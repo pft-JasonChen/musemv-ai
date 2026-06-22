@@ -4,12 +4,22 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMvFlow } from "./MvFlowProvider";
 import { MvDetail } from "./MvDetail";
-import { MV_TYPES } from "@/lib/mv/mock";
+import { MV_TYPES, mockStoryboard } from "@/lib/mv/mock";
 import { MOCK_USER } from "@/lib/user";
 
 export function MvResult() {
   const router = useRouter();
-  const { resultUrl, compose, storyboard } = useMvFlow();
+  const { resultUrl, compose, storyboard, setStoryboard, saveStoryboard } = useMvFlow();
+
+  function editMv() {
+    // Carry this video into the editor; ensure a storyboard exists (direct-mode renders have none).
+    if (!storyboard) {
+      const sb = mockStoryboard();
+      setStoryboard(sb);
+      saveStoryboard(sb);
+    }
+    router.push("/mv/edit");
+  }
 
   useEffect(() => {
     if (!resultUrl) router.replace("/mv/room");
@@ -45,7 +55,7 @@ export function MvResult() {
           hasCharacterTag: compose.photos.length > 0,
         }}
         onRecreate={() => router.push("/mv/room")}
-        onEdit={() => router.push("/mv/edit")}
+        onEdit={editMv}
       />
     </div>
   );

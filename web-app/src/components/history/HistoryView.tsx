@@ -1,7 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useMvFlow } from "@/components/mv/MvFlowProvider";
 import { CreationDialog, type CreationLike } from "@/components/mv/CreationDialog";
@@ -284,16 +285,26 @@ function Menu(p: MenuProps) {
   const isStoryboard = r.kind === "storyboard";
   const hideDelete = (isMv && (p.published || p.reviewing)) || (isSong && p.published);
 
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+
+  function toggle() {
+    if (p.open) { p.setOpen(false); return; }
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) setPos({ top: rect.bottom + 6, right: Math.max(8, window.innerWidth - rect.right) });
+    p.setOpen(true);
+  }
+
   return (
-    <div className="relative shrink-0">
-      <button aria-label="Options" onClick={() => p.setOpen(!p.open)} className="grid h-9 w-9 place-items-center rounded-full transition-colors hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
+    <div className="shrink-0">
+      <button ref={btnRef} aria-label="Options" onClick={toggle} className="grid h-9 w-9 place-items-center rounded-full transition-colors hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
         <I d={ICON.more} />
       </button>
 
-      {p.open && (
+      {p.open && pos && createPortal(
         <>
-          <div className="fixed inset-0 z-40" onClick={() => p.setOpen(false)} />
-          <div className="absolute right-0 top-10 z-50 w-60 overflow-hidden rounded-2xl border p-2 shadow-2xl" style={{ background: "var(--card)", borderColor: "var(--border-2)" }}>
+          <div className="fixed inset-0 z-[90]" onClick={() => p.setOpen(false)} />
+          <div className="fixed z-[91] w-60 overflow-hidden rounded-2xl border p-2 shadow-2xl" style={{ top: pos.top, right: pos.right, background: "var(--card)", borderColor: "var(--border-2)" }}>
             {!community && !failed && (
               <div className="mb-1 flex gap-2 p-1">
                 {isMv && <CtaBtn label="Edit MV" icon={ICON.edit} onClick={() => { p.setOpen(false); p.onEditMv(); }} />}
@@ -320,7 +331,8 @@ function Menu(p: MenuProps) {
 
             {(failed || isStoryboard) && <OptRow icon={<I d={ICON.trash} />} label="Delete" danger onClick={p.onDelete} />}
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </div>
   );

@@ -35,7 +35,12 @@ export function StoryboardEditor() {
   return (
     <div className="mx-auto max-w-[1000px] px-4 pt-6 pb-28 sm:px-6 sm:pb-8">
       <div className="mb-5 flex items-center justify-between gap-3">
-        <h1 className="text-[24px] font-extrabold tracking-tight">Edit Storyboard</h1>
+        <div className="flex items-center gap-3">
+          <button aria-label="Back" onClick={() => router.back()} className="grid h-9 w-9 place-items-center rounded-full" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+          </button>
+          <h1 className="text-[24px] font-extrabold tracking-tight">Edit Storyboard</h1>
+        </div>
         <button
           onClick={save}
           disabled={!storyboardDirty}
@@ -81,21 +86,22 @@ export function StoryboardEditor() {
             />
           </div>
 
-          {/* Synopsis timeline */}
+          {/* Synopsis — vertical waterfall (easy to read & edit across many scenes) */}
           <div>
             <SectionLabel>Synopsis</SectionLabel>
-            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+            <div className="flex flex-col gap-3">
               {storyboard.scenes.map((s) => (
-                <div key={s.id} className="flex shrink-0 flex-col rounded-xl border p-3" style={{ width: 240, background: "var(--card)", borderColor: "var(--border-2)" }}>
-                  <div className="mb-2 flex items-center justify-between">
+                <div key={s.id} className="flex gap-3 rounded-xl border p-3" style={{ background: "var(--card)", borderColor: "var(--border-2)" }}>
+                  <div className="flex w-[68px] shrink-0 flex-col">
                     <span className="text-[13px] font-bold" style={{ color: "var(--accent)" }}>Scene {s.index}</span>
-                    <span className="text-[11px]" style={{ color: "var(--text-2)" }}>{s.range}</span>
+                    <span className="mt-0.5 text-[11px]" style={{ color: "var(--text-2)" }}>{s.range}</span>
                   </div>
                   <textarea
                     value={s.text}
                     onChange={(e) => updateScene(s.id, e.target.value)}
-                    className="w-full flex-1 resize-none bg-transparent text-[12px] outline-none no-scrollbar"
-                    style={{ color: "var(--text)", lineHeight: 1.5, minHeight: 96 }}
+                    rows={3}
+                    className="min-h-[64px] w-full flex-1 resize-y rounded-lg bg-transparent p-2.5 text-[13px] outline-none no-scrollbar"
+                    style={{ background: "var(--card-2)", color: "var(--text)", lineHeight: 1.5 }}
                   />
                 </div>
               ))}

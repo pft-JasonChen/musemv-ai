@@ -48,7 +48,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onRecreate, onEdit, onDelete, onClose }: Props) {
+export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onRecreate, onEdit, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(true);
@@ -121,16 +121,7 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
                 <span className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all" style={{ left: published ? "18px" : "2px" }} />
               </span>
             </button>
-
-            {/* Branded share row */}
-            <div className="mb-1 text-[12px]" style={{ color: "var(--text-2)" }}>Share to</div>
-            <div className="mb-4 flex gap-2">
-              {["Instagram", "TikTok", "WhatsApp", "X", "More"].map((t) => (
-                <button key={t} onClick={() => setShareOpen(true)} title={t} className="grid h-9 flex-1 place-items-center rounded-xl text-[11px] font-bold transition-all hover:brightness-125 active:scale-[0.97]" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
-                  {t === "More" ? "···" : t === "Instagram" ? "IG" : t === "TikTok" ? "TT" : t === "WhatsApp" ? "WA" : "X"}
-                </button>
-              ))}
-            </div>
+            <div className="mb-4" />
 
             {info.songTitle && (
               <>
@@ -153,13 +144,6 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
               <Row label="Scenes">{info.scenes ?? "—"}</Row>
               <Row label="Subtitle">{info.subtitle == null ? "—" : info.subtitle ? "On" : "Off"}</Row>
             </div>
-
-            {onDelete && (
-              <button onClick={onDelete} className="mt-5 inline-flex items-center gap-1.5 text-[12px] hover:underline" style={{ color: "var(--text-3)" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" /></svg>
-                Delete this creation
-              </button>
-            )}
           </div>
 
           {/* Pinned actions */}
