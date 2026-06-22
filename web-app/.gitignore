@@ -1,0 +1,12 @@
+/node_modules
+/.next
+/out
+/build
+/storybook-static
+/test-results
+/playwright-report
+.DS_Store
+*.pem
+.env*
+/coverage
+next-env.d.ts

@@ -1,0 +1,134 @@
+/* ============================================================================
+   MuseMV.ai — Web Prototype Design Tokens
+   Single source of truth. Synced from the mobile prototype's Figma design system
+   (muse-prototype-v2.html :root, Figma node 30:2 / type node 36:92).
+
+   Rules:
+   - Every colour, type size, radius, and spacing in the app MUST derive from a
+     token here. No raw hex / px in components (enforced by design-reviewer).
+   - Semantic aliases (--bg, --card, --text…) are what components reference.
+     The raw scale (--n04…--n100) exists only to define the aliases.
+   ========================================================================== */
+
+:root {
+  /* ── Neutral / Dark 12-step grayscale ─────────────────────────────────── */
+  --n04:  #09090B;  /* deepest bg            */
+  --n09:  #151519;  /* card / sheet bg       */
+  --n14:  #212127;  /* input / icon button   */
+  --n24:  #383842;  /* disabled bg / chip    */
+  --n34:  #50505E;  /* subtle fill           */
+  --n44:  #676779;  /* secondary text        */
+  --n54:  #808093;  /* muted text            */
+  --n64:  #9C9CAB;  /* tertiary text         */
+  --n74:  #B7B7C2;  /* hint text             */
+  --n84:  #D3D3D9;  /* secondary btn text    */
+  --n89:  #E1E1E5;  /* light label           */
+  --n94:  #EEEEF1;  /* lightest surface      */
+  --n100: #FFFFFF;  /* white                 */
+
+  /* ── Semantic surface / text aliases ──────────────────────────────────── */
+  --bg:       var(--n04);
+  --card:     var(--n09);
+  --card-2:   var(--n14);
+  --card-3:   var(--n24);
+  --card-4:   var(--n34);
+  --text:     var(--n100);
+  --text-2:   var(--n64);
+  --text-3:   var(--n74);
+  --text-4:   var(--n84);
+  --text-5:   var(--n44);
+
+  /* ── Borders ──────────────────────────────────────────────────────────── */
+  --border:   rgba(255,255,255,0.09);  /* navbar / section divider */
+  --border-2: rgba(255,255,255,0.15);  /* card / input border      */
+  --border-3: rgba(255,255,255,0.06);  /* subtle separator         */
+
+  /* ── Brand accents ────────────────────────────────────────────────────── */
+  --accent:   #A855F7;  /* purple — primary brand */
+  --accent-2: #EC4899;  /* pink                   */
+  --blue:     #38BDF8;
+  --gold:     #F59E0B;  /* credits                */
+  --orange:   #F97316;
+  --green:    #01B37B;  /* success                */
+  --red:      #FF2600;  /* error / destructive    */
+  --premium:  #FFA614;
+
+  /* ── Gradients ────────────────────────────────────────────────────────── */
+  --mv-grad:   linear-gradient(135deg, #FF6BCE 0%, #A855F7 50%, #4338CA 100%);
+  --song-grad: linear-gradient(135deg, #FFB347 0%, #FF4E50 50%, #D63AF9 100%);
+
+  /* ── Typography scale (Inter) ─────────────────────────────────────────── */
+  --font-sans: 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
+
+  --fs-display:  42px; --fw-display:  800; --lh-display:  1.1;
+  --fs-title-l:  30px; --fw-title-l:  800; --lh-title-l:  1.13;
+  --fs-title-m:  26px; --fw-title-m:  700; --lh-title-m:  1.15;
+  --fs-title-s:  17px; --fw-title-s:  700; --lh-title-s:  22px;
+  --fs-title-xs: 15px; --fw-title-xs: 700; --lh-title-xs: 18px;
+  --fs-headline: 20px; --fw-headline: 700; --lh-headline: 26px;
+  --fs-section:  17px; --fw-section:  700; --lh-section:  22px;
+  --fs-body-l:   17px; --fw-body-l:   500; --lh-body-l:   22px;
+  --fs-body-m:   14px; --fw-body-m:   500; --lh-body-m:   20px;
+  --fs-body-s:   12px; --fw-body-s:   500; --lh-body-s:   1.5;
+  --fs-body-xs:   9px; --fw-body-xs:  500; --lh-body-xs:  11px;
+  --fs-label-m:  13px; --fw-label-m:  700; --lh-label-m:  18px;
+  --fs-label-s:  12px; --fw-label-s:  600; --lh-label-s:  15px;
+  --fs-cap-m:    11px; --fw-cap-m:    700; --lh-cap-m:    16px;
+  --fs-cap-s:     9px; --fw-cap-s:    700; --lh-cap-s:    11px;
+
+  /* ── Spacing scale (4px base — derived from observed prototype values) ─── */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+
+  /* ── Radii (derived from prototype) ───────────────────────────────────── */
+  --r-sm:   8px;   /* chips / tags        */
+  --r-md:   10px;  /* thumbnails          */
+  --r-lg:   12px;  /* small cards         */
+  --r-xl:   14px;  /* cards / inputs / CTA */
+  --r-2xl:  16px;  /* large media cards   */
+  --r-pill: 9999px;/* pills / round btns  */
+
+  /* ── Elevation ────────────────────────────────────────────────────────── */
+  --shadow-cta:  0 8px 12px rgba(168,85,247,0.32);
+  --shadow-card: 0 6px 16px rgba(0,0,0,0.3);
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --dur-fast:   0.15s;
+  --dur-base:   0.2s;
+  --dur-slow:   0.3s;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Layout / chrome ──────────────────────────────────────────────────── */
+  --safe-top: env(safe-area-inset-top, 48px);
+  --safe-bot: env(safe-area-inset-bottom, 20px);
+  --tab-h: 66px;
+  --nav-h: 52px;
+
+  /* ── Responsive breakpoints (px) — reference values for @theme / media ── */
+  --bp-mobile:  390px;   /* phone (primary parity target) */
+  --bp-tablet:  768px;
+  --bp-laptop:  1024px;
+  --bp-desktop: 1440px;
+}
+
+/* ── Typography utility classes (mirror the mobile prototype) ───────────── */
+.t-display  { font:var(--fw-display)  var(--fs-display)/var(--lh-display)   var(--font-sans); letter-spacing:-.4px;  }
+.t-title-l  { font:var(--fw-title-l)  var(--fs-title-l)/var(--lh-title-l)   var(--font-sans); letter-spacing:-.3px;  }
+.t-title-m  { font:var(--fw-title-m)  var(--fs-title-m)/var(--lh-title-m)   var(--font-sans); letter-spacing:-.26px; }
+.t-title-s  { font:var(--fw-title-s)  var(--fs-title-s)/var(--lh-title-s)   var(--font-sans); letter-spacing:-.17px; }
+.t-title-xs { font:var(--fw-title-xs) var(--fs-title-xs)/var(--lh-title-xs) var(--font-sans); letter-spacing:-.15px; }
+.t-headline { font:var(--fw-headline) var(--fs-headline)/var(--lh-headline) var(--font-sans); letter-spacing:-.2px;  }
+.t-section  { font:var(--fw-section)  var(--fs-section)/var(--lh-section)   var(--font-sans); letter-spacing:-.17px; }
+.t-body-l   { font:var(--fw-body-l)   var(--fs-body-l)/var(--lh-body-l)     var(--font-sans); letter-spacing:-.17px; }
+.t-body-m   { font:var(--fw-body-m)   var(--fs-body-m)/var(--lh-body-m)     var(--font-sans); letter-spacing:-.14px; }
+.t-body-s   { font:var(--fw-body-s)   var(--fs-body-s)/var(--lh-body-s)     var(--font-sans); letter-spacing:-.12px; }
+.t-label-m  { font:var(--fw-label-m)  var(--fs-label-m)/var(--lh-label-m)   var(--font-sans); letter-spacing:-.13px; }
+.t-label-s  { font:var(--fw-label-s)  var(--fs-label-s)/var(--lh-label-s)   var(--font-sans); letter-spacing:-.12px; }
+.t-cap-m    { font:var(--fw-cap-m)    var(--fs-cap-m)/var(--lh-cap-m)       var(--font-sans); letter-spacing:-.11px; }
+.t-cap-s    { font:var(--fw-cap-s)    var(--fs-cap-s)/var(--lh-cap-s)       var(--font-sans); letter-spacing:-.09px; }
