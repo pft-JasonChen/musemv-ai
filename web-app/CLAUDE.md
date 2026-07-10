@@ -1,9 +1,5 @@
 @AGENTS.md
 
-# Claude supplement + error log
+## Error log (one line per user correction; fold recurring lessons into an AGENTS.md rule)
 
-Read AGENTS.md first (imported above). This file adds Claude-specific notes and a
-running log of corrections. Append one line per correction.
-
-## Error log
 - (none yet)
