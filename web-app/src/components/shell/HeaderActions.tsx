@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useCredits } from "@/components/providers/CreditsProvider";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { AccountMenu } from "@/components/account/AccountMenu";
 import { MOCK_USER } from "@/lib/user";
 
 export function HeaderActions() {
-  const { credits } = useMvFlow();
+  const { credits } = useCredits();
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);

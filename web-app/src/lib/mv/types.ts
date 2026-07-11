@@ -1,71 +1,30 @@
-// Typed front-end contract for the AI MV creation flow.
-// No backend: async work is modelled as an MvJob fed by a mock handler (see mock.ts).
-// Engineers replace the mock MvApi impl with a real backend without touching the UI.
+// Domain types + rules for the AI MV / AI Song flows.
+//
+// Entity types are defined once as Zod schemas in @/lib/api/schemas and
+// re-exported here so existing imports keep working. This module owns the
+// pure domain constants and rules (defaults, costs, CTA-enable predicates).
+// The backend contract lives in @/lib/api/contract (MuseApi).
 
-export type MvType = "singing" | "storytelling" | "hybrid";
+export type {
+  MvType,
+  SongSource,
+  Song,
+  CharacterPhoto,
+  MvSettings,
+  ComposeState,
+  MvMode,
+  MvJobStatus,
+  Scene,
+  Storyboard,
+  MvJob,
+  MvCreateRequest,
+  SongMode,
+  SongCompose,
+  SongResult,
+  SongJob,
+} from "@/lib/api/schemas";
 
-export type SongSource = "library" | "import" | "sample" | "link";
-
-export interface Song {
-  id: string;
-  source: SongSource;
-  title: string;
-  durationSec: number;
-  art: string;
-  url?: string;
-  trim?: { start: number; end: number };
-}
-
-export interface CharacterPhoto {
-  id: string;
-  url: string;
-  fromSample?: boolean;
-}
-
-export interface MvSettings {
-  ratio: "9:16" | "16:9";
-  resolution: "720P" | "1080P";
-  title: { on: boolean; text: string };
-  author: { on: boolean; text: string };
-  showSubtitle: boolean;
-  watermark: boolean;
-}
-
-export interface ComposeState {
-  mvType: MvType;
-  song: Song | null;
-  description: string;
-  photos: CharacterPhoto[];
-  settings: MvSettings;
-}
-
-export type MvMode = "storyboard_first" | "direct";
-
-export type MvJobStatus = "idle" | "queued" | "processing" | "done" | "failed";
-
-export interface Scene {
-  id: string;
-  index: number;
-  range: string; // e.g. "00:00–00:09"
-  text: string;
-}
-
-export interface Storyboard {
-  characterImage: string;
-  visualStyle: string;
-  scenes: Scene[];
-}
-
-export interface MvJob {
-  id: string;
-  mode: MvMode;
-  status: MvJobStatus;
-  progress: number; // 0–100
-  step: string;
-  compose: ComposeState;
-  storyboard?: Storyboard;
-  resultUrl?: string;
-}
+import type { ComposeState, MvSettings, SongCompose } from "@/lib/api/schemas";
 
 export const DESCRIPTION_MAX = 2500;
 export const COST_STORYBOARD = 20;
@@ -93,28 +52,7 @@ export function isComposeReady(s: ComposeState): boolean {
   return s.song != null && s.description.trim().length > 0;
 }
 
-/**
- * API contract stub. Engineers implement this against the real backend.
- * The mock implementation lives in mock.ts.
- */
-export interface MvApi {
-  createMvJob(input: { mode: MvMode; compose: ComposeState }): Promise<MvJob>;
-  getMvJob(id: string): Promise<MvJob>;
-}
-
 // ── AI Song ──────────────────────────────────────────────────────────────
-export type SongMode = "simple" | "custom";
-
-export interface SongCompose {
-  mode: SongMode;
-  describe: string;
-  instrumental: boolean;
-  lyrics: string;
-  genre: string;
-  mood: string;
-  vocal: string | null;
-  title: string;
-}
 
 export const DEFAULT_SONG_COMPOSE: SongCompose = {
   mode: "simple",
@@ -126,18 +64,6 @@ export const DEFAULT_SONG_COMPOSE: SongCompose = {
   vocal: null,
   title: "",
 };
-
-export interface SongResult {
-  id: string;
-  title: string;
-  cover: string;
-  genre: string;
-  mood: string;
-  durationSec: number;
-  audioUrl?: string;
-  instrumental: boolean;
-  lyrics?: string;
-}
 
 export const COST_SONG = 10;
 

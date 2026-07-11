@@ -2,12 +2,14 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { SongDetail } from "./SongDetail";
 
 export function SongResultView() {
   const router = useRouter();
-  const { songResult, patchCompose } = useMvFlow();
+  const { songResult } = useSongFlow();
+  const { patchCompose } = useMvFlow();
 
   useEffect(() => {
     if (!songResult) router.replace("/song/create");

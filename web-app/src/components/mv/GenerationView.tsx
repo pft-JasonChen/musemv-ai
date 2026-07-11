@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { useMvFlow } from "./MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useSongFlow } from "@/components/providers/SongFlowProvider";
 
 interface Props {
   kind: "storyboard" | "render" | "song";
@@ -20,7 +21,10 @@ interface Props {
 
 export function GenerationView({ kind, title, subtitle, estimate, nextHref, start, alreadyDone }: Props) {
   const router = useRouter();
-  const { gen } = useMvFlow();
+  // MV and Song generations each own their progress; pick by what this screen shows.
+  const mvGen = useMvFlow().gen;
+  const songGen = useSongFlow().gen;
+  const gen = kind === "song" ? songGen : mvGen;
 
   // Start the mock generation once on mount.
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useCredits } from "@/components/providers/CreditsProvider";
 import { MOCK_USER } from "@/lib/user";
 
 interface Props {
@@ -23,7 +23,7 @@ function Avatar({ size = 40 }: { size?: number }) {
 }
 
 export function AccountMenu({ open, onClose, onBuyCredits }: Props) {
-  const { credits } = useMvFlow();
+  const { credits } = useCredits();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

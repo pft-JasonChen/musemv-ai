@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { MvDetail } from "./MvDetail";
 import { SongDetail } from "@/components/song/SongDetail";
-import { useMvFlow } from "./MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { SAMPLE_RESULT_VIDEO, SAMPLE_AUDIO, mockStoryboard } from "@/lib/mv/mock";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 

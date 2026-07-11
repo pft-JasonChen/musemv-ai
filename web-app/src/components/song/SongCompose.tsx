@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { CreditPill } from "@/components/ui/CreditPill";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { GENRES, MOODS, VOCALS, SONG_IDEAS } from "@/lib/mv/mock";
 import { COST_SONG, DESCRIPTION_MAX, isSongReady, type SongMode } from "@/lib/mv/types";
 
@@ -33,7 +33,7 @@ function Chips({ options, value, onPick, clearable }: { options: string[]; value
 
 export function SongCompose() {
   const router = useRouter();
-  const { songCompose: s, patchSongCompose: patch } = useMvFlow();
+  const { songCompose: s, patchSongCompose: patch } = useSongFlow();
   const ready = isSongReady(s);
 
   return (

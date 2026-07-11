@@ -3,7 +3,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
+import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { CreationDialog, type CreationLike } from "@/components/mv/CreationDialog";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { MV_TYPES } from "@/lib/mv/mock";
@@ -20,7 +21,8 @@ function Star({ size = 11 }: { size?: number }) {
 
 export function HomeView() {
   const router = useRouter();
-  const { history, patchSongCompose } = useMvFlow();
+  const { history } = useHistory();
+  const { patchSongCompose } = useSongFlow();
   const [selected, setSelected] = useState<CreationLike | null>(null);
   const [likedSongs, setLikedSongs] = useState<Record<string, boolean>>({});
   const [share, setShare] = useState<{ title: string; url: string } | null>(null);

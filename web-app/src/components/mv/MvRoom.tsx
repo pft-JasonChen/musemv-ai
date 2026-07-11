@@ -11,7 +11,7 @@ import { TrimAudioModal } from "./TrimAudioModal";
 import { FacePickerModal } from "./FacePickerModal";
 import { SettingsModal } from "./SettingsModal";
 import { ModeModal } from "./ModeModal";
-import { useMvFlow } from "./MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { MV_TYPES, SAMPLE_FACES, TEMPLATES, IDEAS, formatDuration } from "@/lib/mv/mock";
 import {
   DESCRIPTION_MAX,

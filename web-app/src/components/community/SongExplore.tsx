@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useRouter } from "next/navigation";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { TOP_PICKS_SONGS, NEW_SONGS, type CommunitySong } from "@/lib/mv/community";
 import { Play, Stats } from "@/components/community/ui";
 
@@ -12,7 +12,7 @@ function I({ d }: { d: string }) {
 
 export function SongExplore() {
   const router = useRouter();
-  const { patchSongCompose } = useMvFlow();
+  const { patchSongCompose } = useSongFlow();
 
   function createFromSong(s: CommunitySong, e: React.MouseEvent) {
     e.stopPropagation();

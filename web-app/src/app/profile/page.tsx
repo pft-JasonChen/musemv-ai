@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useCredits } from "@/components/providers/CreditsProvider";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
@@ -35,7 +35,7 @@ function Row({ icon, title, sub, right, onClick }: { icon: React.ReactNode; titl
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { credits } = useMvFlow();
+  const { credits } = useCredits();
   const [name, setName] = useState(MOCK_USER.name);
   const [email, setEmail] = useState(MOCK_USER.email);
   const [notif, setNotif] = useState(true);

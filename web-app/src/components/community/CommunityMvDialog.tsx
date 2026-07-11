@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 import { getCommunityMv, DEFAULT_CREATOR } from "@/lib/mv/community";
 import { Heart, Share, Stats } from "@/components/community/ui";

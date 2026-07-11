@@ -1,7 +1,7 @@
 "use client";
 
 import { GenerationView } from "@/components/mv/GenerationView";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
 
 export default function Page() {
   const { startStoryboard, storyboard } = useMvFlow();

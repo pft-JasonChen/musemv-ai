@@ -4,7 +4,8 @@
 import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
 import { CreationDialog, type CreationLike } from "@/components/mv/CreationDialog";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { Modal } from "@/components/ui/Modal";
@@ -50,7 +51,8 @@ function Toggle({ on }: { on: boolean }) {
 
 export function HistoryView() {
   const router = useRouter();
-  const { history, setStoryboard, saveStoryboard, setCompose } = useMvFlow();
+  const { history } = useHistory();
+  const { setStoryboard, saveStoryboard, setCompose } = useMvFlow();
   const [filter, setFilter] = useState<Filter>("all");
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [ov, setOv] = useState<Record<string, Override>>({});
