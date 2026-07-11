@@ -11,6 +11,14 @@ The community surface (home feed sections, `/explore/mvs`, `/explore/songs`,
 seed data** in `src/lib/mv/community.ts`. There is no product definition behind
 it yet.
 
+**Strategy proposal (2026-07-11):** `docs/community-strategy-proposal.html` — a
+manager-facing proposal covering the four locked decisions (official-first feed
+with locale-secondary; IP-based locale; HN-gravity time-decayed ranking;
+auto-prescreen + human-review-of-gray-zone moderation), the Phase 1/2/3
+algorithm roadmap, the Phase 1 ranking formula, the moderation pipeline + data
+model, and open decisions still needing sign-off. Turn its conclusions into a
+`specs/` spec + API contract once approved.
+
 What "defined" means (all currently missing):
 
 - **Product spec** — which community capabilities are real product scope
