@@ -3,27 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>MuseMV Community 策略提案</title>
+<title>MuseMV Community 提案 · Deck</title>
 <style>
   :root {
-    --bg: #faf8fc;
-    --surface: #ffffff;
-    --surface-2: #f3eff9;
-    --ink: #1b1526;
-    --ink-2: #574f6e;
-    --ink-3: #8b84a0;
-    --line: #e7e1f0;
-    --accent: #9333ea;
-    --accent-soft: #a855f7;
-    --accent-2: #db2777;
+    --bg: #faf8fc; --surface: #ffffff; --surface-2: #f3eff9;
+    --ink: #1b1526; --ink-2: #574f6e; --ink-3: #8b84a0; --line: #e7e1f0;
+    --accent: #9333ea; --accent-soft: #a855f7; --accent-2: #db2777;
     --grad: linear-gradient(100deg, #9333ea, #db2777);
-    --safe: #16a34a;
-    --safe-bg: #eaf7ee;
-    --warn: #c2740a;
-    --warn-bg: #fdf3e3;
-    --crit: #dc2626;
-    --crit-bg: #fdecec;
-    --shadow: 0 1px 2px rgba(27, 21, 38, .04), 0 8px 28px rgba(27, 21, 38, .06);
+    --safe: #16a34a; --safe-bg: #eaf7ee; --warn: #c2740a; --warn-bg: #fdf3e3;
+    --crit: #dc2626; --crit-bg: #fdecec;
+    --shadow: 0 1px 2px rgba(27,21,38,.04), 0 10px 30px rgba(27,21,38,.07);
     --sans: "Inter", system-ui, -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
     --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, monospace;
   }
@@ -35,7 +24,7 @@
       --grad: linear-gradient(100deg, #c084fc, #f472b6);
       --safe: #4ade80; --safe-bg: #14271b; --warn: #fbbf24; --warn-bg: #2a2010;
       --crit: #f87171; --crit-bg: #2b1717;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.4);
     }
   }
   :root[data-theme="light"] {
@@ -45,7 +34,7 @@
     --grad: linear-gradient(100deg, #9333ea, #db2777);
     --safe: #16a34a; --safe-bg: #eaf7ee; --warn: #c2740a; --warn-bg: #fdf3e3;
     --crit: #dc2626; --crit-bg: #fdecec;
-    --shadow: 0 1px 2px rgba(27,21,38,.04), 0 8px 28px rgba(27,21,38,.06);
+    --shadow: 0 1px 2px rgba(27,21,38,.04), 0 10px 30px rgba(27,21,38,.07);
   }
   :root[data-theme="dark"] {
     --bg: #131019; --surface: #1b1626; --surface-2: #241d33;
@@ -54,426 +43,441 @@
     --grad: linear-gradient(100deg, #c084fc, #f472b6);
     --safe: #4ade80; --safe-bg: #14271b; --warn: #fbbf24; --warn-bg: #2a2010;
     --crit: #f87171; --crit-bg: #2b1717;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.4);
   }
 
   * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
+  html, body { margin: 0; height: 100%; }
   body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font-family: var(--sans); line-height: 1.65;
-    font-size: 16px; letter-spacing: .01em;
-    -webkit-font-smoothing: antialiased;
+    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased; letter-spacing: .01em;
   }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px 96px; }
-  .col { max-width: 760px; }
 
-  /* Top bar */
-  .topbar {
-    position: sticky; top: 0; z-index: 20;
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    padding: 14px 24px; background: color-mix(in srgb, var(--bg) 86%, transparent);
+  .deck { height: 100dvh; overflow-y: auto; scroll-snap-type: y proximity; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { .deck { scroll-behavior: auto; } }
+
+  .slide {
+    min-height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 92px 40px 72px; position: relative;
+  }
+  .inner { width: 100%; max-width: 960px; margin: 0 auto; }
+  @media (max-width: 640px) { .slide { padding: 84px 22px 64px; } }
+
+  /* Chrome */
+  .bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 40; display: flex;
+    align-items: center; justify-content: space-between; gap: 14px;
+    padding: 14px 24px; background: color-mix(in srgb, var(--bg) 82%, transparent);
     backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
   }
-  .topbar .mark { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; letter-spacing: .02em; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--grad); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent); }
-  .toggle {
-    font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-2);
-    background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
-    padding: 6px 14px; cursor: pointer; display: flex; align-items: center; gap: 7px;
-  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 13.5px; letter-spacing: .02em; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--grad); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent); }
+  .bar-right { display: flex; align-items: center; gap: 12px; }
+  .count { font-family: var(--mono); font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .count b { color: var(--accent); }
+  .toggle { font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
   .toggle:hover { color: var(--ink); border-color: var(--accent); }
 
-  /* Hero */
-  header.hero { padding: 64px 0 28px; }
-  .eyebrow { font-size: 12.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
-  h1 { font-size: clamp(32px, 5vw, 46px); line-height: 1.08; letter-spacing: -.02em; margin: 16px 0 0; text-wrap: balance; font-weight: 800; }
-  .lede { font-size: 18px; color: var(--ink-2); margin: 18px 0 0; max-width: 620px; }
-  .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 26px; font-size: 13px; color: var(--ink-3); }
-  .meta b { color: var(--ink-2); font-weight: 600; }
+  .dots { position: fixed; right: 18px; top: 50%; transform: translateY(-50%); z-index: 40; display: flex; flex-direction: column; gap: 10px; }
+  @media (max-width: 820px) { .dots { display: none; } }
+  .dots button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: none; background: var(--line); cursor: pointer; transition: all .2s; }
+  .dots button[aria-current="true"] { background: var(--accent); transform: scale(1.35); }
 
-  /* Locked decisions */
-  .locked { margin-top: 34px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
-  .locked-head { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 14px; }
-  .locked-head .tag { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--safe); background: var(--safe-bg); padding: 3px 9px; border-radius: 999px; }
-  .locked-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
-  .lk { padding: 16px 20px; border-top: 1px solid var(--line); }
-  .lk:nth-child(odd) { border-right: 1px solid var(--line); }
-  .lk .k { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
-  .lk .v { margin-top: 5px; font-size: 15px; font-weight: 650; }
-  @media (max-width: 620px) { .locked-grid { grid-template-columns: 1fr; } .lk:nth-child(odd) { border-right: none; } }
+  .nav { position: fixed; bottom: 20px; right: 24px; z-index: 40; display: flex; gap: 8px; }
+  .nav button { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; font-size: 17px; box-shadow: var(--shadow); }
+  .nav button:hover { color: var(--ink); border-color: var(--accent); }
 
-  /* Sections */
-  section { padding-top: 56px; }
-  .sec-no { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 600; }
-  h2 { font-size: 25px; letter-spacing: -.01em; margin: 8px 0 0; font-weight: 750; text-wrap: balance; }
-  .sub { color: var(--ink-2); margin: 12px 0 0; }
-  section p, section li { color: var(--ink-2); }
-  section p { margin: 16px 0 0; }
-  strong, b { color: var(--ink); font-weight: 680; }
-  .col ul { margin: 14px 0 0; padding-left: 0; list-style: none; }
-  .col ul li { position: relative; padding-left: 22px; margin-top: 9px; }
-  .col ul li::before { content: ""; position: absolute; left: 4px; top: 11px; width: 6px; height: 6px; border-radius: 2px; background: var(--accent); }
-  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
-  code { font-family: var(--mono); font-size: .88em; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
+  /* Type */
+  .kicker { font-family: var(--mono); font-size: 12.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+  .kicker .idx { color: var(--ink-3); }
+  h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.18; letter-spacing: -.02em; font-weight: 700; margin: 20px 0 0; }
+  h1 span { display: block; }
+  h2 { font-size: clamp(26px, 4vw, 40px); line-height: 1.22; letter-spacing: -.015em; font-weight: 700; margin: 16px 0 0; text-wrap: balance; }
+  .lede { font-size: clamp(16px, 2vw, 20px); color: var(--ink-2); margin: 18px 0 0; max-width: 640px; line-height: 1.6; }
+  p { line-height: 1.6; }
 
-  /* Cards & callouts */
-  .card { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; box-shadow: var(--shadow); }
-  .callout { margin-top: 20px; border-radius: 14px; padding: 16px 18px 16px 20px; border: 1px solid; position: relative; }
-  .callout .ct { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-  .callout p { margin-top: 6px; font-size: 14.5px; }
+  ul.pts { list-style: none; padding: 0; margin: 26px 0 0; display: flex; flex-direction: column; gap: 13px; }
+  ul.pts > li { position: relative; padding-left: 26px; font-size: clamp(15px, 1.7vw, 18px); color: var(--ink-2); line-height: 1.55; }
+  ul.pts > li::before { content: ""; position: absolute; left: 3px; top: .62em; width: 7px; height: 7px; border-radius: 2px; background: var(--accent); }
+  strong { color: var(--ink); font-weight: 680; }
+  code { font-family: var(--mono); font-size: .86em; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
+  .muted { color: var(--ink-3); }
+
+  /* Cover */
+  .cover-tags { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 34px; font-size: 14px; color: var(--ink-3); }
+  .cover-tags b { color: var(--ink-2); font-weight: 600; }
+  .rule { height: 5px; width: 88px; border-radius: 3px; background: var(--grad); margin-top: 30px; }
+
+  /* Grids & cards */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 26px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 26px; }
+  @media (max-width: 720px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; box-shadow: var(--shadow); }
+  .card .ct { font-weight: 720; font-size: 16px; }
+  .card .cd { color: var(--ink-2); font-size: 14px; margin-top: 8px; line-height: 1.55; }
+  .card.reco { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent), var(--shadow); }
+  .tag { display: inline-flex; font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 3px 9px; border-radius: 999px; }
+  .tag.a { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .tag.g { color: var(--safe); background: var(--safe-bg); }
+  .tag.n { color: var(--ink-3); background: var(--surface-2); }
+
+  .phase { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+  .phase::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--grad); }
+  .phase .pn { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--accent); }
+  .phase h3 { margin: 6px 0 0; font-size: 17px; font-weight: 720; }
+  .phase .when { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .phase ul { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 7px; }
+  .phase ul li { font-size: 13.5px; color: var(--ink-2); padding-left: 15px; position: relative; line-height: 1.45; }
+  .phase ul li::before { content: ""; position: absolute; left: 2px; top: .6em; width: 5px; height: 5px; border-radius: 1px; background: var(--accent); }
+
+  /* Formula */
+  .formula { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; margin-top: 24px; }
+  .formula .fbody { padding: 22px 24px; font-family: var(--mono); font-size: 14px; line-height: 1.95; overflow-x: auto; }
+  .formula .lbl { color: var(--ink-3); }
+  .formula .hl { color: var(--accent); font-weight: 700; }
+  .weights { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 24px 20px; }
+  .weight { font-family: var(--mono); font-size: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; }
+  .weight b { color: var(--accent); }
+
+  /* Pipeline row */
+  .pipe { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; align-items: stretch; }
+  .node { flex: 1 1 150px; min-width: 140px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 14px 15px; box-shadow: var(--shadow); }
+  .node .st { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .node .nt { font-weight: 700; font-size: 14px; margin-top: 3px; }
+  .node .nd { font-size: 12px; color: var(--ink-3); margin-top: 3px; line-height: 1.4; }
+  .node.start { border-left: 4px solid var(--accent); }
+  .node.safe { border-left: 4px solid var(--safe); } .node.safe .st { color: var(--safe); }
+  .node.warn { border-left: 4px solid var(--warn); } .node.warn .st { color: var(--warn); }
+  .node.crit { border-left: 4px solid var(--crit); } .node.crit .st { color: var(--crit); }
+
+  /* Tables */
+  .tw { margin-top: 22px; overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--surface); }
+  th, td { text-align: left; padding: 12px 15px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--surface-2); font-weight: 700; font-size: 12px; letter-spacing: .03em; color: var(--ink-2); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td b { color: var(--ink); }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .win { color: var(--safe); font-weight: 700; }
+
+  .callout { margin-top: 22px; border-radius: 14px; padding: 15px 18px; border: 1px solid; }
+  .callout .ct { font-weight: 700; font-size: 14px; }
+  .callout p { margin: 6px 0 0; font-size: 14px; line-height: 1.55; }
   .callout.risk { background: var(--crit-bg); border-color: color-mix(in srgb, var(--crit) 40%, var(--line)); }
   .callout.risk .ct { color: var(--crit); }
   .callout.note { background: var(--surface-2); border-color: var(--line); }
   .callout.note .ct { color: var(--accent); }
 
-  /* Tables */
-  .tw { margin-top: 22px; overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
-  table { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--surface); }
-  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { background: var(--surface-2); font-weight: 700; font-size: 12.5px; letter-spacing: .03em; color: var(--ink-2); white-space: nowrap; }
-  tr:last-child td { border-bottom: none; }
-  td b { color: var(--ink); }
-  .diff { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-  .diff.low { color: var(--safe); background: var(--safe-bg); }
-  .diff.mid { color: var(--warn); background: var(--warn-bg); }
-  .diff.high { color: var(--crit); background: var(--crit-bg); }
+  .lockrow { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .lock { flex: 1 1 200px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 15px 17px; box-shadow: var(--shadow); }
+  .lock .k { font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); font-weight: 700; display: flex; align-items: center; gap: 7px; }
+  .lock .v { margin-top: 6px; font-size: 15.5px; font-weight: 680; line-height: 1.4; }
 
-  /* Roadmap */
-  .phases { margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  @media (max-width: 720px) { .phases { grid-template-columns: 1fr; } }
-  .phase { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
-  .phase::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--grad); opacity: .85; }
-  .phase .pn { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--accent); }
-  .phase h3 { margin: 6px 0 0; font-size: 17px; font-weight: 720; }
-  .phase .when { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
-  .phase ul { margin-top: 12px; }
-  .phase ul li { font-size: 13.5px; }
+  .decide { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+  .di { display: flex; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 14px 18px; box-shadow: var(--shadow); }
+  .di .q { font-family: var(--mono); font-weight: 700; color: var(--accent); font-size: 13px; }
+  .di .qt b { font-size: 15px; } .di .qt p { margin: 3px 0 0; font-size: 13.5px; color: var(--ink-2); }
 
-  /* Formula */
-  .formula { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
-  .formula .fh { padding: 13px 20px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-  .formula .fbody { padding: 22px 24px; font-family: var(--mono); font-size: 14px; line-height: 1.9; overflow-x: auto; }
-  .formula .fbody .lbl { color: var(--ink-3); }
-  .formula .fbody .hl { color: var(--accent); font-weight: 700; }
-  .weights { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 24px 22px; }
-  .weight { font-family: var(--mono); font-size: 12.5px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; }
-  .weight b { color: var(--accent); }
-
-  /* Pipeline */
-  .pipe { margin-top: 24px; display: flex; flex-direction: column; gap: 14px; }
-  .prow { display: flex; align-items: stretch; gap: 12px; flex-wrap: wrap; }
-  .node { flex: 1 1 150px; min-width: 150px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 14px 16px; box-shadow: var(--shadow); }
-  .node .nt { font-weight: 700; font-size: 14px; }
-  .node .nd { font-size: 12.5px; color: var(--ink-3); margin-top: 3px; }
-  .node.start { border-left: 4px solid var(--accent); }
-  .branch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  @media (max-width: 720px) { .branch { grid-template-columns: 1fr; } }
-  .node.safe { border-left: 4px solid var(--safe); }
-  .node.crit { border-left: 4px solid var(--crit); }
-  .node.warn { border-left: 4px solid var(--warn); }
-  .node .st { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-  .node.safe .st { color: var(--safe); }
-  .node.crit .st { color: var(--crit); }
-  .node.warn .st { color: var(--warn); }
-
-  /* Options */
-  .opts { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 620px) { .opts { grid-template-columns: 1fr; } }
-  .opt { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); }
-  .opt.reco { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent), var(--shadow); }
-  .opt .badge { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 3px 9px; border-radius: 999px; }
-  .opt h4 { margin: 12px 0 0; font-size: 16px; font-weight: 720; }
-  .opt p { margin-top: 8px; font-size: 13.5px; color: var(--ink-2); }
-
-  /* Decisions to make */
-  .decide { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
-  .di { display: flex; gap: 14px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 15px 18px; box-shadow: var(--shadow); }
-  .di .q { font-family: var(--mono); font-weight: 700; color: var(--accent); font-size: 13px; margin-top: 1px; }
-  .di .qt b { font-size: 14.5px; }
-  .di .qt p { margin-top: 4px; font-size: 13.5px; color: var(--ink-2); }
-
-  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-3); }
-  hr.soft { border: none; border-top: 1px solid var(--line); margin: 0; }
-
-  @media (prefers-reduced-motion: no-preference) {
-    header.hero > * { animation: rise .6s cubic-bezier(.2,.7,.2,1) backwards; }
-    header.hero h1 { animation-delay: .05s; }
-    header.hero .lede { animation-delay: .1s; }
-    header.hero .meta { animation-delay: .15s; }
-    @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
-  }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="mark"><span class="dot" aria-hidden="true"></span> MuseMV · Community 策略提案</div>
-    <button class="toggle" id="themeBtn" aria-label="切換深淺色">
-      <span id="themeIcon">◐</span><span id="themeLabel">主題</span>
-    </button>
+  <div class="bar">
+    <div class="brand"><span class="dot" aria-hidden="true"></span> MuseMV · Community 提案</div>
+    <div class="bar-right">
+      <span class="count"><b id="cur">01</b> / <span id="total">12</span></span>
+      <button class="toggle" id="themeBtn" aria-label="切換深淺色"><span id="themeIcon">◐</span><span id="themeLabel">主題</span></button>
+    </div>
+  </div>
+  <div class="dots" id="dots" aria-hidden="true"></div>
+  <div class="nav">
+    <button id="prev" aria-label="上一頁">↑</button>
+    <button id="next" aria-label="下一頁">↓</button>
   </div>
 
-  <div class="wrap">
-    <header class="hero col">
-      <div class="eyebrow">內部策略提案 · 待核准</div>
-      <h1>Community 內容分發與審核機制</h1>
-      <p class="lede">在使用者仍少、內容以官方為主的階段，如何讓台灣使用者看到台灣的內容、讓好內容自然浮上來，並在開放發布時守住安全底線。</p>
-      <div class="meta">
-        <span><b>對象</b> 產品主管</span>
-        <span><b>日期</b> 2026-07-11</span>
-        <span><b>狀態</b> 提案，待拍板</span>
-        <span><b>關聯</b> web-app · TODO #1</span>
-      </div>
+  <div class="deck" id="deck">
 
-      <div class="locked">
-        <div class="locked-head"><span class="tag">已定案</span> 本次討論拍板的四項方向</div>
-        <div class="locked-grid">
-          <div class="lk"><div class="k">在地化</div><div class="v">官方內容為主，locale 為輔</div></div>
-          <div class="lk"><div class="k">排序公式</div><div class="v">時間衰減 engagement（HN gravity）</div></div>
-          <div class="lk"><div class="k">地區判定</div><div class="v">以 IP 地理位置為主</div></div>
-          <div class="lk"><div class="k">審核</div><div class="v">自動預審 + 人工覆核灰色地帶</div></div>
-        </div>
-      </div>
-    </header>
-
-    <!-- 1 -->
-    <section class="col">
-      <div class="sec-no">01</div>
-      <h2>要解的問題</h2>
-      <p>Community 的畫面已經做好，但背後沒有內容分發規則。兩個必須先回答的核心問題：</p>
-      <ul>
-        <li><b>在地化落差。</b>假設我是台灣使用者，但平台上印度使用者很多——不能推薦一片印度 MV，要優先推台灣人想看的內容。</li>
-        <li><b>冷啟動。</b>新平台各別用戶還不多，一開始內容以官方居多，排序不能依賴大量互動數據。</li>
-        <li><b>開放發布的安全。</b>使用者一旦公開作品，需要機制擋下 NSFW 等違規內容——而且這個 App 會上傳人臉，風險不只色情。</li>
-      </ul>
-    </section>
-
-    <!-- 2 -->
-    <section class="col">
-      <div class="sec-no">02</div>
-      <h2>在地化：locale-first，global 優雅補位</h2>
-      <p class="sub">不走「只看 global」（就是印度 MV 淹沒台灣人的情境），也不走「只看 local」（早期在地內容太薄、feed 會空）。取兩者中間。</p>
-      <ul>
-        <li>每則內容打三個標籤：<code>content_locale</code>（語言）、<code>origin_region</code>（創作者地區）、<code>is_official</code>（官方內容）。</li>
-        <li>主 feed 以使用者 locale 內容優先排序；<b>在地內容不足時</b>才用「官方 → 全球高分」回填，並設<b>回填上限</b>（外語內容不超過 feed 的 20–30%），永遠不會變成一片外語。</li>
-        <li>另開 <b>Global／探索</b> 分頁給想看世界的人——把「看全球」變成主動選擇，而非預設塞給使用者。</li>
-        <li>地區來源以 <b>IP</b> 為主（免設定、自動）；建議日後補「帳號設定可覆寫」以處理 VPN 與旅居使用者。</li>
-      </ul>
-      <p style="margin-top:22px"><b>業界怎麼分</b>——共通心法是把「人工精選 / 演算法 / 排行榜」當三種不同 surface，而非塞進同一條公式：</p>
-      <div class="tw">
-        <table>
-          <thead><tr><th>平台</th><th>在地化邏輯</th><th>對我們的啟發</th></tr></thead>
-          <tbody>
-            <tr><td><b>Spotify</b></td><td>編輯歌單分市場（人工）、演算法自然依語言分群、排行榜分國家/全球</td><td>三種 surface 分離</td></tr>
-            <tr><td><b>Netflix</b></td><td>「Top 10 in Taiwan」為地區榜；每一列（row）用不同演算法</td><td>冷啟動靠 onboarding 偏好＋所在地熱門</td></tr>
-            <tr><td><b>TikTok</b></td><td>用裝置語言/IP 先餵地區熱門，再用完播率快速個人化；新內容先小範圍本地測試</td><td>「內容有出生地，表現好可外擴」</td></tr>
-            <tr><td><b>YouTube</b></td><td>首頁個人化、Trending 分國家；偵測影片語言對齊使用者語言</td><td>語言對齊是強訊號</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 3 -->
-    <section>
-      <div class="col">
-        <div class="sec-no">03</div>
-        <h2>內容演算法路線</h2>
-        <p class="sub">分階段導入——早期純規則、零個人化；累積數據後才上個人化與真 trending。</p>
-      </div>
-      <div class="phases">
-        <div class="phase">
-          <div class="pn">PHASE 1</div>
-          <h3>官方為主 · 純規則</h3>
-          <div class="when">冷啟動 · 現在</div>
-          <ul>
-            <li>Feed 大部分為官方精選（可備多語版本解決在地化）</li>
-            <li>ADMS 人工排<b>前 20</b>（編輯 pin）</li>
-            <li>第 21 名後用<b>規則式排序公式</b>自動排（見 §04）</li>
-            <li>locale 先過濾、IP 判定</li>
-          </ul>
-        </div>
-        <div class="phase">
-          <div class="pn">PHASE 2</div>
-          <h3>導入個人化</h3>
-          <div class="when">UGC 與互動數據足夠後</div>
-          <ul>
-            <li>協同過濾（「喜歡這支的也喜歡…」）</li>
-            <li>內容標籤比對（mvType / genre / mood）</li>
-            <li>Trending 改看<b>速度</b>（近 N 小時增幅）</li>
-            <li>locale 由硬過濾放寬為排序權重</li>
-          </ul>
-        </div>
-        <div class="phase">
-          <div class="pn">PHASE 3</div>
-          <h3>完整 FYP</h3>
-          <div class="when">規模化後</div>
-          <ul>
-            <li>以看完率/停留優化的個人化推薦流</li>
-            <li>探索 vs 熟悉的動態平衡</li>
-            <li>創作者成長與分潤訊號納入</li>
-          </ul>
+    <!-- 01 Cover -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker">內部提案 · 待核准</div>
+        <h1><span>Community</span><span>分發與審核機制</span></h1>
+        <p class="lede">讓台灣使用者看到台灣的內容、讓好內容自然浮上來，並在開放發布時守住安全底線——以最低工程成本的 Phase 1 起步。</p>
+        <div class="rule"></div>
+        <div class="cover-tags">
+          <span><b>對象</b> 產品主管</span>
+          <span><b>日期</b> 2026-07-11</span>
+          <span><b>提案</b> Phase 1 · 輕量版</span>
         </div>
       </div>
     </section>
 
-    <!-- 4 -->
-    <section class="col">
-      <div class="sec-no">04</div>
-      <h2>Phase 1 排序公式（第 21 名之後）</h2>
-      <p class="sub">人工排不到的長尾要自動排。採<b>時間衰減的加權互動分數</b>：純看累積互動會讓榜單僵化、新人永遠出不了頭，加時間衰減能讓內容流動。</p>
+    <!-- 02 Decisions -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">02 / 12</span> 決策總覽</div>
+        <h2>本次拍板：Phase 1 走輕量版</h2>
+        <div class="lockrow">
+          <div class="lock"><div class="k"><span class="tag g">定案</span> 在地化</div><div class="v">官方為主，locale 為輔</div></div>
+          <div class="lock"><div class="k"><span class="tag g">定案</span> 排序</div><div class="v">時間衰減 engagement（HN gravity）</div></div>
+        </div>
+        <div class="lockrow">
+          <div class="lock"><div class="k"><span class="tag g">定案</span> 地區判定</div><div class="v">以 IP 為主</div></div>
+          <div class="lock"><div class="k"><span class="tag g">定案</span> 審核</div><div class="v">Phase 1 輕量版：prompt 預審 + 產出自動擋 + 人工放行</div></div>
+          <div class="lock"><div class="k"><span class="tag a">工具</span> ADMS</div><div class="v">承接排序控制板 · 審核佇列待定</div></div>
+        </div>
+      </div>
+    </section>
 
-      <div class="formula">
-        <div class="fh">① 加權互動值 → ② 時間衰減</div>
-        <div class="fbody">
-<span class="lbl"># ① 互動價值（依「意圖強度」加權：分享 &gt; 讚 &gt; 完播 &gt; 播放）</span>
+    <!-- 03 Problem -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">03 / 12</span> 問題</div>
+        <h2>三個必須先回答的問題</h2>
+        <ul class="pts">
+          <li><strong>在地化落差。</strong>平台上外國使用者可能很多——不能推薦一片外語 MV，要優先給台灣使用者想看的內容。</li>
+          <li><strong>冷啟動。</strong>各別用戶還少、內容以官方居多，排序不能依賴大量互動數據。</li>
+          <li><strong>發布安全。</strong>使用者一旦公開作品需擋下違規內容——而且本 App 會上傳人臉，風險不只色情。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 04 Localization -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">04 / 12</span> 在地化</div>
+        <h2>Locale-first，global 優雅補位</h2>
+        <p class="lede">不走「只看 global」（外語內容淹沒台灣人），也不走「只看 local」（早期內容太薄）。</p>
+        <ul class="pts">
+          <li>每則內容標 <code>content_locale</code> · <code>origin_region</code> · <code>is_official</code>；地區以 <strong>IP</strong> 判定。</li>
+          <li>主 feed 以使用者 locale 優先；不足時才用「官方 → 全球高分」<strong>回填，且設上限（外語 ≤ 20–30%）</strong>。</li>
+          <li>另開 <strong>Global／探索</strong> 分頁——把「看全球」變成主動選擇。</li>
+          <li class="muted">業界心法：把「人工精選 / 演算法 / 排行榜」當三種 surface（Spotify、Netflix、TikTok、YouTube 皆然）。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 05 Roadmap -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">05 / 12</span> 演算法路線</div>
+        <h2>先純規則，再疊個人化</h2>
+        <div class="grid3">
+          <div class="phase"><div class="pn">PHASE 1</div><h3>官方為主 · 純規則</h3><div class="when">現在</div>
+            <ul><li>Feed 多為官方精選（多語版本）</li><li>ADMS 人工排前 20</li><li>21 名後用排序公式（下一頁）</li></ul></div>
+          <div class="phase"><div class="pn">PHASE 2</div><h3>導入個人化</h3><div class="when">數據足夠後</div>
+            <ul><li>協同過濾 + 內容標籤</li><li>Trending 改看速度</li><li>locale 由過濾轉權重</li></ul></div>
+          <div class="phase"><div class="pn">PHASE 3</div><h3>完整 FYP</h3><div class="when">規模化後</div>
+            <ul><li>以完播/停留優化</li><li>探索 vs 熟悉平衡</li><li>創作者成長訊號</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 Formula -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">06 / 12</span> Phase 1 排序公式</div>
+        <h2>第 21 名之後：時間衰減互動分數</h2>
+        <div class="formula">
+          <div class="fbody">
+<span class="lbl"># ① 加權互動（意圖強度：分享 &gt; 讚 &gt; 完播 &gt; 播放）</span>
 E = <span class="hl">1</span>·plays + <span class="hl">2</span>·completes + <span class="hl">4</span>·likes + <span class="hl">10</span>·shares
-
-<span class="lbl"># ② 時間衰減（Hacker News gravity 式）</span>
+<span class="lbl"># ② 時間衰減（Hacker News gravity）</span>
 score = E / (age_hours + <span class="hl">2</span>) ^ <span class="hl">1.8</span>
-
-<span class="lbl"># ③ 冷啟動平滑（避免「3 播放 2 讚」用比率灌水贏過 3000 播放）</span>
+<span class="lbl"># ③ 冷啟動平滑，避免少量播放用比率灌水</span>
 smoothed_like_rate = (likes + C·m) / (plays + C)
-<span class="lbl">     m = 全站平均讚率 · C = 偽計數（如 50）</span>
+          </div>
+          <div class="weights">
+            <span class="weight">play <b>×1</b></span><span class="weight">complete <b>×2</b></span>
+            <span class="weight">like <b>×4</b></span><span class="weight">share <b>×10</b></span>
+            <span class="weight">gravity <b>1.8</b></span><span class="weight">offset <b>+2h</b></span>
+          </div>
         </div>
-        <div class="weights">
-          <span class="weight">play <b>×1</b></span>
-          <span class="weight">complete <b>×2</b></span>
-          <span class="weight">like <b>×4</b></span>
-          <span class="weight">share <b>×10</b></span>
-          <span class="weight">gravity <b>1.8</b></span>
-          <span class="weight">offset <b>+2h</b></span>
-        </div>
-      </div>
-
-      <ul>
-        <li><b>新內容探索位。</b>feed 保留少量固定名額給發布 &lt; 24h 的內容，給新創作者曝光、防止大者恆大。</li>
-        <li><b>全參數可調。</b>權重（1/2/4/10）、gravity、回填上限都設為營運可調設定，不改程式即可微調——ADMS 可承接這個控制面。</li>
-      </ul>
-      <div class="callout note">
-        <div class="ct">為什麼是這個公式</div>
-        <p>Hacker News 與 Reddit 的熱度排序都採「互動 ÷ 時間衰減」的形式；它可直接用一句 SQL 算出、無需 ML，正好適合 Phase 1 的資料量與工程成本。Phase 2 再用協同過濾疊上個人化。</p>
+        <ul class="pts">
+          <li><strong>新內容探索位：</strong>保留少量名額給 &lt; 24h 內容，防止大者恆大。</li>
+          <li><strong>參數全可調</strong>（權重/gravity/回填上限）由 <strong>ADMS 控制板</strong>調，離線批次每 N 分鐘重算並快取。</li>
+        </ul>
       </div>
     </section>
 
-    <!-- 5 -->
-    <section>
-      <div class="col">
-        <div class="sec-no">05</div>
-        <h2>審核機制：自動預審 + 人工覆核灰色地帶</h2>
-        <p class="sub">不走純人工（不擴展、慢、審核員負擔），也不走純自動（誤判與法律風險）。內容按「發布」後先進審核，不直接公開。</p>
-      </div>
-
-      <div class="col">
-        <div class="pipe" role="img" aria-label="審核狀態流程：送出後自動預審，分為安全自動放行、違規自動擋下、灰色地帶進人工佇列">
-          <div class="prow">
-            <div class="node start"><div class="nt">送出發布</div><div class="nd">draft → submitted</div></div>
-            <div class="node start"><div class="nt">自動預審</div><div class="nd">影格＋縮圖＋音訊＋文字</div></div>
-          </div>
-          <div class="branch">
-            <div class="node safe"><div class="st">安全</div><div class="nt" style="margin-top:4px">自動放行</div><div class="nd">→ published</div></div>
-            <div class="node crit"><div class="st">違規</div><div class="nt" style="margin-top:4px">自動擋下</div><div class="nd">→ rejected，通知使用者</div></div>
-            <div class="node warn"><div class="st">灰色</div><div class="nt" style="margin-top:4px">進人工佇列</div><div class="nd">pending_review →（人工）→ 放行 / 拒絕</div></div>
-          </div>
-          <div class="prow">
-            <div class="node"><div class="nt">發布後檢舉</div><div class="nd">任何人 Report → 回到 pending_review 重審</div></div>
-          </div>
+    <!-- 07 How others moderate -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">07 / 12</span> 審核 · 業界怎麼做</div>
+        <h2>影片生成平台的四層防線</h2>
+        <p class="lede">Sora · Runway · Pika · Veo · Kling 幾乎都採同一套：</p>
+        <div class="pipe">
+          <div class="node start"><div class="st">① 輸入端</div><div class="nt">擋 Prompt</div><div class="nd">真人/未成年/暴力字詞</div></div>
+          <div class="node warn"><div class="st">② 產出端</div><div class="nt">NSFW 分類器</div><div class="nd">擋下或要求重生</div></div>
+          <div class="node safe"><div class="st">③ 溯源</div><div class="nt">浮水印/標籤</div><div class="nd">C2PA · SynthID · AI 標示</div></div>
+          <div class="node crit"><div class="st">④ 人工</div><div class="nt">灰色 + 檢舉</div><div class="nd">人工複核 · 累犯封號</div></div>
+        </div>
+        <div class="callout note">
+          <div class="ct">我們的位置</div>
+          <p><strong>① Prompt 預審已具備。</strong>缺的是 <strong>② 產出端抽格審核</strong> 與 <strong>③ AI 標籤</strong>——正是 Phase 1 要補的兩塊。</p>
         </div>
       </div>
+    </section>
 
-      <div class="col"><p style="margin-top:26px"><b>分三個攔截點，難度差很多。</b>我們是 AI 生成內容——能在輸入端（prompt）就擋，是比一般 UGC 平台更強的優勢：</p></div>
-      <div class="tw">
-        <table>
-          <thead><tr><th>元件</th><th>難度</th><th>怎麼做</th></tr></thead>
-          <tbody>
-            <tr><td><b>① Prompt 文字預審</b></td><td><span class="diff low">低</span></td><td>生成時把 prompt 丟文字 moderation API（OpenAI moderation 免費，或 Google/AWS），擋掉明顯違規描述。一個 API call。</td></tr>
-            <tr><td><b>② 影片自動預審</b></td><td><span class="diff mid">中</span></td><td>用 SaaS：<b>Hive Moderation</b>（UGC 影片專精、最準）、<b>AWS Rekognition</b>（在 AWS 最省事）、Google Video Intelligence、Azure Content Safety。回傳各類別分數。<b>不建議自架</b>開源模型。</td></tr>
-            <tr><td><b>③ 三向閾值路由</b></td><td><span class="diff low">低</span></td><td><code>&lt;低標→放行</code>；<code>&gt;高標→擋</code>；中間 → pending_review。純設定判斷。</td></tr>
-            <tr><td><b>④ 人工佇列後台</b></td><td><span class="diff mid">中</span></td><td>內部審核頁：待審清單＋影片預覽＋機器分數＋通過/拒絕鍵。<b>建議直接擴充 ADMS</b>，內容加 <code>moderation_status</code> 欄位。</td></tr>
-            <tr><td><b>⑤ 檢舉回流</b></td><td><span class="diff low">低–中</span></td><td>每支 MV 加 Report 鍵 → 寫 report 記錄 → 重進佇列。</td></tr>
-          </tbody>
-        </table>
+    <!-- 08 Our Phase 1 moderation -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">08 / 12</span> 審核 · 我們的 Phase 1</div>
+        <h2>輕量版：最快上線，量大再擴</h2>
+        <div class="pipe">
+          <div class="node start"><div class="st">已具備</div><div class="nt">① Prompt 預審</div><div class="nd">生成前擋違規字詞</div></div>
+          <div class="node warn"><div class="st">新增</div><div class="nt">② 抽格自動擋</div><div class="nd">AWS 掃明顯違規 → 擋下</div></div>
+          <div class="node safe"><div class="st">新增</div><div class="nt">③ 標「AI 生成」</div><div class="nd">產出加標籤</div></div>
+          <div class="node crit"><div class="st">Phase 1</div><div class="nt">④ 人工放行</div><div class="nd">量少 → 其餘全部人工核可</div></div>
+        </div>
+        <ul class="pts">
+          <li><strong>為何輕量版夠用：</strong>Phase 1 官方為主、UGC 量少，先不做三向閾值路由與專屬佇列，量大再升級到完整版（灰色地帶才進人工）。</li>
+          <li><strong>審核佇列 host 待定</strong>——可先用 ADMS 或極簡內部頁承接。</li>
+        </ul>
       </div>
+    </section>
 
-      <div class="col">
-        <p style="margin-top:26px"><b>Phase 1 兩個選項</b>——待主管依工程成本拍板：</p>
-        <div class="opts">
-          <div class="opt reco">
-            <span class="badge">建議 · 可直接擴展</span>
-            <h4>完整版：①②③④ 全上</h4>
-            <p>只有灰色地帶進人工，可無痛接到 Phase 2。整體難度中等，主要成本是串一個 SaaS API ＋一個簡單後台。長期審核成本最低。</p>
-          </div>
-          <div class="opt">
-            <span class="badge" style="color:var(--ink-3);background:var(--surface-2)">最快上線</span>
-            <h4>輕量版：①② + 全部人工放行</h4>
-            <p>只自動擋明顯違規，其餘因 Phase 1 官方為主、UGC 量少 → 全部進人工放行。最快上線，量大後再補三向路由。</p>
-          </div>
+    <!-- 09 Cost AWS vs Hive -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">09 / 12</span> 成本 · 供應商</div>
+        <h2>用 AWS——更便宜，且已在你們技術棧</h2>
+        <div class="tw">
+          <table>
+            <thead><tr><th>方案</th><th>單價（量級參考）</th><th>備註</th></tr></thead>
+            <tbody>
+              <tr><td><b>AWS Rekognition</b> 圖片審核</td><td class="num win">≈ US$1 / 1,000 張</td><td>已在 AWS、資料留自家、量大更低</td></tr>
+              <tr><td>Hive Moderation</td><td class="num">≈ US$1.5 / 1,000 張</td><td>較準（子類細、可測 AI 生成），需談合約</td></tr>
+              <tr><td>Prompt 文字預審</td><td class="num win">免費</td><td>OpenAI moderation，已具備</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout note">
+          <div class="ct">關鍵省錢手法：抽格，不要用影片 API</div>
+          <p>一支 2 分鐘 MV 每 3 秒抽 1 格 ≈ 40 格 ≈ <b class="num">US$0.04 / 支</b>＋縮圖。Phase 1 量小近乎零成本。<br><span class="muted">單價需以 AWS 官方定價頁最終確認。加分：<code>RecognizeCelebrities</code> 可偵測名人臉，接下一頁的肖像問題。</span></p>
         </div>
       </div>
+    </section>
 
-      <div class="col">
+    <!-- 10 Deepfake consent -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">10 / 12</span> 肖像 / Deepfake 同意</div>
+        <h2>生成前勾選同意 = 正確的最低標</h2>
+        <div class="grid2">
+          <div class="card"><div class="ct">其他平台怎麼解</div><div class="cd">
+            <b>HeyGen / Synthesia</b>：自訂人像須錄製同意聲明，預設用授權演員，禁公眾人物。<br>
+            <b>Sora cameo</b>：本人即時錄影 opt-in，不能上傳別人的臉。<br>
+            共通：ToS 禁用條款 + AI 標籤/浮水印 + 名人臉偵測。</div></div>
+          <div class="card reco"><span class="tag a">建議</span><div class="ct" style="margin-top:10px">我們的做法</div><div class="cd">
+            生成前<strong>勾選「有效同意」</strong>並綁定帳號<strong>存證</strong>（時間、IP、content id）＋ ToS 禁用條款 ＋ 產出標「AI 生成」。<br>
+            Phase 2 加 AWS 名人臉偵測自動送審。</div></div>
+        </div>
         <div class="callout risk">
-          <div class="ct">⚠ NSFW 不是唯一風險</div>
-          <p>這 App 會上傳人臉，審核類別必須擴大：<b>肖像／deepfake 同意</b>（有人上傳名人或他人的臉）、<b>歌曲著作權</b>、<b>CSAM</b>（法律強制通報、零容忍）。這些要一開始就納入政策與偵測類別，不能只擋色情。</p>
+          <div class="ct">⚠ 誠實提醒 · 政策歸屬</div>
+          <p>勾選能<strong>轉移責任＋留稽核軌跡</strong>，但非完全免責盾牌。<strong>政策由法務／Trust&amp;Safety 定</strong>，產品負責落地同意閘門與存證。CSAM 為法律強制通報、零容忍。</p>
         </div>
       </div>
     </section>
 
-    <!-- 6 -->
-    <section class="col">
-      <div class="sec-no">06</div>
-      <h2>需要的資料模型</h2>
-      <p class="sub">支撐上述所有機制，最小欄位增補：</p>
-      <div class="card">
-        <div style="font-family:var(--mono);font-size:13.5px;line-height:2;overflow-x:auto">
-          content.<b style="color:var(--accent)">content_locale</b> · <b style="color:var(--accent)">origin_region</b> · <b style="color:var(--accent)">is_official</b><br>
-          content.<b style="color:var(--accent)">moderation_status</b>  <span style="color:var(--ink-3)">// screening | approved | rejected | pending_review</span><br>
-          content.<b style="color:var(--accent)">moderation_scores</b> (jsonb) · reviewed_by · reviewed_at<br>
-          content.<b style="color:var(--accent)">plays</b> · completes · likes · shares · published_at<br>
-          <b style="color:var(--accent)">reports</b> table  <span style="color:var(--ink-3)">// reporter · content_id · reason · status</span>
+    <!-- 11 Landing: ADMS + data model -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">11 / 12</span> 落地</div>
+        <h2>ADMS 控制板 + 最小資料模型</h2>
+        <div class="grid2">
+          <div class="card"><div class="ct">ADMS 承接</div><div class="cd">
+            ✓ 排序控制板：前 20 手動 pin ＋ 公式參數（權重／gravity／回填上限）<br>
+            ◌ 審核佇列：待定——可 Phase 1 先用 ADMS 或極簡內部頁</div></div>
+          <div class="card"><div class="ct">新增欄位</div><div class="cd" style="font-family:var(--mono);font-size:12.5px;line-height:1.9">
+            content.<b style="color:var(--accent)">content_locale·origin_region·is_official</b><br>
+            content.<b style="color:var(--accent)">moderation_status·scores(jsonb)</b><br>
+            content.<b style="color:var(--accent)">consent_log</b> · plays·completes·likes·shares<br>
+            <b style="color:var(--accent)">reports</b> table</div></div>
         </div>
       </div>
-      <p>排序分數建議<b>離線批次預算</b>（每 N 分鐘重算並快取），feed 讀快取即可，避免每次請求即時計算。</p>
     </section>
 
-    <!-- 7 -->
-    <section class="col">
-      <div class="sec-no">07</div>
-      <h2>待主管拍板</h2>
-      <div class="decide">
-        <div class="di"><div class="q">Q1</div><div class="qt"><b>Phase 1 審核走完整版還是輕量版？</b><p>取決於是否願意在 Phase 1 就投入一個 SaaS 審核 API ＋後台的整合成本。</p></div></div>
-        <div class="di"><div class="q">Q2</div><div class="qt"><b>影片審核供應商？</b><p>建議 Hive（最準）或 AWS Rekognition（若已在 AWS）。需確認預算與每月審核量級。</p></div></div>
-        <div class="di"><div class="q">Q3</div><div class="qt"><b>肖像／deepfake 同意政策由誰定？</b><p>牽涉法務——上傳他人臉的規範與同意流程，需與法務對齊後才能開放發布。</p></div></div>
-        <div class="di"><div class="q">Q4</div><div class="qt"><b>ADMS 是否承接排序控制面與審核佇列？</b><p>建議沿用 ADMS 擴充，避免另建後台；需確認 ADMS 團隊可排期。</p></div></div>
+    <!-- 12 Next -->
+    <section class="slide">
+      <div class="inner">
+        <div class="kicker"><span class="idx">12 / 12</span> 待拍板 · Next</div>
+        <h2>還需要的決策</h2>
+        <div class="decide">
+          <div class="di"><div class="q">Q1</div><div class="qt"><b>確認 Phase 1 走輕量版</b><p>prompt 預審 + AWS 抽格自動擋 + AI 標籤 + 人工放行；三向路由與專屬佇列留待 Phase 2。</p></div></div>
+          <div class="di"><div class="q">Q2</div><div class="qt"><b>審核佇列 host</b><p>ADMS 擴充 vs 極簡內部頁——需 ADMS 團隊排期確認。</p></div></div>
+          <div class="di"><div class="q">Q3</div><div class="qt"><b>肖像同意政策文字</b><p>由法務／Trust&amp;Safety 主稿，產品實作同意閘門與存證。</p></div></div>
+        </div>
+        <div class="callout note">
+          <div class="ct">核准後</div>
+          <p>將結論落地為 <code>specs/community.md</code>（EARS 驗收條件）並把 community 端點加進 <code>MuseApi</code> 契約。</p>
+        </div>
       </div>
     </section>
 
-    <footer class="col">
-      MuseMV · Community 策略提案 · 2026-07-11 · 本文件為內部提案，結論待核准後落地為 <code>specs/</code> 規格與 API 契約。
-    </footer>
   </div>
 
   <script>
     (function () {
       var root = document.documentElement;
+      var deck = document.getElementById('deck');
+      var slides = Array.prototype.slice.call(deck.querySelectorAll('.slide'));
+      var curEl = document.getElementById('cur');
+      var totalEl = document.getElementById('total');
+      var dotsWrap = document.getElementById('dots');
+      totalEl.textContent = slides.length;
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      var active = 0;
+
+      slides.forEach(function (s, i) {
+        var b = document.createElement('button');
+        b.setAttribute('aria-label', '第 ' + (i + 1) + ' 頁');
+        b.addEventListener('click', function () { go(i); });
+        dotsWrap.appendChild(b);
+      });
+      var dots = Array.prototype.slice.call(dotsWrap.children);
+
+      function setActive(i) {
+        active = i;
+        curEl.textContent = pad(i + 1);
+        dots.forEach(function (d, j) { d.setAttribute('aria-current', j === i ? 'true' : 'false'); });
+      }
+      function go(i) {
+        i = Math.max(0, Math.min(slides.length - 1, i));
+        slides[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setActive(i);
+      }
+
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) setActive(slides.indexOf(e.target));
+          });
+        }, { root: deck, threshold: 0.55 });
+        slides.forEach(function (s) { io.observe(s); });
+      }
+
+      document.getElementById('next').addEventListener('click', function () { go(active + 1); });
+      document.getElementById('prev').addEventListener('click', function () { go(active - 1); });
+      window.addEventListener('keydown', function (e) {
+        if (['ArrowDown', 'ArrowRight', 'PageDown', ' '].indexOf(e.key) >= 0) { e.preventDefault(); go(active + 1); }
+        else if (['ArrowUp', 'ArrowLeft', 'PageUp'].indexOf(e.key) >= 0) { e.preventDefault(); go(active - 1); }
+        else if (e.key === 'Home') { e.preventDefault(); go(0); }
+        else if (e.key === 'End') { e.preventDefault(); go(slides.length - 1); }
+      });
+
+      // Theme toggle
       var btn = document.getElementById('themeBtn');
       var label = document.getElementById('themeLabel');
       var icon = document.getElementById('themeIcon');
-      function current() {
-        var set = root.getAttribute('data-theme');
-        if (set) return set;
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      function currentTheme() {
+        return root.getAttribute('data-theme') ||
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       }
-      function paint() {
-        var dark = current() === 'dark';
-        icon.textContent = dark ? '☾' : '☀';
-        label.textContent = dark ? '深色' : '淺色';
-      }
-      btn.addEventListener('click', function () {
-        root.setAttribute('data-theme', current() === 'dark' ? 'light' : 'dark');
-        paint();
-      });
-      paint();
+      function paint() { var d = currentTheme() === 'dark'; icon.textContent = d ? '☾' : '☀'; label.textContent = d ? '深色' : '淺色'; }
+      btn.addEventListener('click', function () { root.setAttribute('data-theme', currentTheme() === 'dark' ? 'light' : 'dark'); paint(); });
+      paint(); setActive(0);
     })();
   </script>
 </body>
