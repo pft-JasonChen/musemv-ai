@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CreditPill } from "./CreditPill";
 
 const meta: Meta<typeof CreditPill> = {

@@ -11,7 +11,7 @@ export interface HistoryItem {
   kind: "mv" | "song";
   title: string;
   thumb: string;
-  status: "generating" | "completed";
+  status: "generating" | "completed" | "failed";
   resultUrl?: string;
 }
 
@@ -20,6 +20,7 @@ interface HistoryValue {
   /** Prepend a generating entry (replacing any existing entry with the same id). */
   upsertGenerating: (item: Omit<HistoryItem, "status">) => void;
   markCompleted: (id: string, resultUrl?: string) => void;
+  markFailed: (id: string) => void;
 }
 
 const Ctx = createContext<HistoryValue | null>(null);
@@ -35,9 +36,13 @@ export function HistoryProvider({ children }: { children: React.ReactNode }) {
     setHistory((h) => h.map((x) => (x.id === id ? { ...x, status: "completed", resultUrl } : x)));
   }, []);
 
+  const markFailed = useCallback((id: string) => {
+    setHistory((h) => h.map((x) => (x.id === id ? { ...x, status: "failed" } : x)));
+  }, []);
+
   const value = useMemo(
-    () => ({ history, upsertGenerating, markCompleted }),
-    [history, upsertGenerating, markCompleted],
+    () => ({ history, upsertGenerating, markCompleted, markFailed }),
+    [history, upsertGenerating, markCompleted, markFailed],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

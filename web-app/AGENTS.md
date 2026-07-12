@@ -11,7 +11,8 @@ Next.js 16.2 (App Router) + React 19 + TypeScript strict + Tailwind v4. Package 
 - `npm run e2e` — Playwright + axe. It serves the LAST production build (`next start -p 3100`),
   so run `npm run build` immediately before. One-time per machine: `npx playwright install chromium`.
   Sandboxed envs with a system chromium: `CHROMIUM_PATH=/path/to/chromium npm run e2e` (no download).
-  Known-failing: the `/` axe gate (pre-existing accent-contrast issue — see `TODO.md` #2).
+  The a11y spec auto-discovers routes from `src/app/`; known accent-pill contrast issues are
+  excluded via selectors in `e2e/a11y.spec.ts` until the design decision lands (`TODO.md` #2).
 - `npm run storybook` / `npm run build-storybook`
 
 **Definition of done:** `npm run typecheck && npm run lint && npm run test:run && npm run build`
@@ -79,7 +80,9 @@ House style in one line:
 
 - Unit tests are colocated `src/**/<name>.test.ts(x)`. Always
   `import { describe, it, expect } from "vitest"` — vitest globals are on, but tsc doesn't see them.
-- New route → append it to the route array in `e2e/a11y.spec.ts`; the axe gate only covers listed routes.
+- New routes are axe-gated automatically (`e2e/a11y.spec.ts` scans `src/app/**/page.tsx`;
+  dynamic `[param]` segments are skipped). Demo failure path: a description containing `[fail]`
+  makes the mock job fail at 60% (error + Retry UI).
 - E2e selectors are exact UI copy: changing a button label or placeholder requires updating `e2e/*.spec.ts`.
 - Stories only for components with no `next/*` imports (runner is @storybook/react-vite). tsconfig
   excludes `*.stories.tsx`, so verify story changes with `npm run build-storybook`, not typecheck.

@@ -84,8 +84,10 @@ export function HistoryView() {
 
   const rows: HistorySample[] = useMemo(() => {
     const live: HistorySample[] = history.map((h) => ({
-      id: h.id, kind: h.kind, title: h.title, thumb: h.thumb,
-      status: h.status === "generating" ? "processing" : "done",
+      id: h.id, kind: h.kind, title: h.title,
+      thumb: h.status === "failed" ? undefined : h.thumb,
+      meta: h.status === "failed" ? (h.kind === "song" ? "AI Song" : "AI MV") : undefined,
+      status: h.status === "generating" ? "processing" : h.status === "failed" ? "failed" : "done",
       date: "Just now", plays: 0, likes: 0, shares: 0, liked: false,
     }));
     return [...live, ...HISTORY_SAMPLES].filter((r) => !removed.has(r.id));

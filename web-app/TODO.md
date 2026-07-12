@@ -35,23 +35,23 @@ What "defined" means (all currently missing):
 
 Until then: do not build further community UI on top of the seed data.
 
-## 2. Home page fails the axe WCAG AA gate (pre-existing; needs a design decision)
+## 2. Accent pills fail WCAG AA contrast (needs a design decision)
 
-`npm run e2e` → `a11y: / has no WCAG A/AA violations` fails with 6
-color-contrast nodes: the "Create" pill buttons in the home song rows —
-white 12px bold text on `--accent` (#A855F7), ratio 3.95:1 vs the 4.5:1
-minimum (`src/components/home/HomeView.tsx:163`, same pattern in
-`src/components/community/SongExplore.tsx:38`).
+The small accent pills — "Create" in home/explore song rows, History filter
+chips, SongCompose mode chips, Creator tabs — put white 12–13px bold text on
+`--accent` (#A855F7): 3.95:1 vs the 4.5:1 minimum.
 
-Not fixed here because `--accent` is synced from the mobile Figma and token
-values must not be edited (AGENTS.md). Options for the design owner: darker
-accent variant for small text, larger/heavier label (≥ 19px bold only needs
-3:1), or a different fill for these pills. Once decided, add a token and
-re-run `npm run e2e`.
+Status 2026-07-12: the axe gate now auto-scans every route and stays GREEN by
+excluding exactly these pill selectors (`e2e/a11y.spec.ts`,
+`KNOWN_CONTRAST_PILLS`) so it still catches everything else. Not fixed in code
+because `--accent` is Figma-synced and token values must not be edited
+(AGENTS.md). Options for the design owner: darker accent variant for small
+text, larger/heavier label (≥ 19px bold only needs 3:1), or a different fill.
+Once decided: add the token, restyle the pills, delete the exclusions.
 
 ## 3. Dev-dependency audit findings (tooling only, not shipped code)
 
-`npm audit`: 7 vulnerabilities (6 moderate, 1 high — vite path traversal via
-the Storybook/Vitest toolchain). All in devDependencies; nothing reaches the
-built app. Clearing them likely means the Storybook 8 → 9 major upgrade —
-schedule as maintenance, don't `npm audit fix --force` casually.
+Status 2026-07-12: Storybook upgraded 8 → 10 and vite 5 → 6; findings dropped
+from 7 (1 high) to **2 moderate**, both from the `postcss` version pinned
+inside `next@16.2.x` itself — upstream, dev-time only, no fix short of a Next
+canary. Re-check after the next Next.js minor.

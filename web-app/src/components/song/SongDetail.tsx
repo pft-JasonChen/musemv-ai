@@ -1,9 +1,10 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import { formatDuration } from "@/lib/mv/mock";
 
 export interface SongDetailInfo {
@@ -33,26 +34,14 @@ function I({ d, size = 18 }: { d: string; size?: number }) {
 }
 
 export function SongDetail({ cover, audioUrl, info, shareUrl, onRecreate, onUseInMv, onClose }: Props) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
+  const { playing, currentTime: cur, duration: dur, toggle: togglePlay, seek: seekTo, nudge } = useAudioPlayer({ src: audioUrl });
   const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [cur, setCur] = useState(0);
-  const [dur, setDur] = useState(0);
 
-  function togglePlay() {
-    const a = audioRef.current;
-    if (!a) return;
-    if (a.paused) { a.play().then(() => setPlaying(true)).catch(() => {}); } else { a.pause(); setPlaying(false); }
-  }
   function seek(e: React.MouseEvent<HTMLDivElement>) {
-    const a = audioRef.current; if (!a || !a.duration) return;
+    if (!dur) return;
     const r = e.currentTarget.getBoundingClientRect();
-    a.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * a.duration;
-  }
-  function nudge(sec: number) {
-    const a = audioRef.current; if (!a) return;
-    a.currentTime = Math.max(0, Math.min(a.duration || 0, a.currentTime + sec));
+    seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * dur);
   }
   const pct = dur ? (cur / dur) * 100 : 0;
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
@@ -64,7 +53,6 @@ export function SongDetail({ cover, audioUrl, info, shareUrl, onRecreate, onUseI
         {/* Cover */}
         <div className="relative aspect-square w-full max-w-[300px] shrink-0 overflow-hidden rounded-2xl" style={{ background: "var(--card-2)" }}>
           <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          {audioUrl && <audio ref={audioRef} src={audioUrl} onEnded={() => setPlaying(false)} onTimeUpdate={() => setCur(audioRef.current?.currentTime ?? 0)} onLoadedMetadata={() => setDur(audioRef.current?.duration ?? 0)} />}
         </div>
 
         {/* Player */}

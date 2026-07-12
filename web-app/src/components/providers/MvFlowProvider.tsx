@@ -7,7 +7,6 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { api, pollJob } from "@/lib/api";
-import { mockStoryboard } from "@/lib/mv/mock";
 import { DEFAULT_COMPOSE, type ComposeState, type MvJob, type Storyboard } from "@/lib/mv/types";
 import { useHistory } from "./HistoryProvider";
 import { IDLE_GEN, toGen, type Gen } from "./progress";
@@ -32,7 +31,7 @@ const Ctx = createContext<MvFlowValue | null>(null);
 const STORAGE_KEY = "mv-storyboard";
 
 export function MvFlowProvider({ children }: { children: React.ReactNode }) {
-  const { upsertGenerating, markCompleted } = useHistory();
+  const { upsertGenerating, markCompleted, markFailed } = useHistory();
   const [compose, setCompose] = useState<ComposeState>(DEFAULT_COMPOSE);
   const [gen, setGen] = useState<Gen>(IDLE_GEN);
   const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
@@ -68,16 +67,23 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => () => cancelPoll.current?.(), []);
 
-  /** Track `job`, updating gen on every poll tick until it completes. */
-  const track = useCallback((job: MvJob, onDone: (job: MvJob) => void) => {
-    cancelPoll.current?.();
-    jobId.current = job.id;
-    setGen(toGen(job));
-    cancelPoll.current = pollJob(() => api.getMvJob(job.id), {
-      onUpdate: (j) => setGen(toGen(j)),
-      onDone,
-    });
-  }, []);
+  /** Track `job`, updating gen on every poll tick until it completes or fails. */
+  const track = useCallback(
+    (job: MvJob, onDone: (job: MvJob) => void) => {
+      cancelPoll.current?.();
+      jobId.current = job.id;
+      setGen(toGen(job));
+      cancelPoll.current = pollJob(() => api.getMvJob(job.id), {
+        onUpdate: (j) => setGen(toGen(j)),
+        onDone,
+        onError: () => {
+          setGen((g) => ({ ...g, status: "failed" }));
+          markFailed(job.id);
+        },
+      });
+    },
+    [markFailed],
+  );
 
   const startStoryboard = useCallback(() => {
     setResultUrl(null);
@@ -86,7 +92,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         id: job.id,
         kind: "mv",
         title: compose.song?.title ?? "Untitled MV",
-        thumb: mockStoryboard().characterImage,
+        thumb: job.thumb,
       });
       track(job, (done) => {
         if (!done.storyboard) return;
@@ -106,7 +112,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         id: job.id,
         kind: "mv",
         title: compose.song?.title ?? "Untitled MV",
-        thumb: storyboard?.characterImage ?? mockStoryboard().characterImage,
+        thumb: job.thumb,
       });
       track(job, (done) => {
         if (!done.resultUrl) return;

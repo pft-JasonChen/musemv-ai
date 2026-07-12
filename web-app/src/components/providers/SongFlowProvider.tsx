@@ -20,7 +20,7 @@ interface SongFlowValue {
 const Ctx = createContext<SongFlowValue | null>(null);
 
 export function SongFlowProvider({ children }: { children: React.ReactNode }) {
-  const { upsertGenerating, markCompleted } = useHistory();
+  const { upsertGenerating, markCompleted, markFailed } = useHistory();
   const [songCompose, setSongCompose] = useState<SongCompose>(DEFAULT_SONG_COMPOSE);
   const [gen, setGen] = useState<Gen>(IDLE_GEN);
   const [songResult, setSongResult] = useState<SongResult | null>(null);
@@ -46,9 +46,13 @@ export function SongFlowProvider({ children }: { children: React.ReactNode }) {
           setSongResult(done.result);
           markCompleted(done.id, done.result.audioUrl);
         },
+        onError: () => {
+          setGen((g) => ({ ...g, status: "failed" }));
+          markFailed(job.id);
+        },
       });
     });
-  }, [songCompose, upsertGenerating, markCompleted]);
+  }, [songCompose, upsertGenerating, markCompleted, markFailed]);
 
   return (
     <Ctx.Provider value={{ songCompose, patchSongCompose, gen, songResult, startSong }}>

@@ -12,9 +12,11 @@ import { FacePickerModal } from "./FacePickerModal";
 import { SettingsModal } from "./SettingsModal";
 import { ModeModal } from "./ModeModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import { MV_TYPES, SAMPLE_FACES, TEMPLATES, IDEAS, formatDuration } from "@/lib/mv/mock";
 import {
   DESCRIPTION_MAX,
+  effectiveDurationSec,
   isComposeReady,
   type CharacterPhoto,
   type MvMode,
@@ -37,8 +39,21 @@ export function MvRoom() {
 
   const ready = isComposeReady(compose);
 
+  const songPlayer = useAudioPlayer({
+    src: compose.song?.url,
+    range: compose.song?.trim ?? null,
+  });
+
   function pickSong(song: Song) {
+    songPlayer.pause();
     setPendingSong(song);
+    setTrimOpen(true);
+  }
+  /** Re-open the trim dialog for the already-chosen song, seeded with its trim. */
+  function editTrim() {
+    if (!compose.song) return;
+    songPlayer.pause();
+    setPendingSong(compose.song);
     setTrimOpen(true);
   }
   function addPhotoFromFile(file: File) {
@@ -98,14 +113,39 @@ export function MvRoom() {
               </button>
             ) : (
               <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: "var(--card-2)" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={compose.song.art} alt="" className="h-11 w-11 rounded-md object-cover" />
+                <button
+                  onClick={songPlayer.toggle}
+                  disabled={!compose.song.url}
+                  aria-label={songPlayer.playing ? "Pause song" : "Play song"}
+                  className="group relative h-11 w-11 shrink-0 overflow-hidden rounded-md"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={compose.song.art} alt="" className="h-full w-full object-cover" />
+                  {compose.song.url && (
+                    <span
+                      className="absolute inset-0 grid place-items-center text-white transition-all group-hover:brightness-110"
+                      style={{ background: "rgba(0,0,0,.35)" }}
+                    >
+                      {songPlayer.playing ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20" /></svg>
+                      )}
+                    </span>
+                  )}
+                </button>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14px] font-semibold">{compose.song.title}</div>
-                  <div className="text-[12px]" style={{ color: "var(--text-2)" }}>{formatDuration(compose.song.durationSec)}</div>
+                  <div className="text-[12px]" style={{ color: "var(--text-2)" }}>
+                    {formatDuration(effectiveDurationSec(compose.song))}
+                    {compose.song.trim && (
+                      <span> · {formatDuration(compose.song.trim.start)}–{formatDuration(compose.song.trim.end)}</span>
+                    )}
+                  </div>
                 </div>
-                <button onClick={() => setSongOpen(true)} className="text-[13px] font-semibold" style={{ color: "var(--accent)" }}>Change</button>
-                <button aria-label="Remove song" onClick={() => patchCompose({ song: null })} className="grid h-7 w-7 place-items-center rounded-full" style={{ background: "var(--card-3)" }}>×</button>
+                <button onClick={editTrim} className="text-[13px] font-semibold" style={{ color: "var(--accent)" }}>Edit</button>
+                <button onClick={() => { songPlayer.pause(); setSongOpen(true); }} className="text-[13px] font-semibold" style={{ color: "var(--accent)" }}>Change</button>
+                <button aria-label="Remove song" onClick={() => { songPlayer.pause(); patchCompose({ song: null }); }} className="grid h-7 w-7 place-items-center rounded-full" style={{ background: "var(--card-3)" }}>×</button>
               </div>
             )}
           </section>

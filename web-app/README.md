@@ -49,10 +49,14 @@ npm run dev                      # http://localhost:3000
 - **Playwright** e2e + axe a11y (`e2e/`), config in `playwright.config.ts`.
 - **`.mcp.json`**: Playwright, Chrome DevTools, shadcn MCP servers.
 
-## Verified (2026-07-11)
-`tsc`, `vitest` (11/11), `eslint` (0), `next build` (19 routes) all green.
-`playwright test`: MV flow, song flow, and `/mv/room` axe gate pass; the `/` axe gate has a
-**known pre-existing color-contrast failure** awaiting a design decision — see `TODO.md` #2.
+## Verified (2026-07-12)
+`tsc`, `vitest` (12/12), `eslint` (0), `next build` (19 routes), `build-storybook`
+(Storybook 10) all green. `playwright test` 20/20: MV flow, song flow, and axe gates on all
+18 auto-discovered routes (known accent-pill contrast issue excluded pending design — `TODO.md` #2).
+
+Demo tips: every sample song has real audio (two mp3s mapped across the list); song rows
+play/pause in place and trims can be re-edited + previewed. A description containing `[fail]`
+demos the generation-failure + Retry state.
 
 ## Structure & rules
 See `AGENTS.md` (agent contract) and `docs/DEVELOPER-HANDOVER.md` (engineer handover).

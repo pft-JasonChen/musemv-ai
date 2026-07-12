@@ -78,6 +78,23 @@ describe("MockMuseApi", () => {
     expect(done.result?.audioUrl).toBeTruthy();
   });
 
+  it("[fail] trigger makes a job fail mid-way without attaching results", async () => {
+    const api = new MockMuseApi();
+    const compose = { ...DEFAULT_COMPOSE, description: "A neon drive [fail]" };
+    const job = await api.createMvJob({ mode: "direct", compose });
+    vi.advanceTimersByTime(12000); // past the render timeline
+    const failed = await api.getMvJob(job.id);
+    expect(failed.status).toBe("failed");
+    expect(failed.progress).toBe(60);
+    expect(failed.resultUrl).toBeUndefined();
+
+    const songJob = await api.createSongJob({ ...DEFAULT_SONG_COMPOSE, describe: "x [fail]" });
+    vi.advanceTimersByTime(9000);
+    const failedSong = await api.getSongJob(songJob.id);
+    expect(failedSong.status).toBe("failed");
+    expect(failedSong.result).toBeUndefined();
+  });
+
   it("rejects malformed input at the contract boundary", async () => {
     const api = new MockMuseApi();
     await expect(

@@ -78,6 +78,8 @@ export const MvJobSchema = z.object({
   progress: z.number(), // 0–100
   step: z.string(),
   compose: ComposeStateSchema,
+  /** Preview image for lists/history; assigned by the backend at creation. */
+  thumb: z.string(),
   storyboard: StoryboardSchema.optional(),
   resultUrl: z.string().optional(),
 });

@@ -99,8 +99,10 @@ Replace the mock (per endpoint, in any order — the contract isolates each):
 
 Also budget for these **production gaps** (fine for a demo, not for launch):
 
-- **No failure/error UX** — jobs can't fail in the mock; design retry/error states
-  (the mobile prototype has a failed-state spec in History).
+- **Failure UX is demo-grade** — a description containing `[fail]` makes the mock job
+  fail at 60% and `GenerationView` shows an error + Retry state; History marks the entry
+  Failed. Real backends need real error taxonomies (quota, moderation-block, timeout)
+  mapped onto this path.
 - **Reload loses mid-flow state** — flow state is in-memory by design; mid-flow routes
   self-guard by redirecting to the flow entry (`MvResult.tsx` pattern). Decide what should
   survive reload once jobs are server-side (job id in the URL is the natural fix).
@@ -135,8 +137,9 @@ all exit 0.
   job engine with fake timers — port these to contract tests against your real API client.
 - **E2e (Playwright):** `npm run build && npm run e2e`. Serves the LAST production build on
   :3100. In sandboxed/CI environments with a system chromium:
-  `CHROMIUM_PATH=/path/to/chromium npm run e2e`. New route → add it to the route array in
-  `e2e/a11y.spec.ts` (the axe gate only covers listed routes).
+  `CHROMIUM_PATH=/path/to/chromium npm run e2e`. New routes are axe-gated automatically —
+  `e2e/a11y.spec.ts` scans `src/app/**/page.tsx` (dynamic `[param]` segments skipped); known
+  accent-pill contrast issues are excluded via selectors until TODO.md #2 is resolved.
 - **Storybook:** stories only for components without `next/*` imports; verify with
   `npm run build-storybook` (tsconfig excludes stories).
 

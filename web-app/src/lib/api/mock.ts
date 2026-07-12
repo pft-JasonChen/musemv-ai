@@ -25,6 +25,13 @@ import { mockSongResult, mockStoryboard, SAMPLE_RESULT_VIDEO } from "@/lib/mv/mo
 const STORYBOARD_MS = 7000;
 const RENDER_MS = 11000;
 const SONG_MS = 8000;
+
+/**
+ * Demo failure trigger: a description/describe containing this token makes the
+ * job fail at ~60% so the error/retry UX can be exercised without a backend.
+ */
+export const FAIL_TRIGGER = "[fail]";
+const FAIL_AT_PROGRESS = 60;
 const STORYBOARD_STEPS = [
   "Analyzing audio...",
   "Designing scenes...",
@@ -65,6 +72,10 @@ interface MvJobRecord {
   /** What the current timeline is producing. */
   phase: "storyboard" | "render";
   timeline: Timeline;
+  /** Preview image assigned at creation (storyboard image once one exists). */
+  thumb: string;
+  /** Progress at which this job fails (demo trigger), if any. */
+  failAt?: number;
   /** Attached once their phase completes. */
   storyboard?: Storyboard;
   resultUrl?: string;
@@ -74,6 +85,8 @@ interface SongJobRecord {
   id: string;
   compose: SongCompose;
   timeline: Timeline;
+  /** Progress at which this job fails (demo trigger), if any. */
+  failAt?: number;
   /** Generated up-front (deterministic for the job), revealed when done. */
   result: SongResult;
 }
@@ -95,6 +108,8 @@ export class MockMuseApi implements MuseApi {
         durationMs: phase === "render" ? RENDER_MS : STORYBOARD_MS,
         steps: phase === "render" ? RENDER_STEPS : STORYBOARD_STEPS,
       },
+      thumb: mockStoryboard().characterImage,
+      failAt: compose.description.includes(FAIL_TRIGGER) ? FAIL_AT_PROGRESS : undefined,
     };
     this.mvJobs.set(record.id, record);
     return this.snapshotMv(record);
@@ -119,6 +134,7 @@ export class MockMuseApi implements MuseApi {
       id: crypto.randomUUID(),
       compose,
       timeline: { startedAt: Date.now(), durationMs: SONG_MS, steps: SONG_STEPS },
+      failAt: compose.describe.includes(FAIL_TRIGGER) ? FAIL_AT_PROGRESS : undefined,
       result: mockSongResult(compose),
     };
     this.songJobs.set(record.id, record);
@@ -137,7 +153,8 @@ export class MockMuseApi implements MuseApi {
 
   private snapshotMv(record: MvJobRecord): MvJob {
     const { progress, step, done } = progressOf(record.timeline);
-    if (done) {
+    const failed = record.failAt != null && progress >= record.failAt;
+    if (done && !failed) {
       // Complete the current phase: attach what it was producing.
       if (record.phase === "storyboard" && !record.storyboard) record.storyboard = mockStoryboard();
       if (record.phase === "render" && !record.resultUrl) record.resultUrl = SAMPLE_RESULT_VIDEO;
@@ -145,10 +162,11 @@ export class MockMuseApi implements MuseApi {
     return MvJobSchema.parse({
       id: record.id,
       mode: record.mode,
-      status: done ? "done" : "processing",
-      progress,
-      step,
+      status: failed ? "failed" : done ? "done" : "processing",
+      progress: failed ? record.failAt : progress,
+      step: failed ? "Generation failed" : step,
       compose: record.compose,
+      thumb: record.storyboard?.characterImage ?? record.thumb,
       storyboard: record.storyboard,
       resultUrl: record.resultUrl,
     });
@@ -156,15 +174,16 @@ export class MockMuseApi implements MuseApi {
 
   private snapshotSong(record: SongJobRecord): SongJob {
     const { progress, step, done } = progressOf(record.timeline);
+    const failed = record.failAt != null && progress >= record.failAt;
     return SongJobSchema.parse({
       id: record.id,
-      status: done ? "done" : "processing",
-      progress,
-      step,
+      status: failed ? "failed" : done ? "done" : "processing",
+      progress: failed ? record.failAt : progress,
+      step: failed ? "Generation failed" : step,
       compose: record.compose,
       title: record.result.title,
       cover: record.result.cover,
-      result: done ? record.result : undefined,
+      result: done && !failed ? record.result : undefined,
     });
   }
 }

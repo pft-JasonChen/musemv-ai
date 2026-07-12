@@ -24,7 +24,7 @@ export type {
   SongJob,
 } from "@/lib/api/schemas";
 
-import type { ComposeState, MvSettings, SongCompose } from "@/lib/api/schemas";
+import type { ComposeState, MvSettings, Song, SongCompose } from "@/lib/api/schemas";
 
 export const DESCRIPTION_MAX = 2500;
 export const COST_STORYBOARD = 20;
@@ -50,6 +50,14 @@ export const DEFAULT_COMPOSE: ComposeState = {
 /** CTA-enable rule (new web behavior; not in source prototype). */
 export function isComposeReady(s: ComposeState): boolean {
   return s.song != null && s.description.trim().length > 0;
+}
+
+/**
+ * Length that will actually be used in the MV: the trim range when set,
+ * the full track otherwise. `durationSec` itself is ALWAYS the full length.
+ */
+export function effectiveDurationSec(song: Pick<Song, "durationSec" | "trim">): number {
+  return song.trim ? song.trim.end - song.trim.start : song.durationSec;
 }
 
 // ── AI Song ──────────────────────────────────────────────────────────────

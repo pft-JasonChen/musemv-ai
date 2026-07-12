@@ -1,6 +1,6 @@
 // UI-facing generation progress, derived from polled job snapshots.
 
-export type GenStatus = "idle" | "processing" | "done";
+export type GenStatus = "idle" | "processing" | "done" | "failed";
 
 export interface Gen {
   status: GenStatus;
@@ -12,7 +12,7 @@ export const IDLE_GEN: Gen = { status: "idle", progress: 0, step: "" };
 
 export function toGen(job: { status: string; progress: number; step: string }): Gen {
   return {
-    status: job.status === "done" ? "done" : "processing",
+    status: job.status === "done" ? "done" : job.status === "failed" ? "failed" : "processing",
     progress: job.progress,
     step: job.step,
   };
