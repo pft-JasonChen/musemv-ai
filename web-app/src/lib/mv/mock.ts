@@ -28,19 +28,28 @@ export const MV_TYPES: MvTypeOption[] = [
   },
 ];
 
+// Only two real audio files exist; every sample song maps to one of them so
+// playback/trim preview always has real audio (demo decision 2026-07-11).
+// durationSec is ALWAYS the full track length of the assigned file — the trim
+// range lives in Song.trim, never overwrites the duration.
+const AUDIO_PARTY_DANCE = "/assets/songs/Party%20Dance.mp3"; // 160s
+const AUDIO_TOP_FLOW = "/assets/songs/Top%20Flow%20Production%20-%20Party.mp3"; // 114s
+const DUR_PARTY_DANCE = 160;
+const DUR_TOP_FLOW = 114;
+
 export const SAMPLE_SONGS: Song[] = [
-  { id: "s1", source: "sample", title: "Top Flow - Party", durationSec: 0, art: "/assets/images/album-art/album_05.jpg" },
-  { id: "s2", source: "sample", title: "Party Dance", durationSec: 0, art: "/assets/images/album-art/album_08.jpg" },
-  { id: "s3", source: "sample", title: "Forest Morning", durationSec: 110, art: "/assets/images/album-art/album_01.jpg" },
-  { id: "s4", source: "sample", title: "Golden Hour", durationSec: 150, art: "/assets/images/album-art/album_03.jpg" },
-  { id: "s5", source: "sample", title: "Neon Pulse", durationSec: 205, art: "/assets/images/album-art/album_02.jpg" },
-  { id: "s6", source: "sample", title: "Ethereal Echoes", durationSec: 165, art: "/assets/images/album-art/album_06.jpg" },
-  { id: "s7", source: "sample", title: "Elysian Reverie", durationSec: 165, art: "/assets/images/album-art/album_07.jpg" },
+  { id: "s1", source: "sample", title: "Top Flow - Party", durationSec: DUR_TOP_FLOW, art: "/assets/images/album-art/album_05.jpg", url: AUDIO_TOP_FLOW },
+  { id: "s2", source: "sample", title: "Party Dance", durationSec: DUR_PARTY_DANCE, art: "/assets/images/album-art/album_08.jpg", url: AUDIO_PARTY_DANCE },
+  { id: "s3", source: "sample", title: "Forest Morning", durationSec: DUR_TOP_FLOW, art: "/assets/images/album-art/album_01.jpg", url: AUDIO_TOP_FLOW },
+  { id: "s4", source: "sample", title: "Golden Hour", durationSec: DUR_PARTY_DANCE, art: "/assets/images/album-art/album_03.jpg", url: AUDIO_PARTY_DANCE },
+  { id: "s5", source: "sample", title: "Neon Pulse", durationSec: DUR_TOP_FLOW, art: "/assets/images/album-art/album_02.jpg", url: AUDIO_TOP_FLOW },
+  { id: "s6", source: "sample", title: "Ethereal Echoes", durationSec: DUR_PARTY_DANCE, art: "/assets/images/album-art/album_06.jpg", url: AUDIO_PARTY_DANCE },
+  { id: "s7", source: "sample", title: "Elysian Reverie", durationSec: DUR_TOP_FLOW, art: "/assets/images/album-art/album_07.jpg", url: AUDIO_TOP_FLOW },
 ];
 
 export const MY_SONGS: Song[] = [
-  { id: "m1", source: "library", title: "My Wedding Ballad", durationSec: 192, art: "/assets/images/album-art/album_04.jpg" },
-  { id: "m2", source: "library", title: "Summer Vibes", durationSec: 178, art: "/assets/images/album-art/album_09.jpg" },
+  { id: "m1", source: "library", title: "My Wedding Ballad", durationSec: DUR_PARTY_DANCE, art: "/assets/images/album-art/album_04.jpg", url: AUDIO_PARTY_DANCE },
+  { id: "m2", source: "library", title: "Summer Vibes", durationSec: DUR_TOP_FLOW, art: "/assets/images/album-art/album_09.jpg", url: AUDIO_TOP_FLOW },
 ];
 
 export const SAMPLE_FACES: string[] = Array.from(

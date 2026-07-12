@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { useMvFlow } from "./MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { COST_RENDER } from "@/lib/mv/types";
 import { formatDuration } from "@/lib/mv/mock";
 

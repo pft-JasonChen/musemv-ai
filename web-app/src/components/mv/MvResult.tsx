@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMvFlow } from "./MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { MvDetail } from "./MvDetail";
 import { MV_TYPES, mockStoryboard } from "@/lib/mv/mock";
 import { MOCK_USER } from "@/lib/user";

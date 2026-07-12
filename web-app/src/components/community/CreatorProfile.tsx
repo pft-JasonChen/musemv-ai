@@ -19,7 +19,7 @@ function Row({ thumb, title, plays, likes, shares, date, onOpen }: { thumb: stri
   const [menu, setMenu] = useState(false);
   return (
     <div className="flex items-center gap-3 border-b py-3" style={{ borderColor: "var(--border-3)" }}>
-      <button onClick={onOpen} className="relative h-[56px] w-[56px] shrink-0 overflow-hidden rounded-lg" style={{ background: "var(--card)" }}>
+      <button onClick={onOpen} aria-label={`Open ${title}`} className="relative h-[56px] w-[56px] shrink-0 overflow-hidden rounded-lg" style={{ background: "var(--card)" }}>
         <img src={thumb} alt="" className="h-full w-full object-cover" />
       </button>
       <button onClick={onOpen} className="min-w-0 flex-1 text-left">

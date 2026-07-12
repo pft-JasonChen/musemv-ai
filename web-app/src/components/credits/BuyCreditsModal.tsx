@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useCredits } from "@/components/providers/CreditsProvider";
 import { CREDIT_PACKS } from "@/lib/user";
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
-  const { credits, addCredits } = useMvFlow();
+  const { credits, addCredits } = useCredits();
   const [selected, setSelected] = useState(2);
   const pack = CREDIT_PACKS.find((p) => p.id === selected)!;
 

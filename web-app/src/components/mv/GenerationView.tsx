@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { useMvFlow } from "./MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useSongFlow } from "@/components/providers/SongFlowProvider";
 
 interface Props {
   kind: "storyboard" | "render" | "song";
@@ -20,7 +21,10 @@ interface Props {
 
 export function GenerationView({ kind, title, subtitle, estimate, nextHref, start, alreadyDone }: Props) {
   const router = useRouter();
-  const { gen } = useMvFlow();
+  // MV and Song generations each own their progress; pick by what this screen shows.
+  const mvGen = useMvFlow().gen;
+  const songGen = useSongFlow().gen;
+  const gen = kind === "song" ? songGen : mvGen;
 
   // Start the mock generation once on mount.
   useEffect(() => {
@@ -35,6 +39,28 @@ export function GenerationView({ kind, title, subtitle, estimate, nextHref, star
       return () => clearTimeout(t);
     }
   }, [gen.status, gen.progress, nextHref, router]);
+
+  const backHref = kind === "song" ? "/song/create" : "/mv/room";
+
+  if (gen.status === "failed") {
+    return (
+      <div className="mx-auto flex max-w-[520px] flex-col items-center px-6 py-16 text-center" role="alert">
+        <div className="grid h-[88px] w-[88px] place-items-center rounded-full" style={{ background: "var(--card-2)" }}>
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FF4E50" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+          </svg>
+        </div>
+        <h1 className="mt-7 text-[22px] font-extrabold">Generation Failed</h1>
+        <p className="mt-2 text-[14px]" style={{ color: "var(--text-2)" }}>
+          Something went wrong while generating. Your credits were not charged — you can retry now or adjust your input and try again.
+        </p>
+        <div className="mt-8 flex gap-2">
+          <Button variant="ghost" onClick={() => router.push(backHref)}>Back</Button>
+          <Button onClick={start}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   const r = 52;
   const circ = 2 * Math.PI * r;

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import { formatDuration } from "@/lib/mv/mock";
 import type { Song } from "@/lib/mv/types";
 
@@ -15,13 +16,39 @@ interface Props {
 
 // deterministic pseudo-random bar heights
 const BARS = Array.from({ length: 56 }, (_, i) => 0.3 + (Math.sin(i * 1.7) * 0.5 + 0.5) * 0.7);
+const DEFAULT_START_PCT = 15;
+const DEFAULT_END_PCT = 70;
 
 export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
   const total = song?.durationSec && song.durationSec > 0 ? song.durationSec : 180;
   const trackRef = useRef<HTMLDivElement>(null);
-  const [startPct, setStartPct] = useState(15);
-  const [endPct, setEndPct] = useState(70);
+  const [startPct, setStartPct] = useState(DEFAULT_START_PCT);
+  const [endPct, setEndPct] = useState(DEFAULT_END_PCT);
   const drag = useRef<null | "start" | "end">(null);
+
+  const startSec = Math.round((startPct / 100) * total);
+  const endSec = Math.round((endPct / 100) * total);
+
+  const { playing, currentTime, toggle, pause } = useAudioPlayer({
+    src: song?.url,
+    range: { start: startSec, end: endSec },
+  });
+
+  // Re-seed the handles each time the dialog opens: from the song's existing
+  // trim when re-editing, otherwise the defaults (render-phase adjustment).
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      if (song?.trim && total > 0) {
+        setStartPct((song.trim.start / total) * 100);
+        setEndPct((song.trim.end / total) * 100);
+      } else {
+        setStartPct(DEFAULT_START_PCT);
+        setEndPct(DEFAULT_END_PCT);
+      }
+    }
+  }
 
   function pctFromEvent(clientX: number) {
     const el = trackRef.current;
@@ -36,18 +63,23 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
     else setEndPct(Math.max(p, startPct + 5));
   }
 
-  const startSec = Math.round((startPct / 100) * total);
-  const endSec = Math.round((endPct / 100) * total);
-
   function confirm() {
     if (!song) return;
-    onConfirm({ ...song, durationSec: endSec - startSec, trim: { start: startSec, end: endSec } });
+    pause();
+    // durationSec stays the FULL track length; only the trim range changes.
+    onConfirm({ ...song, trim: { start: startSec, end: endSec } });
   }
+  function close() {
+    pause();
+    onClose();
+  }
+
+  const playheadPct = playing || currentTime > 0 ? (currentTime / total) * 100 : null;
 
   if (!song) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title="Trim Audio" maxWidth={460}>
+    <Modal open={open} onClose={close} title="Trim Audio" maxWidth={460}>
       <p className="mb-4 text-[14px]" style={{ color: "var(--text-2)" }}>
         Keep only the part of the audio you like best.
       </p>
@@ -55,10 +87,24 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
       <div className="mb-4 flex items-center gap-3 rounded-xl p-3" style={{ background: "var(--card-2)" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={song.art} alt="" className="h-10 w-10 rounded-md object-cover" />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="truncate text-[14px] font-semibold">{song.title}</div>
           <div className="text-[12px]" style={{ color: "var(--text-2)" }}>{formatDuration(total)}</div>
         </div>
+        {song.url && (
+          <button
+            onClick={toggle}
+            aria-label={playing ? "Pause preview" : "Play trimmed section"}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white transition-all hover:brightness-110"
+            style={{ background: "var(--accent)" }}
+          >
+            {playing ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20" /></svg>
+            )}
+          </button>
+        )}
       </div>
 
       <div className="mb-1 flex justify-between text-[12px]" style={{ color: "var(--text-2)" }}>
@@ -84,6 +130,13 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
           })}
         </div>
         <div className="absolute inset-y-0" style={{ left: `${startPct}%`, right: `${100 - endPct}%`, background: "rgba(168,85,247,.16)" }} />
+        {playheadPct != null && (
+          <div
+            className="pointer-events-none absolute inset-y-1 w-0.5 rounded-full bg-white"
+            style={{ left: `${Math.min(endPct, Math.max(startPct, playheadPct))}%`, opacity: playing ? 1 : 0.5 }}
+            aria-hidden
+          />
+        )}
         {(["start", "end"] as const).map((which) => (
           <div
             key={which}
@@ -99,8 +152,12 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
         ))}
       </div>
 
-      <div className="mt-5 flex gap-2">
-        <Button variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
+      <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+        Selected: {formatDuration(endSec - startSec)}
+      </p>
+
+      <div className="mt-4 flex gap-2">
+        <Button variant="secondary" className="flex-1" onClick={close}>Cancel</Button>
         <Button className="flex-1" onClick={confirm}>Use Trimmed Audio</Button>
       </div>
     </Modal>

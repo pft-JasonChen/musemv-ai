@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { useMvFlow } from "./MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useCredits } from "@/components/providers/CreditsProvider";
 import { MV_TYPES } from "@/lib/mv/mock";
 
 const COST_REGEN = 20;
@@ -28,7 +29,8 @@ function Toggle({ on }: { on: boolean }) {
 
 export function MvEditor() {
   const router = useRouter();
-  const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose, setCompose, addCredits } = useMvFlow();
+  const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose, setCompose } = useMvFlow();
+  const { addCredits } = useCredits();
 
   const typeIdx = Math.max(0, MV_TYPES.findIndex((t) => t.id === compose.mvType));
   const defaultPreview = MV_TYPES[typeIdx].video;

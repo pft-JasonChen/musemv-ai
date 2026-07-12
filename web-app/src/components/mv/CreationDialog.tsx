@@ -4,21 +4,12 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { MvDetail } from "./MvDetail";
 import { SongDetail } from "@/components/song/SongDetail";
-import { useMvFlow } from "./MvFlowProvider";
-import { SAMPLE_RESULT_VIDEO, SAMPLE_AUDIO, mockStoryboard } from "@/lib/mv/mock";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { SAMPLE_RESULT_VIDEO, SAMPLE_AUDIO, mockStoryboard, type Creation } from "@/lib/mv/mock";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 
-export interface CreationLike {
-  id: string;
-  kind: "mv" | "song";
-  title: string;
-  thumb: string;
-  date: string;
-  plays: number;
-  likes: number;
-  shares: number;
-  liked: boolean;
-}
+/** Anything creation-shaped this dialog can present (fixture or live history). */
+export type CreationLike = Creation;
 
 interface Props {
   open: boolean;

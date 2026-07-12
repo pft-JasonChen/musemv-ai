@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { ALL_COMMUNITY_SONGS, getCommunitySong, DEFAULT_CREATOR } from "@/lib/mv/community";
 import { Heart, Share, Stats } from "@/components/community/ui";
 
@@ -24,7 +24,7 @@ export function CommunitySongPlayer() {
   const [idx, setIdx] = useState(startIdx === -1 ? 0 : startIdx);
   const song = ALL_COMMUNITY_SONGS[idx];
 
-  const { patchSongCompose } = useMvFlow();
+  const { patchSongCompose } = useSongFlow();
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0); // 0..100
   const [liked, setLiked] = useState(false);

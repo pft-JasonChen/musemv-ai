@@ -10,6 +10,9 @@ Next.js 16.2 (App Router) + React 19 + TypeScript strict + Tailwind v4. Package 
 - `npm run build` — production build
 - `npm run e2e` — Playwright + axe. It serves the LAST production build (`next start -p 3100`),
   so run `npm run build` immediately before. One-time per machine: `npx playwright install chromium`.
+  Sandboxed envs with a system chromium: `CHROMIUM_PATH=/path/to/chromium npm run e2e` (no download).
+  The a11y spec auto-discovers routes from `src/app/`; known accent-pill contrast issues are
+  excluded via selectors in `e2e/a11y.spec.ts` until the design decision lands (`TODO.md` #2).
 - `npm run storybook` / `npm run build-storybook`
 
 **Definition of done:** `npm run typecheck && npm run lint && npm run test:run && npm run build`
@@ -25,10 +28,9 @@ refactors so the project typechecks after each individual edit (add the new befo
 - NEVER: add a backend, DB, or `fetch()` call (`grep -rn 'fetch(' src` must stay empty); edit
   token values in `src/styles/tokens.css` (synced from the mobile Figma); reference
   `../ycmuse-app-prototype/` from code or config.
-- Never stage `tsconfig.tsbuildinfo` (tracked build artifact that churns) — commit with explicit
-  `git add <paths>` from the repo root, never `git add -A`.
-- Ignore `.fuse_hidden*` files under `src/components/` — tracked junk (stale duplicates). Never
-  read, edit, or cite them; check grep hits aren't one of them before acting.
+- Commit with explicit `git add <paths>` from the repo root, never `git add -A`.
+  (`tsconfig.tsbuildinfo` and `.fuse_hidden*` junk are gitignored since 2026-07-11; if a stray
+  `.fuse_hidden*` appears under `src/`, ignore it — never read, edit, or cite it.)
 - ASK FIRST: new dependencies; changing design tokens or the design system; mass-refactoring the
   existing raw-hex/px backlog; destructive git operations.
 - When a requirement is ambiguous or two sources disagree (spec vs code, README vs behavior),
@@ -57,22 +59,30 @@ House style in one line:
      style={{ background: "var(--card)", color: "var(--text-2)" }}>
 ```
 
-## Architecture
+## Architecture (full map: `docs/DEVELOPER-HANDOVER.md`)
 
-- Every `src/app/**/page.tsx` is a thin Server Component that just returns a `"use client"` view
-  from `src/components/<area>/`. Wrap the view in `<Suspense>` if it uses `useSearchParams`.
-- The live mock engine is `MvFlowProvider` (mounted once, in the root layout — never a second time).
-  `MvApi` in `src/lib/mv/types.ts` is a dead engineer-handoff stub: do not implement or call it.
-- New mock capability: types in `types.ts` → seed data in `mock.ts` (community data: `community.ts`)
-  → a `start<Name>` callback in `MvFlowProvider.tsx` driving `run()` → consume via `useMvFlow()`.
-- Mid-flow routes guard themselves: if their `useMvFlow` state is missing, `router.replace()` to
+- Every `src/app/**/page.tsx` is a thin page that returns a `"use client"` view from
+  `src/components/<area>/` (a few tiny pages are client components using hooks directly).
+  Wrap the view in `<Suspense>` if it uses `useSearchParams`.
+- **API layer** (`src/lib/api/`): `contract.ts` defines `MuseApi` (job-based create/poll);
+  `schemas.ts` holds the Zod schemas that ARE the entity types; `mock.ts` is the only fake-backend
+  code; `index.ts` exports `api` — the single backend swap point. UI/providers import only `api`.
+- **State** (`src/components/providers/`): `AppProviders` (mounted once, in the root layout — never
+  a second time) stacks Credits → History → MvFlow → SongFlow. Providers poll jobs via `pollJob`;
+  they own no fake timers. Hooks: `useCredits`, `useHistory`, `useMvFlow`, `useSongFlow`.
+- New mock capability: schema in `schemas.ts` → endpoint on `MuseApi` + `MockMuseApi` → fixtures in
+  `src/lib/mv/mock.ts` (community seed: `community.ts`) → a `start<Name>` callback in the matching
+  provider → consume via its domain hook.
+- Mid-flow routes guard themselves: if their flow state is missing, `router.replace()` to
   the flow entry (pattern: `src/components/mv/MvResult.tsx`). Flow state is in-memory; a reload loses it.
 
 ## Tests
 
 - Unit tests are colocated `src/**/<name>.test.ts(x)`. Always
   `import { describe, it, expect } from "vitest"` — vitest globals are on, but tsc doesn't see them.
-- New route → append it to the route array in `e2e/a11y.spec.ts`; the axe gate only covers listed routes.
+- New routes are axe-gated automatically (`e2e/a11y.spec.ts` scans `src/app/**/page.tsx`;
+  dynamic `[param]` segments are skipped). Demo failure path: a description containing `[fail]`
+  makes the mock job fail at 60% (error + Retry UI).
 - E2e selectors are exact UI copy: changing a button label or placeholder requires updating `e2e/*.spec.ts`.
 - Stories only for components with no `next/*` imports (runner is @storybook/react-vite). tsconfig
   excludes `*.stories.tsx`, so verify story changes with `npm run build-storybook`, not typecheck.

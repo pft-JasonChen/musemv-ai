@@ -15,6 +15,7 @@ test("AI Song: describe -> compose -> result", async ({ page }) => {
   await cta.click();
   await page.waitForURL("**/song/result", { timeout: 14000 });
 
-  await expect(page.getByText("# AI Song")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Use in MV/ })).toBeVisible();
+  // Result view shows the genre/mood tag line (defaults: Pop · Uplifting).
+  await expect(page.getByText(/Pop · Uplifting/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use in Music Video" })).toBeVisible();
 });

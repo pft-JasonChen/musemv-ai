@@ -10,3 +10,5 @@
 .env*
 /coverage
 next-env.d.ts
+tsconfig.tsbuildinfo
+.fuse_hidden*

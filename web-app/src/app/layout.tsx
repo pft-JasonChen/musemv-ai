@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/shell/AppShell";
-import { MvFlowProvider } from "@/components/mv/MvFlowProvider";
+import { AppProviders } from "@/components/providers/AppProviders";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -21,9 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="min-h-full">
-        <MvFlowProvider>
+        <AppProviders>
           <AppShell>{children}</AppShell>
-        </MvFlowProvider>
+        </AppProviders>
       </body>
     </html>
   );

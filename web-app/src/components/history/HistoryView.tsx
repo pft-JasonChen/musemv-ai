@@ -4,7 +4,8 @@
 import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useMvFlow } from "@/components/mv/MvFlowProvider";
+import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
 import { CreationDialog, type CreationLike } from "@/components/mv/CreationDialog";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { Modal } from "@/components/ui/Modal";
@@ -50,7 +51,8 @@ function Toggle({ on }: { on: boolean }) {
 
 export function HistoryView() {
   const router = useRouter();
-  const { history, setStoryboard, saveStoryboard, setCompose } = useMvFlow();
+  const { history } = useHistory();
+  const { setStoryboard, saveStoryboard, setCompose } = useMvFlow();
   const [filter, setFilter] = useState<Filter>("all");
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [ov, setOv] = useState<Record<string, Override>>({});
@@ -82,8 +84,10 @@ export function HistoryView() {
 
   const rows: HistorySample[] = useMemo(() => {
     const live: HistorySample[] = history.map((h) => ({
-      id: h.id, kind: h.kind, title: h.title, thumb: h.thumb,
-      status: h.status === "generating" ? "processing" : "done",
+      id: h.id, kind: h.kind, title: h.title,
+      thumb: h.status === "failed" ? undefined : h.thumb,
+      meta: h.status === "failed" ? (h.kind === "song" ? "AI Song" : "AI MV") : undefined,
+      status: h.status === "generating" ? "processing" : h.status === "failed" ? "failed" : "done",
       date: "Just now", plays: 0, likes: 0, shares: 0, liked: false,
     }));
     return [...live, ...HISTORY_SAMPLES].filter((r) => !removed.has(r.id));

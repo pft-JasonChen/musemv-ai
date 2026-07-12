@@ -2,53 +2,11 @@
 // Powers the homepage community sections (New MVs, Top Picks Songs, New Songs),
 // the MV/song player pages, the creator profile, and the explore pages.
 
-import type { MvType } from "./types";
+// Entity types live as Zod schemas in @/lib/api/schemas; re-exported here so
+// existing imports keep working.
+import type { CommunityCreator, CommunityMv, CommunitySong } from "@/lib/api/schemas";
 
-export type Badge = "HOT" | "NEW" | null;
-
-export interface CommunityCreator {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  /** Display strings, prototype-faithful (e.g. "11.4k"). */
-  plays: string;
-  likes: string;
-}
-
-export interface CommunityMv {
-  id: string;
-  title: string;
-  thumb: string;
-  video: string;
-  badge: Badge;
-  meta: string; // e.g. "Popular | 2-3 min"
-  prompt: string;
-  mvType: MvType;
-  creator: string; // username
-  plays: number;
-  likes: number;
-  shares: number;
-  date: string;
-  /** Pre-matched song used when "Create Music Video" is tapped. */
-  matchedSong: { title: string; art: string; durationSec: number };
-}
-
-export interface CommunitySong {
-  id: string;
-  title: string;
-  cover: string;
-  tags: string; // e.g. "Lo-fi · Soothing · Cozy"
-  genre: string;
-  mood: string;
-  creator: string;
-  plays: number;
-  likes: number;
-  shares: number;
-  date: string;
-  badge: Badge;
-  lyrics?: string;
-}
+export type { Badge, CommunityCreator, CommunityMv, CommunitySong } from "@/lib/api/schemas";
 
 const V_SINGING = "/assets/videos/mv-preview/feature_intro_ai_mv_singing_480x640.mp4";
 const V_STORY = "/assets/videos/mv-preview/feature_intro_ai_mv_storytelling_480x640.mp4";
