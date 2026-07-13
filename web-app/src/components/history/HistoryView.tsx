@@ -227,6 +227,9 @@ function HistoryCard({ r, liked, onOpen, menu }: { r: HistorySample; liked: bool
           <span className="grid h-full w-full place-items-center" style={{ background: "var(--card-3)", color: "var(--text-2)" }}><I d={ICON.alert} size={30} /></span>
         )}
 
+        {/* 20% scrim over thumbnails for badge/label legibility */}
+        {r.thumb && <span className="pointer-events-none absolute inset-0" style={{ background: "rgba(0,0,0,0.2)" }} />}
+
         {/* hover play for done */}
         {clickable && r.thumb && (
           <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity group-hover:opacity-100">
@@ -237,8 +240,11 @@ function HistoryCard({ r, liked, onOpen, menu }: { r: HistorySample; liked: bool
         {/* status badge */}
         <StatusPill r={r} />
 
-        {/* kind badge */}
-        <span className="absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white" style={{ background: "rgba(0,0,0,.55)" }}>{kindLabel}</span>
+        {/* kind badge with type-indicator icon */}
+        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white" style={{ background: "rgba(0,0,0,.55)" }}>
+          <I d={r.kind === "song" ? "M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" : "M15 10l4.5-2.5v9L15 14M4 7h11v10H4z"} size={11} />
+          {kindLabel}
+        </span>
       </button>
 
       {/* Footer */}

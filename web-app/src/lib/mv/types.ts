@@ -32,7 +32,7 @@ export const COST_RENDER = 200;
 
 export const DEFAULT_SETTINGS: MvSettings = {
   ratio: "9:16",
-  resolution: "720P",
+  resolution: "Standard",
   title: { on: true, text: "" },
   author: { on: true, text: "" },
   showSubtitle: true,

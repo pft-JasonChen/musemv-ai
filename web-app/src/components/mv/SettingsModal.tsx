@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { Modal } from "@/components/ui/Modal";
 import type { MvSettings } from "@/lib/mv/types";
@@ -15,11 +16,13 @@ function Segmented<T extends string>({
   value,
   options,
   onSelect,
+  icons,
 }: {
   label: string;
   value: T;
   options: T[];
   onSelect: (v: T) => void;
+  icons?: Partial<Record<T, string>>;
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
@@ -29,12 +32,13 @@ function Segmented<T extends string>({
           <button
             key={o}
             onClick={() => onSelect(o)}
-            className="rounded-md px-3 py-1 text-[13px] font-semibold"
+            className="flex items-center gap-1.5 rounded-md px-3 py-1 text-[13px] font-semibold"
             style={{
               background: value === o ? "var(--accent)" : "transparent",
               color: value === o ? "#fff" : "var(--text-2)",
             }}
           >
+            {icons?.[o] && <img src={icons[o]} width={16} height={16} alt="" style={{ opacity: value === o ? 1 : 0.6 }} />}
             {o}
           </button>
         ))}
@@ -67,7 +71,7 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
     <Modal open={open} onClose={onClose} title="Settings">
       <div className="flex flex-col gap-5">
         <Segmented label="Aspect Ratio" value={settings.ratio} options={["9:16", "16:9"]} onSelect={(ratio) => set({ ratio })} />
-        <Segmented label="Resolution" value={settings.resolution} options={["720P", "1080P"]} onSelect={(resolution) => set({ resolution })} />
+        <Segmented label="Quality" value={settings.resolution} options={["Standard", "High"]} onSelect={(resolution) => set({ resolution })} icons={{ Standard: "/assets/icons/ui/ic_sd.svg", High: "/assets/icons/ui/ic_hd.svg" }} />
 
         <div className="flex flex-col gap-3 border-t pt-4" style={{ borderColor: "var(--border-3)" }}>
           <div className="flex items-center justify-between">

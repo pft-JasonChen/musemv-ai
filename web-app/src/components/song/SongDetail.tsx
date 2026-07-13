@@ -1,10 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { LyricsPanel } from "@/components/song/LyricsPanel";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
+import { buildTimedLines } from "@/lib/mv/lyrics";
 import { formatDuration } from "@/lib/mv/mock";
 
 export interface SongDetailInfo {
@@ -20,6 +22,7 @@ export interface SongDetailInfo {
 interface Props {
   cover: string;
   audioUrl?: string;
+  lyrics?: string;
   info: SongDetailInfo;
   shareUrl: string;
   downloadUrl?: string;
@@ -33,10 +36,12 @@ function I({ d, size = 18 }: { d: string; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
 }
 
-export function SongDetail({ cover, audioUrl, info, shareUrl, onRecreate, onUseInMv, onClose }: Props) {
+export function SongDetail({ cover, audioUrl, lyrics, info, shareUrl, onRecreate, onUseInMv, onClose }: Props) {
   const { playing, currentTime: cur, duration: dur, toggle: togglePlay, seek: seekTo, nudge } = useAudioPlayer({ src: audioUrl });
   const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [lyricsOpen, setLyricsOpen] = useState(false);
+  const lyricLines = useMemo(() => buildTimedLines(lyrics, dur || info.durationSec || 0), [lyrics, dur, info.durationSec]);
 
   function seek(e: React.MouseEvent<HTMLDivElement>) {
     if (!dur) return;
@@ -50,8 +55,8 @@ export function SongDetail({ cover, audioUrl, info, shareUrl, onRecreate, onUseI
   return (
     <>
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-        {/* Cover */}
-        <div className="relative aspect-square w-full max-w-[300px] shrink-0 overflow-hidden rounded-2xl" style={{ background: "var(--card-2)" }}>
+        {/* Cover — circular disc, spins while playing */}
+        <div className="relative aspect-square w-full max-w-[300px] shrink-0 overflow-hidden rounded-full disc-spinning" style={{ background: "var(--card-2)", animationPlayState: playing ? "running" : "paused" }}>
           <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
         </div>
 
@@ -97,6 +102,11 @@ export function SongDetail({ cover, audioUrl, info, shareUrl, onRecreate, onUseI
             <button onClick={() => setShareOpen(true)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
               <I d="M4 12v8h16v-8M12 16V3M8 7l4-4 4 4" size={16} /> Share
             </button>
+            {lyricLines.length > 0 && (
+              <button aria-label="Lyrics" onClick={() => setLyricsOpen(true)} className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-xl transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
+                <I d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3" size={18} />
+              </button>
+            )}
           </div>
 
           {/* CTAs */}
@@ -107,6 +117,17 @@ export function SongDetail({ cover, audioUrl, info, shareUrl, onRecreate, onUseI
         </div>
       </div>
       <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={info.title} url={shareUrl} />
+      <LyricsPanel
+        open={lyricsOpen}
+        onClose={() => setLyricsOpen(false)}
+        title={info.title}
+        cover={cover}
+        lines={lyricLines}
+        currentSec={cur}
+        durationSec={dur || info.durationSec || 0}
+        playing={playing}
+        onTogglePlay={togglePlay}
+      />
     </>
   );
 }

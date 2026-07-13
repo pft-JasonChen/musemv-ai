@@ -6,7 +6,7 @@
 // demo pacing the CEO sees). Delete this file when the real backend lands and
 // point `@/lib/api` (index.ts) at the real implementation instead.
 
-import type { MuseApi } from "./contract";
+import type { EnhanceKind, MuseApi } from "./contract";
 import {
   MvCreateRequestSchema,
   MvJobSchema,
@@ -20,7 +20,7 @@ import {
   type SongResult,
   type Storyboard,
 } from "./schemas";
-import { mockSongResult, mockStoryboard, SAMPLE_RESULT_VIDEO } from "@/lib/mv/mock";
+import { ENHANCE_SAMPLES, mockSongResult, mockStoryboard, SAMPLE_RESULT_VIDEO } from "@/lib/mv/mock";
 
 const STORYBOARD_MS = 7000;
 const RENDER_MS = 11000;
@@ -143,6 +143,14 @@ export class MockMuseApi implements MuseApi {
 
   async getSongJob(id: string): Promise<SongJob> {
     return this.snapshotSong(this.mustGet(this.songJobs, id, "Song job"));
+  }
+
+  async enhancePrompt({ text, kind }: { text: string; kind: EnhanceKind }): Promise<string> {
+    if (!text.trim()) return text;
+    const pool = ENHANCE_SAMPLES[kind] ?? ENHANCE_SAMPLES.song;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    await new Promise((resolve) => setTimeout(resolve, 900)); // simulate model latency
+    return pick;
   }
 
   private mustGet<T>(map: Map<string, T>, id: string, label: string): T {

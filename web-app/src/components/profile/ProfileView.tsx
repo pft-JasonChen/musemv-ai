@@ -7,6 +7,7 @@ import { useCredits } from "@/components/providers/CreditsProvider";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
+import { CreditsDetailModal } from "@/components/credits/CreditsDetailModal";
 import { SAMPLE_CREATIONS } from "@/lib/mv/mock";
 import { MOCK_USER } from "@/lib/user";
 
@@ -48,6 +49,7 @@ export function ProfileView() {
   const [email, setEmail] = useState(MOCK_USER.email);
   const [notif, setNotif] = useState(true);
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [creditsDetailOpen, setCreditsDetailOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [fbOpen, setFbOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -70,16 +72,16 @@ export function ProfileView() {
       </div>
 
       <div className="mt-5 flex items-center rounded-2xl border" style={{ borderColor: "var(--border-2)" }}>
-        <button onClick={() => setCreditsOpen(true)} className="flex flex-1 flex-col items-center py-4">
+        <button onClick={() => setCreditsDetailOpen(true)} className="flex flex-1 flex-col items-center py-4">
           <span className="inline-flex items-center gap-1 text-[20px] font-bold" style={{ color: "var(--gold)" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" opacity="0.25" /><circle cx="12" cy="12" r="6" /></svg>{credits}
           </span>
           <span className="text-[11px]" style={{ color: "var(--text-2)" }}>Credits</span>
         </button>
         <div className="h-8 w-px" style={{ background: "var(--border-2)" }} />
-        <Link href="/history" className="flex flex-1 flex-col items-center py-4"><span className="text-[20px] font-bold">{mvCount}</span><span className="text-[11px]" style={{ color: "var(--text-2)" }}>MVs</span></Link>
+        <Link href="/creator?self=1&tab=mv" className="flex flex-1 flex-col items-center py-4"><span className="text-[20px] font-bold">{mvCount}</span><span className="text-[11px]" style={{ color: "var(--text-2)" }}>MVs</span></Link>
         <div className="h-8 w-px" style={{ background: "var(--border-2)" }} />
-        <Link href="/history" className="flex flex-1 flex-col items-center py-4"><span className="text-[20px] font-bold">{songCount}</span><span className="text-[11px]" style={{ color: "var(--text-2)" }}>Songs</span></Link>
+        <Link href="/creator?self=1&tab=songs" className="flex flex-1 flex-col items-center py-4"><span className="text-[20px] font-bold">{songCount}</span><span className="text-[11px]" style={{ color: "var(--text-2)" }}>Songs</span></Link>
       </div>
 
       <div className="mt-4 divide-y" style={{ borderColor: "var(--border-3)" }}>
@@ -87,10 +89,12 @@ export function ProfileView() {
           right={<span className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold" style={{ color: "#09090B" }}>Upgrade</span>} onClick={() => setCreditsOpen(true)} />
         <Row icon={<I d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" />} title="Notifications" sub={notif ? "On" : "Off"} right={<Toggle label="Notifications" on={notif} onToggle={() => setNotif((v) => !v)} />} />
         <Row icon={<I d="M22 2 11 13M22 2l-7 20-4-9-9-4z" />} title="Send Feedback" onClick={() => setFbOpen(true)} />
+        <Row icon={<I d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />} title="Settings" onClick={() => router.push("/settings")} />
         <div className="pt-1"><Row icon={<I d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />} title="Sign Out" onClick={() => { flash("Signed out (demo)"); setTimeout(() => router.push("/"), 600); }} /></div>
       </div>
 
       <BuyCreditsModal open={creditsOpen} onClose={() => setCreditsOpen(false)} onPurchased={(n) => flash(`Added ${n} credits`)} />
+      <CreditsDetailModal open={creditsDetailOpen} onClose={() => setCreditsDetailOpen(false)} onBuy={() => { setCreditsDetailOpen(false); setCreditsOpen(true); }} />
 
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Profile" maxWidth={400}>
         <label className="mb-1 block text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>Name</label>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { TrendingMvsPanel } from "@/components/community/TrendingMvsPanel";
 import { ChooseSongModal } from "./ChooseSongModal";
 import { TrimAudioModal } from "./TrimAudioModal";
@@ -36,6 +37,7 @@ export function MvRoom() {
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [faceOpen, setFaceOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const audioFileRef = useRef<HTMLInputElement>(null);
 
   const ready = isComposeReady(compose);
 
@@ -59,6 +61,18 @@ export function MvRoom() {
   function addPhotoFromFile(file: File) {
     setPendingPhoto(URL.createObjectURL(file));
     setFaceOpen(true);
+  }
+  /** Import a local audio file → derive duration from metadata → open the trim dialog. */
+  function importAudio(file: File) {
+    const url = URL.createObjectURL(file);
+    const title = file.name.replace(/\.[^/.]+$/, "").trim() || "Imported audio";
+    const open = (durationSec: number) =>
+      pickSong({ id: crypto.randomUUID(), source: "import", title, durationSec, art: "/assets/images/album-art/album_01.jpg", url });
+    const probe = new Audio();
+    probe.preload = "metadata";
+    probe.src = url;
+    probe.addEventListener("loadedmetadata", () => open(Number.isFinite(probe.duration) ? Math.round(probe.duration) : 0), { once: true });
+    probe.addEventListener("error", () => open(0), { once: true });
   }
   function addCroppedPhoto(url: string) {
     const photo: CharacterPhoto = { id: crypto.randomUUID(), url };
@@ -104,13 +118,31 @@ export function MvRoom() {
           <section>
             <SectionLabel required>Choose a Song</SectionLabel>
             {!compose.song ? (
-              <button
-                onClick={() => setSongOpen(true)}
-                className="flex h-[68px] w-full items-center justify-center gap-2 rounded-xl border text-[14px] font-semibold"
-                style={{ background: "var(--card)", borderColor: "var(--border-2)" }}
-              >
-                + Add a song
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setSongOpen(true)}
+                  className="flex h-[68px] w-full items-center justify-center gap-2 rounded-xl border text-[14px] font-semibold"
+                  style={{ background: "var(--card)", borderColor: "var(--border-2)" }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" /></svg>
+                  Song Library
+                </button>
+                <button
+                  onClick={() => audioFileRef.current?.click()}
+                  className="flex h-[68px] w-full items-center justify-center gap-2 rounded-xl border text-[14px] font-semibold"
+                  style={{ background: "var(--card)", borderColor: "var(--border-2)" }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 15V3m0 0L8 7m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
+                  Import audio
+                </button>
+                <input
+                  ref={audioFileRef}
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) importAudio(f); e.target.value = ""; }}
+                />
+              </div>
             ) : (
               <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: "var(--card-2)" }}>
                 <button
@@ -162,9 +194,10 @@ export function MvRoom() {
                 style={{ color: "var(--text)", lineHeight: 1.55 }}
               />
               <div className="flex items-center justify-between px-3 pb-2.5">
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <button onClick={() => setTemplatesOpen(true)} className="rounded-md px-2 py-1 text-[11px] font-semibold" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>Templates</button>
                   <button onClick={() => patchCompose({ description: IDEAS[Math.floor(Math.random() * IDEAS.length)] })} className="rounded-md px-2 py-1 text-[11px] font-semibold" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>Ideas</button>
+                  <EnhanceButton value={compose.description} kind="mv" onEnhanced={(t) => patchCompose({ description: t })} />
                 </div>
                 <span className="text-[12px]" style={{ color: "var(--text-2)" }}>{compose.description.length}/{DESCRIPTION_MAX}</span>
               </div>

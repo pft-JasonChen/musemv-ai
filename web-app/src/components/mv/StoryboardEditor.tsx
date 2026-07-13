@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { COST_RENDER } from "@/lib/mv/types";
 import { formatDuration } from "@/lib/mv/mock";
@@ -84,6 +85,9 @@ export function StoryboardEditor() {
               className="w-full resize-none rounded-xl border bg-transparent p-3 text-[13px] outline-none no-scrollbar"
               style={{ background: "var(--card)", borderColor: "var(--border-2)", color: "var(--text)", minHeight: 72, lineHeight: 1.5 }}
             />
+            <div className="mt-2 flex justify-end">
+              <EnhanceButton value={storyboard.visualStyle} kind="storyboard" onEnhanced={(t) => setStoryboard((sb) => (sb ? { ...sb, visualStyle: t } : sb))} />
+            </div>
           </div>
 
           {/* Synopsis — vertical waterfall (easy to read & edit across many scenes) */}

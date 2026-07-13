@@ -14,6 +14,9 @@
 
 import type { MvCreateRequest, MvJob, SongCompose, SongJob, Storyboard } from "./schemas";
 
+/** Context that selects the tone/format of an AI prompt enhancement. */
+export type EnhanceKind = "mv" | "song" | "lyrics" | "storyboard" | "scene" | "cover";
+
 export interface MuseApi {
   /**
    * Start an MV job. `mode: "storyboard_first"` produces a storyboard for the
@@ -36,4 +39,11 @@ export interface MuseApi {
 
   /** Poll an AI Song job. */
   getSongJob(id: string): Promise<SongJob>;
+
+  /**
+   * Rewrite/enrich a free-text prompt. Backend-less today: returns a polished
+   * variant of `text` appropriate to `kind` (MV concept, song idea, lyric
+   * polish, storyboard/scene description, cover-image brief).
+   */
+  enhancePrompt(input: { text: string; kind: EnhanceKind }): Promise<string>;
 }

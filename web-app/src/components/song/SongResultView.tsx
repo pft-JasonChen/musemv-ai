@@ -28,6 +28,7 @@ export function SongResultView() {
       <SongDetail
         cover={songResult.cover}
         audioUrl={songResult.audioUrl}
+        lyrics={songResult.lyrics}
         downloadUrl={songResult.audioUrl}
         shareUrl={`https://musemv.ai/song/${songResult.title.toLowerCase().replace(/\s+/g, "-")}`}
         info={{ title: songResult.title, dateLabel: "just now", genre: songResult.genre, mood: songResult.mood, instrumental: songResult.instrumental, durationSec: songResult.durationSec }}

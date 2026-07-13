@@ -62,26 +62,37 @@ export function HomeView() {
         </button>
       </div>
 
-      {/* Trending MV */}
+      {/* Trending MV — auto-scrolling infinite carousel (two cloned copies) */}
       <div className="mt-10">
         <SectionHead title="Trending MV" href="/explore/mvs" />
-        <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-          {TRENDING_MVS.map((m) => (
-            <button key={m.id} onClick={() => openMv(m.id)} className="hover-lift relative aspect-video w-[320px] shrink-0 overflow-hidden rounded-2xl text-left">
-              <img src={m.thumb} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,.05) 30%, rgba(0,0,0,.7))" }} />
-              <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: "rgba(255,255,255,.18)", backdropFilter: "blur(6px)" }}>
-                <Star /> Trending MV
-              </span>
-              <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2">
-                <div>
-                  <div className="text-[16px] font-extrabold text-white">{m.title}</div>
-                  <div className="text-[11px] text-white/75">{m.meta}</div>
-                </div>
-                <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-black">Create MV</span>
-              </div>
-            </button>
-          ))}
+        <div className="marquee-wrap no-scrollbar pb-2">
+          <div className="marquee-animate flex w-max">
+            {[...TRENDING_MVS, ...TRENDING_MVS].map((m, i) => {
+              const clone = i >= TRENDING_MVS.length;
+              return (
+                <button
+                  key={`${m.id}-${i}`}
+                  onClick={() => openMv(m.id)}
+                  aria-hidden={clone}
+                  tabIndex={clone ? -1 : 0}
+                  className={`hover-lift relative mr-3 aspect-video w-[272px] shrink-0 overflow-hidden rounded-2xl text-left${clone ? " marquee-clone" : ""}`}
+                >
+                  <img src={m.thumb} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,.05) 30%, rgba(0,0,0,.7))" }} />
+                  <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: "rgba(255,255,255,.18)", backdropFilter: "blur(6px)" }}>
+                    <Star /> Trending MV
+                  </span>
+                  <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2">
+                    <div>
+                      <div className="text-[16px] font-extrabold text-white">{m.title}</div>
+                      <div className="text-[11px] text-white/75">{m.meta}</div>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-black">Create MV</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

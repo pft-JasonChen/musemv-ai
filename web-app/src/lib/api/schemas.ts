@@ -33,7 +33,7 @@ export type CharacterPhoto = z.infer<typeof CharacterPhotoSchema>;
 
 export const MvSettingsSchema = z.object({
   ratio: z.enum(["9:16", "16:9"]),
-  resolution: z.enum(["720P", "1080P"]),
+  resolution: z.enum(["Standard", "High"]),
   title: z.object({ on: z.boolean(), text: z.string() }),
   author: z.object({ on: z.boolean(), text: z.string() }),
   showSubtitle: z.boolean(),

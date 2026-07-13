@@ -18,3 +18,22 @@ export const MOCK_USER = {
 };
 
 export const DEFAULT_CREDITS = 390;
+
+export interface CreditTxn {
+  id: number;
+  label: string;
+  date: string;
+  /** Positive = credits added, negative = credits spent. */
+  amount: number;
+}
+
+/** Recent credit ledger shown in the Credits Detail view (prototype seed). */
+export const CREDIT_TRANSACTIONS: CreditTxn[] = [
+  { id: 1, label: "Credit pack purchase", date: "2026-07-12", amount: 300 },
+  { id: 2, label: "MV render — Neon City Nights", date: "2026-07-11", amount: -200 },
+  { id: 3, label: "Song generation — Golden Hour", date: "2026-07-10", amount: -10 },
+  { id: 4, label: "Scene regenerate — Electric Dreams", date: "2026-07-09", amount: -20 },
+  { id: 5, label: "Daily sign-in bonus", date: "2026-07-09", amount: 20 },
+  { id: 6, label: "Storyboard — Starfall Serenade", date: "2026-07-08", amount: -20 },
+  { id: 7, label: "Welcome bonus", date: "2026-07-01", amount: 500 },
+];

@@ -140,7 +140,7 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
               <Row label="Author">{info.author || "—"}</Row>
               <Row label="Style">{info.typeName || "—"}</Row>
               <Row label="Aspect ratio">{info.ratio || "—"}</Row>
-              <Row label="Resolution">{info.resolution || "—"}</Row>
+              <Row label="Quality">{info.resolution || "—"}</Row>
               <Row label="Scenes">{info.scenes ?? "—"}</Row>
               <Row label="Subtitle">{info.subtitle == null ? "—" : info.subtitle ? "On" : "Off"}</Row>
             </div>

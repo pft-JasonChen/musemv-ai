@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { MV_TYPES } from "@/lib/mv/mock";
@@ -171,7 +172,10 @@ export function MvEditor() {
             className="min-h-[120px] w-full resize-none rounded-lg border bg-transparent p-2.5 text-[13px] outline-none no-scrollbar"
             style={{ background: "var(--card-2)", borderColor: "var(--border-2)", color: "var(--text)", lineHeight: 1.5 }}
           />
-          <div className="mb-3 mt-1 text-right text-[10px]" style={{ color: "var(--text-3)" }}>{activeScene.text.length} / 2500</div>
+          <div className="mb-3 mt-1 flex items-center justify-between">
+            <EnhanceButton value={activeScene.text} kind="scene" onEnhanced={(t) => updateScene(activeScene.id, t)} />
+            <span className="text-[10px]" style={{ color: "var(--text-3)" }}>{activeScene.text.length} / 2500</span>
+          </div>
 
           <button
             onClick={() => regenerate(activeScene.id)}

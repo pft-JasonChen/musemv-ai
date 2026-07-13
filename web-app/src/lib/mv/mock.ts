@@ -190,3 +190,39 @@ export function mockSongResult(c: SongCompose): SongResult {
     lyrics: c.lyrics || undefined,
   };
 }
+
+// ── Prompt Enhance fixtures ─────────────────────────────────────────────────
+// Canned "AI-enhanced" rewrites keyed by context. Backend-less: the mock picks
+// one at random for the requested kind. Ported from the mobile prototype.
+export const ENHANCE_SAMPLES: Record<string, string[]> = {
+  mv: [
+    "A cinematic journey through fragmented memories — golden-hour close-ups give way to wide sweeping shots of empty streets at dusk. Slow-motion moments punctuate the narrative: a hand reaching out, a door closing, light refracting through rain-streaked glass. The visual language is intimate yet expansive, echoing the emotional core of the music.",
+    "An editorial-style visual narrative where the artist moves through shifting environments — a candlelit room, a rooftop at night, a sun-drenched coastline. Each scene transition mirrors a lyrical turn, building tension through texture and contrast until a release of saturated color in the final act.",
+    "A dreamlike sequence that blends reality and abstraction: handheld footage of intimate moments intercut with stylized wide-angle compositions. Cool blue tones in the verses warm into amber and gold as the chorus hits, with practical light sources — candles, neon signs, headlights — anchoring every frame.",
+  ],
+  song: [
+    "A cinematic, emotionally charged piece that weaves together raw vulnerability and soaring hope. Each verse peels back another layer, building toward a chorus that feels like finally exhaling after holding your breath for years.",
+    "An intimate yet anthemic song about the space between who we were and who we're becoming. Rich with sensory detail — rain on windows, city lights through glass, the specific ache of a memory you can't quite shake.",
+    "A sweeping, bittersweet ballad tracing the invisible thread that connects two people across distance and time. Lush instrumentation gives way to a stripped-back bridge that lands with quiet devastation before the final chorus lifts everything into catharsis.",
+  ],
+  lyrics: [
+    "[Verse]\nHeadlights cutting through the dark\nYour voice still echoes where you left your mark\nI'm holding onto everything we said\nLiving in the words still running through my head\n\n[Chorus]\nAnd if the night forgets my name\nI'll still remember how you stayed\nThrough every mile and every flame\nYou were the one thing that stayed the same",
+    "[Verse]\nQuiet rooms and fading light\nI keep replaying that last goodnight\nEvery silence has your shape\nEvery memory I can't escape\n\n[Chorus]\nSo play it slow, let it burn\nGive me one more song to learn\nHold me here till the record turns\nThis is the only way home I've earned",
+    "[Verse]\nCity lights blur into gold\nEvery story that we never told\nI'm still chasing what we used to be\nBefore the world got in between\n\n[Chorus]\nSay you'll wait for me tonight\nUnder every fading light\nWe were never meant to say goodbye\nSo hold this moment till it's right",
+  ],
+  storyboard: [
+    "In a softly diffused light, she stands at the edge of a vast open field at dusk. Her silhouette is framed against a sky that bleeds from gold into deep violet, eyes half-closed as the wind catches the hem of her dress — a quiet moment suspended between longing and release.",
+    "A rain-slicked street at night. She walks alone through pools of reflected neon, unhurried, wrapped in thought. The camera follows at a distance, close enough to sense the weight she carries, far enough to let her keep it.",
+    "She sits at a window seat, morning light filtering through gauze curtains, tracing patterns across her face. A half-drunk cup of tea rests beside her. The scene holds still — just breath, light, and the particular silence of someone deciding something.",
+  ],
+  scene: [
+    "Effortlessly radiant, with a warm and open expression that draws you in. Her look is polished yet approachable — elegant without effort, as if the light simply finds her wherever she stands.",
+    "Quietly commanding, with a gaze that holds a story. Her presence is composed and cinematic — every detail considered, nothing overdone. The kind of beauty that photographs in any light.",
+    "Luminous and expressive, with an energy that shifts between dreamy softness and sharp intent. Her style is distinctive and self-assured, carrying the mood of the scene without trying to.",
+  ],
+  cover: [
+    "A breathtaking cover that captures the essence of the song — a lone figure bathed in golden twilight, standing at the crossroads of memory and hope. Soft bokeh, warm film grain, and a color grade that feels like nostalgia made visible.",
+    "An evocative, editorial-quality cover image: the subject mid-motion against a dramatic sky, colors saturated just beyond reality. The composition draws the eye inward, the mood aching and cinematic in equal measure.",
+    "A striking visual that distills the song's emotional core — intimate framing, dusk-lit atmosphere, textures that feel both timeless and urgent. The image should feel like the first frame of a film you already know you'll love.",
+  ],
+};

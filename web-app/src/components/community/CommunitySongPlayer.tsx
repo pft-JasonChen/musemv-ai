@@ -1,12 +1,14 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { LyricsPanel } from "@/components/song/LyricsPanel";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { ALL_COMMUNITY_SONGS, getCommunitySong, DEFAULT_CREATOR } from "@/lib/mv/community";
+import { buildTimedLines } from "@/lib/mv/lyrics";
 import { Heart, Share, Stats } from "@/components/community/ui";
 
 function I({ d, size = 18 }: { d: string; size?: number }) {
@@ -29,7 +31,9 @@ export function CommunitySongPlayer() {
   const [progress, setProgress] = useState(0); // 0..100
   const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [lyricsOpen, setLyricsOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lyricLines = useMemo(() => buildTimedLines(song.lyrics, DURATION), [song.lyrics]);
 
   const stop = useCallback(() => { if (timer.current) { clearInterval(timer.current); timer.current = null; } }, []);
   useEffect(() => {
@@ -62,8 +66,8 @@ export function CommunitySongPlayer() {
       </button>
 
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-        {/* Cover */}
-        <div className="relative aspect-square w-full max-w-[300px] shrink-0 overflow-hidden rounded-2xl" style={{ background: "var(--card)" }}>
+        {/* Cover — circular disc, spins while playing */}
+        <div className="relative aspect-square w-full max-w-[300px] shrink-0 overflow-hidden rounded-full disc-spinning" style={{ background: "var(--card)", animationPlayState: playing ? "running" : "paused" }}>
           <img src={song.cover} alt="" className="h-full w-full object-cover" />
         </div>
 
@@ -108,16 +112,14 @@ export function CommunitySongPlayer() {
             <button onClick={() => setShareOpen(true)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
               <Share size={16} /> Share
             </button>
+            {lyricLines.length > 0 && (
+              <button aria-label="Lyrics" onClick={() => setLyricsOpen(true)} className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-xl transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
+                <I d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3" size={18} />
+              </button>
+            )}
           </div>
         </div>
       </div>
-
-      {song.lyrics && (
-        <div className="mt-8">
-          <div className="mb-2 text-[13px] font-bold">Lyrics</div>
-          <pre className="whitespace-pre-wrap rounded-xl border p-4 text-[13px] leading-relaxed" style={{ borderColor: "var(--border-2)", color: "var(--text-2)", fontFamily: "inherit" }}>{song.lyrics}</pre>
-        </div>
-      )}
 
       <div className="sticky bottom-4 mt-8">
         <Button className="w-full" onClick={createSong}>
@@ -127,6 +129,17 @@ export function CommunitySongPlayer() {
       </div>
 
       <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={song.title} url={`https://musemv.ai/song/${song.id}`} />
+      <LyricsPanel
+        open={lyricsOpen}
+        onClose={() => setLyricsOpen(false)}
+        title={song.title}
+        cover={song.cover}
+        lines={lyricLines}
+        currentSec={(progress / 100) * DURATION}
+        durationSec={DURATION}
+        playing={playing}
+        onTogglePlay={() => setPlaying((p) => !p)}
+      />
     </div>
   );
 }

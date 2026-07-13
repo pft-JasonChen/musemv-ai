@@ -63,3 +63,24 @@ html, body {
 @media (prefers-reduced-motion: no-preference) {
   .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.35); }
 }
+
+/* Spinning album disc — applied to the circular art on song players while playing. */
+@keyframes disc-spin { from { transform: rotate(0deg) } to { transform: rotate(-360deg) } }
+@media (prefers-reduced-motion: no-preference) {
+  .disc-spinning { animation: disc-spin 60s linear infinite; }
+}
+
+/* Infinite auto-scrolling carousel (trending rail). The track holds two copies
+   of the items; translating -50% loops seamlessly. Pauses on hover; reduced
+   motion falls back to a normal manually-scrollable rail. */
+@keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+.marquee-wrap { overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .marquee-animate { animation: marquee 45s linear infinite; }
+  .marquee-wrap:hover .marquee-animate { animation-play-state: paused; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-wrap { overflow-x: auto; }
+  /* No auto-scroll → drop the duplicate copy so each card shows once. */
+  .marquee-clone { display: none; }
+}
