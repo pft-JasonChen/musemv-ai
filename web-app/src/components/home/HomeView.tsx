@@ -3,17 +3,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useHistory } from "@/components/providers/HistoryProvider";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
-import { CreationDialog, type CreationLike } from "@/components/mv/CreationDialog";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { MV_TYPES } from "@/lib/mv/mock";
 import { NEW_MVS, TOP_PICKS_SONGS, NEW_SONGS, TRENDING_MVS, formatCount } from "@/lib/mv/community";
 import { BadgePill, Play, Headphones, Heart, Share, SectionHead } from "@/components/community/ui";
-
-function StyleHead({ title }: { title: string }) {
-  return <h2 className="mb-3 text-[18px] font-extrabold tracking-tight">{title}</h2>;
-}
 
 function Star({ size = 11 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>;
@@ -21,28 +16,25 @@ function Star({ size = 11 }: { size?: number }) {
 
 export function HomeView() {
   const router = useRouter();
-  const { history } = useHistory();
   const { patchSongCompose } = useSongFlow();
-  const [selected, setSelected] = useState<CreationLike | null>(null);
+  const { requireLogin } = useAuth();
   const [likedSongs, setLikedSongs] = useState<Record<string, boolean>>({});
   const [share, setShare] = useState<{ title: string; url: string } | null>(null);
-
-  const recent: CreationLike[] = history
-    .filter((h) => h.status === "completed")
-    .map((h) => ({ id: h.id, kind: h.kind, title: h.title, thumb: h.thumb, date: "Just now", plays: 0, likes: 0, shares: 0, liked: false }));
 
   function openMv(id: string) { router.push(`/watch?id=${id}`); }
   function openSong(id: string) { router.push(`/song/play?id=${id}`); }
   function createFromSong(genre: string, mood: string, title: string, lyrics?: string) {
-    patchSongCompose({ genre, mood, title, lyrics: lyrics ?? "" });
-    router.push("/song/create");
+    requireLogin(() => {
+      patchSongCompose({ genre, mood, title, lyrics: lyrics ?? "" });
+      router.push("/song/create");
+    });
   }
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6">
       {/* Hero CTAs */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <button onClick={() => router.push("/mv/room")} className="hover-lift relative h-[180px] overflow-hidden rounded-2xl text-left">
+        <button onClick={() => requireLogin(() => router.push("/mv/room"))} className="hover-lift relative h-[180px] overflow-hidden rounded-2xl text-left">
           <video src={MV_TYPES[0].video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(120deg, rgba(168,85,247,.85), rgba(67,56,202,.5) 60%, transparent)" }} />
           <div className="absolute inset-0 flex flex-col justify-center p-6">
@@ -51,7 +43,7 @@ export function HomeView() {
             <span className="mt-3 inline-flex w-fit items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[13px] font-bold text-white">Create MV →</span>
           </div>
         </button>
-        <button onClick={() => router.push("/song/create")} className="hover-lift relative h-[180px] overflow-hidden rounded-2xl text-left" style={{ background: "var(--card)" }}>
+        <button onClick={() => requireLogin(() => router.push("/song/create"))} className="hover-lift relative h-[180px] overflow-hidden rounded-2xl text-left" style={{ background: "var(--card)" }}>
           <img src="/assets/images/album-art/album_02.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(120deg, rgba(255,78,80,.85), rgba(214,58,249,.5) 60%, transparent)" }} />
           <div className="absolute inset-0 flex flex-col justify-center p-6">
@@ -64,7 +56,7 @@ export function HomeView() {
 
       {/* Trending MV — auto-scrolling infinite carousel (two cloned copies) */}
       <div className="mt-10">
-        <SectionHead title="Trending MV" href="/explore/mvs" />
+        <SectionHead title="Trending MV" />
         <div className="marquee-wrap no-scrollbar pb-2">
           <div className="marquee-animate flex w-max">
             {[...TRENDING_MVS, ...TRENDING_MVS].map((m, i) => {
@@ -182,26 +174,6 @@ export function HomeView() {
         </div>
       </div>
 
-      {/* Your recent creations */}
-      <div className="mt-10">
-        <StyleHead title="Your recent creations" />
-        {recent.length === 0 ? (
-          <div className="rounded-2xl border p-8 text-center text-[14px]" style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}>
-            Nothing yet — create your first MV or song and it’ll show up here.
-          </div>
-        ) : (
-          <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-            {recent.map((c) => (
-              <button key={c.id} onClick={() => setSelected(c)} className="hover-lift w-[200px] shrink-0 overflow-hidden rounded-xl text-left" style={{ background: "var(--card)" }}>
-                <div className="relative aspect-video"><img src={c.thumb} alt="" className="h-full w-full object-cover" /><span className="absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase" style={{ background: "rgba(0,0,0,.55)", color: "#fff" }}>{c.kind}</span></div>
-                <div className="p-2.5"><div className="truncate text-[13px] font-semibold">{c.title}</div><div className="text-[11px]" style={{ color: "var(--text-2)" }}>{c.date}</div></div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <CreationDialog key={selected?.id ?? "none"} open={selected != null} creation={selected} onClose={() => setSelected(null)} onDelete={() => setSelected(null)} />
       <ShareDialog open={share != null} onClose={() => setShare(null)} title={share?.title ?? ""} url={share?.url ?? ""} />
     </div>
   );

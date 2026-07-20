@@ -38,7 +38,6 @@ function I({ d, size = 18 }: { d: string; size?: number }) {
 
 export function SongDetail({ cover, audioUrl, lyrics, info, shareUrl, onRecreate, onUseInMv, onClose }: Props) {
   const { playing, currentTime: cur, duration: dur, toggle: togglePlay, seek: seekTo, nudge } = useAudioPlayer({ src: audioUrl });
-  const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const lyricLines = useMemo(() => buildTimedLines(lyrics, dur || info.durationSec || 0), [lyrics, dur, info.durationSec]);
@@ -94,19 +93,16 @@ export function SongDetail({ cover, audioUrl, lyrics, info, shareUrl, onRecreate
             <button aria-label="Forward 15s" onClick={() => nudge(15)} style={{ color: "var(--text-2)" }}><I d="M13 19l7-7-7-7M4 19l7-7-7-7" size={22} /></button>
           </div>
 
-          {/* Like / Share */}
+          {/* Lyrics / Share — no Like (this is the user's own creation) */}
           <div className="mt-5 flex items-center gap-2">
-            <button onClick={() => setLiked((l) => !l)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: liked ? "var(--accent)" : "var(--text-2)" }}>
-              <I d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l9 8.6 7.8-7.6a5.5 5.5 0 0 0 0-7.8z" size={16} /> Like
-            </button>
+            {lyricLines.length > 0 && (
+              <button onClick={() => setLyricsOpen(true)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
+                <I d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3" size={16} /> Lyrics
+              </button>
+            )}
             <button onClick={() => setShareOpen(true)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
               <I d="M4 12v8h16v-8M12 16V3M8 7l4-4 4 4" size={16} /> Share
             </button>
-            {lyricLines.length > 0 && (
-              <button aria-label="Lyrics" onClick={() => setLyricsOpen(true)} className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-xl transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
-                <I d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3" size={18} />
-              </button>
-            )}
           </div>
 
           {/* CTAs */}

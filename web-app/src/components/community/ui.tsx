@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { formatCount, type Badge } from "@/lib/mv/community";
 
 export function Headphones({ size = 12 }: { size?: number }) {
@@ -61,9 +62,9 @@ export function SectionHead({ title, href }: { title: string; href?: string }) {
     <div className="mb-3 flex items-center justify-between">
       <h2 className="text-[18px] font-extrabold tracking-tight">{title}</h2>
       {href && (
-        <a href={href} className="inline-flex items-center gap-0.5 text-[12px] font-semibold" style={{ color: "var(--accent)" }}>
+        <Link href={href} className="inline-flex items-center gap-0.5 text-[12px] font-semibold" style={{ color: "var(--accent)" }}>
           See all <ChevronRight />
-        </a>
+        </Link>
       )}
     </div>
   );

@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
+/* eslint-disable @next/next/no-img-element */
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { AccountMenu } from "@/components/account/AccountMenu";
-import { MOCK_USER } from "@/lib/user";
 
 export function HeaderActions() {
   const { credits } = useCredits();
+  const { loggedIn, openSignIn, profile, subscribed } = useAuth();
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -15,6 +17,18 @@ export function HeaderActions() {
   function onPurchased(n: number) {
     setToast(`Added ${n} credits`);
     setTimeout(() => setToast(null), 2000);
+  }
+
+  if (!loggedIn) {
+    return (
+      <button
+        onClick={openSignIn}
+        className="rounded-full px-4 py-1.5 text-[13px] font-bold text-white transition-all hover:brightness-110 active:scale-95"
+        style={{ background: "var(--accent)" }}
+      >
+        Sign In
+      </button>
+    );
   }
 
   return (
@@ -36,10 +50,14 @@ export function HeaderActions() {
           aria-label="Account menu"
           aria-haspopup="menu"
           aria-expanded={menuOpen}
-          className="grid h-8 w-8 place-items-center rounded-full text-white"
-          style={{ background: "var(--mv-grad)", fontWeight: 700, fontSize: 13 }}
+          className="relative grid h-8 w-8 place-items-center overflow-hidden rounded-full text-white"
+          style={{ background: "var(--mv-grad)", fontWeight: 700, fontSize: 13, boxShadow: subscribed ? "0 0 0 2px var(--gold)" : undefined }}
         >
-          {MOCK_USER.name.charAt(0)}
+          {profile.avatar ? (
+            <img src={profile.avatar} alt="" className="h-full w-full object-cover" />
+          ) : (
+            profile.name.charAt(0)
+          )}
         </button>
         <AccountMenu open={menuOpen} onClose={() => setMenuOpen(false)} onBuyCredits={() => setCreditsOpen(true)} />
       </div>

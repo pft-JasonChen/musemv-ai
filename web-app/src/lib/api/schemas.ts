@@ -21,6 +21,8 @@ export const SongSchema = z.object({
   art: z.string(),
   url: z.string().optional(),
   trim: z.object({ start: z.number(), end: z.number() }).optional(),
+  /** Carried through from AI Song generation so the MV storyboard can display it. */
+  lyrics: z.string().optional(),
 });
 export type Song = z.infer<typeof SongSchema>;
 
@@ -64,10 +66,24 @@ export const SceneSchema = z.object({
 });
 export type Scene = z.infer<typeof SceneSchema>;
 
+/** Fallback lyric passthrough — shown when the source song carries no lyrics. */
+export const DEFAULT_STORYBOARD_LYRICS =
+  "In the stillness of midnight, as raindrops dance upon the pavement,\na story unfolds, a tale of love and loss.\nThe echoes of the past whisper through the droplets,\neach one carrying a memory, a moment lost in time.\nThe rain, a gentle symphony, sets the stage for reflection.\nAnd in your eyes I see the stars we used to chase,\na fleeting moment frozen in the grace of time.\nHold me close beneath the silver light,\nand let the music carry us through the night.";
+
+// Defaults double as a migration path: `StoryboardSchema.parse()` backfills these
+// fields onto any storyboard persisted before they existed (see MvFlowProvider).
 export const StoryboardSchema = z.object({
   characterImage: z.string(),
   visualStyle: z.string(),
   scenes: z.array(SceneSchema),
+  /** Read-only narrative summary (derived from the original MV description). */
+  story: z.string().default("A radiant artist performing in a softly lit studio, dreamy and devoted."),
+  /** Read-only lyric passthrough — always present so the Lyrics section renders. */
+  lyrics: z.string().default(DEFAULT_STORYBOARD_LYRICS),
+  /** MV cover art — starts as the character image; regenerable on Edit MV. */
+  coverImage: z.string().default("/assets/images/storyboard/storyboard_01.jpg"),
+  /** Editable prompt driving cover-art (re)generation. */
+  coverDescription: z.string().default('Create a captivating cover image that embodies the essence of a dreamy night sky filled with shimmering stars.'),
 });
 export type Storyboard = z.infer<typeof StoryboardSchema>;
 

@@ -8,6 +8,9 @@ import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { COST_RENDER } from "@/lib/mv/types";
 import { formatDuration } from "@/lib/mv/mock";
+import { buildTimedLines } from "@/lib/mv/lyrics";
+
+const fmtTs = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
 export function StoryboardEditor() {
   const router = useRouter();
@@ -90,6 +93,12 @@ export function StoryboardEditor() {
             </div>
           </div>
 
+          {/* Story — read-only narrative summary from the original MV description */}
+          <div>
+            <SectionLabel>Story</SectionLabel>
+            <div className="rounded-xl p-3 text-[13px]" style={{ background: "var(--card-2)", color: "var(--text-2)", lineHeight: 1.5 }}>{storyboard.story}</div>
+          </div>
+
           {/* Synopsis — vertical waterfall (easy to read & edit across many scenes) */}
           <div>
             <SectionLabel>Synopsis</SectionLabel>
@@ -109,6 +118,21 @@ export function StoryboardEditor() {
                   />
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Lyrics — read-only, timestamped passthrough from the song */}
+          <div>
+            <SectionLabel>Lyrics</SectionLabel>
+            <div className="no-scrollbar max-h-[220px] overflow-y-auto rounded-xl p-3" style={{ background: "var(--card-2)" }}>
+              <div className="flex flex-col gap-1.5">
+                {buildTimedLines(storyboard.lyrics, compose.song?.durationSec ?? 0).map((l, i) => (
+                  <div key={i} className="flex gap-2">
+                    <span className="shrink-0 text-[11px] tabular-nums" style={{ color: "var(--text-3)" }}>[{fmtTs(l.t)}]</span>
+                    <span className="text-[13px]" style={{ color: "var(--text-2)", lineHeight: 1.6 }}>{l.line}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

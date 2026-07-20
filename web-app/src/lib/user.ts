@@ -19,6 +19,36 @@ export const MOCK_USER = {
 
 export const DEFAULT_CREDITS = 390;
 
+/** Sample avatar photos cycled by the profile "Change Photo" action (mock upload). */
+export const AVATAR_SAMPLES = [
+  "/assets/images/character-photos/samples/Sample_P1.jpg",
+  "/assets/images/character-photos/samples/Sample_P2.jpg",
+  "/assets/images/character-photos/samples/Sample_P3.jpg",
+  "/assets/images/character-photos/samples/Sample_P4.jpg",
+  "/assets/images/character-photos/samples/Sample_P5.jpg",
+  "/assets/images/character-photos/samples/Sample_P6.jpg",
+];
+
+export type PlanId = "weekly" | "super" | "yearly";
+
+export interface SubscriptionPlan {
+  id: PlanId;
+  name: string;
+  price: string;
+  /** Credits granted per cycle. */
+  credits: number;
+  /** Human cadence for the credit reset, e.g. "Weekly" / "Yearly". */
+  cadence: string;
+  badge?: string;
+}
+
+/** Muse Pro plans, matching the mobile app-prototype's IAP screen. */
+export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  { id: "weekly", name: "Weekly Plan", price: "$9.99", credits: 200, cadence: "Weekly" },
+  { id: "super", name: "Super Weekly Plan", price: "$29.99", credits: 1000, cadence: "Weekly", badge: "POPULAR" },
+  { id: "yearly", name: "Yearly Plan", price: "$69.99", credits: 2000, cadence: "Yearly", badge: "BEST VALUE" },
+];
+
 export interface CreditTxn {
   id: number;
   label: string;

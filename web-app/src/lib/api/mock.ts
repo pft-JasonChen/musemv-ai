@@ -164,7 +164,13 @@ export class MockMuseApi implements MuseApi {
     const failed = record.failAt != null && progress >= record.failAt;
     if (done && !failed) {
       // Complete the current phase: attach what it was producing.
-      if (record.phase === "storyboard" && !record.storyboard) record.storyboard = mockStoryboard();
+      if (record.phase === "storyboard" && !record.storyboard) {
+        record.storyboard = mockStoryboard({
+          description: record.compose.description,
+          lyrics: record.compose.song?.lyrics,
+          title: record.compose.settings.title.text || record.compose.song?.title,
+        });
+      }
       if (record.phase === "render" && !record.resultUrl) record.resultUrl = SAMPLE_RESULT_VIDEO;
     }
     return MvJobSchema.parse({

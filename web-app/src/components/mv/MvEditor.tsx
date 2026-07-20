@@ -7,12 +7,14 @@ import { Modal } from "@/components/ui/Modal";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { MV_TYPES } from "@/lib/mv/mock";
+import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
 
 const COST_REGEN = 20;
 const COST_MERGE = 10;
+const COST_COVER = 10;
 
 interface Take { id: string; video: string; status: "ready" | "generating" }
+interface CoverTake { id: string; image: string; status: "ready" | "generating" }
 
 function I({ d, size = 18 }: { d: string; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
@@ -41,7 +43,16 @@ export function MvEditor() {
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [active, setActive] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Output settings are baked into the rendered video, so any change requires a
+  // re-render — track it so it enables Merge MV.
+  const [settingsDirty, setSettingsDirty] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [coverModalOpen, setCoverModalOpen] = useState(false);
+  const [coverPreviewOpen, setCoverPreviewOpen] = useState(false);
+  // Cover variants mirror the scene "takes" tray: Recreate adds a take, the
+  // selected one becomes the cover on Merge. The original is derived in render.
+  const [coverAdded, setCoverAdded] = useState<CoverTake[]>([]);
+  const [coverSelected, setCoverSelected] = useState<string | null>(null);
 
   useEffect(() => {
     if (storyboard) return;
@@ -58,10 +69,20 @@ export function MvEditor() {
   const activeScene = storyboard.scenes.find((s) => s.id === activeId) ?? storyboard.scenes[0];
   const activeTakes = takesFor(activeScene.id);
   const activeVideo = activeTakes.find((t) => t.id === selectedFor(activeScene.id))?.video ?? defaultPreview;
-  const dirty = storyboard.scenes.some((s) => selectedFor(s.id) !== origId(s.id));
+
+  const coverOrigId = "cover-o";
+  const coverTakes: CoverTake[] = [{ id: coverOrigId, image: storyboard.coverImage, status: "ready" }, ...coverAdded];
+  const coverSelectedId = coverSelected ?? coverOrigId;
+  const activeCover = coverTakes.find((t) => t.id === coverSelectedId)?.image ?? storyboard.coverImage;
+  const coverBusy = coverAdded.some((t) => t.status === "generating");
+
+  const dirty = storyboard.scenes.some((s) => selectedFor(s.id) !== origId(s.id)) || coverSelectedId !== coverOrigId || settingsDirty;
 
   const settings = compose.settings;
-  const patchSettings = (p: Partial<typeof settings>) => setCompose((c) => ({ ...c, settings: { ...c.settings, ...p } }));
+  const patchSettings = (p: Partial<typeof settings>) => {
+    setCompose((c) => ({ ...c, settings: { ...c.settings, ...p } }));
+    setSettingsDirty(true); // output settings change the rendered video → needs Merge
+  };
 
   function updateScene(id: string, text: string) {
     setStoryboard((sb) => (sb ? { ...sb, scenes: sb.scenes.map((s) => (s.id === id ? { ...s, text } : s)) } : sb));
@@ -78,10 +99,25 @@ export function MvEditor() {
     }, 2600);
   }
 
+  function regenerateCover() {
+    if (coverBusy) return;
+    const id = `cover-${Date.now()}`;
+    const image = randomCoverImage();
+    setCoverAdded((a) => [...a, { id, image, status: "generating" }]);
+    setCoverModalOpen(false);
+    addCredits(-COST_COVER);
+    setTimeout(() => {
+      setCoverAdded((a) => a.map((t) => (t.id === id ? { ...t, status: "ready" } : t)));
+      setCoverSelected(id); // auto-select the newly generated take
+    }, 2200);
+  }
+
   function merge() {
     if (!dirty || !storyboard) return;
     addCredits(-COST_MERGE);
-    saveStoryboard(storyboard);
+    const committed = { ...storyboard, coverImage: activeCover }; // commit the chosen cover
+    setStoryboard(committed);
+    saveStoryboard(committed);
     router.push("/mv/creating");
   }
 
@@ -130,6 +166,81 @@ export function MvEditor() {
         <button onClick={() => setSettingsOpen(true)} className="ml-auto inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-semibold" style={{ borderColor: "var(--border-2)", color: "var(--text)" }}>
           <I d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 13a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.5A1.7 1.7 0 0 0 11 3.1V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9.5a1.7 1.7 0 0 0 1.6 1.5H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" size={14} /> Output settings
         </button>
+      </div>
+
+      {/* Cover — large preview + variants tray (Recreate adds a take; pick which to use) */}
+      <div className="mb-5 rounded-xl border p-3" style={{ borderColor: "var(--border-2)", background: "var(--card)" }}>
+        <div className="flex gap-4">
+          {/* Large preview of the selected cover — click to view full size */}
+          <button
+            onClick={() => setCoverPreviewOpen(true)}
+            aria-label="View cover full size"
+            className="group/cov relative shrink-0 overflow-hidden rounded-lg"
+            style={{ width: 104, aspectRatio: "9 / 16", background: "var(--card-2)" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={activeCover} alt="MV cover" className="h-full w-full object-cover" style={{ opacity: coverBusy ? 0.5 : 1 }} />
+            <span className="absolute bottom-1.5 right-1.5 grid h-6 w-6 place-items-center rounded-full text-white opacity-80 transition-opacity group-hover/cov:opacity-100" style={{ background: "rgba(0,0,0,.6)" }}>
+              <I d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" size={12} />
+            </span>
+          </button>
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>Cover</div>
+            <button
+              onClick={() => setCoverModalOpen(true)}
+              className="mt-1 text-left text-[13px] leading-snug"
+              style={{ color: "var(--text-2)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+            >
+              {storyboard.coverDescription}
+            </button>
+            <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
+              <button
+                onClick={() => setCoverModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold"
+                style={{ borderColor: "var(--border-2)", color: "var(--text)" }}
+              >
+                <I d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" size={13} /> Edit description
+              </button>
+              <button
+                onClick={regenerateCover}
+                disabled={coverBusy}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-white transition-opacity disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg,#FF6BCE,#A855F7,#4338CA)" }}
+              >
+                <I d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5" size={13} /> Recreate
+                <span className="inline-flex items-center gap-0.5"><Bolt /> {COST_COVER}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Variants tray — appears once you have more than the original cover */}
+        {(coverTakes.length > 1 || coverBusy) && (
+          <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--border-3)" }}>
+            <div className="mb-2 text-[11px]" style={{ color: "var(--text-2)" }}>Pick which cover to use</div>
+            <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
+              {coverTakes.map((t, i) => {
+                const inUse = coverSelectedId === t.id;
+                const isOrig = t.id === coverOrigId;
+                return (
+                  <button key={t.id} onClick={() => t.status === "ready" && setCoverSelected(t.id)} disabled={t.status !== "ready"} className="shrink-0 text-left">
+                    <div className="relative overflow-hidden rounded-lg" style={{ width: 64, aspectRatio: "9 / 16", border: inUse ? "2px solid var(--accent)" : "0.5px solid var(--border-2)", background: "var(--card-2)" }}>
+                      {t.status === "generating" ? (
+                        <span className="grid h-full w-full place-items-center"><span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" /></span>
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={t.image} alt="" className="h-full w-full object-cover" />
+                      )}
+                      {inUse && <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-white" style={{ background: "var(--accent)" }}><I d="M20 6 9 17l-5-5" size={11} /></span>}
+                    </div>
+                    <div className="mt-1 text-center text-[10px]" style={{ color: inUse ? "var(--accent)" : "var(--text-3)" }}>{t.status === "generating" ? "…" : isOrig ? "original" : `take ${i}`}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -241,6 +352,42 @@ export function MvEditor() {
           <Button className="mt-1 w-full" onClick={() => setSettingsOpen(false)}>Done</Button>
         </div>
       </Modal>
+
+      {/* Cover Description modal */}
+      <Modal open={coverModalOpen} onClose={() => setCoverModalOpen(false)} title="Cover Description" maxWidth={460}>
+        <div className="flex flex-col gap-3">
+          <textarea
+            value={storyboard.coverDescription}
+            onChange={(e) => setStoryboard((sb) => (sb ? { ...sb, coverDescription: e.target.value } : sb))}
+            maxLength={2500}
+            className="min-h-[120px] w-full resize-none rounded-xl border bg-transparent p-3 text-[14px] outline-none no-scrollbar"
+            style={{ background: "var(--card-2)", borderColor: "var(--border-2)", color: "var(--text)", lineHeight: 1.5 }}
+          />
+          <div className="flex items-center justify-between">
+            <EnhanceButton value={storyboard.coverDescription} kind="cover" onEnhanced={(t) => setStoryboard((sb) => (sb ? { ...sb, coverDescription: t } : sb))} />
+            <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{storyboard.coverDescription.length}/2500</span>
+          </div>
+          <button
+            onClick={regenerateCover}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-[14px] font-bold text-white transition-all hover:brightness-110 active:scale-[0.98]"
+            style={{ background: "linear-gradient(135deg,#FF6BCE,#A855F7,#4338CA)" }}
+          >
+            <I d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5" size={16} /> Regenerate Cover
+            <span className="ml-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px]" style={{ background: "rgba(255,255,255,.2)" }}><Bolt /> {COST_COVER}</span>
+          </button>
+        </div>
+      </Modal>
+
+      {/* Cover full-size lightbox */}
+      {coverPreviewOpen && (
+        <div className="anim-fade fixed inset-0 z-[110] flex items-center justify-center p-6" style={{ background: "rgba(0,0,0,.88)" }} onClick={() => setCoverPreviewOpen(false)} role="dialog" aria-modal="true" aria-label="Cover preview">
+          <button aria-label="Close preview" onClick={() => setCoverPreviewOpen(false)} className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full text-white" style={{ background: "rgba(255,255,255,.15)" }}>
+            <I d="M6 6l12 12M18 6L6 18" size={18} />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={activeCover} alt="MV cover" className="anim-pop max-h-[86vh] w-auto rounded-xl object-contain" style={{ aspectRatio: "9 / 16", boxShadow: "0 20px 60px rgba(0,0,0,.5)" }} onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
 
       {toast && (
         <div className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg" style={{ background: "rgba(20,20,24,.95)" }}>{toast}</div>

@@ -1,4 +1,5 @@
 import type { MvType, Song, Storyboard } from "./types";
+import { DEFAULT_STORYBOARD_LYRICS } from "@/lib/api/schemas";
 
 export interface MvTypeOption {
   id: MvType;
@@ -84,7 +85,8 @@ export const SAMPLE_RESULT_VIDEO =
   "/assets/videos/mv-preview/feature_intro_ai_mv_singing_480x640.mp4";
 
 /** Build a mock storyboard (3 scenes, prototype-faithful). */
-export function mockStoryboard(): Storyboard {
+export function mockStoryboard(opts?: { description?: string; lyrics?: string; title?: string }): Storyboard {
+  const title = opts?.title?.trim() || "your track";
   return {
     characterImage: "/assets/images/storyboard/storyboard_01.jpg",
     visualStyle:
@@ -94,7 +96,17 @@ export function mockStoryboard(): Storyboard {
       { id: "sc2", index: 2, range: "00:09–00:12", text: "Close-up on the vocalist as she begins to sing, her expression serene." },
       { id: "sc3", index: 3, range: "00:12–00:15", text: "The camera follows her hands as she traces the intricate lace patterns on her dress." },
     ],
+    story: opts?.description?.trim() || "A radiant artist performing in a softly lit studio, dreamy and devoted.",
+    lyrics: opts?.lyrics?.trim() || DEFAULT_STORYBOARD_LYRICS,
+    coverImage: "/assets/images/storyboard/storyboard_01.jpg",
+    coverDescription: `Create a captivating cover image for "${title}" that embodies the essence of a dreamy night sky filled with shimmering stars.`,
   };
+}
+
+/** A different demo cover image, cycled into the storyboard on "regenerate". */
+export function randomCoverImage(): string {
+  const n = Math.floor(Math.random() * 12) + 1;
+  return `/assets/images/album-art/album_${String(n).padStart(2, "0")}.jpg`;
 }
 
 export function formatDuration(sec: number): string {

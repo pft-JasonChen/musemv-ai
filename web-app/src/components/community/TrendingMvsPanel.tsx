@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TRENDING_MVS, NEW_MVS, formatCount } from "@/lib/mv/community";
 import { Heart, Play } from "@/components/community/ui";
@@ -13,7 +14,7 @@ export function TrendingMvsPanel() {
     <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border-2)", background: "var(--card)" }}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-[15px] font-extrabold tracking-tight">Trending from community</h3>
-        <a href="/explore/mvs" className="text-[12px] font-semibold" style={{ color: "var(--accent)" }}>See all</a>
+        <Link href="/explore/mvs" className="text-[12px] font-semibold" style={{ color: "var(--accent)" }}>See all</Link>
       </div>
       <div className="flex flex-col gap-2.5">
         {ITEMS.map((m) => (

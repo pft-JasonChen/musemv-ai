@@ -7,6 +7,7 @@ import { SongDetail } from "@/components/song/SongDetail";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { SAMPLE_RESULT_VIDEO, SAMPLE_AUDIO, mockStoryboard, type Creation } from "@/lib/mv/mock";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
+import { DEFAULT_STORYBOARD_LYRICS } from "@/lib/api/schemas";
 
 /** Anything creation-shaped this dialog can present (fixture or live history). */
 export type CreationLike = Creation;
@@ -53,6 +54,7 @@ export function CreationDialog({ open, creation, onClose, onDelete }: Props) {
     <Modal open={open} onClose={onClose} maxWidth={940}>
       {isMv ? (
         <MvDetail
+          videoUrl={SAMPLE_RESULT_VIDEO}
           posterUrl={creation.thumb}
           downloadUrl={SAMPLE_RESULT_VIDEO}
           shareUrl={`https://musemv.ai/c/${creation.id}`}
@@ -65,6 +67,8 @@ export function CreationDialog({ open, creation, onClose, onDelete }: Props) {
       ) : (
         <SongDetail
           cover={creation.thumb}
+          audioUrl={SAMPLE_AUDIO}
+          lyrics={DEFAULT_STORYBOARD_LYRICS}
           downloadUrl={SAMPLE_AUDIO}
           shareUrl={`https://musemv.ai/c/${creation.id}`}
           info={{ title: creation.title, dateLabel: creation.date }}
