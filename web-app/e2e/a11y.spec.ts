@@ -10,6 +10,14 @@ function discoverRoutes(dir: string, base = ""): string[] {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) {
+      // The [locale] root wraps every route. English (the default locale) is
+      // served UNPREFIXED, so recurse with the base unchanged to test the real
+      // URLs (/profile, not /enu/profile). Other dynamic segments ([id]) are
+      // skipped (they need seeded data).
+      if (entry === "[locale]") {
+        routes.push(...discoverRoutes(full, base));
+        continue;
+      }
       if (entry.startsWith("[")) continue; // dynamic segment
       routes.push(...discoverRoutes(full, `${base}/${entry}`));
     } else if (entry === "page.tsx") {

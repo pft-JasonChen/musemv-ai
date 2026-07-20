@@ -69,15 +69,20 @@ export function HistoryView() {
   const published = (r: HistorySample) => ov[r.id]?.published ?? r.published ?? false;
   const reviewing = (r: HistorySample) => ov[r.id]?.reviewing ?? false;
 
-  /** Seed flow state so the storyboard/MV editors render for sample items. */
+  /**
+   * Seed flow state so the storyboard/MV editors render for THIS sample item.
+   * The storyboard's cover/character art is taken from the row thumbnail so each
+   * history entry opens its own result rather than a shared generic storyboard.
+   */
   function seedFlow(r: HistorySample) {
-    const sb = mockStoryboard();
+    const base = mockStoryboard({ description: r.title, title: r.title });
+    const sb = r.thumb ? { ...base, coverImage: r.thumb, characterImage: r.thumb } : base;
     setStoryboard(sb);
     saveStoryboard(sb);
     setCompose({
       ...DEFAULT_COMPOSE,
       description: r.title,
-      song: r.thumb ? { id: `h-${r.id}`, source: "sample", title: r.title, durationSec: 0, art: r.thumb } : null,
+      song: r.thumb ? { id: `h-${r.id}`, source: "sample", title: r.title, durationSec: 145, art: r.thumb } : null,
       settings: { ...DEFAULT_COMPOSE.settings, title: { on: true, text: r.title } },
     });
   }
@@ -104,7 +109,7 @@ export function HistoryView() {
   function openRow(r: HistorySample) {
     if (r.status !== "done") return;
     if (r.source === "community" && r.communitySongId) { router.push(`/song/play?id=${r.communitySongId}`); return; }
-    if (r.kind === "storyboard") { seedFlow(r); router.push("/mv/storyboard"); return; }
+    if (r.kind === "storyboard") { seedFlow(r); router.push(`/mv/storyboard?id=${r.id}`); return; }
     setSelected({ id: r.id, kind: r.kind, title: r.title, thumb: r.thumb ?? "", date: r.date, plays: r.plays, likes: r.likes, shares: r.shares, liked: liked(r) });
   }
 
@@ -114,8 +119,8 @@ export function HistoryView() {
     else downloadFile(SAMPLE_RESULT_VIDEO, `${r.title}.mp4`);
     setOpenMenu(null); showToast("Download started");
   }
-  function editMv(r: HistorySample) { seedFlow(r); router.push("/mv/edit"); }
-  function createMv(r: HistorySample) { seedFlow(r); router.push(r.kind === "storyboard" ? "/mv/storyboard" : "/mv/room"); }
+  function editMv(r: HistorySample) { seedFlow(r); router.push(`/mv/edit?id=${r.id}`); }
+  function createMv(r: HistorySample) { seedFlow(r); router.push(r.kind === "storyboard" ? `/mv/storyboard?id=${r.id}` : "/mv/room"); }
   function togglePublishSong(r: HistorySample) {
     const next = !published(r);
     patch(r.id, { published: next });
@@ -230,8 +235,8 @@ function HistoryCard({ r, liked, onOpen, menu }: { r: HistorySample; liked: bool
         {/* 20% scrim over thumbnails for badge/label legibility */}
         {r.thumb && <span className="pointer-events-none absolute inset-0" style={{ background: "rgba(0,0,0,0.2)" }} />}
 
-        {/* hover play for done */}
-        {clickable && r.thumb && (
+        {/* hover play — only for MV (storyboard has no output yet; song plays via its dialog, not a video) */}
+        {clickable && r.thumb && r.kind === "mv" && (
           <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity group-hover:opacity-100">
             <span className="grid h-11 w-11 place-items-center rounded-full" style={{ background: "rgba(0,0,0,.5)" }}><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><polygon points="6,4 20,12 6,20" /></svg></span>
           </span>
@@ -242,7 +247,14 @@ function HistoryCard({ r, liked, onOpen, menu }: { r: HistorySample; liked: bool
 
         {/* kind badge with type-indicator icon */}
         <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white" style={{ background: "rgba(0,0,0,.55)" }}>
-          <I d={r.kind === "song" ? "M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" : "M15 10l4.5-2.5v9L15 14M4 7h11v10H4z"} size={11} />
+          {/* Storyboard has no video yet → no camera icon (frames glyph instead). */}
+          {r.kind === "song" ? (
+            <I d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" size={11} />
+          ) : r.kind === "mv" ? (
+            <I d="M15 10l4.5-2.5v9L15 14M4 7h11v10H4z" size={11} />
+          ) : (
+            <I d="M3 6h18v12H3zM9 6v12M15 6v12" size={11} />
+          )}
           {kindLabel}
         </span>
       </button>

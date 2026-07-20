@@ -7,6 +7,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { api, pollJob } from "@/lib/api";
+import { StoryboardSchema } from "@/lib/api/schemas";
 import { DEFAULT_COMPOSE, type ComposeState, type MvJob, type Storyboard } from "@/lib/mv/types";
 import { useHistory } from "./HistoryProvider";
 import { IDLE_GEN, toGen, type Gen } from "./progress";
@@ -61,8 +62,18 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
       saved = null;
     }
     if (!saved) return;
-    setStoryboard((cur) => cur ?? (JSON.parse(saved!) as Storyboard));
-    setSavedJson(saved);
+    // Validate + backfill: a storyboard persisted before `story`/`lyrics`/`cover*`
+    // existed is migrated to the current shape via the schema defaults.
+    let parsed;
+    try {
+      parsed = StoryboardSchema.safeParse(JSON.parse(saved));
+    } catch {
+      return;
+    }
+    if (!parsed.success) return;
+    const normalized = JSON.stringify(parsed.data);
+    setStoryboard((cur) => cur ?? parsed.data);
+    setSavedJson(normalized);
   }, []);
 
   useEffect(() => () => cancelPoll.current?.(), []);

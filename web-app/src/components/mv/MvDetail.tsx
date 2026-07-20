@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { downloadFile } from "@/lib/download";
@@ -49,15 +49,10 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onRecreate, onEdit, onClose }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(true);
-  const [muted, setMuted] = useState(true);
   const [vote, setVote] = useState<"up" | "down" | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [published, setPublished] = useState(false);
 
-  function togglePlay() { const v = videoRef.current; if (!v) return; if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); } }
-  function toggleMute() { const v = videoRef.current; if (!v) return; v.muted = !v.muted; setMuted(v.muted); }
   function download() { if (downloadUrl) downloadFile(downloadUrl, `${info.title}.${videoUrl ? "mp4" : "jpg"}`); }
 
   return (
@@ -66,15 +61,8 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
         {/* Left: 1:1 square stage */}
         <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-2xl lg:aspect-auto lg:h-[520px] lg:w-[520px]" style={{ background: "#0e0e12" }}>
           {videoUrl ? (
-            <>
-              <video ref={videoRef} src={videoUrl} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-contain" />
-              <button aria-label={playing ? "Pause" : "Play"} onClick={togglePlay} className="absolute inset-0 grid place-items-center">
-                {!playing && <span className="grid h-16 w-16 place-items-center rounded-full" style={{ background: "rgba(0,0,0,.45)" }}><svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><polygon points="6,4 20,12 6,20" /></svg></span>}
-              </button>
-              <button aria-label={muted ? "Unmute" : "Mute"} onClick={toggleMute} className="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full" style={{ background: "rgba(0,0,0,.5)", color: "#fff" }}>
-                {muted ? <I d="M11 5 6 9H2v6h4l5 4zM23 9l-6 6M17 9l6 6" /> : <I d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14" />}
-              </button>
-            </>
+            // Autoplays muted; native browser controls handle play/seek/volume/fullscreen.
+            <video src={videoUrl} autoPlay muted loop playsInline controls className="absolute inset-0 h-full w-full object-contain" />
           ) : (
             <>
               {}

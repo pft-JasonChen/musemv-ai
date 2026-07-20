@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { MOCK_USER } from "@/lib/user";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
 
 interface Props {
   open: boolean;
@@ -11,19 +14,21 @@ interface Props {
   onBuyCredits: () => void;
 }
 
-function Avatar({ size = 40 }: { size?: number }) {
+function Avatar({ name, avatar, size = 40 }: { name: string; avatar: string | null; size?: number }) {
   return (
     <span
-      className="grid shrink-0 place-items-center rounded-full text-white"
+      className="grid shrink-0 place-items-center overflow-hidden rounded-full text-white"
       style={{ width: size, height: size, background: "var(--mv-grad)", fontWeight: 700, fontSize: size * 0.4 }}
     >
-      {MOCK_USER.name.charAt(0)}
+      {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : name.charAt(0)}
     </span>
   );
 }
 
 export function AccountMenu({ open, onClose, onBuyCredits }: Props) {
   const { credits } = useCredits();
+  const { signOut, profile, subscribed } = useAuth();
+  const { locale } = useLocale();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,10 +59,18 @@ export function AccountMenu({ open, onClose, onBuyCredits }: Props) {
       style={{ background: "var(--card)", borderColor: "var(--border-2)" }}
     >
       <div className="flex items-center gap-3 border-b p-4" style={{ borderColor: "var(--border-3)" }}>
-        <Avatar />
-        <div className="min-w-0">
-          <div className="truncate text-[14px] font-bold">{MOCK_USER.name}</div>
-          <div className="truncate text-[12px]" style={{ color: "var(--text-2)" }}>{MOCK_USER.email}</div>
+        <Avatar name={profile.name} avatar={profile.avatar} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="truncate text-[14px] font-bold">{profile.name}</span>
+            <span
+              className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+              style={subscribed ? { background: "var(--mv-grad)", color: "#fff" } : { background: "var(--card-2)", color: "var(--text-2)" }}
+            >
+              {subscribed ? "PRO" : "FREE"}
+            </span>
+          </div>
+          <div className="truncate text-[12px]" style={{ color: "var(--text-2)" }}>{profile.email}</div>
         </div>
       </div>
 
@@ -76,15 +89,15 @@ export function AccountMenu({ open, onClose, onBuyCredits }: Props) {
       </div>
 
       <nav className="p-2">
-        <Link href="/profile" onClick={onClose} className={item} style={{ color: "var(--text)" }} role="menuitem">
+        <Link href={localePath(locale, "/profile")} onClick={onClose} className={item} style={{ color: "var(--text)" }} role="menuitem">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" /></svg>
           Profile
         </Link>
-        <Link href="/history" onClick={onClose} className={item} style={{ color: "var(--text)" }} role="menuitem">
+        <Link href={localePath(locale, "/history")} onClick={onClose} className={item} style={{ color: "var(--text)" }} role="menuitem">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5M12 7v5l3 2" /></svg>
           My Creations
         </Link>
-        <button onClick={onClose} className={`${item} w-full`} style={{ color: "var(--red)" }} role="menuitem">
+        <button onClick={() => { onClose(); signOut(); }} className={`${item} w-full`} style={{ color: "var(--red)" }} role="menuitem">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
           Sign Out
         </button>

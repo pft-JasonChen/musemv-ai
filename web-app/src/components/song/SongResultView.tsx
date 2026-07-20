@@ -19,7 +19,7 @@ export function SongResultView() {
 
   function useInMv() {
     if (!songResult) return;
-    patchCompose({ song: { id: songResult.id, source: "library", title: songResult.title, durationSec: songResult.durationSec, art: songResult.cover } });
+    patchCompose({ song: { id: songResult.id, source: "library", title: songResult.title, durationSec: songResult.durationSec, art: songResult.cover, lyrics: songResult.lyrics } });
     router.push("/mv/room");
   }
 
