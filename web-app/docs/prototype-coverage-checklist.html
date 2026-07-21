@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>YouCam Muse Web — Prototype Coverage Checklist</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --surface: #ffffff; --surface-2: #f1f3f6; --border: #e3e6ea;
+    --text: #1c1e22; --text-2: #565b63; --text-3: #878d96;
+    --yes: #067647; --yes-bg: #ecfdf3; --part: #b54708; --part-bg: #fff8f0;
+    --no: #d92d20; --no-bg: #fef3f2; --na: #667085; --na-bg: #f2f4f7;
+    --accent: #6941c6; --sec: #eef1f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c; --surface: #1e2126; --surface-2: #23272e; --border: #2e333b;
+      --text: #e7eaee; --text-2: #a8afb9; --text-3: #7b828d;
+      --yes: #47c78a; --yes-bg: #14251d; --part: #f5a15f; --part-bg: #2a2117;
+      --no: #ff6b5e; --no-bg: #2a1917; --na: #9aa2af; --na-bg: #23272e;
+      --accent: #b28bf0; --sec: #23272e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.6; font-size: 15px; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 96px; }
+  header.page { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 22px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -.01em; }
+  .sub { color: var(--text-2); font-size: 14px; margin: 0; max-width: 78ch; }
+  .sub code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; font-size: 12.5px; }
+
+  .summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 8px; }
+  .stat { flex: 1 1 150px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; }
+  .stat .n { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+  .stat.yes .n { color: var(--yes); } .stat.part .n { color: var(--part); }
+  .stat.no .n { color: var(--no); } .stat.na .n { color: var(--na); }
+
+  .legend { font-size: 13px; color: var(--text-2); margin: 14px 0 26px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .badge { font-size: 11.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .b-yes { background: var(--yes-bg); color: var(--yes); } .b-part { background: var(--part-bg); color: var(--part); }
+  .b-no { background: var(--no-bg); color: var(--no); } .b-na { background: var(--na-bg); color: var(--na); }
+
+  h2.sec { font-size: 17px; margin: 34px 0 12px; display: flex; align-items: center; gap: 10px; }
+  h2.sec .g { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 7px; border-radius: 7px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 760px; }
+  th { background: var(--sec); text-align: left; font-weight: 700; color: var(--text-2); padding: 9px 13px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  td { padding: 10px 13px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--text-2); }
+  tr:last-child td { border-bottom: none; }
+  td.id { font-weight: 700; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  td.item { color: var(--text); font-weight: 600; width: 210px; }
+  td.st { white-space: nowrap; }
+  td.ev code, td.miss code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; font-size: 11.5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text-2); }
+  td.miss { color: var(--text-3); }
+  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--text-3); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>Prototype Coverage Checklist</h1>
+  <p class="sub">把開發排程(<code>YCM_FCS_Schedule / Web.html</code>)逐項對照 <code>web-app/</code> prototype 目前的實作。判斷以「前端 UI / 流程是否存在」為準(本專案是 backend-less mock prototype);後端/OPS-only 的項目標為 N/A。<br><strong>PARTIAL</strong> = 有 UI 但 mock 或缺子功能;<strong>NO</strong> = 尚未實作;<strong>N/A</strong> = 純後端,前端無對應畫面。</p>
+</header>
+
+<div class="summary">
+  <div class="stat yes"><div class="n">13</div><div class="l">✅ 已具備(YES)</div></div>
+  <div class="stat part"><div class="n">13</div><div class="l">🟡 部分/mock(PARTIAL)</div></div>
+  <div class="stat no"><div class="n">5</div><div class="l">⛔ 未實作(NO)</div></div>
+  <div class="stat na"><div class="n">5</div><div class="l">⚙️ 後端/OPS(N/A)</div></div>
+</div>
+<div class="legend">
+  <span class="badge b-yes">YES</span> 前端已具備
+  <span class="badge b-part">PARTIAL</span> 有 UI 但 mock 或缺子功能
+  <span class="badge b-no">NO</span> 尚未實作
+  <span class="badge b-na">N/A</span> 純後端 / OPS
+  <span style="color:var(--text-3)">· 共 36 項</span>
+</div>
+
+<!-- 1 Account -->
+<h2 class="sec"><span class="g">1</span> Account</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>ID</th><th>項目</th><th>狀態</th><th>Prototype 現況(證據)</th><th>缺什麼 / 備註</th></tr></thead>
+  <tbody>
+    <tr><td class="id">1.1</td><td class="item">Social sign-in</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">有「Continue with Apple / Google」按鈕(mock 登入) <code>auth/SignInModal.tsx</code></td><td class="miss">無真實 OAuth、無從 token 帶入 profile</td></tr>
+    <tr><td class="id">1.2</td><td class="item">Profile page</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">頭像(循環 sample = mock 上傳)、使用者名稱、通知開關 <code>profile/ProfileView.tsx</code></td><td class="miss">缺 bio、genre 偏好、onboarding 流程、真實頭像上傳</td></tr>
+    <tr><td class="id">1.3</td><td class="item">History(My Creations)MV / Songs / Liked</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">filter all/mv/song/liked,管理 MV+歌曲+按讚 <code>history/HistoryView.tsx</code></td><td class="miss">資料為 session 內(reload 遺失)</td></tr>
+    <tr><td class="id">1.4</td><td class="item">Account settings</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">Terms / Privacy / Unsubscribe / Delete <code>profile/SettingsView.tsx</code>;編輯名稱+通知在 ProfileView</td><td class="miss">缺改 email/密碼、細部通知/隱私偏好</td></tr>
+    <tr><td class="id">1.5</td><td class="item">Account deletion</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">「Delete Account」列+確認對話框 <code>SettingsView.tsx</code></td><td class="miss">僅 toast stub,無實際刪除</td></tr>
+    <tr><td class="id">1.6</td><td class="item">Cookie consent</td><td class="st"><span class="badge b-no">NO</span></td><td class="ev">—</td><td class="miss">全專案無 cookie consent UI</td></tr>
+  </tbody>
+</table></div>
+
+<!-- 2 AI MV Creation -->
+<h2 class="sec"><span class="g">2</span> AI MV Creation</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>ID</th><th>項目</th><th>狀態</th><th>Prototype 現況(證據)</th><th>缺什麼 / 備註</th></tr></thead>
+  <tbody>
+    <tr><td class="id">2.1</td><td class="item">Main creation flow(分鏡 / 直接建)</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">MvRoom + ModeModal(storyboard-first / direct) <code>mv/MvRoom.tsx</code></td><td class="miss">—</td></tr>
+    <tr><td class="id">2.2</td><td class="item">Song selection for MV</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">歌庫挑選 + 匯入音檔 <code>mv/ChooseSongModal.tsx</code></td><td class="miss">匯入用 blob URL(見 handover §1)</td></tr>
+    <tr><td class="id">2.3</td><td class="item">MV templates(×20,ACMS)</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">template 選擇器 UI <code>lib/mv/mock.ts (TEMPLATES)</code></td><td class="miss">數量不足 20;ACMS 上傳為後端</td></tr>
+    <tr><td class="id">2.4</td><td class="item">MV Ideas(文字 prompt presets)</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">IDEAS presets <code>mv/MvRoom.tsx</code></td><td class="miss">—</td></tr>
+    <tr><td class="id">2.5</td><td class="item">MV sample songs(×40,ACMS)</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">SAMPLE_SONGS 歌庫 <code>lib/mv/mock.ts</code></td><td class="miss">數量不足 40;ACMS 上傳為後端</td></tr>
+    <tr><td class="id">2.6</td><td class="item">MV preview player</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">&lt;video controls&gt; 原生 play/seek/volume/fullscreen <code>mv/MvDetail.tsx:65</code></td><td class="miss">用瀏覽器原生控制列</td></tr>
+    <tr><td class="id">2.7</td><td class="item">Re-generate &amp; edit flow</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">重生成場景/封面、保留 takes、挑選 + Merge <code>mv/MvEditor.tsx</code></td><td class="miss">重生成是前端 setTimeout mock(未走 API)</td></tr>
+    <tr><td class="id">2.8</td><td class="item">Publish MV from creation flow</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">MvDetail 有 publish 開關(「Published · pending review」)<code>mv/MvDetail.tsx:105</code></td><td class="miss">只是切換,無完整發布表單(標題/封面/genre/描述)</td></tr>
+    <tr><td class="id">2.9</td><td class="item">MV proof certificate</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">Proof 頁 <code>proof/ProofView.tsx</code></td><td class="miss">Unlock/Restore 為 stub</td></tr>
+  </tbody>
+</table></div>
+
+<!-- 3 AI Song Creation -->
+<h2 class="sec"><span class="g">3</span> AI Song Creation</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>ID</th><th>項目</th><th>狀態</th><th>Prototype 現況(證據)</th><th>缺什麼 / 備註</th></tr></thead>
+  <tbody>
+    <tr><td class="id">3.1</td><td class="item">Main creation flow</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">SongCompose(simple / custom) <code>song/SongCompose.tsx</code></td><td class="miss">—</td></tr>
+    <tr><td class="id">3.2</td><td class="item">Song Idea / lyrics presets</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">SONG_IDEAS + ENHANCE_SAMPLES.lyrics <code>song/SongCompose.tsx</code></td><td class="miss">—</td></tr>
+    <tr><td class="id">3.3</td><td class="item">Song preview player</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">播放/暫停、進度 scrubber、旋轉唱盤 <code>song/SongDetail.tsx</code></td><td class="miss">缺 waveform 視覺化、loop、音量控制</td></tr>
+    <tr><td class="id">3.4</td><td class="item">Publish song from creation flow</td><td class="st"><span class="badge b-no">NO</span></td><td class="ev">SongDetail 無 publish(grep 確認)</td><td class="miss">歌曲沒有任何發布入口(MV 才有開關)</td></tr>
+  </tbody>
+</table></div>
+
+<!-- 4 Explore (Community) -->
+<h2 class="sec"><span class="g">4</span> Explore(Community)</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>ID</th><th>項目</th><th>狀態</th><th>Prototype 現況(證據)</th><th>缺什麼 / 備註</th></tr></thead>
+  <tbody>
+    <tr><td class="id">4.1</td><td class="item">Publish MV — submit &amp; review status</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">MvDetail「pending review」+ HistoryView published/reviewing 覆寫+確認框 <code>history/HistoryView.tsx:124</code></td><td class="miss">無完整狀態徽章(In Review/Live/Rejected);三處狀態不同步(handover §1)</td></tr>
+    <tr><td class="id">4.2</td><td class="item">Publish Song — submit &amp; review status</td><td class="st"><span class="badge b-no">NO</span></td><td class="ev">歌曲無發布流程</td><td class="miss">整個歌曲 publish + 審核狀態未實作</td></tr>
+    <tr><td class="id">4.3</td><td class="item">Rejection notification &amp; appeal</td><td class="st"><span class="badge b-no">NO</span></td><td class="ev">—</td><td class="miss">無 reject / appeal / resubmit / 通知</td></tr>
+    <tr><td class="id">4.4</td><td class="item">Trending — Explore(4 rails)</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">Trending MV carousel + New MVs + Top Picks Songs + New Songs <code>home/HomeView.tsx</code>,<code>explore/mvs</code>,<code>explore/songs</code></td><td class="miss">跑寫死種子資料</td></tr>
+    <tr><td class="id">4.5</td><td class="item">Share — MV/Song link + preview page</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">公開 <code>/share?id={hash}</code> 頁(P2-S1:MV/歌曲媒體卡、Share+Download、Try CTA、過期狀態);統一 <code>buildShareUrl</code>;ShareDialog 社群目標+native</td><td class="miss">自製作品僅同 session 內可解析(History 記憶體);production 由後端解析 id</td></tr>
+    <tr><td class="id">4.6</td><td class="item">Like — MV/Song</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">Heart 按讚 UI(社群播放器/創作者頁)、History「Liked」filter <code>community/CommunityMvPlayer.tsx:80</code></td><td class="miss">僅本地 state,未持久化/無後端</td></tr>
+    <tr><td class="id">4.7</td><td class="item">Creator profile page</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">頭像、MV/Songs 分頁(作品集+歌曲清單)、讚數 <code>community/CreatorProfile.tsx</code></td><td class="miss">缺 follower 數 / follow 功能、bio</td></tr>
+    <tr><td class="id">4.8</td><td class="item">Content / user share region spec</td><td class="st"><span class="badge b-no">NO</span></td><td class="ev">—</td><td class="miss">無地區分流 UI(屬 spec/後端)</td></tr>
+  </tbody>
+</table></div>
+
+<!-- 5 Monetization -->
+<h2 class="sec"><span class="g">5</span> Monetization</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>ID</th><th>項目</th><th>狀態</th><th>Prototype 現況(證據)</th><th>缺什麼 / 備註</th></tr></thead>
+  <tbody>
+    <tr><td class="id">5.1</td><td class="item">Product SKUs</td><td class="st"><span class="badge b-na">N/A</span></td><td class="ev">—</td><td class="miss">SKU 設定(App store/ePF),前端無對應畫面</td></tr>
+    <tr><td class="id">5.2</td><td class="item">IAP page &amp; purchase flow(2CO / Stripe)</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">BuyCreditsModal(方案+價格+「Buy Now」)、SubscribeModal <code>credits/*.tsx</code></td><td class="miss">mock 購買,無真實結帳/金流</td></tr>
+    <tr><td class="id">5.3</td><td class="item">Plan upgrade / downgrade</td><td class="st"><span class="badge b-part">PARTIAL</span></td><td class="ev">SubscribeModal 可選方案並訂閱 <code>credits/SubscribeModal.tsx</code></td><td class="miss">無真正升/降級管理與 proration</td></tr>
+  </tbody>
+</table></div>
+
+<!-- 6 Mobile Support -->
+<h2 class="sec"><span class="g">6</span> Mobile Support</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>ID</th><th>項目</th><th>狀態</th><th>Prototype 現況(證據)</th><th>缺什麼 / 備註</th></tr></thead>
+  <tbody>
+    <tr><td class="id">6.1</td><td class="item">Mobile RWD support</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">響應式 sm:/lg:,shell 由 bottom-bar 切 sidebar <code>components/shell/</code></td><td class="miss">審查視窗 390/768/1024/1440</td></tr>
+    <tr><td class="id">6.2</td><td class="item">Mobile share URL spec</td><td class="st"><span class="badge b-yes">YES</span></td><td class="ev">統一 <code>share?id={hash}</code> scheme;行動 <code>navigator.share</code> native sheet,桌機 dialog fallback(spec P1-S2)</td><td class="miss">—</td></tr>
+  </tbody>
+</table></div>
+
+<!-- 7 Curation Backend -->
+<h2 class="sec"><span class="g">7</span> Curation Backend</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>ID</th><th>項目</th><th>狀態</th><th>Prototype 現況(證據)</th><th>缺什麼 / 備註</th></tr></thead>
+  <tbody>
+    <tr><td class="id">7.1</td><td class="item">AI review(NSFW/版權/靜音偵測)</td><td class="st"><span class="badge b-na">N/A</span></td><td class="ev">—</td><td class="miss">純後端 pipeline,前端無畫面</td></tr>
+    <tr><td class="id">7.2</td><td class="item">Human moderation queue</td><td class="st"><span class="badge b-na">N/A</span></td><td class="ev">—</td><td class="miss">後端/OPS 管理台</td></tr>
+    <tr><td class="id">7.4</td><td class="item">Admin override controls</td><td class="st"><span class="badge b-na">N/A</span></td><td class="ev">—</td><td class="miss">後端/OPS 管理台</td></tr>
+    <tr><td class="id">7.5</td><td class="item">Ghost account &amp; OPS tagging</td><td class="st"><span class="badge b-na">N/A</span></td><td class="ev">—</td><td class="miss">後端/OPS,對終端使用者不可見</td></tr>
+  </tbody>
+</table></div>
+
+<footer>
+  <p>對照來源:開發排程 <code>YCM_FCS_Schedule/Web.html</code>(7 大類 36 項)。狀態以 prototype 前端實作為準,已用 grep + 元件檢視逐項確認。PARTIAL/NO 的技術細節與修正建議請對照 <code>docs/rd-handover-todo.html</code>。</p>
+</footer>
+
+</div>
+</body>
+</html>

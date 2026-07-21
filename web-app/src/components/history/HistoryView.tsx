@@ -8,6 +8,7 @@ import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useHistory } from "@/components/providers/HistoryProvider";
 import { CreationDialog, type CreationLike } from "@/components/mv/CreationDialog";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { buildShareUrl } from "@/lib/share";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { downloadFile } from "@/lib/download";
@@ -171,7 +172,7 @@ export function HistoryView() {
                       open={openMenu === r.id}
                       setOpen={(v) => setOpenMenu(v ? r.id : null)}
                       onLike={() => toggleLike(r)}
-                      onShare={() => { setOpenMenu(null); setShare({ title: r.title, url: `https://musemv.ai/c/${r.id}` }); }}
+                      onShare={() => { setOpenMenu(null); setShare({ title: r.title, url: buildShareUrl(r.id) }); }}
                       onDownload={() => doDownload(r)}
                       onDelete={() => { setOpenMenu(null); setDel(r); }}
                       onPublish={() => (r.kind === "mv" ? togglePublishMv(r) : togglePublishSong(r))}

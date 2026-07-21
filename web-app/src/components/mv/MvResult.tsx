@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
+import { buildShareUrl } from "@/lib/share";
 import { MvDetail } from "./MvDetail";
 import { MV_TYPES, mockStoryboard } from "@/lib/mv/mock";
 import { MOCK_USER } from "@/lib/user";
@@ -10,6 +12,8 @@ import { MOCK_USER } from "@/lib/user";
 export function MvResult() {
   const router = useRouter();
   const { resultUrl, compose, storyboard, setStoryboard, saveStoryboard } = useMvFlow();
+  const { history } = useHistory();
+  const shareId = history.find((h) => h.kind === "mv" && h.resultUrl === resultUrl)?.id ?? "";
 
   function editMv() {
     // Carry this video into the editor; ensure a storyboard exists (direct-mode renders have none).
@@ -37,7 +41,7 @@ export function MvResult() {
       <MvDetail
         videoUrl={resultUrl}
         downloadUrl={resultUrl}
-        shareUrl={`https://musemv.ai/mv/${title.toLowerCase().replace(/\s+/g, "-")}`}
+        shareUrl={buildShareUrl(shareId)}
         info={{
           title,
           typeName,

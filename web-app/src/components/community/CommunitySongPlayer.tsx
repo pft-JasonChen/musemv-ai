@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { buildShareUrl } from "@/lib/share";
 import { LyricsPanel } from "@/components/song/LyricsPanel";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { ALL_COMMUNITY_SONGS, getCommunitySong, DEFAULT_CREATOR } from "@/lib/mv/community";
@@ -128,7 +129,7 @@ export function CommunitySongPlayer() {
         <p className="mt-2 text-center text-[11px]" style={{ color: "var(--text-3)" }}>Starts a new song with this genre, mood &amp; lyrics.</p>
       </div>
 
-      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={song.title} url={`https://musemv.ai/song/${song.id}`} />
+      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={song.title} url={buildShareUrl(song.id)} />
       <LyricsPanel
         open={lyricsOpen}
         onClose={() => setLyricsOpen(false)}

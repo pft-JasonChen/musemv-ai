@@ -32,13 +32,14 @@ export function GenerationView({ kind, title, subtitle, estimate, nextHref, star
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Navigate when done.
+  // Navigate when done. Trust the job status alone — a real backend may report
+  // "done" before progress reaches exactly 100 (the mock always hits 100).
   useEffect(() => {
-    if (gen.status === "done" && gen.progress >= 100) {
+    if (gen.status === "done") {
       const t = setTimeout(() => router.push(nextHref), 350);
       return () => clearTimeout(t);
     }
-  }, [gen.status, gen.progress, nextHref, router]);
+  }, [gen.status, nextHref, router]);
 
   const backHref = kind === "song" ? "/song/create" : "/mv/room";
 

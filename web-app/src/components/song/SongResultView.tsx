@@ -4,12 +4,15 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
+import { buildShareUrl } from "@/lib/share";
 import { SongDetail } from "./SongDetail";
 
 export function SongResultView() {
   const router = useRouter();
   const { songResult } = useSongFlow();
   const { patchCompose } = useMvFlow();
+  const { history } = useHistory();
 
   useEffect(() => {
     if (!songResult) router.replace("/song/create");
@@ -30,7 +33,7 @@ export function SongResultView() {
         audioUrl={songResult.audioUrl}
         lyrics={songResult.lyrics}
         downloadUrl={songResult.audioUrl}
-        shareUrl={`https://musemv.ai/song/${songResult.title.toLowerCase().replace(/\s+/g, "-")}`}
+        shareUrl={buildShareUrl(history.find((h) => h.kind === "song" && h.resultUrl === songResult.audioUrl)?.id ?? "")}
         info={{ title: songResult.title, dateLabel: "just now", genre: songResult.genre, mood: songResult.mood, instrumental: songResult.instrumental, durationSec: songResult.durationSec }}
         onRecreate={() => router.push("/song/create")}
         onUseInMv={useInMv}

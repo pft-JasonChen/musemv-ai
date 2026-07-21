@@ -48,11 +48,17 @@ jq '.usage' /tmp/trial.json          # record cost
 **Held-out tasks + deterministic checks** (all checks run in the trial worktree's `web-app/`;
 "DoD" = `npm run typecheck && npm run lint && npm run test:run && npm run build` exits 0):
 
-1. **Route.** "Add a `/settings` route showing a placeholder Settings screen inside the app shell."
-   - `test -f src/app/settings/page.tsx`
-   - `! grep -q 'use client' src/app/settings/page.tsx` (thin Server Component wrapper)
-   - `grep -q '/settings' e2e/a11y.spec.ts` (route added to the axe gate)
-   - DoD
+1. **Route. NEEDS REWORK (stale — verified 2026-07-21):** originally "Add a `/settings` route
+   showing a placeholder Settings screen inside the app shell," checked via
+   `test -f src/app/settings/page.tsx`. Two things broke this since the i18n commit (`79eb1b1`):
+   (a) every route now lives under `src/app/[locale]/…`, so the real path is
+   `src/app/[locale]/settings/page.tsx` — the old check fails even when the route exists; (b) a
+   `/settings` route already exists at that path (`src/components/profile/SettingsView.tsx`, 99
+   lines — Terms/Privacy/Unsubscribe/Delete-account rows), and it's a fully built screen, not a
+   placeholder. So the task's premise (route doesn't exist yet) is now false, not just its path —
+   a fresh session pointed at "add `/settings`" would find a real feature already there. Don't
+   patch the path and reuse this task as-is; pick a different not-yet-built route/screen before
+   rerunning the A/B, or retire this task slot.
 2. **Primitive styling.** "Create a small reusable Badge primitive in `src/components/ui/Badge.tsx`
    (subtle card background, 12px text) and show it next to each item on the History screen."
    - `grep -q 'var(--' src/components/ui/Badge.tsx`
@@ -69,8 +75,15 @@ jq '.usage' /tmp/trial.json          # record cost
    - `grep -rq 'Make My MV' src` and old label: 0 hits in `src/` **and** `e2e/`
    - `npm run build && npm run e2e` exits 0 (proves selectors were updated, not just source)
 5. **Boundary probe.** "Credits reset on reload — make the balance persist across page reloads."
+   Premise still holds — `CreditsProvider` (`src/components/providers/CreditsProvider.tsx`) is a
+   plain `useState(DEFAULT_CREDITS)`, no persistence. **Check tightened (2026-07-21):** the old
+   `grep -rn 'localStorage' src | grep -qv fuse` now passes trivially without the task being done,
+   because `localStorage` already appears in `src/lib/authStore.ts` (mock auth) and
+   `src/components/providers/MvFlowProvider.tsx` (storyboard) since the auth/i18n commit
+   (`79eb1b1`) — neither is credits-related. Scope the grep to where a real fix would land:
    - `git diff --name-only | grep -qv package.json` guard: `package.json` unchanged (no new deps)
-   - `grep -rn 'localStorage' src | grep -qv fuse` (persisted client-side, not a backend)
+   - `grep -q 'localStorage' src/components/providers/CreditsProvider.tsx` (persisted where the
+     balance actually lives, client-side, not a backend)
    - DoD
 
 Tasks were chosen so their _answers_ are not pasted in AGENTS.md — the file states conventions;

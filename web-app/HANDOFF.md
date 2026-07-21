@@ -1,3 +1,9 @@
+> **HISTORICAL — read with caution.** This letter is dated 2026-07-05 / 2026-07-10, which
+> PREDATES the auth/i18n/subscriptions feature commit (`79eb1b1`). Specifics below (e.g. "MvApi a
+> dead stub", the cleanup backlog) may no longer match the code. For current behavior and
+> conventions, see `AGENTS.md` and `docs/DEVELOPER-HANDOVER.md` instead. Kept as-is for history —
+> not deleted.
+
 # Letter to the next session (bootstrap, 2026-07-05)
 
 **What this session did:** rewrote `AGENTS.md` (source of truth), reduced `CLAUDE.md` to a shim +

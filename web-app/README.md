@@ -30,7 +30,7 @@ npm run dev                      # http://localhost:3000
 - **Community screens** (seed data only — feature not yet defined, see `TODO.md` #1):
   home feed sections, `/explore/mvs`, `/explore/songs`, `/watch`, `/song/play`, `/creator`,
   `/share/mv/[id]`.
-- **History, profile, credits/IAP modal, proof page** — 19 routes total.
+- **History, profile, settings, credits/IAP modal, proof page** — 20 routes total.
 
 ## Architecture (details: `docs/DEVELOPER-HANDOVER.md`)
 - `src/lib/api/` — the backend boundary: `contract.ts` (`MuseApi`), `schemas.ts` (Zod = types),
@@ -49,10 +49,11 @@ npm run dev                      # http://localhost:3000
 - **Playwright** e2e + axe a11y (`e2e/`), config in `playwright.config.ts`.
 - **`.mcp.json`**: Playwright, Chrome DevTools, shadcn MCP servers.
 
-## Verified (2026-07-12)
-`tsc`, `vitest` (12/12), `eslint` (0), `next build` (19 routes), `build-storybook`
-(Storybook 10) all green. `playwright test` 20/20: MV flow, song flow, and axe gates on all
-18 auto-discovered routes (known accent-pill contrast issue excluded pending design — `TODO.md` #2).
+## Verified (2026-07-21)
+`tsc`, `vitest` (12/12), `eslint` (0), `next build` (20 routes), `build-storybook`
+(Storybook 10) all green. `playwright test` 21/21: MV flow, song flow (both sign in via a
+seeded `localStorage["muse_auth"]`), and axe gates on all 19 auto-discovered routes (known
+accent-pill contrast issue excluded pending design — `TODO.md` #2).
 
 Demo tips: every sample song has real audio (two mp3s mapped across the list); song rows
 play/pause in place and trims can be re-edited + previewed. A description containing `[fail]`

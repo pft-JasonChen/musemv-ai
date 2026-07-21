@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>YouCam Muse Web — RD Handover TODO</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --surface: #ffffff; --surface-2: #f1f3f6; --border: #e3e6ea;
+    --text: #1c1e22; --text-2: #565b63; --text-3: #878d96;
+    --p0: #d92d20; --p0-bg: #fef3f2; --p1: #b54708; --p1-bg: #fff8f0; --p2: #667085; --p2-bg: #f2f4f7;
+    --done: #067647; --done-bg: #ecfdf3;
+    --rd: #175cd3; --rd-bg: #eff6ff; --pm: #6941c6; --pm-bg: #f5f2ff; --design: #c11574; --design-bg: #fdf2fa;
+    --accent: #6941c6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c; --surface: #1e2126; --surface-2: #23272e; --border: #2e333b;
+      --text: #e7eaee; --text-2: #a8afb9; --text-3: #7b828d;
+      --p0: #ff6b5e; --p0-bg: #2a1917; --p1: #f5a15f; --p1-bg: #2a2117; --p2: #9aa2af; --p2-bg: #23272e;
+      --done: #47c78a; --done-bg: #14251d;
+      --rd: #6ba5f5; --rd-bg: #182234; --pm: #b28bf0; --pm-bg: #221a33; --design: #f07cc0; --design-bg: #2e1826;
+      --accent: #b28bf0;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.65; font-size: 15px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 96px; }
+  header.page { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 28px; }
+  h1 { font-size: 27px; margin: 0 0 6px; letter-spacing: -.01em; }
+  .sub { color: var(--text-2); font-size: 14px; margin: 0; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 16px; font-size: 13px; color: var(--text-3); }
+  .meta b { color: var(--text-2); font-weight: 600; }
+
+  .dod { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .dod span { font-size: 12.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--done-bg); color: var(--done); border: 1px solid color-mix(in srgb, var(--done) 25%, transparent); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; margin: 22px 0 6px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; font-size: 13px; }
+  .legend .grp { display: flex; align-items: center; gap: 8px; }
+  .legend .grp > b { color: var(--text-3); font-weight: 600; margin-right: 2px; }
+
+  .badge { font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px; white-space: nowrap; letter-spacing: .02em; }
+  .b-p0 { background: var(--p0-bg); color: var(--p0); } .b-p1 { background: var(--p1-bg); color: var(--p1); } .b-p2 { background: var(--p2-bg); color: var(--p2); }
+  .b-rd { background: var(--rd-bg); color: var(--rd); } .b-pm { background: var(--pm-bg); color: var(--pm); } .b-design { background: var(--design-bg); color: var(--design); }
+
+  nav.toc { margin: 24px 0 8px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  nav.toc h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); margin: 0 0 10px; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc li { margin: 3px 0; }
+  nav.toc a { color: var(--text); text-decoration: none; font-size: 14px; }
+  nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+  nav.toc .cnt { color: var(--text-3); font-size: 12.5px; }
+
+  section.zone { margin-top: 40px; scroll-margin-top: 16px; }
+  section.zone > h2 { font-size: 20px; margin: 0 0 4px; padding-bottom: 8px; display: flex; align-items: baseline; gap: 10px; }
+  section.zone > h2 .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  section.zone > .zdesc { color: var(--text-2); font-size: 13.5px; margin: 0 0 18px; }
+
+  .item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .item-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .item-head .t { font-weight: 650; font-size: 15.5px; flex: 1 1 60%; min-width: 240px; }
+  .item-head .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .item p { margin: 9px 0 0; color: var(--text-2); font-size: 14px; }
+  .item p.why { color: var(--text-3); font-size: 13px; }
+  .item .files { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .item .files code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text-2); }
+  .item .tag { font-size: 12px; color: var(--text-3); }
+  .dec-note { margin-top: 10px; font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--pm-bg); color: var(--pm); border: 1px solid color-mix(in srgb, var(--pm) 22%, transparent); }
+  .spec-note { margin-top: 10px; font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--rd-bg); color: var(--rd); border: 1px solid color-mix(in srgb, var(--rd) 22%, transparent); }
+
+  .changelog { margin: 22px 0 6px; }
+  .changelog > h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); margin: 0 0 10px; }
+  .cl-entry { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }
+  .cl-entry .d { font-size: 12px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .cl-entry p { margin: 5px 0 0; font-size: 13px; color: var(--text-2); }
+  .cl-entry code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; font-size: 11.5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--text-3); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>YouCam Muse Web — RD Handover TODO</h1>
+  <p class="sub">交接前的待辦清單(RD 視角)。範圍為 <code>web-app/</code> 前端 prototype;不含 backend API 設計本身。本清單僅列<strong>未完成</strong>項目 — 已於本次審查修正的程式 bug 與文件矛盾已移除。</p>
+  <div class="meta">
+    <span><b>更新日期</b>2026-07-22</span>
+    <span><b>技術棧</b>Next.js 16.2 · React 19 · TS strict · Tailwind v4</span>
+    <span><b>產品化目標</b>把 mock API 換成真實 backend</span>
+  </div>
+  <div class="dod">
+    <span>typecheck ✔</span><span>lint ✔</span><span>test 12/12 ✔</span><span>build ✔</span><span>e2e 22/22 ✔</span>
+  </div>
+</header>
+
+<div class="legend">
+  <div class="grp"><b>優先級</b><span class="badge b-p0">P0</span> 立即阻擋 <span class="badge b-p1">P1</span> 很快會踩 <span class="badge b-p2">P2</span> 有空再修</div>
+  <div class="grp"><b>負責</b><span class="badge b-rd">RD</span><span class="badge b-pm">PM</span><span class="badge b-design">設計</span></div>
+</div>
+
+<section class="changelog">
+  <h2>變更紀錄 Changelog(交接追蹤,新到舊)</h2>
+  <div class="cl-entry">
+    <span class="d">2026-07-22</span>
+    <p><strong>分享連結 Share Link Page 實作(排程 4.5 + 6.2)。</strong>套用 P2-S1 spec:新增公開、免登入的 <code>/share?id={hash}</code> 頁(MV=影片海報+播放、歌曲=封面+音訊卡、Share + Download、「Try YouCam Muse」CTA、&gt;30 天/無效 id 的過期 empty state)。四套分享 URL 統一為單一 <code>buildShareUrl(id)</code> scheme(<code>lib/share.ts</code>);<code>ShareDialog</code> 加入 FB / X / Pinterest / Reddit + 行動 <code>navigator.share</code>;舊 <code>/share/mv/[id]</code> 改為 redirect;<code>AppShell</code> 對 <code>/share</code> 免除側欄/頂欄。CTA 放大到 19px bold 以通過 WCAG(大字 3:1)。四項 DoD + e2e 22/22 綠燈。<span class="tag">註:自製作品的分享僅在同一 session 內可解析(History 為記憶體內),reload/跨分頁會顯示過期 — 與 spec「production 由後端解析」一致。</span></p>
+  </div>
+  <div class="cl-entry">
+    <span class="d">2026-07-21</span>
+    <p><strong>交接前審查修正。</strong>程式:第二次生成流程重置(reset bug)、三條生成路由守衛、完成判定、job <code>.catch</code>、eslint 忽略殘留 worktree、<code>matchLocale</code> q-weight、刪 dead code。文件:AGENTS/README/DEVELOPER-HANDOVER 的 auth/i18n/route 事實同步 + i18n/訂閱/測試規則/文件權威補齊。測試:兩支 e2e flow 修復(登入種子)。</p>
+  </div>
+</section>
+
+<nav class="toc">
+  <h2>目錄</h2>
+  <ol>
+    <li><a href="#zone-bug">區一 · 程式 Bug / 技術債</a> <span class="cnt">(13 項)</span></li>
+    <li><a href="#zone-spec">區二 · 待補 Spec / 產品決策</a> <span class="cnt">(4 項)</span></li>
+    <li><a href="#zone-ui">區三 · UI/UX 調整中(PM/設計)</a> <span class="cnt">(6 項)</span></li>
+  </ol>
+</nav>
+
+<!-- ============ 區一 · 程式 Bug ============ -->
+<section class="zone" id="zone-bug">
+  <h2><span class="num">§1</span> 程式 Bug / 技術債</h2>
+  <p class="zdesc">產品化(接真實 backend)前需要處理的程式問題。部分經 PM 決策後暫不動程式、僅列此追蹤。</p>
+
+  <div class="item">
+    <div class="item-head"><span class="t">使用者媒體是 blob URL + 前端生成 ID,直接進 API request</span><span class="badges"><span class="badge b-p0">P0</span><span class="badge b-rd">RD</span></span></div>
+    <p><code>MvRoom.importAudio</code>／<code>addPhotoFromFile</code> 把 <code>URL.createObjectURL(...)</code> 的 <code>blob:</code> URL 與 <code>crypto.randomUUID()</code> 塞進 <code>Song.url</code>／<code>CharacterPhoto.url</code>,原樣送進 <code>MvCreateRequest</code>。Schema 只是 <code>z.string()</code>,看起來「一個字串就夠」,但真實 backend 無法解參照別台機器的 blob URL。</p>
+    <p class="why">為何重要:需要先設計「上傳端點」→ 拿到伺服器 URL 再送 create,contract 目前沒有這個掛勾。另外 object URL 從未 <code>revokeObjectURL</code>,有緩慢記憶體洩漏。</p>
+    <div class="files"><code>mv/MvRoom.tsx:61-76</code><code>lib/api/schemas.ts</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">輪詢(pollJob)一次抖動就當作失敗、且為 demo 速度</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-rd">RD</span></span></div>
+    <p>任何一次 fetch throw 就停止輪詢並觸發 <code>onError</code> → 被 provider 轉成 <code>failed</code> + <code>markFailed</code>,一個 Wi-Fi 抖動就會「失敗」一個伺服器端仍在跑的 job。沒有重試預算、沒有 backoff;<code>DEFAULT_INTERVAL_MS = 120</code> 對真後端等於每秒約 8 次請求;且 <code>onError</code> 丟掉了 job 本身的錯誤細節(contract 也沒有 job 的 error 欄位)。</p>
+    <p class="why">產品化必改:加入重試/backoff、區分「job 失敗」與「輪詢失敗」、把輪詢間隔調到合理值、contract 補 error 欄位。</p>
+    <div class="files"><code>lib/api/poll.ts:20,44-52</code><code>lib/api/contract.ts</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t"><code>mv-storyboard</code> localStorage 是全域單槽,會被覆寫/外洩</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-rd">RD</span></span></div>
+    <p>key <code>"mv-storyboard"</code> 沒有依使用者或 job 分槽。<code>HistoryView.seedFlow</code> 只是為了打開一列「範例」歷史就呼叫 <code>saveStoryboard()</code>,會默默蓋掉使用者真正存的分鏡;<code>signOut</code> 只清 <code>muse_auth</code>,分鏡會殘留給下一個使用者;且還原的分鏡沒有帶 <code>jobId</code>。</p>
+    <div class="files"><code>providers/MvFlowProvider.tsx:32,57-77</code><code>history/HistoryView.tsx:77-88</code><code>lib/authStore.ts:27-35</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">MvEditor 是第二個「假後端」,但沒被標示</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-rd">RD</span></span></div>
+    <p><code>mock.ts</code> 標頭寫「這是全專案唯一假後端」、AGENTS.md 說 provider「不擁有假計時器」,但 <code>MvEditor.regenerate</code>／<code>regenerateCover</code> 完全用 <code>setTimeout</code> + 前端隨機挑素材造假,從不經過 <code>MuseApi</code>。RD 換掉 <code>index.ts</code> 會以為編輯器已接好,其實沒有。</p>
+    <p class="why">建議:至少加醒目註解或 contract TODO;產品化時要把場景/封面重生成也走 job-based API。</p>
+    <div class="files"><code>mv/MvEditor.tsx:91-113</code><code>lib/mv/mock.ts</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">Reload 後狀態持久化不一致(訂閱層級尤其危險)</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-rd">RD</span></span></div>
+    <p>Reload 後仍在:auth 布林(localStorage)、分鏡(localStorage)、locale(cookie)。會遺失:compose、gen、resultUrl、songResult、history、credits、以及 <code>subscribed</code>／<code>subscribedPlan</code>／<code>profile</code>(純 useState)。使用者訂了 Muse Pro、reload 後仍登入卻變回免費 + 預設 profile,會被誤判為 session bug。</p>
+    <div class="files"><code>providers/AuthProvider.tsx:49-51</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">完成分鏡後不更新 history,永遠停在「Generating…」</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-rd">RD</span><span class="badge b-pm">PM</span></span></div>
+    <p><code>startStoryboard</code> 的 <code>onDone</code> 只設 flow state,沒有呼叫 <code>markCompleted</code>。若使用者在分鏡完成後按「View Later」停在該步,My Creations 那筆會永遠顯示「Generating…」。</p>
+    <div class="dec-note">未修:完成但未算圖的分鏡在 history 該顯示什麼狀態(draft?storyboard ready?)牽涉產品定義,且 <code>markCompleted(id, videoUrl)</code> 目前簽章不適用(分鏡沒有影片 URL)。需 PM 定義狀態後再實作。</div>
+    <div class="files"><code>providers/MvFlowProvider.tsx:99-114</code><code>lib/mv/mock.ts (HISTORY_SAMPLES)</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">Locale-aware 導航未統一(~40 處沒帶 locale 前綴)</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-rd">RD</span></span></div>
+    <p>只有 4 個檔案用 <code>localePath()</code>,其餘約 40 處 <code>router.push("/bare/path")</code>。Happy path 靠 middleware 的 <code>NEXT_LOCALE</code> cookie 補救,但拿到 <code>/jpn/…</code> 分享連結、瀏覽器又是英文的使用者,一點擊就被默默切回英文;即使正常路徑每次導航也多吃一次 redirect。兩套並存的模式正是新 RD 最容易踩的地雷。</p>
+    <div class="dec-note">決策:留給 RD 處理。建議做法 — 引入一個 locale-aware 導航 helper(如 <code>useLocaleRouter</code>)統一約 40 處呼叫,並把「用 localePath 還是 raw path」寫成明文慣例。</div>
+    <div class="files"><code>lib/i18n/config.ts (localePath)</code><code>components/**（約 40 處 router.push/Link）</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">點數(credits)規則整包待定</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-pm">PM</span><span class="badge b-rd">RD</span></span></div>
+    <p>目前狀態:CTA 上顯示的花費(歌 10 / 分鏡 20 / 算圖 200)其實從未扣款;只有 MvEditor 的重生成/封面/Merge 會 <code>addCredits(-N)</code>,且沒有下限會扣成負數;失敗畫面卻寫「您的點數未被扣除」;<code>SongCompose</code> 還寫死 <code>&lt;CreditPill credits={390} /&gt;</code> 而非讀即時餘額。contract 完全沒有點數模型。</p>
+    <div class="dec-note">決策:整個點數規則待與 PM 討論,本次不動程式。決定後需一次處理:計費位置(前端/後端)、負數下限、寫死餘額、失敗文案一致性。</div>
+    <div class="files"><code>song/SongCompose.tsx:46,167</code><code>mv/MvEditor.tsx:96,108,117</code><code>mv/StoryboardEditor.tsx</code><code>mv/GenerationView.tsx:55</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">SSR <code>&lt;html lang&gt;</code> 永遠是 "en"</span><span class="badges"><span class="badge b-p2">P2</span><span class="badge b-rd">RD</span></span></div>
+    <p>root layout 寫死 <code>lang="en"</code>,<code>LocaleProvider</code> 只在 client 端修正,首屏/爬蟲在 <code>/jpn/*</code> 看到的仍是英文 lang,且沒有 per-locale metadata / alternates。<code>HTML_LANG</code> 對照表已存在但 server 端未使用。</p>
+    <p class="why">SEO / a11y 產品化缺口。</p>
+    <div class="files"><code>app/layout.tsx:23</code><code>lib/i18n/config.ts (HTML_LANG)</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">Demo 型假動作未標示為 stub</span><span class="badges"><span class="badge b-p2">P2</span><span class="badge b-rd">RD</span></span></div>
+    <p><code>SettingsView</code> 的「Unsubscribe」「Delete Account」只跳 toast(訂閱仍 Pro、使用者仍登入);<code>ProofView</code> 的「Unlock for $4.90」「Restore」只是 <code>router.back()</code>,「Privacy Policy」按鈕沒有 handler。demo 沒問題,但 RD 需要知道這些是 stub。</p>
+    <div class="files"><code>profile/SettingsView.tsx:70,87</code><code>proof/ProofView.tsx:58-62</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">History 傳 <code>?id=</code> 但編輯器從不讀取</span><span class="badges"><span class="badge b-p2">P2</span><span class="badge b-rd">RD</span></span></div>
+    <p><code>HistoryView</code> push <code>/mv/edit?id=</code> 與 <code>/mv/storyboard?id=</code>,但兩個編輯器都沒讀 <code>id</code>(state 來自 <code>seedFlow</code>)。這個 query param 暗示了不存在的「依項目路由」。</p>
+    <div class="files"><code>history/HistoryView.tsx:112,122-123</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">StrictMode 下 generation 畫面雙重啟動(dev)</span><span class="badges"><span class="badge b-p2">P2</span><span class="badge b-rd">RD</span></span></div>
+    <p><code>GenerationView</code> 的 start effect 是空依賴陣列且無取消。dev StrictMode 雙呼叫會建兩個 mock job、兩筆「Generating」history。production build 不會雙呼叫,但真後端下任何 remount/Retry 重複都是可計費的重複 job。</p>
+    <p class="why">若日後把 start 從 mount 改到入口動作觸發即可根治(本次已把重置放在入口,未一併改動 start 觸發點以降低回歸風險)。</p>
+    <div class="files"><code>mv/GenerationView.tsx:30-33,59</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">Publish 狀態三處各自為政、不同步</span><span class="badges"><span class="badge b-p2">P2</span><span class="badge b-pm">PM</span></span></div>
+    <p><code>MvDetail</code> 有一個本地 <code>published</code> 開關(無確認步驟),既不讀也不寫 <code>HistoryView</code> 的 <code>published/reviewing</code> 覆寫(後者要確認對話框)。在 dialog 內 publish 關掉就消失、也不會反映到卡片選單。</p>
+    <div class="dec-note">與社群 publish spec(§2)綁定,建議一起定義。</div>
+    <div class="files"><code>mv/MvDetail.tsx:54,105-111</code><code>history/HistoryView.tsx:124-136</code></div>
+  </div>
+</section>
+
+<!-- ============ 區二 · 待補 Spec / 產品決策 ============ -->
+<section class="zone" id="zone-spec">
+  <h2><span class="num">§2</span> 待補 Spec / 產品決策</h2>
+  <p class="zdesc">需要 PM/設計先給定義,RD 才能實作的項目。含社群相關 spec(與區三的社群 UI 項目相呼應)。</p>
+
+  <div class="item">
+    <div class="item-head"><span class="t">社群功能整套 spec 待補</span><span class="badges"><span class="badge b-p0">P0</span><span class="badge b-pm">PM</span><span class="badge b-rd">RD</span></span></div>
+    <p>社群介面(home feed、<code>/explore/mvs</code>、<code>/explore/songs</code>、<code>/watch</code>、<code>/song/play</code>、<code>/creator</code>)已完整 render,但跑在 <code>community.ts</code> 的寫死種子資料上,背後沒有產品定義(TODO.md #1)。已有策略提案 <code>docs/community-strategy-proposal.html</code>(官方優先 feed、IP-based locale、HN-gravity 排序、預審+人工複審),核准後轉成 <code>specs/</code> + API contract。</p>
+    <p class="why">需定義:哪些是真實產品範圍(browse/play/like/share/follow/publish)vs demo 裝飾;community 實體有 Zod schema 但 <code>MuseApi</code> 沒有任何 community 端點;首個 backend release 服務什麼(如唯讀 feed)。</p>
+    <div class="files"><code>lib/mv/community.ts</code><code>lib/api/schemas.ts</code><code>docs/community-strategy-proposal.html</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">Accent pill 未達 WCAG AA 對比</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-design">設計</span></span></div>
+    <p>小型 accent pill(Create、History filter chips、SongCompose mode chips、Creator tabs)白字 12–13px bold 在 <code>--accent</code>(#A855F7)上只有 3.95:1,低於 4.5:1(TODO.md #2)。axe gate 目前靠排除這些 selector 保持綠燈。因 <code>--accent</code> 是 Figma-synced、token 值不可改,需設計決策:給小字用的深色 accent 變體、放大/加粗標籤(≥19px bold 只需 3:1)、或換填色。</p>
+    <div class="files"><code>e2e/a11y.spec.ts (KNOWN_CONTRAST_PILLS)</code><code>styles/tokens.css</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">多個核心介面沒有 spec</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-pm">PM</span></span></div>
+    <p>目前只有 MV 建立流程有 spec(<code>specs/mv-creation-flow.spec.md</code>,且已過時)。沒有 spec 的介面:AI 歌曲流程、MV 編輯器、auth/登入、i18n 與 <code>/settings</code>、profile、訂閱/Muse Pro + 點數/IAP、History 與選項選單、<code>/proof</code>,以及所有社群介面。</p>
+    <div class="files"><code>specs/</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">MV 建立 spec 與程式碼牴觸</span><span class="badges"><span class="badge b-p2">P2</span><span class="badge b-pm">PM</span></span></div>
+    <p><code>specs/mv-creation-flow.spec.md</code> §1/§3 說「no login gate / 刻意省略 requireLogin」但程式碼現在真的有登入 gate;§6 的畫面清單含一個 <code>mv-style</code> 介紹輪播(「Try Now」)但 <code>src/</code> 完全找不到;AC15b 要求 publish 前有「Ready to Go Public?」確認 → Review 狀態,實作只是樂觀切換。spec 引用的 <code>History_Option_Menu_Spec.md</code> 在交付物之外(<code>../ycmuse-app-prototype/</code>)。</p>
+    <div class="files"><code>specs/mv-creation-flow.spec.md</code></div>
+  </div>
+</section>
+
+<!-- ============ 區三 · UI/UX 調整中 ============ -->
+<section class="zone" id="zone-ui">
+  <h2><span class="num">§3</span> UI/UX 調整中(PM / 設計)</h2>
+  <p class="zdesc">PM 與設計師仍在調整的項目,依提供的清單納入。spec 待補者與區二相呼應。</p>
+
+  <div class="item">
+    <div class="item-head"><span class="t">Homepage 版面微調</span><span class="badges"><span class="badge b-p2">P2</span><span class="badge b-design">設計</span></span></div>
+    <p>首頁版面微調(細節待設計提供)。</p>
+    <div class="files"><code>components/home/HomeView.tsx</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">History — mobile UI 調整</span><span class="badges"><span class="badge b-p2">P2</span><span class="badge b-design">設計</span></span></div>
+    <p>History 頁在 mobile 的 UI 調整(細節待設計提供)。</p>
+    <div class="files"><code>components/history/HistoryView.tsx</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">History — video &amp; music popup dialog UI 優化</span><span class="badges"><span class="badge b-p2">P2</span><span class="badge b-design">設計</span></span></div>
+    <p>History 內影片與音樂的 popup dialog UI 優化(細節待設計提供)。</p>
+    <div class="files"><code>mv/MvDetail.tsx</code><code>song/SongDetail.tsx</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">社群 — 點開影片的 UX 優化(可持續捲動)</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-pm">PM</span><span class="badge b-design">設計</span></span></div>
+    <p>Issue:點開社群影片後要讓使用者能持續往下捲看更多影片,而不是進到一個無法繼續捲動的頁面或 popup dialog。<span class="tag">spec 待補(與 §2 社群 spec 綁定)。</span></p>
+    <div class="files"><code>community/CommunityMvPlayer.tsx</code><code>community/CommunityMvDialog.tsx</code><code>app/[locale]/watch/</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">社群 — 播放音樂 UI/UX 優化</span><span class="badges"><span class="badge b-p1">P1</span><span class="badge b-pm">PM</span><span class="badge b-design">設計</span></span></div>
+    <p>社群播放音樂的 UI/UX 優化。<span class="tag">spec 待補(與 §2 社群 spec 綁定)。</span></p>
+    <div class="files"><code>community/CommunitySongPlayer.tsx</code><code>app/[locale]/song/play/</code></div>
+  </div>
+
+  <div class="item">
+    <div class="item-head"><span class="t">社群 — item 排列規則、curation、publish</span><span class="badges"><span class="badge b-p0">P0</span><span class="badge b-pm">PM</span></span></div>
+    <p>社群項目的排列規則、curation、publish 等機制。<span class="tag">spec 待補 — 與 §2「社群功能整套 spec」及 §1「Publish 狀態三處不同步」為同一組決策。</span></p>
+    <div class="files"><code>lib/mv/community.ts</code><code>community/MvExplore.tsx</code><code>community/SongExplore.tsx</code><code>mv/MvDetail.tsx</code></div>
+  </div>
+</section>
+
+<footer>
+  <p>本清單僅列待辦。§1 為程式技術債(含 PM 決策後暫緩者);§2 為需產品決策的 spec 缺口;§3 為 PM/設計調整中項目。檔案路徑相對於 <code>web-app/src/</code>(除另有標註)。已完成的程式修正與文件同步請見 git 歷史與 <code>docs/DEVELOPER-HANDOVER.md</code>。</p>
+</footer>
+
+</div>
+</body>
+</html>

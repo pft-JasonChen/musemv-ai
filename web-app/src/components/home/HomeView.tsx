@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { buildShareUrl } from "@/lib/share";
 import { MV_TYPES } from "@/lib/mv/mock";
 import { NEW_MVS, TOP_PICKS_SONGS, NEW_SONGS, TRENDING_MVS, formatCount } from "@/lib/mv/community";
 import { BadgePill, Play, Headphones, Heart, Share, SectionHead } from "@/components/community/ui";
@@ -152,7 +153,7 @@ export function HomeView() {
                       <Heart filled={liked} /> {formatCount(s.likes + (liked ? 1 : 0))}
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setShare({ title: s.title, url: `https://musemv.ai/song/${s.id}` }); }}
+                      onClick={(e) => { e.stopPropagation(); setShare({ title: s.title, url: buildShareUrl(s.id) }); }}
                       className="inline-flex items-center gap-1 transition-colors hover:brightness-125"
                       style={{ color: "var(--text-2)" }}
                       aria-label="Share"

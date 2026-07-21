@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { buildShareUrl } from "@/lib/share";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 import { getCommunityMv, NEW_MVS } from "@/lib/mv/community";
@@ -99,7 +100,7 @@ export function CommunityMvPlayer() {
         </div>
       </div>
 
-      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={mv.title} url={`https://musemv.ai/share/mv/${mv.id}`} />
+      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={mv.title} url={buildShareUrl(mv.id)} />
     </div>
   );
 }

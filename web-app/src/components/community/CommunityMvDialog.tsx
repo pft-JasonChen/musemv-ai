@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { buildShareUrl } from "@/lib/share";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 import { getCommunityMv, DEFAULT_CREATOR } from "@/lib/mv/community";
@@ -86,7 +87,7 @@ export function CommunityMvDialog({ mvId, open, onClose }: { mvId: string | null
         </div>
       </div>
 
-      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={mv.title} url={`https://musemv.ai/share/mv/${mv.id}`} />
+      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={mv.title} url={buildShareUrl(mv.id)} />
     </Modal>
   );
 }
