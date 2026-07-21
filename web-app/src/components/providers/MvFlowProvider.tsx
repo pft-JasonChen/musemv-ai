@@ -24,7 +24,10 @@ interface MvFlowValue {
   resultUrl: string | null;
   startStoryboard: () => void;
   startRender: () => void;
-  reset: () => void;
+  /** Discard any prior storyboard/result before generating a brand-new MV (keeps the compose form). */
+  resetForNewMv: () => void;
+  /** Discard the prior rendered video before re-rendering the current storyboard. */
+  resetForRerender: () => void;
 }
 
 const Ctx = createContext<MvFlowValue | null>(null);
@@ -98,19 +101,22 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
 
   const startStoryboard = useCallback(() => {
     setResultUrl(null);
-    void api.createMvJob({ mode: "storyboard_first", compose }).then((job) => {
-      upsertGenerating({
-        id: job.id,
-        kind: "mv",
-        title: compose.song?.title ?? "Untitled MV",
-        thumb: job.thumb,
-      });
-      track(job, (done) => {
-        if (!done.storyboard) return;
-        setStoryboard(done.storyboard);
-        setSavedJson(JSON.stringify(done.storyboard));
-      });
-    });
+    void api
+      .createMvJob({ mode: "storyboard_first", compose })
+      .then((job) => {
+        upsertGenerating({
+          id: job.id,
+          kind: "mv",
+          title: compose.song?.title ?? "Untitled MV",
+          thumb: job.thumb,
+        });
+        track(job, (done) => {
+          if (!done.storyboard) return;
+          setStoryboard(done.storyboard);
+          setSavedJson(JSON.stringify(done.storyboard));
+        });
+      })
+      .catch(() => setGen((g) => ({ ...g, status: "failed" })));
   }, [compose, track, upsertGenerating]);
 
   const startRender = useCallback(() => {
@@ -118,27 +124,39 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
       jobId.current && storyboard
         ? api.renderMvJob(jobId.current, storyboard)
         : api.createMvJob({ mode: "direct", compose });
-    void start.then((job) => {
-      upsertGenerating({
-        id: job.id,
-        kind: "mv",
-        title: compose.song?.title ?? "Untitled MV",
-        thumb: job.thumb,
-      });
-      track(job, (done) => {
-        if (!done.resultUrl) return;
-        setResultUrl(done.resultUrl);
-        markCompleted(done.id, done.resultUrl);
-      });
-    });
+    void start
+      .then((job) => {
+        upsertGenerating({
+          id: job.id,
+          kind: "mv",
+          title: compose.song?.title ?? "Untitled MV",
+          thumb: job.thumb,
+        });
+        track(job, (done) => {
+          if (!done.resultUrl) return;
+          setResultUrl(done.resultUrl);
+          markCompleted(done.id, done.resultUrl);
+        });
+      })
+      .catch(() => setGen((g) => ({ ...g, status: "failed" })));
   }, [compose, storyboard, track, upsertGenerating, markCompleted]);
 
-  const reset = useCallback(() => {
+  // A brand-new MV must discard any storyboard/result/job left over from a
+  // previous flow, otherwise the generation screens' `alreadyDone` guard sees
+  // stale state and skips generation (bouncing to the old result).
+  const resetForNewMv = useCallback(() => {
     cancelPoll.current?.();
     jobId.current = null;
-    setCompose(DEFAULT_COMPOSE);
     setGen(IDLE_GEN);
     setStoryboard(null);
+    setResultUrl(null);
+  }, []);
+
+  // Re-rendering keeps the current storyboard + job id but must clear the prior
+  // rendered video so the render screen starts fresh instead of bouncing back.
+  const resetForRerender = useCallback(() => {
+    cancelPoll.current?.();
+    setGen(IDLE_GEN);
     setResultUrl(null);
   }, []);
 
@@ -158,7 +176,8 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         resultUrl,
         startStoryboard,
         startRender,
-        reset,
+        resetForNewMv,
+        resetForRerender,
       }}
     >
       {children}

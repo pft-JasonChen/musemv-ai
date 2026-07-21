@@ -84,9 +84,15 @@ export function matchLocale(acceptLanguage: string | null | undefined): Locale {
   if (!acceptLanguage) return DEFAULT_LOCALE;
   const tags = acceptLanguage
     .split(",")
-    .map((part) => part.split(";")[0].trim().toLowerCase())
-    .filter(Boolean);
-  for (const tag of tags) {
+    .map((part) => {
+      const [tag, ...params] = part.trim().split(";");
+      const qParam = params.find((p) => p.trim().startsWith("q="));
+      const q = qParam ? Number.parseFloat(qParam.trim().slice(2)) : 1;
+      return { tag: tag.trim().toLowerCase(), q: Number.isFinite(q) ? q : 1 };
+    })
+    .filter((t) => t.tag)
+    .sort((a, b) => b.q - a.q);
+  for (const { tag } of tags) {
     const match = tagToLocale(tag);
     if (match) return match;
   }

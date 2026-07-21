@@ -14,7 +14,8 @@ const fmtTs = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60))
 
 export function StoryboardEditor() {
   const router = useRouter();
-  const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose } = useMvFlow();
+  const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose, resetForRerender } =
+    useMvFlow();
   const [toast, setToast] = useState<string | null>(null);
 
   // Tolerant redirect: wait briefly so a persisted storyboard can hydrate.
@@ -139,7 +140,7 @@ export function StoryboardEditor() {
       </div>
 
       <div className="sticky bottom-[66px] sm:bottom-0 mt-8 -mx-4 border-t px-4 py-3 sm:-mx-6 sm:px-6" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
-        <Button className="w-full" onClick={() => router.push("/mv/creating")}>
+        <Button className="w-full" onClick={() => { resetForRerender(); router.push("/mv/creating"); }}>
           Generate MV
           <span className="ml-1 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[14px] font-bold" style={{ background: "rgba(255,255,255,.18)" }}>
             {COST_RENDER}

@@ -32,7 +32,7 @@ function Toggle({ on }: { on: boolean }) {
 
 export function MvEditor() {
   const router = useRouter();
-  const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose, setCompose } = useMvFlow();
+  const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose, setCompose, resetForRerender } = useMvFlow();
   const { addCredits } = useCredits();
 
   const typeIdx = Math.max(0, MV_TYPES.findIndex((t) => t.id === compose.mvType));
@@ -118,6 +118,7 @@ export function MvEditor() {
     const committed = { ...storyboard, coverImage: activeCover }; // commit the chosen cover
     setStoryboard(committed);
     saveStoryboard(committed);
+    resetForRerender(); // clear the prior rendered video so the merge actually re-renders
     router.push("/mv/creating");
   }
 

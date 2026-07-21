@@ -8,6 +8,7 @@ import prettier from "eslint-config-prettier";
 
 const eslintConfig = defineConfig([...nextVitals, ...nextTs, prettier, globalIgnores([
   ".next/**",
+  ".claude/**",
   "out/**",
   "build/**",
   "storybook-static/**",

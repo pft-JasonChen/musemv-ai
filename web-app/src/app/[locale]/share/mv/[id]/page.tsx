@@ -1,6 +1,9 @@
-import { MvExplore } from "@/components/community/MvExplore";
+import { redirect } from "next/navigation";
+import { localePath, isLocale, DEFAULT_LOCALE } from "@/lib/i18n/config";
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  return <MvExplore initialPlayId={id} />;
+// Legacy share route — consolidated onto the single `/share?id={hash}` scheme.
+export default async function Page({ params }: { params: Promise<{ id: string; locale: string }> }) {
+  const { id, locale } = await params;
+  const loc = isLocale(locale) ? locale : DEFAULT_LOCALE;
+  redirect(localePath(loc, `/share?id=${encodeURIComponent(id)}`));
 }

@@ -27,7 +27,7 @@ import {
 
 export function MvRoom() {
   const router = useRouter();
-  const { compose, setCompose, patchCompose } = useMvFlow();
+  const { compose, setCompose, patchCompose, resetForNewMv } = useMvFlow();
   const [songOpen, setSongOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -84,6 +84,7 @@ export function MvRoom() {
   }
   function selectMode(mode: MvMode) {
     setModeOpen(false);
+    resetForNewMv(); // discard any storyboard/result from a previous MV before starting fresh
     router.push(mode === "storyboard_first" ? "/mv/thinking" : "/mv/creating");
   }
 

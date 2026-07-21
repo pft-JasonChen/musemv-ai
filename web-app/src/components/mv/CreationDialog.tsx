@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { MvDetail } from "./MvDetail";
 import { SongDetail } from "@/components/song/SongDetail";
+import { buildShareUrl } from "@/lib/share";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { SAMPLE_RESULT_VIDEO, SAMPLE_AUDIO, mockStoryboard, type Creation } from "@/lib/mv/mock";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
@@ -57,7 +58,7 @@ export function CreationDialog({ open, creation, onClose, onDelete }: Props) {
           videoUrl={SAMPLE_RESULT_VIDEO}
           posterUrl={creation.thumb}
           downloadUrl={SAMPLE_RESULT_VIDEO}
-          shareUrl={`https://musemv.ai/c/${creation.id}`}
+          shareUrl={buildShareUrl(creation.id)}
           info={{ title: creation.title, typeName: "", kind: "mv", dateLabel: creation.date, scenes: null }}
           onRecreate={recreate}
           onEdit={editMv}
@@ -70,7 +71,7 @@ export function CreationDialog({ open, creation, onClose, onDelete }: Props) {
           audioUrl={SAMPLE_AUDIO}
           lyrics={DEFAULT_STORYBOARD_LYRICS}
           downloadUrl={SAMPLE_AUDIO}
-          shareUrl={`https://musemv.ai/c/${creation.id}`}
+          shareUrl={buildShareUrl(creation.id)}
           info={{ title: creation.title, dateLabel: creation.date }}
           onRecreate={recreate}
           onUseInMv={useInMv}
