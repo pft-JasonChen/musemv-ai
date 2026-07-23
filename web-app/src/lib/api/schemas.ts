@@ -121,6 +121,10 @@ export const SongComposeSchema = z.object({
   mood: z.string(),
   vocal: z.string().nullable(),
   title: z.string(),
+  // SONG-01: custom-mode musical controls. Defaulted so existing callers and
+  // persisted/mock data stay valid without supplying them.
+  bpm: z.number().default(120),
+  key: z.string().nullable().default(null),
 });
 export type SongCompose = z.infer<typeof SongComposeSchema>;
 

@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { buildShareUrl } from "@/lib/share";
 import { LyricsPanel } from "@/components/song/LyricsPanel";
+import { SubscribeModal } from "@/components/credits/SubscribeModal";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { ALL_COMMUNITY_SONGS, CREATOR_SONGS, getCommunitySong, DEFAULT_CREATOR } from "@/lib/mv/community";
 import { buildTimedLines } from "@/lib/mv/lyrics";
 import { Heart, Share, Stats } from "@/components/community/ui";
@@ -16,6 +18,8 @@ function I({ d, size = 18 }: { d: string; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
 }
 const DURATION = 125; // 2:05, prototype-faithful
+// SONG-02: free accounts preview only the first 30s; Pro unlocks full playback.
+const FREE_PREVIEW_SEC = 30;
 function fmt(sec: number) { const m = Math.floor(sec / 60); const s = Math.round(sec % 60); return `${m}:${String(s).padStart(2, "0")}`; }
 
 export function CommunitySongPlayer() {
@@ -36,11 +40,15 @@ export function CommunitySongPlayer() {
   const song = playlist[idx];
 
   const { patchSongCompose } = useSongFlow();
+  const { subscribed } = useAuth();
+  // Free accounts can only scrub/play up to the 30s preview cap.
+  const maxPct = subscribed ? 100 : Math.min(100, (FREE_PREVIEW_SEC / DURATION) * 100);
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0); // 0..100
   const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
+  const [subOpen, setSubOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const lyricLines = useMemo(() => buildTimedLines(song.lyrics, DURATION), [song.lyrics]);
 
@@ -49,10 +57,10 @@ export function CommunitySongPlayer() {
     stop();
     if (!playing) return;
     timer.current = setInterval(() => {
-      setProgress((p) => { const next = p + 100 / DURATION; if (next >= 100) { stop(); setPlaying(false); return 100; } return next; });
+      setProgress((p) => { const next = p + 100 / DURATION; if (next >= maxPct) { stop(); setPlaying(false); return maxPct; } return next; });
     }, 1000);
     return stop;
-  }, [playing, stop]);
+  }, [playing, stop, maxPct]);
 
   function go(delta: number) {
     setIdx((i) => (i + delta + playlist.length) % playlist.length);
@@ -60,7 +68,9 @@ export function CommunitySongPlayer() {
   }
   function seek(e: React.MouseEvent<HTMLDivElement>) {
     const r = e.currentTarget.getBoundingClientRect();
-    setProgress(Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100)));
+    const target = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100));
+    if (target > maxPct) { setProgress(maxPct); setPlaying(false); setSubOpen(true); return; } // gated → prompt upgrade
+    setProgress(target);
   }
   function createSong() {
     stop();
@@ -102,6 +112,12 @@ export function CommunitySongPlayer() {
             <div className="mt-1.5 flex justify-between text-[11px]" style={{ color: "var(--text-3)" }}>
               <span>{fmt((progress / 100) * DURATION)}</span><span>{fmt(DURATION)}</span>
             </div>
+            {!subscribed && (
+              <button onClick={() => setSubOpen(true)} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-semibold" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden style={{ color: "var(--gold)" }}><path d="M3 7l4 4 5-6 5 6 4-4-1.5 12h-15z" /></svg>
+                Free preview · first {FREE_PREVIEW_SEC}s — upgrade to Muse Pro for full playback
+              </button>
+            )}
           </div>
 
           {/* Transport */}
@@ -138,6 +154,7 @@ export function CommunitySongPlayer() {
       </div>
 
       <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={song.title} url={buildShareUrl(song.id)} />
+      <SubscribeModal open={subOpen} onClose={() => setSubOpen(false)} />
       <LyricsPanel
         open={lyricsOpen}
         onClose={() => setLyricsOpen(false)}

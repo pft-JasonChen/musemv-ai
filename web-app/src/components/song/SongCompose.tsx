@@ -9,7 +9,7 @@ import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { GENRES, MOODS, VOCALS, SONG_IDEAS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
-import { COST_SONG, DESCRIPTION_MAX, isSongReady, type SongMode } from "@/lib/mv/types";
+import { BPM_MIN, BPM_MAX, COST_SONG, DESCRIPTION_MAX, SONG_KEYS, isSongReady, type SongMode } from "@/lib/mv/types";
 
 function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
   return (
@@ -31,6 +31,45 @@ function Chips({ options, value, onPick, clearable }: { options: string[]; value
           <button key={o} onClick={() => onPick(clearable && sel ? "" : o)} className="rounded-full px-3 py-1.5 text-[12px] font-semibold" style={{ background: sel ? "var(--accent)" : "var(--card-2)", color: sel ? "#fff" : "var(--text-2)" }}>{o}</button>
         );
       })}
+    </div>
+  );
+}
+
+// SONG-01: per-line lyrics editor — each lyric line is its own input, stored back
+// as a newline-joined string so the rest of the flow keeps a single `lyrics` field.
+function LineLyricsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const lines = value.length ? value.split("\n") : [""];
+  const commit = (next: string[]) => onChange(next.join("\n"));
+  return (
+    <div className="flex flex-col gap-1.5">
+      {lines.map((line, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <span className="w-6 shrink-0 text-right text-[11px] tabular-nums" style={{ color: "var(--text-3)" }}>{i + 1}</span>
+          <input
+            value={line}
+            onChange={(e) => commit(lines.map((l, idx) => (idx === i ? e.target.value : l)))}
+            placeholder={`Line ${i + 1}`}
+            className="flex-1 rounded-lg border bg-transparent px-2.5 py-1.5 text-[13px] outline-none"
+            style={{ background: "var(--card-2)", borderColor: "var(--border-2)", color: "var(--text)" }}
+          />
+          <button
+            aria-label={`Remove line ${i + 1}`}
+            onClick={() => commit(lines.length > 1 ? lines.filter((_, idx) => idx !== i) : [""])}
+            className="grid h-6 w-6 shrink-0 place-items-center rounded-full"
+            style={{ background: "var(--card-3)", color: "var(--text-2)" }}
+          >
+            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden><path d="M1 1l12 12M13 1L1 13" /></svg>
+          </button>
+        </div>
+      ))}
+      <button
+        onClick={() => commit([...lines, ""])}
+        className="mt-1 inline-flex w-fit items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold"
+        style={{ background: "var(--card-2)", color: "var(--text-2)" }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+        Add line
+      </button>
     </div>
   );
 }
@@ -112,7 +151,9 @@ export function SongCompose() {
               <div className="rounded-xl border p-3 text-[13px]" style={{ background: "var(--card)", borderColor: "var(--border-2)", color: "var(--text-2)" }}>No lyrics needed — your song will be a pure instrumental track.</div>
             ) : (
               <div className="rounded-xl border" style={{ background: "var(--card)", borderColor: "var(--border-2)" }}>
-                <textarea value={s.lyrics} maxLength={DESCRIPTION_MAX} onChange={(e) => patch({ lyrics: e.target.value })} placeholder="Write your lyrics or song idea here…" className="min-h-[110px] w-full resize-none bg-transparent p-3 text-[14px] outline-none no-scrollbar" style={{ color: "var(--text)", lineHeight: 1.6 }} />
+                <div className="p-3">
+                  <LineLyricsEditor value={s.lyrics} onChange={(v) => patch({ lyrics: v.slice(0, DESCRIPTION_MAX) })} />
+                </div>
                 <div className="flex items-center justify-between gap-2 px-3 pb-2.5">
                   <div className="flex items-center gap-2">
                     <button onClick={() => patch({ lyrics: SONG_IDEAS[Math.floor(Math.random() * SONG_IDEAS.length)] })} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
@@ -160,6 +201,26 @@ export function SongCompose() {
               <div>
                 <div className="mb-2 text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>Vocal <span className="font-medium" style={{ color: "var(--text-3)" }}>(optional)</span></div>
                 <Chips options={VOCALS} value={s.vocal} onPick={(v) => patch({ vocal: v || null })} clearable />
+              </div>
+              {/* SONG-01: tempo + key controls */}
+              <div>
+                <div className="mb-2 flex items-center justify-between text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>
+                  <span>Tempo</span>
+                  <span className="tabular-nums" style={{ color: "var(--text)" }}>{s.bpm} BPM</span>
+                </div>
+                <input
+                  type="range"
+                  min={BPM_MIN}
+                  max={BPM_MAX}
+                  value={s.bpm}
+                  onChange={(e) => patch({ bpm: Number(e.target.value) })}
+                  aria-label="Tempo (BPM)"
+                  className="w-full accent-[var(--accent)]"
+                />
+              </div>
+              <div>
+                <div className="mb-2 text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>Key <span className="font-medium" style={{ color: "var(--text-3)" }}>(optional)</span></div>
+                <Chips options={[...SONG_KEYS]} value={s.key} onPick={(v) => patch({ key: v || null })} clearable />
               </div>
             </div>
           </section>

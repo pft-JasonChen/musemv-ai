@@ -4,10 +4,15 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { SubscribeModal } from "@/components/credits/SubscribeModal";
 import { LyricsPanel } from "@/components/song/LyricsPanel";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { buildTimedLines } from "@/lib/mv/lyrics";
 import { formatDuration } from "@/lib/mv/mock";
+
+// SONG-02: free accounts preview only the first 30 seconds; Pro plays in full.
+const FREE_PREVIEW_SEC = 30;
 
 export interface SongDetailInfo {
   title: string;
@@ -37,9 +42,15 @@ function I({ d, size = 18 }: { d: string; size?: number }) {
 }
 
 export function SongDetail({ cover, audioUrl, lyrics, info, shareUrl, onRecreate, onUseInMv, onClose }: Props) {
-  const { playing, currentTime: cur, duration: dur, toggle: togglePlay, seek: seekTo, nudge } = useAudioPlayer({ src: audioUrl });
+  const { subscribed } = useAuth();
+  const gated = !subscribed;
+  const { playing, currentTime: cur, duration: dur, toggle: togglePlay, seek: seekTo, nudge } = useAudioPlayer({
+    src: audioUrl,
+    range: gated ? { start: 0, end: FREE_PREVIEW_SEC } : null,
+  });
   const [shareOpen, setShareOpen] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
+  const [subOpen, setSubOpen] = useState(false);
   const lyricLines = useMemo(() => buildTimedLines(lyrics, dur || info.durationSec || 0), [lyrics, dur, info.durationSec]);
 
   function seek(e: React.MouseEvent<HTMLDivElement>) {
@@ -82,6 +93,12 @@ export function SongDetail({ cover, audioUrl, lyrics, info, shareUrl, onRecreate
             <div className="mt-1.5 flex justify-between text-[11px]" style={{ color: "var(--text-3)" }}>
               <span>{fmt(cur)}</span><span>{dur ? fmt(dur) : info.durationSec ? formatDuration(info.durationSec) : "--:--"}</span>
             </div>
+            {gated && (
+              <button onClick={() => setSubOpen(true)} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-semibold" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden style={{ color: "var(--gold)" }}><path d="M3 7l4 4 5-6 5 6 4-4-1.5 12h-15z" /></svg>
+                Free preview · first {FREE_PREVIEW_SEC}s — upgrade to Muse Pro for full playback
+              </button>
+            )}
           </div>
 
           {/* Transport */}
@@ -113,6 +130,7 @@ export function SongDetail({ cover, audioUrl, lyrics, info, shareUrl, onRecreate
         </div>
       </div>
       <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={info.title} url={shareUrl} />
+      <SubscribeModal open={subOpen} onClose={() => setSubOpen(false)} />
       <LyricsPanel
         open={lyricsOpen}
         onClose={() => setLyricsOpen(false)}
