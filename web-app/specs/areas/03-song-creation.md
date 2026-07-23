@@ -178,3 +178,4 @@ credits.
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator PASS; tightened SONG-E1 fail trigger (Simple `describe` only), noted Simple-mode results have no Lyrics sheet, flagged Instrumental-doesn't-clear-lyrics quirk. |
+| 2026-07-23 | Implemented: custom-mode BPM slider + Key selector + per-line lyrics editor (`SongComposeSchema` gains defaulted `bpm`/`key`) (SONG-01); 30s free-preview gate on `SongDetail` + community song player with upgrade prompt (SONG-02); Recreate = `COST_SONG_RECREATE` (50) keeping the prior song in History (SONG-03); first AI Enhance per session free then 1 credit each, tracked in `CreditsProvider` (SONG-04); compose credit pill uses live balance (SONG-05 bug). |

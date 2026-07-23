@@ -188,3 +188,4 @@ Codebase change list: [`handoff.md`](handoff.md).
 | 2026-07-22 | Validator fix: `/settings` view path corrected to `profile/SettingsView` (was `account/SettingsView`). |
 | 2026-07-22 | Final RD review fix: corrected 6 stale route-table component names (MvExplore, SongExplore, CommunityMvPlayer, CommunitySongPlayer, CreatorProfile, SongResultView) to match code. |
 | 2026-07-22 | PM decisions round: §9 global register resolved; each area §8 now carries per-area decisions; codebase changes captured in `handoff.md`. |
+| 2026-07-23 | §A + §B implemented in `web-app/src/`. Global items: GL-01 real credit charging (flow providers decrement on generation start, refund on failure) with an insufficient-balance → IAP route at the CTAs; GL-02/EXP-02 action-level auth gating. Per-area as-built in each area §10; three reconciliation flags (Merge cost, plan pricing, legal URLs) in `handoff.md`. |

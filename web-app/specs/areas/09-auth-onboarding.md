@@ -169,3 +169,4 @@ route-entry gating (four routes); no onboarding/splash; social-only sign-in.
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator fix: added Home hero CTAs + song-card create as sign-in triggers (area 04); scoped "ungated" to community like/share; corrected AUTH-P4-S1 logout-on-guarded-page wording; completed success-state quote. |
+| 2026-07-23 | Implemented: action-level auth gating (GL-02/EXP-02) — Like and Create MV/Song across community surfaces (CommunityMvPlayer/Dialog, CommunitySongPlayer, SongExplore) and MvDetail publish now call `requireLogin` at the action, fixing SongExplore's ungated Create; brand "Sign in to YouCam Muse" + Terms/Privacy links (AUTH-03). |

@@ -176,3 +176,4 @@ ungated; Sign Out on profile (not Settings).
 | Date | Change |
 |---|---|
 | 2026-07-22 | Initial as-built spec. Validator PASS (2 NITs applied: Settings nav via localePath; BuyCreditsModal reachable via Credits tile chain). |
+| 2026-07-23 | Implemented: Sign Out moved from `ProfileView` into the (now `AuthGuard`-gated) `SettingsView`, `/settings` added to the sidebar gate (PROF-03); Terms of Use / Privacy Policy wired to shared `lib/legal.ts` links from Settings (PROF-06) and the sign-in modal (AUTH-03). |

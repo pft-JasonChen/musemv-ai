@@ -198,3 +198,4 @@ are local overrides; downloads use fixture media; grid layout (not the app's ver
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator fix: corrected failed-row menu (Like+Share+Delete, not Delete-only) and specified storyboard menu (Create MV + Delete); added per-type menu breakdown, HIST-E7, TBD-HIST-06; noted community id = communitySongId. |
+| 2026-07-23 | Implemented: retention copy now permanent, no 14-day auto-delete (HIST-02); Liked tab restricted to community-liked content (HIST-03); storyboard rows show a Create MV pill on the card (HIST-05); failed rows are Delete-only, Like/Share removed (HIST-06 bug); "Unpublish to edit MV" applied to the Edit MV menu entry (MV-13). Publish confirm (HIST-04) already present. |

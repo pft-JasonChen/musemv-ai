@@ -223,3 +223,4 @@ All curation/feed logic deferred to the backend track (Explore Curation PRD).
 |---|---|
 | 2026-07-22 | Initial as-built spec; all ranking/moderation/curation logic marked TBD per the Explore PRD (`TODO.md #1`). |
 | 2026-07-22 | Validator PASS; documented creator-song deep-link bug (TBD-EXP-09), noted unused `initialPlayId` prop. |
+| 2026-07-23 | Implemented: EXP-09 fixed (community song player selects the playlist the requested song belongs to — creator `cps-*` ids no longer fall back to track 0); song-player parity — shuffle + repeat added, 30s free gate (EXP-04); shared empty / not-found / offline states (`community/EmptyState.tsx`) wired into the explore grids and MV/song players (EXP-06); action-level gating on community Like/Create (GL-02/EXP-02). |

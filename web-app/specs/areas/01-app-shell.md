@@ -176,3 +176,4 @@ dropdown; `/share` is chrome-less; nav labels localized, rest English.
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator fix: nav `/history` label corrected to "History" (was "My Creations" — that's the account-menu/page label); nav list single-sourced in §3. |
+| 2026-07-23 | Implemented: brand wordmark → "YouCam Muse" everywhere (SHELL-01); Notifications + Send Feedback rows added to `AccountMenu` (SHELL-03, UI-only); `HeaderActions` gated on `hydrated` to stop the logged-out→in flash (SHELL-04). |

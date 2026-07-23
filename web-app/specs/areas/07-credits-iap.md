@@ -162,3 +162,4 @@ ledger is a static seed; plans differ from the app.
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator fix: corrected disclaimer claim (only SubscribeModal shows "Demo only — no real payment"; per-modal copy in AC-CR-04); flagged plan-card "resets {cadence}" as display-only; noted code plan names. |
+| 2026-07-23 | Implemented: plans restructured to Weekly / Monthly / Yearly with an "800 Weekly Credits" header + six-feature list; `PlanId` now `weekly\|monthly\|yearly`; per-period price suffix (CR-02); purchased credits "never expire" + subscription credits reset per cycle copy (CR-03); Restore Purchases action + "already on Muse Pro" state in `SubscribeModal` (CR-05). Prices/credit amounts are placeholders pending RD confirmation (see handoff status note). GL-01 real charging wired through the flow providers with an insufficient-balance → IAP route. |
