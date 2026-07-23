@@ -151,7 +151,8 @@ export interface HistorySample {
 }
 
 export const HISTORY_SAMPLES: HistorySample[] = [
-  { id: "h-cinematic-night", kind: "mv", title: "Cinematic Night", thumb: "/assets/videos/sample-mvs/mv_01_cinematic_dark.jpg", status: "done", date: "2026-06-08", plays: 0, likes: 0, shares: 0, liked: true },
+  // Dated today so the public share page is easy to demo from History (see resolveShare).
+  { id: "h-cinematic-night", kind: "mv", title: "Cinematic Night", thumb: "/assets/videos/sample-mvs/mv_01_cinematic_dark.jpg", status: "done", date: "2026-07-23", plays: 0, likes: 0, shares: 0, liked: true },
   { id: "h-new-ai-song-proc", kind: "song", title: "New AI Song", meta: "AI Song", status: "processing", date: "2026-06-08", plays: 0, likes: 0, shares: 0, liked: false },
   { id: "h-golden-hour", kind: "song", title: "Golden Hour", thumb: "/assets/images/album-art/album_01.jpg", status: "done", date: "2026-06-08", plays: 108, likes: 38, shares: 15, liked: true },
   { id: "h-starlight", kind: "storyboard", title: "Starlight in Your Eyes", thumb: "/assets/images/storyboard/storyboard_01.jpg", meta: "Storyboard", status: "done", date: "2026-06-06", plays: 0, likes: 0, shares: 0, liked: false },

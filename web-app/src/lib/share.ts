@@ -12,7 +12,7 @@
 
 import type { HistoryItem } from "@/components/providers/HistoryProvider";
 import { getCommunityMv, getCommunitySong } from "@/lib/mv/community";
-import { SAMPLE_AUDIO } from "@/lib/mv/mock";
+import { SAMPLE_AUDIO, SAMPLE_RESULT_VIDEO, HISTORY_SAMPLES } from "@/lib/mv/mock";
 
 export interface SharedMedia {
   kind: "mv" | "song";
@@ -54,6 +54,16 @@ export function resolveShare(id: string | null, history: HistoryItem[]): SharedM
     return own.kind === "mv"
       ? { kind: "mv", title: own.title, posterUrl: own.thumb, videoUrl: own.resultUrl }
       : { kind: "song", title: own.title, posterUrl: own.thumb, audioUrl: own.resultUrl };
+  }
+
+  // Static History samples resolve like community fixtures (survive reload), so a
+  // shared sample creation opens the public page instead of the expired state.
+  // MV/song samples carry only a thumbnail, so map to the shared demo media.
+  const sample = HISTORY_SAMPLES.find((s) => s.id === id && s.status === "done" && s.thumb);
+  if (sample && (sample.kind === "mv" || sample.kind === "song")) {
+    return sample.kind === "mv"
+      ? { kind: "mv", title: sample.title, posterUrl: sample.thumb!, videoUrl: SAMPLE_RESULT_VIDEO }
+      : { kind: "song", title: sample.title, posterUrl: sample.thumb!, audioUrl: SAMPLE_AUDIO };
   }
 
   return null;
