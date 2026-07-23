@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>YouCam Muse Web — Spec Index</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #16161a; --muted: #5c5c66; --card: #f5f5f7; --border: #e2e2e8;
+    --accent: #7c3aed; --gold: #b45309; --green: #067a53; --red: #c0304a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0e0e12; --fg: #f2f2f5; --muted: #a0a0ad; --card: #1a1a20; --border: #2a2a32;
+      --accent: #a855f7; --gold: #f59e0b; --green: #34d399; --red: #ff6b81; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 18px; margin: 36px 0 12px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin: 0 0 8px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 8px; }
+  .pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--border); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 680px) { .grid { grid-template-columns: 1fr 1fr; } }
+  .card { border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; background: var(--card); }
+  .card .id { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .04em; }
+  .card h3 { margin: 2px 0 6px; font-size: 16px; }
+  .card p { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-right: 6px; }
+  .ok { color: var(--green); border: 1px solid var(--green); }
+  .base { color: var(--accent); border: 1px solid var(--accent); }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 560px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 700; }
+  code { background: var(--card); border: 1px solid var(--border); border-radius: 5px; padding: 0 5px; font-size: 12px; }
+  .legend { color: var(--muted); font-size: 13px; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>YouCam Muse Web — Spec Index</h1>
+  <p class="sub">As-built specification of <code>web-app/</code> (Next.js 16 · React 19 · TS strict). Code is the source of truth; divergences from the mobile App Spec v3.0 and open decisions are flagged inline.</p>
+  <div class="pills">
+    <span class="pill">📖 <a href="00-overview.md">00 · Overview (READ FIRST)</a></span>
+    <span class="pill">✅ <a href="spec-validation.md">Spec-validation eval</a></span>
+    <span class="pill">🗂️ 10 feature areas</span>
+    <span class="pill">📝 <a href="OPEN-QUESTIONS.md">Open Questions (決策後狀態)</a></span>
+    <span class="pill">🛠️ <a href="handoff.md">Handoff (codebase changes)</a></span>
+  </div>
+
+  <h2>Feature areas</h2>
+  <div class="grid">
+    <div class="card"><div class="id">AREA 01</div><h3><a href="areas/01-app-shell.md">App Shell &amp; Chrome</a></h3><p>Sidebar / bottom-bar, top bar, credits badge, account menu, responsive frame.</p><span class="tag ok">validated</span></div>
+    <div class="card"><div class="id">AREA 02</div><h3><a href="areas/02-mv-creation.md">AI MV Creation</a></h3><p>room → thinking → storyboard → creating → result → edit; sheets; modes.</p><span class="tag base">golden sample</span></div>
+    <div class="card"><div class="id">AREA 03</div><h3><a href="areas/03-song-creation.md">AI Song Creation</a></h3><p>create → creating → result; Simple/Custom, Instrumental, Lyrics sheet.</p><span class="tag ok">validated</span></div>
+    <div class="card"><div class="id">AREA 04</div><h3><a href="areas/04-explore-community.md">Explore &amp; Community</a></h3><p>Home feed, explore MVs/songs, watch, song player, creator. UI only — curation TBD.</p><span class="tag base">as-built</span></div>
+    <div class="card"><div class="id">AREA 05</div><h3><a href="areas/05-history.md">History (My Creations)</a></h3><p>Merged live+seed list, filters, ⋯ menu, publish/delete.</p><span class="tag ok">validated</span></div>
+    <div class="card"><div class="id">AREA 06</div><h3><a href="areas/06-profile-account.md">Profile, Account &amp; Settings</a></h3><p>Account hub, edit profile, language, settings (legal / unsub / delete).</p><span class="tag ok">validated</span></div>
+    <div class="card"><div class="id">AREA 07</div><h3><a href="areas/07-credits-iap.md">Credits &amp; IAP</a></h3><p>Balance + Subscribe / Buy Credits / Credits Detail modals (demo-only).</p><span class="tag ok">validated</span></div>
+    <div class="card"><div class="id">AREA 08</div><h3><a href="areas/08-proof-of-creation.md">Proof of Creation</a></h3><p>Static certificate stub — whole feature deferred to RD.</p><span class="tag ok">validated</span></div>
+    <div class="card"><div class="id">AREA 09</div><h3><a href="areas/09-auth-onboarding.md">Auth &amp; Onboarding</a></h3><p>Mock sign-in gate, AuthGuard. Onboarding out of scope.</p><span class="tag ok">validated</span></div>
+    <div class="card"><div class="id">AREA 10</div><h3><a href="areas/10-share.md">Share</a></h3><p>Public share-link page + shared Share dialog.</p><span class="tag ok">validated</span></div>
+  </div>
+
+  <h2>Global conventions</h2>
+  <p class="legend">
+    IDs are area-qualified: paths <code>MV-P1</code>, steps <code>MV-P1-S2</code>, errors <code>MV-E1</code>,
+    criteria <code>AC-MV-01</code>, decisions <code>TBD-MV-01</code> / <code>TBD-GL-01</code>.
+    ⚠️ = divergence from App v3.0 · ❓ = open decision (a <code>TBD-*</code>) · 🔒 = mock / in-memory / seed.
+    Screenshots are deferred to a later storyboard-HTML phase; visual QA items are tagged.
+  </p>
+
+  <h2>Cross-cutting decisions still owned by the product owner</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>ID</th><th>Question</th></tr>
+    <tr><td><code>TBD-GL-01</code></td><td>Credit semantics — which CTAs spend credits; should an empty balance ever block?</td></tr>
+    <tr><td><code>TBD-GL-02</code></td><td>Auth granularity — route-entry gating vs action-level (like/publish/proof).</td></tr>
+    <tr><td><code>TBD-GL-03</code></td><td>Onboarding / splash (App F01) — in web scope or dropped?</td></tr>
+    <tr><td><code>TBD-GL-04</code></td><td>Persistence target — what survives reload in production.</td></tr>
+    <tr><td><code>TBD-GL-05</code></td><td>Community / Curation — ranking + moderation (Explore PRD) as a backend track.</td></tr>
+    <tr><td><code>TBD-GL-06</code></td><td>Localization QA — owned here or a separate track.</td></tr>
+    <tr><td><code>TBD-GL-07</code></td><td><code>/share</code> intended gating (currently public).</td></tr>
+  </table>
+  </div>
+  <p class="legend">Each area spec carries its own <code>TBD-&lt;AREA&gt;-*</code> register (§8). See <a href="00-overview.md">the overview §9</a> for the full global list.</p>
+
+  <footer>Basis: as-built from <code>web-app/src/</code> · App reference: YouCam Muse Spec v3.0 + Explore Curation PRD · generated 2026-07-22.</footer>
+</div>
+</body>
+</html>

@@ -1,5 +1,9 @@
 # Spec — AI MV Creation Flow
 
+> ⚠️ **SUPERSEDED (2026-07-22).** Replaced by the as-built [`areas/02-mv-creation.md`](areas/02-mv-creation.md)
+> (auth-gated, validated). Kept for history only — **do not use for current behaviour** (e.g. this file's
+> "no login gate" is stale; the create-flow entry is now auth-gated). Safe to delete on the PM's confirmation.
+>
 > **Status:** DRAFT for alignment. This is the spec we agree on *before* writing code.
 > **Scope:** front-end UX flow only. No backend internals — async work is modelled as a
 > `MvJob` state machine fed by a mock handler.
