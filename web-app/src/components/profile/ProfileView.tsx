@@ -49,7 +49,7 @@ function Row({ icon, title, sub, right, onClick }: { icon: React.ReactNode; titl
 export function ProfileView() {
   const router = useRouter();
   const { credits } = useCredits();
-  const { profile, subscribed, subscribedPlan, signOut, updateProfile } = useAuth();
+  const { profile, subscribed, subscribedPlan, updateProfile } = useAuth();
   const planName = SUBSCRIPTION_PLANS.find((p) => p.id === subscribedPlan)?.name;
   const { locale, setLocale } = useLocale();
   const t = useT();
@@ -141,8 +141,8 @@ export function ProfileView() {
         <Row icon={<I d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" />} title={t("profile.notifications")} sub={notif ? t("profile.on") : t("profile.off")} right={<Toggle label={t("profile.notifications")} on={notif} onToggle={() => setNotif((v) => !v)} />} />
         <Row icon={<I d="M2 12h5l2-3 3 6 2-3h6" />} title={t("profile.language")} sub={LOCALE_NAMES[locale].native} onClick={() => setLangOpen(true)} />
         <Row icon={<I d="M22 2 11 13M22 2l-7 20-4-9-9-4z" />} title={t("profile.sendFeedback")} onClick={() => setFbOpen(true)} />
+        {/* PROF-03: Sign Out lives in Settings now, not on the profile screen. */}
         <Row icon={<I d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />} title={t("profile.settings")} onClick={() => router.push(localePath(locale, "/settings"))} />
-        <div className="pt-1"><Row icon={<I d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />} title={t("profile.signOut")} onClick={() => { signOut(); flash(t("profile.toast.signedOut")); setTimeout(() => router.push(localePath(locale, "/")), 600); }} /></div>
       </div>
 
       <BuyCreditsModal open={creditsOpen} onClose={() => setCreditsOpen(false)} onPurchased={(n) => flash(`Added ${n} credits`)} />

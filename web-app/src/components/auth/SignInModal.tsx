@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { MOCK_USER } from "@/lib/user";
+import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
 
 type Provider = "Apple" | "Google";
 
@@ -112,9 +113,10 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
               <span className="text-[15px] font-bold text-black">Continue with Google</span>
             </button>
             <p className="mt-1 text-center text-[11px] font-medium leading-relaxed" style={{ color: "var(--text-3)" }}>
+              {/* AUTH-03: wire to the same legal links as Settings (PROF-06). */}
               By continuing, you agree to our{" "}
-              <span style={{ color: "var(--text-2)" }}>Terms of Service</span> and{" "}
-              <span style={{ color: "var(--text-2)" }}>Privacy Policy</span>.
+              <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-2)", textDecoration: "underline" }}>Terms of Service</a> and{" "}
+              <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-2)", textDecoration: "underline" }}>Privacy Policy</a>.
             </p>
           </div>
         </div>

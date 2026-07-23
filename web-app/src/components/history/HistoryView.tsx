@@ -101,7 +101,8 @@ export function HistoryView() {
 
   const shown = rows.filter((r) => {
     const community = r.source === "community";
-    if (filter === "liked") return liked(r);
+    // HIST-03: the Liked tab shows only community-liked content, not liked own rows.
+    if (filter === "liked") return community && liked(r);
     if (filter === "all") return !community;
     if (filter === "mv") return !community && (r.kind === "mv" || r.kind === "storyboard");
     return !community && r.kind === "song";
@@ -139,7 +140,8 @@ export function HistoryView() {
   return (
     <div className="mx-auto max-w-[1000px] px-4 py-6 sm:px-6">
       <h1 className="text-[24px] font-extrabold tracking-tight">My Creations</h1>
-      <p className="mb-4 text-[12px]" style={{ color: "var(--text-2)" }}>Creations are kept for 14 days. Download to keep them.</p>
+      {/* HIST-02: creations are retained permanently (no 14-day auto-delete). */}
+      <p className="mb-4 text-[12px]" style={{ color: "var(--text-2)" }}>Your creations are saved here permanently. Download anytime to keep a copy.</p>
 
       <div className="mb-5 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
@@ -162,6 +164,18 @@ export function HistoryView() {
                 r={r}
                 liked={liked(r)}
                 onOpen={() => openRow(r)}
+                cta={
+                  // HIST-05: storyboards surface Create as a row pill, not only the ⋯ menu.
+                  r.kind === "storyboard" && r.status === "done" ? (
+                    <button
+                      onClick={() => createMv(r)}
+                      className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-bold text-white transition-all hover:brightness-110 active:scale-95"
+                      style={{ background: "var(--accent)" }}
+                    >
+                      Create MV
+                    </button>
+                  ) : null
+                }
                 menu={
                   r.status === "processing" ? null : (
                     <Menu
@@ -216,7 +230,7 @@ export function HistoryView() {
   );
 }
 
-function HistoryCard({ r, liked, onOpen, menu }: { r: HistorySample; liked: boolean; onOpen: () => void; menu: React.ReactNode }) {
+function HistoryCard({ r, liked, onOpen, menu, cta }: { r: HistorySample; liked: boolean; onOpen: () => void; menu: React.ReactNode; cta?: React.ReactNode }) {
   const clickable = r.status === "done";
   const showStats = r.status === "done" && (r.kind === "mv" || r.kind === "song");
   const kindLabel = r.kind === "storyboard" ? "STORYBOARD" : r.kind.toUpperCase();
@@ -275,6 +289,7 @@ function HistoryCard({ r, liked, onOpen, menu }: { r: HistorySample; liked: bool
           )}
           <div className="mt-1 text-[11px]" style={{ color: "var(--text-3)" }}>{r.date}</div>
         </div>
+        {cta}
         {menu}
       </div>
     </div>

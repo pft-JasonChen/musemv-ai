@@ -12,6 +12,7 @@ import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 import { getCommunityMv, NEW_MVS } from "@/lib/mv/community";
 import { Heart, Share, Stats } from "@/components/community/ui";
 import { DEFAULT_CREATOR } from "@/lib/mv/community";
+import { CommunityEmpty } from "@/components/community/EmptyState";
 
 function I({ d, size = 18 }: { d: string; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
@@ -21,7 +22,8 @@ export function CommunityMvPlayer() {
   const router = useRouter();
   const params = useSearchParams();
   const id = params.get("id");
-  const mv = getCommunityMv(id) ?? NEW_MVS[0];
+  const found = getCommunityMv(id);
+  const mv = found ?? NEW_MVS[0];
 
   const { setCompose } = useMvFlow();
   const { requireLogin } = useAuth();
@@ -48,6 +50,19 @@ export function CommunityMvPlayer() {
     });
   }
   function toggleLike() { requireLogin(() => setLiked((l) => !l)); }
+
+  // EXP-06: an id that resolves to nothing shows a not-found state, not a silent
+  // fallback to the first MV.
+  if (id && !found) {
+    return (
+      <div className="mx-auto max-w-[1000px] px-4 py-6 sm:px-6">
+        <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--text-2)" }}>
+          <I d="M15 18l-6-6 6-6" size={16} /> Back
+        </button>
+        <CommunityEmpty variant="not-found" action={<Button onClick={() => router.push("/explore/mvs")}>Explore Music Videos</Button>} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1000px] px-4 py-6 sm:px-6">

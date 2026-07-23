@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { NEW_MVS, TRENDING_MVS, DEFAULT_CREATOR, formatCount } from "@/lib/mv/community";
 import { BadgePill, Heart } from "@/components/community/ui";
+import { CommunityEmpty, useOnline } from "@/components/community/EmptyState";
 import { CommunityMvDialog } from "./CommunityMvDialog";
 
 function I({ d }: { d: string }) {
@@ -16,6 +17,7 @@ const ALL_MVS = [...TRENDING_MVS, ...NEW_MVS];
 export function MvExplore({ initialPlayId }: { initialPlayId?: string }) {
   const router = useRouter();
   const [playId, setPlayId] = useState<string | null>(initialPlayId ?? null);
+  const online = useOnline();
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6">
@@ -25,6 +27,11 @@ export function MvExplore({ initialPlayId }: { initialPlayId?: string }) {
       <h1 className="mb-1 text-[22px] font-extrabold tracking-tight">Explore Music Videos</h1>
       <p className="mb-5 text-[13px]" style={{ color: "var(--text-2)" }}>Trending and new creations from the community.</p>
 
+      {!online ? (
+        <CommunityEmpty variant="offline" />
+      ) : ALL_MVS.length === 0 ? (
+        <CommunityEmpty variant="empty" />
+      ) : (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {ALL_MVS.map((m) => (
           <button key={m.id} onClick={() => setPlayId(m.id)} className="hover-lift overflow-hidden rounded-xl text-left" style={{ background: "var(--card)" }}>
@@ -44,6 +51,7 @@ export function MvExplore({ initialPlayId }: { initialPlayId?: string }) {
           </button>
         ))}
       </div>
+      )}
 
       <CommunityMvDialog open={playId != null} mvId={playId} onClose={() => setPlayId(null)} />
     </div>
