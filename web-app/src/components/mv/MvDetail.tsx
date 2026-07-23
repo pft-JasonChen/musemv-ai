@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { downloadFile } from "@/lib/download";
 import { formatDuration } from "@/lib/mv/mock";
 
@@ -50,6 +51,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onRecreate, onEdit, onClose }: Props) {
+  const { requireLogin } = useAuth();
   const [vote, setVote] = useState<"up" | "down" | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [published, setPublished] = useState(false);
@@ -58,9 +60,10 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
   function download() { if (downloadUrl) downloadFile(downloadUrl, `${info.title}.${videoUrl ? "mp4" : "jpg"}`); }
 
   // MV-12: turning Publish on asks for confirmation first; turning it off is immediate.
+  // GL-02: publishing to the community is gated at the action.
   function togglePublish() {
     if (published) { setPublished(false); return; }
-    setPubConfirm(true);
+    requireLogin(() => setPubConfirm(true));
   }
 
   return (

@@ -40,7 +40,7 @@ export function CommunitySongPlayer() {
   const song = playlist[idx];
 
   const { patchSongCompose } = useSongFlow();
-  const { subscribed } = useAuth();
+  const { subscribed, requireLogin } = useAuth();
   // Free accounts can only scrub/play up to the 30s preview cap.
   const maxPct = subscribed ? 100 : Math.min(100, (FREE_PREVIEW_SEC / DURATION) * 100);
   const [playing, setPlaying] = useState(true);
@@ -72,10 +72,14 @@ export function CommunitySongPlayer() {
     if (target > maxPct) { setProgress(maxPct); setPlaying(false); setSubOpen(true); return; } // gated → prompt upgrade
     setProgress(target);
   }
+  // GL-02/EXP-02: gate at the action — Like and Create both require sign-in.
+  function toggleLike() { requireLogin(() => setLiked((l) => !l)); }
   function createSong() {
-    stop();
-    patchSongCompose({ genre: song.genre, mood: song.mood, title: song.title, lyrics: song.lyrics ?? "" });
-    router.push("/song/create");
+    requireLogin(() => {
+      stop();
+      patchSongCompose({ genre: song.genre, mood: song.mood, title: song.title, lyrics: song.lyrics ?? "" });
+      router.push("/song/create");
+    });
   }
 
   return (
@@ -131,7 +135,7 @@ export function CommunitySongPlayer() {
 
           {/* Like / Share */}
           <div className="mt-5 flex items-center gap-2">
-            <button onClick={() => setLiked((l) => !l)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: liked ? "var(--accent)" : "var(--text-2)" }}>
+            <button onClick={toggleLike} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: liked ? "var(--accent)" : "var(--text-2)" }}>
               <Heart size={16} filled={liked} /> Like
             </button>
             <button onClick={() => setShareOpen(true)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { buildShareUrl } from "@/lib/share";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 import { getCommunityMv, NEW_MVS } from "@/lib/mv/community";
 import { Heart, Share, Stats } from "@/components/community/ui";
@@ -23,6 +24,7 @@ export function CommunityMvPlayer() {
   const mv = getCommunityMv(id) ?? NEW_MVS[0];
 
   const { setCompose } = useMvFlow();
+  const { requireLogin } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(true);
@@ -32,16 +34,20 @@ export function CommunityMvPlayer() {
   function togglePlay() { const v = videoRef.current; if (!v) return; if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); } }
   function toggleMute() { const v = videoRef.current; if (!v) return; v.muted = !v.muted; setMuted(v.muted); }
 
+  // GL-02/EXP-02: gate at the action — creating from a community MV requires sign-in.
   function createMv() {
-    setCompose({
-      ...DEFAULT_COMPOSE,
-      mvType: mv.mvType,
-      description: mv.prompt,
-      song: { id: `tpl-${mv.id}`, source: "sample", title: mv.matchedSong.title, durationSec: mv.matchedSong.durationSec, art: mv.matchedSong.art },
-      settings: { ...DEFAULT_COMPOSE.settings, title: { on: true, text: mv.title } },
+    requireLogin(() => {
+      setCompose({
+        ...DEFAULT_COMPOSE,
+        mvType: mv.mvType,
+        description: mv.prompt,
+        song: { id: `tpl-${mv.id}`, source: "sample", title: mv.matchedSong.title, durationSec: mv.matchedSong.durationSec, art: mv.matchedSong.art },
+        settings: { ...DEFAULT_COMPOSE.settings, title: { on: true, text: mv.title } },
+      });
+      router.push("/mv/room");
     });
-    router.push("/mv/room");
   }
+  function toggleLike() { requireLogin(() => setLiked((l) => !l)); }
 
   return (
     <div className="mx-auto max-w-[1000px] px-4 py-6 sm:px-6">
@@ -78,7 +84,7 @@ export function CommunityMvPlayer() {
 
           {/* Actions */}
           <div className="my-4 flex items-center gap-2">
-            <button onClick={() => setLiked((l) => !l)} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: liked ? "var(--accent)" : "var(--text-2)" }}>
+            <button onClick={toggleLike} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: liked ? "var(--accent)" : "var(--text-2)" }}>
               <Heart size={16} filled={liked} /> Like
             </button>
             <button onClick={() => setShareOpen(true)} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>

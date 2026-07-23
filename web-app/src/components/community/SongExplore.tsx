@@ -3,6 +3,7 @@
 
 import { useRouter } from "next/navigation";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { TOP_PICKS_SONGS, NEW_SONGS, type CommunitySong } from "@/lib/mv/community";
 import { Play, Stats } from "@/components/community/ui";
 
@@ -13,11 +14,16 @@ function I({ d }: { d: string }) {
 export function SongExplore() {
   const router = useRouter();
   const { patchSongCompose } = useSongFlow();
+  const { requireLogin } = useAuth();
 
+  // GL-02/EXP-02: gate at the action so Create is consistent with Home's create
+  // flow (previously this create did not require sign-in).
   function createFromSong(s: CommunitySong, e: React.MouseEvent) {
     e.stopPropagation();
-    patchSongCompose({ genre: s.genre, mood: s.mood, title: s.title, lyrics: s.lyrics ?? "" });
-    router.push("/song/create");
+    requireLogin(() => {
+      patchSongCompose({ genre: s.genre, mood: s.mood, title: s.title, lyrics: s.lyrics ?? "" });
+      router.push("/song/create");
+    });
   }
 
   const renderList = (title: string, items: CommunitySong[]) => (
