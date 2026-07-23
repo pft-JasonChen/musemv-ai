@@ -62,7 +62,7 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 | `/song/result` | `song/SongResultView` | 03 | flow-guard | F12 |
 | `/history` | `history/HistoryView` | 05 history | 🔒 **Auth** | F15 |
 | `/profile` | `profile/ProfileView` | 06 profile-account | 🔒 **Auth** | F16 |
-| `/settings` | `profile/SettingsView` | 06 | — | F19 |
+| `/settings` | `profile/SettingsView` | 06 | 🔒 **Auth** | F19 |
 | `/proof` | `proof/ProofView` | 08 proof | — | F21 |
 | `/share` | `share/ShareLinkView` | 10 share | **Public** (by design) | (web) |
 | `/share/mv/[id]` | *(server redirect → `/share?id=…`; legacy route, no component)* | 10 | — | (web) |
@@ -95,18 +95,16 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 ## 5. Auth model 🔒
 
 - `AuthProvider` + `authStore.ts`; logged-in boolean persists to `localStorage["muse_auth"]`. Subscription/plan/profile are **in-memory only** (reset on reload).
-- `<AuthGuard>` wraps **exactly four route entries**: `/mv/room`, `/song/create`, `/history`, `/profile`. Logged-out → opens `SignInModal`; dismiss → Home.
+- `<AuthGuard>` wraps **five route entries**: `/mv/room`, `/song/create`, `/history`, `/profile`, and (since PROF-03, 2026-07-23) `/settings`. Logged-out → opens `SignInModal`; dismiss → Home.
+- **Action-level gating (GL-02, 2026-07-23):** the primary create/social actions now call `requireLogin` **at the action** — Create MV / Create Song / Like on community surfaces and publish on an MV result — synced to App F22. The route `AuthGuard` is kept as a backstop, so gating exists at both layers.
 - `/share` is **intentionally public** (`ShareLinkView` is not guarded) — recipients of a share link aren't signed in. (Intended gating to confirm → `TBD-GL-07`.)
 - Downstream flow screens (`/mv/thinking…result`, `/song/creating…result`) are **not** individually guarded — they self-redirect to the flow entry when flow state is missing (flow-guard).
-- ⚠️ **Divergence vs the old MV spec** (`mv-creation-flow.spec.md` "no login gate"): auth was added later (`79eb1b1`); the create-flow **entry is now gated**. This overview reflects current code.
-- ⚠️ **Divergence vs App F22:** the app gates each *action* (Create/Like/Proof) individually; web gates by *route entry* only. Community like/share are ungated in web → `TBD-GL-02`.
 
 ## 6. Credits model 🔒
 
-- `CreditsProvider`: single in-memory balance (`DEFAULT_CREDITS = 390`), `addCredits(n)`. Resets on reload. No balance gate anywhere (generation never blocks). Ledger in `CreditsDetailModal` is a static seed, not live.
-- Costs in two places: `COST_STORYBOARD=20 / COST_RENDER=200 / COST_SONG=10` in `src/lib/mv/types.ts`; the Edit-MV costs `COST_REGEN=20 / COST_COVER=10 / COST_MERGE=10` are **hardcoded in `MvEditor.tsx`** (not centralized).
-- ⚠️ **Divergence / code-vs-doc conflict:** `DEVELOPER-HANDOVER.md §6` says "nothing decrements the balance." **Not true as-built** — `MvEditor` decrements on Regenerate scene, Recreate cover, and Merge MV. The *primary* generation flow (storyboard/render/song) is display-only and does **not** decrement. Charging semantics → `TBD-GL-01`.
-- App routes to IAP when credits are short; web never blocks. ⚠️ Divergence (→ `TBD-GL-01`).
+- `CreditsProvider`: single in-memory balance (`DEFAULT_CREDITS = 390`), `addCredits(n)`, plus `enhanceCost`/`consumeEnhance` (SONG-04). Resets on reload; ledger in `CreditsDetailModal` is a static seed, not live.
+- **Real charging (GL-01, 2026-07-23):** the MV/song **flow providers** decrement on generation start — `COST_STORYBOARD=20 / COST_RENDER=200 / COST_SONG=10` (`src/lib/mv/types.ts`; song recreate `COST_SONG_RECREATE=50`) — and **refund on failure**; Edit-MV still charges its micro-ops `COST_REGEN=20 / COST_COVER=10` (in `MvEditor.tsx`). The former `COST_MERGE` was removed — Merge MV is the re-render priced at `COST_RENDER` (see the handoff reconciliation note).
+- **Insufficient-balance gate:** when `credits < cost`, the CTA **routes to the buy-credits IAP instead of generating** (`MvRoom` mode select, `SongCompose`, `StoryboardEditor`, `MvEditor` merge, `SongResultView` recreate) — synced to the app. Real persistence / live ledger / real IAP stay backend-deferred (`TBD-GL-04`, `TBD-CR-01/04`).
 
 ## 7. Design tokens
 
@@ -121,43 +119,43 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 | F01 | Splash & Onboarding | **Dropped** (no splash/onboarding route) → `TBD-GL-03` | 09 |
 | F02 | Explore Home | **Adapted** 🔒 seed | 04 |
 | F03 | AI MV Feature Room | **Adapted** (single-column + Trending aside; no MV-type intro carousel) | 02 |
-| F03-2 | MV Output Settings | **Adapted** (Quality = Standard/High, no Pro gate) ⚠️ | 02 |
+| F03-2 | MV Output Settings | **Adapted → sync App** — Quality = Standard/High; **High is Pro-gated** (MV-04) | 02 |
 | F04-1 | Choose Song | **Reduced** (My/Sample tabs; no in-modal preview) | 02 |
-| F04-2 | Trim Audio | **Adapted** (drag handles; **no 30s minimum**, no format/size limits) ⚠️ | 02 |
+| F04-2 | Trim Audio | **Adapted → sync App** — drag handles; **≥30s minimum** (MV-01); import limited to MP3/AAC/WAV/M4A ≤50MB (MV-02) | 02 |
 | F05 | Create Mode Selection | **Adapted** (centered modal, 2 cards) | 02 |
 | F06 | Storyboard Generation | **Ported** 🔒 mock timing | 02 |
 | F07 | Edit Storyboard | **Adapted** (visual style + scenes editable; story/lyrics read-only) | 02 |
 | F08 | MV Generation + Result | **Adapted** (result = square stage + docked info panel) | 02 |
 | F09 | Edit MV | **Adapted → sync App** (`TBD-MV-08`): regenerate overwrites directly, take/cover picker removed, no Save | 02 |
 | F10 | MV Video Player | **Adapted** 🔒 seed | 04 |
-| F11 | AI Song Feature Room | **Adapted** (Custom = chips; no BPM/Key) | 03 |
-| F12 | Song Result & Lyrics | **Adapted** (no 30s gate; synced Lyrics sheet) | 03 |
-| F13 | Song Player | **Adapted** 🔒 seed (simulated playback, no shuffle/repeat) | 04 |
+| F11 | AI Song Feature Room | **Adapted → sync App** — Custom adds BPM slider + Key selector + per-line lyrics editor (SONG-01) | 03 |
+| F12 | Song Result & Lyrics | **Adapted → sync App** — **30s free-preview gate**, Pro unlocks full (SONG-02); synced Lyrics sheet | 03 |
+| F13 | Song Player | **Adapted** 🔒 seed (simulated playback) — **adds shuffle/repeat + 30s gate** (EXP-04, SONG-02) | 04 |
 | F14 | Community See-All | **Adapted** 🔒 seed | 04 |
 | F15 | History (My Creations) | **Adapted** 🔒 in-memory | 05 |
 | F16 | My Community Profile | **Adapted** (content grid at `/creator?self=1`, area 04) | 04/06 |
 | F17 | Community User Profile | **Adapted** 🔒 seed | 04 |
 | F18 | Account | **Adapted** (`/profile` row-hub) | 06 |
-| F19 | Settings | **Adapted** (placeholder legal; demo Unsubscribe/Delete) | 06 |
-| F20 | IAP Subscribe / Buy Credits | **Adapted** 🔒 no real payment | 07 |
+| F19 | Settings | **Adapted → sync App** — real Terms/Privacy links; **Sign Out moved here** (gated route, PROF-03); demo Unsubscribe/Delete | 06 |
+| F20 | IAP Subscribe / Buy Credits | **Adapted → sync App** 🔒 no real payment — Weekly/Monthly/Yearly + "800 Weekly Credits" header + 6-feature list; Restore Purchases; already-Pro state (CR-02/05) | 07 |
 | F21 | Proof of Creation | **Placeholder** (static stub; whole feature `TBD` in area 08) | 08 |
 | F22 | Face Selector / Sign In / Trim | **Adapted** (manual-crop face picker) | 02, 09 |
 | — | Curation ranking/moderation (Explore PRD) | **Not implemented** — logic is `TBD` (area 04) | 04 |
 | — | Share link page | **Web-only addition** | 10 |
 
-> **Decisions (2026-07-22):** most ⚠️ divergences above are now decided to **sync App**; a few are deferred (Phase 2) or kept as-is. See §9 (global) and each area §8 for the per-item resolution, and [`handoff.md`](handoff.md) for the codebase change list.
+> **Decisions (2026-07-22):** most ⚠️ divergences above are now decided to **sync App**; a few are deferred (Phase 2) or kept as-is. See §9 (global) and each area §8 for the per-item resolution, and [`handoff.md`](../docs/handoff-2026-07-23.md) for the codebase change list.
 
 ---
 
 ## 9. Global TBD register — RESOLVED 2026-07-22
 
 Cross-cutting decisions. Area-specific TBDs live in each area spec's §8 (e.g. `TBD-MV-*`).
-Codebase change list: [`handoff.md`](handoff.md).
+Codebase change list: [`handoff.md`](../docs/handoff-2026-07-23.md).
 
 | ID | Question | Decision (2026-07-22) |
 |---|---|---|
-| **TBD-GL-01** | Credit semantics — which CTAs spend credits; should an empty balance block? | ✅ **Sync App** — real credit charging on generation; when the balance is insufficient, the CTA routes to IAP (blocks generation). |
-| **TBD-GL-02** | Auth granularity — route-entry vs action-level gating. | ✅ **Sync App** — action-level gating (Create MV / Create Song / Like / Get Proof trigger sign-in at the action). |
+| **TBD-GL-01** | Credit semantics — which CTAs spend credits; should an empty balance block? | ✅ **Sync App** — real credit charging on generation; when the balance is insufficient, the CTA routes to IAP (blocks generation). **Implemented 2026-07-23** (§6). |
+| **TBD-GL-02** | Auth granularity — route-entry vs action-level gating. | ✅ **Sync App** — action-level gating (Create MV / Create Song / Like trigger sign-in at the action). **Implemented 2026-07-23** (§5). |
 | **TBD-GL-03** | Onboarding / splash (App F01) — in scope or dropped? | ⏸ **Phase 2** — not in the web MVP; added to the Phase-2 todo (may be added later). |
 | **TBD-GL-04** | Persistence — what survives reload in production. | ✅ **Sync App** — production persists state (history, storyboard, credits, subscription, profile) via the backend. Backend/RD work. |
 | **TBD-GL-05** | Community / Curation — ranking + moderation (Explore PRD). | 📄 **Spec-only** — update spec only; **do NOT change codebase**. Backend integration by RD later. (Applies to every Curation item.) |
@@ -188,4 +186,5 @@ Codebase change list: [`handoff.md`](handoff.md).
 | 2026-07-22 | Validator fix: `/settings` view path corrected to `profile/SettingsView` (was `account/SettingsView`). |
 | 2026-07-22 | Final RD review fix: corrected 6 stale route-table component names (MvExplore, SongExplore, CommunityMvPlayer, CommunitySongPlayer, CreatorProfile, SongResultView) to match code. |
 | 2026-07-22 | PM decisions round: §9 global register resolved; each area §8 now carries per-area decisions; codebase changes captured in `handoff.md`. |
-| 2026-07-23 | §A + §B implemented in `web-app/src/`. Global items: GL-01 real credit charging (flow providers decrement on generation start, refund on failure) with an insufficient-balance → IAP route at the CTAs; GL-02/EXP-02 action-level auth gating. Per-area as-built in each area §10; three reconciliation flags (Merge cost, plan pricing, legal URLs) in `handoff.md`. |
+| 2026-07-23 | §A + §B implemented in `web-app/src/`. Global items: GL-01 real credit charging (flow providers decrement on generation start, refund on failure) with an insufficient-balance → IAP route at the CTAs; GL-02/EXP-02 action-level auth gating. Per-area as-built in each area §10; three reconciliation flags (Merge cost, plan pricing, legal URLs) in `handoff-2026-07-23.md`. |
+| 2026-07-23 | As-built prose refreshed to match the shipped code: §1 route table (`/settings` gated), §5 auth model (action-level + 5 guarded routes), §6 credits model (real charging + IAP gate), §8 parity matrix (F03-2/F04-2/F11/F12/F13/F19/F20 now sync-App), §9 GL-01/GL-02 marked implemented. Public `/share` page simplified + `handoff.md` moved to `docs/handoff-2026-07-23.md`; `mv-creation-flow.spec.md` + `spec-validation.md` removed. |

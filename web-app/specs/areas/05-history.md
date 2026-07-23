@@ -19,10 +19,12 @@ modals.
 `ShareDialog` (area 10); the seed flow into `/mv/edit`/`/mv/storyboard`/`/mv/room` (area 02); the
 community player `/song/play` (area 04); `/proof` (area 08).
 
-**Key divergences from App F15:** the **Liked** tab shows **any liked row** (incl. the user's own),
-not only community-liked content ⚠️; Storyboard rows expose **Create MV in the `⋯` menu**, not a
-"Create" **pill** on the row ⚠️; retention copy is **"14 days"** (copy-only, unenforced) ⚠️. Matches
-the app on: "My Creations" title, All/Music Videos/Songs/Liked tabs, and the Edit MV / Get Proof menu
+**As-built vs App F15 (HIST-02/03/05/06 + MV-13 landed 2026-07-23, now synced to app):** retention is
+**permanent** (no 14-day copy); the **Liked** tab shows **only community-liked content**; Storyboard
+rows show a **"Create MV" pill on the card** (in addition to the `⋯` menu); **failed rows are
+Delete-only** (Like/Share removed); and a **published / in-review MV** shows a neutral **"Unpublish to
+edit MV"** entry that unpublishes first (MV-13). Matches the app on: "My Creations" title,
+All/Music Videos/Songs/Liked tabs, and the Edit MV / Get Proof menu
 CTAs.
 
 ---
@@ -42,27 +44,29 @@ CTAs.
 
 ## 3. State model & rules
 
-- **Auth-gated** route (`AuthGuard`, area 09). Title "My Creations". **DECIDED (`TBD-HIST-02`):
-  retention is PERMANENT** — once generated, a creation is **never auto-deleted**. The current code
-  copy "Creations are kept for 14 days. Download to keep them." must be updated to reflect permanence
-  (→ handoff). (Share-**link** expiry, `TBD-SHARE-01`, is a separate concept.)
+- **Auth-gated** route (`AuthGuard`, area 09). Title "My Creations". **HIST-02 (2026-07-23): retention
+  is PERMANENT** — once generated, a creation is **never auto-deleted**; the copy now reads "Your
+  creations are saved here permanently. Download anytime to keep a copy." (Share-**link** expiry,
+  `TBD-SHARE-01`, is a separate concept.)
 - **Rows** (`HistoryView.tsx:91-100`): live `useHistory` items mapped (status `generating→processing`,
   `failed→failed`, else `done`; failed rows drop the thumb and show a `meta` label) **prepended** to
   the static `HISTORY_SAMPLES`. `removed` ids are filtered out.
-- **Filters** (`HistoryView.tsx:20-26,102-108`): **All** (non-community only) · **Music Videos**
-  (`mv`|`storyboard`, non-community) · **Songs** (`song`, non-community) · **Liked** (any row with
-  `liked` true — includes own creations). ⚠️ vs App (community-liked only) → `TBD-HIST-03`.
+- **Filters** (`HistoryView.tsx`): **All** (non-community only) · **Music Videos** (`mv`|`storyboard`,
+  non-community) · **Songs** (`song`, non-community) · **Liked** — **HIST-03 (2026-07-23): only
+  community-liked content** (`community && liked(r)`), no longer any liked own row.
 - **Card** (`HistoryCard`): aspect-video thumb (or processing/failed placeholder), 20% scrim,
   hover-play (MV only), **status pill** (Generating…=gold / Failed=red / Done=green; community=none),
   **kind badge** (MV / SONG / STORYBOARD icon), title, stats (plays/likes/shares for done mv/song) or
   `meta`, date.
 - **Open row** (`HistoryView.tsx:110-115`): `processing` → not clickable; community song → `router.push(/song/play?id=…)` (id = `communitySongId`, area 04); `storyboard` → `seedFlow` + `/mv/storyboard?id=…` (area 02); else open `CreationDialog`.
-- **`⋯` menu** (`Menu`, portal) — contents depend on row type (`HistoryView.tsx:331-355`):
-  - **CTA row** (non-community, non-failed): **Edit MV** (mv) / **Create MV** (song|storyboard, primary) / **Get Proof** (mv|song).
-  - **Like / Share**: shown for community, mv, and song rows (`:339-340`) — so a **failed song still shows Like + Share**; storyboard rows do **not**.
-  - **Publish (toggle) / Download / normal Delete**: non-community, non-failed, mv|song only (`:342-353`). **Delete is hidden** when an MV is published/reviewing or a song is published (`:309`).
+- **Storyboard "Create" pill (HIST-05, 2026-07-23):** done storyboard cards render a **"Create MV"
+  pill** in the card footer (calls `createMv(r)`), in addition to the menu CTA.
+- **`⋯` menu** (`Menu`, portal) — contents depend on row type:
+  - **CTA row** (non-community, non-failed): **Edit MV** (mv) / **Create MV** (song|storyboard) / **Get Proof** (mv|song). **MV-13:** when the MV is published/in-review, the Edit MV entry becomes a neutral **"Unpublish to edit MV"** that unpublishes on tap.
+  - **Like / Share**: shown for community, mv, and song rows — **HIST-06 (2026-07-23): a failed row is Delete-only** (Like/Share now suppressed with `!failed`); storyboard rows never showed them.
+  - **Publish (toggle) / Download / normal Delete**: non-community, non-failed, mv|song only. **Delete is hidden** when an MV is published/reviewing or a song is published.
   - **Standalone Delete**: also shown for **failed** and **storyboard** rows (`:355`).
-  - **Net per type:** MV = Edit MV/Get Proof + Like/Share/Publish/Download/Delete · Song = Create MV/Get Proof + Like/Share/Publish/Download/Delete · **Storyboard = Create MV + Delete only** · **Community = Like + Share only** · **Failed (song) = Like + Share + Delete** (liking/sharing a failed generation is possible as-built — likely a quirk, → `TBD-HIST-06`).
+  - **Net per type (as-built 2026-07-23):** MV = Edit MV (or "Unpublish to edit MV" when published) / Get Proof + Like/Share/Publish/Download/Delete · Song = Create MV/Get Proof + Like/Share/Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
 - **Publish** (`HistoryView.tsx:125-137`): **MV** → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. **Song** → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ `TBD-MV-06`, area 04).
 - **Delete** (`HistoryView.tsx:194-200`): confirm modal → adds id to `removed` (list-local; not a server delete). `CreationDialog` delete does the same.
 - **Download** (`HistoryView.tsx:118-122`): song → `SAMPLE_AUDIO` as `{title}.mp3`; else `SAMPLE_RESULT_VIDEO` as `{title}.mp4` (fixture media, not the row's own render). 🔒
@@ -106,7 +110,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 | ID | Trigger | Behaviour |
 |---|---|---|
 | **HIST-E1** | Row status `processing` | Card not clickable; `⋯` menu not rendered (only after done/failed). |
-| **HIST-E2** | Row status `failed` | Thumb-less placeholder (alert icon) + `meta` label; menu offers **Like + Share + Delete** (the failed fixture is a song, so Like/Share still render — likely a code quirk, → `TBD-HIST-06`). |
+| **HIST-E2** | Row status `failed` | Thumb-less placeholder (alert icon) + `meta` label; menu is **Delete-only** (HIST-06, 2026-07-23 — Like/Share suppressed). |
 | **HIST-E7** | Storyboard row | Menu collapses to **Create MV (CTA) + Delete** only — no Like/Share/Publish/Download. |
 | **HIST-E3** | Community-sourced row | Reduced menu (Like/Share only); no Publish/Delete/CTA row; status pill hidden. |
 | **HIST-E4** | Reload | Live rows lost (in-memory); only static seed samples remain (🔒 → `TBD-GL-04`). |
@@ -118,8 +122,8 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 ## 6. Acceptance criteria (EARS)
 
 - **AC-HIST-01** — WHEN `/history` loads for a signed-in user, THE SYSTEM SHALL show live jobs prepended to the seed samples, under the **All** filter (community rows excluded).
-- **AC-HIST-02** — WHEN a filter chip is selected, THE SYSTEM SHALL show only rows matching it (All=own, Music Videos=mv/storyboard, Songs=song, Liked=any liked row).
-- **AC-HIST-03** — WHILE a row is `processing`, THE SYSTEM SHALL show a Generating pill and disable open + the `⋯` menu; WHEN `failed`, show a Failed pill and a **Like + Share + Delete** menu; storyboard rows SHALL show only **Create MV + Delete**.
+- **AC-HIST-02** — WHEN a filter chip is selected, THE SYSTEM SHALL show only rows matching it (All=own, Music Videos=mv/storyboard, Songs=song, **Liked=community-liked only**).
+- **AC-HIST-03** — WHILE a row is `processing`, THE SYSTEM SHALL show a Generating pill and disable open + the `⋯` menu; WHEN `failed`, show a Failed pill and a **Delete-only** menu; storyboard rows SHALL show a **Create MV pill** plus a **Create MV + Delete** menu.
 - **AC-HIST-04** — WHEN a done MV/song card is tapped, THE SYSTEM SHALL open `CreationDialog`; a storyboard → `/mv/storyboard`; a community row → `/song/play`.
 - **AC-HIST-05** — WHEN **Publish** is invoked on an MV, THE SYSTEM SHALL show the "Ready to Go Public?" confirm and, on confirm, mark it reviewing/published with a "Submitted for review" toast; a song publishes immediately without a confirm.
 - **AC-HIST-06** — WHEN **Delete** is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.
@@ -131,20 +135,20 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 
 ## 7. Per-path QA checklist
 
-- [ ] **HIST-P1**: All excludes community; Liked shows liked rows; empty filter → empty state (AC-01/02, E5).
+- [ ] **HIST-P1**: All excludes community; **Liked shows community-liked only**; empty filter → empty state (AC-01/02, E5).
 - [ ] **HIST-P2**: done mv/song → dialog; storyboard → editor; community → player; processing inert (AC-03/04).
 - [ ] **HIST-P3**: like toggles + count; Share dialog w/ correct url; Download toast (AC-08).
 - [ ] **HIST-P4**: MV publish → confirm → review toast; song publish → immediate (AC-05).
 - [ ] **HIST-P5**: delete confirm removes row; hidden for published/reviewing (AC-06).
 - [ ] **HIST-P6**: Edit MV / Create MV / Get Proof seed + route correctly (AC-07).
-- [ ] **HIST-E2/E3/E7**: failed → Like + Share + Delete; community → Like/Share only; storyboard → Create MV + Delete.
+- [ ] **HIST-E2/E3/E7**: failed → **Delete only**; community → Like/Share only; storyboard → Create MV pill + (Create MV + Delete) menu; published MV → "Unpublish to edit MV".
 - [ ] **AC-09**: grid clean at 4 widths *(visual)*.
 
 ---
 
 ## 8. Area TBD register — decisions 2026-07-22
 
-**Decisions** — codebase change list in [`../handoff.md`](../handoff.md).
+**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
 
 | ID | Decision |
 |---|---|

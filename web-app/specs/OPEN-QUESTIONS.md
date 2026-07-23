@@ -1,6 +1,6 @@
 # 待確認事項總表(Open Questions — 決策後狀態)
 
-> **狀態:2026-07-22 已完成一輪決策。** 這份表已從「待你決定」更新為「決策後分類」。本輪**只改 spec、未動 codebase**;要動 codebase 的變更清單在 **[`handoff.md`](handoff.md)**。
+> **狀態:2026-07-22 已完成一輪決策。** 這份表已從「待你決定」更新為「決策後分類」。本輪**只改 spec、未動 codebase**;要動 codebase 的變更清單在 **[`handoff.md`](../docs/handoff-2026-07-23.md)**。
 >
 > **權威來源:** 每項的正式決議記在該領域 spec 的第 8 節(或全域在 `00-overview.md` 第 9 節)。
 >
@@ -12,7 +12,7 @@
 
 ## ✅ 已定案 — 比照 App(sync App)
 
-前端可直接做(除標註後端者外),細節見 [`handoff.md`](handoff.md) §A。
+前端可直接做(除標註後端者外),細節見 [`handoff.md`](../docs/handoff-2026-07-23.md) §A。
 
 | ID | 領域 | 決議 |
 |---|---|---|
@@ -120,7 +120,7 @@
 ## PM 該去哪裡看(導覽)
 
 - **這份檔案** — 決策後的分類總覽。你目前主要還要處理的是最下方 ⏳ 的 6 項。
-- **[`handoff.md`](handoff.md)** — 要改 codebase 的變更清單(給下一個 session)。
+- **[`handoff.md`](../docs/handoff-2026-07-23.md)** — 要改 codebase 的變更清單(給下一個 session)。
 - **`index.html`** — 視覺化導覽首頁。
 - **每份 `areas/<n>.md` 第 8 節** — 各領域決議的權威記錄。
 - **`00-overview.md` 第 9 節** — 全域決議 + 第 8 節 App→Web 對照表。

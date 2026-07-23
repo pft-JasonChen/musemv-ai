@@ -5,8 +5,7 @@
 > code); ⚠️ marks divergence from App Spec v3.0, ❓ points at a tracked `TBD-*`, 🔒 marks
 > mock/in-memory behaviour.
 >
-> **Supersedes** `specs/mv-creation-flow.spec.md` (older, pre-auth). That file is removed when the
-> batch phase lands.
+> **Supersedes** the older pre-auth `mv-creation-flow.spec.md` (removed 2026-07-23).
 
 ---
 
@@ -24,10 +23,11 @@ credits/IAP modals (07); sign-in (09).
 **External entry points into this flow (see area 05 / `CreationDialog`):** History/Community rows can
 enter `/mv/edit`, `/mv/room` with **synthesized** MvFlow state — documented in MV-P6 below.
 
-**Key divergences from the app** (details inline): create-flow entry is auth-gated (not "no gate");
-no MV-type intro-carousel screen; Quality is Standard/High with no Pro gate; every song (incl. sample)
-passes through Trim; Trim has no 30s minimum and no format/size validation; credits decrement only in
-Edit MV.
+**Key divergences from the app** (details inline): no MV-type intro-carousel screen; every song (incl.
+sample) passes through Trim. **Synced to app 2026-07-23:** create is auth-gated at the action (GL-02);
+**Quality "High" is Pro-gated** (MV-04); **Trim enforces ≥30s** (MV-01) and **import is limited to
+MP3/AAC/WAV/M4A ≤50MB** (MV-02); **credits are charged on generation** (storyboard/render) with an
+insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL-01).
 
 ---
 
@@ -40,7 +40,7 @@ Edit MV.
 | `/mv/storyboard` | `StoryboardEditor` | character img, song, visual style, story, synopsis scenes, lyrics, Back, Save | `storyboard`, `setStoryboard`, `saveStoryboard`, `storyboardDirty`, `resetForRerender` | `enhancePrompt` (visual style) |
 | `/mv/creating` | `RenderGenerationScreen` → `GenerationView` | progress, View Later | `startRender`, `gen`, `resultUrl` | `renderMvJob` (after storyboard/merge) **or** `createMvJob(direct)`; `getMvJob` (poll) |
 | `/mv/result` | `MvResult` → `MvDetail` | video stage, like/dislike, share, download, publish toggle, Recreate, Edit MV | `resultUrl`, `compose`, `storyboard`, `useHistory` | — |
-| `/mv/edit` | `MvEditor` | Back, cover + variants, scene timeline + takes, output settings, Save, Merge MV | `storyboard`, `compose`, `useCredits().addCredits` | `enhancePrompt` (scene, cover) |
+| `/mv/edit` | `MvEditor` | Back, cover, scene timeline, output settings, Merge MV (MV-08: no Save; take/cover-variant trays hidden behind `LEGACY_TAKE_TRAY_UI`) | `storyboard`, `compose`, `useCredits().{credits,addCredits}` | `enhancePrompt` (scene, cover) |
 
 **Providers:** `MvFlowProvider` (compose/storyboard/result + job polling), `HistoryProvider`
 (`upsertGenerating`/`markCompleted`/`markFailed`), `CreditsProvider` (Edit MV only).
@@ -110,25 +110,28 @@ Screens to capture later (storyboard-HTML phase): every route in §2.
 > **DECIDED (`TBD-MV-08`, sync App — supersedes the earlier "keep the multi-take tray" reading):**
 > this version has **no "Project" mode** → **no Save**; edits are **ephemeral** (leaving `/mv/edit`
 > loses them). Regenerate **overwrites in place** with **no take/cover picker** and **no undo**. The
-> prototype's multi-take + cover-variant trays and the Save button are to be **hidden and code-marked**
-> (not deleted) for a future richer version — see `../handoff.md`. Behaviour matches App F09.
+> prototype's multi-take + cover-variant trays and the Save button are **hidden and code-marked**
+> (not deleted) for a future richer version — see `../../docs/handoff-2026-07-23.md`. Behaviour matches App F09.
 >
-> **As-built today (pre-change):** the code still has Save + the "Pick which take/cover to use" trays;
-> the above is the target this round introduces.
+> **As-built (MV-08 landed 2026-07-23):** Save + the "Pick which take/cover to use" trays are hidden
+> behind the `LEGACY_TAKE_TRAY_UI = false` flag in `MvEditor.tsx` (kept for the future richer version);
+> Regenerate/Recreate auto-select the new result so it overwrites in place. **Merge MV is the
+> re-render, priced at `COST_RENDER` (200)** — the former local `COST_MERGE` (10) was removed to avoid
+> double-charging with GL-01 (see the handoff reconciliation note).
 
-- **MV-P5-S1** Header: per-screen **Back**, MV name, "N shots", **Merge MV** (`10`). **No Save button.** Context chips (type/song/ratio) are **read-only** — "Style & song are locked after creation".
+- **MV-P5-S1** Header: per-screen **Back**, MV name, "N shots", **Merge MV** (`COST_RENDER`, 200). **No Save button.** Context chips (type/song/ratio) are **read-only** — "Style & song are locked after creation".
 - **MV-P5-S2** **Cover:** large preview (tap → lightbox); Edit description (modal + Enhance); **Recreate** cover (`10`, `addCredits(-10)`) **overwrites the cover directly** — no "pick which cover" tray, no undo.
 - **MV-P5-S3** **Scenes:** timeline of scene thumbnails; side panel edits the active scene's prompt (max 2500 + Enhance); **Regenerate scene** (`20`, `addCredits(-20)`) **overwrites that scene's video directly** — no "pick which take" tray, no undo.
 - **MV-P5-S4** **Output settings** modal: MV title/author toggles+inputs, Show subtitle, Show watermark (no ratio/quality here).
-- **MV-P5-S5** **Merge MV** (`addCredits(-10)`) → `resetForRerender()` → `/mv/creating` → back to MV-P4, re-rendering the MV from the current (overwritten) cover/scenes + edited text. Enabled by **any** pending edit (text, regenerate, or settings). ⚠️ Credits decrement here.
+- **MV-P5-S5** **Merge MV** → `resetForRerender()` → `/mv/creating`, where `startRender` charges `COST_RENDER` (200, refunded on failure — GL-01); re-renders the MV from the current (overwritten) cover/scenes + edited text. Enabled by **any** pending edit (text, regenerate, cover, or settings — incl. `storyboardDirty`). If `credits < COST_RENDER`, Merge opens `BuyCreditsModal` instead.
 
 ### MV-P6 — Supporting sheets & external entries
 
 - **MV-P6-A ChooseSongModal:** tabs **My Songs** (default) / **Sample Songs** (🔒 `MY_SONGS`/`SAMPLE_SONGS`); each row art/title/duration + **Use** → `onPick` (same handler for both tabs) → Trim. ⚠️ No in-modal inline preview (app F04-1 has one); preview happens on the song card in `/mv/room` after selection.
-- **MV-P6-B Import audio:** real local file picker; derives duration from metadata, **falls back to 0 on error** (then Trim math uses a 180s fallback while the card shows `0:00`) → Trim. ⚠️ No format/size validation (app: MP3/AAC/WAV/M4A ≤50MB → `TBD-MV-02`).
-- **MV-P6-C TrimAudioModal:** waveform + two drag handles; default select 15%→70%; min 5% gap; live preview of the selected region; **Use Trimmed Audio** stores `trim{start,end}` (full `durationSec` unchanged). ⚠️ **No 30s minimum** (app F04-2 enforces ≥30s / ≥MV length → `TBD-MV-01`). ⚠️ Sample-song trimming is web-new (app trims only library-import).
+- **MV-P6-B Import audio:** real local file picker. **MV-02 (2026-07-23):** accepts only MP3/AAC/WAV/M4A up to 50MB (by extension or MIME) — otherwise an error toast and no import. On accept, derives duration from metadata, **falls back to 0 on error** (then Trim math uses a 180s fallback while the card shows `0:00`) → Trim.
+- **MV-P6-C TrimAudioModal:** waveform + two drag handles; default select 15%→70%; min 5% gap; live preview of the selected region; **Use Trimmed Audio** stores `trim{start,end}` (full `durationSec` unchanged). **MV-01 (2026-07-23):** the selected length must be **≥30s** — below that the button is disabled and a "minimum 30s" hint shows. ⚠️ Sample-song trimming is web-new (app trims only library-import).
 - **MV-P6-D FacePickerModal:** manual crop square + size slider (256×256 JPEG). Detected-face suggestions are supported by the component but **not passed** from `/mv/room` (manual-crop only as-built). ⚠️ App auto-detects up to 6 faces (→ `TBD-MV-03`).
-- **MV-P6-E SettingsModal:** Aspect Ratio 9:16/16:9 · Quality **Standard/High** (SD/HD icons, **no Pro/crown gate** → `TBD-MV-04`) · Title/Author toggles+inputs · Show Subtitle · Show Watermark.
+- **MV-P6-E SettingsModal:** Aspect Ratio 9:16/16:9 · Quality **Standard/High** (SD/HD icons). **MV-04 (2026-07-23):** on the free plan **"High" is greyed with a crown**; tapping it opens `SubscribeModal` (IAP) instead of selecting. Subscribers select it normally. · Title/Author toggles+inputs · Show Subtitle · Show Watermark.
 - **Templates** (inline `<Modal>` in `MvRoom`, not a separate component): grid of `TEMPLATES`; selecting fills `description` with the template prompt. ⚠️ Does **not** auto-select/lock a song (the old web spec claimed it did → `TBD-MV-05`).
 - **External entries (`CreationDialog`, area 05):** from History/Community — **Recreate** → `/mv/room` (MV synthesizes compose with the row title); **Edit MV** → `/mv/edit` (fabricates a `mockStoryboard()` + a synthetic song with `durationSec:0`); **Use in MV** → `/mv/room` with a synthesized `library` song (`durationSec:0`). RD/QA: these enter the flow with placeholder state, not a real compose.
 
@@ -141,7 +144,7 @@ Screens to capture later (storyboard-HTML phase): every route in §2.
 | **MV-E1** | `description` contains `[fail]` (mock) | Job fails ~60% → "Generation Failed" screen: **Back** (→ `/mv/room`) + **Retry**. ⚠️ **Retry re-runs the same compose**, which still contains `[fail]`, so it **re-fails deterministically** — the error copy says "adjust your input" but there is no in-place edit; only Back returns to the form. (Mock-only artifact.) History row → Failed. |
 | **MV-E2** | Reload / deep-link a mid-flow route with no in-memory state | Flow-guard `router.replace("/mv/room")` (thinking/creating & result: immediate; storyboard/edit: 400ms tolerant wait for localStorage hydrate). |
 | **MV-E3** | Logged-out user hits `/mv/room` | `AuthGuard` opens `SignInModal`; dismiss → Home. |
-| **MV-E4** | `/mv/thinking` or `/mv/creating` reached with a **persisted storyboard present but `gen` idle** (e.g. reload) | As-built: `valid` is true (no redirect) but `alreadyDone` skips `start()`, so progress **stays at 0% and never navigates — the screen can hang**. Intended behaviour undefined → `TBD-MV-09`. |
+| **MV-E4** | `/mv/thinking` or `/mv/creating` reached with a **persisted storyboard present but `gen` idle** (e.g. reload) | **Fixed (MV-09, 2026-07-23):** `GenerationView` now forwards to `nextHref` when `alreadyDone` (the artifact already exists), so it no longer hangs at 0%. |
 | **MV-E5** | Edit MV: leaving the page / regenerate | **DECIDED:** no Save/Project mode — edits are **ephemeral** and lost on leaving `/mv/edit`; regenerate (scene/cover) **overwrites** with **no undo**; **Merge** re-renders from the current state (`TBD-MV-08`/`TBD-MV-10`). |
 | **MV-E6** | Choose Song with empty library | 🔒 seed always populated; empty-state to add → `TBD-MV-11` (sync App). |
 | **MV-E7** | Attempt to Edit a **published** MV | Blocked while published/in-review — the Edit MV button reads **"Unpublish to edit MV"** (neutral); user must unpublish first (`TBD-MV-13`). Applies on `/mv/result` and should also apply to History's Edit MV (area 05). |
@@ -164,10 +167,13 @@ Legend: *(visual)* = verification blocked until the screenshot phase.
 - **AC-MV-10** — WHEN `/mv/result` loads, THE SYSTEM SHALL loop the video muted and expose Like/Dislike (mutually exclusive), Share, Download, a **Publish toggle that opens a "Ready to Go Public?" confirm on turn-on**, Recreate, and **Edit MV** — where, while the MV is published/in-review, Edit MV is replaced by a neutral **"Unpublish to edit MV"** action.
 - **AC-MV-11** — IF a job `failed`, THEN THE SYSTEM SHALL show the error state with **Back** and **Retry** and mark the History row Failed. (Retry with an unchanged `[fail]` description re-fails.)
 - **AC-MV-12** — WHEN Regenerate scene or Recreate cover is invoked in Edit MV, THE SYSTEM SHALL **overwrite** that scene/cover in place (no take/cover picker, no undo) and decrement the balance (−20 / −10).
-- **AC-MV-13** — WHEN **Merge MV** is invoked, THE SYSTEM SHALL re-render the MV from the current cover/scenes + edited text and decrement −10; there is **no Save** and edits do not persist across leaving the page.
+- **AC-MV-13** — WHEN **Merge MV** is invoked with sufficient balance, THE SYSTEM SHALL re-render the MV from the current cover/scenes + edited text and charge `COST_RENDER` (−200) on generation start (refunded on failure); there is **no Save** and edits do not persist across leaving the page. WHEN the balance is insufficient, it SHALL open the buy-credits IAP instead.
 - **AC-MV-14** — WHEN **Enhance** is invoked on the description, visual style, scene prompt, or cover description, THE SYSTEM SHALL replace that field with the value returned by `enhancePrompt` for the matching `kind`.
 - **AC-MV-15** — WHEN a storyboard, render, or song job starts, THE SYSTEM SHALL NOT change the credit balance (only Edit-MV actions do). *(Locks in current behaviour pending `TBD-GL-01`.)*
-- **AC-MV-16** — WHEN Trim is confirmed, THE SYSTEM SHALL store `{start,end}` with a ≥5% handle gap, leaving `durationSec` (full length) unchanged. *(No 30s minimum — see `TBD-MV-01`.)*
+- **AC-MV-16** — WHEN Trim is confirmed, THE SYSTEM SHALL store `{start,end}` (leaving `durationSec` unchanged) only when the selected length is **≥30s** (MV-01); below that the confirm is disabled.
+- **AC-MV-17** — WHEN a local audio file is imported, THE SYSTEM SHALL accept only MP3/AAC/WAV/M4A ≤50MB and reject anything else with an error toast (MV-02).
+- **AC-MV-18** — WHILE on the free plan, WHEN "High" quality is tapped in Settings, THE SYSTEM SHALL open the subscribe IAP rather than selecting it (MV-04).
+- **AC-MV-19** — WHEN storyboard or render generation starts, THE SYSTEM SHALL charge the matching cost (COST_STORYBOARD/COST_RENDER) and refund on failure; and WHEN the balance is insufficient at the CTA (mode select / Generate MV / Merge), it SHALL route to the buy-credits IAP (GL-01).
 - **AC-MV-17** — THE SYSTEM SHALL render `/mv/room`, `/mv/storyboard`, `/mv/result`, `/mv/edit` at 390/768/1024/1440px with no overflow. *(visual)*
 
 ---
@@ -178,7 +184,7 @@ Legend: *(visual)* = verification blocked until the screenshot phase.
 - [ ] **MV-P2**: Storyboard First → Generating row appears in History at start → progress 0→100 *(visual)* → storyboard with ≥1 editable scene → Save gated by dirty (AC-05/06/07/08).
 - [ ] **MV-P3**: Directly → progress → result with `<video>` (AC-05/09/10).
 - [ ] **MV-P4**: like/dislike exclusivity; Share dialog opens; Download triggers; **Publish on → "Ready to Go Public?" confirm**; **published → Edit MV shows "Unpublish to edit MV"**; Recreate returns to room prefilled; Edit MV opens editor when unpublished (AC-10, MV-E7).
-- [ ] **MV-P5**: regen scene **overwrites** in place (−20, no picker); cover recreate **overwrites** (−10); **no Save button**; Merge (−10) → re-render; edits lost on leaving the page (AC-12/13).
+- [ ] **MV-P5**: regen scene **overwrites** in place (−20, no picker); cover recreate **overwrites** (−10); **no Save button** (trays hidden behind `LEGACY_TAKE_TRAY_UI`); Merge charges `COST_RENDER` (−200) on re-render, or opens IAP when short; edits lost on leaving the page (AC-12/13/19).
 - [ ] **MV-P6-C**: trim handles move, 5% min gap holds, preview plays selected region (AC-16).
 - [ ] **MV-P6**: Enhance replaces each of the 4 fields (AC-14).
 - [ ] **MV-E1**: `[fail]` → error + Retry, Retry re-fails (AC-11). **MV-E2**: reload `/mv/storyboard` → redirect to room. **MV-E3**: logged-out → sign-in modal. **MV-E4**: reload `/mv/thinking` with hydrated storyboard → confirm behaviour vs `TBD-MV-09`.
@@ -189,7 +195,7 @@ Legend: *(visual)* = verification blocked until the screenshot phase.
 
 ## 8. Area TBD register — decisions 2026-07-22
 
-**Decisions** — codebase change list in [`../handoff.md`](../handoff.md).
+**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
 
 | ID | Decision |
 |---|---|
