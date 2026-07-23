@@ -156,7 +156,7 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[14px] font-bold transition-all hover:brightness-95 active:scale-[0.97]"
                 style={{ background: "#fff", color: "#000" }}
               >
-                <I d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /> Unpublish to edit MV
+                <I d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /> Unpublish to edit
               </button>
             ) : (
               <Button className="flex-1" onClick={onEdit}><I d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /> Edit MV</Button>

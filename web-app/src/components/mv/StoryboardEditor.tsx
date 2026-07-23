@@ -8,23 +8,27 @@ import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import { COST_RENDER } from "@/lib/mv/types";
-import { formatDuration } from "@/lib/mv/mock";
+import { formatDuration, SAMPLE_AUDIO } from "@/lib/mv/mock";
 import { buildTimedLines } from "@/lib/mv/lyrics";
 
 const fmtTs = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
 export function StoryboardEditor() {
   const router = useRouter();
-  const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose, resetForRerender } =
-    useMvFlow();
+  const { storyboard, setStoryboard, compose, resetForRerender } = useMvFlow();
   const { credits } = useCredits();
-  const [toast, setToast] = useState<string | null>(null);
   const [buyOpen, setBuyOpen] = useState(false);
+  // The MV song is play-only here — the song is locked after creation, so this
+  // section only previews it (no editing). Fall back to the demo track so the
+  // control is functional for library/sample songs that carry no local URL.
+  const songPlayer = useAudioPlayer({ src: compose.song?.url ?? SAMPLE_AUDIO });
 
   function generateMv() {
     // GL-01: block the render when the balance can't cover it; route to IAP.
     if (credits < COST_RENDER) { setBuyOpen(true); return; }
+    songPlayer.pause();
     resetForRerender();
     router.push("/mv/creating");
   }
@@ -41,13 +45,6 @@ export function StoryboardEditor() {
   const updateScene = (id: string, text: string) =>
     setStoryboard((sb) => (sb ? { ...sb, scenes: sb.scenes.map((s) => (s.id === id ? { ...s, text } : s)) } : sb));
 
-  function save() {
-    if (!storyboard) return;
-    saveStoryboard(storyboard);
-    setToast("Saved");
-    setTimeout(() => setToast(null), 1800);
-  }
-
   return (
     <div className="mx-auto max-w-[1000px] px-4 pt-6 pb-28 sm:px-6 sm:pb-8">
       <div className="mb-5 flex items-center justify-between gap-3">
@@ -57,14 +54,6 @@ export function StoryboardEditor() {
           </button>
           <h1 className="text-[24px] font-extrabold tracking-tight">Edit Storyboard</h1>
         </div>
-        <button
-          onClick={save}
-          disabled={!storyboardDirty}
-          className="rounded-xl px-4 py-2 text-[14px] font-bold transition-opacity disabled:opacity-40"
-          style={{ background: storyboardDirty ? "var(--card-2)" : "transparent", color: storyboardDirty ? "var(--text)" : "var(--text-2)", border: "1px solid var(--border-2)" }}
-        >
-          {storyboardDirty ? "Save changes" : "Saved"}
-        </button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
@@ -82,8 +71,21 @@ export function StoryboardEditor() {
           <div>
             <SectionLabel>MV Song</SectionLabel>
             <div className="flex items-center gap-3 rounded-xl border p-2.5" style={{ background: "var(--card)", borderColor: "var(--border-2)" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={compose.song?.art ?? "/assets/images/album-art/album_05.jpg"} alt="" className="h-11 w-11 rounded-md object-cover" />
+              <button
+                onClick={songPlayer.toggle}
+                aria-label={songPlayer.playing ? "Pause song" : "Play song"}
+                className="group relative h-11 w-11 shrink-0 overflow-hidden rounded-md"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={compose.song?.art ?? "/assets/images/album-art/album_05.jpg"} alt="" className="h-full w-full object-cover" />
+                <span className="absolute inset-0 grid place-items-center text-white transition-all group-hover:brightness-110" style={{ background: "rgba(0,0,0,.35)" }}>
+                  {songPlayer.playing ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20" /></svg>
+                  )}
+                </span>
+              </button>
               <div className="min-w-0">
                 <div className="truncate text-[14px] font-semibold">{compose.song?.title ?? "Down the Memory Lane"}</div>
                 <div className="text-[12px]" style={{ color: "var(--text-2)" }}>{formatDuration(compose.song?.durationSec ?? 145)}</div>
@@ -159,11 +161,6 @@ export function StoryboardEditor() {
         </Button>
       </div>
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
-      {toast && (
-        <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold" style={{ background: "var(--card-3)", color: "var(--text)" }}>
-          {toast}
-        </div>
-      )}
     </div>
   );
 }

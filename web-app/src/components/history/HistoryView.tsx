@@ -348,7 +348,7 @@ function Menu(p: MenuProps) {
                 {/* MV-13: a published / in-review MV must be unpublished before editing;
                     the Edit MV entry becomes a neutral "Unpublish to edit MV" that unpublishes. */}
                 {isMv && (p.published || p.reviewing ? (
-                  <CtaBtn label="Unpublish to edit MV" icon={ICON.edit} onClick={() => { p.setOpen(false); p.onPublish(); }} />
+                  <CtaBtn label="Unpublish to edit" icon={ICON.edit} onClick={() => { p.setOpen(false); p.onPublish(); }} />
                 ) : (
                   <CtaBtn label="Edit MV" primary icon={ICON.edit} onClick={() => { p.setOpen(false); p.onEditMv(); }} />
                 ))}

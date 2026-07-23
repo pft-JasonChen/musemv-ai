@@ -128,7 +128,7 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 | F08 | MV Generation + Result | **Adapted** (result = square stage + docked info panel) | 02 |
 | F09 | Edit MV | **Adapted → sync App** (`TBD-MV-08`): regenerate overwrites directly, take/cover picker removed, no Save | 02 |
 | F10 | MV Video Player | **Adapted** 🔒 seed | 04 |
-| F11 | AI Song Feature Room | **Adapted → sync App** — Custom adds BPM slider + Key selector + per-line lyrics editor (SONG-01) | 03 |
+| F11 | AI Song Feature Room | **Adapted → sync App** — Custom adds BPM slider + Key selector; Lyrics/Idea is a free-form textarea (SONG-01) | 03 |
 | F12 | Song Result & Lyrics | **Adapted → sync App** — **30s free-preview gate**, Pro unlocks full (SONG-02); synced Lyrics sheet | 03 |
 | F13 | Song Player | **Adapted** 🔒 seed (simulated playback) — **adds shuffle/repeat + 30s gate** (EXP-04, SONG-02) | 04 |
 | F14 | Community See-All | **Adapted** 🔒 seed | 04 |

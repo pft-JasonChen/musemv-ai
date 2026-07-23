@@ -17,8 +17,10 @@ result (disc player + synced Lyrics sheet) → use the song in an MV or recreate
 `ShareDialog` (area 10); Use-in-MV lands in `/mv/room` (area 02).
 
 **As-built vs App F11–F13 (SONG-01…05 landed 2026-07-23, now synced to app):** Custom mode has
-Genre / Mood / Vocal chips + Title **plus a BPM slider, a Key selector, and a per-line lyrics editor**
-(SONG-01; `SongComposeSchema` gains defaulted `bpm`/`key`); free users get a **30s free-preview gate**
+Genre / Mood / Vocal chips + Title **plus a BPM slider and a Key selector** (SONG-01;
+`SongComposeSchema` gains defaulted `bpm`/`key`); the **Lyrics / Idea** input is a free-form textarea
+(app-style — Ideas / Lyrics samples + Enhance), matching the app prototype; free users get a **30s
+free-preview gate**
 (Pro unlocks full playback) in `SongDetail` and the community song player (SONG-02); **Recreate charges
 `COST_SONG_RECREATE` (50) and keeps the prior song in History** (SONG-03); **AI Enhance is free the
 first time per session, then 1 credit** (SONG-04); the compose credit pill shows the **live balance**
@@ -51,8 +53,9 @@ first time per session, then 1 credit** (SONG-04); the compose credit pill shows
 - **CTA-ready** (`isSongReady`): **Custom → always ready**; **Simple → `describe.trim() !== ""`**.
 - Cost: `COST_SONG = 10` shown on the Generate CTA. ⚠️ App said 50 (→ `TBD-GL-01`).
 - Custom-mode musical controls (SONG-01): **BPM slider** (`BPM_MIN 60`–`BPM_MAX 200`) and a **Key**
-  chip selector (`SONG_KEYS`, clearable = "Auto"), both persisted on `songCompose.{bpm,key}`; the lyrics
-  input is a **per-line editor** (`LineLyricsEditor`) storing a newline-joined `lyrics` string.
+  chip selector (`SONG_KEYS`, clearable = "Auto"), both persisted on `songCompose.{bpm,key}`. The
+  **Lyrics / Idea** field is a **free-form textarea** (`s.lyrics`, max 2500) with Idea / Lyrics sample
+  fills + Enhance — matching the app prototype (an earlier per-line editor was reverted 2026-07-23).
 - Compose helpers: **Ideas** (Simple: random `SONG_IDEAS`; Custom: Idea + Lyrics sample fills),
   **Enhance** (`enhancePrompt`; Custom lyrics offers Refine Idea vs Refine Lyrics; **first free/session
   then 1 cr** via `useCredits().{enhanceCost,consumeEnhance}` — SONG-04), a supported-languages info
@@ -82,7 +85,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 ### SONG-P1 — Compose
 - **SONG-P1-S1** Arrive `/song/create` (auth-gated); **Simple** tab default; **Generate** disabled until `describe` non-empty. Hint "Describe your song to continue."
 - **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + Ideas + Enhance. 
-- **SONG-P1-S3** Switch to **Custom**: per-line **Lyrics editor** (or "No lyrics needed" when Instrumental) + Ideas/Lyrics/Enhance; Genre/Mood chips + Vocal (optional, clearable); **BPM slider** + **Key** selector (SONG-01); optional Title. Custom CTA always enabled.
+- **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics / Idea** textarea (or "No lyrics needed" when Instrumental) + Ideas/Lyrics/Enhance; Genre/Mood chips + Vocal (optional, clearable); **BPM slider** + **Key** selector (SONG-01); optional Title. Custom CTA always enabled.
 - **SONG-P1-S4** Tap **Generate Song** (`10`) → `resetForNewSong()` → `/song/creating`.
 
 ### SONG-P2 — Generation
@@ -115,7 +118,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **AC-SONG-04** — WHEN **Generate Song** is tapped, THE SYSTEM SHALL `resetForNewSong()`, insert a Generating History row, and navigate to `/song/creating`.
 - **AC-SONG-05** — WHILE the song job is `processing`, THE SYSTEM SHALL show progress, step, an estimate, and View Later → `/history`; on `done` navigate to `/song/result`.
 - **AC-SONG-06** — WHEN `/song/result` loads, THE SYSTEM SHALL expose seek/±15s, Share, a Lyrics sheet (when lyrics exist), Use in Music Video, and Recreate — and no Like. WHILE not subscribed, playback SHALL be capped at 30s with an upgrade prompt (SONG-02); WHILE subscribed, it SHALL play in full.
-- **AC-SONG-11** — WHILE in Custom mode, THE SYSTEM SHALL expose a BPM slider (60–200) and a Key selector persisted on `songCompose.{bpm,key}`, and edit lyrics line-by-line (SONG-01).
+- **AC-SONG-11** — WHILE in Custom mode, THE SYSTEM SHALL expose a BPM slider (60–200) and a Key selector persisted on `songCompose.{bpm,key}`, and a free-form Lyrics / Idea textarea (SONG-01).
 - **AC-SONG-12** — WHEN Recreate is invoked with `credits ≥ 50`, THE SYSTEM SHALL charge 50 and regenerate while keeping the prior song in History; otherwise it SHALL open the buy-credits IAP (SONG-03).
 - **AC-SONG-13** — WHEN AI Enhance is used, THE SYSTEM SHALL charge nothing the first time per session and 1 credit each time after (SONG-04).
 - **AC-SONG-07** — WHEN **Use in Music Video** is tapped, THE SYSTEM SHALL pre-load the song (incl. lyrics) into MV compose and navigate to `/mv/room`.
@@ -141,7 +144,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 | ID | Decision |
 |---|---|
-| TBD-SONG-01 | ✅ **Sync App** — Custom mode gains Genre picker + BPM slider + Key selector + per-line lyrics. |
+| TBD-SONG-01 | ✅ **Sync App** — Custom mode gains a BPM slider + Key selector; Lyrics / Idea stays a free-form textarea (app-style; per-line editor reverted 2026-07-23). |
 | TBD-SONG-02 | ✅ **Sync App** — free users limited to a 30s preview; full playback unlocked for Pro. |
 | TBD-SONG-03 | ✅ **Sync App** — Recreate costs 50 credits; the prior song is kept in History. |
 | TBD-SONG-04 | ✅ **Sync App** — Enhance: first per session free, then 1 credit each. |
@@ -188,4 +191,5 @@ credits.
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator PASS; tightened SONG-E1 fail trigger (Simple `describe` only), noted Simple-mode results have no Lyrics sheet, flagged Instrumental-doesn't-clear-lyrics quirk. |
-| 2026-07-23 | Implemented: custom-mode BPM slider + Key selector + per-line lyrics editor (`SongComposeSchema` gains defaulted `bpm`/`key`) (SONG-01); 30s free-preview gate on `SongDetail` + community song player with upgrade prompt (SONG-02); Recreate = `COST_SONG_RECREATE` (50) keeping the prior song in History (SONG-03); first AI Enhance per session free then 1 credit each, tracked in `CreditsProvider` (SONG-04); compose credit pill uses live balance (SONG-05 bug). |
+| 2026-07-23 | Implemented: custom-mode BPM slider + Key selector (`SongComposeSchema` gains defaulted `bpm`/`key`) (SONG-01); 30s free-preview gate on `SongDetail` + community song player with upgrade prompt (SONG-02); Recreate = `COST_SONG_RECREATE` (50) keeping the prior song in History (SONG-03); first AI Enhance per session free then 1 credit each, tracked in `CreditsProvider` (SONG-04); compose credit pill uses live balance (SONG-05 bug). |
+| 2026-07-23 | Reverted the SONG-01 per-line lyrics editor back to the app-style free-form **Lyrics / Idea** textarea (per design review); BPM/Key retained. |
