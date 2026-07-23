@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "MuseMV.ai — Web",
+  title: "YouCam Muse — Web",
   description: "AI music video & song creation (web prototype)",
 };
 

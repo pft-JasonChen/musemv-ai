@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { CreditPill } from "@/components/ui/CreditPill";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
+import { useCredits } from "@/components/providers/CreditsProvider";
 import { GENRES, MOODS, VOCALS, SONG_IDEAS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
 import { COST_SONG, DESCRIPTION_MAX, isSongReady, type SongMode } from "@/lib/mv/types";
 
@@ -36,6 +37,7 @@ function Chips({ options, value, onPick, clearable }: { options: string[]; value
 export function SongCompose() {
   const router = useRouter();
   const { songCompose: s, patchSongCompose: patch, resetForNewSong } = useSongFlow();
+  const { credits } = useCredits();
   const ready = isSongReady(s);
   const [langOpen, setLangOpen] = useState(false);
 
@@ -43,7 +45,7 @@ export function SongCompose() {
     <div className="mx-auto max-w-[640px] px-4 py-6 sm:px-6">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-[26px] font-extrabold tracking-tight">AI Song</h1>
-        <CreditPill credits={390} />
+        <CreditPill credits={credits} />
       </div>
 
       {/* mode tabs */}

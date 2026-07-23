@@ -79,7 +79,7 @@ export function Sidebar() {
       >
         <div className="px-3 py-4">
           <span className="text-[20px] font-extrabold tracking-tight">
-            MuseMV<span style={{ color: "var(--accent)" }}>.ai</span>
+            YouCam <span style={{ color: "var(--accent)" }}>Muse</span>
           </span>
         </div>
         {renderLinks(

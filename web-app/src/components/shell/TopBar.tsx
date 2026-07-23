@@ -7,7 +7,7 @@ export function TopBar() {
       style={{ borderColor: "var(--border)", background: "color-mix(in srgb, var(--bg) 82%, transparent)", backdropFilter: "blur(8px)" }}
     >
       <span className="sm:hidden text-[17px] font-extrabold tracking-tight">
-        MuseMV<span style={{ color: "var(--accent)" }}>.ai</span>
+        YouCam <span style={{ color: "var(--accent)" }}>Muse</span>
       </span>
       <div className="ml-auto">
         <HeaderActions />

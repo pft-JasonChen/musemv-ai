@@ -88,7 +88,7 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
             >
               M
             </div>
-            <div className="mb-1.5 text-[20px] font-extrabold tracking-tight">Sign in to MuseMV</div>
+            <div className="mb-1.5 text-[20px] font-extrabold tracking-tight">Sign in to YouCam Muse</div>
             <div className="text-[13px] font-medium leading-relaxed" style={{ color: "var(--text-2)" }}>
               Save your creations, sync across devices,
               <br />

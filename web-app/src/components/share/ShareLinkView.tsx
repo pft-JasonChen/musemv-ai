@@ -37,7 +37,7 @@ export function ShareLinkView() {
 
   const Wordmark = (
     <Link href={home} className="text-[18px] font-extrabold tracking-tight" aria-label="YouCam Muse home">
-      MuseMV<span style={{ color: "var(--accent)" }}>.ai</span>
+      YouCam <span style={{ color: "var(--accent)" }}>Muse</span>
     </Link>
   );
 

@@ -8,7 +8,7 @@ import { ShareDialog } from "@/components/ui/ShareDialog";
 import { buildShareUrl } from "@/lib/share";
 import { LyricsPanel } from "@/components/song/LyricsPanel";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
-import { ALL_COMMUNITY_SONGS, getCommunitySong, DEFAULT_CREATOR } from "@/lib/mv/community";
+import { ALL_COMMUNITY_SONGS, CREATOR_SONGS, getCommunitySong, DEFAULT_CREATOR } from "@/lib/mv/community";
 import { buildTimedLines } from "@/lib/mv/lyrics";
 import { Heart, Share, Stats } from "@/components/community/ui";
 
@@ -23,9 +23,17 @@ export function CommunitySongPlayer() {
   const params = useSearchParams();
   const id = params.get("id");
 
-  const startIdx = Math.max(0, ALL_COMMUNITY_SONGS.findIndex((s) => s.id === (getCommunitySong(id)?.id ?? id)));
-  const [idx, setIdx] = useState(startIdx === -1 ? 0 : startIdx);
-  const song = ALL_COMMUNITY_SONGS[idx];
+  // EXP-09: creator songs (`cps-*`) live in CREATOR_SONGS, not ALL_COMMUNITY_SONGS.
+  // Pick the playlist the requested song actually belongs to so the right track
+  // plays and prev/next stays within that set instead of falling back to index 0.
+  const resolvedId = getCommunitySong(id)?.id ?? id;
+  const playlist = useMemo(
+    () => (CREATOR_SONGS.some((s) => s.id === resolvedId) ? CREATOR_SONGS : ALL_COMMUNITY_SONGS),
+    [resolvedId],
+  );
+  const startIdx = Math.max(0, playlist.findIndex((s) => s.id === resolvedId));
+  const [idx, setIdx] = useState(startIdx);
+  const song = playlist[idx];
 
   const { patchSongCompose } = useSongFlow();
   const [playing, setPlaying] = useState(true);
@@ -47,7 +55,7 @@ export function CommunitySongPlayer() {
   }, [playing, stop]);
 
   function go(delta: number) {
-    setIdx((i) => (i + delta + ALL_COMMUNITY_SONGS.length) % ALL_COMMUNITY_SONGS.length);
+    setIdx((i) => (i + delta + playlist.length) % playlist.length);
     setProgress(0); setPlaying(true); setLiked(false);
   }
   function seek(e: React.MouseEvent<HTMLDivElement>) {

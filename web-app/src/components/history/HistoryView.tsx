@@ -336,8 +336,9 @@ function Menu(p: MenuProps) {
               </div>
             )}
 
-            {(community || isMv || isSong) && <OptRow icon={<Heart size={18} filled={p.liked} />} label={p.liked ? "Unlike" : "Like"} active={p.liked} onClick={p.onLike} />}
-            {(community || isMv || isSong) && <OptRow icon={<Share size={18} />} label="Share" onClick={p.onShare} />}
+            {/* HIST-06: a failed creation is Delete-only — no Like / Share. */}
+            {!failed && (community || isMv || isSong) && <OptRow icon={<Heart size={18} filled={p.liked} />} label={p.liked ? "Unlike" : "Like"} active={p.liked} onClick={p.onLike} />}
+            {!failed && (community || isMv || isSong) && <OptRow icon={<Share size={18} />} label="Share" onClick={p.onShare} />}
 
             {!community && !failed && (isMv || isSong) && (
               <>
