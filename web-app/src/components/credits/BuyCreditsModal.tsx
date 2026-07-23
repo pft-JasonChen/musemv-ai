@@ -65,7 +65,8 @@ export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
       </div>
 
       <p className="mt-3 text-center text-[11px]" style={{ color: "var(--text-3)" }}>
-        Credits are non-refundable and expire after 12 months. Prices may vary by region.
+        {/* CR-03: purchased credits never expire. */}
+        Purchased credits never expire. Non-refundable. Prices may vary by region.
       </p>
 
       <div className="mt-4">

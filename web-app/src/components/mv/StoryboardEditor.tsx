@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
+import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useCredits } from "@/components/providers/CreditsProvider";
 import { COST_RENDER } from "@/lib/mv/types";
 import { formatDuration } from "@/lib/mv/mock";
 import { buildTimedLines } from "@/lib/mv/lyrics";
@@ -16,7 +18,16 @@ export function StoryboardEditor() {
   const router = useRouter();
   const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose, resetForRerender } =
     useMvFlow();
+  const { credits } = useCredits();
   const [toast, setToast] = useState<string | null>(null);
+  const [buyOpen, setBuyOpen] = useState(false);
+
+  function generateMv() {
+    // GL-01: block the render when the balance can't cover it; route to IAP.
+    if (credits < COST_RENDER) { setBuyOpen(true); return; }
+    resetForRerender();
+    router.push("/mv/creating");
+  }
 
   // Tolerant redirect: wait briefly so a persisted storyboard can hydrate.
   useEffect(() => {
@@ -140,13 +151,14 @@ export function StoryboardEditor() {
       </div>
 
       <div className="sticky bottom-[66px] sm:bottom-0 mt-8 -mx-4 border-t px-4 py-3 sm:-mx-6 sm:px-6" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
-        <Button className="w-full" onClick={() => { resetForRerender(); router.push("/mv/creating"); }}>
+        <Button className="w-full" onClick={generateMv}>
           Generate MV
           <span className="ml-1 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[14px] font-bold" style={{ background: "rgba(255,255,255,.18)" }}>
             {COST_RENDER}
           </span>
         </Button>
       </div>
+      <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
       {toast && (
         <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold" style={{ background: "var(--card-3)", color: "var(--text)" }}>
           {toast}

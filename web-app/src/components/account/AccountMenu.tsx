@@ -97,6 +97,16 @@ export function AccountMenu({ open, onClose, onBuyCredits }: Props) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5M12 7v5l3 2" /></svg>
           My Creations
         </Link>
+        {/* SHELL-03: Notifications + Send Feedback are UI-only for now; real wiring is
+            §D (PROF-01 notifications, PROF-02 feedback endpoint) — kept inert in the mock. */}
+        <button onClick={onClose} className={`${item} w-full`} style={{ color: "var(--text)" }} role="menuitem">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+          Notifications
+        </button>
+        <button onClick={onClose} className={`${item} w-full`} style={{ color: "var(--text)" }} role="menuitem">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+          Send Feedback
+        </button>
         <button onClick={() => { onClose(); signOut(); }} className={`${item} w-full`} style={{ color: "var(--red)" }} role="menuitem">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
           Sign Out

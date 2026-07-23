@@ -10,7 +10,7 @@ import type { TKey } from "@/lib/i18n/dictionaries/en";
 type NavItem = { href: string; labelKey: TKey; icon: React.ReactNode };
 
 // Routes (unprefixed) that require sign-in; clicking them while logged out opens the gate.
-const GATED = new Set(["/mv/room", "/song/create", "/history", "/profile"]);
+const GATED = new Set(["/mv/room", "/song/create", "/history", "/profile", "/settings"]);
 
 function Icon({ d }: { d: string }) {
   return (
@@ -79,7 +79,7 @@ export function Sidebar() {
       >
         <div className="px-3 py-4">
           <span className="text-[20px] font-extrabold tracking-tight">
-            MuseMV<span style={{ color: "var(--accent)" }}>.ai</span>
+            YouCam <span style={{ color: "var(--accent)" }}>Muse</span>
           </span>
         </div>
         {renderLinks(

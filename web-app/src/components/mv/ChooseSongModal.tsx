@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { MY_SONGS, SAMPLE_SONGS, formatDuration } from "@/lib/mv/mock";
 import type { Song } from "@/lib/mv/types";
 
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export function ChooseSongModal({ open, onClose, onPick }: Props) {
+  const router = useRouter();
   const [tab, setTab] = useState<"my" | "sample">("my");
   const songs = tab === "my" ? MY_SONGS : SAMPLE_SONGS;
 
@@ -33,6 +36,19 @@ export function ChooseSongModal({ open, onClose, onPick }: Props) {
         ))}
       </div>
 
+      {tab === "my" && songs.length === 0 ? (
+        // MV-11: empty My Songs → prompt to create one instead of a blank list.
+        <div className="flex flex-col items-center gap-4 px-4 py-10 text-center">
+          <span className="grid h-14 w-14 place-items-center rounded-full" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" /></svg>
+          </span>
+          <div>
+            <div className="text-[15px] font-bold">You haven&apos;t created any songs yet</div>
+            <div className="mt-1 text-[13px]" style={{ color: "var(--text-2)" }}>Create an AI song to use it in your music video.</div>
+          </div>
+          <Button onClick={() => { onClose(); router.push("/song/create"); }}>Create Song</Button>
+        </div>
+      ) : (
       <ul className="flex flex-col gap-1">
         {songs.map((s) => (
           <li
@@ -61,6 +77,7 @@ export function ChooseSongModal({ open, onClose, onPick }: Props) {
           </li>
         ))}
       </ul>
+      )}
     </Modal>
   );
 }

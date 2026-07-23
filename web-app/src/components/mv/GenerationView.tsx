@@ -34,12 +34,16 @@ export function GenerationView({ kind, title, subtitle, estimate, nextHref, star
 
   // Navigate when done. Trust the job status alone — a real backend may report
   // "done" before progress reaches exactly 100 (the mock always hits 100).
+  // MV-09: on reload the storyboard/result rehydrates from persistence while
+  // `gen` resets to idle, so the job status never reaches "done" and the screen
+  // would hang at 0%. `alreadyDone` means the artifact already exists — forward
+  // to the next screen instead of waiting on a generation that will never run.
   useEffect(() => {
-    if (gen.status === "done") {
+    if (alreadyDone || gen.status === "done") {
       const t = setTimeout(() => router.push(nextHref), 350);
       return () => clearTimeout(t);
     }
-  }, [gen.status, nextHref, router]);
+  }, [alreadyDone, gen.status, nextHref, router]);
 
   const backHref = kind === "song" ? "/song/create" : "/mv/room";
 

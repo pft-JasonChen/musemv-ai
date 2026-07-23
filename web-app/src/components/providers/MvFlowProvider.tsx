@@ -8,8 +8,9 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { api, pollJob } from "@/lib/api";
 import { StoryboardSchema } from "@/lib/api/schemas";
-import { DEFAULT_COMPOSE, type ComposeState, type MvJob, type Storyboard } from "@/lib/mv/types";
+import { COST_RENDER, COST_STORYBOARD, DEFAULT_COMPOSE, type ComposeState, type MvJob, type Storyboard } from "@/lib/mv/types";
 import { useHistory } from "./HistoryProvider";
+import { useCredits } from "./CreditsProvider";
 import { IDLE_GEN, toGen, type Gen } from "./progress";
 
 interface MvFlowValue {
@@ -36,6 +37,7 @@ const STORAGE_KEY = "mv-storyboard";
 
 export function MvFlowProvider({ children }: { children: React.ReactNode }) {
   const { upsertGenerating, markCompleted, markFailed } = useHistory();
+  const { addCredits } = useCredits();
   const [compose, setCompose] = useState<ComposeState>(DEFAULT_COMPOSE);
   const [gen, setGen] = useState<Gen>(IDLE_GEN);
   const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
@@ -81,9 +83,10 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => () => cancelPoll.current?.(), []);
 
-  /** Track `job`, updating gen on every poll tick until it completes or fails. */
+  /** Track `job`, updating gen on every poll tick until it completes or fails.
+   *  `onFail` runs on error so the caller can refund a credit charge (GL-01). */
   const track = useCallback(
-    (job: MvJob, onDone: (job: MvJob) => void) => {
+    (job: MvJob, onDone: (job: MvJob) => void, onFail?: () => void) => {
       cancelPoll.current?.();
       jobId.current = job.id;
       setGen(toGen(job));
@@ -93,6 +96,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         onError: () => {
           setGen((g) => ({ ...g, status: "failed" }));
           markFailed(job.id);
+          onFail?.();
         },
       });
     },
@@ -101,6 +105,10 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
 
   const startStoryboard = useCallback(() => {
     setResultUrl(null);
+    // GL-01: charge on generation start; refund if the job fails so the "credits
+    // were not charged" failure copy stays true.
+    addCredits(-COST_STORYBOARD);
+    const refund = () => addCredits(COST_STORYBOARD);
     void api
       .createMvJob({ mode: "storyboard_first", compose })
       .then((job) => {
@@ -114,12 +122,15 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
           if (!done.storyboard) return;
           setStoryboard(done.storyboard);
           setSavedJson(JSON.stringify(done.storyboard));
-        });
+        }, refund);
       })
-      .catch(() => setGen((g) => ({ ...g, status: "failed" })));
-  }, [compose, track, upsertGenerating]);
+      .catch(() => { refund(); setGen((g) => ({ ...g, status: "failed" })); });
+  }, [compose, track, upsertGenerating, addCredits]);
 
   const startRender = useCallback(() => {
+    // GL-01: rendering the MV charges the render cost; refund on failure.
+    addCredits(-COST_RENDER);
+    const refund = () => addCredits(COST_RENDER);
     const start =
       jobId.current && storyboard
         ? api.renderMvJob(jobId.current, storyboard)
@@ -136,10 +147,10 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
           if (!done.resultUrl) return;
           setResultUrl(done.resultUrl);
           markCompleted(done.id, done.resultUrl);
-        });
+        }, refund);
       })
-      .catch(() => setGen((g) => ({ ...g, status: "failed" })));
-  }, [compose, storyboard, track, upsertGenerating, markCompleted]);
+      .catch(() => { refund(); setGen((g) => ({ ...g, status: "failed" })); });
+  }, [compose, storyboard, track, upsertGenerating, markCompleted, addCredits]);
 
   // A brand-new MV must discard any storyboard/result/job left over from a
   // previous flow, otherwise the generation screens' `alreadyDone` guard sees

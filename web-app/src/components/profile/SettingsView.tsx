@@ -5,8 +5,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
+import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
 
-type Dialog = null | "terms" | "privacy" | "unsubscribe" | "delete";
+type Dialog = null | "unsubscribe" | "delete";
 
 function Row({ icon, title, sub, danger, onClick }: { icon: string; title: string; sub?: string; danger?: boolean; onClick: () => void }) {
   return (
@@ -25,10 +29,14 @@ function Row({ icon, title, sub, danger, onClick }: { icon: string; title: strin
 
 export function SettingsView() {
   const router = useRouter();
+  const { signOut } = useAuth();
+  const { locale } = useLocale();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [toast, setToast] = useState<string | null>(null);
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 1800); };
   const close = () => setDialog(null);
+  // PROF-06 / AUTH-03: open the real legal pages in a new tab.
+  const openLegal = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
 
   return (
     <div className="mx-auto max-w-[640px] px-4 py-8 sm:px-6">
@@ -40,25 +48,14 @@ export function SettingsView() {
       </div>
 
       <div className="divide-y" style={{ borderColor: "var(--border-3)" }}>
-        <Row icon="/assets/icons/ui/ic_file_text.svg" title="Terms of Use" onClick={() => setDialog("terms")} />
-        <Row icon="/assets/icons/ui/ic_shield_check.svg" title="Privacy Policy" onClick={() => setDialog("privacy")} />
+        {/* PROF-06 / AUTH-03: Terms & Privacy open the real legal pages. */}
+        <Row icon="/assets/icons/ui/ic_file_text.svg" title="Terms of Use" onClick={() => openLegal(TERMS_URL)} />
+        <Row icon="/assets/icons/ui/ic_shield_check.svg" title="Privacy Policy" onClick={() => openLegal(PRIVACY_URL)} />
         <Row icon="/assets/icons/ui/ic_calendar_x.svg" title="Unsubscribe" sub="Cancel your Muse Pro subscription" onClick={() => setDialog("unsubscribe")} />
         <Row icon="/assets/icons/ui/ic_user_x.svg" title="Delete Account" sub="Permanently remove your account" danger onClick={() => setDialog("delete")} />
+        {/* PROF-03: Sign Out moved here from the profile screen. */}
+        <Row icon="/assets/icons/ui/ic_user_x.svg" title="Sign Out" onClick={() => { signOut(); router.push(localePath(locale, "/")); }} />
       </div>
-
-      {/* Terms / Privacy — placeholder legal text */}
-      <Modal open={dialog === "terms"} onClose={close} title="Terms of Use" maxWidth={460}>
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-          This is a prototype. The full Terms of Use would appear here, covering acceptable use, content
-          ownership, and service limitations.
-        </p>
-      </Modal>
-      <Modal open={dialog === "privacy"} onClose={close} title="Privacy Policy" maxWidth={460}>
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>
-          This is a prototype. The full Privacy Policy would appear here, describing what data is collected,
-          how it is used, and your choices.
-        </p>
-      </Modal>
 
       {/* Unsubscribe confirm */}
       <Modal open={dialog === "unsubscribe"} onClose={close} title="Unsubscribe?" maxWidth={400}>

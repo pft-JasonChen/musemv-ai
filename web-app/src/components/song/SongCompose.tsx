@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/Button";
 import { CreditPill } from "@/components/ui/CreditPill";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
+import { useCredits } from "@/components/providers/CreditsProvider";
+import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { GENRES, MOODS, VOCALS, SONG_IDEAS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
-import { COST_SONG, DESCRIPTION_MAX, isSongReady, type SongMode } from "@/lib/mv/types";
+import { BPM_MIN, BPM_MAX, COST_SONG, DESCRIPTION_MAX, SONG_KEYS, isSongReady, type SongMode } from "@/lib/mv/types";
 
 function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
   return (
@@ -33,17 +35,65 @@ function Chips({ options, value, onPick, clearable }: { options: string[]; value
   );
 }
 
+// SONG-01: per-line lyrics editor — each lyric line is its own input, stored back
+// as a newline-joined string so the rest of the flow keeps a single `lyrics` field.
+function LineLyricsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const lines = value.length ? value.split("\n") : [""];
+  const commit = (next: string[]) => onChange(next.join("\n"));
+  return (
+    <div className="flex flex-col gap-1.5">
+      {lines.map((line, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <span className="w-6 shrink-0 text-right text-[11px] tabular-nums" style={{ color: "var(--text-3)" }}>{i + 1}</span>
+          <input
+            value={line}
+            onChange={(e) => commit(lines.map((l, idx) => (idx === i ? e.target.value : l)))}
+            placeholder={`Line ${i + 1}`}
+            className="flex-1 rounded-lg border bg-transparent px-2.5 py-1.5 text-[13px] outline-none"
+            style={{ background: "var(--card-2)", borderColor: "var(--border-2)", color: "var(--text)" }}
+          />
+          <button
+            aria-label={`Remove line ${i + 1}`}
+            onClick={() => commit(lines.length > 1 ? lines.filter((_, idx) => idx !== i) : [""])}
+            className="grid h-6 w-6 shrink-0 place-items-center rounded-full"
+            style={{ background: "var(--card-3)", color: "var(--text-2)" }}
+          >
+            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden><path d="M1 1l12 12M13 1L1 13" /></svg>
+          </button>
+        </div>
+      ))}
+      <button
+        onClick={() => commit([...lines, ""])}
+        className="mt-1 inline-flex w-fit items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold"
+        style={{ background: "var(--card-2)", color: "var(--text-2)" }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+        Add line
+      </button>
+    </div>
+  );
+}
+
 export function SongCompose() {
   const router = useRouter();
   const { songCompose: s, patchSongCompose: patch, resetForNewSong } = useSongFlow();
+  const { credits } = useCredits();
   const ready = isSongReady(s);
   const [langOpen, setLangOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
+
+  function generate() {
+    // GL-01: insufficient balance routes to IAP instead of starting generation.
+    if (credits < COST_SONG) { setBuyOpen(true); return; }
+    resetForNewSong();
+    router.push("/song/creating");
+  }
 
   return (
     <div className="mx-auto max-w-[640px] px-4 py-6 sm:px-6">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-[26px] font-extrabold tracking-tight">AI Song</h1>
-        <CreditPill credits={390} />
+        <CreditPill credits={credits} />
       </div>
 
       {/* mode tabs */}
@@ -101,7 +151,9 @@ export function SongCompose() {
               <div className="rounded-xl border p-3 text-[13px]" style={{ background: "var(--card)", borderColor: "var(--border-2)", color: "var(--text-2)" }}>No lyrics needed — your song will be a pure instrumental track.</div>
             ) : (
               <div className="rounded-xl border" style={{ background: "var(--card)", borderColor: "var(--border-2)" }}>
-                <textarea value={s.lyrics} maxLength={DESCRIPTION_MAX} onChange={(e) => patch({ lyrics: e.target.value })} placeholder="Write your lyrics or song idea here…" className="min-h-[110px] w-full resize-none bg-transparent p-3 text-[14px] outline-none no-scrollbar" style={{ color: "var(--text)", lineHeight: 1.6 }} />
+                <div className="p-3">
+                  <LineLyricsEditor value={s.lyrics} onChange={(v) => patch({ lyrics: v.slice(0, DESCRIPTION_MAX) })} />
+                </div>
                 <div className="flex items-center justify-between gap-2 px-3 pb-2.5">
                   <div className="flex items-center gap-2">
                     <button onClick={() => patch({ lyrics: SONG_IDEAS[Math.floor(Math.random() * SONG_IDEAS.length)] })} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
@@ -150,6 +202,26 @@ export function SongCompose() {
                 <div className="mb-2 text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>Vocal <span className="font-medium" style={{ color: "var(--text-3)" }}>(optional)</span></div>
                 <Chips options={VOCALS} value={s.vocal} onPick={(v) => patch({ vocal: v || null })} clearable />
               </div>
+              {/* SONG-01: tempo + key controls */}
+              <div>
+                <div className="mb-2 flex items-center justify-between text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>
+                  <span>Tempo</span>
+                  <span className="tabular-nums" style={{ color: "var(--text)" }}>{s.bpm} BPM</span>
+                </div>
+                <input
+                  type="range"
+                  min={BPM_MIN}
+                  max={BPM_MAX}
+                  value={s.bpm}
+                  onChange={(e) => patch({ bpm: Number(e.target.value) })}
+                  aria-label="Tempo (BPM)"
+                  className="w-full accent-[var(--accent)]"
+                />
+              </div>
+              <div>
+                <div className="mb-2 text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>Key <span className="font-medium" style={{ color: "var(--text-3)" }}>(optional)</span></div>
+                <Chips options={[...SONG_KEYS]} value={s.key} onPick={(v) => patch({ key: v || null })} clearable />
+              </div>
             </div>
           </section>
 
@@ -162,12 +234,14 @@ export function SongCompose() {
       )}
 
       <div className="sticky bottom-[66px] mt-8 -mx-4 border-t px-4 py-3 sm:bottom-0 sm:-mx-6 sm:px-6" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
-        <Button className="w-full" disabled={!ready} onClick={() => { resetForNewSong(); router.push("/song/creating"); }}>
+        <Button className="w-full" disabled={!ready} onClick={generate}>
           Generate Song
           <span className="ml-1 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[14px] font-bold" style={{ background: "rgba(255,255,255,.18)" }}>{COST_SONG}</span>
         </Button>
         {!ready && <p className="mt-2 text-center text-[12px]" style={{ color: "var(--text-2)" }}>Describe your song to continue.</p>}
       </div>
+
+      <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
     </div>
   );
 }

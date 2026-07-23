@@ -9,7 +9,7 @@ import { AccountMenu } from "@/components/account/AccountMenu";
 
 export function HeaderActions() {
   const { credits } = useCredits();
-  const { loggedIn, openSignIn, profile, subscribed } = useAuth();
+  const { loggedIn, hydrated, openSignIn, profile, subscribed } = useAuth();
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -17,6 +17,13 @@ export function HeaderActions() {
   function onPurchased(n: number) {
     setToast(`Added ${n} credits`);
     setTimeout(() => setToast(null), 2000);
+  }
+
+  // Until persisted auth is read from localStorage, the server/first-paint state
+  // is logged-out. Rendering it would flash the "Sign In" button for a signed-in
+  // user before flipping. Reserve the height and show nothing until hydrated.
+  if (!hydrated) {
+    return <div className="h-8" aria-hidden />;
   }
 
   if (!loggedIn) {

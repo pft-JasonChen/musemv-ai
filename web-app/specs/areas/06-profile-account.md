@@ -8,8 +8,9 @@
 ## 1. Overview & scope
 
 The account hub. `/profile` is a **settings-style hub** (avatar/name/PRO, credits+MVs+Songs stats,
-Muse Pro, Notifications, Language, Feedback, Settings, Sign Out) with an inline Edit-Profile modal.
-`/settings` holds legal links + subscription cancel + account delete.
+Muse Pro, Notifications, Language, Feedback, Settings) with an inline Edit-Profile modal. **Sign Out
+now lives in `/settings`** (PROF-03), not on the profile screen. `/settings` (auth-gated) holds legal
+links + Sign Out + subscription cancel + account delete.
 
 **In scope:** `profile/ProfileView` (`/profile`, 🔒 **Auth**), `profile/SettingsView` (`/settings`),
 the Edit-Profile / Language / Feedback modals.
@@ -25,8 +26,8 @@ F16→06 for convenience; the content-grid half is actually area 04.
 
 **Other key divergences:** Notifications is a **local toggle with no effect** ⚠️; Unsubscribe /
 Delete Account are **demo toasts** (Unsubscribe does not actually downgrade; Delete does not delete)
-⚠️; **Sign Out stays on `/profile`** (+ account menu), whereas App F19 relocated it *into* Settings ⚠️;
-`/settings` is **not auth-gated** ⚠️.
+⚠️. **Synced to App F19 (2026-07-23):** **Sign Out moved into Settings** (PROF-03) and **`/settings` is
+now auth-gated** (`AuthGuard`); Terms of Use / Privacy Policy are **real links** (PROF-06).
 
 ---
 
@@ -34,8 +35,8 @@ Delete Account are **demo toasts** (Unsubscribe does not actually downgrade; Del
 
 | Route / Component | Owns UI | Reads/writes state | `MuseApi` |
 |---|---|---|---|
-| `/profile` → `profile/ProfileView` (🔒 **Auth**) | header (avatar/name/PRO/email + edit), stat tiles (Credits/MVs/Songs), rows (Muse Pro, Notifications, Language, Feedback, Settings, Sign Out), Edit-Profile/Language/Feedback modals | `useAuth().{profile,subscribed,subscribedPlan,signOut,updateProfile}`, `useCredits().credits`, `useLocale().{locale,setLocale}`, `useT()` | **none** |
-| `/settings` → `profile/SettingsView` (public) | Back, Terms/Privacy (placeholder modals), Unsubscribe confirm, Delete-Account confirm | local `dialog` | **none** |
+| `/profile` → `profile/ProfileView` (🔒 **Auth**) | header (avatar/name/PRO/email + edit), stat tiles (Credits/MVs/Songs), rows (Muse Pro, Notifications, Language, Feedback, Settings), Edit-Profile/Language/Feedback modals | `useAuth().{profile,subscribed,subscribedPlan,updateProfile}`, `useCredits().credits`, `useLocale().{locale,setLocale}`, `useT()` | **none** |
+| `/settings` → `profile/SettingsView` (🔒 **Auth**, PROF-03) | Back, Terms/Privacy (real links → `lib/legal.ts`, new tab), Unsubscribe confirm, Delete-Account confirm, **Sign Out** | `useAuth().signOut`, `useLocale()`, local `dialog` | **none** |
 
 Localized via `useT()` (`profile.*`, `language.*`, `common.*`) — `/profile` is one of the only two
 localized surfaces (nav + Profile). `/settings` copy is hardcoded English.
@@ -52,14 +53,15 @@ localized surfaces (nav + Profile). `/settings` copy is hardcoded English.
 - **Notifications** — local `useState(true)` toggle; **no effect** 🔒 (→ `TBD-PROF-01`).
 - **Language** — opens a 9-locale picker → `setLocale(code)` (i18n, area-wide).
 - **Send Feedback** — opens a textarea modal; submit → toast, **content discarded** 🔒 (→ `TBD-PROF-02`).
-- **Settings** — navigates to `/settings` (via `localePath`).
-- **Sign Out** — `signOut()` + toast → redirect Home. ⚠️ App F19 puts Sign Out inside Settings.
+- **Settings** — navigates to `/settings` (via `localePath`). Sign Out is no longer on this screen (PROF-03 moved it into Settings).
 **Edit-Profile modal** (`:176-197`): avatar **cycles `AVATAR_SAMPLES`** (mock "Change Photo", no real upload) 🔒; name (max 30); email **read-only**; Save → `updateProfile({name,avatar})` (in-memory; lost on reload → `TBD-GL-04`).
 
-**Settings** (`SettingsView.tsx`): **Terms of Use** / **Privacy Policy** open **placeholder** legal text
-modals (explicitly "This is a prototype") ⚠️; **Unsubscribe** → confirm → toast "Unsubscribed (demo)"
-— **does not clear `subscribed`** 🔒; **Delete Account** → destructive confirm → toast "Account deleted
-(demo)" → redirect Home — **no real deletion, no sign-out** 🔒. Public route (no `AuthGuard`).
+**Settings** (`SettingsView.tsx`): **Terms of Use** / **Privacy Policy** now **open the real legal
+pages** (`lib/legal.ts` `TERMS_URL`/`PRIVACY_URL`, new tab — PROF-06, same set as the sign-in modal
+AUTH-03) — the old placeholder modals are removed; **Unsubscribe** → confirm → toast "Unsubscribed
+(demo)" — **does not clear `subscribed`** 🔒; **Delete Account** → destructive confirm → toast "Account
+deleted (demo)" → redirect Home — **no real deletion** 🔒; **Sign Out** (PROF-03) → `signOut()` →
+redirect Home. **Auth-gated route** (`AuthGuard`, PROF-03).
 
 🔒 Everything here is in-memory (profile/subscription) or static (stat counts, legal text).
 
@@ -78,10 +80,10 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 - **PROF-P2-S2** **Change Photo** cycles sample avatars; edit name (≤30); email read-only. **Save** → `updateProfile` + "updated" toast (in-memory).
 
 ### PROF-P3 — Rows
-- **PROF-P3-S1** **Muse Pro** → Subscribe modal (area 07) or Manage (if subscribed). **Notifications** → local toggle. **Language** → locale picker → `setLocale`. **Send Feedback** → textarea → submit toast. **Settings** → `/settings`. **Sign Out** → `signOut` + Home.
+- **PROF-P3-S1** **Muse Pro** → Subscribe modal (area 07) or Manage (if subscribed). **Notifications** → local toggle. **Language** → locale picker → `setLocale`. **Send Feedback** → textarea → submit toast. **Settings** → `/settings` (Sign Out lives there now, PROF-03).
 
 ### PROF-P4 — Settings
-- **PROF-P4-S1** `/settings`: **Terms**/**Privacy** → placeholder modals.
+- **PROF-P4-S1** `/settings` (auth-gated): **Terms**/**Privacy** → real legal pages (new tab); **Sign Out** → `signOut()` → Home.
 - **PROF-P4-S2** **Unsubscribe** → confirm → "Unsubscribed (demo)" toast (no downgrade).
 - **PROF-P4-S3** **Delete Account** → destructive confirm → "Account deleted (demo)" toast → Home (no real deletion).
 
@@ -92,7 +94,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 | ID | Trigger | Behaviour |
 |---|---|---|
 | **PROF-E1** | Logged out on `/profile` | `AuthGuard` → sign-in modal (area 09). |
-| **PROF-E2** | Direct-navigate `/settings` logged out | Renders (no gate); Unsubscribe/Delete are demo-only regardless of auth. ⚠️ (→ `TBD-PROF-03`). |
+| **PROF-E2** | Direct-navigate `/settings` logged out | **Auth-gated (PROF-03, 2026-07-23):** `AuthGuard` opens the sign-in modal; dismiss → Home. |
 | **PROF-E3** | Reload after edit/subscribe | Name/avatar/subscription reset to defaults (in-memory; only logged-in boolean persists → `TBD-GL-04`). |
 | **PROF-E4** | Unsubscribe while subscribed | Toast only; `subscribed` stays true (no state change). 🔒 |
 
@@ -105,7 +107,9 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 - **AC-PROF-03** — WHEN Edit-Profile is saved, THE SYSTEM SHALL commit name/avatar via `updateProfile` and reflect them in the shell (in-memory).
 - **AC-PROF-04** — WHEN the Muse Pro row is tapped, THE SYSTEM SHALL open the Subscribe modal (not subscribed) or the Credits detail (subscribed).
 - **AC-PROF-05** — WHEN Language is changed, THE SYSTEM SHALL switch locale via `setLocale` and reflect it in localized surfaces.
-- **AC-PROF-06** — WHEN Sign Out is invoked, THE SYSTEM SHALL clear auth and redirect Home.
+- **AC-PROF-06** — WHEN Sign Out is invoked (from Settings — PROF-03 — or the account menu), THE SYSTEM SHALL clear auth and redirect Home. It SHALL NOT appear on `/profile`.
+- **AC-PROF-08** — `/settings` SHALL be auth-gated (`AuthGuard`); WHEN logged out, it opens the sign-in modal (PROF-03).
+- **AC-PROF-09** — WHEN Terms of Use / Privacy Policy is tapped (Settings or the sign-in modal), THE SYSTEM SHALL open the shared real legal URL in a new tab (PROF-06 / AUTH-03).
 - **AC-PROF-07** — WHEN Unsubscribe or Delete Account is confirmed in `/settings`, THE SYSTEM SHALL show a demo toast (and Delete redirects Home) **without** actually cancelling or deleting anything. *(as-built placeholder — pending `TBD-PROF-04`.)*
 - **AC-PROF-08** — THE SYSTEM SHALL render `/profile` and `/settings` at 390/768/1024/1440px with no overflow. *(visual)*
 
@@ -124,7 +128,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 
 ## 8. Area TBD register — decisions 2026-07-22
 
-**Decisions** — codebase change list in [`../handoff.md`](../handoff.md).
+**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
 
 | ID | Decision |
 |---|---|
@@ -176,3 +180,4 @@ ungated; Sign Out on profile (not Settings).
 | Date | Change |
 |---|---|
 | 2026-07-22 | Initial as-built spec. Validator PASS (2 NITs applied: Settings nav via localePath; BuyCreditsModal reachable via Credits tile chain). |
+| 2026-07-23 | Implemented: Sign Out moved from `ProfileView` into the (now `AuthGuard`-gated) `SettingsView`, `/settings` added to the sidebar gate (PROF-03); Terms of Use / Privacy Policy wired to shared `lib/legal.ts` links from Settings (PROF-06) and the sign-in modal (AUTH-03). |

@@ -14,20 +14,23 @@
 Credit balance + the three monetization modals. `CreditsProvider` holds an in-memory balance;
 `SubscribeModal` (Muse Pro plans), `BuyCreditsModal` (credit packs), and `CreditsDetailModal` (balance
 + ledger) are opened from the shell, account menu, and profile. Disclaimer copy differs per modal:
-only **`SubscribeModal`** says "Demo only — no real payment"; `BuyCreditsModal` shows a
-non-refundable / 12-month-expiry / prices-vary note; `CreditsDetailModal` has none.
+only **`SubscribeModal`** says "Demo only — no real payment. Subscription credits reset each cycle.";
+`BuyCreditsModal` says purchased credits **never expire** (non-refundable / prices-vary);
+`CreditsDetailModal` has none.
 
 **In scope:** `providers/CreditsProvider`, `credits/SubscribeModal`, `credits/BuyCreditsModal`,
 `credits/CreditsDetailModal`; the plan/pack/ledger data in `lib/user.ts`.
 **Out of scope (cross-referenced):** entry points — header credits badge + account menu Buy Credits
 (area 01), profile Credits tile / Muse Pro row (area 06); how generation *spends* credits (area 02
-Edit MV; `TBD-GL-01`).
+MV flow + Edit MV, area 03 song; charging is now real — `GL-01`, see §6 overview).
 
-**Key divergences from App F20:** plans are **Weekly / Super Weekly / Yearly** (200 / 1000 / 2000 cr),
-not the app's Weekly/Monthly/Yearly + "800 Weekly Credits" header + 6-feature list ⚠️; **no native IAP**
-— purchase is instant `addCredits` 🔒; **no Restore Purchases** ⚠️; purchased credits show **"expire
-after 12 months"** (app: purchased never expire; subscription credits reset per cycle — web has no
-reset/expiry logic) ⚠️.
+**As-built vs App F20 (CR-02/03/05 landed 2026-07-23, now synced to app):** plans are **Weekly /
+Monthly / Yearly** with an **"800 Weekly Credits"** header + a **six-feature list** (`WEEKLY_CREDITS`,
+`MUSE_PRO_FEATURES` in `lib/user.ts`); **Restore Purchases** and an **"already on Muse Pro"** state
+exist; purchased credits **never expire** and subscription credits **reset per cycle** (copy only — no
+real reset/expiry engine). Still mock: **no native IAP** — purchase is instant `addCredits` 🔒
+(`TBD-CR-01`); prices/credit amounts are **placeholders pending RD confirmation** (see the handoff
+reconciliation note).
 
 ---
 
@@ -46,19 +49,26 @@ No route of its own; opened as modals. No backend.
 
 ## 3. State model & rules
 
-- **Balance** (`CreditsProvider.tsx:14-15`): single in-memory `credits` (`DEFAULT_CREDITS = 390`) +
-  `addCredits(n)` (adds `n`, may be negative — the only negative callers are Edit MV, area 02). No
-  balance gate anywhere; generation never blocks (→ `TBD-GL-01`). Resets to 390 on reload 🔒.
-- **`SubscribeModal`** (`SubscribeModal.tsx`): title "Muse Pro"; blurb "More credits, faster renders,
-  no watermark"; three `SUBSCRIPTION_PLANS` cards (code names **"Weekly Plan"** $9.99/200cr ·
-  **"Super Weekly Plan"** $29.99/1000cr **POPULAR** · **"Yearly Plan"** $69.99/2000cr **BEST VALUE**);
-  default selected **super**; **Subscribe** → `subscribe(plan)` + `addCredits(plan.credits)` +
-  `onSubscribed` toast + close. Disclaimer: "Demo only — no real payment. Cancel anytime." Each card
-  shows "resets {cadence}" — 🔒 **display-only, no reset logic exists** (→ `TBD-CR-03`).
+- **Balance** (`CreditsProvider.tsx`): single in-memory `credits` (`DEFAULT_CREDITS = 390`) +
+  `addCredits(n)` (adds `n`, may be negative). **GL-01 (2026-07-23):** the MV/song **flow providers**
+  now decrement on generation start (`COST_STORYBOARD`/`COST_RENDER`/`COST_SONG`, refunded on failure)
+  and Edit-MV still charges its micro-ops (`COST_REGEN`/`COST_COVER`); when the balance can't cover a
+  cost the CTA **routes to IAP instead of generating** (`MvRoom`, `SongCompose`, `StoryboardEditor`,
+  `MvEditor`, `SongResultView`). `CreditsProvider` also exposes `enhanceCost` / `consumeEnhance` for
+  the AI-Enhance charge (SONG-04). Balance still resets to 390 on reload 🔒 (`TBD-GL-04`); real ledger
+  is `TBD-CR-04`.
+- **`SubscribeModal`** (`SubscribeModal.tsx`): title "Muse Pro"; **"800 Weekly Credits"** header +
+  six-feature list (`MUSE_PRO_FEATURES`); three `SUBSCRIPTION_PLANS` cards (**"Weekly Plan"**
+  $9.99 · **"Monthly Plan"** $29.99 **POPULAR** · **"Yearly Plan"** $199.99 **BEST VALUE**, all on the
+  `WEEKLY_CREDITS = 800` allowance; prices/credits are placeholders); default selected **monthly**;
+  **Subscribe** → `subscribe(plan)` + `addCredits(plan.credits)` + `onSubscribed` toast + close.
+  **Restore Purchases** action ("No previous purchases found"); when already subscribed the modal
+  shows the **"You're already on Muse Pro"** state instead of the picker (CR-05). Disclaimer: "Demo
+  only — no real payment. Subscription credits reset each cycle. Cancel anytime."
 - **`BuyCreditsModal`** (`BuyCreditsModal.tsx`): shows balance; four `CREDIT_PACKS` (**100** $0.99 ·
   **300** $2.49 **POPULAR** · **600** $4.49 · **1000** $6.49); default selected **300** (id 2);
-  **Buy Now** → `addCredits(pack.credits)` + `onPurchased` toast + close. Copy: "non-refundable and
-  expire after 12 months. Prices may vary by region." + "Cancel anytime · No commitment". 🔒 (no expiry logic exists).
+  **Buy Now** → `addCredits(pack.credits)` + `onPurchased` toast + close. Copy (CR-03): "Purchased
+  credits never expire. Non-refundable. Prices may vary by region." + "Cancel anytime · No commitment".
 - **`CreditsDetailModal`** (`CreditsDetailModal.tsx`): balance card + **Buy Credits** CTA + a
   **Transaction History** list rendered from the static 7-entry `CREDIT_TRANSACTIONS` seed
   (`lib/user.ts`) — 🔒 **not live**; it does not reflect `addCredits` calls.
@@ -89,7 +99,8 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, CreditsDetailModal.
 |---|---|---|
 | **CR-E1** | Reload after buy/subscribe | Balance resets to 390; subscription cleared (in-memory; → `TBD-GL-04`). |
 | **CR-E2** | Ledger vs balance mismatch | The ledger is a fixed seed; it never matches actual `addCredits` history 🔒 (→ `TBD-CR-04`). |
-| **CR-E3** | Already subscribed | No "already Pro" guard in the modal (App F20 shows one); Subscribe can be tapped again (→ `TBD-CR-05`). |
+| **CR-E3** | Already subscribed | `SubscribeModal` shows the **"You're already on Muse Pro"** state (no plan picker / re-subscribe) — CR-05 landed 2026-07-23. |
+| **CR-E4** | Insufficient balance for a generation | The CTA opens `BuyCreditsModal` (IAP) instead of starting the job (GL-01). |
 
 ---
 
@@ -98,10 +109,12 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, CreditsDetailModal.
 - **AC-CR-01** — WHEN a credit pack is purchased, THE SYSTEM SHALL add the pack's credits to the balance, toast, and close — with no real payment step.
 - **AC-CR-02** — WHEN a plan is subscribed, THE SYSTEM SHALL set the account to subscriber, add the plan's credits, and reflect PRO status in the shell/profile.
 - **AC-CR-03** — WHEN `CreditsDetailModal` opens, THE SYSTEM SHALL show the current balance, the static transaction ledger, and a Buy Credits CTA.
-- **AC-CR-04** — THE SYSTEM SHALL show `SubscribeModal`'s "Demo only — no real payment. Cancel anytime." disclaimer; `BuyCreditsModal`'s "non-refundable / expire after 12 months / prices may vary" + "Cancel anytime · No commitment"; and no disclaimer on `CreditsDetailModal`. *(as-built per-modal copy)*
+- **AC-CR-04** — THE SYSTEM SHALL show `SubscribeModal`'s "Demo only — no real payment. Subscription credits reset each cycle. Cancel anytime." disclaimer; `BuyCreditsModal`'s "Purchased credits never expire. Non-refundable. Prices may vary by region." + "Cancel anytime · No commitment"; and no disclaimer on `CreditsDetailModal`. *(as-built per-modal copy)*
 - **AC-CR-05** — THE SYSTEM SHALL render the three modals at 390/768/1024/1440px with no overflow. *(visual)*
+- **AC-CR-06** — WHILE already subscribed, WHEN `SubscribeModal` opens, THE SYSTEM SHALL show the "You're already on Muse Pro" state (no plan picker) and expose a Restore Purchases action.
+- **AC-CR-07** — WHEN a generation is started with `credits < cost`, THE SYSTEM SHALL open the buy-credits IAP instead of generating (GL-01).
 
-> No AC asserts persistence, credit reset/expiry, restore, or real charging — those don't exist (§8).
+> Charging is now real within the in-memory economy (GL-01); persistence, a live ledger, real IAP, and real reset/expiry remain backend-deferred (§8).
 
 ---
 
@@ -117,7 +130,7 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, CreditsDetailModal.
 
 ## 8. Area TBD register — decisions 2026-07-22
 
-**Decisions** — codebase change list in [`../handoff.md`](../handoff.md).
+**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
 
 | ID | Decision |
 |---|---|
@@ -162,3 +175,4 @@ ledger is a static seed; plans differ from the app.
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator fix: corrected disclaimer claim (only SubscribeModal shows "Demo only — no real payment"; per-modal copy in AC-CR-04); flagged plan-card "resets {cadence}" as display-only; noted code plan names. |
+| 2026-07-23 | Implemented: plans restructured to Weekly / Monthly / Yearly with an "800 Weekly Credits" header + six-feature list; `PlanId` now `weekly\|monthly\|yearly`; per-period price suffix (CR-02); purchased credits "never expire" + subscription credits reset per cycle copy (CR-03); Restore Purchases action + "already on Muse Pro" state in `SubscribeModal` (CR-05). Prices/credit amounts are placeholders pending RD confirmation (see handoff status note). GL-01 real charging wired through the flow providers with an insufficient-balance → IAP route. |

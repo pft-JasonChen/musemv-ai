@@ -19,10 +19,11 @@ public `/share` page which renders bare.
 **Out of scope:** `SignInModal` (area 09), the credits modals (area 07), the Profile/History/Settings
 screens the shell links to (areas 05/06).
 
-**Key divergences from the app:** brand wordmark is **"MuseMV.ai"** (app: "YouCam Muse") ⚠️; nav is a
-5-item sidebar (Home · Create MV · Create Song · History · Profile) with **no "＋ Create" FAB**
-(app F02 bottom bar = Explore · ＋Create · History) ⚠️; account is a **dropdown menu**, not the app's
-full-screen Account sheet, and omits the app's Muse Pro / Notifications / Feedback / Settings rows ⚠️.
+**Key divergences from the app:** brand wordmark is now **"YouCam Muse"** everywhere (SHELL-01, synced
+to app, 2026-07-23); nav is a 5-item sidebar (Home · Create MV · Create Song · History · Profile) with
+**no "＋ Create" FAB** (app F02 bottom bar = Explore · ＋Create · History) ⚠️; account is a **dropdown
+menu**, not the app's full-screen Account sheet — it now includes **Notifications** and **Send
+Feedback** rows (SHELL-03, UI-only) alongside Profile / My Creations / Sign Out.
 
 ---
 
@@ -61,8 +62,9 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
   → opens `BuyCreditsModal` (area 07); an **avatar button** (image or name initial; gold ring when
   `subscribed`) → toggles `AccountMenu`. Purchase shows a transient toast.
 - **Account menu** (`AccountMenu.tsx`): header (avatar, name, **PRO/FREE** badge, email), a credits row
-  with **Buy Credits**, and links **Profile** (`/profile`), **My Creations** (`/history`), **Sign Out**
-  (`signOut()`). Closes on outside-click / Escape.
+  with **Buy Credits**, and rows **Profile** (`/profile`), **My Creations** (`/history`),
+  **Notifications** + **Send Feedback** (SHELL-03 — inert UI, wiring is backend `PROF-01/02`), and
+  **Sign Out** (`signOut()`). Closes on outside-click / Escape.
 - **Responsive:** sidebar shown at `sm:` and up; bottom bar below `sm:`; `<main>` gets `pb-20` on
   mobile to clear the bottom bar (`AppShell.tsx:19`).
 - 🔒 All of `credits`, `profile`, `subscribed` are in-memory (reset on reload; see overview §5/§6).
@@ -97,7 +99,7 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 
 | ID | Trigger | Behaviour |
 |---|---|---|
-| **SHELL-E1** | Pre-hydration (SSR/first paint) | `loggedIn` comes from `useSyncExternalStore`; before hydration the header may render the logged-out state, then swap once `authStore` hydrates. (No `hydrated` gate in `HeaderActions`.) |
+| **SHELL-E1** | Pre-hydration (SSR/first paint) | **Fixed (SHELL-04, 2026-07-23):** `HeaderActions` returns a fixed-height placeholder until `hydrated`, so the logged-out→in flash no longer occurs. |
 | **SHELL-E2** | Non-default locale active | All nav/menu links go through `localePath`, keeping the `/jpn/…` prefix; active-state comparison also prefix-aware. |
 | **SHELL-E3** | Missing translation key | `useT()` falls back to English per key (empty non-English dicts). |
 
@@ -110,7 +112,7 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 - **AC-SHELL-03** — WHEN a logged-out user clicks a gated nav item (`/mv/room`, `/song/create`, `/history`, `/profile`), THE SYSTEM SHALL open the sign-in modal and, on success, proceed to the queued route.
 - **AC-SHELL-04** — WHILE logged out, THE SYSTEM SHALL show a **Sign In** button in the top bar and no credits badge/avatar.
 - **AC-SHELL-05** — WHILE logged in, THE SYSTEM SHALL show the credits badge (current balance) and the avatar; and WHEN `subscribed`, render the avatar with the gold ring and a **PRO** badge in the menu.
-- **AC-SHELL-06** — WHEN the avatar is clicked, THE SYSTEM SHALL open the account menu exposing Buy Credits, Profile, My Creations, and Sign Out; and close it on outside-click or Escape.
+- **AC-SHELL-06** — WHEN the avatar is clicked, THE SYSTEM SHALL open the account menu exposing Buy Credits, Profile, My Creations, Notifications, Send Feedback, and Sign Out; and close it on outside-click or Escape.
 - **AC-SHELL-07** — WHEN the path starts with `/share`, THE SYSTEM SHALL render the page bare (no sidebar/top bar).
 - **AC-SHELL-08** — THE SYSTEM SHALL render the shell at 390/768/1024/1440px with no overflow and the correct bar (bottom vs side) at the 640px switch. *(visual)*
 
@@ -129,7 +131,7 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 
 ## 8. Area TBD register
 
-**Decisions (2026-07-22)** — codebase change list in [`../handoff.md`](../handoff.md).
+**Decisions (2026-07-22)** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
 
 | ID | Decision |
 |---|---|
@@ -176,3 +178,4 @@ dropdown; `/share` is chrome-less; nav labels localized, rest English.
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator fix: nav `/history` label corrected to "History" (was "My Creations" — that's the account-menu/page label); nav list single-sourced in §3. |
+| 2026-07-23 | Implemented: brand wordmark → "YouCam Muse" everywhere (SHELL-01); Notifications + Send Feedback rows added to `AccountMenu` (SHELL-03, UI-only); `HeaderActions` gated on `hydrated` to stop the logged-out→in flash (SHELL-04). |

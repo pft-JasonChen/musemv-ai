@@ -21,8 +21,9 @@ Terms/Privacy/Delete-account destinations (area 06 Settings).
 
 **Key divergences from App F01/F22:** **no email/password** option — only Continue with Apple /
 Google ⚠️; **no OAuth** — a 1.5s fake success 🔒; **no Splash & Onboarding carousel** (F01) at all ⚠️
-(→ `TBD-GL-03`); web gates by **route entry**, the app gates by **action** (Create/Like/Proof) ⚠️
-(→ `TBD-GL-02`).
+(→ `TBD-GL-03`). **GL-02 landed 2026-07-23:** gating is now **action-level** (Create MV / Create Song /
+Like / publish call `requireLogin` at the action), synced to App F22 — `AuthGuard` on the four route
+entries is kept as a backstop.
 
 ---
 
@@ -56,16 +57,19 @@ Google ⚠️; **no OAuth** — a 1.5s fake success 🔒; **no Splash & Onboardi
 - **`AuthGuard`** (`AuthGuard.tsx`): renders `null` until `hydrated && loggedIn`. When hydrated and
   logged out, calls `requireLogin(undefined, () => router.replace(home))` — i.e. dismissing the modal
   **redirects Home**. Wraps `/mv/room`, `/song/create`, `/history`, `/profile`.
-- **`SignInModal`** (`SignInModal.tsx`): title "Sign in to MuseMV" + "M" logo; **Continue with Apple**
-  and **Continue with Google** (white buttons); Terms/Privacy text (**non-functional** — plain spans);
-  picking a provider shows a 1.5s success state ("Signed in successfully! Welcome back, {firstName} · via {provider}")
-  then calls `onSignedIn` → `authStore.set(true)`. Dismissal is **blocked during** the success
-  animation (`onClose` swallowed).
-- **Sign-in trigger points:** header **Sign In** (`openSignIn`, area 01); **gated nav** click while
-  logged out (`Sidebar` → `requireLogin(→push)`, area 01); **AuthGuard** on the four gated routes
-  (dismiss → Home); and the **Home hero "Create MV" / "Create Song" CTAs and Home song-card "create"**
-  (`HomeView` → `requireLogin(→push …)`, area 04). Only **community like/share** are ungated. ⚠️ The
-  app gates by *action* (Create/Like/Proof, F22); web gates these route/CTA entries.
+- **`SignInModal`** (`SignInModal.tsx`): title **"Sign in to YouCam Muse"** (SHELL-01); **Continue with
+  Apple** and **Continue with Google** (white buttons); Terms of Service / Privacy Policy are **real
+  links** to `lib/legal.ts` (`TERMS_URL`/`PRIVACY_URL`, new tab) — same set as Settings (AUTH-03 /
+  PROF-06); picking a provider shows a 1.5s success state ("Signed in successfully! Welcome back,
+  {firstName} · via {provider}") then calls `onSignedIn` → `authStore.set(true)`. Dismissal is
+  **blocked during** the success animation (`onClose` swallowed).
+- **Sign-in trigger points (action-level, GL-02):** header **Sign In** (`openSignIn`, area 01);
+  **gated nav** click while logged out (`Sidebar` → `requireLogin(→push)`, area 01); **AuthGuard** on
+  the four gated routes (dismiss → Home) as a backstop; Home hero create CTAs / song-card create
+  (`HomeView`, area 04); and — new — **Create MV / Create Song / Like** on community surfaces
+  (`CommunityMvPlayer`, `CommunityMvDialog`, `CommunitySongPlayer`, `SongExplore`) and **publish** on
+  an MV result (`MvDetail`) all call `requireLogin` at the click. This resolves the former
+  "community like/share ungated" divergence (synced to App F22).
 
 ---
 
@@ -85,7 +89,7 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 - **AUTH-P3-S1** Logged-out user clicks a gated **sidebar** item, or a **Home hero "Create MV"/"Create Song" CTA**, or a **Home song-card "create"** (`HomeView`, area 04) → `requireLogin(() => push(target))`. Sign in → navigates to target (song-card create also pre-fills the song compose); dismiss → stays on the current page.
 
 ### AUTH-P4 — Sign out
-- **AUTH-P4-S1** Account menu → **Sign Out** (area 01) → `signOut()`: clears `muse_auth`, resets subscription + profile to guest defaults. On a guarded page, `AuthGuard` re-opens the sign-in gate; dismissing it → Home (see AUTH-E3).
+- **AUTH-P4-S1** **Sign Out** — from the header account menu (area 01) or from **Settings** (area 06; PROF-03 moved it off the profile screen 2026-07-23) → `signOut()`: clears `muse_auth`, resets subscription + profile to guest defaults. Settings' Sign Out routes Home; on a guarded page, `AuthGuard` re-opens the sign-in gate, dismissing it → Home (see AUTH-E3).
 
 ---
 
@@ -125,7 +129,7 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 
 ## 8. Area TBD register — decisions 2026-07-22
 
-**Decisions** — codebase change list in [`../handoff.md`](../handoff.md).
+**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
 
 | ID | Decision |
 |---|---|
@@ -169,3 +173,4 @@ route-entry gating (four routes); no onboarding/splash; social-only sign-in.
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator fix: added Home hero CTAs + song-card create as sign-in triggers (area 04); scoped "ungated" to community like/share; corrected AUTH-P4-S1 logout-on-guarded-page wording; completed success-state quote. |
+| 2026-07-23 | Implemented: action-level auth gating (GL-02/EXP-02) — Like and Create MV/Song across community surfaces (CommunityMvPlayer/Dialog, CommunitySongPlayer, SongExplore) and MvDetail publish now call `requireLogin` at the action, fixing SongExplore's ungated Create; brand "Sign in to YouCam Muse" + Terms/Privacy links (AUTH-03). |

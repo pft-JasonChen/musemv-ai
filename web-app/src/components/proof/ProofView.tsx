@@ -32,7 +32,7 @@ export function ProofView() {
           </span>
           <div>
             <div className="text-[15px] font-extrabold">Certificate of Authenticity</div>
-            <div className="text-[11px]" style={{ color: "var(--text-2)" }}>MuseMV.ai · Verified Creation</div>
+            <div className="text-[11px]" style={{ color: "var(--text-2)" }}>YouCam Muse · Verified Creation</div>
           </div>
         </div>
 

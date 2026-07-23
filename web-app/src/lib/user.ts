@@ -29,7 +29,7 @@ export const AVATAR_SAMPLES = [
   "/assets/images/character-photos/samples/Sample_P6.jpg",
 ];
 
-export type PlanId = "weekly" | "super" | "yearly";
+export type PlanId = "weekly" | "monthly" | "yearly";
 
 export interface SubscriptionPlan {
   id: PlanId;
@@ -37,16 +37,32 @@ export interface SubscriptionPlan {
   price: string;
   /** Credits granted per cycle. */
   credits: number;
-  /** Human cadence for the credit reset, e.g. "Weekly" / "Yearly". */
+  /** Human cadence for the credit reset, e.g. "Weekly" / "Monthly" / "Yearly". */
   cadence: string;
+  /** Billing-period suffix shown after the price (e.g. "week"). */
+  per: string;
   badge?: string;
 }
 
-/** Muse Pro plans, matching the mobile app-prototype's IAP screen. */
+// CR-02: Muse Pro is Weekly / Monthly / Yearly. All tiers grant the same
+// 800 weekly-credit allowance; longer terms are cheaper per week.
+export const WEEKLY_CREDITS = 800;
+
+/** Muse Pro plans (CR-02). */
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  { id: "weekly", name: "Weekly Plan", price: "$9.99", credits: 200, cadence: "Weekly" },
-  { id: "super", name: "Super Weekly Plan", price: "$29.99", credits: 1000, cadence: "Weekly", badge: "POPULAR" },
-  { id: "yearly", name: "Yearly Plan", price: "$69.99", credits: 2000, cadence: "Yearly", badge: "BEST VALUE" },
+  { id: "weekly", name: "Weekly Plan", price: "$9.99", credits: WEEKLY_CREDITS, cadence: "Weekly", per: "week" },
+  { id: "monthly", name: "Monthly Plan", price: "$29.99", credits: WEEKLY_CREDITS * 4, cadence: "Monthly", per: "month", badge: "POPULAR" },
+  { id: "yearly", name: "Yearly Plan", price: "$199.99", credits: WEEKLY_CREDITS * 52, cadence: "Yearly", per: "year", badge: "BEST VALUE" },
+];
+
+// CR-02: the six benefits listed under the Muse Pro header.
+export const MUSE_PRO_FEATURES: string[] = [
+  "800 weekly credits",
+  "High-quality (HD) MV rendering",
+  "Full-length song playback",
+  "No watermark on exports",
+  "Faster generation queue",
+  "Priority access to new features",
 ];
 
 export interface CreditTxn {

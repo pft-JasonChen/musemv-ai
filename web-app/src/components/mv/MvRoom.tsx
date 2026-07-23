@@ -12,10 +12,14 @@ import { TrimAudioModal } from "./TrimAudioModal";
 import { FacePickerModal } from "./FacePickerModal";
 import { SettingsModal } from "./SettingsModal";
 import { ModeModal } from "./ModeModal";
+import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useCredits } from "@/components/providers/CreditsProvider";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import { MV_TYPES, SAMPLE_FACES, TEMPLATES, IDEAS, formatDuration } from "@/lib/mv/mock";
 import {
+  COST_RENDER,
+  COST_STORYBOARD,
   DESCRIPTION_MAX,
   effectiveDurationSec,
   isComposeReady,
@@ -28,10 +32,15 @@ import {
 export function MvRoom() {
   const router = useRouter();
   const { compose, setCompose, patchCompose, resetForNewMv } = useMvFlow();
+  const { credits } = useCredits();
   const [songOpen, setSongOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(msg: string) { setToast(msg); window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2600); }
   const [pendingSong, setPendingSong] = useState<Song | null>(null);
   const [trimOpen, setTrimOpen] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
@@ -64,6 +73,12 @@ export function MvRoom() {
   }
   /** Import a local audio file → derive duration from metadata → open the trim dialog. */
   function importAudio(file: File) {
+    // MV-02: accept only MP3 / AAC / WAV / M4A up to 50MB; reject anything else.
+    const name = file.name.toLowerCase();
+    const okExt = [".mp3", ".aac", ".wav", ".m4a"].some((ext) => name.endsWith(ext));
+    const okType = /audio\/(mpeg|mp3|aac|wav|x-wav|wave|mp4|x-m4a)/.test(file.type);
+    if (!okExt && !okType) { showToast("Unsupported format. Use MP3, AAC, WAV, or M4A."); return; }
+    if (file.size > 50 * 1024 * 1024) { showToast("File too large. Maximum size is 50MB."); return; }
     const url = URL.createObjectURL(file);
     const title = file.name.replace(/\.[^/.]+$/, "").trim() || "Imported audio";
     const open = (durationSec: number) =>
@@ -83,7 +98,11 @@ export function MvRoom() {
     setCompose((c) => ({ ...c, photos: [...c.photos, photo].slice(0, 2) }));
   }
   function selectMode(mode: MvMode) {
+    // GL-01: block generation when the balance can't cover the mode's cost and
+    // route to IAP (buy credits) instead of starting a job that would go negative.
+    const cost = mode === "storyboard_first" ? COST_STORYBOARD : COST_RENDER;
     setModeOpen(false);
+    if (credits < cost) { setBuyOpen(true); return; }
     resetForNewMv(); // discard any storyboard/result from a previous MV before starting fresh
     router.push(mode === "storyboard_first" ? "/mv/thinking" : "/mv/creating");
   }
@@ -296,6 +315,12 @@ export function MvRoom() {
       <FacePickerModal open={faceOpen} imageUrl={pendingPhoto} onClose={() => setFaceOpen(false)} onConfirm={addCroppedPhoto} />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={compose.settings} onChange={(settings) => patchCompose({ settings })} />
       <ModeModal open={modeOpen} onClose={() => setModeOpen(false)} onSelect={selectMode} />
+      <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg" style={{ background: "rgba(20,20,24,.95)" }}>
+          {toast}
+        </div>
+      )}
       <Modal open={templatesOpen} onClose={() => setTemplatesOpen(false)} title="Select a Template" maxWidth={560}>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {TEMPLATES.map((t) => (

@@ -16,11 +16,13 @@ result (disc player + synced Lyrics sheet) → use the song in an MV or recreate
 `CommunitySongPlayer`); `SongDetail` is **shared** with History's `CreationDialog` (area 05);
 `ShareDialog` (area 10); Use-in-MV lands in `/mv/room` (area 02).
 
-**Key divergences from App F11–F13:** Custom mode has **Genre / Mood / Vocal chips + Title** but **no
-BPM slider or Key selector** (App F11) ⚠️; **no 30s free-preview gating** — full playback for everyone
-(App F12 gates free users to 30s) ⚠️; **Recreate** just returns to compose with **no credit cost**
-(App: 50 cr, prior saved) ⚠️; Enhance is **free** (App: first free then 1 cr) ⚠️; the compose screen's
-inline credit pill is **hardcoded `390`**, not the live balance ⚠️.
+**As-built vs App F11–F13 (SONG-01…05 landed 2026-07-23, now synced to app):** Custom mode has
+Genre / Mood / Vocal chips + Title **plus a BPM slider, a Key selector, and a per-line lyrics editor**
+(SONG-01; `SongComposeSchema` gains defaulted `bpm`/`key`); free users get a **30s free-preview gate**
+(Pro unlocks full playback) in `SongDetail` and the community song player (SONG-02); **Recreate charges
+`COST_SONG_RECREATE` (50) and keeps the prior song in History** (SONG-03); **AI Enhance is free the
+first time per session, then 1 credit** (SONG-04); the compose credit pill shows the **live balance**
+(SONG-05). Generation itself now charges `COST_SONG` (10) on start (GL-01, insufficient → IAP).
 
 ---
 
@@ -48,9 +50,13 @@ inline credit pill is **hardcoded `390`**, not the live balance ⚠️.
 - `genre` (default "Pop"), `mood` (default "Uplifting"), `vocal` (nullable, optional), `title` (optional).
 - **CTA-ready** (`isSongReady`): **Custom → always ready**; **Simple → `describe.trim() !== ""`**.
 - Cost: `COST_SONG = 10` shown on the Generate CTA. ⚠️ App said 50 (→ `TBD-GL-01`).
+- Custom-mode musical controls (SONG-01): **BPM slider** (`BPM_MIN 60`–`BPM_MAX 200`) and a **Key**
+  chip selector (`SONG_KEYS`, clearable = "Auto"), both persisted on `songCompose.{bpm,key}`; the lyrics
+  input is a **per-line editor** (`LineLyricsEditor`) storing a newline-joined `lyrics` string.
 - Compose helpers: **Ideas** (Simple: random `SONG_IDEAS`; Custom: Idea + Lyrics sample fills),
-  **Enhance** (`enhancePrompt`; Custom lyrics offers Refine Idea vs Refine Lyrics), a supported-languages
-  info popover (Custom). Inline **`CreditPill` is hardcoded `390`** (`SongCompose.tsx:46`) ⚠️.
+  **Enhance** (`enhancePrompt`; Custom lyrics offers Refine Idea vs Refine Lyrics; **first free/session
+  then 1 cr** via `useCredits().{enhanceCost,consumeEnhance}` — SONG-04), a supported-languages info
+  popover (Custom). The inline **`CreditPill` shows the live balance** (SONG-05).
 
 **Job (`SongJob` → `SongResult`)**: `createSongJob(compose)` → poll `getSongJob` → on done sets
 `songResult` ({title, cover, genre, mood, durationSec, audioUrl?, instrumental, lyrics?}) and marks
@@ -59,9 +65,10 @@ History completed. Generation estimate "~1 minute" (display-only; mock timing).
 **Result (`SongDetail`)**: circular disc cover (spins while playing), progress bar w/ seek, ±15s nudge,
 play/pause; **Lyrics** button → `LyricsPanel` (synced timed lines highlighting the current line + mini
 player) when lyrics exist; **Share** → `ShareDialog`; CTAs **Use in Music Video** and **Recreate**.
-**No Like** (own creation). Full playback — **no 30s gate** ⚠️.
+**No Like** (own creation). **SONG-02:** free accounts play only the first **30s** (a "Free preview ·
+first 30s — upgrade to Muse Pro" prompt opens `SubscribeModal`); subscribers play in full.
 - **Use in Music Video** → `patchCompose({ song: {source:"library", …, lyrics} })` + `/mv/room` (area 02).
-- **Recreate** → `/song/create` (re-compose; no cost, no auto-regenerate) ⚠️.
+- **Recreate** (SONG-03) → charges `COST_SONG_RECREATE` (50) via `resetForRecreate()` and routes to `/song/creating` to generate a fresh take, **keeping the previous song in History**; if `credits < 50`, opens `BuyCreditsModal` instead.
 
 🔒 `songResult` is in-memory; a reload on `/song/creating` or `/song/result` triggers the flow-guard
 (redirect to `/song/create`).
@@ -75,7 +82,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 ### SONG-P1 — Compose
 - **SONG-P1-S1** Arrive `/song/create` (auth-gated); **Simple** tab default; **Generate** disabled until `describe` non-empty. Hint "Describe your song to continue."
 - **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + Ideas + Enhance. 
-- **SONG-P1-S3** Switch to **Custom**: Lyrics/Idea field (or "No lyrics needed" when Instrumental) + Ideas/Lyrics/Enhance; Genre/Mood chips (required-ish defaults) + Vocal (optional, clearable) + optional Title. Custom CTA always enabled.
+- **SONG-P1-S3** Switch to **Custom**: per-line **Lyrics editor** (or "No lyrics needed" when Instrumental) + Ideas/Lyrics/Enhance; Genre/Mood chips + Vocal (optional, clearable); **BPM slider** + **Key** selector (SONG-01); optional Title. Custom CTA always enabled.
 - **SONG-P1-S4** Tap **Generate Song** (`10`) → `resetForNewSong()` → `/song/creating`.
 
 ### SONG-P2 — Generation
@@ -85,7 +92,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 ### SONG-P3 — Result
 - **SONG-P3-S1** Disc player autoloads; play/pause, seek, ±15s.
 - **SONG-P3-S2** **Lyrics** → `LyricsPanel` (synced highlight + mini player) — only when lyrics exist. In practice this means **Custom mode + non-instrumental + typed lyrics**; Simple mode never sets `lyrics`, so a Simple-mode result has no Lyrics sheet.
-- **SONG-P3-S3** **Share** → `ShareDialog`. **Use in Music Video** → `/mv/room` with the song pre-loaded (incl. lyrics). **Recreate** → `/song/create`.
+- **SONG-P3-S3** **Share** → `ShareDialog`. **Use in Music Video** → `/mv/room` with the song pre-loaded (incl. lyrics). **Recreate** → charges 50 cr and regenerates (`/song/creating`), keeping the prior song in History (SONG-03).
 
 ---
 
@@ -107,7 +114,10 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **AC-SONG-03** — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Ideas/Enhance fills are not capped.)
 - **AC-SONG-04** — WHEN **Generate Song** is tapped, THE SYSTEM SHALL `resetForNewSong()`, insert a Generating History row, and navigate to `/song/creating`.
 - **AC-SONG-05** — WHILE the song job is `processing`, THE SYSTEM SHALL show progress, step, an estimate, and View Later → `/history`; on `done` navigate to `/song/result`.
-- **AC-SONG-06** — WHEN `/song/result` loads, THE SYSTEM SHALL play the full track (no 30s gate) with seek/±15s, expose Share, a Lyrics sheet (when lyrics exist), Use in Music Video, and Recreate — and no Like.
+- **AC-SONG-06** — WHEN `/song/result` loads, THE SYSTEM SHALL expose seek/±15s, Share, a Lyrics sheet (when lyrics exist), Use in Music Video, and Recreate — and no Like. WHILE not subscribed, playback SHALL be capped at 30s with an upgrade prompt (SONG-02); WHILE subscribed, it SHALL play in full.
+- **AC-SONG-11** — WHILE in Custom mode, THE SYSTEM SHALL expose a BPM slider (60–200) and a Key selector persisted on `songCompose.{bpm,key}`, and edit lyrics line-by-line (SONG-01).
+- **AC-SONG-12** — WHEN Recreate is invoked with `credits ≥ 50`, THE SYSTEM SHALL charge 50 and regenerate while keeping the prior song in History; otherwise it SHALL open the buy-credits IAP (SONG-03).
+- **AC-SONG-13** — WHEN AI Enhance is used, THE SYSTEM SHALL charge nothing the first time per session and 1 credit each time after (SONG-04).
 - **AC-SONG-07** — WHEN **Use in Music Video** is tapped, THE SYSTEM SHALL pre-load the song (incl. lyrics) into MV compose and navigate to `/mv/room`.
 - **AC-SONG-08** — IF the song job fails, THEN THE SYSTEM SHALL show the shared error state with Back + Retry.
 - **AC-SONG-09** — WHEN a song job starts, THE SYSTEM SHALL NOT change the credit balance. *(pending `TBD-GL-01`.)*
@@ -127,7 +137,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 ## 8. Area TBD register — decisions 2026-07-22
 
-**Decisions** — codebase change list in [`../handoff.md`](../handoff.md).
+**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
 
 | ID | Decision |
 |---|---|
@@ -178,3 +188,4 @@ credits.
 |---|---|
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator PASS; tightened SONG-E1 fail trigger (Simple `describe` only), noted Simple-mode results have no Lyrics sheet, flagged Instrumental-doesn't-clear-lyrics quirk. |
+| 2026-07-23 | Implemented: custom-mode BPM slider + Key selector + per-line lyrics editor (`SongComposeSchema` gains defaulted `bpm`/`key`) (SONG-01); 30s free-preview gate on `SongDetail` + community song player with upgrade prompt (SONG-02); Recreate = `COST_SONG_RECREATE` (50) keeping the prior song in History (SONG-03); first AI Enhance per session free then 1 credit each, tracked in `CreditsProvider` (SONG-04); compose credit pill uses live balance (SONG-05 bug). |

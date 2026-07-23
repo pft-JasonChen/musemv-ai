@@ -14,6 +14,18 @@
 
 **Scope counts:** §A ~23 frontend changes · §B 5 bugs · §C spec-only (Curation) · §D backend-deferred · §E Phase 2 · §F still-open.
 
+> **Implementation status (2026-07-23):** All of **§A** and **§B** are now implemented in `web-app/src/`
+> (typecheck / lint / test / build green). §C–§F remain untouched as intended. Three reconciliation
+> decisions were made where a value wasn't specified — **RD please confirm:**
+> 1. **Merge MV cost** — with GL-01 charging the render on generation start, the editor's old local
+>    `COST_MERGE` (10) would have double-charged. Merge is now the re-render priced at `COST_RENDER`
+>    (200), consistent with the other two render entry points. (Folds in `TBD-MV-10`.)
+> 2. **Muse Pro plan credits/prices** (CR-02) — Weekly $9.99 / Monthly $29.99 / Yearly $199.99, all on
+>    an 800 weekly-credit allowance (`WEEKLY_CREDITS` in `lib/user.ts`); exact prices/credits are
+>    placeholders.
+> 3. **Terms/Privacy URLs** (PROF-06/AUTH-03) — wired to `lib/legal.ts` (`youcam.com/legal/*`
+>    placeholders); swap for the real production URLs.
+
 > **Note on IDs:** item tags below drop the `TBD-` prefix for brevity — `[MV-08]` ≡ `TBD-MV-08`. Grep either form; the full `TBD-…` ids live in each area spec's §8.
 
 ---
@@ -185,3 +197,4 @@ Not ready to implement; flagged for follow-up.
 |---|---|
 | 2026-07-22 | Initial handoff from the PM decisions round. |
 | 2026-07-22 | Round 2: permanent history retention; MV result publish confirm (MV-12); published→"Unpublish to edit MV" (MV-13); Edit-MV rework — no Save, regenerate overwrites, hide+mark take/Save mechanisms (MV-08, supersedes prior); publish→feed locale ranking + code-format TBD (HIST-07/EXP-10). |
+| 2026-07-23 | **Implemented §A + §B in the codebase.** See per-area spec §10 changelogs for as-built details and the three reconciliation flags above (Merge cost, plan pricing, legal URLs). |

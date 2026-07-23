@@ -71,9 +71,18 @@ export const DEFAULT_SONG_COMPOSE: SongCompose = {
   mood: "Uplifting",
   vocal: null,
   title: "",
+  bpm: 120,
+  key: null,
 };
 
+// SONG-01: musical keys offered by the custom-mode Key selector ("Auto" = null).
+export const SONG_KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] as const;
+export const BPM_MIN = 60;
+export const BPM_MAX = 200;
+
 export const COST_SONG = 10;
+// SONG-03: recreating an existing song is a premium re-roll and keeps the prior take.
+export const COST_SONG_RECREATE = 50;
 
 export function isSongReady(s: SongCompose): boolean {
   return s.mode === "custom" ? true : s.describe.trim().length > 0;
