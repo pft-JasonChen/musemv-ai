@@ -5,13 +5,21 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
+import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { COST_RENDER } from "@/lib/mv/types";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
 
 const COST_REGEN = 20;
-const COST_MERGE = 10;
 const COST_COVER = 10;
+
+// MV-08: the app-consistent Edit MV has no Project mode — edits are ephemeral,
+// Regenerate scene / Recreate cover OVERWRITE directly (no take/cover trays,
+// no Save, no undo), and Merge MV is the re-render enabled by any pending edit.
+// The richer "pick a take / cover variant" + Save UI is intentionally HIDDEN
+// (not deleted) behind this flag so we can develop toward it later.
+const LEGACY_TAKE_TRAY_UI = false;
 
 interface Take { id: string; video: string; status: "ready" | "generating" }
 interface CoverTake { id: string; image: string; status: "ready" | "generating" }
@@ -33,7 +41,7 @@ function Toggle({ on }: { on: boolean }) {
 export function MvEditor() {
   const router = useRouter();
   const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose, setCompose, resetForRerender } = useMvFlow();
-  const { addCredits } = useCredits();
+  const { credits, addCredits } = useCredits();
 
   const typeIdx = Math.max(0, MV_TYPES.findIndex((t) => t.id === compose.mvType));
   const defaultPreview = MV_TYPES[typeIdx].video;
@@ -47,6 +55,7 @@ export function MvEditor() {
   // re-render — track it so it enables Merge MV.
   const [settingsDirty, setSettingsDirty] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [buyOpen, setBuyOpen] = useState(false);
   const [coverModalOpen, setCoverModalOpen] = useState(false);
   const [coverPreviewOpen, setCoverPreviewOpen] = useState(false);
   // Cover variants mirror the scene "takes" tray: Recreate adds a take, the
@@ -76,7 +85,14 @@ export function MvEditor() {
   const activeCover = coverTakes.find((t) => t.id === coverSelectedId)?.image ?? storyboard.coverImage;
   const coverBusy = coverAdded.some((t) => t.status === "generating");
 
-  const dirty = storyboard.scenes.some((s) => selectedFor(s.id) !== origId(s.id)) || coverSelectedId !== coverOrigId || settingsDirty;
+  // MV-08: Merge is enabled by ANY pending edit — a regenerated scene, a
+  // recreated cover, an output-settings change, or an edited scene/cover prompt
+  // (storyboardDirty), since there is no separate Save to commit text edits.
+  const dirty =
+    storyboard.scenes.some((s) => selectedFor(s.id) !== origId(s.id)) ||
+    coverSelectedId !== coverOrigId ||
+    settingsDirty ||
+    storyboardDirty;
 
   const settings = compose.settings;
   const patchSettings = (p: Partial<typeof settings>) => {
@@ -92,10 +108,13 @@ export function MvEditor() {
     const takeId = `${sid}-${Date.now()}`;
     const others = pool.filter((v) => v !== defaultPreview);
     const video = others[Math.floor(Math.random() * others.length)] ?? defaultPreview;
-    setAdded((a) => ({ ...a, [sid]: [...(a[sid] ?? []), { id: takeId, video, status: "generating" }] }));
+    // MV-08: overwrite directly — the regenerated take replaces the prior one
+    // (no tray to pick from). The old take is discarded, not kept.
+    setAdded((a) => ({ ...a, [sid]: [{ id: takeId, video, status: "generating" }] }));
     addCredits(-COST_REGEN);
     setTimeout(() => {
       setAdded((a) => ({ ...a, [sid]: (a[sid] ?? []).map((t) => (t.id === takeId ? { ...t, status: "ready" } : t)) }));
+      setSelected((s) => ({ ...s, [sid]: takeId })); // auto-select → overwrites the shown scene
     }, 2600);
   }
 
@@ -103,18 +122,21 @@ export function MvEditor() {
     if (coverBusy) return;
     const id = `cover-${Date.now()}`;
     const image = randomCoverImage();
-    setCoverAdded((a) => [...a, { id, image, status: "generating" }]);
+    // MV-08: overwrite directly — replace the cover instead of adding a variant.
+    setCoverAdded([{ id, image, status: "generating" }]);
     setCoverModalOpen(false);
     addCredits(-COST_COVER);
     setTimeout(() => {
       setCoverAdded((a) => a.map((t) => (t.id === id ? { ...t, status: "ready" } : t)));
-      setCoverSelected(id); // auto-select the newly generated take
+      setCoverSelected(id); // auto-select the newly generated cover
     }, 2200);
   }
 
   function merge() {
     if (!dirty || !storyboard) return;
-    addCredits(-COST_MERGE);
+    // GL-01: Merge MV is the re-render; the render cost is charged on generation
+    // start in the provider (startRender). Block + route to IAP when unaffordable.
+    if (credits < COST_RENDER) { setBuyOpen(true); return; }
     const committed = { ...storyboard, coverImage: activeCover }; // commit the chosen cover
     setStoryboard(committed);
     saveStoryboard(committed);
@@ -143,12 +165,16 @@ export function MvEditor() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={save} disabled={!storyboardDirty} className="h-10 rounded-xl px-4 text-[14px] font-bold transition-opacity disabled:opacity-40" style={{ background: storyboardDirty ? "var(--card-2)" : "transparent", color: storyboardDirty ? "var(--text)" : "var(--text-2)", border: "1px solid var(--border-2)" }}>
-            {storyboardDirty ? "Save" : "Saved"}
-          </button>
+          {/* MV-08: Save is removed — edits are ephemeral and committed only by
+              Merge MV. The legacy Save control is hidden (not deleted) behind the flag. */}
+          {LEGACY_TAKE_TRAY_UI && (
+            <button onClick={save} disabled={!storyboardDirty} className="h-10 rounded-xl px-4 text-[14px] font-bold transition-opacity disabled:opacity-40" style={{ background: storyboardDirty ? "var(--card-2)" : "transparent", color: storyboardDirty ? "var(--text)" : "var(--text-2)", border: "1px solid var(--border-2)" }}>
+              {storyboardDirty ? "Save" : "Saved"}
+            </button>
+          )}
           <Button onClick={merge} disabled={!dirty} className="!h-10 px-5 text-[14px]">
             <I d="M7 8 3 12l4 4M17 8l4 4-4 4M14 4l-4 16" size={16} /> Merge MV
-            <span className="ml-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-bold" style={{ background: "rgba(255,255,255,.18)" }}><Bolt /> {COST_MERGE}</span>
+            <span className="ml-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-bold" style={{ background: "rgba(255,255,255,.18)" }}><Bolt /> {COST_RENDER}</span>
           </Button>
         </div>
       </div>
@@ -216,8 +242,9 @@ export function MvEditor() {
           </div>
         </div>
 
-        {/* Variants tray — appears once you have more than the original cover */}
-        {(coverTakes.length > 1 || coverBusy) && (
+        {/* Variants tray — MV-08: hidden (not deleted). Recreate now overwrites the
+            cover directly; the picker returns when we build the richer editor. */}
+        {LEGACY_TAKE_TRAY_UI && (coverTakes.length > 1 || coverBusy) && (
           <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--border-3)" }}>
             <div className="mb-2 text-[11px]" style={{ color: "var(--text-2)" }}>Pick which cover to use</div>
             <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
@@ -298,7 +325,10 @@ export function MvEditor() {
             <span className="ml-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px]" style={{ background: "rgba(255,255,255,.2)" }}><Bolt /> {COST_REGEN}</span>
           </button>
 
-          {/* Takes tray */}
+          {/* Takes tray — MV-08: hidden (not deleted). Regenerate now overwrites the
+              scene directly; the take picker returns with the richer editor later. */}
+          {LEGACY_TAKE_TRAY_UI && (
+          <>
           <div className="mt-4 mb-2 text-[11px]" style={{ color: "var(--text-2)" }}>Pick which take to use</div>
           <div className="grid grid-cols-3 gap-2">
             {activeTakes.map((t, i) => {
@@ -319,8 +349,10 @@ export function MvEditor() {
               );
             })}
           </div>
+          </>
+          )}
           <p className="mt-3 text-[11px] leading-relaxed" style={{ color: "var(--text-3)" }}>
-            Regenerate adds a new take ({COST_REGEN} credits). The old take stays — pick the one you want, then Merge MV ({COST_MERGE} credits) to commit.
+            Regenerate scene ({COST_REGEN} credits) replaces this scene directly. Edits aren&apos;t saved — Merge MV ({COST_RENDER} credits) re-renders the video with your changes.
           </p>
         </div>
       </div>
@@ -393,6 +425,8 @@ export function MvEditor() {
       {toast && (
         <div className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg" style={{ background: "rgba(20,20,24,.95)" }}>{toast}</div>
       )}
+
+      <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
     </div>
   );
 }

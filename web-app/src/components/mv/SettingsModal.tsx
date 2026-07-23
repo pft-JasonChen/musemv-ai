@@ -1,7 +1,10 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { SubscribeModal } from "@/components/credits/SubscribeModal";
+import { useAuth } from "@/components/providers/AuthProvider";
 import type { MvSettings } from "@/lib/mv/types";
 
 interface Props {
@@ -11,37 +14,54 @@ interface Props {
   onChange: (next: MvSettings) => void;
 }
 
+function Crown() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden style={{ color: "var(--gold)" }}>
+      <path d="M3 7l4 4 5-6 5 6 4-4-1.5 12h-15z" />
+    </svg>
+  );
+}
+
 function Segmented<T extends string>({
   label,
   value,
   options,
   onSelect,
   icons,
+  locked,
+  onLocked,
 }: {
   label: string;
   value: T;
   options: T[];
   onSelect: (v: T) => void;
   icons?: Partial<Record<T, string>>;
+  /** Options that require Muse Pro — greyed with a crown; tap routes to IAP. */
+  locked?: Partial<Record<T, boolean>>;
+  onLocked?: (v: T) => void;
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-[14px] font-semibold">{label}</span>
       <div className="flex rounded-lg p-0.5" style={{ background: "var(--card-2)" }}>
-        {options.map((o) => (
-          <button
-            key={o}
-            onClick={() => onSelect(o)}
-            className="flex items-center gap-1.5 rounded-md px-3 py-1 text-[13px] font-semibold"
-            style={{
-              background: value === o ? "var(--accent)" : "transparent",
-              color: value === o ? "#fff" : "var(--text-2)",
-            }}
-          >
-            {icons?.[o] && <img src={icons[o]} width={16} height={16} alt="" style={{ opacity: value === o ? 1 : 0.6 }} />}
-            {o}
-          </button>
-        ))}
+        {options.map((o) => {
+          const isLocked = locked?.[o] ?? false;
+          return (
+            <button
+              key={o}
+              onClick={() => (isLocked ? onLocked?.(o) : onSelect(o))}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1 text-[13px] font-semibold"
+              style={{
+                background: value === o && !isLocked ? "var(--accent)" : "transparent",
+                color: isLocked ? "var(--text-3)" : value === o ? "#fff" : "var(--text-2)",
+              }}
+            >
+              {icons?.[o] && <img src={icons[o]} width={16} height={16} alt="" style={{ opacity: isLocked ? 0.5 : value === o ? 1 : 0.6 }} />}
+              {o}
+              {isLocked && <Crown />}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -66,12 +86,23 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
 
 export function SettingsModal({ open, onClose, settings, onChange }: Props) {
   const set = (patch: Partial<MvSettings>) => onChange({ ...settings, ...patch });
+  const { subscribed } = useAuth();
+  const [subOpen, setSubOpen] = useState(false);
 
   return (
     <Modal open={open} onClose={onClose} title="Settings">
       <div className="flex flex-col gap-5">
         <Segmented label="Aspect Ratio" value={settings.ratio} options={["9:16", "16:9"]} onSelect={(ratio) => set({ ratio })} />
-        <Segmented label="Quality" value={settings.resolution} options={["Standard", "High"]} onSelect={(resolution) => set({ resolution })} icons={{ Standard: "/assets/icons/ui/ic_sd.svg", High: "/assets/icons/ui/ic_hd.svg" }} />
+        {/* MV-04: "High" quality is a Muse Pro feature — locked on the free plan. */}
+        <Segmented
+          label="Quality"
+          value={settings.resolution}
+          options={["Standard", "High"]}
+          onSelect={(resolution) => set({ resolution })}
+          icons={{ Standard: "/assets/icons/ui/ic_sd.svg", High: "/assets/icons/ui/ic_hd.svg" }}
+          locked={{ High: !subscribed }}
+          onLocked={() => setSubOpen(true)}
+        />
 
         <div className="flex flex-col gap-3 border-t pt-4" style={{ borderColor: "var(--border-3)" }}>
           <div className="flex items-center justify-between">
@@ -112,6 +143,7 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
           </div>
         </div>
       </div>
+      <SubscribeModal open={subOpen} onClose={() => setSubOpen(false)} />
     </Modal>
   );
 }

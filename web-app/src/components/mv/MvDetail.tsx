@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { downloadFile } from "@/lib/download";
 import { formatDuration } from "@/lib/mv/mock";
@@ -52,8 +53,15 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
   const [vote, setVote] = useState<"up" | "down" | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [published, setPublished] = useState(false);
+  const [pubConfirm, setPubConfirm] = useState(false);
 
   function download() { if (downloadUrl) downloadFile(downloadUrl, `${info.title}.${videoUrl ? "mp4" : "jpg"}`); }
+
+  // MV-12: turning Publish on asks for confirmation first; turning it off is immediate.
+  function togglePublish() {
+    if (published) { setPublished(false); return; }
+    setPubConfirm(true);
+  }
 
   return (
     <>
@@ -103,7 +111,7 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
             </div>
 
             {/* Publish toggle */}
-            <button onClick={() => setPublished((p) => !p)} className="mb-2 flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[14px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)" }}>
+            <button onClick={togglePublish} className="mb-2 flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[14px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)" }}>
               <span className="flex items-center gap-2"><I d="M12 3v12m0-12 4 4m-4-4-4 4M5 21h14" /> {published ? "Published · pending review" : "Publish to community"}</span>
               <span className="relative inline-block h-5 w-9 rounded-full transition-colors" style={{ background: published ? "var(--accent)" : "var(--card-3)" }}>
                 <span className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all" style={{ left: published ? "18px" : "2px" }} />
@@ -137,12 +145,33 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
           {/* Pinned actions */}
           <div className="mt-3 flex shrink-0 gap-2 border-t pt-3" style={{ borderColor: "var(--border-2)" }}>
             <Button variant="secondary" className="flex-1" onClick={onRecreate}><I d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5" /> Recreate</Button>
-            <Button className="flex-1" onClick={onEdit}><I d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /> Edit MV</Button>
+            {/* MV-13: while published/in-review the MV must be unpublished before editing.
+                The button turns neutral and unpublishing re-enables the accent "Edit MV". */}
+            {published ? (
+              <button
+                onClick={() => setPublished(false)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[14px] font-bold transition-all hover:brightness-95 active:scale-[0.97]"
+                style={{ background: "#fff", color: "#000" }}
+              >
+                <I d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /> Unpublish to edit MV
+              </button>
+            ) : (
+              <Button className="flex-1" onClick={onEdit}><I d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /> Edit MV</Button>
+            )}
           </div>
         </div>
       </div>
 
       <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={info.title} url={shareUrl} />
+
+      {/* MV-12: reuse History's "Ready to Go Public?" confirm before publishing. */}
+      <Modal open={pubConfirm} onClose={() => setPubConfirm(false)} title="Ready to Go Public?" maxWidth={420}>
+        <p className="mb-5 text-[14px]" style={{ color: "var(--text-2)" }}>Once published, your creation is visible to the community and may be shared on our social channels.</p>
+        <div className="flex gap-2">
+          <Button variant="secondary" className="flex-1" onClick={() => setPubConfirm(false)}>Cancel</Button>
+          <Button className="flex-1" onClick={() => { setPublished(true); setPubConfirm(false); }}>Confirm</Button>
+        </div>
+      </Modal>
     </>
   );
 }

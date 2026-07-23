@@ -7,6 +7,7 @@ import { CreditPill } from "@/components/ui/CreditPill";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { GENRES, MOODS, VOCALS, SONG_IDEAS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
 import { COST_SONG, DESCRIPTION_MAX, isSongReady, type SongMode } from "@/lib/mv/types";
 
@@ -40,6 +41,14 @@ export function SongCompose() {
   const { credits } = useCredits();
   const ready = isSongReady(s);
   const [langOpen, setLangOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
+
+  function generate() {
+    // GL-01: insufficient balance routes to IAP instead of starting generation.
+    if (credits < COST_SONG) { setBuyOpen(true); return; }
+    resetForNewSong();
+    router.push("/song/creating");
+  }
 
   return (
     <div className="mx-auto max-w-[640px] px-4 py-6 sm:px-6">
@@ -164,12 +173,14 @@ export function SongCompose() {
       )}
 
       <div className="sticky bottom-[66px] mt-8 -mx-4 border-t px-4 py-3 sm:bottom-0 sm:-mx-6 sm:px-6" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
-        <Button className="w-full" disabled={!ready} onClick={() => { resetForNewSong(); router.push("/song/creating"); }}>
+        <Button className="w-full" disabled={!ready} onClick={generate}>
           Generate Song
           <span className="ml-1 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[14px] font-bold" style={{ background: "rgba(255,255,255,.18)" }}>{COST_SONG}</span>
         </Button>
         {!ready && <p className="mt-2 text-center text-[12px]" style={{ color: "var(--text-2)" }}>Describe your song to continue.</p>}
       </div>
+
+      <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
     </div>
   );
 }

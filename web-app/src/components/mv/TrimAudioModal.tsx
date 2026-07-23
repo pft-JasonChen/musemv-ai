@@ -18,6 +18,8 @@ interface Props {
 const BARS = Array.from({ length: 56 }, (_, i) => 0.3 + (Math.sin(i * 1.7) * 0.5 + 0.5) * 0.7);
 const DEFAULT_START_PCT = 15;
 const DEFAULT_END_PCT = 70;
+// MV-01: an MV needs at least 30s of audio; the trim can't be shorter than this.
+const MIN_TRIM_SEC = 30;
 
 export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
   const total = song?.durationSec && song.durationSec > 0 ? song.durationSec : 180;
@@ -63,8 +65,11 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
     else setEndPct(Math.max(p, startPct + 5));
   }
 
+  const selectedSec = endSec - startSec;
+  const tooShort = selectedSec < MIN_TRIM_SEC;
+
   function confirm() {
-    if (!song) return;
+    if (!song || tooShort) return;
     pause();
     // durationSec stays the FULL track length; only the trim range changes.
     onConfirm({ ...song, trim: { start: startSec, end: endSec } });
@@ -152,13 +157,14 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
         ))}
       </div>
 
-      <p className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
-        Selected: {formatDuration(endSec - startSec)}
+      <p className="mt-2 text-[12px]" style={{ color: tooShort ? "var(--red)" : "var(--text-2)" }}>
+        Selected: {formatDuration(selectedSec)}
+        {tooShort && ` · minimum ${MIN_TRIM_SEC}s`}
       </p>
 
       <div className="mt-4 flex gap-2">
         <Button variant="secondary" className="flex-1" onClick={close}>Cancel</Button>
-        <Button className="flex-1" onClick={confirm}>Use Trimmed Audio</Button>
+        <Button className="flex-1" disabled={tooShort} onClick={confirm}>Use Trimmed Audio</Button>
       </div>
     </Modal>
   );

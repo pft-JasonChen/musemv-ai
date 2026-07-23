@@ -330,7 +330,13 @@ function Menu(p: MenuProps) {
           <div className="fixed z-[91] w-60 overflow-hidden rounded-2xl border p-2 shadow-2xl" style={{ top: pos.top, right: pos.right, background: "var(--card)", borderColor: "var(--border-2)" }}>
             {!community && !failed && (
               <div className="mb-1 flex gap-2 p-1">
-                {isMv && <CtaBtn label="Edit MV" icon={ICON.edit} onClick={() => { p.setOpen(false); p.onEditMv(); }} />}
+                {/* MV-13: a published / in-review MV must be unpublished before editing;
+                    the Edit MV entry becomes a neutral "Unpublish to edit MV" that unpublishes. */}
+                {isMv && (p.published || p.reviewing ? (
+                  <CtaBtn label="Unpublish to edit MV" icon={ICON.edit} onClick={() => { p.setOpen(false); p.onPublish(); }} />
+                ) : (
+                  <CtaBtn label="Edit MV" primary icon={ICON.edit} onClick={() => { p.setOpen(false); p.onEditMv(); }} />
+                ))}
                 {(isSong || isStoryboard) && <CtaBtn label="Create MV" primary icon={ICON.video} onClick={() => { p.setOpen(false); p.onCreateMv(); }} />}
                 {(isMv || isSong) && <CtaBtn label="Get Proof" icon={ICON.proof} onClick={() => { p.setOpen(false); p.onProof(); }} />}
               </div>

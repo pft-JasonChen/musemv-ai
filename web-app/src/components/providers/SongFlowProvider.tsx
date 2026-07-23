@@ -5,8 +5,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { api, pollJob } from "@/lib/api";
-import { DEFAULT_SONG_COMPOSE, type SongCompose, type SongResult } from "@/lib/mv/types";
+import { COST_SONG, DEFAULT_SONG_COMPOSE, type SongCompose, type SongResult } from "@/lib/mv/types";
 import { useHistory } from "./HistoryProvider";
+import { useCredits } from "./CreditsProvider";
 import { IDLE_GEN, toGen, type Gen } from "./progress";
 
 interface SongFlowValue {
@@ -23,6 +24,7 @@ const Ctx = createContext<SongFlowValue | null>(null);
 
 export function SongFlowProvider({ children }: { children: React.ReactNode }) {
   const { upsertGenerating, markCompleted, markFailed } = useHistory();
+  const { addCredits } = useCredits();
   const [songCompose, setSongCompose] = useState<SongCompose>(DEFAULT_SONG_COMPOSE);
   const [gen, setGen] = useState<Gen>(IDLE_GEN);
   const [songResult, setSongResult] = useState<SongResult | null>(null);
@@ -37,6 +39,9 @@ export function SongFlowProvider({ children }: { children: React.ReactNode }) {
 
   const startSong = useCallback(() => {
     setSongResult(null);
+    // GL-01: charge on generation start; refund if the job fails.
+    addCredits(-COST_SONG);
+    const refund = () => addCredits(COST_SONG);
     void api
       .createSongJob(songCompose)
       .then((job) => {
@@ -53,11 +58,12 @@ export function SongFlowProvider({ children }: { children: React.ReactNode }) {
           onError: () => {
             setGen((g) => ({ ...g, status: "failed" }));
             markFailed(job.id);
+            refund();
           },
         });
       })
-      .catch(() => setGen((g) => ({ ...g, status: "failed" })));
-  }, [songCompose, upsertGenerating, markCompleted, markFailed]);
+      .catch(() => { refund(); setGen((g) => ({ ...g, status: "failed" })); });
+  }, [songCompose, upsertGenerating, markCompleted, markFailed, addCredits]);
 
   // A brand-new song must discard the previous result, otherwise the song
   // generation screen's `alreadyDone` guard skips generation (showing the old song).
