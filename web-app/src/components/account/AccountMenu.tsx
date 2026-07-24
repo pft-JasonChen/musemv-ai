@@ -12,6 +12,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onBuyCredits: () => void;
+  onSubscribe: () => void;
 }
 
 function Avatar({ name, avatar, size = 40 }: { name: string; avatar: string | null; size?: number }) {
@@ -25,7 +26,7 @@ function Avatar({ name, avatar, size = 40 }: { name: string; avatar: string | nu
   );
 }
 
-export function AccountMenu({ open, onClose, onBuyCredits }: Props) {
+export function AccountMenu({ open, onClose, onBuyCredits, onSubscribe }: Props) {
   const { credits } = useCredits();
   const { signOut, profile, subscribed } = useAuth();
   const { locale } = useLocale();
@@ -79,13 +80,24 @@ export function AccountMenu({ open, onClose, onBuyCredits }: Props) {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden><circle cx="12" cy="12" r="9" opacity="0.25" /><circle cx="12" cy="12" r="6" /></svg>
           {credits}
         </span>
-        <button
-          onClick={() => { onClose(); onBuyCredits(); }}
-          className="rounded-lg px-2.5 py-1 text-[12px] font-bold text-white"
-          style={{ background: "var(--accent)" }}
-        >
-          Buy Credits
-        </button>
+        {/* CR-06: Buy Credits is subscriber-only; free users get Subscribe. */}
+        {subscribed ? (
+          <button
+            onClick={() => { onClose(); onBuyCredits(); }}
+            className="rounded-lg px-2.5 py-1 text-[12px] font-bold text-white"
+            style={{ background: "var(--accent)" }}
+          >
+            Buy Credits
+          </button>
+        ) : (
+          <button
+            onClick={() => { onClose(); onSubscribe(); }}
+            className="rounded-lg px-2.5 py-1 text-[12px] font-bold text-white"
+            style={{ background: "var(--mv-grad)" }}
+          >
+            Subscribe
+          </button>
+        )}
       </div>
 
       <nav className="p-2">

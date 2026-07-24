@@ -138,31 +138,14 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 ---
 
-## 8. Area TBD register — decisions 2026-07-22
+## 8. Open items for RD
 
-**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
-
-| ID | Decision |
+| ID | Open item |
 |---|---|
-| TBD-SONG-01 | ✅ **Sync App** — Custom mode gains a BPM slider + Key selector; Lyrics / Idea stays a free-form textarea (app-style; per-line editor reverted 2026-07-23). |
-| TBD-SONG-02 | ✅ **Sync App** — free users limited to a 30s preview; full playback unlocked for Pro. |
-| TBD-SONG-03 | ✅ **Sync App** — Recreate costs 50 credits; the prior song is kept in History. |
-| TBD-SONG-04 | ✅ **Sync App** — Enhance: first per session free, then 1 credit each. |
-| TBD-SONG-05 | 🐞 **Bug (RD fix)** — replace the hardcoded `390` credit pill with the live balance. |
-| TBD-SONG-06 | 🔧 **Backend (RD)** — production song-failure trigger. |
-| TBD-SONG-07 | ⏳ **TBD** — supported-language list still open. |
+| **TBD-SONG-06** | 🔧 **Backend (RD)** — the production song-generation failure trigger is undefined (the mock's `[fail]`-in-description behaviour needs a real equivalent). |
+| **TBD-SONG-07** | ⏳ **TBD** — the Custom info popover lists 11 languages; confirm the real supported-language set for lyric generation. |
 
 See also global: `TBD-GL-01` (credit charging — incl. `COST_SONG=10` vs app 50).
-
-| ID | Question |
-|---|---|
-| **TBD-SONG-01** | **Custom controls** — App F11 Custom has a BPM slider + Key selector + per-line lyrics timing; web has Genre/Mood/Vocal chips + free-text lyrics only. Which controls are in web scope? |
-| **TBD-SONG-02** | **Free-preview gating** — App F12/F13 limits free users to a 30s preview (full with Pro); web plays full for everyone. Is preview-gating required? |
-| **TBD-SONG-03** | **Recreate cost/behaviour** — App: 50 cr, prior song saved. Web: free return to compose, no auto-regenerate. Confirm intended. |
-| **TBD-SONG-04** | **Enhance cost** — App: first free then 1 cr each. Web: always free. |
-| **TBD-SONG-05** | **Inline credit pill** — `SongCompose` shows a hardcoded `390` pill instead of the live balance; intended, or should it read `useCredits()`? |
-| **TBD-SONG-06** | **Song failure trigger** — confirm how a song generation failure is triggered/handled in production (the mock's `[fail]` behaviour for songs needs verification). |
-| **TBD-SONG-07** | **Supported languages** — the Custom info popover lists 11 languages; confirm the real supported set for lyric generation. |
 
 ---
 
@@ -181,15 +164,6 @@ flowchart TD
 
 ---
 
-## 10. Decisions & changelog
-
-**Decisions (as-built):** Simple default; Custom uses chips (no BPM/Key); full playback (no preview
-gate); Recreate is free re-compose; song result has no Like; generation is mock and display-only on
-credits.
-
-| Date | Change |
-|---|---|
-| 2026-07-22 | Initial as-built spec. |
-| 2026-07-22 | Validator PASS; tightened SONG-E1 fail trigger (Simple `describe` only), noted Simple-mode results have no Lyrics sheet, flagged Instrumental-doesn't-clear-lyrics quirk. |
-| 2026-07-23 | Implemented: custom-mode BPM slider + Key selector (`SongComposeSchema` gains defaulted `bpm`/`key`) (SONG-01); 30s free-preview gate on `SongDetail` + community song player with upgrade prompt (SONG-02); Recreate = `COST_SONG_RECREATE` (50) keeping the prior song in History (SONG-03); first AI Enhance per session free then 1 credit each, tracked in `CreditsProvider` (SONG-04); compose credit pill uses live balance (SONG-05 bug). |
-| 2026-07-23 | Reverted the SONG-01 per-line lyrics editor back to the app-style free-form **Lyrics / Idea** textarea (per design review); BPM/Key retained. Validated Custom page against the app prototype screenshot — free-form textarea with structure tags (e.g. `[Verse 1]`) confirmed; renamed the CTA **"Generate Song" → "Create Song"** to match the app (e2e updated). |
+**Decisions (as-built):** Simple default; Custom adds BPM/Key + free-form Lyrics/Idea textarea; 30s
+free-preview gate for non-subscribers; Recreate costs 50cr and keeps the prior song; song result has
+no Like; generation is mock and display-only on credits (except the real `COST_SONG` charge).

@@ -63,7 +63,6 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 | `/history` | `history/HistoryView` | 05 history | 🔒 **Auth** | F15 |
 | `/profile` | `profile/ProfileView` | 06 profile-account | 🔒 **Auth** | F16 |
 | `/settings` | `profile/SettingsView` | 06 | 🔒 **Auth** | F19 |
-| `/proof` | `proof/ProofView` | 08 proof | — | F21 |
 | `/share` | `share/ShareLinkView` | 10 share | **Public** (by design) | (web) |
 | `/share/mv/[id]` | *(server redirect → `/share?id=…`; legacy route, no component)* | 10 | — | (web) |
 
@@ -137,30 +136,24 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 | F17 | Community User Profile | **Adapted** 🔒 seed | 04 |
 | F18 | Account | **Adapted** (`/profile` row-hub) | 06 |
 | F19 | Settings | **Adapted → sync App** — real Terms/Privacy links; **Sign Out moved here** (gated route, PROF-03); demo Unsubscribe/Delete | 06 |
-| F20 | IAP Subscribe / Buy Credits | **Adapted → sync App** 🔒 no real payment — Weekly/Monthly/Yearly + "800 Weekly Credits" header + 6-feature list; Restore Purchases; already-Pro state (CR-02/05) | 07 |
-| F21 | Proof of Creation | **Placeholder** (static stub; whole feature `TBD` in area 08) | 08 |
+| F20 | IAP Subscribe / Buy Credits | **Pricing finalized (Business Model 2026-07-13)** 🔒 no real payment — Weekly $19.99/200 · Weekly Pro $29.99/1,000 (default) · Yearly $59.99/2,000; packs 300–8,000; **credits subscriber-only**; Restore Purchases; already-Pro state (CR-02/03/05/06) | 07 |
+| F21 | Proof of Creation | **Removed 2026-07-24** — decided out of web-MVP scope; the placeholder route/component were deleted (area 08) | 08 |
 | F22 | Face Selector / Sign In / Trim | **Adapted** (manual-crop face picker) | 02, 09 |
 | — | Curation ranking/moderation (Explore PRD) | **Not implemented** — logic is `TBD` (area 04) | 04 |
 | — | Share link page | **Web-only addition** | 10 |
 
-> **Decisions (2026-07-22):** most ⚠️ divergences above are now decided to **sync App**; a few are deferred (Phase 2) or kept as-is. See §9 (global) and each area §8 for the per-item resolution, and [`handoff.md`](../docs/handoff-2026-07-23.md) for the codebase change list.
-
 ---
 
-## 9. Global TBD register — RESOLVED 2026-07-22
+## 9. Global open items for RD
 
-Cross-cutting decisions. Area-specific TBDs live in each area spec's §8 (e.g. `TBD-MV-*`).
-Codebase change list: [`handoff.md`](../docs/handoff-2026-07-23.md).
+Cross-cutting items still needing a decision or backend work. Area-specific items live in each area
+spec's §8 (e.g. `TBD-MV-*`).
 
-| ID | Question | Decision (2026-07-22) |
-|---|---|---|
-| **TBD-GL-01** | Credit semantics — which CTAs spend credits; should an empty balance block? | ✅ **Sync App** — real credit charging on generation; when the balance is insufficient, the CTA routes to IAP (blocks generation). **Implemented 2026-07-23** (§6). |
-| **TBD-GL-02** | Auth granularity — route-entry vs action-level gating. | ✅ **Sync App** — action-level gating (Create MV / Create Song / Like trigger sign-in at the action). **Implemented 2026-07-23** (§5). |
-| **TBD-GL-03** | Onboarding / splash (App F01) — in scope or dropped? | ⏸ **Phase 2** — not in the web MVP; added to the Phase-2 todo (may be added later). |
-| **TBD-GL-04** | Persistence — what survives reload in production. | ✅ **Sync App** — production persists state (history, storyboard, credits, subscription, profile) via the backend. Backend/RD work. |
-| **TBD-GL-05** | Community / Curation — ranking + moderation (Explore PRD). | 📄 **Spec-only** — update spec only; **do NOT change codebase**. Backend integration by RD later. (Applies to every Curation item.) |
-| **TBD-GL-06** | Localization QA — owned here or separate? | ✅ **Not owned here** — i18n uses the existing AI-generation mechanism (**"Sync YCO i18n method"**); localization QA is out of scope for these specs. |
-| **TBD-GL-07** | `/share` gating — public or gated? | ✅ **Public** — `/share` stays public. |
+| ID | Open item |
+|---|---|
+| **TBD-GL-03** | ⏸ **Phase 2** — Onboarding / splash (App F01) is not in the web MVP; may be added later. |
+| **TBD-GL-04** | 🔧 **Backend (RD)** — production persistence (history, storyboard, credits, subscription, profile all reset today). |
+| **TBD-GL-05** | 📄 **Spec-only, ongoing** — Community / Curation ranking + moderation (Explore PRD). Do **not** change the codebase from this; backend integration is a later RD track. Applies to every Curation item across areas. |
 
 ---
 
@@ -174,17 +167,3 @@ Codebase change list: [`handoff.md`](../docs/handoff-2026-07-23.md).
 | Take | *(Legacy)* an alternate generated variant of a scene/cover in Edit MV. ⚠️ The pick-a-take UI is **removed** per `TBD-MV-08` — regenerate now overwrites directly; the mechanism is hidden/marked for a future version (see area 02). |
 | Flow-guard | A mid-flow screen that redirects to its flow entry when in-memory state is missing. |
 | `MuseApi` | The single typed backend boundary (`src/lib/api/contract.ts`); mock today, real client later. |
-
----
-
-## 11. Changelog
-
-| Date | Change |
-|---|---|
-| 2026-07-22 | Initial overview + area architecture (golden-sample phase). |
-| 2026-07-22 | Senior-RD review applied: fixed `/share` (public, not gated) + removed non-existent `SharedMvView`; area-qualified ID scheme; global TBD register with stable ids; parity "spec-pending" vs ❓ split; single-source-of-truth rule; Edit-MV cost locations noted. |
-| 2026-07-22 | Validator fix: `/settings` view path corrected to `profile/SettingsView` (was `account/SettingsView`). |
-| 2026-07-22 | Final RD review fix: corrected 6 stale route-table component names (MvExplore, SongExplore, CommunityMvPlayer, CommunitySongPlayer, CreatorProfile, SongResultView) to match code. |
-| 2026-07-22 | PM decisions round: §9 global register resolved; each area §8 now carries per-area decisions; codebase changes captured in `handoff.md`. |
-| 2026-07-23 | §A + §B implemented in `web-app/src/`. Global items: GL-01 real credit charging (flow providers decrement on generation start, refund on failure) with an insufficient-balance → IAP route at the CTAs; GL-02/EXP-02 action-level auth gating. Per-area as-built in each area §10; three reconciliation flags (Merge cost, plan pricing, legal URLs) in `handoff-2026-07-23.md`. |
-| 2026-07-23 | As-built prose refreshed to match the shipped code: §1 route table (`/settings` gated), §5 auth model (action-level + 5 guarded routes), §6 credits model (real charging + IAP gate), §8 parity matrix (F03-2/F04-2/F11/F12/F13/F19/F20 now sync-App), §9 GL-01/GL-02 marked implemented. Public `/share` page simplified + `handoff.md` moved to `docs/handoff-2026-07-23.md`; `mv-creation-flow.spec.md` + `spec-validation.md` removed. |

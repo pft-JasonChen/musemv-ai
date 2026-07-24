@@ -18,9 +18,13 @@ interface Props {
   creation: CreationLike | null;
   onClose: () => void;
   onDelete: (id: string) => void;
+  /** MV-only: current published/reviewing state for this row + the callback that flips it. */
+  published?: boolean;
+  reviewing?: boolean;
+  onTogglePublish?: () => void;
 }
 
-export function CreationDialog({ open, creation, onClose, onDelete }: Props) {
+export function CreationDialog({ open, creation, onClose, onDelete, published, reviewing, onTogglePublish }: Props) {
   const router = useRouter();
   const { setCompose, patchCompose, setStoryboard, saveStoryboard } = useMvFlow();
   if (!creation) return null;
@@ -64,6 +68,9 @@ export function CreationDialog({ open, creation, onClose, onDelete }: Props) {
           onEdit={editMv}
           onDelete={del}
           onClose={onClose}
+          published={published}
+          reviewing={reviewing}
+          onTogglePublish={onTogglePublish}
         />
       ) : (
         <SongDetail

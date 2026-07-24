@@ -36,6 +36,16 @@ interface Props {
   onEdit: () => void;
   onDelete?: () => void;
   onClose?: () => void;
+  /**
+   * Controlled publish state — pass both `published`/`reviewing` and
+   * `onTogglePublish` when this dialog was opened from a History row, so the
+   * same row's "..." menu stays in sync (the parent owns the confirm gate and
+   * the actual state change). Omit all three for a standalone/local toggle
+   * (used by the fresh-generation result screen, which has no History row).
+   */
+  published?: boolean;
+  reviewing?: boolean;
+  onTogglePublish?: () => void;
 }
 
 function I({ d }: { d: string }) {
@@ -50,20 +60,34 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onRecreate, onEdit, onClose }: Props) {
+export function MvDetail({
+  videoUrl, posterUrl, info, shareUrl, downloadUrl, onRecreate, onEdit, onClose,
+  published: publishedProp, reviewing: reviewingProp, onTogglePublish,
+}: Props) {
   const { requireLogin } = useAuth();
   const [vote, setVote] = useState<"up" | "down" | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const [published, setPublished] = useState(false);
+  const [localPublished, setLocalPublished] = useState(false);
   const [pubConfirm, setPubConfirm] = useState(false);
+
+  // Controlled (opened from a History row): the parent owns the state + the
+  // confirm-then-publish decision entirely — see HistoryView.togglePublishMv.
+  const controlled = onTogglePublish !== undefined;
+  const published = controlled ? Boolean(publishedProp || reviewingProp) : localPublished;
 
   function download() { if (downloadUrl) downloadFile(downloadUrl, `${info.title}.${videoUrl ? "mp4" : "jpg"}`); }
 
   // MV-12: turning Publish on asks for confirmation first; turning it off is immediate.
   // GL-02: publishing to the community is gated at the action.
   function togglePublish() {
-    if (published) { setPublished(false); return; }
+    if (controlled) { onTogglePublish!(); return; }
+    if (published) { setLocalPublished(false); return; }
     requireLogin(() => setPubConfirm(true));
+  }
+
+  function unpublish() {
+    if (controlled) { onTogglePublish!(); return; }
+    setLocalPublished(false);
   }
 
   return (
@@ -152,7 +176,7 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
                 The button turns neutral and unpublishing re-enables the accent "Edit MV". */}
             {published ? (
               <button
-                onClick={() => setPublished(false)}
+                onClick={unpublish}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[14px] font-bold transition-all hover:brightness-95 active:scale-[0.97]"
                 style={{ background: "#fff", color: "#000" }}
               >
@@ -172,7 +196,7 @@ export function MvDetail({ videoUrl, posterUrl, info, shareUrl, downloadUrl, onR
         <p className="mb-5 text-[14px]" style={{ color: "var(--text-2)" }}>Once published, your creation is visible to the community and may be shared on our social channels.</p>
         <div className="flex gap-2">
           <Button variant="secondary" className="flex-1" onClick={() => setPubConfirm(false)}>Cancel</Button>
-          <Button className="flex-1" onClick={() => { setPublished(true); setPubConfirm(false); }}>Confirm</Button>
+          <Button className="flex-1" onClick={() => { setLocalPublished(true); setPubConfirm(false); }}>Confirm</Button>
         </div>
       </Modal>
     </>

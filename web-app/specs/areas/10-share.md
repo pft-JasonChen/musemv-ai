@@ -51,8 +51,10 @@ Renders **bare** (no shell) — `AppShell` treats any `/share…` path as chrome
   `HISTORY_SAMPLES`** (done MV/song, mapped to the shared demo video/audio) → else `null`.
   `?type=expired` forces `null` (`ShareLinkView.tsx`).
 - **Valid link (`SharedMedia` present):** logo header (→ home) + media (MV = `<video controls>` at
-  9:16; song = cover image + `<audio controls>`) + a **Download** button (only if a media URL exists).
-  No Share action, title/creator, or Try CTA (simplified 2026-07-23).
+  9:16, **capped at 80vh max-height** so it can't overflow the viewport on wide/short screens — width
+  derives from the aspect ratio instead of always filling the 520px column (2026-07-24); song = cover
+  image + `<audio controls>`) + a **Download** button (only if a media URL exists). No Share action,
+  title/creator, or Try CTA (simplified 2026-07-23).
 - **Expired/invalid (`null`):** logo header (→ home), bell-off icon, "This link has expired", copy
   "*Shared links are available for 30 days…*". ⚠️ The 30-day window is **copy only** — there is no
   expiry logic; only an unresolvable id triggers this state. (The former "Go to YouCam Muse" button was
@@ -123,23 +125,15 @@ Screens to capture later: `/share?id=…` (valid MV + valid song), `/share?type=
 
 ---
 
-## 8. Area TBD register — decisions 2026-07-22
+## 8. Open items for RD
 
-**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
-
-| ID | Decision |
+| ID | Open item |
 |---|---|
-| TBD-SHARE-01 | 🔧 **Backend (RD)** — server-side share resolution + real link expiry. |
-| TBD-SHARE-02 | ⏳ **TBD** — social sharing is **removed for MVP** (ShareDialog is copy-link only, 2026-07-23); the web social-channel set is to be defined and re-added later. |
-| TBD-SHARE-03 | ✅ **Decided (yes)** — share links carry analytics; details TBD. |
+| **TBD-SHARE-01** | 🔧 **Backend (RD)** — server-side share resolution + real link expiry. Production must resolve any id (incl. the sharer's own live creations) server-side, and implement the advertised 30-day expiry (copy-only today). |
+| **TBD-SHARE-02** | ⏳ **TBD** — social sharing is removed for MVP (`ShareDialog` is copy-link only); the final web social-channel set (App lists Instagram/TikTok/WhatsApp/X; the removed web set was Facebook/X/Pinterest/Reddit) is undefined and to be re-added later. |
+| **TBD-SHARE-03** | ⏳ **Decided to build, details TBD** — share links should carry analytics tracking, but which recipient data (if any) is captured is undefined. |
 
 See also global: `TBD-GL-04` (persistence), `TBD-GL-07` (`/share` gating), `TBD-SHELL-01` (brand).
-
-| ID | Question |
-|---|---|
-| **TBD-SHARE-01** | **Server-side resolution + real expiry** — production must resolve any id (incl. the sharer's own creations) server-side, and implement the advertised 30-day expiry (copy-only today). RD to define the share record + endpoint. |
-| **TBD-SHARE-02** | **Social channels** — final set? App listed Instagram / TikTok / WhatsApp / X; web has Facebook / X / Pinterest / Reddit. |
-| **TBD-SHARE-03** | **Analytics / privacy** — should share links carry tracking, and what recipient data (if any) is captured? Undefined. |
 
 ---
 
@@ -156,14 +150,6 @@ flowchart TD
 
 ---
 
-## 10. Decisions & changelog
-
 **Decisions (as-built):** dedicated public share page (web-only) + shared `ShareDialog`; bare (no
 shell); community ids **and static History samples** resolve from fixtures, live own creations from
-in-memory History only; 30-day expiry is copy, not enforced.
-
-| Date | Change |
-|---|---|
-| 2026-07-22 | Initial as-built spec. Validator PASS (2 NITs); clarified SHARE-E2 native-share fallback reachability. |
-| 2026-07-23 | Public `/share` page **simplified** to logo header (→ home) + media + Download only — Share action, title/creator, and Try/Go-home CTAs removed; brand consistently "YouCam Muse" (SHELL-01). `resolveShare` now also resolves static `HISTORY_SAMPLES` so a shared sample creation opens the page (a demo MV, `h-cinematic-night`, is dated 2026-07-23). `ShareDialog` is no longer opened from `/share` but remains the shared primitive for result/player screens. |
-| 2026-07-23 | **`ShareDialog` reduced to copy-link only for MVP** — the four social-platform composer links (Facebook / X / Pinterest / Reddit), the third-party note, and the native Share button were removed (→ `TBD-SHARE-02`). |
+in-memory History only; 30-day expiry is copy, not enforced; the video frame is capped at 80vh.

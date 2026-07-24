@@ -4,6 +4,7 @@
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { CREDIT_TRANSACTIONS } from "@/lib/user";
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 /** Credits Detail — current balance + transaction ledger, with a Buy Credits CTA. */
 export function CreditsDetailModal({ open, onClose, onBuy }: Props) {
   const { credits } = useCredits();
+  const { subscribed } = useAuth();
 
   return (
     <Modal open={open} onClose={onClose} title="Credits" maxWidth={460}>
@@ -31,7 +33,8 @@ export function CreditsDetailModal({ open, onClose, onBuy }: Props) {
             <span className="mb-1 text-[12px] font-semibold" style={{ color: "var(--text-3)" }}>credits</span>
           </div>
         </div>
-        <Button className="!h-9 px-4 text-[13px]" onClick={onBuy}>Buy Credits</Button>
+        {/* CR-06: Buy Credits is subscriber-only; free users get Subscribe. */}
+        <Button className="!h-9 px-4 text-[13px]" onClick={onBuy}>{subscribed ? "Buy Credits" : "Get Muse Pro"}</Button>
       </div>
 
       {/* Transaction ledger */}

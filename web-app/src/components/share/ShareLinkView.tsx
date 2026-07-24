@@ -70,15 +70,25 @@ export function ShareLinkView() {
 
       <main className="mx-auto flex w-full max-w-[520px] flex-1 flex-col items-center px-6 pb-24 pt-4">
         {/* Media */}
-        <div className="w-full overflow-hidden rounded-2xl" style={{ background: "var(--card)", border: "1px solid var(--border-2)" }}>
+        <div
+          className={media.kind === "mv" ? "overflow-hidden rounded-2xl" : "w-full overflow-hidden rounded-2xl"}
+          style={{
+            background: "var(--card)",
+            border: "1px solid var(--border-2)",
+            // Cap the portrait (9:16) video to 80% of the viewport height so it
+            // never overflows on wide/short viewports; width derives from the
+            // aspect ratio instead of always filling the 520px column.
+            ...(media.kind === "mv" ? { aspectRatio: "9 / 16", maxHeight: "80vh", width: "auto", maxWidth: "100%" } : {}),
+          }}
+        >
           {media.kind === "mv" ? (
             <video
               src={media.videoUrl}
               poster={media.posterUrl}
               controls
               playsInline
-              className="block w-full"
-              style={{ aspectRatio: "9 / 16", objectFit: "cover", background: "#000" }}
+              className="block h-full w-full"
+              style={{ objectFit: "cover", background: "#000" }}
             />
           ) : (
             <div className="flex flex-col items-center gap-4 p-6">

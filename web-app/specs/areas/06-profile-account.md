@@ -126,31 +126,16 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 
 ---
 
-## 8. Area TBD register — decisions 2026-07-22
+## 8. Open items for RD
 
-**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
-
-| ID | Decision |
+| ID | Open item |
 |---|---|
-| TBD-PROF-01 | 🔧 **Backend (RD)** — real notifications wiring. |
-| TBD-PROF-02 | 🔧 **Backend (RD)** — feedback destination/endpoint. |
-| TBD-PROF-03 | ✅ **Sync App** — move Sign Out into Settings; reach `/settings` via the (gated) account. |
-| TBD-PROF-04 | 🔧 **Backend (RD)** — real Unsubscribe (store deeplink) + real account Delete. |
-| TBD-PROF-05 | 🔧 **Backend (RD)** — real stats source (not static `SAMPLE_CREATIONS`). |
-| TBD-PROF-06 | ✅ **Sync App** — wire real localized Terms/Privacy WebViews (same links as `TBD-AUTH-03`). |
-| TBD-PROF-07 | ✅ **Confirmed** — `/profile` hub vs `/creator?self=1` grid split is fine. No change. |
+| **TBD-PROF-01** | 🔧 **Backend (RD)** — real push/notification wiring (App F18 toggles creation-complete/like alerts); today it's an inert local toggle. |
+| **TBD-PROF-02** | 🔧 **Backend (RD)** — Send Feedback destination/endpoint. App opens an in-app form (WebView) with device metadata; web discards the input. |
+| **TBD-PROF-04** | 🔧 **Backend (RD)** — real Unsubscribe (store deeplink per App F19, cancels subscription) and real account Delete (permanent data removal). Both are demo toasts today. |
+| **TBD-PROF-05** | 🔧 **Backend (RD)** — real stats source. MVs/Songs counts come from static `SAMPLE_CREATIONS`; the Muse Pro row hardcodes "validity 2026-08-10". |
 
 See also global: `TBD-GL-01` (credits), `TBD-GL-04` (persistence), `TBD-GL-06` (localization).
-
-| ID | Question |
-|---|---|
-| **TBD-PROF-01** | **Notifications** — real push/notification wiring (App F18 toggles creation-complete/like alerts); today it's an inert local toggle. |
-| **TBD-PROF-02** | **Send Feedback** — where does feedback go? App opens an in-app form (WebView) with device metadata; web discards it. Define the endpoint/destination. |
-| **TBD-PROF-03** | **Settings auth** — `/settings` is public; App reaches it via the (gated) Account screen. Should it be gated? Sign Out placement (App = inside Settings; web = on /profile). |
-| **TBD-PROF-04** | **Unsubscribe / Delete Account** — real cancellation (store deeplink per App F19) and real account deletion (App: permanent data removal, cancels subscription). Both are demo toasts today. |
-| **TBD-PROF-05** | **Stats source** — MVs/Songs counts come from static `SAMPLE_CREATIONS`; hardcoded "validity 2026-08-10". Wire to real user data. |
-| **TBD-PROF-06** | **Terms/Privacy** — App opens localized legal WebViews; web shows placeholder text. Provide the real localized URLs. |
-| **TBD-PROF-07** | **Profile = which App screen?** Confirm web's split of Account-hub (`/profile`) vs My-Community-Profile grid (`/creator?self=1`, area 04) matches intended IA (App F16 vs F18). |
 
 ---
 
@@ -171,13 +156,6 @@ flowchart TD
 
 ---
 
-## 10. Decisions & changelog
-
 **Decisions (as-built):** `/profile` = Account-style hub (rows), community grid split to `/creator?self=1`;
-edits/subscription in-memory; Notifications/Feedback/Unsubscribe/Delete are demo-only; `/settings`
-ungated; Sign Out on profile (not Settings).
-
-| Date | Change |
-|---|---|
-| 2026-07-22 | Initial as-built spec. Validator PASS (2 NITs applied: Settings nav via localePath; BuyCreditsModal reachable via Credits tile chain). |
-| 2026-07-23 | Implemented: Sign Out moved from `ProfileView` into the (now `AuthGuard`-gated) `SettingsView`, `/settings` added to the sidebar gate (PROF-03); Terms of Use / Privacy Policy wired to shared `lib/legal.ts` links from Settings (PROF-06) and the sign-in modal (AUTH-03). |
+edits/subscription in-memory; Notifications/Feedback/Unsubscribe/Delete are demo-only; `/settings` is
+auth-gated with Sign Out (not on `/profile`); Terms/Privacy are real links.

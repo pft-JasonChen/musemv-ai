@@ -68,7 +68,7 @@ Data: `lib/mv/community.ts` — `TRENDING_MVS`, `NEW_MVS`, `TOP_PICKS_SONGS`, `N
 
 ### 3.2 Explore pages
 - **`/explore/mvs`** (`MvExplore`): responsive grid (2/3/4 cols) of `[...TRENDING_MVS, ...NEW_MVS]`; card → **`CommunityMvDialog`** (modal player); Back → `/`. Every card's creator avatar is `DEFAULT_CREATOR.avatar` ⚠️. (`MvExplore` also accepts an `initialPlayId` deep-link prop, but the route never passes it — currently dead.)
-- **`/explore/songs`** (`SongExplore`): "Top Picks" + "New Songs" lists; row → `/song/play?id`; creator → `/creator`; **Create** → `patchSongCompose` + `/song/create` (**no `requireLogin` at click** — relies on the `/song/create` `AuthGuard`; ⚠️ inconsistent with Home's gated Create, `TBD-EXP-02`); Back → `router.back()`.
+- **`/explore/songs`** (`SongExplore`): "Top Picks" + "New Songs" lists; row → `/song/play?id`; creator → `/creator`; **Create** → `requireLogin` → `patchSongCompose` + `/song/create` (gated at the click, consistent with Home — GL-02/EXP-02); Back → `router.back()`.
 
 ### 3.3 MV player — `/watch` + `CommunityMvDialog`
 - `/watch` reads `?id` → `getCommunityMv(id) ?? NEW_MVS[0]`; **3:4 portrait** stage, autoplay **muted** loop, tap play/pause, mute toggle; `# Music Video` tag, title, meta; creator → `/creator`; **Like** (local), **Share** (`ShareDialog`), `Stats`, prompt; **Create Music Video** → `setCompose` (mvType + prompt + `matchedSong` + title) → `/mv/room` (area 02).
@@ -137,7 +137,7 @@ Screens to capture later: `/`, `/explore/mvs` (+ dialog), `/explore/songs`, `/wa
 | **EXP-E2** | Like/Create on any community item | **GL-02 (2026-07-23):** gated at the action — `requireLogin` runs before the effect. State is still local, lost on reload; real counters/persistence → `TBD-EXP-08`. |
 | **EXP-E3** | `/song/play` "playback" | No real audio — a `setInterval` advances a progress bar to 125s then stops. 🔒 |
 | **EXP-E4** | Empty rail / no content | Not handled — seed arrays are always populated (`TBD-EXP-06`). |
-| **EXP-E5** | Create from a community item while logged out | Home hero + New-Songs Create call `requireLogin`; `/explore/songs` Create and player Create rely on the downstream route's `AuthGuard`. |
+| **EXP-E5** | Create from a community item while logged out | All Create entry points (Home hero, New-Songs, `/explore/songs`, players) call `requireLogin` at the click (GL-02/EXP-02). |
 
 ---
 
@@ -170,36 +170,20 @@ Screens to capture later: `/`, `/explore/mvs` (+ dialog), `/explore/songs`, `/wa
 
 ---
 
-## 8. Area TBD register — decisions 2026-07-22
+## 8. Open items for RD
 
-**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md). Curation items are **spec-only** (no codebase change now; backend by RD later — `TBD-GL-05`).
+Curation items are **spec-only** — do not change the codebase from these; backend by RD later (`TBD-GL-05`).
 
-| ID | Decision |
+| ID | Open item |
 |---|---|
-| TBD-EXP-01 | 📄 **Spec-only (Curation PRD)** — 4-rail scoring/eligibility/refresh/dedup; no codebase change now. |
-| TBD-EXP-02 | ✅ **Resolved via `TBD-GL-02`** — unify Create gating to action-level (sign-in at click). |
-| TBD-EXP-03 | ⏳ **TBD** — MV-player 9:16↔3:4 toggle + swipe-up next-MV feed. |
-| TBD-EXP-04 | ✅ **Sync App** — song player: shuffle/repeat + 30s free gate + community/own playlist modes. |
-| TBD-EXP-05 | ⏳ **TBD** — real multi-creator data + Report/Block. |
-| TBD-EXP-06 | ✅ **Sync App** — empty / not-found states with App-style copy ("Be the first to create!"). |
-| TBD-EXP-07 | 📄 **Spec-only (Curation PRD)** — publish→feed + AI/human moderation + admin pin/unpin; no codebase change now. |
-| TBD-EXP-08 | 🔧 **Backend (RD)** — real like/share/play counters + auth gating. |
-| TBD-EXP-09 | 🐞 **Bug (RD fix)** — creator Songs-tab plays the wrong track (fix the `/song/play` playlist lookup). |
-| TBD-EXP-10 | ⏳ **Format TBD (RD)** — the publish/feed **language/locale code format** (2-char vs 3-char). Frontend just passes it through and requests the server-sorted feed; RD decides the format (ties i18n `TBD-GL-06`). |
+| **TBD-EXP-01** | 📄 **Spec-only (Curation PRD)** — implement the Explore PRD: scoring formulas per rail (Trending/New MVs/Top Picks/New Songs), eligibility gates, refresh cadence, dedup. Today all four are static seed in array order. |
+| **TBD-EXP-03** | ⏳ **TBD** — App F10 aspect toggle (9:16↔3:4) + swipe-up next-MV community feed; web has neither. In scope? |
+| **TBD-EXP-05** | ⏳ **TBD** — a single `DEFAULT_CREATOR` backs every avatar; self mode mixes `MOCK_USER` identity with sample content/stats; no Report/Block (App F17). Wire real creators + moderation actions. |
+| **TBD-EXP-07** | 📄 **Spec-only (Curation PRD)** — how user creations enter these rails (ties `TBD-MV-06`), plus the AI+human moderation pipeline and admin pin/unpin. Entirely unbuilt. |
+| **TBD-EXP-08** | 🔧 **Backend (RD)** — likes/shares/plays are local, ungated (well, gated at the click per GL-02, but not persisted), non-persistent. Define real counters + storage. |
+| **TBD-EXP-10** | ⏳ **Format TBD (RD)** — the publish/feed **language/locale code format** (2-char ISO vs 3-char product code). Frontend just passes it through and requests the server-sorted feed; RD decides the format (ties i18n `TBD-GL-06`). |
 
 See also global: `TBD-GL-02` (like/publish gating), `TBD-GL-05` (Curation/community backend track), and `TBD-MV-06` (publish → community pipeline, area 02).
-
-| ID | Question |
-|---|---|
-| **TBD-EXP-01** | **Rail curation** — implement the Explore PRD: scoring formulas per rail (Trending/New MVs/Top Picks/New Songs), eligibility gates, refresh cadence, dedup. Today all four are static seed in array order. (See the Explore Curation PRD.) |
-| **TBD-EXP-02** | **Create gating consistency** — Home hero + New-Songs Create call `requireLogin`; `/explore/songs` Create and the players' Create rely only on the destination route's `AuthGuard`. Standardize. |
-| **TBD-EXP-03** | **MV player parity** — App F10 aspect toggle (9:16↔3:4) + swipe-up next-MV community feed; web has neither. In scope? |
-| **TBD-EXP-04** | **Song player parity** — App F13 shuffle/repeat + 30s free gate + community/own playlist modes; web has none, and playback is a simulated timer (no real audio). Define real playback + gating. |
-| **TBD-EXP-05** | **Creator profiles** — a single `DEFAULT_CREATOR` backs every avatar; self mode mixes `MOCK_USER` identity with sample content/stats; no Report/Block (App F17). Wire real creators + moderation actions. |
-| **TBD-EXP-06** | **Empty/error states** — no empty-rail, not-found, or offline states (App has empty-state illustrations). Define them. |
-| **TBD-EXP-07** | **Publish→feed + moderation** — how user creations enter these rails (ties `TBD-MV-06`), plus the AI+human moderation pipeline and admin pin/unpin from the Curation PRD. Entirely unbuilt. |
-| **TBD-EXP-08** | **Engagement persistence** — likes/shares/plays are local, ungated, non-persistent. Define real counters + auth gating (App F22). |
-| **TBD-EXP-09** | **Creator-song deep link (bug)** — Creator profile Songs-tab rows push `/song/play?id=cps-*`, but those ids aren't in the player playlist (`ALL_COMMUNITY_SONGS`), so the wrong song plays (falls back to index 0). Fix the lookup/playlist. |
 
 ---
 
@@ -224,14 +208,6 @@ flowchart TD
 
 ---
 
-## 10. Decisions & changelog
-
 **Decisions (as-built):** community is UI-only on static seed; no ranking/moderation/persistence; single
-sample creator; MV player 3:4-only; song player simulated (no real audio); like/share local + ungated.
-All curation/feed logic deferred to the backend track (Explore Curation PRD).
-
-| Date | Change |
-|---|---|
-| 2026-07-22 | Initial as-built spec; all ranking/moderation/curation logic marked TBD per the Explore PRD (`TODO.md #1`). |
-| 2026-07-22 | Validator PASS; documented creator-song deep-link bug (TBD-EXP-09), noted unused `initialPlayId` prop. |
-| 2026-07-23 | Implemented: EXP-09 fixed (community song player selects the playlist the requested song belongs to — creator `cps-*` ids no longer fall back to track 0); song-player parity — shuffle + repeat added, 30s free gate (EXP-04); shared empty / not-found / offline states (`community/EmptyState.tsx`) wired into the explore grids and MV/song players (EXP-06); action-level gating on community Like/Create (GL-02/EXP-02). |
+sample creator; MV player 3:4-only; song player simulated (no real audio); like/share gated at the
+click but not persisted. All curation/feed logic deferred to the backend track (Explore Curation PRD).

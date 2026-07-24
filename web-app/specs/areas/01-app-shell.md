@@ -129,25 +129,9 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 
 ---
 
-## 8. Area TBD register
+## 8. Open items for RD
 
-**Decisions (2026-07-22)** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
-
-| ID | Decision |
-|---|---|
-| TBD-SHELL-01 | ✅ **Sync App** — rename brand wordmark to **"YouCam Muse"** (from "MuseMV.ai"), incl. `SignInModal` title. |
-| TBD-SHELL-02 | ✅ **Confirmed** — keep the 5-item sidebar incl. Profile, no ＋Create FAB (web IA as-is). No change. |
-| TBD-SHELL-03 | ✅ **Sync App** — add **Notifications** + **Send Feedback** rows to the account menu/screen (F18). |
-| TBD-SHELL-04 | 🐞 **Bug (RD fix)** — gate the header on `hydrated` to remove the pre-hydration logged-out→in flash. |
-
-See also global: `TBD-GL-02` (auth granularity), `TBD-GL-06` (localization scope).
-
-| ID | Question |
-|---|---|
-| **TBD-SHELL-01** | **Brand wordmark** — is "MuseMV.ai" the intended web brand, or should it be "YouCam Muse" per the app? (Placeholder-looking.) |
-| **TBD-SHELL-02** | **Nav model** — the app bottom bar is Explore · ＋Create FAB · History; web is a 5-item sidebar incl. Profile and no FAB. Confirm the intended web IA. |
-| **TBD-SHELL-03** | **Account menu scope** — the app Account screen (F18) has Muse Pro, Notifications, Send Feedback, and Settings rows; the web dropdown has only Profile / My Creations / Sign Out. Which belong in web, and where is `/settings` reached from? (See area 06.) |
-| **TBD-SHELL-04** | **Pre-hydration flash** — is the brief logged-out→logged-in header swap (SHELL-E1) acceptable, or should the header gate on `hydrated`? |
+No open items for this area — see `../00-overview.md` §9 for global open items.
 
 ---
 
@@ -169,13 +153,5 @@ flowchart TD
 
 ---
 
-## 10. Decisions & changelog
-
 **Decisions (as-built):** desktop-native sidebar (not a stretched mobile tab bar); account as a
 dropdown; `/share` is chrome-less; nav labels localized, rest English.
-
-| Date | Change |
-|---|---|
-| 2026-07-22 | Initial as-built spec. |
-| 2026-07-22 | Validator fix: nav `/history` label corrected to "History" (was "My Creations" — that's the account-menu/page label); nav list single-sourced in §3. |
-| 2026-07-23 | Implemented: brand wordmark → "YouCam Muse" everywhere (SHELL-01); Notifications + Send Feedback rows added to `AccountMenu` (SHELL-03, UI-only); `HeaderActions` gated on `hydrated` to stop the logged-out→in flash (SHELL-04). |

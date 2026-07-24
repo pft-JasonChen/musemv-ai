@@ -32,7 +32,6 @@ function I({ d, size = 18 }: { d: string; size?: number }) {
 }
 const ICON = {
   edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
-  proof: "M12 2l7 4v6c0 4-3 7-7 8-4-1-7-4-7-8V6z M9 12l2 2 4-4",
   video: "M15 10l4.5-2.5v9L15 14M3 7h12v10H3z",
   publish: "M12 3v12m0-12 4 4m-4-4-4 4M5 21h14",
   timer: "M12 8v4l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
@@ -98,6 +97,11 @@ export function HistoryView() {
     }));
     return [...live, ...HISTORY_SAMPLES].filter((r) => !removed.has(r.id));
   }, [history, removed]);
+
+  // Live row backing the open CreationDialog (if any) — used to keep its
+  // published/reviewing state (and the toggle) in sync with this same row's
+  // "..." menu, since `selected` is a point-in-time snapshot taken at open time.
+  const selectedRow = selected ? rows.find((r) => r.id === selected.id) : undefined;
 
   const shown = rows.filter((r) => {
     const community = r.source === "community";
@@ -192,7 +196,6 @@ export function HistoryView() {
                       onPublish={() => (r.kind === "mv" ? togglePublishMv(r) : togglePublishSong(r))}
                       onEditMv={() => editMv(r)}
                       onCreateMv={() => createMv(r)}
-                      onProof={() => router.push("/proof")}
                     />
                   )
                 }
@@ -202,7 +205,19 @@ export function HistoryView() {
         </ul>
       )}
 
-      <CreationDialog key={selected?.id ?? "none"} open={selected != null} creation={selected} onClose={() => setSelected(null)} onDelete={(id) => setRemoved((s) => new Set(s).add(id))} />
+      <CreationDialog
+        key={selected?.id ?? "none"}
+        open={selected != null}
+        creation={selected}
+        published={selectedRow ? published(selectedRow) : false}
+        reviewing={selectedRow ? reviewing(selectedRow) : false}
+        onClose={() => setSelected(null)}
+        onDelete={(id) => setRemoved((s) => new Set(s).add(id))}
+        onTogglePublish={() => {
+          if (!selectedRow) return;
+          if (selectedRow.kind === "mv") togglePublishMv(selectedRow); else togglePublishSong(selectedRow);
+        }}
+      />
       <ShareDialog open={share != null} onClose={() => setShare(null)} title={share?.title ?? ""} url={share?.url ?? ""} />
 
       <Modal open={del != null} onClose={() => setDel(null)} title="Delete" maxWidth={380}>
@@ -311,7 +326,7 @@ interface MenuProps {
   r: HistorySample; liked: boolean; published: boolean; reviewing: boolean;
   open: boolean; setOpen: (v: boolean) => void;
   onLike: () => void; onShare: () => void; onDownload: () => void; onDelete: () => void;
-  onPublish: () => void; onEditMv: () => void; onCreateMv: () => void; onProof: () => void;
+  onPublish: () => void; onEditMv: () => void; onCreateMv: () => void;
 }
 
 function Menu(p: MenuProps) {
@@ -353,7 +368,6 @@ function Menu(p: MenuProps) {
                   <CtaBtn label="Edit MV" primary icon={ICON.edit} onClick={() => { p.setOpen(false); p.onEditMv(); }} />
                 ))}
                 {(isSong || isStoryboard) && <CtaBtn label="Create MV" primary icon={ICON.video} onClick={() => { p.setOpen(false); p.onCreateMv(); }} />}
-                {(isMv || isSong) && <CtaBtn label="Get Proof" icon={ICON.proof} onClick={() => { p.setOpen(false); p.onProof(); }} />}
               </div>
             )}
 

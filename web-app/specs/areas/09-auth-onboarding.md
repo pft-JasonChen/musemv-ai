@@ -127,25 +127,14 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 
 ---
 
-## 8. Area TBD register — decisions 2026-07-22
+## 8. Open items for RD
 
-**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
-
-| ID | Decision |
+| ID | Open item |
 |---|---|
-| TBD-AUTH-01 | 🔧 **Backend (RD)** — real auth integration (provider, session/token). |
-| TBD-AUTH-02 | ✅ **Decided** — v1 is **Apple / Google SSO only; no email/password** (matches current). No change. |
-| TBD-AUTH-03 | ✅ **Sync App** — wire Terms/Privacy links (localized; same links as `TBD-PROF-06`). |
-| TBD-AUTH-04 | ⏳ **Web-specific spec needed** — define the web guest-browsing / gating rules in detail (a web access matrix). Not a straight App copy. |
+| **TBD-AUTH-01** | 🔧 **Backend (RD)** — real auth integration: provider(s), session/token model, and where it lives relative to `MuseApi`. Entirely undefined; do not infer from the mock. |
+| **TBD-AUTH-04** | ⏳ **Web-specific spec needed** — define the web guest-browsing / gating rules in detail (a web access matrix: which surfaces are usable logged-out — today Home/Explore/Watch/Player/Share/Settings). Not a straight App copy. |
 
 See also global: `TBD-GL-02` (auth granularity), `TBD-GL-03` (onboarding), `TBD-GL-04` (persistence).
-
-| ID | Question |
-|---|---|
-| **TBD-AUTH-01** | **Real auth integration** — provider(s), session/token model, and where it lives relative to `MuseApi`. Entirely undefined; RD to design. (Do not infer from the mock.) |
-| **TBD-AUTH-02** | **Email/password** — App F22 offers it; web has only Apple/Google. Is email/password in web scope? |
-| **TBD-AUTH-03** | **Terms/Privacy links** — non-functional in `SignInModal` today; wire to the real localized URLs (App F19)? |
-| **TBD-AUTH-04** | **Guest browsing scope** — which surfaces are usable logged-out (today: Home/Explore/Watch/Player/Share/Settings)? Confirm intended guest capabilities. |
 
 ---
 
@@ -164,13 +153,6 @@ flowchart TD
 
 ---
 
-## 10. Decisions & changelog
-
 **Decisions (as-built):** auth is mock and outside `MuseApi`; only the logged-in boolean persists;
-route-entry gating (four routes); no onboarding/splash; social-only sign-in.
-
-| Date | Change |
-|---|---|
-| 2026-07-22 | Initial as-built spec. |
-| 2026-07-22 | Validator fix: added Home hero CTAs + song-card create as sign-in triggers (area 04); scoped "ungated" to community like/share; corrected AUTH-P4-S1 logout-on-guarded-page wording; completed success-state quote. |
-| 2026-07-23 | Implemented: action-level auth gating (GL-02/EXP-02) — Like and Create MV/Song across community surfaces (CommunityMvPlayer/Dialog, CommunitySongPlayer, SongExplore) and MvDetail publish now call `requireLogin` at the action, fixing SongExplore's ungated Create; brand "Sign in to YouCam Muse" + Terms/Privacy links (AUTH-03). |
+route-entry gating (four routes) plus action-level gating (GL-02) on Create/Like/Publish; no
+onboarding/splash; social-only sign-in.

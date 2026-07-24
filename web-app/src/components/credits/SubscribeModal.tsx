@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { MUSE_PRO_FEATURES, SUBSCRIPTION_PLANS, WEEKLY_CREDITS, type PlanId } from "@/lib/user";
+import { DEFAULT_PLAN_ID, MUSE_PRO_FEATURES, SUBSCRIPTION_PLANS, type PlanId } from "@/lib/user";
 
 interface Props {
   open: boolean;
@@ -14,9 +14,9 @@ interface Props {
 }
 
 export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
-  const { subscribe, subscribed } = useAuth();
+  const { subscribe, subscribed, subscribedPlan } = useAuth();
   const { addCredits } = useCredits();
-  const [selected, setSelected] = useState<PlanId>("monthly");
+  const [selected, setSelected] = useState<PlanId>(DEFAULT_PLAN_ID);
   const [restored, setRestored] = useState(false);
   const plan = SUBSCRIPTION_PLANS.find((p) => p.id === selected)!;
 
@@ -29,6 +29,7 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
 
   // CR-05: already-Pro state — no plan picker, just a confirmation + Restore.
   if (subscribed) {
+    const current = SUBSCRIPTION_PLANS.find((p) => p.id === subscribedPlan);
     return (
       <Modal open={open} onClose={onClose} title="Muse Pro" maxWidth={460}>
         <div className="flex flex-col items-center gap-3 py-4 text-center">
@@ -36,7 +37,11 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>
           </span>
           <div className="text-[16px] font-bold">You&apos;re already on Muse Pro</div>
-          <div className="text-[13px]" style={{ color: "var(--text-2)" }}>Enjoy your {WEEKLY_CREDITS} weekly credits, HD renders, and full playback.</div>
+          <div className="text-[13px]" style={{ color: "var(--text-2)" }}>
+            {current
+              ? `Enjoy your ${current.credits.toLocaleString()} ${current.cadence.toLowerCase()} credits, watermark-free MVs, and full playback.`
+              : "Enjoy your Muse Pro credits, watermark-free MVs, and full playback."}
+          </div>
           <Button className="mt-2 w-full" onClick={onClose}>Done</Button>
         </div>
       </Modal>
@@ -50,15 +55,15 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>
         </span>
         <div>
-          {/* CR-02: headline benefit + feature list. */}
-          <div className="text-[15px] font-bold">{WEEKLY_CREDITS} Weekly Credits</div>
+          {/* CR-02: headline credit count tracks the selected plan. */}
+          <div className="text-[15px] font-bold">{plan.credits.toLocaleString()} {plan.cadence} Credits</div>
           <div className="text-[12px]" style={{ color: "var(--text-2)" }}>Everything in Muse Pro, one subscription.</div>
         </div>
       </div>
 
-      {/* CR-02: six-feature list */}
+      {/* CR-02: benefit list + a per-plan credit-expiry line. */}
       <ul className="mb-4 grid grid-cols-1 gap-1.5">
-        {MUSE_PRO_FEATURES.map((f) => (
+        {[...MUSE_PRO_FEATURES, `Credits Expire ${plan.cadence}`].map((f) => (
           <li key={f} className="flex items-center gap-2 text-[13px]" style={{ color: "var(--text-2)" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M5 13l4 4L19 7" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {f}
@@ -88,7 +93,7 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
                 <div className="text-[15px] font-bold">{p.name}</div>
                 <div className="mt-0.5 inline-flex items-center gap-1 text-[12px]" style={{ color: "var(--gold)" }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden><circle cx="12" cy="12" r="9" opacity="0.25" /><circle cx="12" cy="12" r="6" /></svg>
-                  {p.credits.toLocaleString()} credits · resets {p.cadence.toLowerCase()}
+                  {p.credits.toLocaleString()} credits · expire {p.cadence.toLowerCase()}
                 </div>
               </div>
               <div className="text-right">
@@ -111,8 +116,8 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
         <p className="mt-1 text-center text-[11px]" style={{ color: "var(--text-2)" }}>No previous purchases found on this account.</p>
       )}
       <p className="mt-2 text-center text-[11px]" style={{ color: "var(--text-3)" }}>
-        {/* CR-03: subscription credits reset each billing cycle. */}
-        Demo only — no real payment. Subscription credits reset each cycle. Cancel anytime.
+        {/* CR-03: subscription credits expire at the end of each billing cycle. */}
+        Demo only — no real payment. Subscription credits expire each cycle. Cancel anytime.
       </p>
     </Modal>
   );

@@ -101,7 +101,7 @@ Screens to capture later (storyboard-HTML phase): every route in §2.
 ### MV-P4 — Result & actions (`/mv/result` via `MvDetail`)
 
 - **MV-P4-S1** Video autoplays **muted + looped** with native controls on a square stage. ⚠️ App autoplays speaker-on; muted is a web/browser choice.
-- **MV-P4-S2** Like / Dislike (mutually exclusive, local state) · **Share** (`ShareDialog`, link) · **Download** (`resultUrl`) · **Publish to community** toggle. **DECIDED (`TBD-MV-12`, sync App):** toggling Publish **on** opens a **"Ready to Go Public?" confirm dialog** (the same one History uses, area 05); on confirm → **Published · pending review**; toggling off **unpublishes**. On publish the client sends a **language/locale code** so the backend can rank the community feed locale-primary (backend/Curation — see area 04 §3; code format TBD `TBD-EXP-10`). (Feed pipeline/destination → `TBD-MV-06`, spec-only.)
+- **MV-P4-S2** Like / Dislike (mutually exclusive, local state) · **Share** (`ShareDialog`, link) · **Download** (`resultUrl`) · **Publish to community** toggle. **DECIDED (`TBD-MV-12`, sync App):** toggling Publish **on** opens a **"Ready to Go Public?" confirm dialog** (the same one History uses, area 05); on confirm → **Published · pending review**; toggling off **unpublishes**. On publish the client sends a **language/locale code** so the backend can rank the community feed locale-primary (backend/Curation — see area 04 §3; code format TBD `TBD-EXP-10`). (Feed pipeline/destination → `TBD-MV-06`, spec-only.) 🔒 On this fresh-generation screen, publish state is **local to `MvDetail`** (`MvResult` has no History row to share it with yet); opening the *same* creation later from History uses the controlled path described in area 05 §3, where the row's `⋯` menu and its detail dialog share one state.
 - **MV-P4-S3** Info panel: type/character tags, title (settings title or song title), author (settings or `MOCK_USER.name`), Music row, Generation Detail (character, author, style, ratio, quality, scenes, subtitle).
 - **MV-P4-S4** **Recreate** → `/mv/room` (keeps compose). **Edit MV** → `/mv/edit` (direct-mode renders, which have no storyboard, get a `mockStoryboard()` first). **DECIDED rule (`TBD-MV-13`):** a **published** (or in-review) MV must be **unpublished before editing** — while published, the Edit MV button renders **neutral (white bg / black text)** labeled **"Unpublish to edit"**; tapping it unpublishes, after which it returns to the accent **"Edit MV"** and opens the editor. No per-screen back arrow on Result — the shell handles back.
 
@@ -193,41 +193,16 @@ Legend: *(visual)* = verification blocked until the screenshot phase.
 
 ---
 
-## 8. Area TBD register — decisions 2026-07-22
+## 8. Open items for RD
 
-**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
-
-| ID | Decision |
+| ID | Open item |
 |---|---|
-| TBD-MV-01 | ✅ **Sync App** — Trim enforces ≥30s (and ≥ the MV's required length). |
-| TBD-MV-02 | ✅ **Sync App** — import limited to MP3/AAC/WAV/M4A, ≤50MB; reject others with an error. |
-| TBD-MV-03 | ⏸ **Phase 2** — multi-face auto-detect deferred; keep manual crop for MVP. |
-| TBD-MV-04 | ✅ **Sync App** — "High" quality is Pro-gated (greyed + crown on free plan; tap → IAP). |
-| TBD-MV-05 | ✅ **Resolved** — Template injects a **prompt only**; it does **not** select/lock a song (matches current code — the old-spec "locks a song" claim is dropped). No change. |
-| TBD-MV-06 | ✅ **Sync App** frontend publish-confirm. Backend review pipeline = 📄 **spec-only** (Curation, `TBD-GL-05`) — no codebase change now. |
-| TBD-MV-07 | ⏳ **Pending design** — MV-type intro / Style-Picker awaits the designer's guideline + confirmed UX flow. |
-| TBD-MV-08 | ✅ **Sync App (SUPERSEDES the earlier "keep the multi-take tray" reading)** — Edit MV is app-consistent: **no take/cover picker**, regenerate **overwrites directly** (no undo), and **no Save/Project mode** (edits ephemeral). **Hide + code-mark** the removed multi-take/cover-variant/Save mechanisms for a future version (don't delete). |
-| TBD-MV-09 | 🐞 **Bug (RD fix)** — generation screens can hang at 0% when state is hydrated-but-idle. |
-| TBD-MV-10 | ✅ **Resolved by the Edit-MV rework** — with Save removed, **Merge** is enabled by any pending edit (incl. scene-text) and re-renders. |
-| TBD-MV-11 | ✅ **Sync App** — Choose Song empty state ("You haven't created any songs yet" + create shortcut). |
-| TBD-MV-12 | ✅ **Decided (sync App)** — MV result **Publish toggle-on opens a "Ready to Go Public?" confirm dialog** (reuse History's). |
-| TBD-MV-13 | ✅ **Decided** — a **published** MV must be **unpublished before Edit MV**; while published the Edit MV button reads **"Unpublish to edit"** (neutral; shortened from "Unpublish to edit MV" 2026-07-23). Applies on `/mv/result` + History (area 05, `TBD-HIST-08`). |
+| **TBD-MV-03** | ⏸ **Phase 2** — multi-face auto-detect deferred; MVP keeps manual crop (app supports up to 6 detected faces). |
+| **TBD-MV-06** | 📄 **Backend pipeline undefined** — the frontend publish-confirm is built, but where "Publish to community" actually writes and what the review pipeline does is spec-only, tied to the Curation PRD (`TBD-GL-05`, area 04). |
+| **TBD-MV-07** | ⏳ **Pending design** — the app's MV-type intro / Style-Picker carousel awaits the designer's guideline + confirmed UX flow before it's built (or intentionally dropped) for web. |
+| **TBD-MV-11** | ⏳ **Empty song library** — Choose Song's seed is always populated today; the intended empty-state ("You haven't created any songs yet" + create shortcut) is not yet built. |
 
 See also global: `TBD-GL-01` (credit charging), `TBD-GL-02` (auth granularity).
-
-| ID | Question |
-|---|---|
-| **TBD-MV-01** | **Trim minimum** — enforce app's ≥30s / ≥MV-length, or keep the current free-form 5%-gap trim? |
-| **TBD-MV-02** | **Import validation** — enforce an audio format allow-list + 50MB cap (app), or accept any `audio/*` (incl. the duration-0 fallback in MV-P6-B)? |
-| **TBD-MV-03** | **Face detection** — wire real multi-face auto-detect (app: up to 6) or keep manual crop? |
-| **TBD-MV-04** | **Quality tier** — is "High" Pro-gated (app 1080p = Pro) or free? No gate exists today. |
-| **TBD-MV-05** | **Templates** — should selecting a template also auto-select/lock a song (old web spec said so; code does not)? |
-| **TBD-MV-06** | **Publish** — where does "Publish to community" write, and what is the review pipeline? (Ties to Curation PRD / area 04.) Local-only today. |
-| **TBD-MV-07** | **MV-type intro** — is the app's Style-Picker/carousel intended for web, or intentionally dropped? |
-| **TBD-MV-08** | **Edit-MV "takes"** — are per-scene takes meant to be real, committed, re-rendered variants, or cosmetic? Today only the cover commits on Merge; scene takes are discarded. Determines the Edit-MV data model. |
-| **TBD-MV-09** | **Idle-with-state on generation screens** — what should `/mv/thinking` & `/mv/creating` do when a storyboard is hydrated but `gen` is idle (reload)? Today it can hang at 0% (MV-E4). |
-| **TBD-MV-10** | **Text-only storyboard edit → re-render path** — a scene-text-only edit enables Save but not Merge (MV-E5); how should a text change reach a re-render? |
-| **TBD-MV-11** | **Empty song library** — intended empty-state for Choose Song (seed always populated today). |
 
 ---
 
@@ -252,15 +227,6 @@ flowchart TD
 
 ---
 
-## 10. Decisions & changelog
-
 **Decisions (as-built):** desktop single-column compose + Trending aside; centered mode modal; muted
 autoplay result; storyboard persisted to localStorage; credits display-only except Edit MV; every song
 trims before use.
-
-| Date | Change |
-|---|---|
-| 2026-07-22 | Rewritten as-built from current code. Supersedes `mv-creation-flow.spec.md`. |
-| 2026-07-22 | Senior-RD review applied — accuracy fixes: all songs trim (not just library/import); Merge commits cover+text only (takes discarded, MV-P5-S5/AC-13); Generating row inserted at job start (AC-06); scene shape includes `id`; Edit-MV cost locations noted. Added MV-E4 (idle hang), MV-E5 (Save/Merge gate gap), MV-E6; corrected `[fail]` staging + mermaid; area-qualified IDs; MuseApi column; new AC-14/15/16; TBD register `TBD-MV-01…11`. |
-| 2026-07-23 | Implemented: trim ≥30s min (MV-01); import validation MP3/AAC/WAV/M4A ≤50MB (MV-02); "High" quality Pro-gated (MV-04); Edit-MV rework — Save removed, Regenerate/Recreate overwrite directly, take-tray/cover-variant/Save UI hidden behind `LEGACY_TAKE_TRAY_UI` flag (not deleted), Merge enabled by any edit and priced at `COST_RENDER` (MV-08, folds MV-10 & resolves MV-E4/E5); ChooseSong empty state + Create Song shortcut (MV-11); publish-confirm on result (MV-12); "Unpublish to edit MV" neutral state (MV-13); MV-09 idle-hang fix (GenerationView forwards when the artifact already exists). |
-| 2026-07-23 | Design review: **Edit Storyboard** — removed the "Save changes" button (edits ephemeral, carried into Generate MV) and made the **MV Song play-only** (tap to play/pause via `useAudioPlayer`; the song stays locked after creation). Result-screen "Unpublish to edit MV" string shortened to **"Unpublish to edit"** (matches History). |

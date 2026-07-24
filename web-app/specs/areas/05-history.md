@@ -9,23 +9,23 @@
 
 The signed-in user's **"My Creations"** list (`/history`, auth-gated). It merges **live in-memory jobs**
 (from the MV/Song flow providers) with a **static seed** of sample creations, shown as filterable
-cards with a per-row `⋯` options menu (like/share/download/delete/publish + Edit MV / Create MV / Get
-Proof). Opening a row routes to the right destination (detail dialog, storyboard editor, or community
+cards with a per-row `⋯` options menu (like/share/download/delete/publish + Edit MV / Create MV).
+Opening a row routes to the right destination (detail dialog, storyboard editor, or community
 player).
 
 **In scope:** `history/HistoryView` (`/history`), its cards + `⋯` menu, the delete/publish confirm
 modals.
 **Out of scope (cross-referenced):** `CreationDialog` detail content (areas 02 MV / 03 song);
 `ShareDialog` (area 10); the seed flow into `/mv/edit`/`/mv/storyboard`/`/mv/room` (area 02); the
-community player `/song/play` (area 04); `/proof` (area 08).
+community player `/song/play` (area 04).
 
 **As-built vs App F15 (HIST-02/03/05/06 + MV-13 landed 2026-07-23, now synced to app):** retention is
 **permanent** (no 14-day copy); the **Liked** tab shows **only community-liked content**; Storyboard
 rows show a **"Create MV" pill on the card** (in addition to the `⋯` menu); **failed rows are
 Delete-only** (Like/Share removed); and a **published / in-review MV** shows a neutral **"Unpublish to
 edit MV"** entry that unpublishes first (MV-13). Matches the app on: "My Creations" title,
-All/Music Videos/Songs/Liked tabs, and the Edit MV / Get Proof menu
-CTAs.
+All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation ("Get Proof") was
+**removed 2026-07-24** — out of web scope (area 08).
 
 ---
 
@@ -62,12 +62,12 @@ CTAs.
 - **Storyboard "Create" pill (HIST-05, 2026-07-23):** done storyboard cards render a **"Create MV"
   pill** in the card footer (calls `createMv(r)`), in addition to the menu CTA.
 - **`⋯` menu** (`Menu`, portal) — contents depend on row type:
-  - **CTA row** (non-community, non-failed): **Edit MV** (mv) / **Create MV** (song|storyboard) / **Get Proof** (mv|song). **MV-13:** when the MV is published/in-review, the Edit MV entry becomes a neutral **"Unpublish to edit"** that unpublishes on tap.
+  - **CTA row** (non-community, non-failed): **Edit MV** (mv) / **Create MV** (song|storyboard). **MV-13:** when the MV is published/in-review, the Edit MV entry becomes a neutral **"Unpublish to edit"** that unpublishes on tap.
   - **Like / Share**: shown for community, mv, and song rows — **HIST-06 (2026-07-23): a failed row is Delete-only** (Like/Share now suppressed with `!failed`); storyboard rows never showed them.
   - **Publish (toggle) / Download / normal Delete**: non-community, non-failed, mv|song only. **Delete is hidden** when an MV is published/reviewing or a song is published.
   - **Standalone Delete**: also shown for **failed** and **storyboard** rows (`:355`).
-  - **Net per type (as-built 2026-07-23):** MV = Edit MV (or "Unpublish to edit" when published) / Get Proof + Like/Share/Publish/Download/Delete · Song = Create MV/Get Proof + Like/Share/Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
-- **Publish** (`HistoryView.tsx:125-137`): **MV** → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. **Song** → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ `TBD-MV-06`, area 04).
+  - **Net per type (as-built 2026-07-24):** MV = Edit MV (or "Unpublish to edit" when published) + Like/Share/Publish/Download/Delete · Song = Create MV + Like/Share/Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
+- **Publish** (`HistoryView.tsx:125-137`): **MV** → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. **Song** → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ `TBD-MV-06`, area 04). **The `⋯` menu and a row's own `CreationDialog` share this same `published`/`reviewing` state** (2026-07-24) — publishing from either surface updates both, so a row opened via its detail dialog and its "..." menu never disagree.
 - **Delete** (`HistoryView.tsx:194-200`): confirm modal → adds id to `removed` (list-local; not a server delete). `CreationDialog` delete does the same.
 - **Download** (`HistoryView.tsx:118-122`): song → `SAMPLE_AUDIO` as `{title}.mp3`; else `SAMPLE_RESULT_VIDEO` as `{title}.mp4` (fixture media, not the row's own render). 🔒
 - **`seedFlow`** (`HistoryView.tsx:78-89`): builds a `mockStoryboard` from the row title/thumb and sets compose, so Edit/Create/Storyboard entries render for that row (synthesized state — cross-ref area 02 MV-P6 external entries).
@@ -98,10 +98,9 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 ### HIST-P5 — Delete
 - **HIST-P5-S1** `⋯` → **Delete** → confirm modal ("cannot be undone") → **Delete** → row removed from the list (local). Delete is hidden for published/reviewing items.
 
-### HIST-P6 — Create / Edit / Proof entries (cross-area)
+### HIST-P6 — Create / Edit entries (cross-area)
 - **HIST-P6-S1** `⋯` → **Edit MV** (mv) → `seedFlow` → `/mv/edit?id=…` (area 02).
 - **HIST-P6-S2** `⋯` → **Create MV** (song/storyboard) → `seedFlow` → `/mv/storyboard?id=…` (storyboard) or `/mv/room` (song) (area 02).
-- **HIST-P6-S3** `⋯` → **Get Proof** (mv/song) → `/proof` (area 08).
 
 ---
 
@@ -127,7 +126,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - **AC-HIST-04** — WHEN a done MV/song card is tapped, THE SYSTEM SHALL open `CreationDialog`; a storyboard → `/mv/storyboard`; a community row → `/song/play`.
 - **AC-HIST-05** — WHEN **Publish** is invoked on an MV, THE SYSTEM SHALL show the "Ready to Go Public?" confirm and, on confirm, mark it reviewing/published with a "Submitted for review" toast; a song publishes immediately without a confirm.
 - **AC-HIST-06** — WHEN **Delete** is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.
-- **AC-HIST-07** — WHEN **Edit MV / Create MV / Get Proof** is chosen, THE SYSTEM SHALL seed flow state and route to `/mv/edit` / `/mv/storyboard`|`/mv/room` / `/proof` respectively.
+- **AC-HIST-07** — WHEN **Edit MV / Create MV** is chosen, THE SYSTEM SHALL seed flow state and route to `/mv/edit` / `/mv/storyboard`|`/mv/room` respectively.
 - **AC-HIST-08** — WHEN **Share** / **Download** is invoked, THE SYSTEM SHALL open `ShareDialog` with `buildShareUrl(id)` / download the fixture media as `{title}.mp4`|`.mp3`. *(download uses fixture media, not the row's own render — 🔒)*
 - **AC-HIST-09** — THE SYSTEM SHALL render `/history` at 390/768/1024/1440px with no overflow (1/2/3-column grid). *(visual)*
 
@@ -140,37 +139,20 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - [ ] **HIST-P3**: like toggles + count; Share dialog w/ correct url; Download toast (AC-08).
 - [ ] **HIST-P4**: MV publish → confirm → review toast; song publish → immediate (AC-05).
 - [ ] **HIST-P5**: delete confirm removes row; hidden for published/reviewing (AC-06).
-- [ ] **HIST-P6**: Edit MV / Create MV / Get Proof seed + route correctly (AC-07).
+- [ ] **HIST-P6**: Edit MV / Create MV seed + route correctly (AC-07).
 - [ ] **HIST-E2/E3/E7**: failed → **Delete only**; community → Like/Share only; storyboard → Create MV pill + (Create MV + Delete) menu; published MV → "Unpublish to edit".
 - [ ] **AC-09**: grid clean at 4 widths *(visual)*.
 
 ---
 
-## 8. Area TBD register — decisions 2026-07-22
+## 8. Open items for RD
 
-**Decisions** — codebase change list in [`../../docs/handoff-2026-07-23.md`](../../docs/handoff-2026-07-23.md).
-
-| ID | Decision |
+| ID | Open item |
 |---|---|
-| TBD-HIST-01 | 🔧 **Backend (RD)** — persisted per-user history endpoint (list/detail/delete). |
-| TBD-HIST-02 | ✅ **Decided — PERMANENT retention.** Once generated, a creation is **never auto-deleted** (supersedes both the earlier "30 days" and the code's "14 days" copy). Share-link expiry (`TBD-SHARE-01`) is separate. |
-| TBD-HIST-03 | ✅ **Sync App** — Liked tab shows only community-liked content. |
-| TBD-HIST-04 | ✅ **Sync App** — Publish = confirm → review → community; backend pipeline is 📄 spec-only (Curation, `TBD-GL-05`). |
-| TBD-HIST-05 | ✅ **Sync App** — Storyboard "Create" as a row **pill** (not a menu CTA). |
-| TBD-HIST-06 | 🐞 **Bug (RD fix)** — a failed row should be **Delete-only** (remove Like + Share). |
-| TBD-HIST-07 | ✅ **Decided** — on **Publish** (MV or Song), the client sends a **language/locale code**; the backend ranks the community feed locale-primary. The frontend just requests the sorted feed (backend/Curation, area 04; code format TBD `TBD-EXP-10`). |
-| TBD-HIST-08 | ✅ **Decided (`TBD-MV-13`)** — a **published** MV must be **unpublished before Edit MV**; apply the same "Unpublish to edit" rule to History's Edit MV entry. |
+| **TBD-HIST-01** | 🔧 **Backend (RD)** — persisted per-user history endpoint (list/detail/delete). Today live rows are in-memory and downloads use fixture media, not the row's own render. |
+| **TBD-HIST-04** | 📄 **Backend pipeline undefined** — Publish's confirm→review→community frontend flow is built, but what Publish actually *does* server-side (moderation/review → community feed) is spec-only, tied to the Curation PRD (`TBD-GL-05`, area 04). |
 
 See also global: `TBD-GL-04` (persistence), and `TBD-MV-06` (publish → community pipeline).
-
-| ID | Question |
-|---|---|
-| **TBD-HIST-01** | **Persisted history** — production needs a real per-user history endpoint (list/detail/delete). Today live rows are in-memory and downloads use fixture media, not the row's own render. |
-| **TBD-HIST-02** | **Retention** — is the "14 days" retention real (auto-purge), or copy only? Reconcile with share's "30 days" (area 10). |
-| **TBD-HIST-03** | **Liked tab semantics** — App F15 shows community-liked content; web shows any liked row. Which is intended? |
-| **TBD-HIST-04** | **Publish pipeline** — what does Publish actually do (moderation/review → community)? Ties to the Curation PRD (area 04). Local toggle only today. |
-| **TBD-HIST-05** | **Storyboard "Create" affordance** — App uses a row **pill**; web uses a menu CTA. Confirm intended pattern. |
-| **TBD-HIST-06** | **Like/Share on failed rows** — a failed (song) row still exposes Like + Share in the `⋯` menu. Intended, or should failed rows be Delete-only? (Likely a code quirk.) |
 
 ---
 
@@ -188,19 +170,10 @@ flowchart TD
   Menu --> Quick["Like · Share · Download"]
   Menu --> Pub["Publish → (MV: confirm → review) / (song: toggle)"]
   Menu --> Del["Delete → confirm → remove"]
-  Menu --> Cta["Edit MV / Create MV / Get Proof (areas 02/08)"]
+  Menu --> Cta["Edit MV / Create MV (area 02)"]
 ```
 
 ---
 
-## 10. Decisions & changelog
-
 **Decisions (as-built):** merged live+seed list; in-memory (reload loses live rows); publish/like/delete
 are local overrides; downloads use fixture media; grid layout (not the app's vertical list).
-
-| Date | Change |
-|---|---|
-| 2026-07-22 | Initial as-built spec. |
-| 2026-07-22 | Validator fix: corrected failed-row menu (Like+Share+Delete, not Delete-only) and specified storyboard menu (Create MV + Delete); added per-type menu breakdown, HIST-E7, TBD-HIST-06; noted community id = communitySongId. |
-| 2026-07-23 | Implemented: retention copy now permanent, no 14-day auto-delete (HIST-02); Liked tab restricted to community-liked content (HIST-03); storyboard rows show a Create MV pill on the card (HIST-05); failed rows are Delete-only, Like/Share removed (HIST-06 bug); "Unpublish to edit MV" applied to the Edit MV menu entry (MV-13). Publish confirm (HIST-04) already present. |
-| 2026-07-23 | Design review: the published-MV Edit entry string shortened from "Unpublish to edit MV" to **"Unpublish to edit"** (History + MV result). |
