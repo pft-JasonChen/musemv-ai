@@ -7,7 +7,7 @@ test("AI Song: describe -> compose -> result", async ({ page }) => {
   await page.addInitScript(() => window.localStorage.setItem("muse_auth", "1"));
   await page.goto("/song/create");
 
-  const cta = page.getByRole("button", { name: /Generate Song/ });
+  const cta = page.getByRole("button", { name: /Create Song/ });
   await expect(cta).toBeDisabled();
 
   await page

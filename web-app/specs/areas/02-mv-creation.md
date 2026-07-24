@@ -37,7 +37,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 |---|---|---|---|---|
 | `/mv/room` | `mv/MvRoom` | type picker, Choose Song, Describe, photos, Settings, CTA, Templates modal | `useMvFlow().compose`, `patchCompose`, `resetForNewMv` | `enhancePrompt` (Describe) |
 | `/mv/thinking` | `StoryboardGenerationScreen` → `GenerationView` | progress ring, step, View Later | `startStoryboard`, `gen`, `storyboard` | `createMvJob(storyboard_first)`, `getMvJob` (poll) |
-| `/mv/storyboard` | `StoryboardEditor` | character img, song, visual style, story, synopsis scenes, lyrics, Back, Save | `storyboard`, `setStoryboard`, `saveStoryboard`, `storyboardDirty`, `resetForRerender` | `enhancePrompt` (visual style) |
+| `/mv/storyboard` | `StoryboardEditor` | character img, **play-only** song, visual style, story, synopsis scenes, lyrics, Back, Generate MV (no Save) | `storyboard`, `setStoryboard`, `resetForRerender`, `useAudioPlayer` (song preview) | `enhancePrompt` (visual style) |
 | `/mv/creating` | `RenderGenerationScreen` → `GenerationView` | progress, View Later | `startRender`, `gen`, `resultUrl` | `renderMvJob` (after storyboard/merge) **or** `createMvJob(direct)`; `getMvJob` (poll) |
 | `/mv/result` | `MvResult` → `MvDetail` | video stage, like/dislike, share, download, publish toggle, Recreate, Edit MV | `resultUrl`, `compose`, `storyboard`, `useHistory` | — |
 | `/mv/edit` | `MvEditor` | Back, cover, scene timeline, output settings, Merge MV (MV-08: no Save; take/cover-variant trays hidden behind `LEGACY_TAKE_TRAY_UI`) | `storyboard`, `compose`, `useCredits().{credits,addCredits}` | `enhancePrompt` (scene, cover) |
@@ -89,7 +89,7 @@ Screens to capture later (storyboard-HTML phase): every route in §2.
 
 - **MV-P2-S1** In `ModeModal`, pick **Create Storyboard First** (Recommended · "~1 min" · `20` credits) → `router.push("/mv/thinking")`.
 - **MV-P2-S2** `/mv/thinking`: on mount, if not `alreadyDone` (`storyboard == null`), `startStoryboard()` fires and **inserts a Generating row in History immediately**; ring shows `gen.progress`/`gen.step`; estimate "~1 minute" (display-only; mock ≈7s); **View Later** → `/history` (navigation only). Flow-guard: if compose not ready *and* no storyboard → redirect `/mv/room`.
-- **MV-P2-S3** On `gen.status==="done"` → `/mv/storyboard` (`StoryboardEditor`). Edit **Visual Style** (+ Enhance) and each **Scene** synopsis; **Story** & **Lyrics** read-only; per-screen **Back** (`router.back()`); **Save changes** enabled only when `storyboardDirty`.
+- **MV-P2-S3** On `gen.status==="done"` → `/mv/storyboard` (`StoryboardEditor`). Edit **Visual Style** (+ Enhance) and each **Scene** synopsis; **Story** & **Lyrics** read-only; the **MV Song is play-only** — tap its thumbnail to play/pause the track, but it can't be changed (locked after creation) (2026-07-23). per-screen **Back** (`router.back()`). **No "Save changes" button** (removed 2026-07-23) — edits are ephemeral and carried into **Generate MV**, which re-renders from the current storyboard state.
 - **MV-P2-S4** Tap **Generate MV** (`200`) → `resetForRerender()` → `/mv/creating` → (MV-P3-S2).
 
 ### MV-P3 — Direct generation
@@ -103,7 +103,7 @@ Screens to capture later (storyboard-HTML phase): every route in §2.
 - **MV-P4-S1** Video autoplays **muted + looped** with native controls on a square stage. ⚠️ App autoplays speaker-on; muted is a web/browser choice.
 - **MV-P4-S2** Like / Dislike (mutually exclusive, local state) · **Share** (`ShareDialog`, link) · **Download** (`resultUrl`) · **Publish to community** toggle. **DECIDED (`TBD-MV-12`, sync App):** toggling Publish **on** opens a **"Ready to Go Public?" confirm dialog** (the same one History uses, area 05); on confirm → **Published · pending review**; toggling off **unpublishes**. On publish the client sends a **language/locale code** so the backend can rank the community feed locale-primary (backend/Curation — see area 04 §3; code format TBD `TBD-EXP-10`). (Feed pipeline/destination → `TBD-MV-06`, spec-only.)
 - **MV-P4-S3** Info panel: type/character tags, title (settings title or song title), author (settings or `MOCK_USER.name`), Music row, Generation Detail (character, author, style, ratio, quality, scenes, subtitle).
-- **MV-P4-S4** **Recreate** → `/mv/room` (keeps compose). **Edit MV** → `/mv/edit` (direct-mode renders, which have no storyboard, get a `mockStoryboard()` first). **DECIDED rule (`TBD-MV-13`):** a **published** (or in-review) MV must be **unpublished before editing** — while published, the Edit MV button renders **neutral (white bg / black text)** labeled **"Unpublish to edit MV"** (string optimizable); tapping it unpublishes, after which it returns to the accent **"Edit MV"** and opens the editor. No per-screen back arrow on Result — the shell handles back.
+- **MV-P4-S4** **Recreate** → `/mv/room` (keeps compose). **Edit MV** → `/mv/edit` (direct-mode renders, which have no storyboard, get a `mockStoryboard()` first). **DECIDED rule (`TBD-MV-13`):** a **published** (or in-review) MV must be **unpublished before editing** — while published, the Edit MV button renders **neutral (white bg / black text)** labeled **"Unpublish to edit"**; tapping it unpublishes, after which it returns to the accent **"Edit MV"** and opens the editor. No per-screen back arrow on Result — the shell handles back.
 
 ### MV-P5 — Edit MV (`/mv/edit`)
 
@@ -147,7 +147,7 @@ Screens to capture later (storyboard-HTML phase): every route in §2.
 | **MV-E4** | `/mv/thinking` or `/mv/creating` reached with a **persisted storyboard present but `gen` idle** (e.g. reload) | **Fixed (MV-09, 2026-07-23):** `GenerationView` now forwards to `nextHref` when `alreadyDone` (the artifact already exists), so it no longer hangs at 0%. |
 | **MV-E5** | Edit MV: leaving the page / regenerate | **DECIDED:** no Save/Project mode — edits are **ephemeral** and lost on leaving `/mv/edit`; regenerate (scene/cover) **overwrites** with **no undo**; **Merge** re-renders from the current state (`TBD-MV-08`/`TBD-MV-10`). |
 | **MV-E6** | Choose Song with empty library | 🔒 seed always populated; empty-state to add → `TBD-MV-11` (sync App). |
-| **MV-E7** | Attempt to Edit a **published** MV | Blocked while published/in-review — the Edit MV button reads **"Unpublish to edit MV"** (neutral); user must unpublish first (`TBD-MV-13`). Applies on `/mv/result` and should also apply to History's Edit MV (area 05). |
+| **MV-E7** | Attempt to Edit a **published** MV | Blocked while published/in-review — the Edit MV button reads **"Unpublish to edit"** (neutral); user must unpublish first (`TBD-MV-13`). Applies on `/mv/result` and History's Edit MV (area 05). |
 
 ---
 
@@ -162,9 +162,9 @@ Legend: *(visual)* = verification blocked until the screenshot phase.
 - **AC-MV-05** — WHEN **Storyboard First** is chosen, THE SYSTEM SHALL navigate to `/mv/thinking` and start a storyboard job; WHEN **Directly**, navigate to `/mv/creating` and start a render job.
 - **AC-MV-06** — WHEN a generation job starts, THE SYSTEM SHALL insert a Generating row in History; and WHILE `processing`, SHALL show 0–100% progress, a step label, an estimate, and a **View Later** control that navigates to `/history`.
 - **AC-MV-07** — WHEN a storyboard job is `done`, THE SYSTEM SHALL navigate to `/mv/storyboard` populated with character image, song, visual style, story, timed scenes, and lyrics.
-- **AC-MV-08** — WHEN Visual Style or a Scene text is edited, THE SYSTEM SHALL set `storyboardDirty` and enable **Save changes**; and persist on save.
+- **AC-MV-08** — WHEN Visual Style or a Scene text is edited in `/mv/storyboard`, THE SYSTEM SHALL update the in-memory storyboard (no Save button; edits are ephemeral) and carry the change into the next **Generate MV**. The MV Song section SHALL be **play-only** (no editing).
 - **AC-MV-09** — WHEN **Generate MV** is tapped, THE SYSTEM SHALL render using the (possibly edited) storyboard and land on `/mv/result`.
-- **AC-MV-10** — WHEN `/mv/result` loads, THE SYSTEM SHALL loop the video muted and expose Like/Dislike (mutually exclusive), Share, Download, a **Publish toggle that opens a "Ready to Go Public?" confirm on turn-on**, Recreate, and **Edit MV** — where, while the MV is published/in-review, Edit MV is replaced by a neutral **"Unpublish to edit MV"** action.
+- **AC-MV-10** — WHEN `/mv/result` loads, THE SYSTEM SHALL loop the video muted and expose Like/Dislike (mutually exclusive), Share, Download, a **Publish toggle that opens a "Ready to Go Public?" confirm on turn-on**, Recreate, and **Edit MV** — where, while the MV is published/in-review, Edit MV is replaced by a neutral **"Unpublish to edit"** action.
 - **AC-MV-11** — IF a job `failed`, THEN THE SYSTEM SHALL show the error state with **Back** and **Retry** and mark the History row Failed. (Retry with an unchanged `[fail]` description re-fails.)
 - **AC-MV-12** — WHEN Regenerate scene or Recreate cover is invoked in Edit MV, THE SYSTEM SHALL **overwrite** that scene/cover in place (no take/cover picker, no undo) and decrement the balance (−20 / −10).
 - **AC-MV-13** — WHEN **Merge MV** is invoked with sufficient balance, THE SYSTEM SHALL re-render the MV from the current cover/scenes + edited text and charge `COST_RENDER` (−200) on generation start (refunded on failure); there is **no Save** and edits do not persist across leaving the page. WHEN the balance is insufficient, it SHALL open the buy-credits IAP instead.
@@ -181,9 +181,9 @@ Legend: *(visual)* = verification blocked until the screenshot phase.
 ## 7. Per-path QA checklist
 
 - [ ] **MV-P1**: fresh room CTA disabled → add song only → still disabled → add description → enabled (AC-01/02/03).
-- [ ] **MV-P2**: Storyboard First → Generating row appears in History at start → progress 0→100 *(visual)* → storyboard with ≥1 editable scene → Save gated by dirty (AC-05/06/07/08).
+- [ ] **MV-P2**: Storyboard First → Generating row appears in History at start → progress 0→100 *(visual)* → storyboard with ≥1 editable scene; **MV Song plays on tap, not editable**; **no Save button**; edits carried into Generate MV (AC-05/06/07/08).
 - [ ] **MV-P3**: Directly → progress → result with `<video>` (AC-05/09/10).
-- [ ] **MV-P4**: like/dislike exclusivity; Share dialog opens; Download triggers; **Publish on → "Ready to Go Public?" confirm**; **published → Edit MV shows "Unpublish to edit MV"**; Recreate returns to room prefilled; Edit MV opens editor when unpublished (AC-10, MV-E7).
+- [ ] **MV-P4**: like/dislike exclusivity; Share dialog opens; Download triggers; **Publish on → "Ready to Go Public?" confirm**; **published → Edit MV shows "Unpublish to edit"**; Recreate returns to room prefilled; Edit MV opens editor when unpublished (AC-10, MV-E7).
 - [ ] **MV-P5**: regen scene **overwrites** in place (−20, no picker); cover recreate **overwrites** (−10); **no Save button** (trays hidden behind `LEGACY_TAKE_TRAY_UI`); Merge charges `COST_RENDER` (−200) on re-render, or opens IAP when short; edits lost on leaving the page (AC-12/13/19).
 - [ ] **MV-P6-C**: trim handles move, 5% min gap holds, preview plays selected region (AC-16).
 - [ ] **MV-P6**: Enhance replaces each of the 4 fields (AC-14).
@@ -211,7 +211,7 @@ Legend: *(visual)* = verification blocked until the screenshot phase.
 | TBD-MV-10 | ✅ **Resolved by the Edit-MV rework** — with Save removed, **Merge** is enabled by any pending edit (incl. scene-text) and re-renders. |
 | TBD-MV-11 | ✅ **Sync App** — Choose Song empty state ("You haven't created any songs yet" + create shortcut). |
 | TBD-MV-12 | ✅ **Decided (sync App)** — MV result **Publish toggle-on opens a "Ready to Go Public?" confirm dialog** (reuse History's). |
-| TBD-MV-13 | ✅ **Decided** — a **published** MV must be **unpublished before Edit MV**; while published the Edit MV button reads **"Unpublish to edit MV"** (neutral). Applies on `/mv/result` + History (area 05, `TBD-HIST-08`). |
+| TBD-MV-13 | ✅ **Decided** — a **published** MV must be **unpublished before Edit MV**; while published the Edit MV button reads **"Unpublish to edit"** (neutral; shortened from "Unpublish to edit MV" 2026-07-23). Applies on `/mv/result` + History (area 05, `TBD-HIST-08`). |
 
 See also global: `TBD-GL-01` (credit charging), `TBD-GL-02` (auth granularity).
 
@@ -263,3 +263,4 @@ trims before use.
 | 2026-07-22 | Rewritten as-built from current code. Supersedes `mv-creation-flow.spec.md`. |
 | 2026-07-22 | Senior-RD review applied — accuracy fixes: all songs trim (not just library/import); Merge commits cover+text only (takes discarded, MV-P5-S5/AC-13); Generating row inserted at job start (AC-06); scene shape includes `id`; Edit-MV cost locations noted. Added MV-E4 (idle hang), MV-E5 (Save/Merge gate gap), MV-E6; corrected `[fail]` staging + mermaid; area-qualified IDs; MuseApi column; new AC-14/15/16; TBD register `TBD-MV-01…11`. |
 | 2026-07-23 | Implemented: trim ≥30s min (MV-01); import validation MP3/AAC/WAV/M4A ≤50MB (MV-02); "High" quality Pro-gated (MV-04); Edit-MV rework — Save removed, Regenerate/Recreate overwrite directly, take-tray/cover-variant/Save UI hidden behind `LEGACY_TAKE_TRAY_UI` flag (not deleted), Merge enabled by any edit and priced at `COST_RENDER` (MV-08, folds MV-10 & resolves MV-E4/E5); ChooseSong empty state + Create Song shortcut (MV-11); publish-confirm on result (MV-12); "Unpublish to edit MV" neutral state (MV-13); MV-09 idle-hang fix (GenerationView forwards when the artifact already exists). |
+| 2026-07-23 | Design review: **Edit Storyboard** — removed the "Save changes" button (edits ephemeral, carried into Generate MV) and made the **MV Song play-only** (tap to play/pause via `useAudioPlayer`; the song stays locked after creation). Result-screen "Unpublish to edit MV" string shortened to **"Unpublish to edit"** (matches History). |

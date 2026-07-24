@@ -62,11 +62,11 @@ CTAs.
 - **Storyboard "Create" pill (HIST-05, 2026-07-23):** done storyboard cards render a **"Create MV"
   pill** in the card footer (calls `createMv(r)`), in addition to the menu CTA.
 - **`⋯` menu** (`Menu`, portal) — contents depend on row type:
-  - **CTA row** (non-community, non-failed): **Edit MV** (mv) / **Create MV** (song|storyboard) / **Get Proof** (mv|song). **MV-13:** when the MV is published/in-review, the Edit MV entry becomes a neutral **"Unpublish to edit MV"** that unpublishes on tap.
+  - **CTA row** (non-community, non-failed): **Edit MV** (mv) / **Create MV** (song|storyboard) / **Get Proof** (mv|song). **MV-13:** when the MV is published/in-review, the Edit MV entry becomes a neutral **"Unpublish to edit"** that unpublishes on tap.
   - **Like / Share**: shown for community, mv, and song rows — **HIST-06 (2026-07-23): a failed row is Delete-only** (Like/Share now suppressed with `!failed`); storyboard rows never showed them.
   - **Publish (toggle) / Download / normal Delete**: non-community, non-failed, mv|song only. **Delete is hidden** when an MV is published/reviewing or a song is published.
   - **Standalone Delete**: also shown for **failed** and **storyboard** rows (`:355`).
-  - **Net per type (as-built 2026-07-23):** MV = Edit MV (or "Unpublish to edit MV" when published) / Get Proof + Like/Share/Publish/Download/Delete · Song = Create MV/Get Proof + Like/Share/Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
+  - **Net per type (as-built 2026-07-23):** MV = Edit MV (or "Unpublish to edit" when published) / Get Proof + Like/Share/Publish/Download/Delete · Song = Create MV/Get Proof + Like/Share/Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
 - **Publish** (`HistoryView.tsx:125-137`): **MV** → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. **Song** → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ `TBD-MV-06`, area 04).
 - **Delete** (`HistoryView.tsx:194-200`): confirm modal → adds id to `removed` (list-local; not a server delete). `CreationDialog` delete does the same.
 - **Download** (`HistoryView.tsx:118-122`): song → `SAMPLE_AUDIO` as `{title}.mp3`; else `SAMPLE_RESULT_VIDEO` as `{title}.mp4` (fixture media, not the row's own render). 🔒
@@ -141,7 +141,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - [ ] **HIST-P4**: MV publish → confirm → review toast; song publish → immediate (AC-05).
 - [ ] **HIST-P5**: delete confirm removes row; hidden for published/reviewing (AC-06).
 - [ ] **HIST-P6**: Edit MV / Create MV / Get Proof seed + route correctly (AC-07).
-- [ ] **HIST-E2/E3/E7**: failed → **Delete only**; community → Like/Share only; storyboard → Create MV pill + (Create MV + Delete) menu; published MV → "Unpublish to edit MV".
+- [ ] **HIST-E2/E3/E7**: failed → **Delete only**; community → Like/Share only; storyboard → Create MV pill + (Create MV + Delete) menu; published MV → "Unpublish to edit".
 - [ ] **AC-09**: grid clean at 4 widths *(visual)*.
 
 ---
@@ -203,3 +203,4 @@ are local overrides; downloads use fixture media; grid layout (not the app's ver
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator fix: corrected failed-row menu (Like+Share+Delete, not Delete-only) and specified storyboard menu (Create MV + Delete); added per-type menu breakdown, HIST-E7, TBD-HIST-06; noted community id = communitySongId. |
 | 2026-07-23 | Implemented: retention copy now permanent, no 14-day auto-delete (HIST-02); Liked tab restricted to community-liked content (HIST-03); storyboard rows show a Create MV pill on the card (HIST-05); failed rows are Delete-only, Like/Share removed (HIST-06 bug); "Unpublish to edit MV" applied to the Edit MV menu entry (MV-13). Publish confirm (HIST-04) already present. |
+| 2026-07-23 | Design review: the published-MV Edit entry string shortened from "Unpublish to edit MV" to **"Unpublish to edit"** (History + MV result). |
