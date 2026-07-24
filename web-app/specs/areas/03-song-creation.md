@@ -32,7 +32,7 @@ first time per session, then 1 credit** (SONG-04); the compose credit pill shows
 
 | Route | View | Owns UI | Reads/writes state | `MuseApi` |
 |---|---|---|---|---|
-| `/song/create` | `song/SongCompose` (🔒 **Auth**) | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, Ideas/Lyrics/Enhance, Generate CTA | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}` | `enhancePrompt` (song/lyrics) |
+| `/song/create` | `song/SongCompose` (🔒 **Auth**) | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, BPM/Key (Custom), Title, Ideas/Lyrics/Enhance, **Create Song** CTA | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}` | `enhancePrompt` (song/lyrics) |
 | `/song/creating` | `song/SongGenerationScreen` → `GenerationView` | progress ring/step, View Later | `startSong`, `gen`, `songResult` | `createSongJob`, `getSongJob` (poll) |
 | `/song/result` | `song/SongResultView` → `SongDetail` | disc player, progress/seek, ±15s, Lyrics sheet, Share, Use-in-MV, Recreate | `songResult`, `useMvFlow().patchCompose` (Use-in-MV), `useHistory` (share id) | — |
 
@@ -51,7 +51,7 @@ first time per session, then 1 credit** (SONG-04); the compose credit pill shows
 - `lyrics`: string (Custom), max 2500.
 - `genre` (default "Pop"), `mood` (default "Uplifting"), `vocal` (nullable, optional), `title` (optional).
 - **CTA-ready** (`isSongReady`): **Custom → always ready**; **Simple → `describe.trim() !== ""`**.
-- Cost: `COST_SONG = 10` shown on the Generate CTA. ⚠️ App said 50 (→ `TBD-GL-01`).
+- Cost: `COST_SONG = 10` shown on the **Create Song** CTA (label matches the app prototype, 2026-07-23).
 - Custom-mode musical controls (SONG-01): **BPM slider** (`BPM_MIN 60`–`BPM_MAX 200`) and a **Key**
   chip selector (`SONG_KEYS`, clearable = "Auto"), both persisted on `songCompose.{bpm,key}`. The
   **Lyrics / Idea** field is a **free-form textarea** (`s.lyrics`, max 2500) with Idea / Lyrics sample
@@ -83,10 +83,10 @@ first 30s — upgrade to Muse Pro" prompt opens `SubscribeModal`); subscribers p
 Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/song/result`, Lyrics sheet.
 
 ### SONG-P1 — Compose
-- **SONG-P1-S1** Arrive `/song/create` (auth-gated); **Simple** tab default; **Generate** disabled until `describe` non-empty. Hint "Describe your song to continue."
+- **SONG-P1-S1** Arrive `/song/create` (auth-gated); **Simple** tab default; **Create Song** disabled until `describe` non-empty. Hint "Describe your song to continue."
 - **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + Ideas + Enhance. 
 - **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics / Idea** textarea (or "No lyrics needed" when Instrumental) + Ideas/Lyrics/Enhance; Genre/Mood chips + Vocal (optional, clearable); **BPM slider** + **Key** selector (SONG-01); optional Title. Custom CTA always enabled.
-- **SONG-P1-S4** Tap **Generate Song** (`10`) → `resetForNewSong()` → `/song/creating`.
+- **SONG-P1-S4** Tap **Create Song** (`10`) → `resetForNewSong()` → `/song/creating`.
 
 ### SONG-P2 — Generation
 - **SONG-P2-S1** `/song/creating`: `startSong()` fires once (inserts a Generating History row); ring/step; estimate "~1 minute"; **View Later** → `/history`. Flow-guard: not ready & no result → redirect `/song/create`.
@@ -112,10 +112,10 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 ## 6. Acceptance criteria (EARS)
 
-- **AC-SONG-01** — WHEN `/song/create` loads, THE SYSTEM SHALL default to **Simple** and keep **Generate** disabled until `describe.trim() !== ""`; in **Custom**, Generate SHALL be enabled by default.
+- **AC-SONG-01** — WHEN `/song/create` loads, THE SYSTEM SHALL default to **Simple** and keep **Create Song** disabled until `describe.trim() !== ""`; in **Custom**, it SHALL be enabled by default.
 - **AC-SONG-02** — WHEN Instrumental is ON in Custom, THE SYSTEM SHALL hide the lyrics editor and typically generate without lyrics (no Lyrics sheet). *(Note: toggling does not clear previously-typed lyrics — see SONG-E4 / `TBD-SONG-01`.)*
 - **AC-SONG-03** — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Ideas/Enhance fills are not capped.)
-- **AC-SONG-04** — WHEN **Generate Song** is tapped, THE SYSTEM SHALL `resetForNewSong()`, insert a Generating History row, and navigate to `/song/creating`.
+- **AC-SONG-04** — WHEN **Create Song** is tapped, THE SYSTEM SHALL `resetForNewSong()`, insert a Generating History row, and navigate to `/song/creating`.
 - **AC-SONG-05** — WHILE the song job is `processing`, THE SYSTEM SHALL show progress, step, an estimate, and View Later → `/history`; on `done` navigate to `/song/result`.
 - **AC-SONG-06** — WHEN `/song/result` loads, THE SYSTEM SHALL expose seek/±15s, Share, a Lyrics sheet (when lyrics exist), Use in Music Video, and Recreate — and no Like. WHILE not subscribed, playback SHALL be capped at 30s with an upgrade prompt (SONG-02); WHILE subscribed, it SHALL play in full.
 - **AC-SONG-11** — WHILE in Custom mode, THE SYSTEM SHALL expose a BPM slider (60–200) and a Key selector persisted on `songCompose.{bpm,key}`, and a free-form Lyrics / Idea textarea (SONG-01).
@@ -192,4 +192,4 @@ credits.
 | 2026-07-22 | Initial as-built spec. |
 | 2026-07-22 | Validator PASS; tightened SONG-E1 fail trigger (Simple `describe` only), noted Simple-mode results have no Lyrics sheet, flagged Instrumental-doesn't-clear-lyrics quirk. |
 | 2026-07-23 | Implemented: custom-mode BPM slider + Key selector (`SongComposeSchema` gains defaulted `bpm`/`key`) (SONG-01); 30s free-preview gate on `SongDetail` + community song player with upgrade prompt (SONG-02); Recreate = `COST_SONG_RECREATE` (50) keeping the prior song in History (SONG-03); first AI Enhance per session free then 1 credit each, tracked in `CreditsProvider` (SONG-04); compose credit pill uses live balance (SONG-05 bug). |
-| 2026-07-23 | Reverted the SONG-01 per-line lyrics editor back to the app-style free-form **Lyrics / Idea** textarea (per design review); BPM/Key retained. |
+| 2026-07-23 | Reverted the SONG-01 per-line lyrics editor back to the app-style free-form **Lyrics / Idea** textarea (per design review); BPM/Key retained. Validated Custom page against the app prototype screenshot — free-form textarea with structure tags (e.g. `[Verse 1]`) confirmed; renamed the CTA **"Generate Song" → "Create Song"** to match the app (e2e updated). |

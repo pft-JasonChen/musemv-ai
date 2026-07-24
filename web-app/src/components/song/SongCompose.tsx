@@ -194,7 +194,7 @@ export function SongCompose() {
 
       <div className="sticky bottom-[66px] mt-8 -mx-4 border-t px-4 py-3 sm:bottom-0 sm:-mx-6 sm:px-6" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
         <Button className="w-full" disabled={!ready} onClick={generate}>
-          Generate Song
+          Create Song
           <span className="ml-1 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[14px] font-bold" style={{ background: "rgba(255,255,255,.18)" }}>{COST_SONG}</span>
         </Button>
         {!ready && <p className="mt-2 text-center text-[12px]" style={{ color: "var(--text-2)" }}>Describe your song to continue.</p>}
