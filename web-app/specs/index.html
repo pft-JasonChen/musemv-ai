@@ -190,6 +190,10 @@
         <span class="nav-area">10</span><span class="nav-name">Share</span>
         <span class="nav-dot st-ok"></span>
       </button>
+      <button class="nav-item" type="button" data-doc="11">
+        <span class="nav-area">11</span><span class="nav-name">Credit Consumption (RD)</span>
+        <span class="nav-dot st-warn"></span>
+      </button>
       <button class="nav-item" type="button" data-doc="OQ">
         <span class="nav-area">OQ</span><span class="nav-name">Open Questions</span>
         <span class="nav-dot st-ref"></span>
@@ -304,6 +308,13 @@
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">Public /share/[id] page + the shared ShareDialog component.</td>
         <td class="c-qa">Share dialog + public share-link page. Intended gating still open (TBD-GL-07). 6 AC.</td>
+      </tr>
+      <tr data-doc="11" tabindex="0" role="button" aria-label="Open Credit Consumption (RD) spec">
+        <td class="c-area">11</td>
+        <td class="c-feat"><span class="feat-name">Credit Consumption (RD)</span><span class="feat-open">Open spec →</span><div class="c-file">areas/11-credit-consumption.md</div></td>
+        <td><span class="badge st-warn">as-built</span></td>
+        <td class="c-dev">MSR Credit Consume Form (credit_consume 1.0); main-action + subActions payload per scenario; cloud-config action map.</td>
+        <td class="c-qa">Which action/subActions each generation sends, charge-on-start + refund-on-fail, reserved actions. 2 TBD.</td>
       </tr>
       <tr data-doc="OQ" tabindex="0" role="button" aria-label="Open Open Questions spec">
         <td class="c-area">OQ</td>
@@ -595,6 +606,10 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 <ul>
 <li><code>CreditsProvider</code>: single in-memory balance (<code>DEFAULT_CREDITS = 390</code>), <code>addCredits(n)</code>, plus <code>enhanceCost</code>/<code>consumeEnhance</code> (SONG-04). Resets on reload; ledger in <code>CreditsDetailModal</code> is a static seed, not live.</li>
 <li><strong>Real charging (GL-01, 2026-07-23):</strong> the MV/song <strong>flow providers</strong> decrement on generation start — <code>COST_STORYBOARD=20 / COST_RENDER=200 / COST_SONG=10</code> (<code>src/lib/mv/types.ts</code>; song recreate <code>COST_SONG_RECREATE=50</code>) — and <strong>refund on failure</strong>; Edit-MV still charges its micro-ops <code>COST_REGEN=20 / COST_COVER=10</code> (in <code>MvEditor.tsx</code>). The former <code>COST_MERGE</code> was removed — Merge MV is the re-render priced at <code>COST_RENDER</code> (see the handoff reconciliation note).</li>
+<li><strong>Backend charging contract → <code>areas/11-credit-consumption.md</code>.</strong> The prototype's <code>COST_*</code> constants are<br>
+<strong>placeholders</strong>; the real charge is the MSR Credit Consume Form (<code>credit_consume: 1.0</code>), where each<br>
+  generation posts a main action + <code>subActions</code> and the backend sums the matching rules. Area 11 is the<br>
+  RD-facing action map; the prototype numbers below are what the demo does today (<code>TBD-CC-05</code>).</li>
 <li><strong>Insufficient-balance gate:</strong> when <code>credits &lt; cost</code>, the CTA <strong>routes to the buy-credits IAP instead of generating</strong> (<code>MvRoom</code> mode select, <code>SongCompose</code>, <code>StoryboardEditor</code>, <code>MvEditor</code> merge, <code>SongResultView</code> recreate) — synced to the app. Real persistence / live ledger / real IAP stay backend-deferred (<code>TBD-GL-04</code>, <code>TBD-CR-01/04</code>).</li>
 </ul>
 <h2 id="7-design-tokens">7. Design tokens</h2>
@@ -3006,6 +3021,520 @@ native Share button were removed</strong> (social channels deferred → <code>TB
 <p><strong>Decisions (as-built):</strong> dedicated public share page (web-only) + shared <code>ShareDialog</code>; bare (no<br>
 shell); community ids <strong>and static History samples</strong> resolve from fixtures, live own creations from<br>
 in-memory History only; 30-day expiry is copy, not enforced; the video frame is capped at 80vh.</p>
+</article>
+<article class="doc" id="doc-11" data-name="Credit Consumption (RD)" data-file="areas/11-credit-consumption.md">
+<h1 id="area-11-credit-consumption-rd">Area 11 — Credit Consumption (RD 扣點規格)</h1>
+<blockquote>
+<p><strong>Audience:</strong> RD（App / Web 前端 + 後端串接）。<br>
+<strong>What this is:</strong> 每個扣點情境要 call 哪支 API、帶哪些 action，以及後端如何算出總點數。<br>
+<strong>Sources:</strong> <code>[YCM] Credit Consume Cloud Config .json</code>（<strong>唯一權威來源</strong>）、<br>
+<code>MSR Credit Consume Form (with Sub-Actions).md</code>（機制說明）、<code>YCM Credit_Action.pdf</code>（成本/定價推導）。</p>
+<p>⚠️ <strong>數值以 cloud config JSON 為準。</strong> <code>YCM Credit_Action.pdf</code> 的部分 credit 數字與 JSON 不同<br>
+（6 個 <code>*_seedance15</code> 的每秒點數、<code>create_script_upload_song</code> 的級距）— PDF 是成本試算稿，會再調整。<br>
+<strong>點數是可調參數，RD 不應 hardcode</strong>；本文的重點是 <strong>action 組合方式</strong>，那才是介面契約。</p>
+<p>Related: 餘額 / 儲值 / 訂閱 UI → <code>07-credits-iap.md</code>。各流程的 UI 行為 → <code>02-mv-creation.md</code>、<br>
+<code>03-song-creation.md</code>。</p>
+</blockquote>
+<hr>
+<h2 id="1-api">1. API</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Form</td>
+<td><strong>MSR Credit Consume Form</strong></td>
+</tr>
+<tr>
+<td>GenericSetting</td>
+<td><code>credit_consume: 1.0</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Payload 格式</strong> — key 名稱與 cloud config 一致。分兩種形狀：</p>
+<pre><code class="language-json">// 有 sub action（委派型 main action）
+{
+  &quot;action&quot;: &quot;&lt;main action&gt;&quot;,
+  &quot;consumedType&quot;: &quot;duration&quot;,
+  &quot;rule&quot;: [&quot;&lt;sub action&gt;&quot;, &quot;…&quot;]
+}
+
+// 無 sub action（自帶規則型 main action）— rule 整個欄位省略
+{
+  &quot;action&quot;: &quot;&lt;main action&gt;&quot;,
+  &quot;consumedType&quot;: &quot;duration&quot;
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>action</code></td>
+<td>main action 名稱，一次任務一個。</td>
+</tr>
+<tr>
+<td><code>consumedType</code></td>
+<td><strong>一律填 <code>"duration"</code></strong>。後端以此區分 <code>duration</code> / <code>credit</code> 兩種計費基準；本文所有情境都是 <code>duration</code>，<strong>只要 payload 有這個欄位就必須帶上</strong>。</td>
+</tr>
+<tr>
+<td><code>rule</code></td>
+<td>sub action 名稱陣列。<strong>注意 key 是 <code>rule</code>，不是 <code>subActions</code></strong> — <code>MSR Credit Consume Form (with Sub-Actions).md</code> 的示意範例寫作 <code>subActions</code>，實際 API 以 <code>rule</code> 為準。<strong>無 sub action 時整個欄位省略，不要送空陣列 <code>[]</code>。</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Sub-action 機制的設計理由（避免組合爆炸、子服務可獨立複用）見 <code>MSR Credit Consume Form
+(with Sub-Actions).md</code>。RD 只需知道：<strong>一次任務 = 一個 main action + 0~N 個 sub actions</strong>，<br>
+後端把命中的計費規則全部加總。</p>
+<hr>
+<h2 id="2">2. 核心概念</h2>
+<p><strong>Main action</strong> — 記錄在扣點歷史 (Token History) 用，一個生成任務對應一個。<br>
+<strong>Sub actions</strong> — 實際計費單位；同一個 sub action 可被不同 main action 複用<br>
+（例：<code>singing_720p_seedance15</code> 同時被 <code>create_mv</code> 和 <code>generate_mv</code> 使用）。</p>
+<blockquote>
+<p>⚠️ <strong><code>rule</code> 這個字有兩個意思，別混淆：</strong><br>
+<strong>Payload 的 <code>rule</code></strong> = 前端送出的 <strong>sub action 名稱陣列</strong>。<br>
+<strong>Cloud config 的 <code>rule</code></strong> = 後端該 action 的<strong>計費規則</strong>（<code>token</code> / <code>tknPerRes</code> / <code>procUnitRange</code>）。<br>
+前端只組前者，後者是後端查表用的。</p>
+</blockquote>
+<p>兩種主 action：</p>
+<table>
+<thead>
+<tr>
+<th>型態</th>
+<th>Cloud config 特徵</th>
+<th>扣點來源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>委派型</strong></td>
+<td>計費規則 <code>"rule": []</code></td>
+<td>完全由 payload 的 <code>rule</code> 陣列決定（<code>create_mv</code> / <code>generate_mv</code> / <code>edit_mv</code>）</td>
+</tr>
+<tr>
+<td><strong>自帶規則型</strong></td>
+<td>計費規則非空</td>
+<td>main action 自己就是計費單位，<strong>payload 省略 <code>rule</code> 欄位</strong>（AI Song 全部 / <code>create_script_upload_song</code> / <code>merge_mv</code>）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cloud-config">計費規則速查（cloud config 端，供理解用）</h3>
+<table>
+<thead>
+<tr>
+<th>欄位組合</th>
+<th>意義</th>
+<th>範例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tknPerRes: N</code>, <code>procUnit: 1</code></td>
+<td><strong>每次結果固定 N 點</strong>，與長度無關</td>
+<td><code>upload_song</code> → 45</td>
+</tr>
+<tr>
+<td><code>token: N</code>, <code>procUnit: 1</code></td>
+<td><strong>每秒 N 點</strong> → <code>N × x sec</code></td>
+<td><code>singing_720p_seedance15</code> → 5/sec</td>
+</tr>
+<tr>
+<td><code>procUnitRange: [a,b]</code>, <code>token: N</code></td>
+<td>長度落在 a~b 秒 → <strong>固定 N 點</strong></td>
+<td><code>merge_mv</code> 1–240s → 10</td>
+</tr>
+<tr>
+<td><code>[]</code>（空陣列）</td>
+<td>不計費，委派給 sub actions</td>
+<td><code>create_mv</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>consumedType: "duration"</code> + <code>x sec</code>：</strong> 秒數由<strong>後端自己從 task 取得</strong>，App / Web <strong>不需要在<br>
+payload 帶秒數</strong>。基準為：</p>
+<ul>
+<li><code>create_mv</code> / <code>generate_mv</code> → <strong>最終 MV 總長</strong></li>
+<li><code>edit_mv</code>（recreate）→ <strong>被重生成的那一個 shot 的長度</strong></li>
+<li><code>create_script_upload_song</code> / <code>merge_mv</code> → 歌曲 / MV 長度（用來選 <code>procUnitRange</code> 級距）</li>
+</ul>
+<p><strong>長度上限：</strong> 產品支援的 MV / 歌曲長度最長 <strong>240 秒（4 分鐘）</strong>，各 <code>procUnitRange</code> 的上限 240<br>
+已完整涵蓋，不存在「超出級距」的情況。</p>
+<p><strong>總點數 = main action rule + Σ 所有 sub action rule。</strong></p>
+<hr>
+<h2 id="3">3. 六個扣點情境</h2>
+<h3 id="31-ai-song">3.1 AI Song — 生成歌曲</h3>
+<p><strong>觸發：</strong> <code>/song/create</code> → <strong>Create Song</strong><br>
+<strong>Action：</strong> 依 <code>mode</code> × <code>Instrumental</code> toggle 四選一，<strong>無 sub action</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Instrumental toggle</th>
+<th>action</th>
+<th>credit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Simple</td>
+<td>OFF（= vocal）</td>
+<td><code>ai_song_simple_vocal</code></td>
+<td>6</td>
+</tr>
+<tr>
+<td>Simple</td>
+<td>ON</td>
+<td><code>ai_song_simple_instrumental</code></td>
+<td>12</td>
+</tr>
+<tr>
+<td>Custom</td>
+<td>OFF（= vocal）</td>
+<td><code>ai_song_custom_vocal</code></td>
+<td>6</td>
+</tr>
+<tr>
+<td>Custom</td>
+<td>ON</td>
+<td><code>ai_song_custom_instrumental</code></td>
+<td>12</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>早期 cloud config 上此 action 拼作 <code>ai_song_simpe_instrumental</code>（缺 <code>l</code>），<strong>後端已修正為<br>
+<code>ai_song_simple_instrumental</code></strong>。手邊若有舊版 config 快照，以本表為準。</p>
+</blockquote>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;ai_song_custom_vocal&quot;,
+  &quot;consumedType&quot;: &quot;duration&quot;
+}
+</code></pre>
+<hr>
+<h3 id="32-create-mv-mv">3.2 Create MV — 直接生成 MV</h3>
+<p><strong>觸發：</strong> <code>/mv/room</code> → Create Music Video → ModeModal → <strong>Create MV Directly</strong><br>
+<strong>Action：</strong> <code>create_mv</code>（委派）+ <code>rule</code> 帶 2 個 sub action。</p>
+<table>
+<thead>
+<tr>
+<th>sub action</th>
+<th>來源</th>
+<th>規則</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>upload_song</code></td>
+<td>固定帶，不分歌曲來源（My Songs / Sample / Import 皆同）</td>
+<td>每次 45 點</td>
+</tr>
+<tr>
+<td><code>&lt;mvType&gt;_&lt;res&gt;_seedance15</code></td>
+<td>MV type × 畫質</td>
+<td>每秒 N 點</td>
+</tr>
+</tbody>
+</table>
+<p><code>mvType</code> = <code>singing</code> | <code>storytelling</code> | <code>hybrid</code>　·　<code>res</code> = <code>720p</code>（UI <strong>Standard</strong>）| <code>1080p</code>（UI <strong>High</strong>）</p>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;create_mv&quot;,
+  &quot;consumedType&quot;: &quot;duration&quot;,
+  &quot;rule&quot;: [&quot;upload_song&quot;, &quot;singing_1080p_seedance15&quot;]
+}
+</code></pre>
+<p><strong>計算：</strong> <code>45 + 6 × x sec</code>　→ 30 秒 MV = <strong>225 點</strong></p>
+<hr>
+<h3 id="33-create-script">3.3 Create Script — 生成分鏡腳本</h3>
+<p><strong>觸發：</strong> <code>/mv/room</code> → Create Music Video → ModeModal → <strong>Create Storyboard First</strong><br>
+<strong>Action：</strong> <code>create_script_upload_song</code>，<strong>無 sub action</strong>（自帶級距規則）。</p>
+<table>
+<thead>
+<tr>
+<th>歌曲長度</th>
+<th>credit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1–120s</td>
+<td>15</td>
+</tr>
+<tr>
+<td>121–240s</td>
+<td>18</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;create_script_upload_song&quot;,
+  &quot;consumedType&quot;: &quot;duration&quot;
+}
+</code></pre>
+<blockquote>
+<p>級距由後端依 task 的歌曲長度自動比對 <code>procUnitRange</code>，前端不需判斷。</p>
+</blockquote>
+<hr>
+<h3 id="34-generate-mv-mv">3.4 Generate MV — 由腳本生成 MV</h3>
+<p><strong>觸發：</strong> <code>/mv/storyboard</code> → <strong>Generate MV</strong><br>
+<strong>Action：</strong> <code>generate_mv</code>（委派）+ <code>rule</code> 帶 2 個 sub action。與 3.2 的差別只在 per-song 那顆<br>
+（<code>from_script</code> 35 取代 <code>upload_song</code> 45，因為腳本階段已收過費）。</p>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;generate_mv&quot;,
+  &quot;consumedType&quot;: &quot;duration&quot;,
+  &quot;rule&quot;: [&quot;from_script&quot;, &quot;storytelling_720p_seedance15&quot;]
+}
+</code></pre>
+<p><strong>計算：</strong> <code>35 + 2 × x sec</code>　→ 30 秒 MV = <strong>95 點</strong></p>
+<blockquote>
+<p><strong>走 storyboard 路線的總花費</strong> = 3.3 + 3.4（例：15 + 95 = 110），比 3.2 直接生成多出腳本費用。</p>
+</blockquote>
+<hr>
+<h3 id="35-edit-mv-recreate-shot">3.5 Edit MV - Recreate — 重生成單一 shot</h3>
+<p><strong>觸發：</strong> <code>/mv/edit</code> → 選一個 shot → <strong>Regenerate</strong><br>
+<strong>Action：</strong> <code>edit_mv</code>（委派）+ <code>rule</code> 帶 2 個 sub action。<strong>每重生成一個 shot 呼叫一次。</strong></p>
+<table>
+<thead>
+<tr>
+<th>sub action</th>
+<th>規則</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>recreate</code></td>
+<td>每次 8 點</td>
+</tr>
+<tr>
+<td><code>sing_&lt;res&gt;</code> 或 <code>story_&lt;res&gt;</code></td>
+<td>每秒 N 點（<code>sing</code> 7 · <code>story_720p</code> 2 · <code>story_1080p</code> 4）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>選 <code>sing_*</code> 還是 <code>story_*</code>：依「該 shot 本身的類型」判斷，不是看 MV 的 type。</strong><br>
+所以 Hybrid MV 兩種都可能出現 — 歌唱段落用 <code>sing_*</code>，敘事段落用 <code>story_*</code>。<br>
+（此處<strong>沒有</strong> <code>hybrid_*</code> 的 sub action。）</p>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;edit_mv&quot;,
+  &quot;consumedType&quot;: &quot;duration&quot;,
+  &quot;rule&quot;: [&quot;recreate&quot;, &quot;story_1080p&quot;]
+}
+</code></pre>
+<p><strong>計算：</strong> <code>8 + 4 × (該 shot 秒數)</code>　→ 5 秒 shot = <strong>28 點</strong></p>
+<blockquote>
+<p><strong>封面 Recreate（<code>TBD-CC-02</code>）：</strong> 功能保留，但 cloud config 尚無對應 action —<br>
+<strong>後端待補</strong>。補上前，前端執行封面重生成時<strong>不呼叫扣點 API</strong>；補上後回填此處的 payload 與點數。</p>
+</blockquote>
+<hr>
+<h3 id="36-edit-mv-merge-mv">3.6 Edit MV - Merge MV — 合併輸出</h3>
+<p><strong>觸發：</strong> <code>/mv/edit</code> → <strong>Merge MV</strong><br>
+<strong>Action：</strong> <code>merge_mv</code>，<strong>無 sub action</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>MV 長度</th>
+<th>credit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1–240s</td>
+<td>10（固定）</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-json">{
+  &quot;action&quot;: &quot;merge_mv&quot;,
+  &quot;consumedType&quot;: &quot;duration&quot;
+}
+</code></pre>
+<hr>
+<h2 id="4-action">4. Action 對照總表</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>情境</th>
+<th>main action</th>
+<th><code>rule</code>（sub actions）</th>
+<th>計費形態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>AI Song</td>
+<td><code>ai_song_{simple\|custom}_{vocal\|instrumental}</code></td>
+<td><em>(省略)</em></td>
+<td>固定</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Create MV</td>
+<td><code>create_mv</code></td>
+<td><code>upload_song</code> + <code>&lt;mvType&gt;_&lt;res&gt;_seedance15</code></td>
+<td>固定 + 每秒</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Create Script</td>
+<td><code>create_script_upload_song</code></td>
+<td><em>(省略)</em></td>
+<td>級距</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Generate MV</td>
+<td><code>generate_mv</code></td>
+<td><code>from_script</code> + <code>&lt;mvType&gt;_&lt;res&gt;_seedance15</code></td>
+<td>固定 + 每秒</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Edit MV - Recreate</td>
+<td><code>edit_mv</code></td>
+<td><code>recreate</code> + <code>sing_&lt;res&gt;</code>|<code>story_&lt;res&gt;</code></td>
+<td>固定 + 每秒</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Edit MV - Merge</td>
+<td><code>merge_mv</code></td>
+<td><em>(省略)</em></td>
+<td>級距</td>
+</tr>
+</tbody>
+</table>
+<p><strong>完整 sub action 清單（12 個）</strong></p>
+<table>
+<thead>
+<tr>
+<th>Per-song（固定）</th>
+<th></th>
+<th>Per-second（每秒）</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>upload_song</code></td>
+<td>45</td>
+<td><code>singing_720p_seedance15</code></td>
+<td>5</td>
+</tr>
+<tr>
+<td><code>from_script</code></td>
+<td>35</td>
+<td><code>singing_1080p_seedance15</code></td>
+<td>6</td>
+</tr>
+<tr>
+<td><code>recreate</code></td>
+<td>8</td>
+<td><code>storytelling_720p_seedance15</code></td>
+<td>2</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><code>storytelling_1080p_seedance15</code></td>
+<td>4</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><code>hybrid_720p_seedance15</code></td>
+<td>4</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><code>hybrid_1080p_seedance15</code></td>
+<td>5</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><code>sing_720p</code> / <code>sing_1080p</code></td>
+<td>7 / 7</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><code>story_720p</code> / <code>story_1080p</code></td>
+<td>2 / 4</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="5">5. 扣點時機與失敗處理</h2>
+<ol>
+<li><strong>送出生成任務時扣點</strong>（不是完成時）。</li>
+<li><strong>任務 failed → 全額退點。</strong></li>
+<li><strong>送出前先檢查餘額</strong>：不足時不呼叫扣點 API，改導向 IAP（<code>BuyCreditsModal</code> / <code>SubscribeModal</code>），<br>
+   細節見 <code>07-credits-iap.md</code>。</li>
+<li>每個 shot 的 Recreate 是<strong>獨立一次扣點</strong>，不合併計算。</li>
+<li><strong>AI Enhance / Refine prompt 不扣點</strong> — description、visual style、scene prompt、cover description、<br>
+   歌詞 Refine 等 prompt 優化操作皆為免費，<strong>不呼叫本 API</strong>。<br>
+   ⚠️ web prototype 目前實作為「每 session 首次免費、之後 1 點」（<code>enhanceCost</code>/<code>consumeEnhance</code>），<br>
+   與此決議不符，需移除（<code>TBD-CC-05</code>）。</li>
+</ol>
+<hr>
+<h2 id="6-action">6. 保留 / 不使用的 action</h2>
+<p>Cloud config 內以下 <strong>12 個 action 為預留、目前不上線</strong>，RD <strong>不要呼叫</strong>：</p>
+<pre><code>{singing|storytelling|hybrid}_{short|full}_{720p|1080p}_seedance15
+</code></pre>
+<p>它們用 <code>tknPerRes</code>（固定收費）而非每秒收費，屬於未來「固定長度 MV 方案」的預留設定。</p>
+<p><code>ai_song_custom_vocal_refine</code>（0 點）為<strong>已刪除的 action</strong>，prototype 無對應功能，<strong>忽略</strong>。</p>
+<hr>
+<h2 id="7-tbd">7. 待確認 (TBD)</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>項目</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TBD-CC-01</strong></td>
+<td><code>create_script_upload_song</code> 的級距：PDF 有 3 階（1–40s=12 / 41–120s=15 / 121–240s=18），JSON 只有 2 階（1–120s=15 / 121–240s=18）。以 JSON 為準，但需確認是否要補回 12 點那一階。</td>
+</tr>
+<tr>
+<td><strong>TBD-CC-02</strong></td>
+<td><strong>Edit MV 的封面 Recreate — 後端待補 action。</strong> 功能保留在 spec 中（見 §3.5），但 cloud config 目前無對應 action，後端補上後回填本文的 payload 與點數。在那之前前端不呼叫扣點 API。</td>
+</tr>
+<tr>
+<td><strong>TBD-CC-05</strong></td>
+<td>Prototype 目前的 placeholder 點數（<code>COST_STORYBOARD=20</code> / <code>COST_RENDER=200</code> / <code>COST_SONG=10</code> / <code>COST_SONG_RECREATE=50</code> / <code>COST_REGEN=20</code> / <code>COST_COVER=10</code>）與本規格不符 — 需依本文重算，並改為由後端回傳而非 hardcode；同時移除 AI Enhance 的 1 點收費（<code>enhanceCost</code>/<code>consumeEnhance</code>，見 §5.5）。</td>
+</tr>
+</tbody>
+</table>
+<p><strong>已結案：</strong> ~~TBD-CC-03~~（AI Enhance 不扣點，見 §5.5）·<br>
+~~TBD-CC-04~~（產品上限 240s，級距已完整涵蓋，見 §2）· ~~<code>simpe</code> 拼字~~（後端已修正，見 §3.1）。</p>
+<hr>
+<h2 id="8">8. 流程圖</h2>
+<pre><code class="language-mermaid">flowchart TD
+  Song[&quot;/song/create&quot;] --&gt;|Create Song| A1[&quot;ai_song_*&lt;br/&gt;（省略 rule）&quot;]
+
+  Room[&quot;/mv/room&quot;] --&gt;|Create MV Directly| A2[&quot;create_mv&lt;br/&gt;+ upload_song&lt;br/&gt;+ mvType_res_seedance15&quot;]
+  Room --&gt;|Create Storyboard First| A3[&quot;create_script_upload_song&lt;br/&gt;（省略 rule）&quot;]
+  A3 --&gt; SB[&quot;/mv/storyboard&quot;]
+  SB --&gt;|Generate MV| A4[&quot;generate_mv&lt;br/&gt;+ from_script&lt;br/&gt;+ mvType_res_seedance15&quot;]
+
+  A2 --&gt; Edit[&quot;/mv/edit&quot;]
+  A4 --&gt; Edit
+  Edit --&gt;|Regenerate shot| A5[&quot;edit_mv&lt;br/&gt;+ recreate&lt;br/&gt;+ sing_res | story_res&quot;]
+  Edit --&gt;|Merge MV| A6[&quot;merge_mv&lt;br/&gt;（省略 rule）&quot;]
+</code></pre>
 </article>
 <article class="doc" id="doc-OQ" data-name="Open Questions" data-file="OPEN-QUESTIONS.md">
 <h1 id="open-questions">待確認事項總表(Open Questions — 仍待處理項目)</h1>

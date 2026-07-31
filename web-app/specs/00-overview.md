@@ -103,6 +103,10 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 
 - `CreditsProvider`: single in-memory balance (`DEFAULT_CREDITS = 390`), `addCredits(n)`, plus `enhanceCost`/`consumeEnhance` (SONG-04). Resets on reload; ledger in `CreditsDetailModal` is a static seed, not live.
 - **Real charging (GL-01, 2026-07-23):** the MV/song **flow providers** decrement on generation start — `COST_STORYBOARD=20 / COST_RENDER=200 / COST_SONG=10` (`src/lib/mv/types.ts`; song recreate `COST_SONG_RECREATE=50`) — and **refund on failure**; Edit-MV still charges its micro-ops `COST_REGEN=20 / COST_COVER=10` (in `MvEditor.tsx`). The former `COST_MERGE` was removed — Merge MV is the re-render priced at `COST_RENDER` (see the handoff reconciliation note).
+- **Backend charging contract → `areas/11-credit-consumption.md`.** The prototype's `COST_*` constants are
+  **placeholders**; the real charge is the MSR Credit Consume Form (`credit_consume: 1.0`), where each
+  generation posts a main action + `subActions` and the backend sums the matching rules. Area 11 is the
+  RD-facing action map; the prototype numbers below are what the demo does today (`TBD-CC-05`).
 - **Insufficient-balance gate:** when `credits < cost`, the CTA **routes to the buy-credits IAP instead of generating** (`MvRoom` mode select, `SongCompose`, `StoryboardEditor`, `MvEditor` merge, `SongResultView` recreate) — synced to the app. Real persistence / live ledger / real IAP stay backend-deferred (`TBD-GL-04`, `TBD-CR-01/04`).
 
 ## 7. Design tokens
