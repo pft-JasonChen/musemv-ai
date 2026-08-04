@@ -1,0 +1,158 @@
+.components-page {
+  padding: 24px 16px 64px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.components-page__title {
+  color: var(--color-text-primary);
+  margin-bottom: 32px;
+}
+
+.components-page__layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.components-page__sidebar {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.components-page__nav-item {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.components-page__nav-item--active {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.components-page__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.components-page__component-name {
+  color: var(--color-text-primary);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border-primary);
+  margin-bottom: 24px;
+}
+
+.components-page__hint {
+  color: var(--color-text-tertiary);
+  margin: -12px 0 24px;
+}
+
+.components-page__size-group {
+  margin-bottom: 32px;
+}
+
+.components-page__size-title {
+  color: var(--color-text-secondary);
+  margin-bottom: 16px;
+}
+
+.components-page__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.components-page__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.components-page__row--badges {
+  align-items: flex-start;
+  align-content: flex-start;
+}
+
+.components-page__variant-label {
+  color: var(--color-text-tertiary);
+  width: 100%;
+}
+
+.components-page__cell {
+  display: flex;
+  align-items: center;
+}
+
+.components-page__card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+/* Same bordered/blurred container ListItem's "song" variant already sits
+   inside on real pages (e.g. My Creations) — showing it bare here would
+   miss how it actually reads in context. --narrow caps the width low
+   enough to demonstrate Community's container-query narrow layout. */
+.components-page__list-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 700px;
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: var(--radius-3xl);
+  border: 1px solid var(--white-15);
+  background: var(--black-60);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.components-page__list-demo--narrow {
+  max-width: 380px;
+}
+
+@media (min-width: 768px) {
+  .components-page {
+    padding: 40px 32px 80px;
+  }
+
+  .components-page__layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .components-page__sidebar {
+    flex-direction: column;
+    width: 200px;
+    flex-shrink: 0;
+    overflow-x: visible;
+    padding-bottom: 0;
+    border-bottom: none;
+    border-right: 1px solid var(--color-border-primary);
+    padding-right: 16px;
+  }
+
+  .components-page__row {
+    flex-wrap: nowrap;
+  }
+
+  .components-page__variant-label {
+    width: 140px;
+    flex-shrink: 0;
+  }
+}

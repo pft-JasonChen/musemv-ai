@@ -1,0 +1,368 @@
+.credits-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.credits-dialog-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.credits-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.credits-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-3xl);
+  background: var(--neutral-dark-09);
+  box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
+  transform: scale(0.96);
+  transition: transform 0.3s ease;
+}
+
+.credits-dialog-overlay--visible .credits-dialog {
+  transform: scale(1);
+}
+
+.credits-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.credits-dialog__header-spacer,
+.credits-dialog__close {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.credits-dialog__title {
+  flex: 1;
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-m);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.2px;
+  text-align: center;
+}
+
+.credits-dialog__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.credits-dialog__close-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.credits-dialog__balance-label {
+  margin: 0;
+  color: var(--white-40);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.12px;
+}
+
+.credits-dialog__balance-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.credits-dialog__balance-amount {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+}
+
+.credits-dialog__balance-icon {
+  width: 14px;
+  height: 14px;
+  align-self: center;
+}
+
+.credits-dialog__balance-number {
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 38px;
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.38px;
+}
+
+.credits-dialog__balance-unit {
+  color: var(--white-80);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.12px;
+}
+
+.credits-dialog__recover {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
+.credits-dialog__recover:hover {
+  opacity: 0.85;
+}
+
+.credits-dialog__scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 332px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.credits-dialog__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.credits-dialog__section-label {
+  margin: 0;
+  padding: 4px 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+}
+
+.credits-dialog__packs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.credits-dialog__pack-slot {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Absolutely positioned (not in normal flow) so a pack's tags never add to
+   its slot's layout height — otherwise packs with tags would sit visibly
+   closer to their neighbor above than packs without any, since the tag row
+   would actually push the slot taller instead of just overlapping it. */
+.credits-dialog__pack-tags {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+}
+
+.credits-dialog__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 14px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  line-height: 11px;
+  white-space: nowrap;
+}
+
+.credits-dialog__tag--pink {
+  border: 1px solid rgba(242, 59, 119, 0.4);
+  background: rgba(242, 59, 119, 0.6);
+}
+
+.credits-dialog__tag--purple {
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  background: rgba(145, 50, 255, 0.6);
+  border-radius: var(--radius-pill);
+}
+
+.credits-dialog__tag--green {
+  border: 1px solid rgba(1, 179, 123, 0.4);
+  background: rgba(1, 179, 123, 0.6);
+}
+
+.credits-dialog__pack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--white-15);
+  border-radius: 12px;
+  background: rgba(9, 9, 11, 0.4);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.credits-dialog__pack--selected {
+  border: 1.5px solid var(--color-accent-purple);
+  background: linear-gradient(90deg, #36055b 0%, var(--neutral-dark-09) 64.904%);
+}
+
+.credits-dialog__pack-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.credits-dialog__pack-label {
+  margin: 0;
+  color: var(--white-40);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+}
+
+.credits-dialog__pack-credits {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+}
+
+.credits-dialog__pack-credits-icon {
+  width: 10px;
+  height: 10px;
+  align-self: center;
+  background-color: var(--white-40);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.credits-dialog__pack-price {
+  display: flex;
+  flex-shrink: 0;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.credits-dialog__pack-original {
+  color: var(--white-40);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  text-decoration: line-through;
+}
+
+.credits-dialog__pack-current {
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.17px;
+}
+
+.credits-dialog__disclaimer {
+  margin: 4px 0 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+  text-align: center;
+}
+
+.credits-dialog__cta {
+  height: 46px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 34px;
+  background: linear-gradient(90deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  transition: opacity 0.15s ease;
+}
+
+.credits-dialog__cta:hover {
+  opacity: 0.85;
+}
+
+.credits-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+}
+
+.credits-dialog__footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.credits-dialog__footer a:hover {
+  text-decoration: underline;
+}

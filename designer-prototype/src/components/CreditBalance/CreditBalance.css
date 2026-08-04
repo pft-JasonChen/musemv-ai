@@ -1,0 +1,38 @@
+.credit-balance {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 12px 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+  font-family: inherit;
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-label-s);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.credit-balance:hover {
+  opacity: 0.85;
+}
+
+.credit-balance img,
+.credit-balance__add {
+  width: 16px;
+  height: 16px;
+}
+
+.credit-balance__add {
+  background: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}

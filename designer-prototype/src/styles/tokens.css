@@ -1,0 +1,482 @@
+/*
+ * YCM Design Tokens
+ * Generated for direct use in Claude / frontend projects.
+ *
+ * Usage:
+ *   color: var(--pf-light-blue);
+ *   font-size: var(--font-body-m);
+ */
+
+:root {
+  /* =========================================================
+   * Primitive colors
+   * ======================================================= */
+
+  /* Brand / functional colors */
+  --pf-light-blue: rgba(3, 173, 226, 1);
+  --pf-light-blue-80: rgba(3, 173, 226, 0.8);
+  --pf-light-blue-60: rgba(3, 173, 226, 0.6);
+  --pf-light-blue-40: rgba(3, 173, 226, 0.4);
+
+  --pf-orange: rgba(255, 138, 2, 1);
+  --pf-orange-80: rgba(255, 138, 2, 0.8);
+  --pf-orange-60: rgba(255, 138, 2, 0.6);
+  --pf-orange-40: rgba(255, 138, 2, 0.4);
+
+  --pf-dark-blue: rgba(64, 62, 223, 1);
+  --pf-dark-blue-80: rgba(64, 62, 223, 0.8);
+  --pf-dark-blue-60: rgba(64, 62, 223, 0.6);
+  --pf-dark-blue-40: rgba(64, 62, 223, 0.4);
+
+  --pf-pink: rgba(242, 59, 119, 1);
+  --pf-pink-80: rgba(242, 59, 119, 0.8);
+  --pf-pink-60: rgba(242, 59, 119, 0.6);
+  --pf-pink-40: rgba(242, 59, 119, 0.4);
+
+  --pf-green: rgba(1, 179, 123, 1);
+  --pf-green-80: rgba(1, 179, 123, 0.8);
+  --pf-green-60: rgba(1, 179, 123, 0.6);
+  --pf-green-40: rgba(1, 179, 123, 0.4);
+
+  --pf-purple: rgba(145, 50, 255, 1);
+  --pf-purple-80: rgba(145, 50, 255, 0.8);
+  --pf-purple-60: rgba(145, 50, 255, 0.6);
+  --pf-purple-40: rgba(145, 50, 255, 0.4);
+
+  --pf-red: rgba(255, 38, 0, 1);
+  --pf-red-80: rgba(255, 38, 0, 0.8);
+  --pf-red-60: rgba(255, 38, 0, 0.6);
+  --pf-red-40: rgba(255, 38, 0, 0.4);
+
+  /* Alpha colors */
+  --white-15: rgba(255, 255, 255, 0.15);
+  --white-40: rgba(255, 255, 255, 0.4);
+  --white-60: rgba(255, 255, 255, 0.6);
+  --white-80: rgba(255, 255, 255, 0.8);
+
+  --black-15: rgba(9, 9, 11, 0.15);
+  --black-40: rgba(9, 9, 11, 0.4);
+  --black-60: rgba(9, 9, 11, 0.6);
+  --black-80: rgba(9, 9, 11, 0.8);
+
+  /* Dark-theme neutral palette */
+  --neutral-dark-100: rgba(255, 255, 255, 1);
+  --neutral-dark-94: rgba(238, 238, 241, 1);
+  --neutral-dark-89: rgba(225, 225, 229, 1);
+  --neutral-dark-84: rgba(211, 211, 217, 1);
+  --neutral-dark-74: rgba(183, 183, 194, 1);
+  --neutral-dark-64: rgba(156, 156, 171, 1);
+  --neutral-dark-54: rgba(128, 128, 147, 1);
+  --neutral-dark-44: rgba(103, 103, 121, 1);
+  --neutral-dark-34: rgba(80, 80, 94, 1);
+  --neutral-dark-24: rgba(56, 56, 66, 1);
+  --neutral-dark-14: rgba(33, 33, 39, 1);
+  --neutral-dark-09: rgba(21, 21, 25, 1);
+  --neutral-dark-04: rgba(9, 9, 11, 1);
+
+  /* Light-theme neutral palette */
+  --neutral-light-100: rgba(9, 9, 11, 1);
+  --neutral-light-94: rgba(21, 21, 25, 1);
+  --neutral-light-89: rgba(33, 33, 39, 1);
+  --neutral-light-84: rgba(56, 56, 66, 1);
+  --neutral-light-74: rgba(80, 80, 94, 1);
+  --neutral-light-64: rgba(103, 103, 121, 1);
+  --neutral-light-54: rgba(128, 128, 147, 1);
+  --neutral-light-44: rgba(156, 156, 171, 1);
+  --neutral-light-34: rgba(183, 183, 194, 1);
+  --neutral-light-24: rgba(211, 211, 217, 1);
+  --neutral-light-14: rgba(225, 225, 229, 1);
+  --neutral-light-09: rgba(247, 247, 247, 1);
+  --neutral-light-04: rgba(255, 255, 255, 1);
+
+  /* =========================================================
+   * Mobile typography — regular
+   * ======================================================= */
+
+  --font-mobile-regular-large-title: 30px;
+  --font-mobile-regular-title-1: 20px;
+  --font-mobile-regular-title-2: 18px;
+  --font-mobile-regular-title-3: 17px;
+  --font-mobile-regular-title-4: 16px;
+  --font-mobile-regular-title-5: 15px;
+  --font-mobile-regular-button: 15px;
+  --font-mobile-regular-body-1: 14px;
+  --font-mobile-regular-body-2: 12px;
+  --font-mobile-regular-subheadline: 12px;
+  --font-mobile-regular-footnote: 11px;
+  --font-mobile-regular-caption-1: 10px;
+  --font-mobile-regular-caption-2: 9px;
+
+  /* Mobile typography — bold */
+  --font-mobile-bold-large-title: 30px;
+  --font-mobile-bold-title-1: 20px;
+  --font-mobile-bold-title-2: 18px;
+  --font-mobile-bold-title-3: 17px;
+  --font-mobile-bold-title-4: 16px;
+  --font-mobile-bold-title-5: 15px;
+  --font-mobile-bold-button: 15px;
+  --font-mobile-bold-body-1: 14px;
+  --font-mobile-bold-body-2: 12px;
+  --font-mobile-bold-subheadline: 12px;
+  --font-mobile-bold-footnote: 11px;
+  --font-mobile-bold-caption-1: 10px;
+  --font-mobile-bold-caption-2: 9px;
+
+  /* =========================================================
+   * Web typography
+   * ======================================================= */
+
+  /* Desktop */
+  --font-web-desktop-headline-1: 48px;
+  --font-web-desktop-headline-2: 38px;
+  --font-web-desktop-headline-3: 28px;
+  --font-web-desktop-headline-4: 24px;
+  --font-web-desktop-headline-5: 20px;
+  --font-web-desktop-button-1: 24px;
+  --font-web-desktop-button-2: 18px;
+  --font-web-desktop-body-1: 22px;
+  --font-web-desktop-body-2: 20px;
+  --font-web-desktop-body-3: 18px;
+  --font-web-desktop-body-4: 16px;
+  --font-web-desktop-body-5: 12px;
+
+  /* Mobile */
+  --font-web-mobile-headline-1: 30px;
+  --font-web-mobile-headline-2: 26px;
+  --font-web-mobile-headline-3: 20px;
+  --font-web-mobile-headline-4: 18px;
+  --font-web-mobile-headline-5: 16px;
+  --font-web-mobile-button-1: 20px;
+  --font-web-mobile-button-2: 18px;
+
+  /* =========================================================
+   * Simplified semantic typography
+   * ======================================================= */
+
+  --font-display: 42px;
+  --font-headline: 20px;
+  --font-section: 17px;
+
+  --font-title-xl: 30px;
+  --font-title-l: 26px;
+  --font-title-m: 20px;
+  --font-title-s: 17px;
+  --font-title-xs: 15px;
+
+  --font-body-l: 17px;
+  --font-body-m: 14px;
+  --font-body-s: 12px;
+  --font-body-xs: 9px;
+
+  --font-label-m: 13px;
+  --font-label-s: 12px;
+
+  --font-caption-m: 11px;
+  --font-caption-s: 9px;
+}
+
+/* =========================================================
+ * Optional semantic theme aliases
+ * Use these aliases in components when light/dark mode is needed.
+ * ======================================================= */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --color-text-primary: var(--neutral-light-100);
+  --color-text-secondary: var(--neutral-light-64);
+  --color-text-tertiary: var(--neutral-light-54);
+  --color-text-disabled: var(--neutral-light-34);
+
+  --color-bg-primary: var(--neutral-light-04);
+  --color-bg-secondary: var(--neutral-light-09);
+  --color-bg-tertiary: var(--neutral-light-14);
+
+  --color-border-primary: var(--neutral-light-24);
+  --color-border-secondary: var(--neutral-light-14);
+
+  --color-action-primary: var(--pf-light-blue);
+  --color-action-danger: var(--pf-red);
+  --color-action-success: var(--pf-green);
+  --color-action-warning: var(--pf-orange);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-text-primary: var(--neutral-dark-100);
+  --color-text-secondary: var(--neutral-dark-64);
+  --color-text-tertiary: var(--neutral-dark-54);
+  --color-text-disabled: var(--neutral-dark-34);
+
+  --color-bg-primary: var(--neutral-dark-04);
+  --color-bg-secondary: var(--neutral-dark-09);
+  --color-bg-tertiary: var(--neutral-dark-14);
+
+  --color-border-primary: var(--neutral-dark-24);
+  --color-border-secondary: var(--neutral-dark-14);
+
+  --color-action-primary: var(--pf-light-blue);
+  --color-action-danger: var(--pf-red);
+  --color-action-success: var(--pf-green);
+  --color-action-warning: var(--pf-orange);
+}
+
+/* =========================================================
+ * Gradient tokens
+ * ======================================================= */
+
+:root {
+  --gradient-mv: linear-gradient(
+    90deg,
+    #ff6bce 0%,
+    #a855f7 50%,
+    #4338ca 100%
+  );
+
+  --gradient-song: linear-gradient(
+    90deg,
+    #ffb347 0%,
+    #ff4e50 50%,
+    #d63af9 100%
+  );
+
+  --gradient-story: linear-gradient(
+    90deg,
+    #3af9b9 0%,
+    #4e8fff 50%,
+    #391ed1 100%
+  );
+
+  --gradient-shadow: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+
+  /* Typography foundations */
+  --font-family-primary: Inter, sans-serif;
+
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --line-height-display: 50px;
+  --line-height-headline: 26px;
+  --line-height-section: 22px;
+
+  --line-height-title-xl: 36px;
+  --line-height-title-l: 32px;
+  --line-height-title-m: 24px;
+  --line-height-title-s: 22px;
+  --line-height-title-xs: 18px;
+
+  --line-height-body-l: 22px;
+  --line-height-body-m: 20px;
+  --line-height-body-xs: 11px;
+
+  --line-height-label-m: 18px;
+  --line-height-label-s: 15px;
+
+  --line-height-caption-m: 16px;
+  --line-height-caption-s: 11px;
+}
+
+/* =========================================================
+ * Gradient utility classes
+ * ======================================================= */
+
+.color-gradient-mv {
+  background: var(--gradient-mv);
+}
+
+.color-gradient-song {
+  background: var(--gradient-song);
+}
+
+.color-gradient-story {
+  background: var(--gradient-story);
+}
+
+.color-gradient-shadow {
+  background: var(--gradient-shadow);
+}
+
+/* =========================================================
+ * Typography utility classes
+ * ======================================================= */
+
+.type-display {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-display);
+  font-weight: var(--font-weight-extrabold);
+  line-height: var(--line-height-display);
+}
+
+.type-headline {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-headline);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-headline);
+}
+
+.type-section {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-section);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-section);
+}
+
+.type-title-xl {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-xl);
+  font-weight: var(--font-weight-extrabold);
+  line-height: var(--line-height-title-xl);
+}
+
+.type-title-l {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-l);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-l);
+}
+
+.type-title-m {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-m);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-m);
+}
+
+.type-title-s {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-s);
+}
+
+.type-title-xs {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-xs);
+}
+
+.type-body-l {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-l);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body-l);
+}
+
+.type-body-m {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body-m);
+}
+
+.type-body-s {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+}
+
+.type-body-xs {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body-xs);
+}
+
+.type-label-m {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-label-m);
+}
+
+.type-label-s {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-label-s);
+}
+
+.type-caption-m {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-caption-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-caption-m);
+}
+
+.type-caption-s {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-caption-s);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-caption-s);
+}
+
+/* =========================================================
+ * YCM Local Variables
+ * Added from YCM Figma Local Variables (2026-07-27 Figma Frame audit).
+ * These were missing from the original tokens.css export.
+ * ======================================================= */
+
+/* YCM Local Variables — Purple */
+:root {
+  --purple-500: #a855f7;
+  --color-accent-purple: var(--purple-500);
+}
+
+/* YCM Local Variables — Spacing */
+:root {
+  --spacing-4: 0.25rem;
+  --spacing-8: 0.5rem;
+  --spacing-12: 0.75rem;
+  --spacing-16: 1rem;
+  --spacing-20: 1.25rem;
+  --spacing-24: 1.5rem;
+  --spacing-28: 1.75rem;
+  --spacing-32: 2rem;
+  --spacing-40: 2.5rem;
+  --spacing-48: 3rem;
+}
+
+/* YCM Local Variables — Radius */
+:root {
+  --radius-sm: 0.75rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.375rem;
+  --radius-3xl: 1.625rem;
+  --radius-full: 624.9375rem;
+
+  /* Universal pill/circular radius for all buttons (Button/Pill, Button/Circular).
+     Any value this large clamps to 50% of the element's own size, so the same
+     token produces a stadium shape on a pill button and a perfect circle on a
+     circular button, regardless of size variant. */
+  --radius-pill: 999px;
+}
+
+/* YCM Local Variables — Effects */
+/* Figma does not export blur as a named Variable; 3px is the literal value
+   observed across every Tertiary button variant (Button/Pill, Button/Circular). */
+:root {
+  --blur-glass: 3px;
+}
+
+/* YCM Local Variables — State */
+/* Not a Figma Variable — a recurring pattern observed across components:
+   disabled state = the whole element at 30% opacity. Intended as a general
+   project-wide token, not limited to buttons. */
+:root {
+  --opacity-disabled: 0.3;
+
+  /* Hover darken overlay (Button/Circular Primary: hover = active color + this
+     layered on top). General project-wide token, not limited to buttons. */
+  --overlay-hover-dark: rgba(0, 0, 0, 0.2);
+}

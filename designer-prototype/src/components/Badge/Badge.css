@@ -1,0 +1,48 @@
+.badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 3px 4px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  color: var(--neutral-dark-100);
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  line-height: 11px;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.badge__icon {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  background: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.badge--purple,
+.badge--gold {
+  padding: 4px 6px;
+  border: 1px solid;
+  font-size: 10px;
+  line-height: normal;
+}
+
+.badge--purple { border-color: rgba(168, 85, 247, .35); color: var(--color-accent-purple); background: rgba(168, 85, 247, .2); }
+.badge--gold { border-color: rgba(245, 158, 11, .25); color: var(--color-action-warning); background: rgba(245, 158, 11, .15); }
+.badge--processing { background: var(--neutral-dark-14); }
+.badge--done { color: var(--neutral-dark-100); background: var(--pf-green-40); }
+.badge--failed { color: var(--pf-red); background: rgba(255, 38, 0, .2); }
+.badge--hot { padding: 2px 6px; border: 1px solid rgba(168, 85, 247, .35); background: var(--pf-purple-60); }
+.badge--new { padding: 2px 6px; border: 1px solid rgba(245, 158, 11, .25); background: var(--pf-orange-60); }
+.badge--sale { padding: 2px 6px; border: 1px solid var(--pf-pink-40); background: var(--pf-pink-60); }
+.badge--popular { padding: 2px 6px; border: 1px solid var(--pf-green-40); background: var(--pf-green-60); }

@@ -1,7 +1,7 @@
 # Token map — WA ⇄ DP
 
 > **GENERATED — do not hand-edit.** `node scripts/build-token-map.mjs`
-> Sources: `src/styles/tokens.css` · `/Users/jasonchen/Downloads/YCM-main/src/styles/tokens.css`
+> Sources: `src/styles/tokens.css` · `/home/user/musemv-ai/designer-prototype/src/styles/tokens.css`
 > Generated 2026-08-04. Gate **G2-a** (`redesign-migration-plan-2026-08-01.md` §10).
 
 Matching is **by value**, which is what plan §4.1 asserts is already true ("顏色不是重畫,
@@ -20,13 +20,13 @@ mapped", not as "missing" — the designer has 11 of our 20 routes still undesig
 
 | | count |
 |---|---|
-| WA tokens | 80 |
-| DP tokens (dark theme) | 179 |
+| WA tokens | 110 |
+| DP tokens (dark theme) | 183 |
 | DP names that differ between light and dark | 9 |
-| exact value match | 12 |
-| ambiguous (one WA value → several DP names) | 44 |
-| WA-only (no DP token with this value) | 24 |
-| DP-only | 65 |
+| exact value match | 27 |
+| ambiguous (one WA value → several DP names) | 55 |
+| WA-only (no DP token with this value) | 28 |
+| DP-only | 52 |
 
 ---
 
@@ -41,7 +41,7 @@ read from the actual token files, so this table stops being a claim and starts b
 | type-name ladder | `--fs-headline` | `20px` | `--font-title-m` | `20px` | ✅ same | plan §4.2: names are off by one step — DP title-m (20px) is WA headline |
 | pink | `--accent-2` | `#EC4899` | `--pf-pink` | `#F23B77` | 🔴 differs | different colours |
 | blue | `--blue` | `#38BDF8` | `--pf-light-blue` | `#03ADE2` | 🔴 differs | different colours |
-| gradient angle | `--mv-grad` | `linear-gradient(135deg,#ff6bce 0%,#a855f7 50%,#4338ca 100%)` | `--gradient-mv` | `(absent)` | 🔴 differs | 135deg vs 90deg — confirm the Figma source |
+| gradient angle | `--mv-grad` | `linear-gradient(135deg,#ff6bce 0%,#a855f7 50%,#4338ca 100%)` | `--gradient-mv` | `linear-gradient(90deg,#ff6bce 0%,#a855f7 50%,#4338ca 100%)` | 🔴 differs | 135deg vs 90deg — confirm the Figma source |
 
 ## 2. The two ladders R2 is about
 
@@ -93,7 +93,7 @@ WA `--fs-*` vs DP's semantic `--font-*` (the `--font-web-*` / `--font-mobile-*` 
 
 ## 3. Mapped by value
 
-### Exact match — safe to alias (12)
+### Exact match — safe to alias (27)
 
 | WA token | value | DP token | category |
 |---|---|---|---|
@@ -103,14 +103,29 @@ WA `--fs-*` vs DP's semantic `--font-*` (the `--font-web-*` / `--font-mobile-*` 
 | `--green` | `#01B37B` | `--pf-green` | colour |
 | `--red` | `#FF2600` | `--pf-red` | colour |
 | `--fs-display` | `42px` | `--font-display` | type |
+| `--fw-display` | `800` | `--font-weight-extrabold` | weight |
+| `--fw-title-l` | `800` | `--font-weight-extrabold` | weight |
+| `--fw-title-m` | `700` | `--font-weight-bold` | weight |
+| `--fw-title-s` | `700` | `--font-weight-bold` | weight |
+| `--fw-title-xs` | `700` | `--font-weight-bold` | weight |
+| `--fw-headline` | `700` | `--font-weight-bold` | weight |
+| `--fw-section` | `700` | `--font-weight-bold` | weight |
+| `--fw-body-l` | `500` | `--font-weight-medium` | weight |
+| `--fw-body-m` | `500` | `--font-weight-medium` | weight |
+| `--fw-body-s` | `500` | `--font-weight-medium` | weight |
+| `--fw-body-xs` | `500` | `--font-weight-medium` | weight |
 | `--fs-label-m` | `13px` | `--font-label-m` | type |
+| `--fw-label-m` | `700` | `--font-weight-bold` | weight |
+| `--fw-label-s` | `600` | `--font-weight-semibold` | weight |
+| `--fw-cap-m` | `700` | `--font-weight-bold` | weight |
+| `--fw-cap-s` | `700` | `--font-weight-bold` | weight |
 | `--sp-1` | `4px` | `--spacing-4` | spacing |
 | `--sp-2` | `8px` | `--spacing-8` | spacing |
 | `--sp-10` | `40px` | `--spacing-40` | spacing |
 | `--r-sm` | `8px` | `--spacing-8` | radius |
 | `--r-pill` | `9999px` | `--radius-full` | radius |
 
-### Ambiguous — one WA value maps to several DP names; pick deliberately (44)
+### Ambiguous — one WA value maps to several DP names; pick deliberately (55)
 
 | WA token | value | DP token | category |
 |---|---|---|---|
@@ -139,16 +154,27 @@ WA `--fs-*` vs DP's semantic `--font-*` (the `--font-web-*` / `--font-mobile-*` 
 | `--fs-title-l` | `30px` | `--font-mobile-regular-large-title` · `--font-mobile-bold-large-title` · `--font-web-mobile-headline-1` · `--font-title-xl` | type |
 | `--fs-title-m` | `26px` | `--font-web-mobile-headline-2` · `--font-title-l` · `--line-height-headline` · `--radius-3xl` | type |
 | `--fs-title-s` | `17px` | `--font-mobile-regular-title-3` · `--font-mobile-bold-title-3` · `--font-section` · `--font-title-s` · `--font-body-l` | type |
+| `--lh-title-s` | `22px` | `--font-web-desktop-body-1` · `--line-height-section` · `--line-height-title-s` · `--line-height-body-l` · `--radius-2xl` | line-height |
 | `--fs-title-xs` | `15px` | `--font-mobile-regular-title-5` · `--font-mobile-regular-button` · `--font-mobile-bold-title-5` · `--font-mobile-bold-button` · `--font-title-xs` · `--line-height-label-s` | type |
+| `--lh-title-xs` | `18px` | `--font-mobile-regular-title-2` · `--font-mobile-bold-title-2` · `--font-web-desktop-button-2` · `--font-web-desktop-body-3` · `--font-web-mobile-headline-4` · `--font-web-mobile-button-2` · `--line-height-title-xs` · `--line-height-label-m` | line-height |
 | `--fs-headline` | `20px` | `--font-mobile-regular-title-1` · `--font-mobile-bold-title-1` · `--font-web-desktop-headline-5` · `--font-web-desktop-body-2` · `--font-web-mobile-headline-3` · `--font-web-mobile-button-1` · `--font-headline` · `--font-title-m` · `--line-height-body-m` · `--spacing-20` · `--radius-xl` | type |
+| `--lh-headline` | `26px` | `--font-web-mobile-headline-2` · `--font-title-l` · `--line-height-headline` · `--radius-3xl` | line-height |
 | `--fs-section` | `17px` | `--font-mobile-regular-title-3` · `--font-mobile-bold-title-3` · `--font-section` · `--font-title-s` · `--font-body-l` | type |
+| `--lh-section` | `22px` | `--font-web-desktop-body-1` · `--line-height-section` · `--line-height-title-s` · `--line-height-body-l` · `--radius-2xl` | line-height |
 | `--fs-body-l` | `17px` | `--font-mobile-regular-title-3` · `--font-mobile-bold-title-3` · `--font-section` · `--font-title-s` · `--font-body-l` | type |
+| `--lh-body-l` | `22px` | `--font-web-desktop-body-1` · `--line-height-section` · `--line-height-title-s` · `--line-height-body-l` · `--radius-2xl` | line-height |
 | `--fs-body-m` | `14px` | `--font-mobile-regular-body-1` · `--font-mobile-bold-body-1` · `--font-body-m` · `--radius-md` | type |
+| `--lh-body-m` | `20px` | `--font-mobile-regular-title-1` · `--font-mobile-bold-title-1` · `--font-web-desktop-headline-5` · `--font-web-desktop-body-2` · `--font-web-mobile-headline-3` · `--font-web-mobile-button-1` · `--font-headline` · `--font-title-m` · `--line-height-body-m` · `--spacing-20` · `--radius-xl` | line-height |
 | `--fs-body-s` | `12px` | `--font-mobile-regular-body-2` · `--font-mobile-regular-subheadline` · `--font-mobile-bold-body-2` · `--font-mobile-bold-subheadline` · `--font-web-desktop-body-5` · `--font-body-s` · `--font-label-s` · `--spacing-12` · `--radius-sm` | type |
 | `--fs-body-xs` | `9px` | `--font-mobile-regular-caption-2` · `--font-mobile-bold-caption-2` · `--font-body-xs` · `--font-caption-s` | type |
+| `--lh-body-xs` | `11px` | `--font-mobile-regular-footnote` · `--font-mobile-bold-footnote` · `--font-caption-m` · `--line-height-body-xs` · `--line-height-caption-s` | line-height |
+| `--lh-label-m` | `18px` | `--font-mobile-regular-title-2` · `--font-mobile-bold-title-2` · `--font-web-desktop-button-2` · `--font-web-desktop-body-3` · `--font-web-mobile-headline-4` · `--font-web-mobile-button-2` · `--line-height-title-xs` · `--line-height-label-m` | line-height |
 | `--fs-label-s` | `12px` | `--font-mobile-regular-body-2` · `--font-mobile-regular-subheadline` · `--font-mobile-bold-body-2` · `--font-mobile-bold-subheadline` · `--font-web-desktop-body-5` · `--font-body-s` · `--font-label-s` · `--spacing-12` · `--radius-sm` | type |
+| `--lh-label-s` | `15px` | `--font-mobile-regular-title-5` · `--font-mobile-regular-button` · `--font-mobile-bold-title-5` · `--font-mobile-bold-button` · `--font-title-xs` · `--line-height-label-s` | line-height |
 | `--fs-cap-m` | `11px` | `--font-mobile-regular-footnote` · `--font-mobile-bold-footnote` · `--font-caption-m` · `--line-height-body-xs` · `--line-height-caption-s` | type |
+| `--lh-cap-m` | `16px` | `--font-mobile-regular-title-4` · `--font-mobile-bold-title-4` · `--font-web-desktop-body-4` · `--font-web-mobile-headline-5` · `--line-height-caption-m` · `--spacing-16` · `--radius-lg` | line-height |
 | `--fs-cap-s` | `9px` | `--font-mobile-regular-caption-2` · `--font-mobile-bold-caption-2` · `--font-body-xs` · `--font-caption-s` | type |
+| `--lh-cap-s` | `11px` | `--font-mobile-regular-footnote` · `--font-mobile-bold-footnote` · `--font-caption-m` · `--line-height-body-xs` · `--line-height-caption-s` | line-height |
 | `--sp-3` | `12px` | `--font-mobile-regular-body-2` · `--font-mobile-regular-subheadline` · `--font-mobile-bold-body-2` · `--font-mobile-bold-subheadline` · `--font-web-desktop-body-5` · `--font-body-s` · `--font-label-s` · `--spacing-12` · `--radius-sm` | spacing |
 | `--sp-4` | `16px` | `--font-mobile-regular-title-4` · `--font-mobile-bold-title-4` · `--font-web-desktop-body-4` · `--font-web-mobile-headline-5` · `--line-height-caption-m` · `--spacing-16` · `--radius-lg` | spacing |
 | `--sp-5` | `20px` | `--font-mobile-regular-title-1` · `--font-mobile-bold-title-1` · `--font-web-desktop-headline-5` · `--font-web-desktop-body-2` · `--font-web-mobile-headline-3` · `--font-web-mobile-button-1` · `--font-headline` · `--font-title-m` · `--line-height-body-m` · `--spacing-20` · `--radius-xl` | spacing |
@@ -159,7 +185,7 @@ WA `--fs-*` vs DP's semantic `--font-*` (the `--font-web-*` / `--font-mobile-*` 
 | `--r-xl` | `14px` | `--font-mobile-regular-body-1` · `--font-mobile-bold-body-1` · `--font-body-m` · `--radius-md` | radius |
 | `--r-2xl` | `16px` | `--font-mobile-regular-title-4` · `--font-mobile-bold-title-4` · `--font-web-desktop-body-4` · `--font-web-mobile-headline-5` · `--line-height-caption-m` · `--spacing-16` · `--radius-lg` | radius |
 
-### WA-only — no DP token carries this value yet (24)
+### WA-only — no DP token carries this value yet (28)
 
 | WA token | value | DP token | category |
 |---|---|---|---|
@@ -173,6 +199,10 @@ WA `--fs-*` vs DP's semantic `--font-*` (the `--font-web-*` / `--font-mobile-*` 
 | `--mv-grad` | `linear-gradient(135deg,#ff6bce 0%,#a855f7 50%,#4338ca 100%)` | — | gradient |
 | `--song-grad` | `linear-gradient(135deg,#ffb347 0%,#ff4e50 50%,#d63af9 100%)` | — | gradient |
 | `--font-sans` | `'inter', -apple-system, 'sf pro display', system-ui, sans-serif` | — | type |
+| `--lh-display` | `1.1` | — | line-height |
+| `--lh-title-l` | `1.13` | — | line-height |
+| `--lh-title-m` | `1.15` | — | line-height |
+| `--lh-body-s` | `1.5` | — | line-height |
 | `--shadow-cta` | `0 8px 12px rgba(168,85,247,0.32)` | — | other |
 | `--shadow-card` | `0 6px 16px rgba(0,0,0,0.3)` | — | other |
 | `--dur-fast` | `0.15s` | — | other |
@@ -189,7 +219,7 @@ WA `--fs-*` vs DP's semantic `--font-*` (the `--font-web-*` / `--font-mobile-*` 
 | `--bp-desktop` | `1440px` | — | other |
 
 
-## 4. DP-only — new tokens arriving with the redesign (65)
+## 4. DP-only — new tokens arriving with the redesign (52)
 
 <details><summary>expand</summary>
 
@@ -229,33 +259,20 @@ WA `--fs-*` vs DP's semantic `--font-*` (the `--font-web-*` / `--font-mobile-*` 
 | `--black-60` | `rgba(9,9,11,0.6)` |
 | `--black-80` | `rgba(9,9,11,0.8)` |
 | `--neutral-light-09` | `#F7F7F7` |
-| `--font-mobile-regular-title-2` | `18px` |
-| `--font-mobile-bold-title-2` | `18px` |
 | `--font-web-desktop-headline-1` | `48px` |
 | `--font-web-desktop-headline-2` | `38px` |
 | `--font-web-desktop-headline-3` | `28px` |
-| `--font-web-desktop-button-2` | `18px` |
-| `--font-web-desktop-body-1` | `22px` |
-| `--font-web-desktop-body-3` | `18px` |
-| `--font-web-mobile-headline-4` | `18px` |
-| `--font-web-mobile-button-2` | `18px` |
 | `--color-action-primary` | `#03ADE2` |
 | `--color-action-warning` | `#FF8A02` |
+| `--gradient-mv` | `linear-gradient(90deg,#ff6bce 0%,#a855f7 50%,#4338ca 100%)` |
+| `--gradient-song` | `linear-gradient(90deg,#ffb347 0%,#ff4e50 50%,#d63af9 100%)` |
+| `--gradient-story` | `linear-gradient(90deg,#3af9b9 0%,#4e8fff 50%,#391ed1 100%)` |
+| `--gradient-shadow` | `linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0.4) 100%)` |
 | `--font-family-primary` | `inter, sans-serif` |
-| `--font-weight-medium` | `500` |
-| `--font-weight-semibold` | `600` |
-| `--font-weight-bold` | `700` |
-| `--font-weight-extrabold` | `800` |
 | `--line-height-display` | `50px` |
-| `--line-height-section` | `22px` |
 | `--line-height-title-xl` | `36px` |
-| `--line-height-title-s` | `22px` |
-| `--line-height-title-xs` | `18px` |
-| `--line-height-body-l` | `22px` |
-| `--line-height-label-m` | `18px` |
 | `--spacing-28` | `28px` |
 | `--spacing-48` | `48px` |
-| `--radius-2xl` | `22px` |
 | `--radius-pill` | `999px` |
 | `--blur-glass` | `3px` |
 | `--opacity-disabled` | `0.3` |

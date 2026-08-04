@@ -1,0 +1,73 @@
+/* Figma "Floating Button" (node 1692:75490). */
+.floating-cta {
+  position: fixed;
+  right: 0;
+  bottom: var(--floating-cta-footer-offset, 0px);
+  left: 240px;
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 20px 60px;
+  box-sizing: border-box;
+  background: linear-gradient(to bottom, rgba(7, 7, 7, 0) 4%, #070707 100%);
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.floating-cta > * {
+  pointer-events: auto;
+}
+
+.floating-cta__spacer {
+  flex: none;
+  width: 100%;
+  height: 126px;
+  pointer-events: none;
+}
+
+body:has(.sidebar--collapsed) .floating-cta {
+  left: 76px;
+}
+
+@media (min-width: 1024px) {
+  .floating-cta--parent-aligned,
+  body:has(.sidebar--collapsed) .floating-cta--parent-aligned,
+  body:has(.sidebar:not(.sidebar--collapsed)) .floating-cta--parent-aligned {
+    right: auto;
+    left: var(--floating-cta-parent-left);
+    width: var(--floating-cta-parent-width);
+  }
+}
+
+@media (max-width: 1024px) {
+  .floating-cta {
+    left: 76px;
+  }
+
+  body:has(.sidebar:not(.sidebar--collapsed)) .floating-cta {
+    left: 240px;
+  }
+}
+
+@media (max-width: 767px) {
+  .floating-cta__spacer {
+    height: 84px;
+  }
+
+  .floating-cta,
+  body:has(.sidebar--collapsed) .floating-cta,
+  body:has(.sidebar:not(.sidebar--collapsed)) .floating-cta {
+    right: 0;
+    bottom: calc(66px + var(--floating-cta-footer-offset, 0px));
+    left: 0;
+    width: auto;
+    padding: 18px 16px 20px;
+  }
+
+  .floating-cta > * {
+    width: 100%;
+    max-width: 440px;
+  }
+}
