@@ -337,3 +337,55 @@ test("G5-d#10 enhancePrompt round-trips through api, not a local fake", async ({
   // A local fake would wrap/extend the input; the api returns an independent sample.
   expect(await box.inputValue()).not.toContain(original);
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// S2 — an MV needs at least 30s of audio (MV-01)
+//
+// WHY THIS TEST EXISTS, AND WHY NOW
+//   redesign-migration-plan.md §1.4: S2 is decided — WA's 30s floor wins, DP's
+//   8%-of-track TRIM_MIN_GAP is dropped. The handoff flags S2 as one of only two
+//   product rules with NO test behind it, living inside a component DP replaces
+//   wholesale (TrimAudioSheet). That combination is exactly how a rule disappears
+//   during a port: nothing fails, the screen looks right, and the constraint is
+//   simply gone. Written BEFORE TrimAudioModal is touched, so the port has to
+//   keep it rather than rediscover it.
+// ════════════════════════════════════════════════════════════════════════════
+test("S2 trim floor: a selection under 30s is rejected with a reason", async ({ page }) => {
+  await login(page);
+  await page.goto("/mv/room");
+
+  await page.getByRole("button", { name: "Song Library" }).click();
+  const chooseSong = page.getByRole("dialog", { name: "Choose Song" });
+  await chooseSong.getByRole("button", { name: "Use", exact: true }).first().click();
+
+  const confirm = page.getByRole("button", { name: "Use Trimmed Audio", exact: true });
+  // The default handles (15%–70% of a 114s track ≈ 63s) clear the floor, so the
+  // dialog opens usable — otherwise this test would pass for the wrong reason.
+  await expect(confirm).toBeEnabled();
+
+  const startHandle = page.getByRole("slider", { name: "Trim start" });
+  const endHandle = page.getByRole("slider", { name: "Trim end" });
+  const startBox = await startHandle.boundingBox();
+  const endBox = await endHandle.boundingBox();
+  expect(startBox && endBox, "both trim handles must be rendered").toBeTruthy();
+
+  // Each handle is `left: calc(pct% - 6px)` with width 12px, so its CENTRE sits
+  // exactly on its percentage. Two known centres (15% and 70%) give the track
+  // geometry without having to locate the track element itself.
+  const startCentre = startBox!.x + startBox!.width / 2;
+  const endCentre = endBox!.x + endBox!.width / 2;
+  const trackWidth = (endCentre - startCentre) / 0.55;
+  const trackLeft = startCentre - 0.15 * trackWidth;
+  const y = endBox!.y + endBox!.height / 2;
+
+  // Drag the end handle to 25%: a 10% span of a 114s track ≈ 11s, well under the
+  // floor and clear of onMove's `startPct + 5` clamp.
+  await page.mouse.move(endCentre, y);
+  await page.mouse.down();
+  await page.mouse.move(trackLeft + 0.25 * trackWidth, y, { steps: 12 });
+  await page.mouse.up();
+
+  // Both halves of the rule: the user is told why, and the action is blocked.
+  await expect(page.getByText(/minimum 30s/)).toBeVisible();
+  await expect(confirm).toBeDisabled();
+});

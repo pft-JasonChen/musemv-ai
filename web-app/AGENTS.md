@@ -11,6 +11,10 @@ Next.js 16.2 (App Router) + React 19 + TypeScript strict + Tailwind v4. Package 
 - `npm run e2e` — Playwright + axe. It serves the LAST production build (`next start -p 3100`),
   so run `npm run build` immediately before. One-time per machine: `npx playwright install chromium`.
   Sandboxed envs with a system chromium: `CHROMIUM_PATH=/path/to/chromium npm run e2e` (no download).
+  You need this whenever Playwright's pinned browser build differs from the image's — the error
+  names a build number that "doesn't exist" and tells you to run `npx playwright install`; don't,
+  just point `CHROMIUM_PATH` at the binary that IS there
+  (`find /opt/pw-browsers -name chrome -o -name chrome-headless-shell`).
   The a11y spec auto-discovers routes from `src/app/`; known accent-pill contrast issues are
   excluded via selectors in `e2e/a11y.spec.ts` until the design decision lands (`TODO.md` #2).
 - `npm run storybook` / `npm run build-storybook`
@@ -25,9 +29,13 @@ refactors so the project typechecks after each individual edit (add the new befo
 - This folder has no `.git` — the repo root is one level up (`ycmuse-web/`). The root
   `.claude/rules/stage-*.md` pipeline (BEM classes, `prototypes/`, port 8000) belongs to a
   DIFFERENT sub-project; ignore it here. Inside `web-app/`, this file is the contract.
-- NEVER: add a backend, DB, or `fetch()` call (`grep -rn 'fetch(' src` must stay empty); edit
-  token values in `src/styles/tokens.css` (synced from the mobile Figma); reference
+- NEVER: add a backend, DB, or `fetch()` call (`grep -rn 'fetch(' src` must stay empty);
+  hand-edit a single token value in `src/styles/tokens.css`; reference
   `../ycmuse-app-prototype/` from code or config.
+  **Tokens changed hands on 2026-08-04** (plan D2): `tokens.css` is now synced from the
+  DESIGNER prototype (`designer-prototype/src/styles/tokens.css`), not the mobile Figma.
+  It may be **replaced wholesale from a designer drop**, never edited value-by-value.
+  WA-specific semantic names live in `src/styles/token-aliases.css`.
 - Commit with explicit `git add <paths>` from the repo root, never `git add -A`.
   (`tsconfig.tsbuildinfo` and `.fuse_hidden*` junk are gitignored since 2026-07-11; if a stray
   `.fuse_hidden*` appears under `src/`, ignore it — never read, edit, or cite it.)
@@ -48,13 +56,33 @@ refactors so the project typechecks after each individual edit (add the new befo
   The `.t-*` classes and `--sp-*`/`--fs-*` tokens are unused; don't adopt them or `text-sm`-style named sizes.
 - Radii: `rounded-*` is remapped in the `globals.css` `@theme` (`rounded-xl` = 14px, not Tailwind's
   12px). Use the named utilities; never `rounded-[Npx]`.
-- Breakpoints: only `sm:` (640px — where the shell switches bottom-bar → sidebar) and `lg:` (1024px).
-  No `md:`/`xl:` anywhere. 390/768/1024/1440 are review viewports, not code breakpoints.
+- Breakpoints: **six tiers — 320 / 375 / 768 / 1024 / 1440 / 1920** (plan D2). `md:` (768) and
+  `xl:` (1920) are being added to the `@theme`; 320 is the minimum supported width and has no
+  query of its own (it is the unprefixed default). These are BOTH code breakpoints and the
+  six screenshot widths — the old "review viewports are not code breakpoints" split is gone.
+  _In flight:_ the shell's phone cutover moves `sm:` (640) → `md:` (768) as part of the Shell
+  slice. Until that slice lands you will still see `sm:` doing that job — it is mid-migration,
+  not a rule violation. Check `docs/redesign-migration-plan.md` §4 for where it is up to.
 - Raw `#fff`/`#000`, `rgba()` scrims, and gradient stops are existing tolerated practice — match
   the surrounding file; don't mass-convert. A NEW semantic color = add a token to `tokens.css`
   `:root` and consume it via `var()`.
 - Hover/press transitions and the focus-visible ring are applied globally in `globals.css` — don't
   re-add them per component.
+
+### Migrating a screen to the designer UI (`docs/redesign-migration-plan.md`)
+
+- **Which token names to write (R-5).** Migrated markup uses **DP's native names**
+  (`var(--radius-lg)`, `var(--color-…)`). `token-aliases.css` exists only so components that
+  have NOT been migrated keep working; it shrinks with every slice and is deleted at the end.
+  Do not "tidy" migrated markup back onto the WA aliases — that is the one change that would
+  make the alias layer permanent. (The reverse rule is impossible anyway: DP's 52 stylesheets
+  are copied verbatim and already reference DP names, and rewriting them forfeits file-level
+  re-sync on the next drop.)
+- **Style purity.** A migrated component's classes come from `src/styles/designer/`. Don't mix
+  Tailwind utilities into it (Gate G3-d).
+- **Icons (D4).** Migrated screens use DP's `mask-image` + `currentColor`. All 84 of WA's
+  `ic_*.svg` filenames already exist in DP's 90, so this is a rename, not a redraw. Convert
+  **only the screen you are migrating** — the inline-`<svg>` backlog is not yours to mass-refactor.
 
 House style in one line:
 
@@ -108,6 +136,19 @@ House style in one line:
   request, but it costs a redirect round-trip instead of an in-place navigation. Going forward,
   prefer `localePath(locale, path)` for new `router.push()` calls; don't propagate the raw-path
   pattern.
+- **Migrated links are not optional about this (R-9).** Every link in a migrated component goes
+  through `next/link` + `localePath()`. DP navigates with `<a href="/home">` and reads
+  `window.location.pathname`; copy that across and each navigation becomes a full page load
+  **and** loses the locale prefix. The cookie redirect still lands you on the right page, so
+  **it looks perfect in English and is broken in the other 8 locales** — nobody testing in
+  English will ever see it. `guard-greps.sh` now fails on a literal `<a href="/`, but 20 of DP's
+  links are `href={variable}` and no grep sees those: the rule is yours to hold, the grep only
+  catches the easy half.
+- **i18n scope during the migration (R-8).** Keep the existing boundary exactly: the migrated
+  `Sidebar` / `MobileTabBar` / `MobileHeader` / Account screens **stay on `useT()`**, everything
+  else stays hardcoded English. `useT()` has only two real consumers today and migrating the
+  Sidebar is what would silently take it to one. Do not widen the scope either — wiring new
+  areas into `useT()` is a separate decision, not a side effect of a UI port.
 
 ## Tests
 

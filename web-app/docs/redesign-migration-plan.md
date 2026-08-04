@@ -164,18 +164,24 @@
 
 ### Phase 0 — 前置(不動任何畫面)
 
-1. ✅ DP 進 repo + PROVENANCE(已完成,`da34346`)
-2. ✅ token-map generator 修正 + G2-a 生效(已完成)
-3. **`AGENTS.md` 改寫**:breakpoint 六階、token 規則(D2 + R-5)、導航規則(R-9)、i18n 分界(R-8)。
-   ⚠️ 這會**推翻現行的「只有 sm/lg」與「NEVER edit token values」** —— 兩條都是 hook 與 reviewer 會引用的載重規則,
-   **必須在 Phase 1 之前改完**,否則每個 reviewer 都會引用一條你已經決定要打破的規則。
-4. **`guard-greps.sh` 新增 `<a href="/` grep**(R-9)
-5. **`DEVELOPER-HANDOVER.md` §7 同步**(breakpoint)+ **§9 更正**(UI source of truth 是 DP,不是 mobile prototype)
-6. 六寬度 Phase 0 baseline 截圖(114 張已 committed,確認仍有效)
-7. **補 S2 的 e2e**(30 秒 trim 下限)—— 在 `TrimAudioSheet` 被碰之前
-8. 寄出 U6 給 RD
+1. ✅ DP 進 repo + PROVENANCE(`da34346`)
+2. ✅ token-map generator 修正 + G2-a 生效(`da34346`)
+3. ✅ **`AGENTS.md` 改寫**:breakpoint 六階、token 規則(D2 + R-5)、icon(D4)、導航(R-9)、i18n 分界(R-8)。
+   推翻了現行的「只有 sm/lg」與「NEVER edit token values」—— 兩條都是 hook 與 reviewer 會引用的載重規則,
+   所以必須趕在 Phase 1 之前改完,否則每個 reviewer 都會引用一條已經決定要打破的規則。
+4. ✅ **`guard-greps.sh` 新增 `<a href="/` grep**(R-9)。
+   實測可抓到 DP 的 17 個字面連結,且不誤傷 `https://` / `#anchor` / `mailto:`。
+   ⚠️ **另有 20 個是 `href={變數}`,grep 看不見** —— 這條規則抬高地板,沒有關上門。
+5. ✅ **`DEVELOPER-HANDOVER.md` §7**(breakpoint + token 來源)+ **§9**(UI source of truth 改為 DP,
+   mobile prototype 降為 flow-only)
+6. ✅ 114 張六寬度 baseline 確認仍在且已 committed(320/375/768/1024/1440/1920 全在)
+7. ✅ **補上 S2 的 e2e**(30 秒 trim 下限),趕在 `TrimAudioSheet` 被碰之前。
+   **已做變異測試**:把 `MIN_TRIM_SEC` 改成 0 → 測試紅;改回 30 → 綠。它真的在守這條規則,
+   不是剛好通過。
+8. ⬜ 寄出 U6 給 RD(草稿見 §8,需要你寄)
 
-**Gate:** G1 + G4(快照)+ G6。
+**Gate 實測(2026-08-04):** typecheck ✓ lint ✓ test:run 76 ✓ build ✓ ·
+guard-greps ✓ token-map ✓ rd-changelog ✓ · **e2e 47 passed**(46 + 新增的 S2)。
 
 ### Phase 1 — 地基(不動任何畫面)
 
@@ -288,3 +294,49 @@ git diff --stat designer-prototype/    # 這就是 §12 step 1 要的 drop-to-dr
 > **不變的原則:DP、spec 與 code 三者衝突時,讀 code。**
 > 這次已經抓到兩個實例:token-map 產生器比它引用的文件更不可信;
 > DP 的 $9.99 與**已知過時**的交接文件一致,而不是與 code 一致。
+
+---
+
+## 8. U6 — 給 RD 的確認信(草稿,需要你寄)
+
+Gate G4 是這次轉移最重要的一層:它把「不要影響 RD」從口頭約定變成機器檢查。
+但**它只能保護 C1–C8 這張清單上的東西** —— 所以這張清單的正確性,直接決定 G4 有沒有意義。
+清單目前是我們單方面列的,RD 從未確認。成本是一封信。
+
+> **主旨:確認一下你們實際依賴 web-app 的哪些介面**
+>
+> Hi,
+>
+> 我們接下來會把設計師的新版 UI 搬進 `web-app/`。分工不變:UI 由我們出,你們負責串 API 與帳號。
+> 也就是說這次是 **UI-only 變更,對你們的介面應該是零破壞**。
+>
+> 為了讓「應該」變成「保證」,我們建了一組自動檢查:只要 PR 動到下面任何一項,CI 就會擋下來,
+> 並強制寫進 `docs/CHANGELOG-RD.md`。**但它只保護清單上的東西。**
+> 想請你們確認這張清單就是你們真正依賴的:
+>
+> | | 介面 | 我們的假設 |
+> |---|---|---|
+> | C1 | `src/lib/api/contract.ts`(`MuseApi` 6 個方法) | 你們要實作這個 interface → 凍結 |
+> | C2 | `src/lib/api/schemas.ts`(Zod = wire contract) | 回應格式驗證 → 凍結 |
+> | C3 | `src/lib/api/index.ts`(`export const api`) | 換真 client 的唯一一行 → 凍結 |
+> | C4 | `useAuth` / `useCredits` / `useHistory` / `useMvFlow` / `useSongFlow` 的回傳鍵 | 只可新增,不可改名或刪除 |
+> | C5 | `src/lib/authStore.ts` → `localStorage["muse_auth"]` | 接真登入的落點 |
+> | C6 | `src/lib/i18n/config.ts`(9 語 `LOCALES`、`localePath`、`HTML_LANG`)+ `middleware.ts` | URL 結構、SEO、後端語系參數 |
+> | C7 | `src/app/**/page.tsx` 的 URL 形狀 | deep link、分享連結、埋點 |
+> | C8 | `src/lib/mv/types.ts`(`COST_*`、`DEFAULT_SETTINGS`、`isComposeReady`) | 對帳 / 扣點規則 |
+>
+> **三個具體問題:**
+>
+> 1. **有沒有漏的?** 你們有沒有依賴不在這張表上的東西(某個 component prop、某個 util、
+>    某個 localStorage key、某個 query 參數)?有的話我們加進去一起保護。
+> 2. **C5 / C6 我們決定「不動」** —— auth 維持 `localStorage["muse_auth"]`(設計師的 prototype 用
+>    `sessionStorage`,我們不採用),語言維持 9 語。這對你們是不是正確的方向?
+> 3. **C8 會有一次變更**:我們會拿掉 song 的 `bpm` / `musicKey` 兩個欄位(設計師新版沒有這兩個
+>    控制項)。這會走獨立 PR + changelog,不會夾在 UI 變更裡。**對你們有影響嗎?**
+>
+> 另外提醒一件事,免得你們日後撞到:我們有一條 grep 禁止 `src` 出現任何 `fetch(`。
+> 你們的真 client 進來時會被它擋下 —— 這是預期的,設 **`YCM_REAL_API=1`** 規則就變成
+> 「`fetch` 只允許在 `src/lib/api/` 裡」,也就是你們本來就想維持的界線。細節在
+> `docs/DEVELOPER-HANDOVER.md` §4。
+>
+> 謝謝!
