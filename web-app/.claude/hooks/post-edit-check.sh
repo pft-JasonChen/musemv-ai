@@ -13,4 +13,6 @@ case "$path" in
     npx tsc --noEmit || { echo "tsc failed after editing $path" >&2; exit 2; }
     npx vitest related --run "$path" >/dev/null 2>&1 || true ;;
 esac
+bash .claude/hooks/guard-greps.sh || exit 2
+
 exit 0

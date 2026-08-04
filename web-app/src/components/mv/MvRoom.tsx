@@ -279,6 +279,9 @@ export function MvRoom() {
             <SectionLabel>Settings</SectionLabel>
             <button
               onClick={() => setSettingsOpen(true)}
+              // Its visible content is just the current setting tags, which makes a poor
+              // accessible name; the label also gives e2e a stable handle (G5-d #7).
+              aria-label="Open MV settings"
               className="flex w-full items-center gap-2 rounded-xl border p-3"
               style={{ background: "var(--card)", borderColor: "var(--border-2)" }}
             >

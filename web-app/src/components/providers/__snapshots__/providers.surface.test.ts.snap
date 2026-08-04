@@ -1,0 +1,75 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`C4 — provider hook surfaces [additive only] > the set of contract-bearing providers is unchanged 1`] = `
+[
+  "useAuth",
+  "useCredits",
+  "useHistory",
+  "useMvFlow",
+  "useSongFlow",
+]
+`;
+
+exports[`C4 — provider hook surfaces [additive only] > useAuth > shape is unchanged 1`] = `
+[
+  "hydrated",
+  "loggedIn",
+  "openSignIn",
+  "profile",
+  "requireLogin",
+  "signOut",
+  "status",
+  "subscribe",
+  "subscribed",
+  "subscribedPlan",
+  "updateProfile",
+]
+`;
+
+exports[`C4 — provider hook surfaces [additive only] > useCredits > shape is unchanged 1`] = `
+[
+  "addCredits",
+  "consumeEnhance",
+  "credits",
+  "enhanceCost",
+]
+`;
+
+exports[`C4 — provider hook surfaces [additive only] > useHistory > shape is unchanged 1`] = `
+[
+  "history",
+  "markCompleted",
+  "markFailed",
+  "upsertGenerating",
+]
+`;
+
+exports[`C4 — provider hook surfaces [additive only] > useMvFlow > shape is unchanged 1`] = `
+[
+  "compose",
+  "gen",
+  "patchCompose",
+  "resetForNewMv",
+  "resetForRerender",
+  "resultUrl",
+  "saveStoryboard",
+  "setCompose",
+  "setStoryboard",
+  "startRender",
+  "startStoryboard",
+  "storyboard",
+  "storyboardDirty",
+]
+`;
+
+exports[`C4 — provider hook surfaces [additive only] > useSongFlow > shape is unchanged 1`] = `
+[
+  "gen",
+  "patchSongCompose",
+  "resetForNewSong",
+  "resetForRecreate",
+  "songCompose",
+  "songResult",
+  "startSong",
+]
+`;

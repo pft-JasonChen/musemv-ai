@@ -12,3 +12,6 @@
 next-env.d.ts
 tsconfig.tsbuildinfo
 .fuse_hidden*
+
+# Per-machine session checkpoints written by .claude/hooks/write-handoff.sh
+.claude/session-log/

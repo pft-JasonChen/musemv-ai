@@ -59,7 +59,9 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
 
   return (
     // While the success animation plays, block dismissal by swallowing onClose.
-    <Modal open={open} onClose={signingIn ? () => {} : onClose} maxWidth={400}>
+    // `ariaLabel` (not `title`) because this dialog draws its own heading: without it
+    // the role="dialog" has no accessible name at all (WCAG / axe aria-dialog-name).
+    <Modal open={open} onClose={signingIn ? () => {} : onClose} ariaLabel="Sign in" maxWidth={400}>
       {signingIn ? (
         <div className="flex flex-col items-center gap-2.5 px-2 py-8 text-center">
           <div

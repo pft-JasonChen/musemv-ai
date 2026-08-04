@@ -1,0 +1,369 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`C1 — MuseApi contract (src/lib/api/contract.ts) [FROZEN] > EnhanceKind union is unchanged 1`] = `""mv" | "song" | "lyrics" | "storyboard" | "scene" | "cover""`;
+
+exports[`C1 — MuseApi contract (src/lib/api/contract.ts) [FROZEN] > method names are unchanged 1`] = `
+[
+  "createMvJob",
+  "createSongJob",
+  "enhancePrompt",
+  "getMvJob",
+  "getSongJob",
+  "renderMvJob",
+]
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > BadgeSchema shape is unchanged 1`] = `"{"$schema":"https://json-schema.org/draft/2020-12/schema","anyOf":[{"type":"string","enum":["HOT","NEW"]},{"type":"null"}]}"`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > CharacterPhotoSchema shape is unchanged 1`] = `
+"fromSample: boolean?
+id: string
+url: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > CommunityCreatorSchema shape is unchanged 1`] = `
+"avatar: string
+email: string
+id: string
+likes: string
+name: string
+plays: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > CommunityMvSchema shape is unchanged 1`] = `
+"badge: anyOf
+creator: string
+date: string
+id: string
+likes: number
+matchedSong: object
+  art: string
+  durationSec: number
+  title: string
+meta: string
+mvType: enum[singing|storytelling|hybrid]
+plays: number
+prompt: string
+shares: number
+thumb: string
+title: string
+video: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > CommunitySongSchema shape is unchanged 1`] = `
+"badge: anyOf
+cover: string
+creator: string
+date: string
+genre: string
+id: string
+likes: number
+lyrics: string?
+mood: string
+plays: number
+shares: number
+tags: string
+title: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > ComposeStateSchema shape is unchanged 1`] = `
+"description: string
+mvType: enum[singing|storytelling|hybrid]
+photos: array
+  fromSample: boolean?
+  id: string
+  url: string
+settings: object
+  author: object
+    on: boolean
+    text: string
+  ratio: enum[9:16|16:9]
+  resolution: enum[Standard|High]
+  showSubtitle: boolean
+  title: object
+    on: boolean
+    text: string
+  watermark: boolean
+song: anyOf"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > MvCreateRequestSchema shape is unchanged 1`] = `
+"compose: object
+  description: string
+  mvType: enum[singing|storytelling|hybrid]
+  photos: array
+    fromSample: boolean?
+    id: string
+    url: string
+  settings: object
+    author: object
+      on: boolean
+      text: string
+    ratio: enum[9:16|16:9]
+    resolution: enum[Standard|High]
+    showSubtitle: boolean
+    title: object
+      on: boolean
+      text: string
+    watermark: boolean
+  song: anyOf
+mode: enum[storyboard_first|direct]"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > MvJobSchema shape is unchanged 1`] = `
+"compose: object
+  description: string
+  mvType: enum[singing|storytelling|hybrid]
+  photos: array
+    fromSample: boolean?
+    id: string
+    url: string
+  settings: object
+    author: object
+      on: boolean
+      text: string
+    ratio: enum[9:16|16:9]
+    resolution: enum[Standard|High]
+    showSubtitle: boolean
+    title: object
+      on: boolean
+      text: string
+    watermark: boolean
+  song: anyOf
+id: string
+mode: enum[storyboard_first|direct]
+progress: number
+resultUrl: string?
+status: enum[idle|queued|processing|done|failed]
+step: string
+storyboard: object?
+  characterImage: string
+  coverDescription: string?
+  coverImage: string?
+  lyrics: string?
+  scenes: array
+    id: string
+    index: number
+    range: string
+    text: string
+  story: string?
+  visualStyle: string
+thumb: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > MvJobStatusSchema shape is unchanged 1`] = `"{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"string","enum":["idle","queued","processing","done","failed"]}"`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > MvModeSchema shape is unchanged 1`] = `"{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"string","enum":["storyboard_first","direct"]}"`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > MvSettingsSchema shape is unchanged 1`] = `
+"author: object
+  on: boolean
+  text: string
+ratio: enum[9:16|16:9]
+resolution: enum[Standard|High]
+showSubtitle: boolean
+title: object
+  on: boolean
+  text: string
+watermark: boolean"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > MvTypeSchema shape is unchanged 1`] = `"{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"string","enum":["singing","storytelling","hybrid"]}"`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > SceneSchema shape is unchanged 1`] = `
+"id: string
+index: number
+range: string
+text: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > SongComposeSchema shape is unchanged 1`] = `
+"bpm: number?
+describe: string
+genre: string
+instrumental: boolean
+key: anyOf?
+lyrics: string
+mode: enum[simple|custom]
+mood: string
+title: string
+vocal: anyOf"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > SongJobSchema shape is unchanged 1`] = `
+"compose: object
+  bpm: number?
+  describe: string
+  genre: string
+  instrumental: boolean
+  key: anyOf?
+  lyrics: string
+  mode: enum[simple|custom]
+  mood: string
+  title: string
+  vocal: anyOf
+cover: string
+id: string
+progress: number
+result: object?
+  audioUrl: string?
+  cover: string
+  durationSec: number
+  genre: string
+  id: string
+  instrumental: boolean
+  lyrics: string?
+  mood: string
+  title: string
+status: enum[idle|queued|processing|done|failed]
+step: string
+title: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > SongModeSchema shape is unchanged 1`] = `"{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"string","enum":["simple","custom"]}"`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > SongResultSchema shape is unchanged 1`] = `
+"audioUrl: string?
+cover: string
+durationSec: number
+genre: string
+id: string
+instrumental: boolean
+lyrics: string?
+mood: string
+title: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > SongSchema shape is unchanged 1`] = `
+"art: string
+durationSec: number
+id: string
+lyrics: string?
+source: enum[library|import|sample|link]
+title: string
+trim: object?
+  end: number
+  start: number
+url: string?"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > SongSourceSchema shape is unchanged 1`] = `"{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"string","enum":["library","import","sample","link"]}"`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > StoryboardSchema shape is unchanged 1`] = `
+"characterImage: string
+coverDescription: string?
+coverImage: string?
+lyrics: string?
+scenes: array
+  id: string
+  index: number
+  range: string
+  text: string
+story: string?
+visualStyle: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > the exported schema list is unchanged 1`] = `
+[
+  "BadgeSchema",
+  "CharacterPhotoSchema",
+  "CommunityCreatorSchema",
+  "CommunityMvSchema",
+  "CommunitySongSchema",
+  "ComposeStateSchema",
+  "MvCreateRequestSchema",
+  "MvJobSchema",
+  "MvJobStatusSchema",
+  "MvModeSchema",
+  "MvSettingsSchema",
+  "MvTypeSchema",
+  "SceneSchema",
+  "SongComposeSchema",
+  "SongJobSchema",
+  "SongModeSchema",
+  "SongResultSchema",
+  "SongSchema",
+  "SongSourceSchema",
+  "StoryboardSchema",
+]
+`;
+
+exports[`C6 — locale model (src/lib/i18n/config.ts) > LOCALES, default, and HTML_LANG are unchanged 1`] = `
+{
+  "DEFAULT_LOCALE": "enu",
+  "HTML_LANG": {
+    "chs": "zh-Hans",
+    "cht": "zh-Hant",
+    "deu": "de",
+    "enu": "en",
+    "esp": "es",
+    "fra": "fr",
+    "jpn": "ja",
+    "kor": "ko",
+    "ptg": "pt",
+  },
+  "LOCALES": [
+    "enu",
+    "jpn",
+    "kor",
+    "cht",
+    "chs",
+    "deu",
+    "fra",
+    "esp",
+    "ptg",
+  ],
+}
+`;
+
+exports[`C7 — route map (src/app/**/page.tsx) > the URL shapes RD deep-links against are unchanged 1`] = `
+[
+  "/[locale]",
+  "/[locale]/creator",
+  "/[locale]/explore/mvs",
+  "/[locale]/explore/songs",
+  "/[locale]/history",
+  "/[locale]/mv/creating",
+  "/[locale]/mv/edit",
+  "/[locale]/mv/result",
+  "/[locale]/mv/room",
+  "/[locale]/mv/storyboard",
+  "/[locale]/mv/thinking",
+  "/[locale]/profile",
+  "/[locale]/settings",
+  "/[locale]/share",
+  "/[locale]/share/mv/[id]",
+  "/[locale]/song/create",
+  "/[locale]/song/creating",
+  "/[locale]/song/play",
+  "/[locale]/song/result",
+  "/[locale]/watch",
+]
+`;
+
+exports[`C8 — domain constants (src/lib/mv/types.ts) [additive only] > DEFAULT_SETTINGS is unchanged 1`] = `
+{
+  "author": {
+    "on": true,
+    "text": "",
+  },
+  "ratio": "9:16",
+  "resolution": "Standard",
+  "showSubtitle": true,
+  "title": {
+    "on": true,
+    "text": "",
+  },
+  "watermark": false,
+}
+`;
+
+exports[`C8 — domain constants (src/lib/mv/types.ts) [additive only] > credit costs are unchanged (billing depends on these) 1`] = `
+{
+  "COST_RENDER": 200,
+  "COST_SONG": 10,
+  "COST_SONG_RECREATE": 50,
+  "COST_STORYBOARD": 20,
+  "DESCRIPTION_MAX": 2500,
+}
+`;

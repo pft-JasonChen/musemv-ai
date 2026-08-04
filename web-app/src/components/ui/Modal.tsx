@@ -7,11 +7,16 @@ interface Props {
   open: boolean;
   onClose: () => void;
   title?: string;
+  /** Accessible name for dialogs that render their own custom heading instead of the
+   *  sticky title bar. With neither `title` nor `ariaLabel` the dialog has NO
+   *  accessible name — a WCAG failure (axe `aria-dialog-name`) that e2e/a11y.spec.ts
+   *  cannot catch, because it only visits pages with every modal closed. */
+  ariaLabel?: string;
   children: React.ReactNode;
   maxWidth?: number;
 }
 
-export function Modal({ open, onClose, title, children, maxWidth = 460 }: Props) {
+export function Modal({ open, onClose, title, ariaLabel, children, maxWidth = 460 }: Props) {
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -24,7 +29,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 460 }: Props)
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={title} className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
+    <div role="dialog" aria-modal="true" aria-label={title ?? ariaLabel} className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 anim-fade" style={{ background: "rgba(0,0,0,.6)" }} onClick={onClose} aria-hidden />
       <div
         className="anim-pop relative max-h-[88vh] w-full overflow-y-auto no-scrollbar rounded-t-2xl border sm:w-auto sm:rounded-2xl"

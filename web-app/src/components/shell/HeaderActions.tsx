@@ -49,6 +49,8 @@ export function HeaderActions() {
         <button
           onClick={() => setCreditsOpen(true)}
           aria-label="Buy credits"
+          // e2e/behaviour-regressions.spec.ts reads the balance from here (G5-d #1/#2).
+          data-testid="credit-balance"
           className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-bold transition-opacity hover:opacity-80"
           style={{ background: "rgba(245,158,11,.18)", color: "var(--gold)" }}
         >
@@ -59,6 +61,8 @@ export function HeaderActions() {
       ) : (
         <div className="flex items-center gap-2">
           <span
+            // e2e/behaviour-regressions.spec.ts reads the balance from here (G5-d #1/#2).
+            data-testid="credit-balance"
             className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-bold"
             style={{ background: "rgba(245,158,11,.18)", color: "var(--gold)" }}
           >

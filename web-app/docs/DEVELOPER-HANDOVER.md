@@ -104,6 +104,12 @@ Replace the mock (per endpoint, in any order — the contract isolates each):
 - [ ] Delete `src/lib/api/mock.ts` + the `mockStoryboard`/`mockSongResult` generators once
       nothing imports them. `grep -rn 'fetch(' src` currently returns nothing — after your
       real client lands, that grep becomes "only inside the API implementation".
+- [ ] **Flip the guard when you add the first `fetch`.** `.claude/hooks/guard-greps.sh`
+      (Gate G1-b) enforces zero `fetch(` anywhere in `src`, so your first real client would
+      be blocked by the Stop hook. Export **`YCM_REAL_API=1`** and the rule becomes
+      "`fetch` inside `src/lib/api/` only, still banned everywhere else" — which is exactly
+      the invariant you want to keep from then on. Pre-wired 2026-08-03 and tested in both
+      directions; the default stays strict so prototype work is unaffected.
 
 Also budget for these **production gaps** (fine for a demo, not for launch):
 
@@ -114,8 +120,14 @@ Also budget for these **production gaps** (fine for a demo, not for launch):
 - **Reload loses mid-flow state** — flow state is in-memory by design; mid-flow routes
   self-guard by redirecting to the flow entry (`MvResult.tsx` pattern). Decide what should
   survive reload once jobs are server-side (job id in the URL is the natural fix).
-- **Credits are cosmetic** — costs exist as constants (`COST_STORYBOARD/RENDER/SONG` in
-  `lib/mv/types.ts`) but nothing decrements the balance.
+- **Credits ARE charged, and the ledger is not** — generation deducts and refunds on
+  failure (§6 has the full table and the guard locations). What is still demo-grade is
+  `CREDIT_TRANSACTIONS`: a static 7-entry seed that never reflects real usage, and the fact
+  that the balance itself is in-memory and resets on reload. Wire both to the backend.
+  *(Corrected 2026-08-03. This bullet used to read "Credits are cosmetic … nothing
+  decrements the balance", contradicting §6 in the same document — §6 was fixed on 08-02
+  and this one was missed. If you read only §4, you would have built against a false
+  premise.)*
 - **Community is undefined** — screens exist, product definition doesn't. TODO.md #1.
 - **`/` axe gate fails** (accent-contrast, pre-existing) — TODO.md #2.
 - **npm audit**: 7 dev-tooling findings (Storybook/Vitest chain) — TODO.md #3.
@@ -185,9 +197,18 @@ an in-place navigation. `localePath()` is the preferred pattern going forward.
 derived, not stored — `guest` (logged out) → `free` (logged in, `loggedIn` true) → `subscriber`
 (logged in AND `subscribed` true). `subscribe(plan: PlanId)` just sets `subscribed = true` and
 `subscribedPlan = plan`; it does not itself grant credits — callers (`SubscribeModal`) call
-`addCredits(plan.credits)` separately. `PlanId` and the three tiers (`SUBSCRIPTION_PLANS`:
-`weekly` $9.99/200cr, `super` $29.99/1000cr "POPULAR", `yearly` $69.99/2000cr "BEST VALUE") live in
-`src/lib/user.ts`.
+`addCredits(plan.credits)` separately. `PlanId` and the three tiers live in `src/lib/user.ts`
+(`SUBSCRIPTION_PLANS`) — the as-approved Business Model (2026-07-13) figures:
+
+| `PlanId` | Name | Price | Credits | Cadence | Badge | Store SKU |
+|---|---|---|---|---|---|---|
+| `weekly` | Weekly | $19.99 | 200 | Weekly | MOST POPULAR | `subscribe_1_week_no_trial_ycm` |
+| `weekly_pro` | Weekly Pro | $29.99 | 1000 | Weekly | BEST VALUE | `subscribe_1_week_pro_no_trial_ycm` |
+| `yearly` | Yearly | $59.99 | 2000 | Yearly | — | `subscribe_12_month_no_trial_ycm` |
+
+`DEFAULT_PLAN_ID` is `weekly_pro`. Credits granted per cycle expire on the plan's cadence.
+(Corrected 2026-08-02 — this table previously listed a non-existent `super` plan and the wrong
+prices for `weekly`/`yearly`. `src/lib/api/contract.surface.test.ts` now freezes the real values.)
 
 **Credit balance** (`CreditsProvider`, `src/components/providers/CreditsProvider.tsx`): a single
 `useState(DEFAULT_CREDITS)` (`DEFAULT_CREDITS = 390` in `src/lib/user.ts`) plus `addCredits(n)`.
@@ -206,12 +227,41 @@ React `useState` in `AuthProvider` — in-memory only, reset to guest defaults o
 `signOut()`). Credits are the same: `CreditsProvider`'s balance is in-memory and resets to
 `DEFAULT_CREDITS` on reload.
 
-**Credits are display-only.** `COST_STORYBOARD` (20), `COST_RENDER` (200), and `COST_SONG` (10)
-(`src/lib/mv/types.ts`) are shown next to the relevant CTAs (`ModeModal`, `StoryboardEditor`,
-`SongCompose`), but nothing in the codebase subtracts them from the balance — `addCredits()` is
-only ever called with a positive amount (subscribe/buy). Whether/how generation should actually
-charge credits is an open product decision, not yet implemented; don't infer a charging rule from
-the displayed costs.
+**Credits ARE charged — generation deducts, and refunds on failure.** (Rewritten 2026-08-02: this
+section previously said "Credits are display-only … nothing in the codebase subtracts them", which
+had been wrong since charging landed. It was RD's only written source, so treat the table below as
+the contract. `e2e/behaviour-regressions.spec.ts` now proves each row.)
+
+Costs live in `src/lib/mv/types.ts` and are frozen by `src/lib/api/contract.surface.test.ts` (C8):
+
+| Constant | Value | Charged where | On failure |
+|---|---|---|---|
+| `COST_STORYBOARD` | 20 | `MvFlowProvider.startStoryboard()` — `addCredits(-20)` at job start | refunded |
+| `COST_RENDER` | 200 | `MvFlowProvider.startRender()` — `addCredits(-200)` at job start | refunded |
+| `COST_SONG` | 10 | `SongFlowProvider` / `SongCompose` | refunded |
+| `COST_SONG_RECREATE` | 50 | `SongResultView` recreate | refunded |
+| Enhance | 0 then 1 | `CreditsProvider.consumeEnhance()` — first per session free (SONG-04) | n/a |
+
+The charge/refund rule is **GL-01**: charge when the job starts, refund from the poll's `onError`
+so the "credits were not charged" failure copy stays true. See the `refund` closures in
+`MvFlowProvider`.
+
+**Insufficient balance routes to IAP instead of generating.** Note WHERE the guard lives — reading
+only `MvFlowProvider` makes it look absent, because `startStoryboard()`/`startRender()` charge
+unconditionally. The balance check sits one level up, at the point the user commits:
+
+| Path | Guard | Location |
+|---|---|---|
+| MV (both modes) | `if (credits < cost) { setBuyOpen(true); return; }` where `cost` is `COST_STORYBOARD` or `COST_RENDER` | `MvRoom.selectMode()` |
+| Song create | `credits < COST_SONG` | `SongCompose` |
+| Song recreate | `credits < COST_SONG_RECREATE` | `SongResultView` |
+
+All three open `BuyCreditsModal` and return early — no job starts, nothing is charged.
+`e2e/behaviour-regressions.spec.ts` proves this for the MV path (390 − 20 − 200 = 170, which is
+already under `COST_RENDER`, so the next render must be refused).
+
+`CREDIT_TRANSACTIONS` in `lib/user.ts` remains a static 7-entry seed ledger shown in
+`CreditsDetailModal` — it does NOT react to `addCredits()` and does not reflect real usage.
 
 ## 7. Conventions you must keep (they're load-bearing)
 

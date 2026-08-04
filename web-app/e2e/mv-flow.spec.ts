@@ -15,8 +15,16 @@ test("MV creation: compose -> storyboard -> render -> result", async ({ page }) 
     .getByPlaceholder("Describe your video to help AI create a more compelling story.")
     .fill("A glamorous neon-lit night drive through the city.");
   await page.getByRole("button", { name: "Song Library" }).click(); // opens Choose Song modal
-  await page.getByRole("button", { name: "Use" }).first().click(); // AC2 (opens Trim)
-  await page.getByRole("button", { name: "Use Trimmed Audio" }).click();
+  // Scope to the dialog and match the name EXACTLY. getByRole name matching is
+  // substring-by-default, so a bare { name: "Use" } also matches "Use Trimmed
+  // Audio" / "Use in Music Video". Modal portals to document.body, so those
+  // page-level buttons come earlier in DOM order and .first() resolved to one
+  // sitting under the modal scrim — the click then retried against the scrim for
+  // the whole 20s expect timeout. (Fixed 2026-08-02: this suite was in no gate,
+  // so the breakage sat unnoticed. That is what C2 is about.)
+  const chooseSong = page.getByRole("dialog", { name: "Choose Song" });
+  await chooseSong.getByRole("button", { name: "Use", exact: true }).first().click(); // AC2 (opens Trim)
+  await page.getByRole("button", { name: "Use Trimmed Audio", exact: true }).click();
   await expect(cta).toBeEnabled();
 
   await cta.click(); // AC5
