@@ -15,7 +15,8 @@
 //     4  flow-guard on direct deep link .............. "flow-guard"
 //     5  [fail] path: fail + Retry + History Failed .. "fail path"
 //     6  job polling 0 -> 100 ........................ "polling"
-//     7  Pro gate: High crown + 30s preview .......... "Pro gate: High", "Pro gate: preview"
+//     7  Pro gate: High crown ........................ "Pro gate: High"
+//        …its 30s-preview half INVERTED by slice 3b ... "S3 / G5-d#7 inverted"
 //     8  publish -> confirm -> reviewing ............. "publish"
 //     9  i18n: 9 locales, localePath not bypassed .... "i18n"
 //    10  enhancePrompt goes through api .............. "enhancePrompt"
@@ -263,10 +264,48 @@ test("G5-d#7 Pro gate: High resolution is locked for a free account", async ({ p
   await expect(dialog.getByRole("button", { name: /^Standard/ })).toBeVisible();
 });
 
-test("G5-d#7 Pro gate: free playback is capped at a 30s preview", async ({ page }) => {
-  await login(page);
-  await page.goto("/song/play");
-  await expect(page.getByText(/Free preview · first 30s/)).toBeVisible();
+// ── G5-d #7, PREVIEW HALF: INVERTED BY SLICE 3b (plan §5) ───────────────────
+//
+// This test used to assert the 30s cap EXISTED. §1.4 cancelled that gate long
+// before, but the code never changed, so the test went on freezing the old
+// behaviour — correctly, since until 3b nothing had decided to change it.
+//
+// S3 lands with the `/song/play` migration, so the assertion inverts here: free
+// playback is NOT capped. The OTHER half of G5-d #7 — High quality locked behind
+// a crown — is untouched and still asserted above; it lives on `/mv/room`, which
+// has not been migrated yet.
+//
+// Asserting the absence of an upsell string alone would be a weak test: deleting
+// the component that renders it would also pass. So it also proves playback
+// actually goes past 30s.
+test("S3 / G5-d#7 inverted: free playback is NOT capped at 30s", async ({ page }) => {
+  await login(page); // logged in, NOT subscribed
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/song/play?id=sp-pop-anthem");
+
+  await expect(page.getByText(/Free preview/)).toHaveCount(0);
+
+  // The real <audio> the migrated player is built around. Wait for metadata
+  // before seeking — currentTime cannot be set until duration is known.
+  const audio = page.locator("audio");
+  await expect
+    .poll(async () => audio.evaluate((el: HTMLAudioElement) => el.duration || 0), {
+      message: "audio metadata must load",
+    })
+    .toBeGreaterThan(60);
+
+  // Seek to ~90% by clicking the progress bar. The old player clamped this to
+  // `maxPct` (30/125) and opened SubscribeModal instead.
+  const bar = page.locator(".now-playing__progress");
+  const box = (await bar.boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.9, box.y + box.height / 2);
+
+  await expect
+    .poll(async () => audio.evaluate((el: HTMLAudioElement) => el.currentTime), {
+      message: "playback position must be allowed past the old 30s cap",
+    })
+    .toBeGreaterThan(30);
+  await expect(page.getByRole("dialog", { name: /Muse Pro|Subscribe/i })).toHaveCount(0);
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -622,7 +661,9 @@ test("A4: the override restores the tabs row only, not the whole navbar", async 
   await expect(page.locator(".mobile-header")).toBeVisible();
 });
 
-test("A4: a navbar with no tabs stays hidden on mobile, exactly as DP intends", async ({ page }) => {
+test("A4: a navbar with no tabs stays hidden on mobile, exactly as DP intends", async ({
+  page,
+}) => {
   // /explore/mvs passes no tabsSlot, so its DetailNavbar is pure chrome and the
   // `:has()` scoping must leave DP's rule alone. Mobile back navigation is a
   // separate open question (DESIGNER-TODO A5) — this asserts we did NOT quietly
@@ -631,4 +672,209 @@ test("A4: a navbar with no tabs stays hidden on mobile, exactly as DP intends", 
   await page.goto("/explore/mvs");
   await expect(page.locator(".detail-navbar")).toBeHidden();
   await expect(page.locator(".mobile-tabbar")).toBeVisible();
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3b — /explore/songs + /song/play, one migrated screen behind two URLs
+//
+// This slice changes BEHAVIOUR, not just markup, and A4 is the reason every one
+// of those changes gets a test here instead of a screenshot: re-recording a
+// visual baseline accepts whatever it sees, so slice 2b's baselines absorbed the
+// total loss of History's mobile filter tabs without a single test going red.
+//
+// The changes, each asserted below:
+//   · desktop: clicking a song swaps the right column and does NOT navigate
+//   · mobile:  clicking a song opens the full-screen player, and Back returns
+//   · cold `?id=` deep link: Back lands on /explore/songs, not outside the app
+//   · `?tab=` selects that tab
+//   · EXP-09 survives the merge: a `cps-*` id lists the creator's playlist
+//   · EXP-06 survives: an unresolvable id is still a not-found state
+//   · the Create gate (GL-02/EXP-02) survives
+//   · no hydration failure from the phone-cutover media query (R-2)
+//
+// S3 (playback uncapped) is asserted with the G5-d #7 inversion further up.
+// ════════════════════════════════════════════════════════════════════════════
+
+test("3b desktop: clicking a song swaps the right column without navigating", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/explore/songs");
+
+  const nowPlayingTitle = page.locator(".now-playing__title");
+  const first = await nowPlayingTitle.innerText();
+
+  // Second row — a different song from whatever is already Now Playing.
+  await page.locator(".top-song__title").nth(1).click();
+
+  await expect(nowPlayingTitle).not.toHaveText(first);
+  // The whole point of the merge: the URL does not jump to /song/play.
+  await expect(page).toHaveURL(/\/explore\/songs$/);
+});
+
+test("3b mobile: tapping a song opens the full-screen player, Back returns to the list", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 900 });
+  await page.goto("/explore/songs");
+
+  const player = page.locator(".song-detail-mobile-player");
+  await expect(player).toBeHidden();
+
+  await page.locator(".top-song__title").first().click();
+
+  // A real route change (router.push), not DP's history.pushState.
+  await expect(page).toHaveURL(/\/song\/play\?id=/);
+  await expect(player).toBeVisible();
+
+  // A5 does NOT block this screen precisely because this control exists.
+  await player.locator(".song-detail-mobile-player__back").click();
+  await expect(page).toHaveURL(/\/explore\/songs$/);
+  await expect(player).toBeHidden();
+});
+
+test("3b mobile: a cold ?id= deep link's Back falls back into the app, not out of it", async ({
+  page,
+}) => {
+  // Q6's fallback, on the screen where getting it wrong is most visible: a
+  // shared link opened in a fresh tab has no in-app history, and `history.length`
+  // would wrongly claim it does (see src/lib/navHistory.ts).
+  await page.setViewportSize({ width: 375, height: 900 });
+  await page.goto("/song/play?id=sp-chill-rnb");
+
+  // DP's own rule: an explicit ?id= opens straight into the full-screen player.
+  const player = page.locator(".song-detail-mobile-player");
+  await expect(player).toBeVisible();
+
+  await player.locator(".song-detail-mobile-player__back").click();
+  await expect(page).toHaveURL(/\/explore\/songs$/);
+  await expect(page.locator(".top-song").first()).toBeVisible(); // still inside the app
+});
+
+test("3b: ?tab= selects that tab, and Trending is not offered", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/explore/songs?tab=New%20Releases");
+
+  await expect(page.getByRole("button", { name: "New Releases" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  // DP ships four tabs and admits three are fake. Trending has no real data
+  // behind it, so it was deliberately not built (DESIGNER-TODO A7).
+  await expect(page.getByRole("button", { name: "Trending" })).toHaveCount(0);
+});
+
+test("3b: switching a browse filter does not change what is playing", async ({ page }) => {
+  // Found by G7's independent review and then measured: the Now Playing default was
+  // derived live from `displayedSongs[0]`, and WA's three tabs are three different
+  // catalogs (DP's four are reorderings of one), so All -> New Releases moved Now
+  // Playing from "Pop Anthem" to "Down the Memory Lane" and the load effect
+  // restarted the audio. A filter must not touch playback.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/explore/songs");
+
+  const nowPlaying = page.locator(".now-playing__title");
+  const before = await nowPlaying.innerText();
+
+  // No song clicked — only the filter changes.
+  await page.getByRole("button", { name: "New Releases" }).click();
+  await expect(page.locator(".tabs__tab--active")).toHaveText("New Releases");
+  await expect(nowPlaying).toHaveText(before);
+
+  await page.getByRole("button", { name: "Top Picks" }).click();
+  await expect(nowPlaying).toHaveText(before);
+});
+
+test("3b: a tab switch changes the list", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/explore/songs");
+  const rows = page.locator(".top-song");
+  const all = await rows.count();
+
+  await page.getByRole("button", { name: "Top Picks" }).click();
+  await expect(rows).not.toHaveCount(all); // All = both catalogs, Top Picks = one
+});
+
+test("3b / EXP-09: a creator song id lists the creator's playlist", async ({ page }) => {
+  // The merge could easily have dropped this: `cps-*` ids arrive from /creator
+  // and belong to none of the three community tabs. Product owner decided
+  // 2026-08-05 that the LIST follows the playlist, so the two agree.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const id = "cps-midnight-drive";
+  await page.goto(`/song/play?id=${id}`);
+
+  await expect(page.locator(".now-playing")).toBeVisible();
+  // No tab drives this list, so none may claim to be selected.
+  await expect(page.locator(".tabs__tab--active")).toHaveCount(0);
+
+  // Clicking a tab switches back to the community catalog.
+  await page.getByRole("button", { name: "Top Picks" }).click();
+  await expect(page.locator(".tabs__tab--active")).toHaveCount(1);
+});
+
+test("3b / EXP-06: an unresolvable id is still a not-found state", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/song/play?id=does-not-exist");
+  await expect(page.getByRole("button", { name: "Explore Songs" })).toBeVisible();
+  await expect(page.locator(".now-playing")).toHaveCount(0);
+});
+
+test("3b / GL-02: Create still requires sign-in", async ({ page }) => {
+  // NOT logged in. The gate is at the action, not the route.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/explore/songs");
+
+  await page.locator(".now-playing__cta").click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page).toHaveURL(/\/explore\/songs$/); // did not reach /song/create
+});
+
+test("3b / R9: the migrated links carry the locale prefix", async ({ page }) => {
+  // Invisible in English, broken in the other 8 locales — the failure mode R-9
+  // exists for. DP navigates by assigning to the document location.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/jpn/explore/songs");
+
+  const hrefs = await page
+    .locator(".top-song__user-row")
+    .evaluateAll((els) => els.map((e) => e.getAttribute("href")));
+  expect(hrefs.length).toBeGreaterThan(0);
+  for (const href of hrefs) expect(href).toBe("/jpn/creator");
+  await expect(page.locator(".now-playing__user")).toHaveAttribute("href", "/jpn/creator");
+});
+
+for (const width of [1440, 1000, 700]) {
+  test(`3b / R-2 hydration: the song screen is clean at ${width}px`, async ({ page }) => {
+    // The screen reads the phone cutover through `useMediaQuery`, and it portals
+    // the mobile player to <body>. DP's shapes of both are a hydration failure
+    // and a BUILD failure respectively; neither shows up as a visual diff, and
+    // one of them is a console error, so assert the console directly.
+    const problems: string[] = [];
+    page.on("console", (m) => {
+      if (m.type() === "error") problems.push(m.text());
+    });
+    page.on("pageerror", (e) => problems.push(String(e)));
+
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/song/play?id=sp-electronic");
+    await expect(page.locator(".song-detail").first()).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+}
+
+test("3b / A4: the song screen's tabs are usable on a phone", async ({ page }) => {
+  // Same class of loss as History's: this DetailNavbar passes a tabsSlot, so DP's
+  // "hide every navbar below 767px" rule would delete the tabs unless the A4
+  // override catches it. The list IS reachable from the bottom bar, so the __top
+  // row staying hidden is correct — it is the filters that are page content.
+  await page.setViewportSize({ width: 375, height: 900 });
+  await page.goto("/explore/songs");
+
+  const tabs = page.locator(".tabs");
+  await expect(tabs).toBeVisible();
+  await expect(page.locator(".detail-navbar__top")).toBeHidden();
+
+  await tabs.getByRole("button", { name: "New Releases" }).click();
+  await expect(tabs.getByRole("button", { name: "New Releases" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });

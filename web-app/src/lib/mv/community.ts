@@ -804,6 +804,44 @@ export function mvCoverRatio(id: string): MvCoverRatio {
   return RATIO_BY_ID.get(id) ?? "3:4";
 }
 
+// ── Song audio URL (presentation only) ──────────────────────────────────────
+//
+// Slice 3b's player is DP's, and DP's is built around a real `<audio>` element:
+// duration, currentTime, seeking and onEnded all come FROM the element rather
+// than from a timer. (WA's old player faked it with `setInterval` and a
+// hardcoded `DURATION = 125`.) So the screen needs a URL per song.
+//
+// `CommunitySongSchema` is contract surface C2, frozen, and G4-a fails on any
+// diff — it has no `audio` field and no backend is going to start sending one
+// because of a demo screen. Same call as `mvCoverRatio` above: DERIVE IT HERE,
+// in the presentation layer, and keep the contract at zero diff.
+//
+// THE KNOWN COST, ACCEPTED (product owner, 2026-08-05): there are exactly two
+// mp3s in `public/assets/songs/`, so every song is one of two sounds. That is a
+// demo-media limitation (U4), not a flaw in doing it this way — swap this
+// function for a real field the moment the API grows one.
+//
+// Assigned ONCE, keyed by id, over the whole catalog in a fixed order, for the
+// same reason the ratio is: the same song must sound the same on every screen.
+// Percent-encoded, matching `mock.ts` — both filenames contain spaces, and these
+// strings go straight onto `audio.src`.
+const AUDIO = [
+  "/assets/songs/Party%20Dance.mp3", // 160s
+  "/assets/songs/Top%20Flow%20Production%20-%20Party.mp3", // 114s
+] as const;
+
+const AUDIO_BY_ID = new Map<string, string>(
+  [...TOP_PICKS_SONGS, ...NEW_SONGS, ...CREATOR_SONGS].map((s, i) => [
+    s.id,
+    AUDIO[i % AUDIO.length],
+  ]),
+);
+
+/** Playable audio URL for a community song. Unknown ids fall back to the first track. */
+export function songAudioUrl(id: string): string {
+  return AUDIO_BY_ID.get(id) ?? AUDIO[0];
+}
+
 export function formatCount(n: number): string {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   return String(Math.max(0, n));

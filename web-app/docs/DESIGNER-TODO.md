@@ -44,6 +44,19 @@ axe 實測(WCAG AA,小型文字需 **4.5:1**):
   **請在下次交稿時把 `Tabs.css` 的 `.tabs__tab` 改成 `.6`**,我們就會刪掉那個 override。
 - ⬜ `.tabs__tab--active`(3.95:1)與 `.badge--failed`(2.55:1)**仍待決定**。
 
+**進度(2026-08-05,Slice 3b):上面那句「日後補上登入測試時看起來像突然壞掉」的預測成真了 ——
+而且不是靠補登入,是靠一條不需要登入的 route。** `/explore/songs` 與 `/song/play`
+沒有 `AuthGuard`,所以它們的 tab 列是 **axe 第一次真的量到的那一列**,
+`e2e/a11y.spec.ts` 當場兩條紅:`.tabs__tab--active`,實測 **3.95:1**,與上表一字不差。
+
+- 這**不是 3b 造成的**。`/history` 從 Slice 2b 就有同一組 tab,只是 axe 看不到。
+- 依 A1 選項 2 的既有慣例(比照 `TODO.md` #2 的 accent pill),已把
+  `.tabs__tab--active` 加進 `a11y.spec.ts` 的 `KNOWN_CONTRAST_PILLS` 排除清單,
+  註解指回本條。**沒有自己挑顏色** —— 挑顏色是設計判斷,而且要修在 DP 的
+  `Tabs.css` / `tokens.css`,不是 override。
+- **這條現在是唯一還靠排除清單活著的 DP 對比問題**;`.badge--failed` 尚未被 axe 量到
+  (它只出現在 `/history`,仍在覆蓋缺口裡)。
+
 - **剩下兩項需要的決定(擇一):**
   1. 調整品牌紫上的文字處理(加深底色、或改用深色文字、或加大字級到 ≥18px 讓門檻降為 3:1);
      次要文字不透明度從 40% 提高到約 60%;Failed badge 提高文字亮度或加深底色;或
@@ -131,6 +144,50 @@ WA 這邊有**兩份真的**清單(`TOP_PICKS_SONGS`、`NEW_SONGS`),所以 Slice
 
 - **需要的決定:** `Trending` 的定義是什麼?(近 7 天播放成長?總播放數?人工精選?)
   給了定義我們就能接真資料把它加回來。若它其實只是視覺佔位,請在下次交稿移除。
+- **已落地(2026-08-05):** Slice 3b 就是照上面做的,線上只有三個 tab,並有 e2e
+  斷言 `Trending` 不存在 —— 所以它加回來時會是一個**刻意的**改動,不會悄悄長出來。
+
+### A7. DP 的 transport 沒有 shuffle / repeat —— 不擋開發,但**與 spec 相牴觸**
+
+**發現於:** 2026-08-05,Slice 3b(`/song/play`)。
+
+`SongDetailPage` 的 `NowPlaying` 與 `MobileNowPlaying` 兩支 transport 都只有
+**prev / play / next** 三顆。WA 原本的播放器有 **shuffle + repeat**,而且那不是隨手加的:
+`specs` 的 **AC-EXP-05** 明文要求 `/song/play` 要有 shuffle + repeat(EXP-04,2026-07-23 加入)。
+
+**產品決定(2026-08-05):照 DP 刪掉,並記在這裡問設計師。** 所以現在的狀態是
+**code 與 spec 不一致,而且是刻意的** —— 這正是不能只靠截圖驗收的那類損失
+(見 A4:重錄視覺基準會把功能損失一起收下)。
+
+- **需要的決定(擇一):**
+  1. transport 補回 shuffle / repeat —— 請給稿(五顆的排列、icon、選中態);或
+  2. 產品確認這兩個功能取消,我們就把 **AC-EXP-05 改掉**,讓 spec 跟上。
+- 在決定之前:`specs/00-overview.md` F13 與 `specs/areas/04-*` 的 AC-EXP-05
+  已標註此差異,`plan §8` 記為 **S21**。
+
+### A8. `TopSongListItem.css` **一條 media query 都沒有** —— 不擋開發,320/375 標題被截到不可讀
+
+**發現於:** 2026-08-05,Slice 3b 的六寬度視覺檢查。
+
+`TopSongListItem.css`(239 行)**沒有任何 `@media`**。它是照 1440 / 1920 兩個 Figma frame
+畫的,而 `.top-song__actions`(愛心 + 分享 + Create 三顆)是 `flex-shrink: 0`,
+所以在 320 / 375 擠壓的全是標題欄。實測(截圖存檔):
+
+| 寬度  | 標題實際顯示                                            | 創作者          |
+| ----- | ------------------------------------------------------- | --------------- |
+| 375px | 「Pop Ant…」「Acoustic…」「Down th…」—— 約 10 字        | 「Melody…」     |
+| 320px | 「P…」「C…」「El…」「A…」—— **1–2 個字元,完全讀不出來** | 「M」「S.」單字 |
+
+**320px 是議定的最小支援寬度,在那裡這份清單是不能用的** —— 不是「有點擠」。
+
+手機上這份清單是 Explore 的**頂層目的地**(底欄可達),不是次要畫面 —— 使用者主要就是
+在這裡挑歌,而現在挑不出來。DP 自己在手機也是這個清單,所以這是稿本身缺手機版,
+不是我們搬錯。
+
+- **需要的決定:** 320–767px 這一列怎麼排?(例如:Create 收成 icon、
+  stats 那一列收掉、或標題允許兩行)請給一個手機 frame。
+- 我們**沒有自己改** —— 動 `top-song` 的行內配置就是在替設計師決定版面,
+  而且會變成 `designer-overrides.css` 裡一條很難刪的規則。
 
 ---
 

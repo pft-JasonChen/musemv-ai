@@ -1,0 +1,230 @@
+/* Figma "Song Result — Lyrics" (node 881:19546, mobile). No separate
+   desktop frame given, so this reuses LoginModal's established convention:
+   a centered dialog by default, becoming a full-width bottom sheet only
+   below the mobile breakpoint. */
+
+.lyrics-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.lyrics-sheet-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lyrics-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.lyrics-sheet {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  max-height: 70vh;
+  box-sizing: border-box;
+  padding: 32px;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-09);
+  box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
+  transform: scale(0.96);
+  transition: transform 0.3s ease;
+}
+
+.lyrics-sheet-overlay--visible .lyrics-sheet {
+  transform: scale(1);
+}
+
+.lyrics-sheet__handle {
+  display: none;
+}
+
+.lyrics-sheet__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.lyrics-sheet__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  cursor: pointer;
+}
+
+.lyrics-sheet__close-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.lyrics-sheet__title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+}
+
+.lyrics-sheet__header-spacer {
+  flex-shrink: 0;
+  width: 32px;
+}
+
+.lyrics-sheet__song-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lyrics-sheet__song-art {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+}
+
+.lyrics-sheet__song-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lyrics-sheet__song-title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-bold);
+}
+
+.lyrics-sheet__song-time {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+}
+
+.lyrics-sheet__play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  cursor: pointer;
+  color: var(--neutral-dark-04);
+}
+
+.lyrics-sheet__play-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.lyrics-sheet__divider {
+  margin: 16px 0;
+  height: 1px;
+  background: var(--white-15);
+}
+
+.lyrics-sheet__lines {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.lyrics-sheet__lines::-webkit-scrollbar {
+  display: none;
+}
+
+.lyrics-sheet__line {
+  margin: 0;
+  padding: 6px 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  transition: color 0.2s ease;
+}
+
+.lyrics-sheet__line--active {
+  color: var(--neutral-dark-100);
+}
+
+/* App-mobile bottom sheet — same convention as LoginModal's mobile sheet. */
+@media (max-width: 767px) {
+  .lyrics-sheet-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .lyrics-sheet {
+    max-width: none;
+    max-height: 70vh;
+    padding: 12px 20px 24px;
+    border-radius: 26px 26px 0 0;
+    border: none;
+    box-shadow: none;
+    /* Bottom sheet slides up instead of the desktop dialog's scale-in. */
+    transform: translateY(100%);
+  }
+
+  .lyrics-sheet-overlay--visible .lyrics-sheet {
+    transform: translateY(0);
+  }
+
+  .lyrics-sheet__handle {
+    display: block;
+    align-self: center;
+    width: 36px;
+    height: 4px;
+    margin-bottom: 12px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.15);
+  }
+}

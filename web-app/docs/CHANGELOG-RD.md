@@ -10,16 +10,52 @@ required output is an explicit statement that you looked, not paperwork.
 
 **Newest first.** One entry per change, with the surface, what moved, and what RD must do.
 
-| Surface | What it is | May change? |
-|---|---|---|
-| C1 | `src/lib/api/contract.ts` — the `MuseApi` interface | ❌ frozen |
-| C2 | `src/lib/api/schemas.ts` — Zod = wire contract | ❌ frozen |
-| C3 | `src/lib/api/index.ts` — the one-line backend swap point | ❌ frozen |
-| C4 | `useAuth` / `useCredits` / `useHistory` / `useMvFlow` / `useSongFlow` return keys | ⚠️ additive only |
-| C5 | `src/lib/authStore.ts` — `localStorage["muse_auth"]` | ⚠️ independent PR |
-| C6 | `src/lib/i18n/config.ts` + `src/middleware.ts` — locale model | ⚠️ independent PR |
-| C7 | `src/app/**/page.tsx` — URL shapes | ⚠️ independent PR |
-| C8 | `src/lib/mv/types.ts` — `COST_*`, `DEFAULT_SETTINGS`, `isComposeReady` | ⚠️ additive only |
+| Surface | What it is                                                                        | May change?       |
+| ------- | --------------------------------------------------------------------------------- | ----------------- |
+| C1      | `src/lib/api/contract.ts` — the `MuseApi` interface                               | ❌ frozen         |
+| C2      | `src/lib/api/schemas.ts` — Zod = wire contract                                    | ❌ frozen         |
+| C3      | `src/lib/api/index.ts` — the one-line backend swap point                          | ❌ frozen         |
+| C4      | `useAuth` / `useCredits` / `useHistory` / `useMvFlow` / `useSongFlow` return keys | ⚠️ additive only  |
+| C5      | `src/lib/authStore.ts` — `localStorage["muse_auth"]`                              | ⚠️ independent PR |
+| C6      | `src/lib/i18n/config.ts` + `src/middleware.ts` — locale model                     | ⚠️ independent PR |
+| C7      | `src/app/**/page.tsx` — URL shapes                                                | ⚠️ independent PR |
+| C8      | `src/lib/mv/types.ts` — `COST_*`, `DEFAULT_SETTINGS`, `isComposeReady`            | ⚠️ additive only  |
+
+---
+
+## 2026-08-05 — `/explore/songs` and `/song/play` now render one shared view; **URL shapes unchanged**
+
+**Surface:** C7 (`src/app/[locale]/explore/songs/page.tsx`, `src/app/[locale]/song/play/page.tsx`).
+
+**Change:** both files were rewritten to render the same component
+(`src/components/song/SongDetailView`, wrapped in `<Suspense>`) instead of two separate views.
+**Nothing about either URL moved:** both routes still exist, both still accept the same query
+parameters (`?id=`, and `?tab=` on the explore side), and no path, segment, or parameter name
+changed. **C7 diff for RD purposes: zero.**
+
+**Why it looks like a contract change and is not.** The designer's `SongDetailPage` is a
+two-column screen — song list on the left, Now Playing on the right, sharing one `<audio>` — and
+at ≥1024px CSS makes those columns an exact 1:1 split. Migrating "the list" and "the player" as
+separate screens would leave half of a 1440px viewport empty. So one view now serves both URLs.
+
+**Keeping both `page.tsx` files was the specific reason this approach was chosen** over merging
+them into a single route: every link RD or anyone else has pointing at either URL keeps working,
+and this gate stays at zero diff. If we had merged the routes, this entry would be reporting a
+breaking change instead.
+
+**Also in this change, and explicitly NOT contract surface:**
+
+- Song audio URLs are derived per id in `src/lib/mv/community.ts` (`songAudioUrl`). **`CommunitySongSchema` (C2) gained no `audio` field** — same discipline as `mvCoverRatio` in the
+  previous slice. When the real API grows an `audio` field, that function is the single place to
+  replace. Until then the whole catalog maps onto the two demo mp3s.
+- The 30s free-playback cap is gone from this screen (product decision S1/S3). No API, cost, or
+  entitlement constant moved: `src/lib/mv/types.ts` (C8) and `src/lib/api/**` (C1–C3) are
+  untouched in this change — verified by `git diff`.
+
+**RD action required:** none. No interface, schema, cost, locale, or URL changed.
+
+**Notified:** recorded here; flag at the next sync if any of you deep-link `/song/play` with
+query parameters beyond `?id=`, since that is the one thing this screen now reads more of.
 
 ---
 
@@ -55,6 +91,7 @@ test:run (76) / build and 47 e2e green.
 **Surface:** C9 (`docs/DEVELOPER-HANDOVER.md`) — documentation only. **C1–C8 unchanged.**
 
 **Change:** §6 was materially wrong and RD reads it as the source of truth:
+
 - It said **"Credits are display-only … nothing in the codebase subtracts them"**. False —
   generation charges on job start and refunds from the poll's `onError` (GL-01). Replaced with a
   cost/charge/refund table.
@@ -87,6 +124,7 @@ The C1–C8 surface was frozen into snapshot tests. **Nothing RD depends on move
 you depend on — the gate is only as good as that list. Anything missing, tell us and we add it.
 
 Recorded baseline at this point:
+
 - `MuseApi`: `createMvJob`, `createSongJob`, `enhancePrompt`, `getMvJob`, `getSongJob`, `renderMvJob`
 - `LOCALES`: `enu jpn kor cht chs deu fra esp ptg` (9), English unprefixed
 - Costs: `COST_STORYBOARD 20` · `COST_RENDER 200` · `COST_SONG 10` · `COST_SONG_RECREATE 50`

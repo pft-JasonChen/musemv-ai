@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { NEW_MVS, TRENDING_MVS, mvCoverRatio, type CommunityMv } from "@/lib/mv/community";
 import { CommunityEmpty, useOnline } from "@/components/community/EmptyState";
@@ -10,6 +10,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Card } from "@/components/ui/Card";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
+import { useMediaQuery } from "@/lib/ssr";
 import {
   computeJustifiedRows,
   aspectRatioOf,
@@ -45,9 +46,6 @@ import {
 const TOP_PICKS = TRENDING_MVS;
 const NEWLY_RELEASED = NEW_MVS;
 
-/** `useLayoutEffect` warns during SSR; fall back to `useEffect` there. */
-const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
-
 type GridItem = CommunityMv & { ratio: MvRatio };
 
 const withRatio = (items: readonly CommunityMv[]): GridItem[] =>
@@ -68,23 +66,14 @@ function MvGrid({ items, onOpen }: { items: readonly GridItem[]; onOpen: (id: st
    * CRASHING under SSR, which is exactly what makes it look safe; what it
    * actually guarantees is that server and first client render disagree.
    *
-   * So: SSR-safe constant initial value, real value read after mount.
-   * `useLayoutEffect` (not `useEffect`) because the desktop and fallback grids
-   * are different DOM, and correcting after paint would flash the wrapped
-   * layout on every desktop load.
-   *
    * A sweep of the whole drop found this pattern in exactly two files. Both are
-   * now fixed; there is no third.
+   * fixed; there is no third.
+   *
+   * The fix itself moved OUT of here in slice 3b: `/song/play` needs the same
+   * question asked of the phone cutover, and the pre-flight is explicit about not
+   * ending up with two sources for it. `useMediaQuery` carries the reasoning.
    */
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useIsomorphicLayoutEffect(() => {
-    const mq = window.matchMedia(DESKTOP_QUERY);
-    setIsDesktop(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   useEffect(() => {
     const el = containerRef.current;

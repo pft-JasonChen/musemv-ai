@@ -3,12 +3,58 @@
 > **日期:** 2026-08-04
 > **DP(Designer Prototype):** `designer-prototype/`(in-repo,commit `568e64c`,2026-08-04)
 > **WA(Web App):** `web-app/` — 正式交付物
-> **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成;Phase 3 第一支 `/explore/mvs` 完成。**
+> **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成;Phase 3 的 3a、3b 完成。**
 > 新 UI 目前涵蓋:全域 shell(側欄 + 手機 chrome)、`/history` 整頁、`/explore/mvs`
-> (justified gallery)。**下一步是 Slice 3b(`/explore/songs` + `/song/play`),
-> pre-flight 已做完並記在 §4 Phase 3 的「3b 的 pre-flight」—— 開工直接讀那一節。**
-> ⚠️ **`/watch` 這個 slice 目前被 DESIGNER-TODO A5 擋住**(手機 detail 畫面沒有返回途徑)。
-> **A5 不擋 3b** —— `SongDetailPage` 自帶有返回鍵的全螢幕手機播放器,已讀 code 確認。
+> (justified gallery)、`/explore/songs` + `/song/play`(合併成一個雙欄畫面 + 手機全螢幕播放器)。
+> **`OWN_CHROME` 是誠實的帳本:16 條 route 移轉了 4 條。**
+
+---
+
+## ▶ 下一個 session 從這裡開始(2026-08-05 交接)
+
+**先讀這一節,再讀 §4 Phase 3。** 上一個 session 做完 Slice 3b 並跑完 G7。
+
+### A. 3b 的三筆未結,都不是可以自己收掉的
+
+| #                                                 | 狀態                                                                                                                                                                                                                                                                   | 誰能收                                            |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| **A-1 視覺基準 12 張**                            | `explore-songs` / `song-play` 各六寬度**未重錄**。`visual-baseline.spec.ts-snapshots/` 有 `-linux` 與 `-darwin` 兩套,**移轉以來只有 `-linux` 被維護**(`explore-mvs-1440-darwin.png` 最後一次變更是 `8452d37`,Phase 1 之前)。macOS 上只能產出對不上那條線的 `-darwin`。 | **要在 Linux 環境**跑 `npm run e2e:visual:update` |
+| **A-2 G7 的 a11y leg**                            | `code-reviewer`(FAIL → 已修)與 `design-reviewer`(REMEDIATED)都跑完了;**`a11y-checker` 連續兩次被 API 錯誤中斷,沒有產出報告** —— 這一格是空白,不是 PASS。                                                                                                               | 重跑 `a11y-checker`(§10.7:建置者不得自我認證)     |
+| **A-3 `TODO.md` #4:build 砍掉 `backdrop-filter`** | **影響 19 支 designer stylesheet 中的 13 支**,不是 3b 的問題也不是 DP 的問題。已在 `/explore/songs` ≥1024px 造成實際可見的破圖(列表清晰穿過 navbar)。刻意沒在 3b 修:改 build 設定會一次動到所有已移轉畫面的外觀。                                                      | 自己一個 slice(含六寬度重檢 + 基準重錄)           |
+
+> **A-3 不要用 `designer-overrides.css` 把 navbar 塗不透明。** 那是遮症狀,留下另外 12 支。
+> 細節、實測數字與「done 長什麼樣」都寫在 `TODO.md` #4。
+
+### B. 下一個 slice 要先做一個決定
+
+§4 的順序是 `/watch` → `/profile` + `/settings` → `/creator` → Credits IAP → `/mv/room` → …
+**但 `/watch` 被 `DESIGNER-TODO` A5 擋住**(DP 在 <767px 藏掉所有 navbar,而 `MVDetailPage`
+沒有自己的返回鍵 —— 手機上進得去出不來)。A5 **不**擋 3b,已由實作確認:`SongDetailPage`
+自帶有返回鍵的全螢幕手機播放器。所以兩條路:
+
+1. **先解 A5**(要設計師給稿或產品拍板一個返回方案),然後做 `/watch`;或
+2. **跳過 `/watch`,先做 `/profile` + `/settings`** —— 它們不是 detail 畫面,不受 A5 影響。
+
+**建議走 2**:A5 要等外部輸入,而 `/profile` 已經是唯一走 `useT()` 的畫面之一(R-8),
+把它移轉掉會同時驗證 i18n 邊界有沒有被破壞。**但這是產品決定,開工前先問。**
+
+### C. 等設計師回覆的四筆(都不擋其他畫面)
+
+- **A5** — 手機 detail 畫面的返回途徑(**擋 `/watch`**)
+- **A7** 🆕 — DP transport 沒有 shuffle/repeat,**與 spec `AC-EXP-05` 相牴觸**;產品已拍板照 DP,
+  所以現在 code 是刻意違反 spec 的狀態(plan **S21**)
+- **A8** 🆕 — `TopSongListItem.css` 零 media query,320px 標題只剩 1–2 字元
+- **A1** — `.tabs__tab--active` 3.95:1;3b 是第一個真的被 axe 量到的畫面,已依 A1 選項 2 排除
+
+### D. 3b 留下的三條可重用經驗(寫在 `CLAUDE.md`,別重新踩)
+
+1. **寫 URL 就是跳頁,`replace` 也一樣** —— 「桌機點了不導航」意味著 active 狀態是 component state。
+2. **`audio.play()` 的 rejection 一定要 catch** —— 冷載入必然 `NotAllowedError`,未處理就是 console error,
+   而 R-2 那幾支測試斷言 console 是空的。
+3. **`opacity: 0` 不等於 hidden** —— 仍在 tab order 與 a11y tree 裡。用常駐掛載 + `inert`,
+   並且**掃 DOM 驗證**,不要用推論(3b 第一版就漏了同一畫面上的第二個遮罩)。
+
+---
 
 ## 這份文件與 `redesign-migration-plan-2026-08-01.md` 的關係
 
@@ -98,17 +144,18 @@
 
 ### 1.4 產品規則(§8 的 S 項判定)
 
-| #                      | 判定                                                                                                                     | 後續動作                                                                                                                                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **S1**                 | **取消** High 畫質的 Pro 鎖,免費開放                                                                                     | 與 DP 一致。**理由是連貫的**:DP 的 `UpgradeDialog` 顯示新方案賣的是 **credits 不是功能**($9.99/200、$29.99/1,000、$59.99/2,000)                                                                     |
-| **S3**                 | **取消** 30 秒試聽門檻,免費全曲播放                                                                                      | 同上                                                                                                                                                                                                |
-| **S1/S3 的 Gate 處理** | **反轉測試,不刪除**                                                                                                      | G5-d #7 從「Pro 門檻存在」改寫成「**High 對免費帳號可選、播放不設上限**」。Gate 維持 10 項不降級,並防止門檻日後被誤加回來                                                                           |
-| **S2**                 | **只保留 30 秒 trim 下限**,拿掉 DP 的 8% 軌長 gap                                                                        | 以 MV-01 spec 為準。**移轉 `TrimAudioSheet` 前先補上 S2 的 e2e**                                                                                                                                    |
-| **S4**                 | **拿掉 BPM + Key**,跟 DP 一致                                                                                            | ⚠️ 動到 `src/lib/mv/types.ts` 的 `bpm`/`musicKey` → **屬 C8,需獨立 PR + `CHANGELOG-RD.md`**,不可夾在 UI slice。同步更新 SONG-01 spec                                                                |
-| **S6**                 | **保留審核流程**;MV 的 confirm 用 DP 新的 `PublishDialog`,`reviewing` / `Submitted for review` 沿用 WA;Song 維持現行行為 | DP 這版剛好把 confirm 那一半補回來了                                                                                                                                                                |
-| **S8**                 | **維持 `localStorage["muse_auth"]`**                                                                                     | DP 的 `AuthProvider`(用 `sessionStorage`)**整支不搬**,只取 `LoginModal` 外觀接 WA 既有 `AuthProvider`。零契約變更                                                                                   |
-| **S20** 🆕             | 方案價**以 code 為準:Weekly $19.99**                                                                                     | 新發現,不在 08-01 的 §8。DP 寫 $9.99,與**已知過時**的 DEVELOPER-HANDOVER 一致而非與 code 一致 —— 典型的 code/doc 陷阱。移轉 `UpgradeDialog` 時**只搬版面,價格一律讀 `SUBSCRIPTION_PLANS`**,不得硬寫 |
-| **S5**                 | credits 扣款 / 退款 / 餘額不足導購 **完全不動**                                                                          | 非協商項。DP 全站硬寫 `credits={390}`(19 處),移轉時**一律改接 `useCredits()`**                                                                                                                      |
+| #                      | 判定                                                                                                                     | 後續動作                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **S1**                 | **取消** High 畫質的 Pro 鎖,免費開放                                                                                     | 與 DP 一致。**理由是連貫的**:DP 的 `UpgradeDialog` 顯示新方案賣的是 **credits 不是功能**($9.99/200、$29.99/1,000、$59.99/2,000)                                                                                                                                                                                                                                                                                                                             |
+| **S3**                 | **取消** 30 秒試聽門檻,免費全曲播放                                                                                      | 同上                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **S1/S3 的 Gate 處理** | **反轉測試,不刪除**                                                                                                      | G5-d #7 從「Pro 門檻存在」改寫成「**High 對免費帳號可選、播放不設上限**」。Gate 維持 10 項不降級,並防止門檻日後被誤加回來                                                                                                                                                                                                                                                                                                                                   |
+| **S2**                 | **只保留 30 秒 trim 下限**,拿掉 DP 的 8% 軌長 gap                                                                        | 以 MV-01 spec 為準。**移轉 `TrimAudioSheet` 前先補上 S2 的 e2e**                                                                                                                                                                                                                                                                                                                                                                                            |
+| **S4**                 | **拿掉 BPM + Key**,跟 DP 一致                                                                                            | ⚠️ 動到 `src/lib/mv/types.ts` 的 `bpm`/`musicKey` → **屬 C8,需獨立 PR + `CHANGELOG-RD.md`**,不可夾在 UI slice。同步更新 SONG-01 spec                                                                                                                                                                                                                                                                                                                        |
+| **S6**                 | **保留審核流程**;MV 的 confirm 用 DP 新的 `PublishDialog`,`reviewing` / `Submitted for review` 沿用 WA;Song 維持現行行為 | DP 這版剛好把 confirm 那一半補回來了                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **S8**                 | **維持 `localStorage["muse_auth"]`**                                                                                     | DP 的 `AuthProvider`(用 `sessionStorage`)**整支不搬**,只取 `LoginModal` 外觀接 WA 既有 `AuthProvider`。零契約變更                                                                                                                                                                                                                                                                                                                                           |
+| **S20** 🆕             | 方案價**以 code 為準:Weekly $19.99**                                                                                     | 新發現,不在 08-01 的 §8。DP 寫 $9.99,與**已知過時**的 DEVELOPER-HANDOVER 一致而非與 code 一致 —— 典型的 code/doc 陷阱。移轉 `UpgradeDialog` 時**只搬版面,價格一律讀 `SUBSCRIPTION_PLANS`**,不得硬寫                                                                                                                                                                                                                                                         |
+| **S5**                 | credits 扣款 / 退款 / 餘額不足導購 **完全不動**                                                                          | 非協商項。DP 全站硬寫 `credits={390}`(19 處),移轉時**一律改接 `useCredits()`**                                                                                                                                                                                                                                                                                                                                                                              |
+| **S21** 🆕             | `/song/play` 的 **shuffle + repeat 照 DP 刪掉**,並回報設計師                                                             | 新發現於 Slice 3b(2026-08-05),不在 08-01 的 §8,也不在 3b 的 pre-flight —— **pre-flight 漏的第二個東西**(第一個是 `createPortal`)。DP 兩支 transport 都只有 prev/play/next;WA 有 shuffle + repeat,而且 **spec AC-EXP-05 明文要求**(EXP-04,2026-07-23)。產品拍板照 DP,所以**這是 code 刻意違反 spec 的狀態**:已寫進 `DESIGNER-TODO.md` A7 等設計判斷,並回寫 spec 標註差異。**沒有反轉測試可寫** —— 這是功能移除,不是門檻反轉,守它的是 A7 那筆待辦而非一條 e2e |
 
 ### 1.5 路由
 
@@ -400,7 +447,109 @@ href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
 
 **Gate(每個 route):** G1 + G4 + **G5(含行為回歸清單)** + G6 + G7。
 
-#### Slice 3b — `/explore/songs` + `/song/play`:**§2.1 的拆法在這裡行不通,已改**(2026-08-05)
+#### Slice 3b — `/explore/songs` + `/song/play` ✅ **完成 2026-08-05**
+
+下面 pre-flight 的四個決定全部照做,並且**沒有一個在實作時被推翻** —— 但 pre-flight
+漏了兩件事,兩件都是「照搬就會默默弄壞 spec」的那一類:
+
+- **S21(新):DP 的 transport 沒有 shuffle / repeat**,而 `AC-EXP-05` 明文要求。
+  產品拍板照 DP 刪掉 → `DESIGNER-TODO.md` A7 + spec 回寫。這是 A4 的教訓第二次出現:
+  截圖看不出少了兩顆按鈕,`e2e` 也不會紅,**只有逐條比對 spec 才會發現**。
+- **EXP-09(既有 spec 行為)在合併後無處可去**。`?id=cps-*` 從 `/creator` 進來,
+  那些歌不在三個 tab 的任何一個裡。產品拍板:**左清單切成 `CREATOR_SONGS`**,
+  點任一 tab 切回社群目錄,`activeTab === null` 表示這個狀態(所以 `Tabs` 改收 `null`)。
+
+**實作上與 pre-flight 不同的一處(pre-flight 想得不夠細):** pre-flight 說手機點歌
+`router.push`、桌機「只換右欄」,但沒說桌機的 `?id=` 怎麼寫。**桌機一個字都不能寫進 URL** ——
+`router.replace('/song/play?id=')` 會讓 `/explore/songs` 悄悄變成 `/song/play`,
+那正是這一支要消滅的跳頁。所以 active song 是 **state**,URL 只當起始值,
+並記住「這個選擇是對哪個 `?id=` 做的」,`?id=` 一變就讓位(寫成推導,不是 effect 改 state)。
+prev/next 同樣走 state:若它們推 URL,手機播放器的返回就會變成往回跳歌而不是回清單。
+
+**三個 SSR 危險讀取都照 pre-flight 的表處理,而且 `createPortal` 那一列真的會擋 build。**
+另外**多修了一處 pre-flight 沒點到的**:`audio.play()` 的 rejection 一定要 catch ——
+冷載入沒有 user activation 時它必然 reject(`NotAllowedError`),
+未處理的 rejection 就是一個 console error,而 R-2 那三支測試斷言 console 是空的。
+
+**`useMediaQuery` / `useIsMounted` 抽成 `src/lib/ssr.ts`。** pre-flight 要求
+「改走已定的 media-query hook,不要兩套來源」—— 但那個 hook 不存在,3a 是內嵌在
+`MvGrid` 裡的。所以這一支抽出來,並把 3a 那份改成呼叫它(照 `DpIcon` 在第二個畫面抽出的前例)。
+
+**`useMountTransition` 沒有搬,而且是想清楚之後決定不搬。** DP 用它是為了讓
+`LyricsSheet` 關閉時還能播完退場動畫。但它的關閉態是 `opacity: 0; pointer-events: none` ——
+眼睛和滑鼠看不到,**tab 順序和螢幕閱讀器看得到**。所以改成:常駐掛載 + 關閉時 `inert`
+(React 19 原生支援),退場動畫自然兩個方向都會播,而且不會多一個隱形的可聚焦 dialog。
+**這件事是測試量到的,不是推論**:第一版沒有把 `LyricsSheet` 限定在手機播放器開啟時才掛載,
+`/explore/songs` 上的 `getByRole("dialog")` 當場解析到兩個元素。
+
+**A1 的預言成真了 —— 而且不是靠補登入測試。** A1 早就寫下「現在沒被擋是因為測試有覆蓋缺口,
+免得日後看起來像突然壞掉」。`/explore/songs` 與 `/song/play` **沒有 `AuthGuard`**,
+所以它們的 tab 列是 axe 第一次真的量到的那一列:`.tabs__tab--active` 白字壓品牌紫,
+**3.95:1,與 A1 表上的數字一字不差**。依 A1 選項 2 的既有慣例加進 `a11y.spec.ts` 的排除清單
+並註解指回 A1 —— **沒有自己挑顏色**。這不是 3b 造成的。
+
+**A8(新):`TopSongListItem.css` 一條 media query 都沒有。** 六寬度視覺檢查量到
+320px 的標題被截到只剩 1–2 個字元(「P…」「C…」),375px 約 10 字。
+手機上這份清單是 Explore 的頂層目的地,**在最小支援寬度是不能用的**。
+沒有自己改配置(那是替設計師決定版面),記進 `DESIGNER-TODO.md` A8 要手機 frame。
+
+**順手修掉一個擋 Stop gate 的 G2-a 缺陷(見 §5 的 G2-a 列)。** token map 的生成物
+把絕對路徑寫進去,所以 `--check` 在第二台機器上一定失敗,而且謊稱是 token 動了。
+改成 git-root 相對路徑,token 資料逐位元組不變。
+
+**G7 抓到兩個真的缺陷,而且兩個都是「同一份文件裡剛寫下的教訓,自己沒套用」。**
+這是 §10.7「建置者不得自我認證」最好的一次辯護:兩者都在自我回報「82/82 全綠」之後才浮出來。
+
+1. **桌機歌詞遮罩關閉時仍可被 Tab 聚焦。** `.now-playing__lyrics-overlay` 的關閉態是
+   `opacity: 0; pointer-events: none` —— **正是本 slice 為 `LyricsSheet` 加 `inert` 的那個理由**,
+   但同一個畫面上的第二個遮罩漏了。已加 `inert={!showLyrics}`。
+   **有量測**:掃 1440px DOM 找「可聚焦但不可見且不在 `[inert]` 內」的節點,修前恰好回傳
+   `now-playing__lyrics-close`(「Close lyrics」)一個,修後回傳空陣列。
+2. **切換瀏覽 tab 會換掉並重啟正在播的歌。** Now Playing 的預設值是即時從
+   `displayedSongs[0]` 推導的,而使用者明確點過的歌是黏著的 —— 所以**只有在還沒點任何歌時**
+   才會發生,一般點來點去的驗收永遠碰不到。
+   **根因正是本 slice 自己記過的那個 DP 差異卻沒追到底**:DP 四個 tab 是**同一份** catalog 的
+   四種排序,即時推導無害;WA 三個 tab 是**三份不同**的 catalog。
+   **有量測**:`/explore/songs` 什麼都不點,All → New Releases 讓 Now Playing 從
+   「Pop Anthem」變成「Down the Memory Lane」,並觸發載入 effect 重新播放。
+   已把 `defaultId` 在掛載時凍結,並補一支 e2e(`switching a browse filter does not change what
+is playing`)—— 依 A4 的教訓,由行為測試守,不是由「我注意到了」守。
+
+**Gate:** typecheck ✓ lint ✓ test:run 84 ✓ build ✓ · `designer:check` 19 檔全 verbatim ✓ ·
+G1-b greps ✓ · **G2-a ✓**(修好後才真的會過)· G4 契約零 diff(`src/lib/api/`、`types.ts` 未動)✓ ·
+G4-g ✓ · **e2e 83/83**(69 → +14 本 slice)· 六寬度截圖已看過。
+**桌機不跳頁那一支做了 mutation test**:把 `setSelectedId` 換回 `router.replace` → 該支當場紅在
+`toHaveURL` 那一行,反轉後恢復綠。
+**e2e 曾經紅過一次 `G5-d#2`,那是機器負載造成的,不是 bug** —— 當時三支 review subagent
+各自在跑 chromium。單獨重跑綠、機器閒下來全跑也綠。已把這個陷阱記進 `AGENTS.md` 的 e2e 段。
+**G7 獨立驗收(已跑,結論如下):**
+
+- **`code-reviewer` → FAIL,一條確認的 spec/code 分歧,已修。** 這一支把 `AC-EXP-05` 改得很仔細,
+  卻漏了它的兄弟條目:`AC-EXP-03` 與 journey `EXP-P3-S1` 仍宣稱「歌曲卡一律導向 `/song/play?id`」,
+  在桌機已經是假的。順帶發現 §3.2 / §3.4 整段仍在描述已刪除的 `CommunitySongPlayer`,
+  **而且 §3.2 的 `/explore/mvs` 那行是 slice 3a 留下的同類漂移**(還寫成 2/3/4 欄 grid)。全部已修並註明日期。
+- **`design-reviewer` → REMEDIATED**,確認 A8 的數字精確、1:1 分欄在 1024/1440/1920 完全相等、
+  ≥1920 的 stats reflow 正確、手機播放器在 ≥768 確實 `display:none`。
+  **但它唯一的新發現是錯的,已實測推翻:** 它說 `.now-playing` 的 `top: 124px` 比 navbar 矮 6px
+  導致封面被切掉。實測 navbar 高 **138px**,容器確實重疊 14px,**但容器沒有背景且有 20px padding,
+  第一個可見子元素(封面)落在 144px —— 比 navbar 底部低 6px,是「淨空 6px」不是「被切 6px」**,
+  方向與結論都相反,沒有任何東西被裁切。
+- **`a11y-checker` 兩次都被 API 錯誤中斷,沒有產出報告 —— 這一項仍是空白。**
+
+**追查那 6px 時撞到一個真正嚴重、而且 reviewer 沒看出來的問題 → `TODO.md` #4。**
+截圖顯示歌曲列表**清晰地**穿過 navbar 下半部,與 Back 鍵和 tabs 疊在一起無法閱讀。
+根因不是 DP 也不是這一支:**production build 把標準的 `backdrop-filter` 砍掉,只留過時的
+`-webkit-` 前綴,而 Chrome 149 完全不認前綴版**(已用同一顆 chromium 兩邊對照實測)。
+DP 的 navbar 背景是「不透明漸層到全透明」,靠那層 blur 撐可讀性 —— blur 從來沒生效過。
+**影響 19 支 designer stylesheet 中的 13 支**,不是這個畫面的問題。
+`/history` 之所以從沒暴露:它在 1440×800 根本不會滾動(`scrollHeight` 等於視窗高)。
+**沒有在這一支修**:改 build 設定會一次改動所有已移轉畫面的外觀,要自己的 slice 與自己的基準;
+**也刻意沒有用 `designer-overrides.css` 把 navbar 塗成不透明** —— 那是遮症狀,留下另外 12 支。
+
+<details>
+<summary>原 pre-flight 與拆法決定(保留,實作即照此進行)</summary>
+
+#### Slice 3b 的原始 pre-flight:**§2.1 的拆法在這裡行不通,已改**(2026-08-05)
 
 §2.1 原本把 `/explore/songs` 寫成「取 `SongDetailPage` 的**清單區塊**」,`/song/play` 另外一條。
 **照做會得到半個設計。** `MVDetailPage` 能拆是因為它的播放器是**整寬、疊在**整寬 grid 上面;
@@ -512,6 +661,24 @@ WA 改成:手機點歌 → `router.push(localePath(locale, '/song/play?id=…'))
 手機點歌開全螢幕且返回回到清單 · 冷開 `?id=` 後返回落在 `/explore/songs` 而非走出 app ·
 免費帳號可播到底(S3)· `?tab=` 選中對應 tab · Create AI Song 的 `requireLogin` 守門仍在。
 
+**實際落地的清單比上面多 7 支(共 13 支):** 上列 6 項全數實作,另加
+tab 切換真的換清單 · EXP-09 的 creator 清單 · EXP-06 not-found · R-9 locale 前綴 ·
+R-2 hydration ×3(1440 / 1000 / 700)· A4 手機 tabs 可用。
+**檔案清單與上面預估的差異:** 多了 `src/lib/ssr.ts`(抽出的 hook)、
+`e2e/a11y.spec.ts`(A1 的排除清單)、`src/components/shell/RoomNavbar.tsx`(`Tabs` 收 `null`);
+`SongExplore.tsx` 與 `CommunitySongPlayer.tsx` 是**刪除**而非改寫。
+**視覺基準那 12 張沒有重錄** —— 見下面的說明。
+
+> **⚠️ 視覺基準:12 張未重錄,而且不是遺漏。** `visual-baseline.spec.ts-snapshots/` 同時存
+> `-linux` 與 `-darwin` 兩套。**Phase 1 以來的每一次重錄都只動 `-linux`**
+> (`git log` 可查:`explore-mvs-1440-darwin.png` 最後一次變更是 `8452d37`,
+> 移轉還沒開始),所以 `-darwin` 那 114 張早已是舊 UI 的存檔,不只這 12 張。
+> 這一支是在 **macOS** 上做的,只能產出 `-darwin`,**產出來也對不上維護中的那條線**。
+> 需要在 Linux 環境跑一次 `npm run e2e:visual:update`,把
+> `explore-songs` / `song-play` 各六寬度收進 `-linux`。**這是 3b 唯一未完成的產出。**
+
+</details>
+
 #### Slice 3a — `/explore/mvs` ✅ **完成 2026-08-05**
 
 範圍照上面的 pre-flight 走:只搬 `MVDetailPage` 的**下半**(`.mv-detail__grid*`),
@@ -573,12 +740,12 @@ Blog、AI Storybook、S9 語言擴充。
 
 08-01 §10 的 G1–G7 continue to apply。本次**只改這四處**:
 
-| Gate          | 修訂                                                                                                                                                                                                                                                                                                                                                       |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **G1-b**      | **新增** `<a href="/` grep(R-9)。既有 5 條(`import.meta`、`fetch(`、`MockMuseApi`、`sessionStorage`、`window.location.href=`)全部保留                                                                                                                                                                                                                      |
-| **G5-d #7**   | **反轉**:從「Pro 門檻(High 畫質 crown、30 秒試聽)存在」改為「**High 對免費帳號可選、播放不設上限**」。清單維持 10 項。**分兩次落地(2026-08-05):播放上限那半段在 Slice 3b 反轉**(它就住在 3b 要重寫的畫面),**High 畫質那半段等 `/mv/room` slice**。在 3b 之前,`e2e/behaviour-regressions.spec.ts:266` 斷言的是**尚未反轉的舊行為** —— 那不是遺漏,是還沒排到 |
-| **G5-d 新增** | S2(30 秒 trim 下限)與 Q2(中間頁不進歷史)各需一個 e2e                                                                                                                                                                                                                                                                                                       |
-| **G2-a**      | 已生效(generator 預設路徑改指 in-repo DP)。此前它在所有非設計者機器上都是靜默 skip                                                                                                                                                                                                                                                                         |
+| Gate          | 修訂                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **G1-b**      | **新增** `<a href="/` grep(R-9)。既有 5 條(`import.meta`、`fetch(`、`MockMuseApi`、`sessionStorage`、`window.location.href=`)全部保留                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **G5-d #7**   | **反轉**:從「Pro 門檻(High 畫質 crown、30 秒試聽)存在」改為「**High 對免費帳號可選、播放不設上限**」。清單維持 10 項。**分兩次落地(2026-08-05):播放上限那半段已在 Slice 3b 反轉** ✅ —— 測試改名為 `S3 / G5-d#7 inverted`,除了斷言導購文案消失,還實際把 `<audio>` seek 到 90% 並斷言 `currentTime > 30`(只斷言文案不見的話,把元件刪掉也會通過)。**High 畫質那半段仍等 `/mv/room` slice**,`Pro gate: High` 那支照舊有效                                                                                                                                                       |
+| **G5-d 新增** | S2(30 秒 trim 下限)與 Q2(中間頁不進歷史)各需一個 e2e                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **G2-a**      | 已生效(generator 預設路徑改指 in-repo DP)。此前它在所有非設計者機器上都是靜默 skip。**2026-08-05(Slice 3b)又修一次,同一個病的另一面:** 生成物把**絕對路徑**寫進去(`/home/user/musemv-ai/…`),而 `--check` 是整檔比對 —— 所以它在**任何第二台機器上都會失敗**,錯誤訊息還說「tokens moved without regenerating」,而 token 一個都沒動。在 macOS 上直接擋住 Stop gate。**改成輸出 git-root 相對路徑**(日期本來就已被 `strip()` 排除,同一個理由),token 資料逐位元組不變。若當時選擇「重新生成了事」,只會把失敗甩給下一台機器 —— 就是 `-darwin`/`-linux` 視覺基準現在卡住的那個乒乓 |
 
 ### 需要 `CHANGELOG-RD.md` 條目的變更
 

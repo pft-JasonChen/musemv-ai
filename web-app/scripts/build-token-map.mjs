@@ -55,6 +55,26 @@ const DP_TOKENS = join(DP_ROOT, "src", "styles", "tokens.css");
 const OUT_MD = join(WA_ROOT, "docs", "token-map.md");
 const OUT_JSON = join(WA_ROOT, "docs", "token-map.json");
 
+/**
+ * Emit source paths RELATIVE TO THE GIT ROOT, never absolute.
+ *
+ * WHY (found 2026-08-05, slice 3b): the generated map recorded absolute paths —
+ * `/home/user/musemv-ai/designer-prototype/…` from the machine that last ran it.
+ * `--check` regenerates and compares whole files, so on ANY other machine those
+ * two lines differ and G2-a fails with "tokens moved without regenerating" when
+ * no token has moved. It blocked the Stop gate on a macOS checkout with a diff
+ * that was nothing but the absolute path.
+ *
+ * Regenerating to fix it would only flip the failure onto the next machine —
+ * exactly the ping-pong the `-darwin`/`-linux` visual baselines are already stuck
+ * in. Relative paths make the artifact machine-independent, so the check goes
+ * back to measuring the one thing it is for: whether the TOKENS changed. The date
+ * line is stripped from the comparison for the same reason (see `strip` below);
+ * this is the same problem the author already solved once.
+ */
+const REPO_ROOT = resolve(WA_ROOT, "..");
+const rel = (p) => p.replace(REPO_ROOT + "/", "");
+
 // ── parse ───────────────────────────────────────────────────────────────────
 /**
  * `--name: value;` declarations, split by THEME BLOCK.
@@ -303,7 +323,7 @@ const section = (title, rs) => rs.length === 0 ? "" : [
 const md = `# Token map — WA ⇄ DP
 
 > **GENERATED — do not hand-edit.** \`node scripts/build-token-map.mjs\`
-> Sources: \`${WA_TOKENS.replace(WA_ROOT + "/", "")}\` · \`${DP_TOKENS}\`
+> Sources: \`${rel(WA_TOKENS)}\` · \`${rel(DP_TOKENS)}\`
 > Generated ${stamp}. Gate **G2-a** (\`redesign-migration-plan-2026-08-01.md\` §10).
 
 Matching is **by value**, which is what plan §4.1 asserts is already true ("顏色不是重畫,
@@ -394,7 +414,7 @@ ${dpOnly.map(([n, v]) => `| \`${n}\` | \`${esc(normalise(resolved(dp, v)))}\` |`
 const json = {
   generatedBy: "scripts/build-token-map.mjs",
   generated: stamp,
-  sources: { wa: WA_TOKENS, dp: DP_TOKENS },
+  sources: { wa: rel(WA_TOKENS), dp: rel(DP_TOKENS) },
   counts: { wa: wa.size, dp: dp.size, ...tally, dpOnly: dpOnly.length },
   conflicts: conflictRows,
   rows,

@@ -50,5 +50,8 @@
 @import "./designer/Badge.css";
 @import "./designer/Card.css";
 @import "./designer/SectionHeader.css";
+@import "./designer/TopSongListItem.css";
+@import "./designer/LyricsSheet.css";
 @import "./designer/HistoryPage.css";
 @import "./designer/MVDetailPage.css";
+@import "./designer/SongDetailPage.css";

@@ -55,3 +55,54 @@ Status 2026-07-12: Storybook upgraded 8 → 10 and vite 5 → 6; findings droppe
 from 7 (1 high) to **2 moderate**, both from the `postcss` version pinned
 inside `next@16.2.x` itself — upstream, dev-time only, no fix short of a Next
 canary. Re-check after the next Next.js minor.
+
+## 4. The production build strips `backdrop-filter`, so every DP blur is dead (found 2026-08-05, Slice 3b G7)
+
+**`backdrop-filter` never renders in a production build.** The CSS minifier in the
+`next build` pipeline keeps the obsolete `-webkit-` prefix and drops the standard
+property. From `.next/static/chunks/*.css`:
+
+```css
+.detail-navbar{z-index:20;-webkit-backdrop-filter:blur(8px);background:linear-gradient(#09090b 0%,#09090b00 100%);…}
+```
+
+The source (`src/styles/designer/DetailNavbar.css`, verbatim from DP) declares
+**both**. Only the prefixed one survives — and **Chrome 149 ignores the prefixed
+form entirely**. Measured, in the same browser the e2e suite uses:
+
+| element style                          | computed `backdropFilter` |
+| -------------------------------------- | ------------------------- |
+| `-webkit-backdrop-filter: blur(8px)`   | `none`                    |
+| `backdrop-filter: blur(8px)`           | `blur(8px)`               |
+
+So this is not a headless artifact and not a DP defect — DP's CSS is correct. It is
+our build pipeline silently removing the only form that works.
+
+**Scope: 13 of the 19 copied designer stylesheets use `backdrop-filter`** —
+`DetailNavbar`, `RoomNavbar`, `MobileHeader`, `MobileTabBar`, `Card`, `Badge`,
+`IconButton`, `CreditBalance`, `HistoryPage`, `LyricsSheet`, and more. Every
+frosted-glass surface in the migrated UI is currently plain transparent.
+
+**Where it is already visibly wrong:** `/explore/songs` at ≥1024px. DP's navbar
+background is `linear-gradient(#09090b → transparent)` and relies on the blur to
+keep the fade legible. With no blur, the song list scrolls **sharply** through the
+navbar's lower half — rows and album thumbnails collide with the Back control and
+sit under the tab pills, unreadable (screenshot in the slice's review notes).
+
+**Why it never showed until now.** `/history` is the only other migrated screen with
+a two-row navbar, and at 1440×800 it does not scroll at all (`scrollHeight` equals
+the viewport), so nothing has ever passed behind that gradient. `/explore/mvs`'s
+navbar has no tabs row, so its opaque top covers the whole 80px.
+
+**Not fixed here, deliberately.** The fix is in the build/minifier configuration and
+would change the rendering of **all 13 stylesheets across every migrated screen** —
+it needs its own change, its own six-width re-check, and new visual baselines. Doing
+it at the tail of a screen migration would bundle an app-wide visual change into a
+slice that is supposed to be one screen. **Do NOT paper over it in
+`designer-overrides.css`** by making the navbar opaque: that hides one symptom of a
+systemic problem and leaves the other twelve.
+
+**Done looks like:** the standard `backdrop-filter` present in
+`.next/static/chunks/*.css`; a test asserting `getComputedStyle(navbar).backdropFilter
+!== "none"` on a production build so it cannot regress silently; the six widths
+re-checked and baselines re-recorded on Linux.

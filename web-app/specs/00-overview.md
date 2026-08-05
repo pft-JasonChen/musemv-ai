@@ -11,16 +11,16 @@
 
 ## 0. How to read these specs
 
-| Convention | Meaning |
-|---|---|
-| **Path ID** `MV-P1` | One user journey through an area. **Always area-qualified** (`MV-`, `SONG-`, `EXP-`, …) so IDs never collide across the 10 areas. |
-| **Step ID** `MV-P1-S2` | A step within a path (screen state + user action + system response). |
-| **Error ID** `MV-E1` | An error/edge branch within an area. |
-| **AC** `AC-MV-01` | An EARS acceptance criterion (QA-testable), prefixed per area. |
+| Convention                        | Meaning                                                                                                                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Path ID** `MV-P1`               | One user journey through an area. **Always area-qualified** (`MV-`, `SONG-`, `EXP-`, …) so IDs never collide across the 10 areas.                                                     |
+| **Step ID** `MV-P1-S2`            | A step within a path (screen state + user action + system response).                                                                                                                  |
+| **Error ID** `MV-E1`              | An error/edge branch within an area.                                                                                                                                                  |
+| **AC** `AC-MV-01`                 | An EARS acceptance criterion (QA-testable), prefixed per area.                                                                                                                        |
 | **TBD** `TBD-GL-01` / `TBD-MV-01` | A tracked open decision. `GL` = global (this doc §9); area-specific ones (`TBD-MV-*`) live in that area's §8. Each id is unique and stated **once**; other places cross-reference it. |
-| ⚠️ **Divergence** | Web behaviour differs from App Spec v3.0 — intentional or drifted; each is flagged. |
-| ❓ | Points at an open `TBD-*` decision inline. |
-| 🔒 **Mock** | Backed by mock/seed data or in-memory state; not a real backend yet. |
+| ⚠️ **Divergence**                 | Web behaviour differs from App Spec v3.0 — intentional or drifted; each is flagged.                                                                                                   |
+| ❓                                | Points at an open `TBD-*` decision inline.                                                                                                                                            |
+| 🔒 **Mock**                       | Backed by mock/seed data or in-memory state; not a real backend yet.                                                                                                                  |
 
 **Single-source-of-truth rule (avoid the doc-drift this repo has already hit):** every fact and every
 TBD is authoritative in exactly one place. The parity matrix (§8) owns divergence status; each area's
@@ -28,7 +28,7 @@ journeys own the behavioural detail; the TBD registers own open questions. Elsew
 by id — don't restate.
 
 **Screenshots are deferred** to a later "storyboard HTML" phase. Specs are behaviour-first and
-diffable today; each path lists the route(s) to capture later. QA items marked *visual* (e.g. "purple
+diffable today; each path lists the route(s) to capture later. QA items marked _visual_ (e.g. "purple
 border", "progress 0→100") are **blocked until that phase** and tagged accordingly.
 
 **Parity status vocabulary (§8):** **Ported** (matches app), **Adapted** (same intent, desktop
@@ -43,30 +43,31 @@ a `TBD-*`). "spec-pending" and "❓" are different states: one is our backlog, t
 All routes live under `src/app/[locale]/`. English (`enu`) is served **unprefixed** (`/mv/room`); other
 locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 
-| Route | View component | Area spec | Auth | App ref |
-|---|---|---|---|---|
-| `/` | `home/HomeView` | 04 explore-community | — | F02 |
-| `/explore/mvs` | `community/MvExplore` | 04 | — | F14 |
-| `/explore/songs` | `community/SongExplore` | 04 | — | F14 |
-| `/watch` | `community/CommunityMvPlayer` (MV player) | 04 | — | F10 |
-| `/song/play` | `community/CommunitySongPlayer` | 04 | — | F13 |
-| `/creator` | `community/CreatorProfile` | 04 | — | F17 |
-| `/mv/room` | `mv/MvRoom` | 02 mv-creation | 🔒 **Auth** | F03 |
-| `/mv/thinking` | `mv/StoryboardGenerationScreen` | 02 | flow-guard | F06 |
-| `/mv/storyboard` | `mv/StoryboardEditor` | 02 | flow-guard | F07 |
-| `/mv/creating` | `mv/RenderGenerationScreen` | 02 | flow-guard | F08 |
-| `/mv/result` | `mv/MvResult` | 02 | flow-guard | F08 |
-| `/mv/edit` | `mv/MvEditor` | 02 | flow-guard | F09 |
-| `/song/create` | `song/SongCompose` | 03 song-creation | 🔒 **Auth** | F11 |
-| `/song/creating` | `song/SongGenerationScreen` | 03 | flow-guard | (web) |
-| `/song/result` | `song/SongResultView` | 03 | flow-guard | F12 |
-| `/history` | `history/HistoryView` | 05 history | 🔒 **Auth** | F15 |
-| `/profile` | `profile/ProfileView` | 06 profile-account | 🔒 **Auth** | F16 |
-| `/settings` | `profile/SettingsView` | 06 | 🔒 **Auth** | F19 |
-| `/share` | `share/ShareLinkView` | 10 share | **Public** (by design) | (web) |
-| `/share/mv/[id]` | *(server redirect → `/share?id=…`; legacy route, no component)* | 10 | — | (web) |
+| Route            | View component                                                  | Area spec            | Auth                   | App ref |
+| ---------------- | --------------------------------------------------------------- | -------------------- | ---------------------- | ------- |
+| `/`              | `home/HomeView`                                                 | 04 explore-community | —                      | F02     |
+| `/explore/mvs`   | `community/MvExplore`                                           | 04                   | —                      | F14     |
+| `/explore/songs` | `song/SongDetailView`                                           | 04                   | —                      | F14     |
+| `/watch`         | `community/CommunityMvPlayer` (MV player)                       | 04                   | —                      | F10     |
+| `/song/play`     | `song/SongDetailView` (same view as `/explore/songs`)           | 04                   | —                      | F13     |
+| `/creator`       | `community/CreatorProfile`                                      | 04                   | —                      | F17     |
+| `/mv/room`       | `mv/MvRoom`                                                     | 02 mv-creation       | 🔒 **Auth**            | F03     |
+| `/mv/thinking`   | `mv/StoryboardGenerationScreen`                                 | 02                   | flow-guard             | F06     |
+| `/mv/storyboard` | `mv/StoryboardEditor`                                           | 02                   | flow-guard             | F07     |
+| `/mv/creating`   | `mv/RenderGenerationScreen`                                     | 02                   | flow-guard             | F08     |
+| `/mv/result`     | `mv/MvResult`                                                   | 02                   | flow-guard             | F08     |
+| `/mv/edit`       | `mv/MvEditor`                                                   | 02                   | flow-guard             | F09     |
+| `/song/create`   | `song/SongCompose`                                              | 03 song-creation     | 🔒 **Auth**            | F11     |
+| `/song/creating` | `song/SongGenerationScreen`                                     | 03                   | flow-guard             | (web)   |
+| `/song/result`   | `song/SongResultView`                                           | 03                   | flow-guard             | F12     |
+| `/history`       | `history/HistoryView`                                           | 05 history           | 🔒 **Auth**            | F15     |
+| `/profile`       | `profile/ProfileView`                                           | 06 profile-account   | 🔒 **Auth**            | F16     |
+| `/settings`      | `profile/SettingsView`                                          | 06                   | 🔒 **Auth**            | F19     |
+| `/share`         | `share/ShareLinkView`                                           | 10 share             | **Public** (by design) | (web)   |
+| `/share/mv/[id]` | _(server redirect → `/share?id=…`; legacy route, no component)_ | 10                   | —                      | (web)   |
 
 **Modals / sheets (no route)** — specced inside the owning area:
+
 - Credits/IAP: `SubscribeModal`, `BuyCreditsModal`, `CreditsDetailModal` → area 07 (F20)
 - Auth: `SignInModal` → area 09 (F22)
 - Account menu, Edit-profile → area 06 (F18)
@@ -111,40 +112,40 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 
 ## 7. Design tokens
 
-- `src/styles/tokens.css` (synced from mobile Figma — **values never edited**). New semantic color = new token in `:root`. Specs reference token *names* (e.g. `--accent`), never hex.
+- `src/styles/tokens.css` (synced from mobile Figma — **values never edited**). New semantic color = new token in `:root`. Specs reference token _names_ (e.g. `--accent`), never hex.
 
 ---
 
 ## 8. App → Web parity matrix
 
-| App F | App feature | Web status | Where |
-|---|---|---|---|
-| F01 | Splash & Onboarding | **Dropped** (no splash/onboarding route) → `TBD-GL-03` | 09 |
-| F02 | Explore Home | **Adapted** 🔒 seed | 04 |
-| F03 | AI MV Feature Room | **Adapted** (single-column + Trending aside; no MV-type intro carousel) | 02 |
-| F03-2 | MV Output Settings | **Adapted → sync App** — Quality = Standard/High; **High is Pro-gated** (MV-04) | 02 |
-| F04-1 | Choose Song | **Reduced** (My/Sample tabs; no in-modal preview) | 02 |
-| F04-2 | Trim Audio | **Adapted → sync App** — drag handles; **≥30s minimum** (MV-01); import limited to MP3/AAC/WAV/M4A ≤50MB (MV-02) | 02 |
-| F05 | Create Mode Selection | **Adapted** (centered modal, 2 cards) | 02 |
-| F06 | Storyboard Generation | **Ported** 🔒 mock timing | 02 |
-| F07 | Edit Storyboard | **Adapted** (visual style + scenes editable; story/lyrics read-only) | 02 |
-| F08 | MV Generation + Result | **Adapted** (result = square stage + docked info panel) | 02 |
-| F09 | Edit MV | **Adapted → sync App** (`TBD-MV-08`): regenerate overwrites directly, take/cover picker removed, no Save | 02 |
-| F10 | MV Video Player | **Adapted** 🔒 seed | 04 |
-| F11 | AI Song Feature Room | **Adapted → sync App** — Custom adds BPM slider + Key selector; Lyrics/Idea is a free-form textarea (SONG-01) | 03 |
-| F12 | Song Result & Lyrics | **Adapted → sync App** — **30s free-preview gate**, Pro unlocks full (SONG-02); synced Lyrics sheet | 03 |
-| F13 | Song Player | **Adapted** 🔒 seed (simulated playback) — **adds shuffle/repeat + 30s gate** (EXP-04, SONG-02) | 04 |
-| F14 | Community See-All | **Adapted** 🔒 seed | 04 |
-| F15 | History (My Creations) | **Adapted** 🔒 in-memory | 05 |
-| F16 | My Community Profile | **Adapted** (content grid at `/creator?self=1`, area 04) | 04/06 |
-| F17 | Community User Profile | **Adapted** 🔒 seed | 04 |
-| F18 | Account | **Adapted** (`/profile` row-hub) | 06 |
-| F19 | Settings | **Adapted → sync App** — real Terms/Privacy links; **Sign Out moved here** (gated route, PROF-03); demo Unsubscribe/Delete | 06 |
-| F20 | IAP Subscribe / Buy Credits | **Pricing finalized (Business Model 2026-07-13)** 🔒 no real payment — Weekly $19.99/200 · Weekly Pro $29.99/1,000 (default) · Yearly $59.99/2,000; packs 300–8,000; **credits subscriber-only**; Restore Purchases; already-Pro state (CR-02/03/05/06) | 07 |
-| F21 | Proof of Creation | **Removed 2026-07-24** — decided out of web-MVP scope; the placeholder route/component were deleted (area 08) | 08 |
-| F22 | Face Selector / Sign In / Trim | **Adapted** (manual-crop face picker) | 02, 09 |
-| — | Curation ranking/moderation (Explore PRD) | **Not implemented** — logic is `TBD` (area 04) | 04 |
-| — | Share link page | **Web-only addition** | 10 |
+| App F | App feature                               | Web status                                                                                                                                                                                                                                              | Where  |
+| ----- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| F01   | Splash & Onboarding                       | **Dropped** (no splash/onboarding route) → `TBD-GL-03`                                                                                                                                                                                                  | 09     |
+| F02   | Explore Home                              | **Adapted** 🔒 seed                                                                                                                                                                                                                                     | 04     |
+| F03   | AI MV Feature Room                        | **Adapted** (single-column + Trending aside; no MV-type intro carousel)                                                                                                                                                                                 | 02     |
+| F03-2 | MV Output Settings                        | **Adapted → sync App** — Quality = Standard/High; **High is Pro-gated** (MV-04)                                                                                                                                                                         | 02     |
+| F04-1 | Choose Song                               | **Reduced** (My/Sample tabs; no in-modal preview)                                                                                                                                                                                                       | 02     |
+| F04-2 | Trim Audio                                | **Adapted → sync App** — drag handles; **≥30s minimum** (MV-01); import limited to MP3/AAC/WAV/M4A ≤50MB (MV-02)                                                                                                                                        | 02     |
+| F05   | Create Mode Selection                     | **Adapted** (centered modal, 2 cards)                                                                                                                                                                                                                   | 02     |
+| F06   | Storyboard Generation                     | **Ported** 🔒 mock timing                                                                                                                                                                                                                               | 02     |
+| F07   | Edit Storyboard                           | **Adapted** (visual style + scenes editable; story/lyrics read-only)                                                                                                                                                                                    | 02     |
+| F08   | MV Generation + Result                    | **Adapted** (result = square stage + docked info panel)                                                                                                                                                                                                 | 02     |
+| F09   | Edit MV                                   | **Adapted → sync App** (`TBD-MV-08`): regenerate overwrites directly, take/cover picker removed, no Save                                                                                                                                                | 02     |
+| F10   | MV Video Player                           | **Adapted** 🔒 seed                                                                                                                                                                                                                                     | 04     |
+| F11   | AI Song Feature Room                      | **Adapted → sync App** — Custom adds BPM slider + Key selector; Lyrics/Idea is a free-form textarea (SONG-01)                                                                                                                                           | 03     |
+| F12   | Song Result & Lyrics                      | **Adapted → sync App** — **30s free-preview gate**, Pro unlocks full (SONG-02); synced Lyrics sheet                                                                                                                                                     | 03     |
+| F13   | Song Player                               | **Adapted** 🔒 seed — real `<audio>`, **no 30s gate** (S3 landed 2026-08-05). ⚠️ shuffle/repeat **removed** by the designer-UI migration, still an open divergence from AC-EXP-05 — `DESIGNER-TODO.md` A7 / plan S21                                    | 04     |
+| F14   | Community See-All                         | **Adapted** 🔒 seed                                                                                                                                                                                                                                     | 04     |
+| F15   | History (My Creations)                    | **Adapted** 🔒 in-memory                                                                                                                                                                                                                                | 05     |
+| F16   | My Community Profile                      | **Adapted** (content grid at `/creator?self=1`, area 04)                                                                                                                                                                                                | 04/06  |
+| F17   | Community User Profile                    | **Adapted** 🔒 seed                                                                                                                                                                                                                                     | 04     |
+| F18   | Account                                   | **Adapted** (`/profile` row-hub)                                                                                                                                                                                                                        | 06     |
+| F19   | Settings                                  | **Adapted → sync App** — real Terms/Privacy links; **Sign Out moved here** (gated route, PROF-03); demo Unsubscribe/Delete                                                                                                                              | 06     |
+| F20   | IAP Subscribe / Buy Credits               | **Pricing finalized (Business Model 2026-07-13)** 🔒 no real payment — Weekly $19.99/200 · Weekly Pro $29.99/1,000 (default) · Yearly $59.99/2,000; packs 300–8,000; **credits subscriber-only**; Restore Purchases; already-Pro state (CR-02/03/05/06) | 07     |
+| F21   | Proof of Creation                         | **Removed 2026-07-24** — decided out of web-MVP scope; the placeholder route/component were deleted (area 08)                                                                                                                                           | 08     |
+| F22   | Face Selector / Sign In / Trim            | **Adapted** (manual-crop face picker)                                                                                                                                                                                                                   | 02, 09 |
+| —     | Curation ranking/moderation (Explore PRD) | **Not implemented** — logic is `TBD` (area 04)                                                                                                                                                                                                          | 04     |
+| —     | Share link page                           | **Web-only addition**                                                                                                                                                                                                                                   | 10     |
 
 ---
 
@@ -153,21 +154,21 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 Cross-cutting items still needing a decision or backend work. Area-specific items live in each area
 spec's §8 (e.g. `TBD-MV-*`).
 
-| ID | Open item |
-|---|---|
-| **TBD-GL-03** | ⏸ **Phase 2** — Onboarding / splash (App F01) is not in the web MVP; may be added later. |
-| **TBD-GL-04** | 🔧 **Backend (RD)** — production persistence (history, storyboard, credits, subscription, profile all reset today). |
+| ID            | Open item                                                                                                                                                                                                            |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TBD-GL-03** | ⏸ **Phase 2** — Onboarding / splash (App F01) is not in the web MVP; may be added later.                                                                                                                             |
+| **TBD-GL-04** | 🔧 **Backend (RD)** — production persistence (history, storyboard, credits, subscription, profile all reset today).                                                                                                  |
 | **TBD-GL-05** | 📄 **Spec-only, ongoing** — Community / Curation ranking + moderation (Explore PRD). Do **not** change the codebase from this; backend integration is a later RD track. Applies to every Curation item across areas. |
 
 ---
 
 ## 10. Glossary
 
-| Term | Meaning |
-|---|---|
-| Compose state | The MV form (`mvType`, `song`, `description`, `photos`, `settings`). |
-| Job | An async generation unit (`queued → processing → done \| failed`), polled via `MuseApi`. |
-| Storyboard-first / Direct | The two MV generation modes (review a storyboard first, vs render immediately). |
-| Take | *(Legacy)* an alternate generated variant of a scene/cover in Edit MV. ⚠️ The pick-a-take UI is **removed** per `TBD-MV-08` — regenerate now overwrites directly; the mechanism is hidden/marked for a future version (see area 02). |
-| Flow-guard | A mid-flow screen that redirects to its flow entry when in-memory state is missing. |
-| `MuseApi` | The single typed backend boundary (`src/lib/api/contract.ts`); mock today, real client later. |
+| Term                      | Meaning                                                                                                                                                                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Compose state             | The MV form (`mvType`, `song`, `description`, `photos`, `settings`).                                                                                                                                                                 |
+| Job                       | An async generation unit (`queued → processing → done \| failed`), polled via `MuseApi`.                                                                                                                                             |
+| Storyboard-first / Direct | The two MV generation modes (review a storyboard first, vs render immediately).                                                                                                                                                      |
+| Take                      | _(Legacy)_ an alternate generated variant of a scene/cover in Edit MV. ⚠️ The pick-a-take UI is **removed** per `TBD-MV-08` — regenerate now overwrites directly; the mechanism is hidden/marked for a future version (see area 02). |
+| Flow-guard                | A mid-flow screen that redirects to its flow entry when in-memory state is missing.                                                                                                                                                  |
+| `MuseApi`                 | The single typed backend boundary (`src/lib/api/contract.ts`); mock today, real client later.                                                                                                                                        |

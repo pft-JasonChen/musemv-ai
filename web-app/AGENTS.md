@@ -17,6 +17,13 @@ Next.js 16.2 (App Router) + React 19 + TypeScript strict + Tailwind v4. Package 
   (`find /opt/pw-browsers -name chrome -o -name chrome-headless-shell`).
   The a11y spec auto-discovers routes from `src/app/`; known accent-pill contrast issues are
   excluded via selectors in `e2e/a11y.spec.ts` until the design decision lands (`TODO.md` #2).
+  **Run it on a quiet machine, and don't leave a `next start -p 3100` of your own running.**
+  Two ways that bites (both measured 2026-08-05): a server already on :3100 makes the run abort
+  immediately (`reuseExistingServer` is false on purpose — see `playwright.config.ts`); and CPU
+  contention makes the long chained specs flake on a `.click()` timeout. `G5-d#2` failed that way
+  while three review subagents were driving their own browsers, then passed alone and passed again
+  once the machine was idle. **A gate that fails under load is not evidence of a bug — re-run it
+  quiet before believing either answer.**
 - `npm run storybook` / `npm run build-storybook`
 
 **Definition of done:** `npm run typecheck && npm run lint && npm run test:run && npm run build`

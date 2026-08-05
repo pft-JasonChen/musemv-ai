@@ -95,7 +95,10 @@ export function Tabs<T extends string>({
   onChange,
 }: {
   tabs: readonly { id: T; label: string }[];
-  active: T;
+  /** `null` = none selected. `/song/play?id=cps-*` needs that state: it shows the
+   *  creator's playlist (EXP-09), which is not one of the tabs, and highlighting
+   *  a tab that is not driving the list would be a lie. */
+  active: T | null;
   onChange: (id: T) => void;
 }) {
   return (

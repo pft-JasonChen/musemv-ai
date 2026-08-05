@@ -1,9 +1,9 @@
 {
   "generatedBy": "scripts/build-token-map.mjs",
-  "generated": "2026-08-04",
+  "generated": "2026-08-05",
   "sources": {
-    "wa": "/home/user/musemv-ai/web-app/src/styles/token-aliases.css",
-    "dp": "/home/user/musemv-ai/designer-prototype/src/styles/tokens.css"
+    "wa": "web-app/src/styles/token-aliases.css",
+    "dp": "designer-prototype/src/styles/tokens.css"
   },
   "counts": {
     "wa": 110,
