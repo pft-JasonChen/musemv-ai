@@ -764,7 +764,9 @@ export function SongDetailView() {
           App Router cannot use DP's navbar-as-a-prop arrangement. Back falls back
           to /explore/songs: on a cold `?id=` deep link that is this section's
           entry, and it is what the mobile player's back control uses too. */}
-      <DetailNavbar fallbackPath="/explore/songs" tabsSlot={tabsSlot} />
+      {/* A5: no phone back — the list half is an Explore tab-bar destination. The
+          full-screen mobile player has its own back (that is why 3b was safe). */}
+      <DetailNavbar fallbackPath="/explore/songs" tabsSlot={tabsSlot} phoneBack={false} />
 
       {!online ? (
         <CommunityEmpty variant="offline" />

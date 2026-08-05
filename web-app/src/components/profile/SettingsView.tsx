@@ -19,16 +19,15 @@ import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
  * one here. Its copy stays hardcoded English, matching the existing boundary —
  * widening `useT()` is a separate decision, not a side effect of a UI port.
  *
- * ── The back control is deliberately NOT DP's ──────────────────────────────
- * DP puts Back in `DetailNavbar`, which `AppLayout.css` sets to `display: none`
- * below 767px — measured: at 375px the button computes to height 0 (see
- * DESIGNER-TODO A5, which this screen turned out to be the second confirmed
- * victim of). WA's pre-migration `/settings` had a working Back button at every
- * width, so porting DP verbatim would DELETE a working control on phones —
- * exactly the A4 regression, where a re-recorded baseline quietly accepted the
- * loss. So the in-page back control stays until A5 has a designer answer, and
- * `e2e/behaviour-regressions.spec.ts` asserts it is reachable at 375px.
- * This restores existing WA behaviour; it does not invent a new design.
+ * ── The phone back control now comes from DetailNavbar ─────────────────────
+ * This screen was the second confirmed victim of A5: DP puts Back in
+ * `DetailNavbar`, which `AppLayout.css` hides below 767px, and WA's
+ * pre-migration `/settings` had a working Back at every width — so porting DP
+ * verbatim would have deleted a working control on phones (A4's regression).
+ * It was first fixed with a bespoke in-page control here; once the sweep found
+ * FIVE affected screens, the fix moved into `DetailNavbar` itself so there is
+ * one definition and one place to delete when a drop ships a mobile back
+ * affordance. Nothing screen-specific is needed here any more.
  */
 
 type Dialog = null | "unsubscribe" | "delete";
@@ -86,20 +85,6 @@ export function SettingsView() {
       <DetailNavbar fallbackPath={localePath(locale, "/profile")} title="Settings" />
       <section className="account-page">
         <div className="account-page__content">
-          {/* See the header comment: this is WA's control, not DP's, because DP's
-            lives in a navbar that phones never render. */}
-          <div className="mb-5 flex items-center gap-3 md:hidden">
-            <button
-              type="button"
-              aria-label="Back"
-              onClick={() => router.back()}
-              className="icon-button icon-button--small icon-button--tertiary"
-            >
-              <DpIcon name="ic_chevron-left" className="icon-button__icon" />
-            </button>
-            <h1 className="text-[20px] font-extrabold">Settings</h1>
-          </div>
-
           <div className="account-page__rows account-page__rows--settings">
             {/* PROF-06 / AUTH-03: Terms & Privacy open the real legal pages. */}
             <SettingsRow

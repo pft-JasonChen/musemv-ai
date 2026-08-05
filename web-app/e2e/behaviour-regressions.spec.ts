@@ -891,6 +891,48 @@ test("3b / A4: the song screen's tabs are usable on a phone", async ({ page }) =
 // Slice 3c — /profile + /settings migrated to DP's AccountPage
 // ════════════════════════════════════════════════════════════════════════════
 
+// A5's fix lives in DetailNavbar, so this sweep covers every route that renders
+// one — and automatically covers each new migrated detail screen as it lands.
+// DP hides `.detail-navbar` below 767px and its MobileHeader has no back, so
+// without this the screens are enterable and not leavable on a phone. Measured
+// on DP itself: 5 of its pages declare a back whose computed height is 0 at 375.
+// Only the routes that NEED it: a screen the mobile tab bar can reach (Explore,
+// Create, History) passes phoneBack={false}, because back solves nothing there.
+// Every migrated detail screen from here on gets it by default, so this list
+// grows with the migration rather than being remembered.
+const DETAIL_NAVBAR_ROUTES = ["/settings"];
+
+for (const route of DETAIL_NAVBAR_ROUTES) {
+  test(`A5: ${route} has a working back control at 375px`, async ({ page }) => {
+    await login(page);
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.goto(route);
+
+    const back = page.getByRole("button", { name: "Back" });
+    await expect(back).toBeVisible();
+    const box = await back.boundingBox();
+    expect(box, `${route}: Back must have a real hit area, not a 0-height ghost`).not.toBeNull();
+    expect(box!.height).toBeGreaterThanOrEqual(24);
+  });
+}
+
+test("A5: a mobile tab-bar destination does NOT get a phone back row", async ({ page }) => {
+  // The opt-out has to be real, or every Explore screen gains a useless row.
+  await login(page);
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/explore/mvs");
+  await expect(page.getByRole("button", { name: "Back" })).toHaveCount(0);
+});
+
+test("A5: the phone back control is NOT duplicated on desktop", async ({ page }) => {
+  // The DP navbar carries its own back at >=768; showing both would be a defect.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/settings");
+  await expect(page.getByRole("button", { name: "Back" })).toBeHidden();
+  await expect(page.locator(".detail-navbar__back")).toBeVisible();
+});
+
 test("3c / A5: /settings still has a reachable back control on a phone", async ({ page }) => {
   // THE test for this slice. DP puts Back in DetailNavbar, which AppLayout.css
   // hides below 767px — measured on DP itself: height 0 at 375px. WA's

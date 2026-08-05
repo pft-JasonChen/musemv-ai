@@ -172,7 +172,9 @@ export function MvExplore({ initialPlayId }: { initialPlayId?: string }) {
       {/* Sticky, rendered as the view's own first child — see DetailNavbar for
           why App Router can't use DP's navbar-as-a-prop arrangement. Back falls
           back to Home, since this page IS its section's entry point. */}
-      <DetailNavbar fallbackPath="/" />
+      {/* A5: no phone back — Explore is a mobile tab-bar destination, so there is
+          nothing to be trapped in and the row would only cost vertical space. */}
+      <DetailNavbar fallbackPath="/" phoneBack={false} />
 
       <div className="mv-detail">
         {/* EXP-06's offline/empty states are still WA's Tailwind component. It
