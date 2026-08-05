@@ -3,7 +3,8 @@
 > **日期:** 2026-08-04
 > **DP(Designer Prototype):** `designer-prototype/`(in-repo,commit `568e64c`,2026-08-04)
 > **WA(Web App):** `web-app/` — 正式交付物
-> **狀態:** 決策已拍板,尚未動任何元件。
+> **狀態:** 決策已拍板。**Phase 0 / 1 完成,Phase 1.5 spike 完成**(`/history` card)。
+> Phase 2 Shell 尚未開始 —— 在此之前只有 `/history` 的卡片是新 UI。
 
 ## 這份文件與 `redesign-migration-plan-2026-08-01.md` 的關係
 
@@ -144,17 +145,17 @@
 
 > 這些**不阻擋**開工,但每一項都要有人追。標 🔴 的會影響已排程的 slice。
 
-| #     | 項目                                                                                                                                                                 | 卡住誰                                              |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| U1 🔴 | **Song Length**:DP 用 `SHOW_SONG_LENGTH = false` 藏起來。是暫時隱藏還是要移除?(S4 已決定拿掉 BPM/Key,但 Song Length 未表態)                                          | `/song/create`                                      |
-| U2 🔴 | **D1 尚未驗證**:「DP 的 BEM CSS 與 Tailwind 在固定載入順序下共存」**沒有人在任何一個畫面上試過**。specificity 互咬是主要風險                                         | 由 `/history` spike 回答(§4 Phase 1.5)              |
-| U3 🔴 | **R-2 SSR 模式未定**:192 處危險讀取散在 33 檔。要先在一個畫面上定出唯一模式(`"use client"` + 讀取移進 `useEffect` + SSR-safe 初值),再機械套用                        | 同上                                                |
-| U4    | 300MB demo 媒體(44 mp4 + 36 mp3)是否進 git —— **轉移完成後**再看                                                                                                     | 無(目前用設計師的 Vercel 版做並排比對)              |
-| U5    | S9 語言擴充(9 → 12 或其他)—— 轉移後定案,屬 C6                                                                                                                        | 無                                                  |
-| U6    | **C1–C8 清單未經 RD 確認**(2026-08-04 決定不寄確認信)。這不是待辦,是一項已知事實:G4 只能保護清單上的東西,所以它證明的範圍以這張我方自訂的清單為準                    | 無                                                  |
-| U7    | 08-01 §7 的 **Q1、Q3、Q4、Q5、Q8、Q9** 尚未處理(轉場無縫度、deep-link 無 flow state、`/mv/thinking` 完成後是否換 URL、Blog/Storybook URL 結構、未登入開受保護 route) | Q3 其實已有答案(flow-guard 已實作且有 e2e),只需確認 |
-| U8    | **S14 Home 區塊組成**、**S12 行銷 chrome 雙層 IA** —— 隨 landing 一起決定                                                                                            | landing                                             |
-| U9    | `MVResultPage` / `MVEditPage` / `SongResult` 的 Figma 覆核 —— 設計師自標未收斂                                                                                       | 搬時標 `@needs-figma-recheck`                       |
+| #         | 項目                                                                                                                                                                                                            | 卡住誰                                              |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| U1 🔴     | **Song Length**:DP 用 `SHOW_SONG_LENGTH = false` 藏起來。是暫時隱藏還是要移除?(S4 已決定拿掉 BPM/Key,但 Song Length 未表態)                                                                                     | `/song/create`                                      |
+| ~~U2~~ ✅ | **D1 已驗證**(2026-08-04 spike):共存,機制是 cascade layer 而非載入順序;擴散範圍實測為 0(115 項視覺測試只有 history 的 6 項變動)                                                                                 | 已關閉                                              |
+| U3 🔴     | **R-2 模式已定但未驗證**:`/history` 只有良性的 `useEffect` 讀取,**render 期 / `useState` initializer 讀 window 的危險類型完全沒出現**(它在 `Sidebar.tsx` 與 `App.tsx`)。模式寫在 §4 Phase 1.5,但 spike 測不到它 | **Shell slice(Phase 2)才是考場**                    |
+| U4        | 300MB demo 媒體(44 mp4 + 36 mp3)是否進 git —— **轉移完成後**再看                                                                                                                                                | 無(目前用設計師的 Vercel 版做並排比對)              |
+| U5        | S9 語言擴充(9 → 12 或其他)—— 轉移後定案,屬 C6                                                                                                                                                                   | 無                                                  |
+| U6        | **C1–C8 清單未經 RD 確認**(2026-08-04 決定不寄確認信)。這不是待辦,是一項已知事實:G4 只能保護清單上的東西,所以它證明的範圍以這張我方自訂的清單為準                                                               | 無                                                  |
+| U7        | 08-01 §7 的 **Q1、Q3、Q4、Q5、Q8、Q9** 尚未處理(轉場無縫度、deep-link 無 flow state、`/mv/thinking` 完成後是否換 URL、Blog/Storybook URL 結構、未登入開受保護 route)                                            | Q3 其實已有答案(flow-guard 已實作且有 e2e),只需確認 |
+| U8        | **S14 Home 區塊組成**、**S12 行銷 chrome 雙層 IA** —— 隨 landing 一起決定                                                                                                                                       | landing                                             |
+| U9        | `MVResultPage` / `MVEditPage` / `SongResult` 的 Figma 覆核 —— 設計師自標未收斂                                                                                                                                  | 搬時標 `@needs-figma-recheck`                       |
 
 ---
 
@@ -223,12 +224,77 @@ gate Phase 1」——**commit 是必要條件,但不是充分條件:基準是綁
 
 ### Phase 1.5 — spike `/history`(回答 U2 / U3)
 
-只搬一個畫面,回答兩件事後**停下來報告**:
+**✅ 執行完成 2026-08-04。範圍:history card(DP BEM markup + CSS)搬進 WA 既有頁面,
+provider / handler / ⋯ 選單全部保留不動。**
 
-- **R-1**:DP 的 BEM CSS 在 `tokens → token-aliases → tailwind → designer` 的固定載入順序下,與 Tailwind 共存得如何?
-- **R-2**:SSR 危險讀取的唯一模式是什麼?
+#### U2 / R-1 —— ✅ 答案:共存,而且機制不是「載入順序」
 
-**兩題都有答案之前,不得移轉第二個畫面。**
+**真正的機制是 cascade layer,不是順序。** Tailwind v4 產出
+`@layer base, components, properties, theme, utilities`;`designer.css` 是**無 layer** 匯入的,
+而 **CSS 規則裡「無 layer」永遠贏過「有 layer」,與 specificity 和先後順序都無關**。
+所以已移轉元件上的 DP BEM 一定贏 Tailwind utility —— D1 能成立靠的是這個,不是 `@import` 的位置。
+
+證據:
+
+- DP `HistoryPage.css` 79 條規則**全部**掛在 `.history-*` BEM 之下,**0 個 `!important`**,
+  3 個裸元素選擇器全是 BEM 塊的子代(`.history-card__copy > a` 這類),不會外洩。
+  唯一跨界的 `.app-layout__content:has(.history-card__menu)` 指向 DP 自己的 layout,在 WA 不匹配。
+- DP 兩支樣式表定義的 class 名與 WA 全部 markup **零重疊**(逐 class 比對)。
+- **實測擴散範圍:視覺測試 115 項中恰好 6 項變動,全部是 `history`(六個寬度);其餘 18 條 route
+  的 109 項一項未動。** 全域匯入 DP 樣式表對其他畫面**零影響**。
+
+⚠️ **代價要知道**:因為無 layer 恆勝,已移轉元件上若混入 Tailwind utility,**它會靜默失效**。
+G3-d 的「不得混用」因此不是風格偏好,而是**量出來的後果**。
+
+#### U3 / R-2 —— ⚠️ 模式已定,但**這個畫面沒有真正的難題**
+
+`/history` 的 DP 危險讀取**全是良性的**:`document.addEventListener` 與 `window.setTimeout`
+都已經在 `useEffect` 裡(本來就 SSR-safe),另有一處 `window.location.href =` —— 那條被 G1-b 硬擋,
+改用 WA 的 router 即可。
+
+**真正危險的那一類(render 期或 `useState` initializer 讀 window)在這個畫面完全沒有出現** ——
+它住在 `Sidebar.tsx` 的 `window.matchMedia()` 與 `App.tsx` 的 `window.location.pathname`,
+兩者都在 **Phase 2 的 Shell slice**。
+
+已定下的模式(待 Shell slice 真正驗證):
+
+> `"use client"` + 所有 `window`/`document` 讀取移進 `useEffect` + 初值給 SSR-safe 預設值 +
+> **絕不在 render 或 `useState` initializer 裡讀 window**。
+
+**所以 R-2 尚未真正關閉。** 誠實記錄:spike 無法測到它該測的東西,Shell slice 才是它的考場。
+
+#### 在 DP 套件裡找到的三個瑕疵(搬第一支檔就出現)
+
+| #   | 問題                                                                                                                                  | 影響                                                                                                                                   |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `HistoryPage.css` 引用 **DP 自己 tokens.css 沒定義**的三個 token:`--neutral-dark-48`(×2)、`--neutral-dark-15`、`--line-height-body-s` | CSS **靜默丟棄**該宣告,元素改為繼承。無錯誤、無警告。階梯有 44/54 沒有 48,有 14/24 沒有 15,有 `--font-body-s` 卻沒有對應的 line-height |
+| 2   | `.badge--failed` 對比度 **≈4.07:1**(`#FF2600` 疊在 `rgba(255,38,0,.2)` 上,合成後 `rgb(68,24,20)`),9px/700 需要 **4.5:1**              | **axe serious violation**。G5-e 要求該 route 零 violation → 目前 `/history` 過不了,需設計師修或比照 accent pill 加例外                 |
+| 3   | `HistoryPage.css` 的 media query 是 **480 / 767 / 900 / 1200**,只有 767 對得上議定的六階                                              | 與 §1.2 的六階 breakpoint 不一致,要跟設計師確認                                                                                        |
+
+#### 新增工具:`scripts/check-designer-css.mjs`(`npm run designer:check`)
+
+D1 的「原樣搬」會把設計師的錯一起搬進來,而 **CSS 是靜默失敗**。這支腳本檢查兩件事:
+
+1. `src/styles/designer/` 每支檔案與 drop **逐位元組相同**(擋「我改一下就好」—— 下次 re-drop 會把它悄悄還原)
+2. 它們引用的每個 `var(--token)` 都真的解析得到
+
+已接上 Stop hook:**drift 直接 blocking**;未解析 token 只列印不擋 —— 讓它擋反而會逼人去改 verbatim 檔,
+正是第 1 條要防的事。drift 偵測已做變異測試(改一行 → exit 2,還原 → exit 0)。
+
+#### 一個 DP CSS 逼出來的結構調整
+
+`.history-card__copy > a` 是**直接子代元素選擇器**,標題的整套視覺(顏色/字級/ellipsis)都掛在上面 ——
+用 `<button>` 會完全沒有樣式。所以標題改成 `<a>`,**給真實 href 並攔截 click**:行為與先前完全相同
+(照樣開 dialog),但 middle-click / 複製連結可用,axe 也看到一個有目的地的 anchor 而非裸可點 `<a>`。
+href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
+
+#### Gate 結果
+
+`typecheck` · `lint` · `test:run(76)` · `build` · G1-b greps · G2-a · D1 verbatim · G4-g **全綠**;
+**e2e 47/47**;視覺 109/115 未動 + history 6 張已**明確重錄**(該畫面是刻意改版,非 Phase 1 的零差異情境)。
+
+> 觀察到一次 flake:`G5-d#3 requireLogin` 在滿載並行下 20s timeout,單獨跑 461ms 通過,
+> 第二次完整跑 47/47 全綠。記錄下來而非當作雜訊 —— 「單獨跑會過」正是負載敏感 flake 的長相。
 
 ### Phase 2 — Shell + 共用元件
 

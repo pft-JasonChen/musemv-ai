@@ -19,6 +19,7 @@
     "e2e:visual:update": "playwright test --grep @visual --update-snapshots",
     "token-map": "node scripts/build-token-map.mjs",
     "token-map:check": "node scripts/build-token-map.mjs --check",
+    "designer:check": "node scripts/check-designer-css.mjs",
     "style:baseline": "node scripts/computed-style-diff.mjs capture",
     "style:diff": "node scripts/computed-style-diff.mjs compare"
   },

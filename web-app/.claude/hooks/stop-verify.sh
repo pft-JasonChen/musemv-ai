@@ -58,6 +58,20 @@ if [ -f scripts/build-token-map.mjs ]; then
   esac
 fi
 
+# ── D1 — the designer stylesheets must stay verbatim ────────────────────────
+# Blocks only on DRIFT (a local edit to a copied file), because a re-drop would
+# silently revert that edit and take the fix with it. Unresolved var(--token)
+# references are the DESIGNER's bugs: they are printed, not fatal — making them
+# fatal would just pressure someone into editing the verbatim copy, which is the
+# one thing this check exists to prevent. Found 3 on the first file migrated.
+if [ -f scripts/check-designer-css.mjs ]; then
+  node scripts/check-designer-css.mjs > /tmp/_d1.log 2>&1
+  if [ "$?" -ne 0 ]; then
+    echo "Stop blocked — designer CSS drifted from the drop:" >&2; cat /tmp/_d1.log >&2; exit 2
+  fi
+  grep -q 'never defined' /tmp/_d1.log && sed -n '/never defined/,$p' /tmp/_d1.log
+fi
+
 # ── G5 / G3 — e2e (Playwright + axe) ────────────────────────────────────────
 # The only leg that actually LOOKS at the rendered screen. tsc and vitest cannot
 # catch a button that stopped rendering; G5-d's 10 behaviour regressions and the

@@ -28,4 +28,9 @@
      screen yet. If the spike says otherwise, this file is where it gets fixed.
    ========================================================================== */
 
-/* (no designer stylesheets imported yet — first one lands with /history) */
+/* Each file below is byte-identical to its counterpart in designer-prototype/.
+   `npm run designer:check` proves that, and proves every var(--token) they use
+   actually resolves. Do not edit these files to fix a bug — fix it upstream and
+   re-drop, or the next re-sync silently reverts you. */
+@import "./designer/Badge.css";
+@import "./designer/HistoryPage.css";
