@@ -155,6 +155,14 @@ DOM 在、`display:none`、使用者完全無法篩選。其中 **Liked 是有 s
 - **需要的決定:** 手機 detail 畫面的返回要放哪裡?(MobileHeader 加 back?detail-navbar
   在手機只留 back 一顆?還是把 `MobileNowPlaying` 的頁內返回鍵推廣成通則?)請給稿。
 
+> **✅ 我方已在 2026-08-05 自行止血,但這條仍需要設計答案。** 產品負責人決定不等稿,
+> 否則剩下 10 條 route 有 5 條做不了。作法:**在 WA 自己的 `DetailNavbar` 元件裡**
+> 加一顆手機專用的返回鍵(`phoneBack`,預設 **開**,所以新畫面預設不會被關住)。
+> 它**刻意不用 `.detail-navbar` 的 class** —— 那個盒子正是被 `display:none` 的東西。
+> 底欄可達的畫面(`/explore/mvs`、`/explore/songs` 清單半邊)明確傳 `phoneBack={false}`。
+> **一個檔案、一個刪除點。** 設計師給稿後,把這段拿掉即可,不需要逐頁清。
+> 已有 e2e 守住三件事:該有的有、該沒有的沒有、桌機不重複。
+
 ### A6. `SongDetailPage` 的 `Trending` tab 沒有對應資料 —— 不擋開發
 
 `SongDetailPage.tsx:31` 有四個 tab(`All` / `Top Picks` / `Trending` / `New Releases`),
@@ -287,6 +295,31 @@ console 是 `TypeError: Cannot read properties of undefined (reading 'id')`(song
   完全沒有人看過 —— 它也在 A5 的 `DetailNavbar` 名單上,只是量不到。
 - 想重跑這個稽核:把 `designer-prototype/` 複製到 repo 外,補 stub,再跑 `vite`。
   **不要在 `designer-prototype/` 裡面補檔**,那是唯讀參考。
+
+### A14. `/watch` 移轉後少了 4 個資訊區塊,以及 375px 標題被截斷
+
+**發現於:** 2026-08-05,Slice 3d(`/watch` 移轉)。
+
+**(a) DP 的播放器沒有這四樣,WA 移轉前有:** `# Music Video` 標籤、meta 行、
+統計區塊(plays / likes / shares)、以及來源 prompt 文字。
+DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + transport。
+
+- **這不是 spec 違規** —— 已逐條比對:`AC-EXP-04` 只要求「靜音 3:4 播放 + play/pause + mute +
+  Like + Share + Create Music Video 預填 `/mv/room`」,那四樣都不在任何 AC 裡。
+  所以照 DP 走是**改版**,不是靜默回歸。與 3b 的 S21 同一個判斷路徑,只是這次 spec 沒有牴觸。
+- **但要讓設計師知道港口的代價:** 統計數字與 prompt 是社群頁面上唯一能看到「這支 MV 表現如何 /
+  用什麼 prompt 生的」的地方,拿掉之後 `/watch` 變成純播放器。
+- **需要的決定:** 這是刻意的嗎?若要保留統計 / prompt,請給一個能放它們的版位。
+
+**(b) 375px 標題被截斷。** `.mv-player__title` 在 375px 只顯示到「Cinemat…」,
+成因與 A8 同一類:`.mv-player__meta-row` 是 flex,右側 like/share/CTA 是固定寬,
+壓縮的全是標題。**不擋開發**,但手機上看不到完整片名。
+
+> **順帶一提,我方在這一支主動修掉了 DP 的一個 a11y 缺陷。** DP 的進度條是純 `<div>` +
+> `onPointerDown`,沒有 role / tabIndex / 鍵盤處理 —— 就是 G7 對歌曲播放器記下的
+> WCAG 2.1.1 缺陷(`TODO.md` #5)。`/watch` 改用 `src/components/ui/SeekBar.tsx`,
+> 有 `role="slider"`、方向鍵 / PageUp / Home / End,並補了測試。
+> **歌曲播放器可以直接改用同一支收掉 #5。**
 
 ### A13. `AccountPage.css` 的 stats 說明文字 **約 3.3–3.8:1**,不到 WCAG AA —— 與 A1 同一類
 

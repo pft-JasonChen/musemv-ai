@@ -900,7 +900,7 @@ test("3b / A4: the song screen's tabs are usable on a phone", async ({ page }) =
 // Create, History) passes phoneBack={false}, because back solves nothing there.
 // Every migrated detail screen from here on gets it by default, so this list
 // grows with the migration rather than being remembered.
-const DETAIL_NAVBAR_ROUTES = ["/settings"];
+const DETAIL_NAVBAR_ROUTES = ["/settings", "/watch"];
 
 for (const route of DETAIL_NAVBAR_ROUTES) {
   test(`A5: ${route} has a working back control at 375px`, async ({ page }) => {
@@ -1038,4 +1038,64 @@ test("3c / G7-2: every control on the account screens meets the 24x24 AA floor",
       expect(small, `${route} @${width} has sub-24px targets`).toEqual([]);
     }
   }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3d — /watch migrated to DP's MVDetailPage player half
+// ════════════════════════════════════════════════════════════════════════════
+
+test("3d / AC-EXP-04: /watch plays muted with play/pause, mute, Like, Share and Create", async ({
+  page,
+}) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/watch");
+
+  // Muted 3:4 playback is the AC, so assert the element state, not the pixels —
+  // headless chromium has no H.264 decoder and paints the stage black.
+  const video = page.locator(".mv-player__video");
+  await expect(video).toHaveJSProperty("muted", true);
+
+  await expect(page.getByRole("button", { name: /Pause|Play/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Mute|Unmute/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Like" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Share" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Create MV/ })).toBeVisible();
+});
+
+test("3d: the seek bar is operable by keyboard, not just pointer", async ({ page }) => {
+  // DP's seek bar is a bare div with onPointerDown — the exact WCAG 2.1.1 defect
+  // G7 logged against the song player (TODO.md #5). /watch got SeekBar instead,
+  // so this asserts the thing that made it worth extracting.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/watch");
+
+  const slider = page.getByRole("slider", { name: "Seek" });
+  await expect(slider).toBeVisible();
+  await expect(slider).toHaveAttribute("aria-valuenow", /\d+/);
+  await slider.focus();
+  await expect(slider).toBeFocused();
+});
+
+test("3d / EXP-06: an unresolvable /watch id is a not-found state", async ({ page }) => {
+  await login(page);
+  await page.goto("/watch?id=does-not-exist");
+  await expect(page.getByRole("button", { name: "Explore Music Videos" })).toBeVisible();
+});
+
+test("3d / GL-02: Create MV from /watch requires sign-in", async ({ page }) => {
+  // NOT logged in — the gate is at the action, not the route.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/watch");
+  await page.getByRole("button", { name: /Create MV/ }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page).toHaveURL(/\/watch$/);
+});
+
+test("3d / R9: the creator link carries the locale prefix", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/jpn/watch");
+  await expect(page.locator(".mv-player__user")).toHaveAttribute("href", "/jpn/creator");
 });

@@ -47,6 +47,7 @@ const OWN_CHROME = [
   "/song/play",
   "/profile",
   "/settings",
+  "/watch",
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

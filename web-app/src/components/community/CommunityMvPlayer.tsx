@@ -1,40 +1,106 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
 import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { DpIcon } from "@/components/ui/DpIcon";
+import { SeekBar } from "@/components/ui/SeekBar";
+import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { buildShareUrl } from "@/lib/share";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 import { getCommunityMv, NEW_MVS } from "@/lib/mv/community";
-import { Heart, Share, Stats } from "@/components/community/ui";
-import { DEFAULT_CREATOR } from "@/lib/mv/community";
 import { CommunityEmpty } from "@/components/community/EmptyState";
 
-function I({ d, size = 18 }: { d: string; size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
-}
-
+/**
+ * Slice 3d — `/watch`, migrated to DP's `MVDetailPage` UPPER half (`.mv-player*`).
+ * The lower half (the justified grid) is `/explore/mvs` and was migrated in 3a;
+ * `MVDetailPage.css` was copied verbatim then and already carries these rules.
+ *
+ * ── This is the screen A5 blocked ───────────────────────────────────────────
+ * `MVDetailPage` is where A5 was first found: DP hides every navbar below 767px
+ * and this page has no in-page back, so on a phone it was enterable and not
+ * leavable. `DetailNavbar` now emits its own phone back control (default on),
+ * so the block is gone rather than worked around here.
+ *
+ * ── What DP's overlay drops, and why that is allowed ────────────────────────
+ * WA's pre-migration screen had a side panel with a "# Music Video" badge, the
+ * meta line, a stats block (plays/likes/shares) and the source prompt. DP's is
+ * an immersive player: video, floating title + creator, like/share, CTA and
+ * transport. Those four are genuinely gone.
+ *
+ * That was checked against the spec rather than assumed. **AC-EXP-04** requires
+ * muted 3:4 playback with play/pause + mute, and Like, Share and Create Music
+ * Video pre-filling `/mv/room` — all present. The badge/meta/stats/prompt are
+ * not in any AC, so this is a redesign, not a silent spec regression. Recorded
+ * in `DESIGNER-TODO.md` so the designer sees what the port costs.
+ *
+ * DP also ADDS a seek bar and fullscreen. The seek bar goes through `SeekBar`,
+ * which is keyboard-operable — DP's is pointer-only, the defect G7 logged
+ * against the song player (`TODO.md` #5). No point shipping it twice.
+ */
 export function CommunityMvPlayer() {
   const router = useRouter();
   const params = useSearchParams();
+  const { locale } = useLocale();
   const id = params.get("id");
   const found = getCommunityMv(id);
+  // AC-EXP-07: a missing/invalid id falls back to a default item rather than crashing.
   const mv = found ?? NEW_MVS[0];
 
   const { setCompose } = useMvFlow();
   const { requireLogin } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(true);
   const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
-  function togglePlay() { const v = videoRef.current; if (!v) return; if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); } }
-  function toggleMute() { const v = videoRef.current; if (!v) return; v.muted = !v.muted; setMuted(v.muted); }
+  function togglePlay() {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      // A cold load has no user activation, so play() can reject with
+      // NotAllowedError. An unhandled rejection is a console error, and the R-2
+      // specs assert the console is empty (the 3b lesson).
+      void v.play().then(
+        () => setPlaying(true),
+        () => setPlaying(false),
+      );
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
+  }
+
+  function toggleMute() {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+  }
+
+  function toggleFullscreen() {
+    const el = playerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void el.requestFullscreen?.().catch(() => {});
+  }
+
+  function seek(next: number) {
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = next;
+    setCurrentTime(next);
+  }
 
   // GL-02/EXP-02: gate at the action — creating from a community MV requires sign-in.
   function createMv() {
@@ -43,85 +109,185 @@ export function CommunityMvPlayer() {
         ...DEFAULT_COMPOSE,
         mvType: mv.mvType,
         description: mv.prompt,
-        song: { id: `tpl-${mv.id}`, source: "sample", title: mv.matchedSong.title, durationSec: mv.matchedSong.durationSec, art: mv.matchedSong.art },
+        song: {
+          id: `tpl-${mv.id}`,
+          source: "sample",
+          title: mv.matchedSong.title,
+          durationSec: mv.matchedSong.durationSec,
+          art: mv.matchedSong.art,
+        },
         settings: { ...DEFAULT_COMPOSE.settings, title: { on: true, text: mv.title } },
       });
-      router.push("/mv/room");
+      router.push(localePath(locale, "/mv/room"));
     });
   }
-  function toggleLike() { requireLogin(() => setLiked((l) => !l)); }
+
+  function toggleLike() {
+    requireLogin(() => setLiked((l) => !l));
+  }
 
   // EXP-06: an id that resolves to nothing shows a not-found state, not a silent
   // fallback to the first MV.
   if (id && !found) {
     return (
-      <div className="mx-auto max-w-[1000px] px-4 py-6 sm:px-6">
-        <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--text-2)" }}>
-          <I d="M15 18l-6-6 6-6" size={16} /> Back
-        </button>
-        <CommunityEmpty variant="not-found" action={<Button onClick={() => router.push("/explore/mvs")}>Explore Music Videos</Button>} />
-      </div>
+      <>
+        <DetailNavbar fallbackPath="/explore/mvs" />
+        <div className="mx-auto max-w-[1000px] px-4 py-6 sm:px-6">
+          <CommunityEmpty
+            variant="not-found"
+            action={
+              <Button onClick={() => router.push(localePath(locale, "/explore/mvs"))}>
+                Explore Music Videos
+              </Button>
+            }
+          />
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[1000px] px-4 py-6 sm:px-6">
-      <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--text-2)" }}>
-        <I d="M15 18l-6-6 6-6" size={16} /> Back
-      </button>
+    <>
+      <DetailNavbar fallbackPath="/explore/mvs" />
 
-      <div className="flex flex-col gap-5 lg:flex-row">
-        {/* Video stage (portrait) */}
-        <div className="relative mx-auto aspect-[3/4] w-full max-w-[420px] shrink-0 overflow-hidden rounded-2xl lg:mx-0 lg:h-[560px] lg:w-[420px]" style={{ background: "#0e0e12" }}>
-          <video key={mv.id} ref={videoRef} src={mv.video} autoPlay muted loop playsInline onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} className="absolute inset-0 h-full w-full object-cover" />
-          <button aria-label={playing ? "Pause" : "Play"} onClick={togglePlay} className="absolute inset-0 grid place-items-center">
-            {!playing && <span className="grid h-16 w-16 place-items-center rounded-full" style={{ background: "rgba(0,0,0,.45)" }}><svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><polygon points="6,4 20,12 6,20" /></svg></span>}
-          </button>
-          <button aria-label={muted ? "Unmute" : "Mute"} onClick={toggleMute} className="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full" style={{ background: "rgba(0,0,0,.5)", color: "#fff" }}>
-            {muted ? <I d="M11 5 6 9H2v6h4l5 4zM23 9l-6 6M17 9l6 6" /> : <I d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14" />}
-          </button>
+      <div className="mv-player" ref={playerRef}>
+        <video
+          className="mv-player__backdrop"
+          src={mv.video}
+          muted
+          loop
+          autoPlay
+          playsInline
+          aria-hidden="true"
+        />
+        <div className="mv-player__backdrop-scrim" aria-hidden="true" />
+
+        <div className="mv-player__stage mv-player__stage--portrait">
+          <video
+            key={mv.id}
+            ref={videoRef}
+            className="mv-player__video"
+            src={mv.video}
+            autoPlay
+            loop
+            muted={muted}
+            playsInline
+            onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
+            onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onClick={togglePlay}
+          />
         </div>
 
-        {/* Info panel */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="mb-2 inline-flex w-fit rounded-md px-2.5 py-1 text-[11px] font-bold" style={{ background: "rgba(1,179,123,.18)", color: "var(--green)" }}># Music Video</span>
-          <h1 className="text-[24px] font-extrabold leading-tight">{mv.title}</h1>
-          <div className="mt-1 text-[12px]" style={{ color: "var(--text-2)" }}>{mv.meta}</div>
-
-          {/* Creator */}
-          <button onClick={() => router.push("/creator")} className="mt-4 flex w-fit items-center gap-2.5 rounded-xl p-1.5 pr-3 transition-colors hover:brightness-125" style={{ background: "var(--card)" }}>
-            <img src={DEFAULT_CREATOR.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
-            <div className="text-left">
-              <div className="text-[13px] font-semibold">{mv.creator}</div>
-              <div className="text-[11px]" style={{ color: "var(--text-2)" }}>View profile</div>
+        <div className="mv-player__floating">
+          <div className="mv-player__meta-row">
+            <div className="mv-player__meta">
+              <p className="mv-player__title">{mv.title}</p>
+              {/* R-9: next/link + localePath. DP assigns window.location.href here,
+                  which is a full page load AND loses the locale prefix. */}
+              <Link href={localePath(locale, "/creator")} className="mv-player__user">
+                <span className="mv-player__avatar">
+                  <DpIcon name="ic_account" className="mv-player__avatar-icon" />
+                </span>
+                <span className="mv-player__username">{mv.creator}</span>
+              </Link>
             </div>
-          </button>
 
-          {/* Actions */}
-          <div className="my-4 flex items-center gap-2">
-            <button onClick={toggleLike} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: liked ? "var(--accent)" : "var(--text-2)" }}>
-              <Heart size={16} filled={liked} /> Like
-            </button>
-            <button onClick={() => setShareOpen(true)} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-semibold transition-all hover:brightness-125" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
-              <Share size={16} /> Share
-            </button>
+            <div className="mv-player__actions">
+              <div className="mv-player__like-share">
+                <button
+                  type="button"
+                  onClick={toggleLike}
+                  aria-label={liked ? "Unlike" : "Like"}
+                  aria-pressed={liked}
+                  className={`icon-button icon-button--medium icon-button--ghost mv-player__action-icon${
+                    liked ? " mv-player__action-icon--active" : ""
+                  }`}
+                >
+                  <DpIcon
+                    name={liked ? "ic_favorite_on" : "ic_favorite_off"}
+                    className="icon-button__icon"
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShareOpen(true)}
+                  aria-label="Share"
+                  className="icon-button icon-button--medium icon-button--ghost mv-player__action-icon"
+                >
+                  <DpIcon name="ic_share" className="icon-button__icon" />
+                </button>
+              </div>
+              <Button className="mv-player__cta" onClick={createMv}>
+                Create MV
+                <DpIcon name="ic_arrow_right" className="button__icon" />
+              </Button>
+            </div>
           </div>
 
-          <div className="mb-4 rounded-xl border p-3" style={{ borderColor: "var(--border-2)" }}>
-            <div className="mb-1.5"><Stats plays={mv.plays} likes={mv.likes + (liked ? 1 : 0)} shares={mv.shares} /></div>
-            <div className="text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{mv.prompt}</div>
-          </div>
+          <div className="mv-player__controls">
+            <button
+              type="button"
+              className="mv-player__control-btn"
+              onClick={togglePlay}
+              aria-label={playing ? "Pause" : "Play"}
+            >
+              <DpIcon name={playing ? "ic_pause" : "ic_play"} className="mv-player__control-icon" />
+            </button>
 
-          <div className="mt-auto">
-            <Button className="w-full" onClick={createMv}>
-              <I d="M5 12h14M13 6l6 6-6 6" /> Create Music Video
-            </Button>
-            <p className="mt-2 text-center text-[11px]" style={{ color: "var(--text-3)" }}>Uses this prompt, style &amp; song as a starting point.</p>
+            <span className="mv-player__time">{formatTime(currentTime)}</span>
+
+            <SeekBar
+              value={currentTime}
+              max={duration}
+              onSeek={seek}
+              label="Seek"
+              className="mv-player__progress"
+              trackClassName="mv-player__progress-track"
+              fillClassName="mv-player__progress-fill"
+              thumbClassName="mv-player__progress-thumb"
+            />
+
+            <span className="mv-player__time">{formatTime(duration)}</span>
+
+            <button
+              type="button"
+              className="mv-player__control-btn"
+              onClick={toggleMute}
+              aria-label={muted ? "Unmute" : "Mute"}
+            >
+              <DpIcon
+                name={muted ? "ic_speaker_off" : "ic_speaker_on"}
+                className="mv-player__control-icon"
+              />
+            </button>
+
+            <button
+              type="button"
+              className="mv-player__control-btn"
+              onClick={toggleFullscreen}
+              aria-label="Fullscreen"
+            >
+              <DpIcon name="ic_expand" className="mv-player__control-icon" />
+            </button>
           </div>
         </div>
       </div>
 
-      <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} title={mv.title} url={buildShareUrl(mv.id)} />
-    </div>
+      <ShareDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        title={mv.title}
+        url={buildShareUrl(mv.id)}
+      />
+    </>
   );
+}
+
+function formatTime(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
