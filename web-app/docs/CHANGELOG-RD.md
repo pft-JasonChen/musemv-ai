@@ -23,6 +23,33 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-04 — Phase 1 token swap; no contract change, but ONE thing you must not drop
+
+**Surface:** the gate flagged `src/app/globals.css` and `src/app/layout.tsx` because they sit
+under `src/app/**`. **Neither is a `page.tsx`, so no URL shape moved — C7 is unchanged, and so
+are C1–C6 and C8.** Stating that explicitly is the point of this entry.
+
+**What changed:** `src/styles/tokens.css` is now the DESIGNER's token file, copied wholesale from
+`designer-prototype/` and replaced wholesale on every drop. WA's previous token names did not
+disappear — they moved to the new `src/styles/token-aliases.css`, frozen at their existing values,
+and shrink as screens migrate. Stylesheet load order is now
+`tokens -> token-aliases -> tailwind -> designer`. Six breakpoints replaced the old two.
+
+**The one thing to carry:** the root layout now sets **`<html data-theme="dark">`**, and it is
+load-bearing, not cosmetic. The designer's token file ships light AND dark, and its `:root` block
+is the LIGHT one. If you rebuild or replace the root layout and drop that attribute, every
+`--color-*` silently resolves to its light value while the app still paints dark surfaces from the
+alias layer. It presents as a random CSS bug with no error anywhere. Keep the attribute.
+
+**RD action required:** none for C1–C8. Just don't drop `data-theme="dark"` when you touch the
+root layout, and don't hand-edit `tokens.css` — a value you change there is lost at the next
+designer drop. WA-specific semantic names belong in `token-aliases.css`.
+
+**Verified by:** Phase 1's acceptance is "old screens unchanged", checked two independent ways and
+both zero: **G2-b** computed-style census, 19 routes x 4 widths, 17,704 element samples, diff = 0;
+**G2-c** pixel diff, 114 screenshots across 6 widths, 0 differing. Plus typecheck / lint /
+test:run (76) / build and 47 e2e green.
+
 ## 2026-08-02 (b) — docs corrected to match code; no contract change
 
 **Surface:** C9 (`docs/DEVELOPER-HANDOVER.md`) — documentation only. **C1–C8 unchanged.**

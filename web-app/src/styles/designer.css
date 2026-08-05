@@ -1,0 +1,31 @@
+/* ============================================================================
+   designer.css — the single entry point for DP's BEM stylesheets (plan D1).
+
+   Phase 1 wires the pipeline and leaves it EMPTY on purpose: the plumbing is
+   proved to build and to change nothing before any rule flows through it.
+
+   HOW THIS FILLS UP
+     Each migrated screen copies its DP stylesheet(s) verbatim into
+     `src/styles/designer/` and adds one `@import` line below. Verbatim is the
+     point — it is what makes a designer re-drop a file-level copy instead of a
+     merge (see designer-prototype/PROVENANCE.md).
+
+   WHY ONE ENTRY FILE AND NOT CSS MODULES
+     Next only allows global (non-module) CSS to be imported from a layout, and
+     DP's class names are already globally-scoped BEM. Routing them through one
+     file imported by globals.css means the JSX keeps DP's `className` strings
+     untouched. CSS Modules would require rewriting every class reference and
+     would forfeit that.
+
+   ORDER MATTERS
+     globals.css imports this LAST, after tailwind, so a DP rule beats a Tailwind
+     utility of equal specificity on a migrated screen. Migrated components are
+     not supposed to mix the two anyway (Gate G3-d) — this is the backstop for
+     when they meet at a shared element.
+
+   ⚠️ UNPROVEN UNTIL THE /history SPIKE. Whether DP's BEM and Tailwind actually
+     coexist under this order is R-1/U2, and nobody has tested it on a real
+     screen yet. If the spike says otherwise, this file is where it gets fixed.
+   ========================================================================== */
+
+/* (no designer stylesheets imported yet — first one lands with /history) */

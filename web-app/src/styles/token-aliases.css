@@ -1,0 +1,231 @@
+/* ============================================================================
+   token-aliases.css — WA's LEGACY token names, frozen.
+
+   WHY THIS FILE EXISTS (plan D2 + R-5)
+     `tokens.css` now belongs to the designer: it is DP's file, replaced wholesale
+     on every drop. But ~60 components still reference WA's old names (--bg,
+     --card, --r-xl, --fs-body-m ...). This file keeps those names alive so those
+     components need zero changes, which is what makes Phase 1 "old screens
+     unchanged" achievable at all.
+
+   WHY LITERAL VALUES AND NOT `var(--dp-name)`
+     Tempting, and wrong. 27 of these DO have a DP token with an identical value,
+     so `--r-xl: var(--radius-md)` would work today. But it would also mean that
+     the NEXT designer drop silently moves every not-yet-migrated screen: change
+     --radius-md to 15px upstream and WA's --r-xl follows it, with no diff in any
+     file we own and no gate that would notice. Phase 1's contract is that
+     unmigrated screens do not move; freezing the values is what enforces it.
+     The correspondence is not lost — it is recorded in docs/token-map.md, which
+     is generated and checked (G2-a).
+
+   THIS FILE ONLY SHRINKS
+     Migrated markup writes DP's native names (R-5). Every screen that moves
+     retires some of these; when the last consumer is gone the file is deleted.
+     Never add a name here — a new semantic token goes to the designer, or into
+     the app as a DP-named token.
+
+   GENERATED from the pre-swap tokens.css on 2026-08-04, so the values below are
+   exactly what shipped before the swap. Do not "tidy" them.
+   ========================================================================== */
+
+:root {
+  /* ── Neutral / Dark 12-step grayscale ─────────────────────────────────── */
+  --n04: #09090b; /* deepest bg            */
+  --n09: #151519; /* card / sheet bg       */
+  --n14: #212127; /* input / icon button   */
+  --n24: #383842; /* disabled bg / chip    */
+  --n34: #50505e; /* subtle fill           */
+  --n44: #676779; /* secondary text        */
+  --n54: #808093; /* muted text            */
+  --n64: #9c9cab; /* tertiary text         */
+  --n74: #b7b7c2; /* hint text             */
+  --n84: #d3d3d9; /* secondary btn text    */
+  --n89: #e1e1e5; /* light label           */
+  --n94: #eeeef1; /* lightest surface      */
+  --n100: #ffffff; /* white                 */
+
+  /* ── Semantic surface / text aliases ──────────────────────────────────── */
+  --bg: var(--n04);
+  --card: var(--n09);
+  --card-2: var(--n14);
+  --card-3: var(--n24);
+  --card-4: var(--n34);
+  --text: var(--n100);
+  --text-2: var(--n64);
+  --text-3: var(--n74);
+  --text-4: var(--n84);
+  --text-5: var(--n44);
+
+  /* ── Borders ──────────────────────────────────────────────────────────── */
+  --border: rgba(255, 255, 255, 0.09); /* navbar / section divider */
+  --border-2: rgba(255, 255, 255, 0.15); /* card / input border      */
+  --border-3: rgba(255, 255, 255, 0.06); /* subtle separator         */
+
+  /* ── Brand accents ────────────────────────────────────────────────────── */
+  --accent: #a855f7; /* purple — primary brand */
+  --accent-2: #ec4899; /* pink                   */
+  --blue: #38bdf8;
+  --gold: #f59e0b; /* credits                */
+  --orange: #f97316;
+  --green: #01b37b; /* success                */
+  --red: #ff2600; /* error / destructive    */
+  --premium: #ffa614;
+
+  /* ── Gradients ────────────────────────────────────────────────────────── */
+  --mv-grad: linear-gradient(135deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+  --song-grad: linear-gradient(135deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+
+  /* ── Typography scale (Inter) ─────────────────────────────────────────── */
+  --font-sans: "Inter", -apple-system, "SF Pro Display", system-ui, sans-serif;
+
+  --fs-display: 42px;
+  --fw-display: 800;
+  --lh-display: 1.1;
+  --fs-title-l: 30px;
+  --fw-title-l: 800;
+  --lh-title-l: 1.13;
+  --fs-title-m: 26px;
+  --fw-title-m: 700;
+  --lh-title-m: 1.15;
+  --fs-title-s: 17px;
+  --fw-title-s: 700;
+  --lh-title-s: 22px;
+  --fs-title-xs: 15px;
+  --fw-title-xs: 700;
+  --lh-title-xs: 18px;
+  --fs-headline: 20px;
+  --fw-headline: 700;
+  --lh-headline: 26px;
+  --fs-section: 17px;
+  --fw-section: 700;
+  --lh-section: 22px;
+  --fs-body-l: 17px;
+  --fw-body-l: 500;
+  --lh-body-l: 22px;
+  --fs-body-m: 14px;
+  --fw-body-m: 500;
+  --lh-body-m: 20px;
+  --fs-body-s: 12px;
+  --fw-body-s: 500;
+  --lh-body-s: 1.5;
+  --fs-body-xs: 9px;
+  --fw-body-xs: 500;
+  --lh-body-xs: 11px;
+  --fs-label-m: 13px;
+  --fw-label-m: 700;
+  --lh-label-m: 18px;
+  --fs-label-s: 12px;
+  --fw-label-s: 600;
+  --lh-label-s: 15px;
+  --fs-cap-m: 11px;
+  --fw-cap-m: 700;
+  --lh-cap-m: 16px;
+  --fs-cap-s: 9px;
+  --fw-cap-s: 700;
+  --lh-cap-s: 11px;
+
+  /* ── Spacing scale (4px base — derived from observed prototype values) ─── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* ── Radii (derived from prototype) ───────────────────────────────────── */
+  --r-sm: 8px; /* chips / tags        */
+  --r-md: 10px; /* thumbnails          */
+  --r-lg: 12px; /* small cards         */
+  --r-xl: 14px; /* cards / inputs / CTA */
+  --r-2xl: 16px; /* large media cards   */
+  --r-pill: 9999px; /* pills / round btns  */
+
+  /* ── Elevation ────────────────────────────────────────────────────────── */
+  --shadow-cta: 0 8px 12px rgba(168, 85, 247, 0.32);
+  --shadow-card: 0 6px 16px rgba(0, 0, 0, 0.3);
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --dur-fast: 0.15s;
+  --dur-base: 0.2s;
+  --dur-slow: 0.3s;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Layout / chrome ──────────────────────────────────────────────────── */
+  --safe-top: env(safe-area-inset-top, 48px);
+  --safe-bot: env(safe-area-inset-bottom, 20px);
+  --tab-h: 66px;
+  --nav-h: 52px;
+
+  /* ── Responsive breakpoints (px) — reference values for @theme / media ── */
+  --bp-mobile: 390px; /* phone (primary parity target) */
+  --bp-tablet: 768px;
+  --bp-laptop: 1024px;
+  --bp-desktop: 1440px;
+}
+
+/* ── Dead weight, kept only so this file is a faithful freeze ──────────────
+   Measured 2026-08-04: the `.t-` classes below have 0 uses in src, --font-sans
+   is referenced ONLY by those classes, and the spacing and breakpoint scales
+   above have 0 uses each. AGENTS.md already records those layers as unused.
+   They are reproduced here rather than dropped so that the token swap is
+   provably a no-op; deleting dead CSS is a separate, deliberate change — not a
+   side effect of Phase 1. Delete them with the rest of this file. */
+/* ── Typography utility classes (mirror the mobile prototype) ───────────── */
+.t-display {
+  font: var(--fw-display) var(--fs-display)/var(--lh-display) var(--font-sans);
+  letter-spacing: -0.4px;
+}
+.t-title-l {
+  font: var(--fw-title-l) var(--fs-title-l)/var(--lh-title-l) var(--font-sans);
+  letter-spacing: -0.3px;
+}
+.t-title-m {
+  font: var(--fw-title-m) var(--fs-title-m)/var(--lh-title-m) var(--font-sans);
+  letter-spacing: -0.26px;
+}
+.t-title-s {
+  font: var(--fw-title-s) var(--fs-title-s)/var(--lh-title-s) var(--font-sans);
+  letter-spacing: -0.17px;
+}
+.t-title-xs {
+  font: var(--fw-title-xs) var(--fs-title-xs)/var(--lh-title-xs) var(--font-sans);
+  letter-spacing: -0.15px;
+}
+.t-headline {
+  font: var(--fw-headline) var(--fs-headline)/var(--lh-headline) var(--font-sans);
+  letter-spacing: -0.2px;
+}
+.t-section {
+  font: var(--fw-section) var(--fs-section)/var(--lh-section) var(--font-sans);
+  letter-spacing: -0.17px;
+}
+.t-body-l {
+  font: var(--fw-body-l) var(--fs-body-l)/var(--lh-body-l) var(--font-sans);
+  letter-spacing: -0.17px;
+}
+.t-body-m {
+  font: var(--fw-body-m) var(--fs-body-m)/var(--lh-body-m) var(--font-sans);
+  letter-spacing: -0.14px;
+}
+.t-body-s {
+  font: var(--fw-body-s) var(--fs-body-s)/var(--lh-body-s) var(--font-sans);
+  letter-spacing: -0.12px;
+}
+.t-label-m {
+  font: var(--fw-label-m) var(--fs-label-m)/var(--lh-label-m) var(--font-sans);
+  letter-spacing: -0.13px;
+}
+.t-label-s {
+  font: var(--fw-label-s) var(--fs-label-s)/var(--lh-label-s) var(--font-sans);
+  letter-spacing: -0.12px;
+}
+.t-cap-m {
+  font: var(--fw-cap-m) var(--fs-cap-m)/var(--lh-cap-m) var(--font-sans);
+  letter-spacing: -0.11px;
+}
+.t-cap-s {
+  font: var(--fw-cap-s) var(--fs-cap-s)/var(--lh-cap-s) var(--font-sans);
+  letter-spacing: -0.09px;
+}

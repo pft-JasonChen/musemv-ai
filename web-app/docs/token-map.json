@@ -2,7 +2,7 @@
   "generatedBy": "scripts/build-token-map.mjs",
   "generated": "2026-08-04",
   "sources": {
-    "wa": "/home/user/musemv-ai/web-app/src/styles/tokens.css",
+    "wa": "/home/user/musemv-ai/web-app/src/styles/token-aliases.css",
     "dp": "/home/user/musemv-ai/designer-prototype/src/styles/tokens.css"
   },
   "counts": {
@@ -63,7 +63,7 @@
   "rows": [
     {
       "wa": "--n04",
-      "waValue": "#09090B",
+      "waValue": "#09090b",
       "normalised": "#09090B",
       "category": "colour",
       "dp": [
@@ -107,7 +107,7 @@
     },
     {
       "wa": "--n34",
-      "waValue": "#50505E",
+      "waValue": "#50505e",
       "normalised": "#50505E",
       "category": "colour",
       "dp": [
@@ -140,7 +140,7 @@
     },
     {
       "wa": "--n64",
-      "waValue": "#9C9CAB",
+      "waValue": "#9c9cab",
       "normalised": "#9C9CAB",
       "category": "colour",
       "dp": [
@@ -151,7 +151,7 @@
     },
     {
       "wa": "--n74",
-      "waValue": "#B7B7C2",
+      "waValue": "#b7b7c2",
       "normalised": "#B7B7C2",
       "category": "colour",
       "dp": [
@@ -162,7 +162,7 @@
     },
     {
       "wa": "--n84",
-      "waValue": "#D3D3D9",
+      "waValue": "#d3d3d9",
       "normalised": "#D3D3D9",
       "category": "colour",
       "dp": [
@@ -173,7 +173,7 @@
     },
     {
       "wa": "--n89",
-      "waValue": "#E1E1E5",
+      "waValue": "#e1e1e5",
       "normalised": "#E1E1E5",
       "category": "colour",
       "dp": [
@@ -184,7 +184,7 @@
     },
     {
       "wa": "--n94",
-      "waValue": "#EEEEF1",
+      "waValue": "#eeeef1",
       "normalised": "#EEEEF1",
       "category": "colour",
       "dp": [
@@ -194,7 +194,7 @@
     },
     {
       "wa": "--n100",
-      "waValue": "#FFFFFF",
+      "waValue": "#ffffff",
       "normalised": "#FFFFFF",
       "category": "colour",
       "dp": [
@@ -205,7 +205,7 @@
     },
     {
       "wa": "--bg",
-      "waValue": "var(--n04) → #09090B",
+      "waValue": "var(--n04) → #09090b",
       "normalised": "#09090B",
       "category": "colour",
       "dp": [
@@ -249,7 +249,7 @@
     },
     {
       "wa": "--card-4",
-      "waValue": "var(--n34) → #50505E",
+      "waValue": "var(--n34) → #50505e",
       "normalised": "#50505E",
       "category": "colour",
       "dp": [
@@ -260,7 +260,7 @@
     },
     {
       "wa": "--text",
-      "waValue": "var(--n100) → #FFFFFF",
+      "waValue": "var(--n100) → #ffffff",
       "normalised": "#FFFFFF",
       "category": "colour",
       "dp": [
@@ -271,7 +271,7 @@
     },
     {
       "wa": "--text-2",
-      "waValue": "var(--n64) → #9C9CAB",
+      "waValue": "var(--n64) → #9c9cab",
       "normalised": "#9C9CAB",
       "category": "colour",
       "dp": [
@@ -282,7 +282,7 @@
     },
     {
       "wa": "--text-3",
-      "waValue": "var(--n74) → #B7B7C2",
+      "waValue": "var(--n74) → #b7b7c2",
       "normalised": "#B7B7C2",
       "category": "colour",
       "dp": [
@@ -293,7 +293,7 @@
     },
     {
       "wa": "--text-4",
-      "waValue": "var(--n84) → #D3D3D9",
+      "waValue": "var(--n84) → #d3d3d9",
       "normalised": "#D3D3D9",
       "category": "colour",
       "dp": [
@@ -315,7 +315,7 @@
     },
     {
       "wa": "--border",
-      "waValue": "rgba(255,255,255,0.09)",
+      "waValue": "rgba(255, 255, 255, 0.09)",
       "normalised": "rgba(255,255,255,0.09)",
       "category": "colour",
       "dp": [],
@@ -323,7 +323,7 @@
     },
     {
       "wa": "--border-2",
-      "waValue": "rgba(255,255,255,0.15)",
+      "waValue": "rgba(255, 255, 255, 0.15)",
       "normalised": "rgba(255,255,255,0.15)",
       "category": "colour",
       "dp": [
@@ -333,7 +333,7 @@
     },
     {
       "wa": "--border-3",
-      "waValue": "rgba(255,255,255,0.06)",
+      "waValue": "rgba(255, 255, 255, 0.06)",
       "normalised": "rgba(255,255,255,0.06)",
       "category": "colour",
       "dp": [],
@@ -341,7 +341,7 @@
     },
     {
       "wa": "--accent",
-      "waValue": "#A855F7",
+      "waValue": "#a855f7",
       "normalised": "#A855F7",
       "category": "colour",
       "dp": [
@@ -351,7 +351,7 @@
     },
     {
       "wa": "--accent-2",
-      "waValue": "#EC4899",
+      "waValue": "#ec4899",
       "normalised": "#EC4899",
       "category": "colour",
       "dp": [],
@@ -359,7 +359,7 @@
     },
     {
       "wa": "--blue",
-      "waValue": "#38BDF8",
+      "waValue": "#38bdf8",
       "normalised": "#38BDF8",
       "category": "colour",
       "dp": [],
@@ -367,7 +367,7 @@
     },
     {
       "wa": "--gold",
-      "waValue": "#F59E0B",
+      "waValue": "#f59e0b",
       "normalised": "#F59E0B",
       "category": "colour",
       "dp": [],
@@ -375,7 +375,7 @@
     },
     {
       "wa": "--orange",
-      "waValue": "#F97316",
+      "waValue": "#f97316",
       "normalised": "#F97316",
       "category": "colour",
       "dp": [],
@@ -383,7 +383,7 @@
     },
     {
       "wa": "--green",
-      "waValue": "#01B37B",
+      "waValue": "#01b37b",
       "normalised": "#01B37B",
       "category": "colour",
       "dp": [
@@ -393,7 +393,7 @@
     },
     {
       "wa": "--red",
-      "waValue": "#FF2600",
+      "waValue": "#ff2600",
       "normalised": "#FF2600",
       "category": "colour",
       "dp": [
@@ -403,7 +403,7 @@
     },
     {
       "wa": "--premium",
-      "waValue": "#FFA614",
+      "waValue": "#ffa614",
       "normalised": "#FFA614",
       "category": "colour",
       "dp": [],
@@ -411,7 +411,7 @@
     },
     {
       "wa": "--mv-grad",
-      "waValue": "linear-gradient(135deg, #FF6BCE 0%, #A855F7 50%, #4338CA 100%)",
+      "waValue": "linear-gradient(135deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%)",
       "normalised": "linear-gradient(135deg,#ff6bce 0%,#a855f7 50%,#4338ca 100%)",
       "category": "gradient",
       "dp": [],
@@ -419,7 +419,7 @@
     },
     {
       "wa": "--song-grad",
-      "waValue": "linear-gradient(135deg, #FFB347 0%, #FF4E50 50%, #D63AF9 100%)",
+      "waValue": "linear-gradient(135deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%)",
       "normalised": "linear-gradient(135deg,#ffb347 0%,#ff4e50 50%,#d63af9 100%)",
       "category": "gradient",
       "dp": [],
@@ -427,8 +427,8 @@
     },
     {
       "wa": "--font-sans",
-      "waValue": "'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif",
-      "normalised": "'inter', -apple-system, 'sf pro display', system-ui, sans-serif",
+      "waValue": "\"Inter\", -apple-system, \"SF Pro Display\", system-ui, sans-serif",
+      "normalised": "\"inter\", -apple-system, \"sf pro display\", system-ui, sans-serif",
       "category": "type",
       "dp": [],
       "status": "wa-only"
@@ -1183,16 +1183,16 @@
     },
     {
       "wa": "--shadow-cta",
-      "waValue": "0 8px 12px rgba(168,85,247,0.32)",
-      "normalised": "0 8px 12px rgba(168,85,247,0.32)",
+      "waValue": "0 8px 12px rgba(168, 85, 247, 0.32)",
+      "normalised": "0 8px 12px rgba(168, 85, 247, 0.32)",
       "category": "other",
       "dp": [],
       "status": "wa-only"
     },
     {
       "wa": "--shadow-card",
-      "waValue": "0 6px 16px rgba(0,0,0,0.3)",
-      "normalised": "0 6px 16px rgba(0,0,0,0.3)",
+      "waValue": "0 6px 16px rgba(0, 0, 0, 0.3)",
+      "normalised": "0 6px 16px rgba(0, 0, 0, 0.3)",
       "category": "other",
       "dp": [],
       "status": "wa-only"

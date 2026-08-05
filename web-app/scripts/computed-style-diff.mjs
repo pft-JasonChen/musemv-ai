@@ -91,7 +91,14 @@ async function capture() {
     ? flag("--routes").split(",")
     : discoverRoutes(join(WA_ROOT, "src", "app"));
 
-  const browser = await chromium.launch();
+  // Same escape hatch as playwright.config.ts: when the image's chromium build differs
+  // from the one @playwright/test pins, launch() fails with "Executable doesn't exist"
+  // and tells you to run `npx playwright install`. Point CHROMIUM_PATH at the binary
+  // that IS present instead. Without this, G2-b simply cannot run in a sandboxed env —
+  // and a Phase-1 instrument that will not launch is not a gate.
+  const browser = await chromium.launch(
+    process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+  );
   const out = { origin: ORIGIN, widths: WIDTHS, props: PROPS, elementCap: ELEMENT_CAP, routes: {} };
   let cells = 0;
 

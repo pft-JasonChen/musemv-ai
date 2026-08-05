@@ -1,7 +1,7 @@
 # Token map — WA ⇄ DP
 
 > **GENERATED — do not hand-edit.** `node scripts/build-token-map.mjs`
-> Sources: `src/styles/tokens.css` · `/home/user/musemv-ai/designer-prototype/src/styles/tokens.css`
+> Sources: `src/styles/token-aliases.css` · `/home/user/musemv-ai/designer-prototype/src/styles/tokens.css`
 > Generated 2026-08-04. Gate **G2-a** (`redesign-migration-plan-2026-08-01.md` §10).
 
 Matching is **by value**, which is what plan §4.1 asserts is already true ("顏色不是重畫,
@@ -198,13 +198,13 @@ WA `--fs-*` vs DP's semantic `--font-*` (the `--font-web-*` / `--font-mobile-*` 
 | `--premium` | `#FFA614` | — | colour |
 | `--mv-grad` | `linear-gradient(135deg,#ff6bce 0%,#a855f7 50%,#4338ca 100%)` | — | gradient |
 | `--song-grad` | `linear-gradient(135deg,#ffb347 0%,#ff4e50 50%,#d63af9 100%)` | — | gradient |
-| `--font-sans` | `'inter', -apple-system, 'sf pro display', system-ui, sans-serif` | — | type |
+| `--font-sans` | `"inter", -apple-system, "sf pro display", system-ui, sans-serif` | — | type |
 | `--lh-display` | `1.1` | — | line-height |
 | `--lh-title-l` | `1.13` | — | line-height |
 | `--lh-title-m` | `1.15` | — | line-height |
 | `--lh-body-s` | `1.5` | — | line-height |
-| `--shadow-cta` | `0 8px 12px rgba(168,85,247,0.32)` | — | other |
-| `--shadow-card` | `0 6px 16px rgba(0,0,0,0.3)` | — | other |
+| `--shadow-cta` | `0 8px 12px rgba(168, 85, 247, 0.32)` | — | other |
+| `--shadow-card` | `0 6px 16px rgba(0, 0, 0, 0.3)` | — | other |
 | `--dur-fast` | `0.15s` | — | other |
 | `--dur-base` | `0.2s` | — | other |
 | `--dur-slow` | `0.3s` | — | other |

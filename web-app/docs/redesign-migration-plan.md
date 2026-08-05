@@ -151,7 +151,7 @@
 | U3 🔴 | **R-2 SSR 模式未定**:192 處危險讀取散在 33 檔。要先在一個畫面上定出唯一模式(`"use client"` + 讀取移進 `useEffect` + SSR-safe 初值),再機械套用                        | 同上                                                |
 | U4    | 300MB demo 媒體(44 mp4 + 36 mp3)是否進 git —— **轉移完成後**再看                                                                                                     | 無(目前用設計師的 Vercel 版做並排比對)              |
 | U5    | S9 語言擴充(9 → 12 或其他)—— 轉移後定案,屬 C6                                                                                                                        | 無                                                  |
-| U6    | **B5:RD 尚未確認 C1–C8 清單就是他們真正依賴的東西**。G4 的價值上限由這張清單的正確性決定                                                                             | 無,但**成本是一封信**,建議現在就寄                  |
+| U6    | **C1–C8 清單未經 RD 確認**(2026-08-04 決定不寄確認信)。這不是待辦,是一項已知事實:G4 只能保護清單上的東西,所以它證明的範圍以這張我方自訂的清單為準                    | 無                                                  |
 | U7    | 08-01 §7 的 **Q1、Q3、Q4、Q5、Q8、Q9** 尚未處理(轉場無縫度、deep-link 無 flow state、`/mv/thinking` 完成後是否換 URL、Blog/Storybook URL 結構、未登入開受保護 route) | Q3 其實已有答案(flow-guard 已實作且有 e2e),只需確認 |
 | U8    | **S14 Home 區塊組成**、**S12 行銷 chrome 雙層 IA** —— 隨 landing 一起決定                                                                                            | landing                                             |
 | U9    | `MVResultPage` / `MVEditPage` / `SongResult` 的 Figma 覆核 —— 設計師自標未收斂                                                                                       | 搬時標 `@needs-figma-recheck`                       |
@@ -178,22 +178,48 @@
 7. ✅ **補上 S2 的 e2e**(30 秒 trim 下限),趕在 `TrimAudioSheet` 被碰之前。
    **已做變異測試**:把 `MIN_TRIM_SEC` 改成 0 → 測試紅;改回 30 → 綠。它真的在守這條規則,
    不是剛好通過。
-8. ⬜ 寄出 U6 給 RD(草稿見 §8,需要你寄)
 
 **Gate 實測(2026-08-04):** typecheck ✓ lint ✓ test:run 76 ✓ build ✓ ·
 guard-greps ✓ token-map ✓ rd-changelog ✓ · **e2e 47 passed**(46 + 新增的 S2)。
 
 ### Phase 1 — 地基(不動任何畫面)
 
-1. tokens 換 DP 版 + `token-aliases.css`(D2)
-2. `@theme` radius / font 對映重算
-3. root layout 加 `data-theme="dark"`
-4. 六階 breakpoint
-5. Assets 搬移 script(slugify;DP 這版只有 8 個檔名含空白,比舊包的 150 個好很多)
-6. 建 `src/styles/designer/` 與 `designer.css` 入口(先接管線)
+**✅ 完成 2026-08-04。驗收雙綠:G2-b computed-style diff = 0、G2-c pixel diff = 0。**
 
-**驗收條件就是「舊畫面零變化」:`npm run e2e:visual` 六寬度 pixel diff = 0 且 `npm run style:diff` = 0。**
-非零代表 token 對映錯了 —— **改 `docs/token-map.md` 再對映一次,絕不重錄 baseline。**
+1. ✅ `tokens.css` 換成 DP 版(整檔 + 出處 header);新增 `token-aliases.css`
+2. ✅ 六階 breakpoint 進 `@theme`(`xs` 375 / `xl` 1440 / `2xl` 1920)
+3. ✅ root layout 加 `data-theme="dark"`
+4. ✅ 載入順序改為 D1 的 `tokens → token-aliases → tailwind → designer`
+5. ✅ 建 `src/styles/designer/` 與 `designer.css` 入口(**故意留空**,先證明管線會 build 且零影響)
+6. ✅ 補齊 DP 多的 6 個 icon → WA 現在具備全部 90 個 DP icon 檔名
+
+**一個對 D2 字面的刻意偏離:`token-aliases.css` 存的是「凍結的字面值」,不是 `var(--dp-name)`。**
+27 個 WA token 確實有同值的 DP token,寫 `--r-xl: var(--radius-md)` 今天可行 —— 但那等於讓
+**下一次設計師改版靜默移動所有尚未移轉的畫面**:上游把 `--radius-md` 改成 15px,WA 的 `--r-xl`
+就跟著動,而我們自己的檔案一行 diff 都沒有,也沒有任何 gate 會發現。Phase 1 的契約是
+「未移轉畫面不動」,凍結字面值才是真正執行這條契約的作法。對應關係沒有遺失 —— 它記在
+`docs/token-map.md`(生成物,受 G2-a 檢查)。
+
+**R6 已解除。** 舊包 150 個含空白檔名,這一版只剩 8 個,而且**全部在 `covers/`** ——
+也就是我們排除掉的 demo 媒體。vendored 的資產零個含空白,slugify script 不需要做。
+
+**⚠️ G2-c 的基準檔原本在這台機器上根本無法運作。** committed 的 114 張 baseline 全是
+`-darwin`,linux 上 0 張。Playwright 在非 macOS 找不到對應快照 → 每一張都判定失敗並「順手寫一張新的」,
+看起來像大量 diff,實際上是缺基準。handoff 說「把 baseline commit 進來,只存在一台筆電的基準無法
+gate Phase 1」——**commit 是必要條件,但不是充分條件:基準是綁平台的。** 本次已補錄 114 張
+`-linux` 基準(**從 swap 前的 code 錄的**,不是為了讓 diff 消失而重錄),G2-c 因此在這個平台上
+第一次真的會跑。
+
+**踩到並修掉的兩個工具問題**(兩者都會讓 gate 假性通過或無法執行):
+
+- `computed-style-diff.mjs` 不吃 `CHROMIUM_PATH`,在這個環境**完全無法啟動** → G2-b 等於不存在。
+- port 3100 殘留的舊 `next start` 會被 Playwright 的 `reuseExistingServer` 接手,servers 舊 build,
+  CSS chunk 回 **500**,於是整站**無樣式**渲染 → 截圖高達 913×16891。這會產出看似「巨大視覺差異」
+  的假訊號。**跑視覺測試前先確認 3100 沒有殘留 server。**
+
+**驗收條件(維持不變,供下次動 token 時使用):`npm run e2e:visual` 六寬度 pixel diff = 0
+且 `npm run style:diff` = 0。** 非零代表 token 對映錯了 —— **改 `docs/token-map.md` 再對映一次,
+絕不重錄 baseline。**
 
 ### Phase 1.5 — spike `/history`(回答 U2 / U3)
 
@@ -294,49 +320,3 @@ git diff --stat designer-prototype/    # 這就是 §12 step 1 要的 drop-to-dr
 > **不變的原則:DP、spec 與 code 三者衝突時,讀 code。**
 > 這次已經抓到兩個實例:token-map 產生器比它引用的文件更不可信;
 > DP 的 $9.99 與**已知過時**的交接文件一致,而不是與 code 一致。
-
----
-
-## 8. U6 — 給 RD 的確認信(草稿,需要你寄)
-
-Gate G4 是這次轉移最重要的一層:它把「不要影響 RD」從口頭約定變成機器檢查。
-但**它只能保護 C1–C8 這張清單上的東西** —— 所以這張清單的正確性,直接決定 G4 有沒有意義。
-清單目前是我們單方面列的,RD 從未確認。成本是一封信。
-
-> **主旨:確認一下你們實際依賴 web-app 的哪些介面**
->
-> Hi,
->
-> 我們接下來會把設計師的新版 UI 搬進 `web-app/`。分工不變:UI 由我們出,你們負責串 API 與帳號。
-> 也就是說這次是 **UI-only 變更,對你們的介面應該是零破壞**。
->
-> 為了讓「應該」變成「保證」,我們建了一組自動檢查:只要 PR 動到下面任何一項,CI 就會擋下來,
-> 並強制寫進 `docs/CHANGELOG-RD.md`。**但它只保護清單上的東西。**
-> 想請你們確認這張清單就是你們真正依賴的:
->
-> | | 介面 | 我們的假設 |
-> |---|---|---|
-> | C1 | `src/lib/api/contract.ts`(`MuseApi` 6 個方法) | 你們要實作這個 interface → 凍結 |
-> | C2 | `src/lib/api/schemas.ts`(Zod = wire contract) | 回應格式驗證 → 凍結 |
-> | C3 | `src/lib/api/index.ts`(`export const api`) | 換真 client 的唯一一行 → 凍結 |
-> | C4 | `useAuth` / `useCredits` / `useHistory` / `useMvFlow` / `useSongFlow` 的回傳鍵 | 只可新增,不可改名或刪除 |
-> | C5 | `src/lib/authStore.ts` → `localStorage["muse_auth"]` | 接真登入的落點 |
-> | C6 | `src/lib/i18n/config.ts`(9 語 `LOCALES`、`localePath`、`HTML_LANG`)+ `middleware.ts` | URL 結構、SEO、後端語系參數 |
-> | C7 | `src/app/**/page.tsx` 的 URL 形狀 | deep link、分享連結、埋點 |
-> | C8 | `src/lib/mv/types.ts`(`COST_*`、`DEFAULT_SETTINGS`、`isComposeReady`) | 對帳 / 扣點規則 |
->
-> **三個具體問題:**
->
-> 1. **有沒有漏的?** 你們有沒有依賴不在這張表上的東西(某個 component prop、某個 util、
->    某個 localStorage key、某個 query 參數)?有的話我們加進去一起保護。
-> 2. **C5 / C6 我們決定「不動」** —— auth 維持 `localStorage["muse_auth"]`(設計師的 prototype 用
->    `sessionStorage`,我們不採用),語言維持 9 語。這對你們是不是正確的方向?
-> 3. **C8 會有一次變更**:我們會拿掉 song 的 `bpm` / `musicKey` 兩個欄位(設計師新版沒有這兩個
->    控制項)。這會走獨立 PR + changelog,不會夾在 UI 變更裡。**對你們有影響嗎?**
->
-> 另外提醒一件事,免得你們日後撞到:我們有一條 grep 禁止 `src` 出現任何 `fetch(`。
-> 你們的真 client 進來時會被它擋下 —— 這是預期的,設 **`YCM_REAL_API=1`** 規則就變成
-> 「`fetch` 只允許在 `src/lib/api/` 裡」,也就是你們本來就想維持的界線。細節在
-> `docs/DEVELOPER-HANDOVER.md` §4。
->
-> 謝謝!

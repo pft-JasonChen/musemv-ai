@@ -45,7 +45,12 @@ const DP_ROOT = resolve(
   flag("--dp", existsSync(IN_REPO_DP) ? IN_REPO_DP : join(homedir(), "Downloads", "YCM-main")),
 );
 
-const WA_TOKENS = join(WA_ROOT, "src", "styles", "tokens.css");
+// The WA side of the map moved on 2026-08-04 (Phase 1 / D2). `tokens.css` used to hold
+// WA's own names; it is now the DESIGNER's file, copied wholesale from the drop. Reading
+// it as "WA" would compare DP against itself — every row a trivial match, and the one
+// thing the map exists to record (which WA legacy name corresponds to which DP token)
+// silently gone. WA's names now live in token-aliases.css, so that is the WA side.
+const WA_TOKENS = join(WA_ROOT, "src", "styles", "token-aliases.css");
 const DP_TOKENS = join(DP_ROOT, "src", "styles", "tokens.css");
 const OUT_MD = join(WA_ROOT, "docs", "token-map.md");
 const OUT_JSON = join(WA_ROOT, "docs", "token-map.json");

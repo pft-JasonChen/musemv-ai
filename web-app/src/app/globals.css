@@ -1,8 +1,29 @@
-@import "tailwindcss";
+/* Load order is fixed and load-bearing (plan D1):
+     tokens -> token-aliases -> tailwind -> designer
+   tokens.css is the designer's file; token-aliases.css keeps WA's legacy names
+   alive on top of it; tailwind comes after both so its utilities can resolve
+   either; designer.css is last so DP's BEM rules win over Tailwind utilities on
+   migrated screens without needing !important. Reordering these silently changes
+   which side wins a specificity tie — don't. */
 @import "../styles/tokens.css";
+@import "../styles/token-aliases.css";
+@import "tailwindcss";
+@import "../styles/designer.css";
 
 /* Map design tokens -> Tailwind v4 theme so utilities resolve to our tokens. */
 @theme inline {
+  /* Six-tier breakpoints (plan §1.2). 320 is the minimum supported width and has
+     no query — it is the unprefixed base. These are both the code breakpoints and
+     the six screenshot widths.
+       xs 375 · md 768 · lg 1024 · xl 1440 · 2xl 1920
+     `sm` (640) is NOT one of the six. It stays only because the shell's phone
+     cutover still uses it; the Shell slice moves that to `md` (768) and `sm` goes
+     with it (plan §1.1 CH5, R12). Until then it is deliberate legacy, not drift.
+     Measured before changing xl/2xl: `md:` `xl:` `2xl:` `xs:` have 0 uses in src
+     today, so redefining them moves nothing on screen. */
+  --breakpoint-xs: 375px;
+  --breakpoint-xl: 1440px;
+  --breakpoint-2xl: 1920px;
   --color-bg: var(--bg);
   --color-card: var(--card);
   --color-card-2: var(--card-2);
@@ -25,9 +46,12 @@
   --font-sans: var(--font-inter), Inter, system-ui, sans-serif;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   background: var(--bg);
@@ -36,51 +60,142 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
-.mv-gradient { background: var(--mv-grad); }
+.mv-gradient {
+  background: var(--mv-grad);
+}
 
 /* ── Motion & interaction layer (site-wide) ─────────────────────────────── */
 @media (prefers-reduced-motion: no-preference) {
-  button, a, [role="button"], input, select, textarea, summary {
-    transition: background-color .18s ease, color .18s ease, border-color .18s ease,
-                opacity .18s ease, transform .12s ease, box-shadow .18s ease, filter .18s ease;
+  button,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  summary {
+    transition:
+      background-color 0.18s ease,
+      color 0.18s ease,
+      border-color 0.18s ease,
+      opacity 0.18s ease,
+      transform 0.12s ease,
+      box-shadow 0.18s ease,
+      filter 0.18s ease;
   }
-  button:not(:disabled):active, [role="button"]:active { transform: scale(0.97); }
+  button:not(:disabled):active,
+  [role="button"]:active {
+    transform: scale(0.97);
+  }
 }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
-@keyframes mv-fade { from { opacity: 0 } to { opacity: 1 } }
-@keyframes mv-pop { from { opacity: 0; transform: translateY(10px) scale(.985) } to { opacity: 1; transform: none } }
-@keyframes mv-slide-up { from { opacity: 0; transform: translate(-50%, 10px) } to { opacity: 1; transform: translate(-50%, 0) } }
+@keyframes mv-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes mv-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes mv-slide-up {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
 
-.anim-fade { animation: mv-fade .2s ease both; }
-.anim-pop { animation: mv-pop .24s cubic-bezier(.4,0,.2,1) both; }
-.anim-toast { animation: mv-slide-up .26s cubic-bezier(.4,0,.2,1) both; }
+.anim-fade {
+  animation: mv-fade 0.2s ease both;
+}
+.anim-pop {
+  animation: mv-pop 0.24s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.anim-toast {
+  animation: mv-slide-up 0.26s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
 
-.hover-lift { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.hover-lift {
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
 @media (prefers-reduced-motion: no-preference) {
-  .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  }
 }
 
 /* Spinning album disc — applied to the circular art on song players while playing. */
-@keyframes disc-spin { from { transform: rotate(0deg) } to { transform: rotate(-360deg) } }
+@keyframes disc-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
-  .disc-spinning { animation: disc-spin 60s linear infinite; }
+  .disc-spinning {
+    animation: disc-spin 60s linear infinite;
+  }
 }
 
 /* Infinite auto-scrolling carousel (trending rail). The track holds two copies
    of the items; translating -50% loops seamlessly. Pauses on hover; reduced
    motion falls back to a normal manually-scrollable rail. */
-@keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
-.marquee-wrap { overflow: hidden; }
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-wrap {
+  overflow: hidden;
+}
 @media (prefers-reduced-motion: no-preference) {
-  .marquee-animate { animation: marquee 45s linear infinite; }
-  .marquee-wrap:hover .marquee-animate { animation-play-state: paused; }
+  .marquee-animate {
+    animation: marquee 45s linear infinite;
+  }
+  .marquee-wrap:hover .marquee-animate {
+    animation-play-state: paused;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .marquee-wrap { overflow-x: auto; }
+  .marquee-wrap {
+    overflow-x: auto;
+  }
   /* No auto-scroll → drop the duplicate copy so each card shows once. */
-  .marquee-clone { display: none; }
+  .marquee-clone {
+    display: none;
+  }
 }
