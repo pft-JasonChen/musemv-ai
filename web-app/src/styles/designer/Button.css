@@ -1,0 +1,209 @@
+/*
+  Button — Figma "Button/Pill" component set (node 1257:21110)
+  Size: Large / Medium / Small
+  Variant: Primary / PrimaryPayg / Secondary / Tertiary / Ghost
+*/
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  white-space: nowrap;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+}
+
+.button__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.button__icon--mask {
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* =========================================================
+ * Size
+ * ======================================================= */
+
+.button--large {
+  padding: 14px 16px;
+}
+
+.button--medium {
+  padding: 12px 14px;
+}
+
+.button--small {
+  min-width: 48px;
+  padding: 8px 10px;
+}
+
+@media (min-width: 1024px) {
+  .button--large.button--primary,
+  .button--large.button--primary-payg {
+    min-width: 230px;
+  }
+}
+
+/* Typography per size */
+
+.button--large .button__label,
+.button--large .button__credits-count {
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-xs);
+  letter-spacing: 0;
+}
+
+.button--medium .button__label {
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-label-s);
+  letter-spacing: -0.12px;
+}
+
+.button--small .button__label {
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+}
+
+/* =========================================================
+ * Variant — Primary / PrimaryPayg
+ * ======================================================= */
+
+.button--primary,
+.button--primary-payg {
+  background: var(--gradient-mv);
+  color: var(--neutral-dark-100);
+}
+
+.button--medium.button--primary,
+.button--small.button--primary {
+  background: var(--color-accent-purple);
+}
+
+/* Hover synced from IconButton: Active color + a dark overlay layered on top. */
+.button--large.button--primary:hover:not(:disabled),
+.button--large.button--primary-payg:hover:not(:disabled) {
+  background-image: linear-gradient(var(--overlay-hover-dark), var(--overlay-hover-dark)), var(--gradient-mv);
+}
+
+.button--medium.button--primary:hover:not(:disabled),
+.button--small.button--primary:hover:not(:disabled) {
+  background-image: linear-gradient(var(--overlay-hover-dark), var(--overlay-hover-dark));
+}
+
+.button--primary:disabled,
+.button--primary-payg:disabled {
+  background: var(--neutral-dark-24);
+}
+
+.button--large.button--primary:disabled,
+.button--large.button--primary-payg:disabled {
+  opacity: 1;
+}
+
+.button--primary:disabled .button__label,
+.button--primary:disabled .button__icon,
+.button--primary-payg:disabled .button__label,
+.button--primary-payg:disabled .button__icon,
+.button--primary-payg:disabled .button__credits {
+  opacity: var(--opacity-disabled);
+}
+
+/* =========================================================
+ * Variant — Secondary
+ * ======================================================= */
+
+.button--secondary {
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}
+
+/* Hover synced from IconButton: background stays, text/icon tint to purple. */
+.button--secondary:hover:not(:disabled) {
+  color: var(--color-accent-purple);
+}
+
+.button--secondary:disabled {
+  opacity: var(--opacity-disabled);
+}
+
+/* =========================================================
+ * Variant — Tertiary
+ * ======================================================= */
+
+.button--tertiary {
+  background: var(--neutral-dark-14);
+  border: 1px solid var(--white-15);
+  color: var(--neutral-dark-84);
+}
+
+.button--medium.button--tertiary,
+.button--small.button--tertiary {
+  background: var(--white-15);
+  border: none;
+  backdrop-filter: blur(var(--blur-glass));
+  color: var(--neutral-dark-100);
+}
+
+/* Hover synced from IconButton: raise the white overlay (Large lightens its
+   solid dark fill instead, since it isn't translucent to begin with). */
+.button--large.button--tertiary:hover:not(:disabled) {
+  background-image: linear-gradient(var(--white-15), var(--white-15));
+}
+
+.button--medium.button--tertiary:hover:not(:disabled),
+.button--small.button--tertiary:hover:not(:disabled) {
+  background: var(--white-40);
+  backdrop-filter: blur(var(--blur-glass));
+}
+
+.button--tertiary:disabled {
+  opacity: var(--opacity-disabled);
+}
+
+/* =========================================================
+ * Variant — Ghost
+ * ======================================================= */
+
+.button--ghost {
+  background: transparent;
+  color: var(--neutral-dark-64);
+}
+
+/* Hover synced from IconButton: invisible at rest, reveal a white wash. */
+.button--ghost:hover:not(:disabled) {
+  background: var(--white-15);
+}
+
+.button--ghost:disabled {
+  opacity: var(--opacity-disabled);
+}
+
+/* =========================================================
+ * Credits cluster (PrimaryPayg only)
+ * ======================================================= */
+
+.button__credits {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}

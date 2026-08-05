@@ -152,7 +152,7 @@
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
 | U1 🔴     | **Song Length**:DP 用 `SHOW_SONG_LENGTH = false` 藏起來。是暫時隱藏還是要移除?(S4 已決定拿掉 BPM/Key,但 Song Length 未表態)                                                                                     | `/song/create`                                      |
 | ~~U2~~ ✅ | **D1 已驗證**(2026-08-04 spike):共存,機制是 cascade layer 而非載入順序;擴散範圍實測為 0(115 項視覺測試只有 history 的 6 項變動)                                                                                 | 已關閉                                              |
-| U3 🔴     | **R-2 模式已定但未驗證**:`/history` 只有良性的 `useEffect` 讀取,**render 期 / `useState` initializer 讀 window 的危險類型完全沒出現**(它在 `Sidebar.tsx` 與 `App.tsx`)。模式寫在 §4 Phase 1.5,但 spike 測不到它 | **Shell slice(Phase 2)才是考場**                    |
+| ~~U3~~ ✅ | **R-2 已驗證**(2026-08-04 Shell slice)。反向實測:把 DP 原本的 `useState` initializer 讀 `matchMedia` 放回去,1000px 立刻拋 **React #418 hydration failed**;換成「SSR-safe 初值 + isomorphic `useLayoutEffect`」後 1440 / 1000 / 700 三個寬度皆 **0 console issue** | 已關閉 |
 | U4        | 300MB demo 媒體(44 mp4 + 36 mp3)是否進 git —— **轉移完成後**再看                                                                                                                                                | 無(目前用設計師的 Vercel 版做並排比對)              |
 | U5        | S9 語言擴充(9 → 12 或其他)—— 轉移後定案,屬 C6                                                                                                                                                                   | 無                                                  |
 | U6        | **C1–C8 清單未經 RD 確認**(2026-08-04 決定不寄確認信)。這不是待辦,是一項已知事實:G4 只能保護清單上的東西,所以它證明的範圍以這張我方自訂的清單為準                                                               | 無                                                  |
@@ -301,8 +301,32 @@ href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
 
 ### Phase 2 — Shell + 共用元件
 
-- **Slice 2a — Shell**(CH1/CH2/CH5):`Sidebar` + `MobileHeader` + `MobileTabBar` + `AppShell` 的 navbar slot。
-  ⚠️ 內含**行為變更**(底欄 5→3 項、切點 640→767、Profile 改由 profile footer 進入),**要自己的 e2e**。
+- **Slice 2a — Shell** ✅ **完成 2026-08-04**(CH1/CH5/CH6):`Sidebar` + `MobileHeader` +
+  `MobileTabBar`,外層改用 DP 的 `AppLayout` class。
+
+  **R-2 在這裡才真正被驗證**(spike 測不到)。DP 的
+  `useState(() => typeof window !== 'undefined' ? matchMedia(q).matches : false)` 看起來安全 ——
+  `typeof window` 保護讓它不會在 SSR 崩潰 —— 但它保證了 **hydration 不一致**:server 給 `false`,
+  client 首次 render 讀真實媒體查詢,≤1024px 兩邊就對不上。**實測把它放回去,1000px 立刻拋
+  React #418 `hydration failed`**;改成 SSR-safe 初值 + isomorphic `useLayoutEffect` 後,
+  1440 / 1000 / 700 三個寬度皆零 console issue。
+
+  用 `useLayoutEffect` 而非 `useEffect` 是因為 **DP 的 CSS 沒有 collapsed 的 media query**
+  (純 class 驅動),在 paint 之後才修正會讓 240px 側欄在每次筆電寬度載入時閃一下再縮成 72px。
+
+  **行為變更(R12/S13),已補 6 支 e2e:** 手機切點 640 → **767**;底欄 5 項 → **3 項**
+  (Explore / ＋ / History);**Profile 離開底欄**,改由 `MobileHeader` 帳號鍵與側欄 profile footer 進入。
+  另補一支 R-9 測試,直接斷言 `/jpn/history` 的側欄連結全都帶 `/jpn` 前綴 ——
+  這個失敗在英文環境下完全看不出來。
+
+  **視覺基準重錄 108/114**,未變動的正好是 `/share` 的 6 個寬度 —— 那是 `AppShell` 唯一 bare
+  渲染的 route。擴散範圍恰好等於「有 shell 的每一條 route」,反過來證明 bare 路徑仍然正確。
+
+  **Gate:** typecheck · lint · test:run(76) · build · G1-b · G2-a · D1-verbatim · G4-g 全綠;
+  **e2e 53/53**(47 + 新增 6)。
+
+- **Slice 2b(下一步)** —— `RoomNavbar` / `DetailNavbar` + `AppShell` 的 navbar slot(CH2)。
+  在它落地前,`TopBar` 仍是所有 route 的預設頂欄。
 - **Slice 2b…** 依相依序:`Button` → `IconButton` → `Chip` → `ToggleSwitch` → `Tabs` → `Card` → `ListItem`
   → `SectionHeader` → `Badge` → `CreditBalance` → `RoomNavbar` / `DetailNavbar` → `Toast` → `LoginModal`
   → `PublishDialog` → `ShareDialog` → `UpgradeButton` / `UpgradeDialog` / `CreditsDialog` → `FloatingCTA`

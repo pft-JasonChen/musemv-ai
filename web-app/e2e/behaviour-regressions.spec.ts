@@ -389,3 +389,82 @@ test("S2 trim floor: a selection under 30s is rejected with a reason", async ({ 
   await expect(page.getByText(/minimum 30s/)).toBeVisible();
   await expect(confirm).toBeDisabled();
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// R12 / S13 — the shell's phone cutover and mobile IA
+//
+// WHY THIS IS A BEHAVIOUR TEST, NOT A VISUAL ONE
+//   Plan R12 insists the 640 -> 767 move is a behaviour change, not styling: it
+//   decides WHICH navigation renders between 640 and 767, and the mobile item set
+//   went 5 -> 3 with Profile leaving the bar entirely (CH5). A screenshot would
+//   record that something looks different; these assert which nav a user actually
+//   gets, and that the account is still reachable after Profile left the tab bar.
+// ════════════════════════════════════════════════════════════════════════════
+const CUTOVER = 768; // DP switches at max-width:767px, so 768 is the first desktop px
+
+test("R12 shell: desktop width shows the sidebar and no mobile chrome", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/history");
+  await expect(page.locator(".sidebar")).toBeVisible();
+  await expect(page.locator(".mobile-tabbar")).toBeHidden();
+  await expect(page.locator(".mobile-header")).toBeHidden();
+});
+
+test("R12 shell: just below the cutover swaps sidebar for the mobile bars", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: CUTOVER - 1, height: 900 });
+  await page.goto("/history");
+  await expect(page.locator(".sidebar")).toBeHidden();
+  await expect(page.locator(".mobile-tabbar")).toBeVisible();
+  await expect(page.locator(".mobile-header")).toBeVisible();
+});
+
+test("R12 shell: 700px is mobile now — this is the 640->767 change itself", async ({ page }) => {
+  // Under the old 640px cutover this width rendered the DESKTOP rail. The whole
+  // point of R12 is that it no longer does; if someone reverts the breakpoint,
+  // this is the test that goes red.
+  await login(page);
+  await page.setViewportSize({ width: 700, height: 900 });
+  await page.goto("/history");
+  await expect(page.locator(".mobile-tabbar")).toBeVisible();
+  await expect(page.locator(".sidebar")).toBeHidden();
+});
+
+test("S13 mobile IA: the bar is Explore / Create / History — Profile is not on it", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/history");
+  const bar = page.locator(".mobile-tabbar");
+  await expect(bar.getByText("Explore")).toBeVisible();
+  await expect(bar.getByText("History")).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Create" })).toBeVisible();
+  // Profile left the bottom bar (5 -> 3). Losing it here without a replacement
+  // would strand the account on phones, so assert both halves of that change.
+  await expect(bar.getByText("Profile")).toHaveCount(0);
+  await expect(page.locator(".mobile-header").getByRole("link", { name: "Account" })).toBeVisible();
+});
+
+test("S13 mobile IA: the + tab opens the create sheet with both creators", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/history");
+  await page.locator(".mobile-tabbar").getByRole("button", { name: "Create" }).click();
+  const sheet = page.getByRole("dialog", { name: /What would you like to create/i });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByText("AI Music Video")).toBeVisible();
+  await expect(sheet.getByText("AI Song")).toBeVisible();
+});
+
+test("R9 shell: every sidebar link carries the locale prefix", async ({ page }) => {
+  // The failure this guards is invisible in English: DP links with a bare
+  // <a href="/home">, the NEXT_LOCALE cookie redirects to the right page anyway,
+  // and only the other 8 locales are broken. Assert the prefix is really in the DOM.
+  await login(page);
+  await page.goto("/jpn/history");
+  const hrefs = await page.locator(".sidebar__nav-item").evaluateAll((els) =>
+    els.map((e) => e.getAttribute("href")),
+  );
+  expect(hrefs.length).toBeGreaterThan(0);
+  for (const href of hrefs) expect(href).toMatch(/^\/jpn(\/|$)/);
+});

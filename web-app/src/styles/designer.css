@@ -32,5 +32,11 @@
    `npm run designer:check` proves that, and proves every var(--token) they use
    actually resolves. Do not edit these files to fix a bug — fix it upstream and
    re-drop, or the next re-sync silently reverts you. */
+@import "./designer/AppLayout.css";
+@import "./designer/Sidebar.css";
+@import "./designer/MobileHeader.css";
+@import "./designer/MobileTabBar.css";
+@import "./designer/IconButton.css";
+@import "./designer/Button.css";
 @import "./designer/Badge.css";
 @import "./designer/HistoryPage.css";

@@ -1,104 +1,200 @@
 "use client";
 
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale, useT } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
+import { SUBSCRIPTION_PLANS } from "@/lib/user";
 import type { TKey } from "@/lib/i18n/dictionaries/en";
 
-type NavItem = { href: string; labelKey: TKey; icon: React.ReactNode };
+/**
+ * ── MIGRATED TO THE DESIGNER UI (plan Phase 2, Slice 2a) ────────────────────
+ *
+ * Classes come from `src/styles/designer/Sidebar.css`, copied verbatim from DP.
+ * No Tailwind utilities in here (G3-d) — the /history spike measured why: DP's
+ * stylesheets are unlayered and Tailwind's are not, so a utility on a migrated
+ * element loses silently rather than loudly.
+ *
+ * DP's: the markup, classes, collapse behaviour, signed-in profile footer.
+ * WA's:  `useT()` labels (R-8), `localePath()` links (R-9), the auth gate.
+ *
+ * NOTE: this component no longer renders the mobile bottom bar. WA used to draw
+ * both the desktop rail and the phone tab bar from one NAV array; DP splits them
+ * into Sidebar + MobileTabBar with DIFFERENT item sets, so they are separate
+ * components now (plan CH5).
+ */
 
-// Routes (unprefixed) that require sign-in; clicking them while logged out opens the gate.
-const GATED = new Set(["/mv/room", "/song/create", "/history", "/profile", "/settings"]);
+type NavKey = "home" | "mv" | "song" | "story" | "history" | "blog";
+type NavItem = { key: NavKey; href: string; labelKey: TKey; icon: string };
 
-function Icon({ d }: { d: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
-  );
-}
+/**
+ * DP ships six items; two are hidden for MVP (CH6). AI Storybook has no screen
+ * behind it at all (`href="#"` upstream) and Blog is deferred to V2. Hiding via a
+ * constant rather than deleting means V2 re-enables them without re-deriving the
+ * markup, and a demo cannot click into a blank page in the meantime.
+ */
+const HIDDEN: ReadonlySet<NavKey> = new Set<NavKey>(["story", "blog"]);
 
 const NAV: NavItem[] = [
-  { href: "/", labelKey: "nav.home", icon: <Icon d="M3 11.5 12 4l9 7.5M5 10v10h5v-6h4v6h5V10" /> },
-  { href: "/mv/room", labelKey: "nav.createMv", icon: <Icon d="M15 10l4.5-2.5v9L15 14M3 7h12v10H3zM3 7l4-3h6" /> },
-  { href: "/song/create", labelKey: "nav.createSong", icon: <Icon d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" /> },
-  { href: "/history", labelKey: "nav.history", icon: <Icon d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5M12 7v5l3 2" /> },
-  { href: "/profile", labelKey: "nav.profile", icon: <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" /> },
+  { key: "home", href: "/", labelKey: "nav.home", icon: "ic_compass_OL" },
+  { key: "mv", href: "/mv/room", labelKey: "nav.createMv", icon: "ic_video_ai" },
+  { key: "song", href: "/song/create", labelKey: "nav.createSong", icon: "ic_song_ai" },
+  { key: "story", href: "#", labelKey: "nav.storybook", icon: "ic_story_ai" },
+  { key: "history", href: "/history", labelKey: "nav.history", icon: "ic_history_OL" },
+  { key: "blog", href: "/blog", labelKey: "nav.blog", icon: "ic_file_text" },
 ];
+
+/** Routes (unprefixed) that require sign-in; clicking them logged out opens the gate. */
+const GATED = new Set(["/mv/room", "/song/create", "/history", "/profile", "/settings"]);
+
+/** Below Laptop the rail collapses to icon-only by default; the toggle overrides it. */
+const COLLAPSE_QUERY = "(max-width: 1024px)";
+
+const mask = (name: string) => {
+  const url = `url("/assets/icons/ui/${name}.svg")`;
+  return { maskImage: url, WebkitMaskImage: url };
+};
+
+/** `useLayoutEffect` warns during SSR; fall back to `useEffect` there. */
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { loggedIn, requireLogin } = useAuth();
+  const { loggedIn, requireLogin, profile, subscribed, subscribedPlan } = useAuth();
   const { locale } = useLocale();
   const t = useT();
 
-  const homePath = localePath(locale, "/");
+  /**
+   * ── THE R-2 PATTERN — and this component is what proves it ────────────────
+   *
+   * DP writes the initial value as
+   *   useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
+   * The `typeof window` guard stops it CRASHING under SSR, which is exactly why it
+   * looks safe. It isn't: it guarantees a hydration MISMATCH instead. The server
+   * renders `false`; the client's first render reads the real media query; at any
+   * width ≤1024 those disagree and React has to patch the DOM after the fact.
+   *
+   * So the rule is: initial state is an SSR-safe constant, and the real value is
+   * read only after mount. `useLayoutEffect` rather than `useEffect` because it
+   * runs before paint — DP's CSS has NO media query for the collapsed state (it is
+   * purely class-driven), so correcting after paint would flash a 240px rail down
+   * to 72px on every laptop-width load.
+   *
+   * Precedent already here: AuthProvider reads its store via `useSyncExternalStore`
+   * with an explicit `getServerSnapshot`. Same principle — give the server a
+   * defined answer, let the client correct on mount.
+   */
+  const [collapsed, setCollapsed] = useState(false);
+  const manuallyOverridden = useRef(false);
 
+  useIsomorphicLayoutEffect(() => {
+    const mq = window.matchMedia(COLLAPSE_QUERY);
+    if (!manuallyOverridden.current) setCollapsed(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => {
+      if (!manuallyOverridden.current) setCollapsed(e.matches);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  function toggleCollapsed() {
+    manuallyOverridden.current = true;
+    setCollapsed((c) => !c);
+  }
+
+  const homePath = localePath(locale, "/");
   function isActive(href: string) {
+    if (href === "#") return false;
     const target = localePath(locale, href);
     return href === "/" ? pathname === homePath : pathname.startsWith(target);
   }
 
   function onNavClick(e: React.MouseEvent, href: string) {
-    const target = localePath(locale, href);
     if (!loggedIn && GATED.has(href)) {
       e.preventDefault();
-      requireLogin(() => router.push(target));
+      requireLogin(() => router.push(localePath(locale, href)));
     }
   }
 
-  function renderLinks(className: (active: boolean) => string, style: (active: boolean) => React.CSSProperties) {
-    return NAV.map((item) => {
-      const active = isActive(item.href);
-      return (
-        <Link
-          key={item.href}
-          href={localePath(locale, item.href)}
-          onClick={(e) => onNavClick(e, item.href)}
-          aria-current={active ? "page" : undefined}
-          className={className(active)}
-          style={style(active)}
-        >
-          {item.icon}
-          {t(item.labelKey)}
-        </Link>
-      );
-    });
-  }
+  const planName = SUBSCRIPTION_PLANS.find((p) => p.id === subscribedPlan)?.name;
 
   return (
-    <>
-      {/* Desktop rail */}
-      <nav
-        aria-label="Primary"
-        className="hidden sm:flex flex-col gap-1 w-[220px] shrink-0 border-r p-3"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <div className="px-3 py-4">
-          <span className="text-[20px] font-extrabold tracking-tight">
-            YouCam <span style={{ color: "var(--accent)" }}>Muse</span>
-          </span>
+    <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
+      <div className="sidebar__top">
+        <div className="sidebar__logo-row">
+          {!collapsed && (
+            <Link href={homePath} className="sidebar__logo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/brand/Logo.svg" alt="MUSE" />
+            </Link>
+          )}
+          <button
+            type="button"
+            className="icon-button icon-button--small icon-button--ghost"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+            onClick={toggleCollapsed}
+          >
+            <span className="icon-button__icon" style={mask("ic_panel_left")} aria-hidden="true" />
+          </button>
         </div>
-        {renderLinks(
-          () => "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold transition-colors",
-          (active) => ({ background: active ? "var(--card-2)" : "transparent", color: active ? "var(--text)" : "var(--text-2)" }),
-        )}
-      </nav>
 
-      {/* Mobile bottom bar */}
-      <nav
-        aria-label="Primary"
-        className="sm:hidden fixed bottom-0 inset-x-0 z-40 flex justify-around border-t py-2"
-        style={{ borderColor: "var(--border)", background: "var(--card)" }}
-      >
-        {renderLinks(
-          () => "flex flex-col items-center gap-1 px-3 py-1 text-[10px] font-semibold",
-          (active) => ({ color: active ? "var(--accent)" : "var(--text-2)" }),
-        )}
-      </nav>
-    </>
+        <nav className="sidebar__nav" aria-label="Primary">
+          {NAV.filter((item) => !HIDDEN.has(item.key)).map((item) => (
+            <Link
+              key={item.key}
+              href={localePath(locale, item.href)}
+              className={`sidebar__nav-item${isActive(item.href) ? " sidebar__nav-item--active" : ""}`}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              onClick={(e) => onNavClick(e, item.href)}
+            >
+              <span className="sidebar__nav-icon" style={mask(item.icon)} aria-hidden="true" />
+              <span className="sidebar__nav-label">
+                <span className="sidebar__nav-label-text">{t(item.labelKey)}</span>
+              </span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+
+      {loggedIn && (
+        <div className="sidebar__bottom">
+          <Link href={localePath(locale, "/profile")} className="sidebar__profile">
+            <span className="sidebar__profile-avatar">
+              <span
+                className="sidebar__profile-avatar-icon"
+                style={mask("ic_user")}
+                aria-hidden="true"
+              />
+            </span>
+            <span className="sidebar__profile-copy">
+              <span className="sidebar__profile-name">{profile.name}</span>
+              <span className="sidebar__profile-plan">
+                {subscribed ? (planName ?? t("profile.musePro")) : t("nav.freePlan")}
+              </span>
+            </span>
+            <span
+              className="sidebar__profile-chevron"
+              style={mask("ic_chevron-right")}
+              aria-hidden="true"
+            />
+          </Link>
+          {/* DP opens its own UpgradeDialog here. WA's subscribe flow already lives
+              on /profile (SubscribeModal), so this routes there rather than porting
+              a second IAP surface inside a shell slice. */}
+          {!subscribed && (
+            <Link
+              href={localePath(locale, "/profile")}
+              className="button button--medium button--tertiary sidebar__upgrade-button"
+            >
+              {t("nav.upgrade")}
+            </Link>
+          )}
+        </div>
+      )}
+    </aside>
   );
 }

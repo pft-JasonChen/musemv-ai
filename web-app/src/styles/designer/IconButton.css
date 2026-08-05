@@ -1,0 +1,172 @@
+/*
+  IconButton — Figma "Button/Circular" component set (node 1344:25513)
+  Size: Large / Medium / Small / XSmall
+  Variant: Primary / Secondary / Tertiary / Ghost
+*/
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: none;
+  cursor: pointer;
+}
+
+.icon-button:disabled {
+  cursor: not-allowed;
+}
+
+.icon-button__icon {
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* =========================================================
+ * Size
+ * ======================================================= */
+
+.icon-button--large {
+  width: 56px;
+  height: 56px;
+}
+.icon-button--large .icon-button__icon {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-button--medium {
+  width: 36px;
+  height: 36px;
+}
+.icon-button--medium .icon-button__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-button--small {
+  width: 28px;
+  height: 28px;
+}
+.icon-button--small .icon-button__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-button--xsmall {
+  width: 20px;
+  height: 20px;
+}
+.icon-button--xsmall .icon-button__icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* =========================================================
+ * Variant — Primary
+ * Hover = Active color with a dark overlay on top (all sizes alike).
+ * ======================================================= */
+
+.icon-button--primary {
+  background-color: var(--color-accent-purple);
+  color: var(--neutral-dark-100);
+}
+
+.icon-button--primary:hover:not(:disabled) {
+  background-image: linear-gradient(var(--overlay-hover-dark), var(--overlay-hover-dark));
+}
+
+.icon-button--primary:disabled {
+  background-color: var(--neutral-dark-24);
+  background-image: none;
+}
+
+.icon-button--primary:disabled .icon-button__icon {
+  opacity: var(--opacity-disabled);
+}
+
+/* =========================================================
+ * Variant — Secondary
+ * Background never changes; hover only tints the icon purple.
+ * ======================================================= */
+
+.icon-button--secondary {
+  background-color: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}
+
+.icon-button--large.icon-button--secondary {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.icon-button--secondary:hover:not(:disabled) {
+  color: var(--color-accent-purple);
+}
+
+.icon-button--secondary:disabled {
+  opacity: var(--opacity-disabled);
+}
+
+/* =========================================================
+ * Variant — Tertiary
+ * White glass at every size; hover raises the white overlay 15% -> 40%.
+ * Figma only defines this Hover for Large/Medium (Small/XSmall have no
+ * Active/Hover difference there) — unified across all 4 sizes per request.
+ * ======================================================= */
+
+.icon-button--tertiary {
+  color: var(--neutral-dark-100);
+  background-color: var(--white-15);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--white-15);
+}
+
+.icon-button--tertiary:hover:not(:disabled) {
+  background-color: var(--white-40);
+}
+
+.icon-button--tertiary:disabled {
+  opacity: var(--opacity-disabled);
+}
+
+/* =========================================================
+ * Variant — Ghost
+ * Large: visible dark glass at rest, hover darkens further.
+ * Medium/Small/XSmall: invisible at rest, hover reveals a white wash.
+ * ======================================================= */
+
+.icon-button--ghost {
+  background: none;
+  color: var(--neutral-dark-64);
+}
+
+.icon-button--large.icon-button--ghost {
+  background-color: var(--black-40);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--white-15);
+}
+
+.icon-button--large.icon-button--ghost:hover:not(:disabled) {
+  background-color: var(--black-80);
+}
+
+.icon-button--medium.icon-button--ghost:hover:not(:disabled),
+.icon-button--small.icon-button--ghost:hover:not(:disabled),
+.icon-button--xsmall.icon-button--ghost:hover:not(:disabled) {
+  background-color: var(--white-15);
+}
+
+.icon-button--ghost:disabled {
+  opacity: var(--opacity-disabled);
+}

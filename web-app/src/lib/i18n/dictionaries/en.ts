@@ -4,12 +4,30 @@
 // falls back to the English value below — so the prototype always renders.
 
 export const en = {
-  // Sidebar / primary nav
+  // Sidebar / primary nav.
+  // Labels follow the designer prototype (plan Phase 2, Slice 2a): "Create MV" →
+  // "AI Music Video", "Create Song" → "AI Song". The KEYS deliberately keep their
+  // old names — renaming them would churn every locale file for a copy change, and
+  // the non-English dictionaries are intentionally empty and fall back here anyway.
+  // Verified before changing: no e2e selector matches a sidebar label (the
+  // "Create Song" in song-flow.spec.ts is a page CTA with role=button; nav items
+  // are links).
   "nav.home": "Home",
-  "nav.createMv": "Create MV",
-  "nav.createSong": "Create Song",
+  "nav.createMv": "AI Music Video",
+  "nav.createSong": "AI Song",
   "nav.history": "History",
   "nav.profile": "Profile",
+  // Present in DP's sidebar but hidden for MVP (CH6) — keys exist so V2 can
+  // unhide without touching this file.
+  "nav.storybook": "AI Storybook",
+  "nav.blog": "Blog",
+  // Sidebar profile footer
+  "nav.freePlan": "Free plan",
+  "nav.upgrade": "Upgrade",
+  // Mobile chrome (MobileTabBar / MobileHeader)
+  "nav.explore": "Explore",
+  "nav.create": "Create",
+  "nav.account": "Account",
 
   // Profile — stats & rows
   "profile.credits": "Credits",
