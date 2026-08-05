@@ -25,6 +25,7 @@ import { formatCount } from "@/lib/mv/community";
 // in this spike — D4 says convert only the screen you are migrating, and the menu
 // is still Tailwind. The card itself uses DP's mask icons via DpIcon.
 import { Heart, Share } from "@/components/community/ui";
+import { RoomNavbar, Tabs } from "@/components/shell/RoomNavbar";
 
 type Filter = "all" | "mv" | "song" | "liked";
 const FILTERS: { id: Filter; label: string }[] = [
@@ -240,169 +241,171 @@ export function HistoryView() {
   }
 
   return (
-    <div className="mx-auto max-w-[1000px] px-4 py-6 sm:px-6">
-      <h1 className="text-[24px] font-extrabold tracking-tight">My Creations</h1>
-      {/* HIST-02: creations are retained permanently (no 14-day auto-delete). */}
-      <p className="mb-4 text-[12px]" style={{ color: "var(--text-2)" }}>
-        Your creations are saved here permanently. Download anytime to keep a copy.
-      </p>
+    <>
+      {/*
+        The page renders its own navbar (plan CH2 / Slice 2b). DP passes it as a
+        prop to AppLayout; App Router cannot, since the page lives inside the
+        layout — but `.room-navbar` is `position: sticky`, so rendering it as the
+        first child here behaves identically. `AppShell.OWN_CHROME` lists this
+        route so the legacy TopBar stays out of the way.
 
-      <div className="mb-5 flex flex-wrap gap-2">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className="rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors"
-            style={{
-              background: filter === f.id ? "var(--accent)" : "var(--card-2)",
-              color: filter === f.id ? "#fff" : "var(--text-2)",
-            }}
+        The title and the filter tabs both move up into it, which is where DP puts
+        them: the tabs stop scrolling away with the page body.
+      */}
+      <RoomNavbar
+        title="My Creations"
+        tabsSlot={<Tabs tabs={FILTERS} active={filter} onChange={setFilter} />}
+      />
+
+      <div className="history-page">
+        {/* HIST-02: creations are retained permanently (no 14-day auto-delete).
+            DP has no equivalent line, but this one carries a product rule rather
+            than decoration, so it stays. */}
+        <p className="mb-4 text-[12px]" style={{ color: "var(--text-2)" }}>
+          Your creations are saved here permanently. Download anytime to keep a copy.
+        </p>
+
+        {shown.length === 0 ? (
+          <div
+            className="rounded-2xl border p-12 text-center"
+            style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}
           >
-            {f.label}
-          </button>
-        ))}
+            Nothing here yet. Your{" "}
+            {filter === "all"
+              ? "creations"
+              : FILTERS.find((f) => f.id === filter)?.label.toLowerCase()}{" "}
+            will appear here.
+          </div>
+        ) : (
+          <ul className="history-page__grid">
+            {shown.map((r) => (
+              <li key={r.id}>
+                <HistoryCard
+                  r={r}
+                  liked={liked(r)}
+                  onOpen={() => openRow(r)}
+                  href={rowHref(r)}
+                  cta={
+                    // HIST-05: storyboards surface Create outside the ⋯ menu. DP places
+                    // it on the cover itself (.history-card__create) rather than as a
+                    // row pill; same affordance, same handler.
+                    r.kind === "storyboard" && r.status === "done" ? (
+                      <span
+                        className="history-card__create"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          createMv(r);
+                        }}
+                      >
+                        <DpIcon name="ic_video" />
+                        Create MV
+                      </span>
+                    ) : null
+                  }
+                  menu={
+                    r.status === "processing" ? null : (
+                      <Menu
+                        r={r}
+                        liked={liked(r)}
+                        published={published(r)}
+                        reviewing={reviewing(r)}
+                        open={openMenu === r.id}
+                        setOpen={(v) => setOpenMenu(v ? r.id : null)}
+                        onLike={() => toggleLike(r)}
+                        onShare={() => {
+                          setOpenMenu(null);
+                          setShare({ title: r.title, url: buildShareUrl(r.id) });
+                        }}
+                        onDownload={() => doDownload(r)}
+                        onDelete={() => {
+                          setOpenMenu(null);
+                          setDel(r);
+                        }}
+                        onPublish={() =>
+                          r.kind === "mv" ? togglePublishMv(r) : togglePublishSong(r)
+                        }
+                        onEditMv={() => editMv(r)}
+                        onCreateMv={() => createMv(r)}
+                      />
+                    )
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <CreationDialog
+          key={selected?.id ?? "none"}
+          open={selected != null}
+          creation={selected}
+          published={selectedRow ? published(selectedRow) : false}
+          reviewing={selectedRow ? reviewing(selectedRow) : false}
+          onClose={() => setSelected(null)}
+          onDelete={(id) => setRemoved((s) => new Set(s).add(id))}
+          onTogglePublish={() => {
+            if (!selectedRow) return;
+            if (selectedRow.kind === "mv") togglePublishMv(selectedRow);
+            else togglePublishSong(selectedRow);
+          }}
+        />
+        <ShareDialog
+          open={share != null}
+          onClose={() => setShare(null)}
+          title={share?.title ?? ""}
+          url={share?.url ?? ""}
+        />
+
+        <Modal open={del != null} onClose={() => setDel(null)} title="Delete" maxWidth={380}>
+          <p className="mb-5 text-[14px]" style={{ color: "var(--text-2)" }}>
+            Are you sure you want to delete this item? This action cannot be undone.
+          </p>
+          <div className="flex gap-2">
+            <Button variant="secondary" className="flex-1" onClick={() => setDel(null)}>
+              Cancel
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={() => {
+                if (del) setRemoved((s) => new Set(s).add(del.id));
+                setDel(null);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </Modal>
+
+        <Modal
+          open={pubConfirm != null}
+          onClose={() => setPubConfirm(null)}
+          title="Ready to Go Public?"
+          maxWidth={420}
+        >
+          <p className="mb-5 text-[14px]" style={{ color: "var(--text-2)" }}>
+            Once published, your creation is visible to the community and may be shared on our
+            social channels.
+          </p>
+          <div className="flex gap-2">
+            <Button variant="secondary" className="flex-1" onClick={() => setPubConfirm(null)}>
+              Cancel
+            </Button>
+            <Button className="flex-1" onClick={confirmPublishMv}>
+              Confirm
+            </Button>
+          </div>
+        </Modal>
+
+        {toast && (
+          <div
+            className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
+            style={{ background: "rgba(20,20,24,.95)" }}
+          >
+            {toast}
+          </div>
+        )}
       </div>
-
-      {shown.length === 0 ? (
-        <div
-          className="rounded-2xl border p-12 text-center"
-          style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}
-        >
-          Nothing here yet. Your{" "}
-          {filter === "all"
-            ? "creations"
-            : FILTERS.find((f) => f.id === filter)?.label.toLowerCase()}{" "}
-          will appear here.
-        </div>
-      ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map((r) => (
-            <li key={r.id}>
-              <HistoryCard
-                r={r}
-                liked={liked(r)}
-                onOpen={() => openRow(r)}
-                href={rowHref(r)}
-                cta={
-                  // HIST-05: storyboards surface Create outside the ⋯ menu. DP places
-                  // it on the cover itself (.history-card__create) rather than as a
-                  // row pill; same affordance, same handler.
-                  r.kind === "storyboard" && r.status === "done" ? (
-                    <span
-                      className="history-card__create"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        createMv(r);
-                      }}
-                    >
-                      <DpIcon name="ic_video" />
-                      Create MV
-                    </span>
-                  ) : null
-                }
-                menu={
-                  r.status === "processing" ? null : (
-                    <Menu
-                      r={r}
-                      liked={liked(r)}
-                      published={published(r)}
-                      reviewing={reviewing(r)}
-                      open={openMenu === r.id}
-                      setOpen={(v) => setOpenMenu(v ? r.id : null)}
-                      onLike={() => toggleLike(r)}
-                      onShare={() => {
-                        setOpenMenu(null);
-                        setShare({ title: r.title, url: buildShareUrl(r.id) });
-                      }}
-                      onDownload={() => doDownload(r)}
-                      onDelete={() => {
-                        setOpenMenu(null);
-                        setDel(r);
-                      }}
-                      onPublish={() =>
-                        r.kind === "mv" ? togglePublishMv(r) : togglePublishSong(r)
-                      }
-                      onEditMv={() => editMv(r)}
-                      onCreateMv={() => createMv(r)}
-                    />
-                  )
-                }
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <CreationDialog
-        key={selected?.id ?? "none"}
-        open={selected != null}
-        creation={selected}
-        published={selectedRow ? published(selectedRow) : false}
-        reviewing={selectedRow ? reviewing(selectedRow) : false}
-        onClose={() => setSelected(null)}
-        onDelete={(id) => setRemoved((s) => new Set(s).add(id))}
-        onTogglePublish={() => {
-          if (!selectedRow) return;
-          if (selectedRow.kind === "mv") togglePublishMv(selectedRow);
-          else togglePublishSong(selectedRow);
-        }}
-      />
-      <ShareDialog
-        open={share != null}
-        onClose={() => setShare(null)}
-        title={share?.title ?? ""}
-        url={share?.url ?? ""}
-      />
-
-      <Modal open={del != null} onClose={() => setDel(null)} title="Delete" maxWidth={380}>
-        <p className="mb-5 text-[14px]" style={{ color: "var(--text-2)" }}>
-          Are you sure you want to delete this item? This action cannot be undone.
-        </p>
-        <div className="flex gap-2">
-          <Button variant="secondary" className="flex-1" onClick={() => setDel(null)}>
-            Cancel
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={() => {
-              if (del) setRemoved((s) => new Set(s).add(del.id));
-              setDel(null);
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      </Modal>
-
-      <Modal
-        open={pubConfirm != null}
-        onClose={() => setPubConfirm(null)}
-        title="Ready to Go Public?"
-        maxWidth={420}
-      >
-        <p className="mb-5 text-[14px]" style={{ color: "var(--text-2)" }}>
-          Once published, your creation is visible to the community and may be shared on our social
-          channels.
-        </p>
-        <div className="flex gap-2">
-          <Button variant="secondary" className="flex-1" onClick={() => setPubConfirm(null)}>
-            Cancel
-          </Button>
-          <Button className="flex-1" onClick={confirmPublishMv}>
-            Confirm
-          </Button>
-        </div>
-      </Modal>
-
-      {toast && (
-        <div
-          className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
-          style={{ background: "rgba(20,20,24,.95)" }}
-        >
-          {toast}
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 

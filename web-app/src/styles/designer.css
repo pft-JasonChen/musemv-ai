@@ -36,7 +36,11 @@
 @import "./designer/Sidebar.css";
 @import "./designer/MobileHeader.css";
 @import "./designer/MobileTabBar.css";
+@import "./designer/RoomNavbar.css";
 @import "./designer/IconButton.css";
 @import "./designer/Button.css";
+@import "./designer/CreditBalance.css";
+@import "./designer/UpgradeButton.css";
+@import "./designer/Tabs.css";
 @import "./designer/Badge.css";
 @import "./designer/HistoryPage.css";

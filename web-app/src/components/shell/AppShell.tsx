@@ -29,17 +29,32 @@ import { MobileTabBar } from "./MobileTabBar";
  * replace it route by route in slice 2b. The marketing Navbar and Footer are out
  * of scope entirely (CH3/CH4): both appear only on Home and Blog, both deferred.
  */
+/**
+ * Routes whose view renders its own DP navbar (RoomNavbar / DetailNavbar) and so
+ * must NOT also get the legacy TopBar.
+ *
+ * This list grows by one entry per migrated screen and is deleted outright when
+ * the last route moves and TopBar goes with it. Keeping it here — rather than
+ * having each page try to hand a navbar upward — is what App Router allows: the
+ * page renders inside the layout, so the layout can only be told which routes to
+ * stay out of the way for.
+ */
+const OWN_CHROME = ["/history"];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const path = stripLocalePrefix(usePathname() || "/");
+
   // The public share-link page (/share) is a standalone, no-navigation page
   // (spec P2-S1) — render it bare, without the app sidebar/top bar.
-  const bare = stripLocalePrefix(usePathname() || "/").startsWith("/share");
-  if (bare) return <>{children}</>;
+  if (path.startsWith("/share")) return <>{children}</>;
+
+  const ownChrome = OWN_CHROME.some((r) => path === r || path.startsWith(`${r}/`));
 
   return (
     <div className="app-layout app-layout--mobile-app">
       <Sidebar />
       <div className="app-layout__main">
-        <TopBar />
+        {!ownChrome && <TopBar />}
         <MobileHeader />
         <main className="app-layout__content">{children}</main>
         <MobileTabBar />

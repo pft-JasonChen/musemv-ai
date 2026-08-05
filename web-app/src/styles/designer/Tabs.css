@@ -1,0 +1,35 @@
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Figma "Bar/Tabs" (node 1357:30289) — 8px 16px padding + 18px line-height
+   gives the exact 34px tab height; several pages had been overriding this
+   default (wrong padding/radius/weight) to hit that spec locally instead —
+   see CommunityProfilePage/CreditsPage/HistoryPage, now cleaned up since
+   the default itself matches. */
+.tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-14);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-label-m);
+  letter-spacing: -0.13px;
+  white-space: nowrap;
+}
+
+.tabs__tab--active {
+  background: var(--color-accent-purple);
+  color: var(--neutral-dark-100);
+}

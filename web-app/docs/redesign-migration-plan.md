@@ -3,8 +3,8 @@
 > **日期:** 2026-08-04
 > **DP(Designer Prototype):** `designer-prototype/`(in-repo,commit `568e64c`,2026-08-04)
 > **WA(Web App):** `web-app/` — 正式交付物
-> **狀態:** 決策已拍板。**Phase 0 / 1 完成,Phase 1.5 spike 完成**(`/history` card)。
-> Phase 2 Shell 尚未開始 —— 在此之前只有 `/history` 的卡片是新 UI。
+> **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成。**
+> 新 UI 目前涵蓋:全域 shell(側欄 + 手機 chrome)與 `/history` 整頁。下一步是 Phase 3 的其餘畫面。
 
 ## 這份文件與 `redesign-migration-plan-2026-08-01.md` 的關係
 
@@ -325,8 +325,26 @@ href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
   **Gate:** typecheck · lint · test:run(76) · build · G1-b · G2-a · D1-verbatim · G4-g 全綠;
   **e2e 53/53**(47 + 新增 6)。
 
-- **Slice 2b(下一步)** —— `RoomNavbar` / `DetailNavbar` + `AppShell` 的 navbar slot(CH2)。
-  在它落地前,`TopBar` 仍是所有 route 的預設頂欄。
+- **Slice 2b — navbar slot** ✅ **完成 2026-08-04**(CH2):`RoomNavbar` + `Tabs` +
+  `CreditBalance` / `UpgradeButton` 版面,並把 `/history` 完整收尾(標題與篩選 tab 上移進 navbar,
+  grid 換成 DP 的四欄 `.history-page__grid`)。
+
+  **slot 在 App Router 的作法。** DP 是把 navbar 當 prop 傳給 `AppLayout`;App Router 反過來 ——
+  page 在 layout 內部,傳不上去。解法是 `.room-navbar` 本來就是 `position: sticky`,所以
+  **由已移轉的 view 自己 render 成第一個子元素**,行為完全相同;`AppShell` 只需要一份
+  `OWN_CHROME` 清單知道哪些 route 不要再畫 legacy `TopBar`。那份清單每移轉一個畫面加一列,
+  最後一個畫面搬完就連同 `TopBar` 一起刪除。
+
+  **`DetailNavbar` 刻意還沒做** —— 它要等 Phase 3 第一個 detail 畫面才有真正的使用者,
+  現在做等於憑空猜介面。
+
+  **credits 已接真值:** DP 19 處硬寫的 `390` 換成 `useCredits()`;`CreditBalance` 與
+  `UpgradeButton` 都導到 `/profile`,WA 的 credits 與訂閱介面本來就在那裡,
+  不在 shell slice 裡再搬一套 IAP。
+
+  **Gate:** typecheck · lint · test:run(76) · build · G1-b · G2-a · D1-verbatim · G4-g 全綠;
+  **e2e 53/53**。axe 在已登入的 `/history` 抓到 **5 個 color-contrast node**,全部是 DP 的
+  `Tabs` 與 `Badge`(見 `DESIGNER-TODO.md` A1)—— 我方元件零 violation。
 - **Slice 2b…** 依相依序:`Button` → `IconButton` → `Chip` → `ToggleSwitch` → `Tabs` → `Card` → `ListItem`
   → `SectionHeader` → `Badge` → `CreditBalance` → `RoomNavbar` / `DetailNavbar` → `Toast` → `LoginModal`
   → `PublishDialog` → `ShareDialog` → `UpgradeButton` / `UpgradeDialog` / `CreditsDialog` → `FloatingCTA`
