@@ -1,0 +1,370 @@
+/*
+  Card — Figma "Card" component set (node 1243:26094)
+  Type: Video / Song · Ratio: 3:4 / 4:3 (Video only, Song is always 1:1) · Community: on/off
+
+  Width is fluid (100%) and height follows aspect-ratio, so the card scales with
+  whatever grid/flex column it's placed in — sizing is decided by the parent
+  layout, not fixed here (min/max-height to be revisited once real pages exist).
+*/
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* =========================================================
+ * Layout — Flat (Video, community=off): image + text in one box
+ * ======================================================= */
+
+.card--flat {
+  aspect-ratio: 3 / 4;
+  padding: 12px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  justify-content: flex-end;
+  background: var(--neutral-dark-14);
+}
+
+.card__cover-image--flat,
+.card__cover-scrim--flat {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.card__cover-image--flat {
+  object-fit: cover;
+}
+
+.card__cover-image,
+.card__cover-image--flat {
+  transition: transform 0.3s ease;
+}
+
+.card:hover .card__cover-image,
+.card:hover .card__cover-image--flat {
+  transform: scale(1.2);
+}
+
+.card__cover-scrim--flat {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, var(--black-40) 100%);
+}
+
+.card--flat .card__body {
+  position: relative;
+  z-index: 1;
+}
+
+/* =========================================================
+ * Layout — Cover (community=on for Video/Song, or Song community=off):
+ * image lives in its own rounded box, text sits below it.
+ * ======================================================= */
+
+.card--video.card--cover-3-4,
+.card--video.card--cover-4-3 {
+  gap: 5px;
+}
+
+.card--song {
+  gap: var(--spacing-8);
+}
+
+.card__cover {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--neutral-dark-14);
+}
+
+.card--cover-3-4 .card__cover {
+  aspect-ratio: 3 / 4;
+  padding: 12px;
+}
+
+.card--cover-4-3 .card__cover {
+  aspect-ratio: 4 / 3;
+  padding: 12px;
+}
+
+.card--song .card__cover {
+  aspect-ratio: 1 / 1;
+  padding: 8px;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.card__cover-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.card--video .card__cover-scrim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, var(--black-40) 100%);
+}
+
+/* =========================================================
+ * Badge (e.g. "HOT") — optional on/off toggle, works in any layout.
+ * Absolutely positioned so it doesn't disturb the play button's flex flow,
+ * inset to match whichever container's own padding it sits inside.
+ * ======================================================= */
+
+.card__badge-row {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  pointer-events: none;
+}
+
+.card--flat .card__badge-row,
+.card--cover-3-4 .card__badge-row,
+.card--cover-4-3 .card__badge-row {
+  top: 12px;
+  left: 12px;
+  right: 12px;
+}
+
+.card--song .card__badge-row {
+  top: 8px;
+  left: 8px;
+  right: 8px;
+}
+
+.card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--pf-purple-60);
+  /* accent-purple @ 35% — no exact tokens.css match yet, kept as a one-off value */
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-label-s);
+  letter-spacing: -0.12px;
+  white-space: nowrap;
+}
+
+/* "NEW" — PF Orange 60%, distinct from the default "HOT" purple above. */
+.card__badge--new {
+  background: rgba(255, 138, 2, 0.6);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+/* =========================================================
+ * Play button
+ * ======================================================= */
+
+.card__play-row {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.card:hover .card__play-row,
+.card__play-row:focus-within {
+  opacity: 1;
+}
+
+.card__play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  background: var(--black-40);
+  backdrop-filter: blur(2.667px);
+  -webkit-backdrop-filter: blur(2.667px);
+}
+
+button.card__play {
+  cursor: pointer;
+}
+
+.card__play--video {
+  padding: 5.333px;
+}
+.card__play--video .card__play-icon {
+  width: 21.333px;
+  height: 21.333px;
+}
+
+.card__play--song {
+  padding: 10px;
+}
+.card__play--song .card__play-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.card__play-icon {
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* =========================================================
+ * Body — Title + (Subtitle or User row)
+ * ======================================================= */
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.card--video .card__body {
+  gap: 2px;
+}
+
+.card--song .card__body {
+  gap: var(--spacing-4);
+}
+
+.card__title {
+  margin: 0;
+  width: 100%;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-m);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-m);
+  letter-spacing: -0.2px;
+}
+
+.card__subtitle {
+  margin: 0;
+  width: 100%;
+  color: var(--neutral-dark-89);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+}
+
+/* =========================================================
+ * User row — avatar + username + likes (community=on)
+ * ======================================================= */
+
+.card__user-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.card__user-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card__avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background-image: linear-gradient(45deg, #ff6bce 14.639%, var(--color-accent-purple) 50%, #4338ca 85.361%);
+}
+
+.card__avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card__avatar-icon {
+  width: 8px;
+  height: 8px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.card__username {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-89);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+}
+
+.card__likes {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.card__likes-icon {
+  width: 16px;
+  height: 16px;
+  background-color: var(--neutral-dark-74);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.card__likes-count {
+  color: var(--neutral-dark-74);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+  white-space: nowrap;
+}

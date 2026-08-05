@@ -25,10 +25,7 @@
 // this file checks the app actually applies them.
 
 import { expect, test, type Page } from "@playwright/test";
-import {
-  COST_RENDER,
-  COST_STORYBOARD,
-} from "../src/lib/mv/types";
+import { COST_RENDER, COST_STORYBOARD } from "../src/lib/mv/types";
 import { DEFAULT_LOCALE, HTML_LANG, LOCALES, localePath } from "../src/lib/i18n/config";
 
 const MV_DESCRIPTION = "A glamorous neon-lit night drive through the city.";
@@ -431,7 +428,9 @@ test("R12 shell: 700px is mobile now — this is the 640->767 change itself", as
   await expect(page.locator(".sidebar")).toBeHidden();
 });
 
-test("S13 mobile IA: the bar is Explore / Create / History — Profile is not on it", async ({ page }) => {
+test("S13 mobile IA: the bar is Explore / Create / History — Profile is not on it", async ({
+  page,
+}) => {
   await login(page);
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto("/history");
@@ -462,9 +461,174 @@ test("R9 shell: every sidebar link carries the locale prefix", async ({ page }) 
   // and only the other 8 locales are broken. Assert the prefix is really in the DOM.
   await login(page);
   await page.goto("/jpn/history");
-  const hrefs = await page.locator(".sidebar__nav-item").evaluateAll((els) =>
-    els.map((e) => e.getAttribute("href")),
-  );
+  const hrefs = await page
+    .locator(".sidebar__nav-item")
+    .evaluateAll((els) => els.map((e) => e.getAttribute("href")));
   expect(hrefs.length).toBeGreaterThan(0);
   for (const href of hrefs) expect(href).toMatch(/^\/jpn(\/|$)/);
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Q6 / R-2 — /explore/mvs, the first Phase 3 screen (plan §4)
+//
+// Two things this slice introduces that a screenshot cannot see:
+//
+//   Q6  Back is `router.back()` with a fallback to the section entry, NOT DP's
+//       `?from=` query. The two only differ when there IS no history — a shared
+//       or deep-linked URL — which is exactly the case a reviewer clicking
+//       around the app never reaches.
+//
+//   R-2 The justified grid reads `matchMedia` to choose its layout. DP does that
+//       in a `useState` initializer, which slice 2a measured as a hydration
+//       failure. That failure is a CONSOLE error and a silently patched DOM, not
+//       a visual diff, so it needs asserting directly.
+// ════════════════════════════════════════════════════════════════════════════
+
+test("Q6 back: with no history, Back falls back to the section entry", async ({ page }) => {
+  // A cold load — the deep-link / shared-URL case, and the whole reason Q6
+  // rejected DP's `?from=` scheme. This is the test that caught the first
+  // implementation: `window.history.length` counts the entry the app replaced,
+  // so `router.back()` fired and landed on about:blank — outside the app.
+  await page.goto("/explore/mvs");
+  await page.locator(".detail-navbar__back").click();
+  await expect(page).toHaveURL(/\/(enu)?\/?$/);
+  await expect(page.locator(".sidebar")).toBeVisible(); // still inside the app
+});
+
+test("Q6 back: after navigating in-app, Back really goes back", async ({ page }) => {
+  // A REAL client-side navigation (Home's "See all"), not a second page.goto —
+  // a full load is not in-app history and must not count as one.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await page
+    .getByRole("link", { name: /See all/i })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/explore\/mvs$/);
+  await page.locator(".detail-navbar__back").click();
+  await expect(page).toHaveURL(/\/(enu)?\/?$/);
+
+  // Both paths end on "/" here, so the URL alone cannot tell them apart — the
+  // forward entry can. A real back() leaves /explore/mvs ahead of us; the
+  // fallback would have PUSHED "/" onto the end of the stack, with nothing
+  // forward to return to.
+  await page.goForward();
+  await expect(page).toHaveURL(/\/explore\/mvs$/);
+});
+
+test("Q6 back: the back control is a real link, not a bare clickable", async ({ page }) => {
+  // The href is what makes middle-click and "copy link address" work and what
+  // lets axe see a destination — the click handler overrides it for plain clicks.
+  await page.goto("/explore/mvs");
+  await expect(page.locator(".detail-navbar__back")).toHaveAttribute("href", "/");
+});
+
+for (const width of [1440, 1000, 700]) {
+  test(`R-2 hydration: /explore/mvs is clean at ${width}px`, async ({ page }) => {
+    // 1000px is the width that made the Sidebar's version of this pattern throw:
+    // wide enough that the media query disagrees with the server's assumption.
+    const problems: string[] = [];
+    page.on("console", (m) => {
+      if (m.type() === "error") problems.push(m.text());
+    });
+    page.on("pageerror", (e) => problems.push(String(e)));
+
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/explore/mvs");
+    await expect(page.locator(".mv-detail__grid").first()).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+}
+
+test("S15 gallery: the desktop grid justifies rows to the container width", async ({ page }) => {
+  // The redesign's actual point. Below 1024 the layout falls back to a plain
+  // wrapping grid, so assert the justified rows exist only above it.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/explore/mvs");
+  await expect(page.locator(".mv-detail__grid-row").first()).toBeVisible();
+  await expect(page.locator(".mv-detail__grid--wrap")).toHaveCount(0);
+
+  await page.setViewportSize({ width: 900, height: 900 });
+  await expect(page.locator(".mv-detail__grid--wrap").first()).toBeVisible();
+  await expect(page.locator(".mv-detail__grid-row")).toHaveCount(0);
+});
+
+test("R9 /explore/mvs: card and creator links carry the locale prefix", async ({ page }) => {
+  // Same invisible-in-English failure as the sidebar test above, one screen down.
+  await page.goto("/jpn/explore/mvs");
+  const hrefs = await page
+    .locator(".mv-detail__grid-item")
+    .evaluateAll((els) => els.map((e) => e.getAttribute("href")));
+  expect(hrefs.length).toBeGreaterThan(0);
+  for (const href of hrefs) expect(href).toMatch(/^\/jpn\/watch\?id=/);
+  await expect(page.locator(".detail-navbar__back")).toHaveAttribute("href", "/jpn");
+});
+
+test("/explore/mvs: clicking a card still opens the dialog, not a navigation", async ({ page }) => {
+  // The migration replaced markup, not behaviour. If a later slice moves this
+  // screen to real navigation that is a deliberate decision — this test is where
+  // it should show up.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/explore/mvs");
+  await page.locator(".mv-detail__grid-item").first().click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page).toHaveURL(/\/explore\/mvs$/);
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// A4 — the navbar tabs row survives the mobile cutover
+//
+// This is the test that would have caught slice 2b. DP's AppLayout hides every
+// navbar below 767px because MobileHeader/MobileTabBar replace them — correct
+// for chrome, wrong for the tabs row, which is page content. Moving History's
+// filters into `tabsSlot` therefore deleted them on phones: still in the DOM,
+// display:none, no way to filter at all. Nothing failed; the 2b baselines were
+// re-recorded at all six widths and accepted the loss.
+//
+// A visual test cannot catch this class of bug — it records whatever it sees.
+// Asserting the control is USABLE is what makes it a regression test.
+// ════════════════════════════════════════════════════════════════════════════
+
+for (const width of [320, 375, 767, 768, 1440]) {
+  test(`A4 /history: the filter tabs are usable at ${width}px`, async ({ page }) => {
+    await login(page);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/history");
+
+    const tabs = page.locator(".tabs");
+    await expect(tabs).toBeVisible();
+    // HIST-03: Liked is a spec'd behaviour, so assert it specifically rather
+    // than just counting pills.
+    await expect(tabs.getByRole("button", { name: "Liked" })).toBeVisible();
+
+    // Usable, not merely painted.
+    await tabs.getByRole("button", { name: "Songs" }).click();
+    await expect(tabs.getByRole("button", { name: "Songs" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+}
+
+test("A4: the override restores the tabs row only, not the whole navbar", async ({ page }) => {
+  // The title/credits/Upgrade row must STAY hidden on phones — MobileHeader
+  // carries those, and showing both would double them up. If this goes red the
+  // override has widened beyond what was decided.
+  await login(page);
+  await page.setViewportSize({ width: 375, height: 900 });
+  await page.goto("/history");
+  await expect(page.locator(".room-navbar__tabs")).toBeVisible();
+  await expect(page.locator(".room-navbar__top")).toBeHidden();
+  await expect(page.locator(".mobile-header")).toBeVisible();
+});
+
+test("A4: a navbar with no tabs stays hidden on mobile, exactly as DP intends", async ({ page }) => {
+  // /explore/mvs passes no tabsSlot, so its DetailNavbar is pure chrome and the
+  // `:has()` scoping must leave DP's rule alone. Mobile back navigation is a
+  // separate open question (DESIGNER-TODO A5) — this asserts we did NOT quietly
+  // answer it here.
+  await page.setViewportSize({ width: 375, height: 900 });
+  await page.goto("/explore/mvs");
+  await expect(page.locator(".detail-navbar")).toBeHidden();
+  await expect(page.locator(".mobile-tabbar")).toBeVisible();
 });

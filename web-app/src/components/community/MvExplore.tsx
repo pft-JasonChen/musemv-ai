@@ -1,59 +1,217 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { NEW_MVS, TRENDING_MVS, DEFAULT_CREATOR, formatCount } from "@/lib/mv/community";
-import { BadgePill, Heart } from "@/components/community/ui";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { NEW_MVS, TRENDING_MVS, mvCoverRatio, type CommunityMv } from "@/lib/mv/community";
 import { CommunityEmpty, useOnline } from "@/components/community/EmptyState";
 import { CommunityMvDialog } from "./CommunityMvDialog";
+import { DetailNavbar } from "@/components/shell/DetailNavbar";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { Card } from "@/components/ui/Card";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
+import {
+  computeJustifiedRows,
+  aspectRatioOf,
+  DESKTOP_QUERY,
+  type MvRatio,
+} from "@/lib/mv/justifiedRows";
 
-function I({ d }: { d: string }) {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
+/**
+ * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, first screen after /history) ──
+ *
+ * Source: the LOWER half of DP's `MVDetailPage` — the justified gallery (S15,
+ * a deliberate redesign, not a like-for-like port of the old 4-column grid).
+ * DP's one file covers two of our routes; its upper half (`.mv-player*`) is
+ * `/watch` and is a separate slice. Classes come from
+ * `src/styles/designer/MVDetailPage.css`, verbatim; no Tailwind in this subtree
+ * (G3-d).
+ *
+ * WHAT DID NOT CHANGE. Clicking a video still opens `CommunityMvDialog` in
+ * place, exactly as before — the plan's per-screen rule is to replace JSX and
+ * class names while keeping WA's behaviour, and dialog-vs-navigate is a
+ * behaviour change that would need its own slice and its own e2e. The offline
+ * and empty states (EXP-06) are also unchanged.
+ *
+ * TWO SECTIONS, REAL DATA. DP shows "Top Picks" and "Newly Released" and fills
+ * the second by REVERSING the same catalog — it has no second list. WA has two
+ * genuinely different ones, so they map straight onto the designer's layout:
+ * Top Picks ← TRENDING_MVS, Newly Released ← NEW_MVS.
+ *
+ * The old "← Home" text button is gone because `DetailNavbar` now carries back
+ * navigation; this screen is where Q6's `router.back()`-with-fallback lands.
+ */
+
+const TOP_PICKS = TRENDING_MVS;
+const NEWLY_RELEASED = NEW_MVS;
+
+/** `useLayoutEffect` warns during SSR; fall back to `useEffect` there. */
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+type GridItem = CommunityMv & { ratio: MvRatio };
+
+const withRatio = (items: readonly CommunityMv[]): GridItem[] =>
+  items.map((m) => ({ ...m, ratio: mvCoverRatio(m.id) }));
+
+function MvGrid({ items, onOpen }: { items: readonly GridItem[]; onOpen: (id: string) => void }) {
+  const { locale } = useLocale();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  /**
+   * ── THE R-2 PATTERN, SECOND INSTANCE ──────────────────────────────────────
+   *
+   * DP writes this as
+   *   useState(() => typeof window !== 'undefined' ? matchMedia(q).matches : false)
+   * — the same shape as the Sidebar's, which slice 2a measured throwing React
+   * error 418, `hydration failed`, at 1000px. The `typeof window` guard stops it
+   * CRASHING under SSR, which is exactly what makes it look safe; what it
+   * actually guarantees is that server and first client render disagree.
+   *
+   * So: SSR-safe constant initial value, real value read after mount.
+   * `useLayoutEffect` (not `useEffect`) because the desktop and fallback grids
+   * are different DOM, and correcting after paint would flash the wrapped
+   * layout on every desktop load.
+   *
+   * A sweep of the whole drop found this pattern in exactly two files. Both are
+   * now fixed; there is no third.
+   */
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useIsomorphicLayoutEffect(() => {
+    const mq = window.matchMedia(DESKTOP_QUERY);
+    setIsDesktop(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) =>
+      setContainerWidth(entries[0].contentRect.width),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  /**
+   * The href is WA's own route for playing a community MV (D3 — DP's
+   * `/mv-detail?id=&from=` scheme is not adopted, and Q6 rejects `?from=`
+   * outright). The click is intercepted so it opens the dialog instead, which
+   * is what this screen has always done; the real href is what makes
+   * middle-click and "copy link address" work and what lets axe see a link with
+   * a destination. Same convention as the /history card.
+   */
+  function link(mv: GridItem) {
+    return {
+      href: localePath(locale, `/watch?id=${mv.id}`),
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        onOpen(mv.id);
+      },
+    };
+  }
+
+  function card(mv: GridItem) {
+    return (
+      <Card
+        type="Video"
+        ratio={mv.ratio}
+        community
+        title={mv.title}
+        username={mv.creator}
+        likes={mv.likes}
+        badge={mv.badge ?? undefined}
+        coverImage={mv.thumb}
+      />
+    );
+  }
+
+  // Below Laptop width the justified-row maths (built around the 1440 desktop
+  // frame Figma provides) has no room to work — fall back to the simpler
+  // fixed-width wrapping grid.
+  if (!isDesktop) {
+    return (
+      <div className="mv-detail__grid mv-detail__grid--wrap" ref={containerRef}>
+        {items.map((mv) => (
+          <Link
+            key={mv.id}
+            {...link(mv)}
+            className={`mv-detail__grid-item mv-detail__grid-item--${mv.ratio.replace(":", "-")}`}
+          >
+            {card(mv)}
+          </Link>
+        ))}
+      </div>
+    );
+  }
+
+  const rows = computeJustifiedRows(items, containerWidth);
+
+  return (
+    <div className="mv-detail__grid" ref={containerRef}>
+      {rows.map((row, rowIndex) => (
+        <div className="mv-detail__grid-row" key={rowIndex}>
+          {row.items.map((mv) => (
+            <Link
+              key={mv.id}
+              {...link(mv)}
+              className="mv-detail__grid-item"
+              style={{ width: row.coverHeight * aspectRatioOf(mv.ratio) }}
+            >
+              {card(mv)}
+            </Link>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
 }
 
-const ALL_MVS = [...TRENDING_MVS, ...NEW_MVS];
-
 export function MvExplore({ initialPlayId }: { initialPlayId?: string }) {
-  const router = useRouter();
   const [playId, setPlayId] = useState<string | null>(initialPlayId ?? null);
   const online = useOnline();
 
-  return (
-    <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6">
-      <button onClick={() => router.push("/")} className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--text-2)" }}>
-        <I d="M15 18l-6-6 6-6" /> Home
-      </button>
-      <h1 className="mb-1 text-[22px] font-extrabold tracking-tight">Explore Music Videos</h1>
-      <p className="mb-5 text-[13px]" style={{ color: "var(--text-2)" }}>Trending and new creations from the community.</p>
+  const topPicks = withRatio(TOP_PICKS);
+  const newlyReleased = withRatio(NEWLY_RELEASED);
+  const isEmpty = topPicks.length === 0 && newlyReleased.length === 0;
 
-      {!online ? (
-        <CommunityEmpty variant="offline" />
-      ) : ALL_MVS.length === 0 ? (
-        <CommunityEmpty variant="empty" />
-      ) : (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {ALL_MVS.map((m) => (
-          <button key={m.id} onClick={() => setPlayId(m.id)} className="hover-lift overflow-hidden rounded-xl text-left" style={{ background: "var(--card)" }}>
-            <div className="relative aspect-[3/4]">
-              <img src={m.thumb} alt="" className="h-full w-full object-cover" />
-              <BadgePill badge={m.badge} />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,.8), transparent 55%)" }} />
-              <div className="absolute bottom-2 left-3 right-3">
-                <div className="truncate text-[13px] font-bold text-white">{m.title}</div>
-                <div className="mt-0.5 flex items-center gap-2">
-                  <img src={DEFAULT_CREATOR.avatar} alt="" className="h-4 w-4 rounded-full object-cover" />
-                  <span className="truncate text-[11px] text-white/75">{m.creator}</span>
-                  <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-white/85"><Heart /> {formatCount(m.likes)}</span>
-                </div>
-              </div>
-            </div>
-          </button>
-        ))}
+  return (
+    <>
+      {/* Sticky, rendered as the view's own first child — see DetailNavbar for
+          why App Router can't use DP's navbar-as-a-prop arrangement. Back falls
+          back to Home, since this page IS its section's entry point. */}
+      <DetailNavbar fallbackPath="/" />
+
+      <div className="mv-detail">
+        {/* EXP-06's offline/empty states are still WA's Tailwind component. It
+            replaces the grid rather than sitting inside it, so the two systems
+            never meet on one element — same arrangement /history uses for its
+            empty state and ⋯ menu. It migrates when its own slice comes up. */}
+        {!online ? (
+          <CommunityEmpty variant="offline" />
+        ) : isEmpty ? (
+          <CommunityEmpty variant="empty" />
+        ) : (
+          <>
+            <section className="mv-detail__grid-section">
+              {/* This page is already the "See all" destination, so neither
+                  section links anywhere further. */}
+              <SectionHeader title="Top Picks Music Videos" mobileTitle="Top Picks" />
+              <MvGrid items={topPicks} onOpen={setPlayId} />
+            </section>
+
+            <section className="mv-detail__grid-section">
+              <SectionHeader title="Newly Released Music Videos" mobileTitle="New MVs" />
+              <MvGrid items={newlyReleased} onOpen={setPlayId} />
+            </section>
+          </>
+        )}
       </div>
-      )}
 
       <CommunityMvDialog open={playId != null} mvId={playId} onClose={() => setPlayId(null)} />
-    </div>
+    </>
   );
 }

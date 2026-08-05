@@ -26,6 +26,7 @@ import { formatCount } from "@/lib/mv/community";
 // is still Tailwind. The card itself uses DP's mask icons via DpIcon.
 import { Heart, Share } from "@/components/community/ui";
 import { RoomNavbar, Tabs } from "@/components/shell/RoomNavbar";
+import { DpIcon } from "@/components/ui/DpIcon";
 
 type Filter = "all" | "mv" | "song" | "liked";
 const FILTERS: { id: Filter; label: string }[] = [
@@ -425,19 +426,6 @@ export function HistoryView() {
  *    row gains middle-click and copy-link. See `rowHref()`.
  *  · The date must be a `<time>` for the same reason.
  */
-function DpIcon({ name, className }: { name: string; className?: string }) {
-  // D4: DP draws icons as a CSS mask tinted by `currentColor`, not inline <svg>.
-  // All 90 of DP's icon filenames exist under public/assets/icons/ui/.
-  const url = `url("/assets/icons/ui/${name}.svg")`;
-  return (
-    <span
-      className={className}
-      aria-hidden="true"
-      style={{ maskImage: url, WebkitMaskImage: url }}
-    />
-  );
-}
-
 /** DP's Badge (styles/designer/Badge.css) for the states the cover shows. */
 function DpBadge({ status }: { status: "Done" | "Failed" | "Processing" }) {
   const icon = status === "Done" ? "ic_check" : status === "Failed" ? "ic_close" : "ic_star";

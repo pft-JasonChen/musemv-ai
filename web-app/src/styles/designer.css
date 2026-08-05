@@ -23,9 +23,13 @@
      not supposed to mix the two anyway (Gate G3-d) — this is the backstop for
      when they meet at a shared element.
 
-   ⚠️ UNPROVEN UNTIL THE /history SPIKE. Whether DP's BEM and Tailwind actually
-     coexist under this order is R-1/U2, and nobody has tested it on a real
-     screen yet. If the spike says otherwise, this file is where it gets fixed.
+   PROVEN BY THE /history SPIKE (R-1/U2, closed 2026-08-04) — AND THE MECHANISM
+     IS NOT THE ORDER. Tailwind v4 emits `@layer base, components, …`; this file
+     is imported WITHOUT a layer, and an unlayered rule always beats a layered one
+     regardless of specificity or source order. That is what makes D1 work.
+     The consequence to remember: a Tailwind utility mixed into a migrated
+     component silently loses. Gate G3-d's "don't mix" is that measurement, not a
+     style preference.
    ========================================================================== */
 
 /* Each file below is byte-identical to its counterpart in designer-prototype/.
@@ -37,10 +41,14 @@
 @import "./designer/MobileHeader.css";
 @import "./designer/MobileTabBar.css";
 @import "./designer/RoomNavbar.css";
+@import "./designer/DetailNavbar.css";
 @import "./designer/IconButton.css";
 @import "./designer/Button.css";
 @import "./designer/CreditBalance.css";
 @import "./designer/UpgradeButton.css";
 @import "./designer/Tabs.css";
 @import "./designer/Badge.css";
+@import "./designer/Card.css";
+@import "./designer/SectionHeader.css";
 @import "./designer/HistoryPage.css";
+@import "./designer/MVDetailPage.css";

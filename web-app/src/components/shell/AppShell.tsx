@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { stripLocalePrefix } from "@/lib/i18n/config";
+import { useTrackInAppNavigation } from "@/lib/navHistory";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { MobileHeader } from "./MobileHeader";
@@ -39,10 +40,16 @@ import { MobileTabBar } from "./MobileTabBar";
  * page renders inside the layout, so the layout can only be told which routes to
  * stay out of the way for.
  */
-const OWN_CHROME = ["/history"];
+const OWN_CHROME = ["/history", "/explore/mvs"];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const path = stripLocalePrefix(usePathname() || "/");
+  const pathname = usePathname() || "/";
+  const path = stripLocalePrefix(pathname);
+
+  // Feeds DetailNavbar's Q6 back decision — see src/lib/navHistory.ts. It sits
+  // here because AppShell is the one component mounted for every route, and it
+  // must run before the /share early return so the hook order stays stable.
+  useTrackInAppNavigation(pathname);
 
   // The public share-link page (/share) is a standalone, no-navigation page
   // (spec P2-S1) — render it bare, without the app sidebar/top bar.

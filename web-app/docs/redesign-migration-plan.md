@@ -3,8 +3,10 @@
 > **日期:** 2026-08-04
 > **DP(Designer Prototype):** `designer-prototype/`(in-repo,commit `568e64c`,2026-08-04)
 > **WA(Web App):** `web-app/` — 正式交付物
-> **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成。**
-> 新 UI 目前涵蓋:全域 shell(側欄 + 手機 chrome)與 `/history` 整頁。下一步是 Phase 3 的其餘畫面。
+> **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成;Phase 3 第一支 `/explore/mvs` 完成。**
+> 新 UI 目前涵蓋:全域 shell(側欄 + 手機 chrome)、`/history` 整頁、`/explore/mvs`
+> (justified gallery)。下一步是 `/explore/songs`。
+> ⚠️ **`/watch` 這個 slice 目前被 DESIGNER-TODO A5 擋住**(手機 detail 畫面沒有返回途徑)。
 
 ## 這份文件與 `redesign-migration-plan-2026-08-01.md` 的關係
 
@@ -52,14 +54,27 @@
 
 ### 1.1 Chrome / Shell
 
-| #       | 決策                                                                                               | 理由 / 影響                                                                                                                                                                                                                           |
-| ------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **CH1** | **Sidebar + MobileHeader + MobileTabBar 全域一次移轉**,單獨一個 slice,以 DP 為準                   | 側欄是**持續性 chrome**。若 Home 用舊版、`/history` 用新版,側欄會在導航時**當場變形**,比靜態新舊並存更糟。Home 因此會先拿到新側欄 —— 這是 landing 延後期間唯一會變的部分                                                              |
-| **CH2** | 採 DP 的 **per-page `RoomNavbar`/`DetailNavbar`**;WA 全域 `TopBar` 降級為「未移轉 route 的預設值」 | DP 的 detail 畫面是**繞著 `DetailNavbar` 的返回鍵設計的**(這正是 `AppLayout` 只在 Home/History 顯示 `MobileTabBar` 的原因)。沒有它,12 個畫面在手機上**失去唯一的返回途徑**。實務上 `TopBar` 只剩 Home 在用,landing 設計到位時一併刪除 |
-| **CH3** | **行銷 `Navbar` 不在本次範圍**                                                                     | 它只出現在 Home(`AppLayout` 的 `??` fallback),而 Home 已延後。連帶:它內含的 12 語 `LanguagePicker` 本次也碰不到(見 S9)                                                                                                                |
-| **CH4** | **`Footer` 不在本次範圍**                                                                          | 只出現在 landing 與 `/blog`(`showFooter`),兩者都延後                                                                                                                                                                                  |
-| **CH5** | 手機底欄 **5 項 @640px → 3 項 @767px**(Explore / ＋建立 / History)                                 | Profile 從底欄消失,改由 **Sidebar 的 profile footer**(桌機)與 **`MobileHeader` 帳號 icon**(手機)進入。**這是行為變更(R12/S13),要自己的 slice 與自己的 e2e**                                                                           |
-| **CH6** | Sidebar **隱藏 AI Storybook 與 Blog**,保留登入後 profile footer + Upgrade 鈕                       | AI Storybook `href="#"` 連畫面都沒有;Blog 已定 V2。以常數控制,V2 開回來只改一行。避免 CEO demo 點到空頁                                                                                                                               |
+| #       | 決策                                                                                               | 理由 / 影響                                                                                                                                                              |
+| ------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **CH1** | **Sidebar + MobileHeader + MobileTabBar 全域一次移轉**,單獨一個 slice,以 DP 為準                   | 側欄是**持續性 chrome**。若 Home 用舊版、`/history` 用新版,側欄會在導航時**當場變形**,比靜態新舊並存更糟。Home 因此會先拿到新側欄 —— 這是 landing 延後期間唯一會變的部分 |
+| **CH2** | 採 DP 的 **per-page `RoomNavbar`/`DetailNavbar`**;WA 全域 `TopBar` 降級為「未移轉 route 的預設值」 | ⚠️ **理由已於 2026-08-05 更正,決策不變** —— 見下方修正框。實務上 `TopBar` 只剩 Home 在用,landing 設計到位時一併刪除                                                      |
+
+> **CH2 原本的理由是錯的(2026-08-05,`/explore/mvs` slice 實測)。** 原文寫的是
+> 「DP 的 detail 畫面是繞著 `DetailNavbar` 的返回鍵設計的,沒有它,12 個畫面在手機上失去唯一的
+> 返回途徑」。實際讀 DP 的 CSS:`AppLayout.css:82-89` 在 `max-width: 767px` 把
+> `.detail-navbar` 連同 `.sidebar`/`.navbar`/`.room-navbar`/`.footer` 一起 `display: none`,
+> 而 `MobileHeader` **沒有任何 back 控制項**(DP 與 WA 都沒有)。
+> 也就是說**那個返回鍵在手機上本來就不存在** —— 它是桌機專屬的。
+>
+> **決策本身仍然成立**(per-page navbar 是對的,`DetailNavbar` 在桌機確實是返回途徑),
+> 但「手機」那半段不能再拿來當理由,也不能拿來當「手機返回已解決」的證據。
+> **手機 detail 返回是一個尚未解決的開放問題,記在 `DESIGNER-TODO.md` A5,並且擋 `/watch`。**
+> 這條記在這裡而不是默默改掉,因為它正是計畫自己說的
+> 「DP、spec 與 code 三者衝突時,讀 code」的第三個實例。
+> | **CH3** | **行銷 `Navbar` 不在本次範圍** | 它只出現在 Home(`AppLayout` 的 `??` fallback),而 Home 已延後。連帶:它內含的 12 語 `LanguagePicker` 本次也碰不到(見 S9) |
+> | **CH4** | **`Footer` 不在本次範圍** | 只出現在 landing 與 `/blog`(`showFooter`),兩者都延後 |
+> | **CH5** | 手機底欄 **5 項 @640px → 3 項 @767px**(Explore / ＋建立 / History) | Profile 從底欄消失,改由 **Sidebar 的 profile footer**(桌機)與 **`MobileHeader` 帳號 icon**(手機)進入。**這是行為變更(R12/S13),要自己的 slice 與自己的 e2e** |
+> | **CH6** | Sidebar **隱藏 AI Storybook 與 Blog**,保留登入後 profile footer + Upgrade 鈕 | AI Storybook `href="#"` 連畫面都沒有;Blog 已定 V2。以常數控制,V2 開回來只改一行。避免 CEO demo 點到空頁 |
 
 ### 1.2 Token / 樣式
 
@@ -148,17 +163,17 @@
 
 > 這些**不阻擋**開工,但每一項都要有人追。標 🔴 的會影響已排程的 slice。
 
-| #         | 項目                                                                                                                                                                                                            | 卡住誰                                              |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| U1 🔴     | **Song Length**:DP 用 `SHOW_SONG_LENGTH = false` 藏起來。是暫時隱藏還是要移除?(S4 已決定拿掉 BPM/Key,但 Song Length 未表態)                                                                                     | `/song/create`                                      |
-| ~~U2~~ ✅ | **D1 已驗證**(2026-08-04 spike):共存,機制是 cascade layer 而非載入順序;擴散範圍實測為 0(115 項視覺測試只有 history 的 6 項變動)                                                                                 | 已關閉                                              |
-| ~~U3~~ ✅ | **R-2 已驗證**(2026-08-04 Shell slice)。反向實測:把 DP 原本的 `useState` initializer 讀 `matchMedia` 放回去,1000px 立刻拋 **React #418 hydration failed**;換成「SSR-safe 初值 + isomorphic `useLayoutEffect`」後 1440 / 1000 / 700 三個寬度皆 **0 console issue** | 已關閉 |
-| U4        | 300MB demo 媒體(44 mp4 + 36 mp3)是否進 git —— **轉移完成後**再看                                                                                                                                                | 無(目前用設計師的 Vercel 版做並排比對)              |
-| U5        | S9 語言擴充(9 → 12 或其他)—— 轉移後定案,屬 C6                                                                                                                                                                   | 無                                                  |
-| U6        | **C1–C8 清單未經 RD 確認**(2026-08-04 決定不寄確認信)。這不是待辦,是一項已知事實:G4 只能保護清單上的東西,所以它證明的範圍以這張我方自訂的清單為準                                                               | 無                                                  |
-| U7        | 08-01 §7 的 **Q1、Q3、Q4、Q5、Q8、Q9** 尚未處理(轉場無縫度、deep-link 無 flow state、`/mv/thinking` 完成後是否換 URL、Blog/Storybook URL 結構、未登入開受保護 route)                                            | Q3 其實已有答案(flow-guard 已實作且有 e2e),只需確認 |
-| U8        | **S14 Home 區塊組成**、**S12 行銷 chrome 雙層 IA** —— 隨 landing 一起決定                                                                                                                                       | landing                                             |
-| U9        | `MVResultPage` / `MVEditPage` / `SongResult` 的 Figma 覆核 —— 設計師自標未收斂                                                                                                                                  | 搬時標 `@needs-figma-recheck`                       |
+| #         | 項目                                                                                                                                                                                                                                                              | 卡住誰                                              |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| U1 🔴     | **Song Length**:DP 用 `SHOW_SONG_LENGTH = false` 藏起來。是暫時隱藏還是要移除?(S4 已決定拿掉 BPM/Key,但 Song Length 未表態)                                                                                                                                       | `/song/create`                                      |
+| ~~U2~~ ✅ | **D1 已驗證**(2026-08-04 spike):共存,機制是 cascade layer 而非載入順序;擴散範圍實測為 0(115 項視覺測試只有 history 的 6 項變動)                                                                                                                                   | 已關閉                                              |
+| ~~U3~~ ✅ | **R-2 已驗證**(2026-08-04 Shell slice)。反向實測:把 DP 原本的 `useState` initializer 讀 `matchMedia` 放回去,1000px 立刻拋 **React #418 hydration failed**;換成「SSR-safe 初值 + isomorphic `useLayoutEffect`」後 1440 / 1000 / 700 三個寬度皆 **0 console issue** | 已關閉                                              |
+| U4        | 300MB demo 媒體(44 mp4 + 36 mp3)是否進 git —— **轉移完成後**再看                                                                                                                                                                                                  | 無(目前用設計師的 Vercel 版做並排比對)              |
+| U5        | S9 語言擴充(9 → 12 或其他)—— 轉移後定案,屬 C6                                                                                                                                                                                                                     | 無                                                  |
+| U6        | **C1–C8 清單未經 RD 確認**(2026-08-04 決定不寄確認信)。這不是待辦,是一項已知事實:G4 只能保護清單上的東西,所以它證明的範圍以這張我方自訂的清單為準                                                                                                                 | 無                                                  |
+| U7        | 08-01 §7 的 **Q1、Q3、Q4、Q5、Q8、Q9** 尚未處理(轉場無縫度、deep-link 無 flow state、`/mv/thinking` 完成後是否換 URL、Blog/Storybook URL 結構、未登入開受保護 route)                                                                                              | Q3 其實已有答案(flow-guard 已實作且有 e2e),只需確認 |
+| U8        | **S14 Home 區塊組成**、**S12 行銷 chrome 雙層 IA** —— 隨 landing 一起決定                                                                                                                                                                                         | landing                                             |
+| U9        | `MVResultPage` / `MVEditPage` / `SongResult` 的 Figma 覆核 —— 設計師自標未收斂                                                                                                                                                                                    | 搬時標 `@needs-figma-recheck`                       |
 
 ---
 
@@ -345,6 +360,7 @@ href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
   **Gate:** typecheck · lint · test:run(76) · build · G1-b · G2-a · D1-verbatim · G4-g 全綠;
   **e2e 53/53**。axe 在已登入的 `/history` 抓到 **5 個 color-contrast node**,全部是 DP 的
   `Tabs` 與 `Badge`(見 `DESIGNER-TODO.md` A1)—— 我方元件零 violation。
+
 - **Slice 2b…** 依相依序:`Button` → `IconButton` → `Chip` → `ToggleSwitch` → `Tabs` → `Card` → `ListItem`
   → `SectionHeader` → `Badge` → `CreditBalance` → `RoomNavbar` / `DetailNavbar` → `Toast` → `LoginModal`
   → `PublishDialog` → `ShareDialog` → `UpgradeButton` / `UpgradeDialog` / `CreditsDialog` → `FloatingCTA`
@@ -381,6 +397,53 @@ href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
 **替換** JSX 結構與 class 名;**逐條比對** §8 差異,發現新差異就記錄,不自行決定。
 
 **Gate(每個 route):** G1 + G4 + **G5(含行為回歸清單)** + G6 + G7。
+
+#### Slice 3a — `/explore/mvs` ✅ **完成 2026-08-05**
+
+範圍照上面的 pre-flight 走:只搬 `MVDetailPage` 的**下半**(`.mv-detail__grid*`),
+`.mv-player*` 留給 `/watch`。帶進 `Card`(160 行)、`SectionHeader`、`DetailNavbar`,
+以及 `computeJustifiedRows`。
+
+**R-2 第二個實例已修並且有測試證明。** 套 Phase 1.5 的模式(SSR-safe 初值 + isomorphic
+`useLayoutEffect`)。新增 3 支 e2e 在 1440 / 1000 / 700 斷言 console 零 error ——
+hydration 失敗是 console error 加上被默默修掉的 DOM,**視覺測試看不到它**,所以要直接斷言。
+全 DP 的這個 pattern 至此**兩支檔都已修完,沒有第三支**。
+
+**`ratio` 沒有進 schema(照 §5 的契約紀律)。** DP 的 justified 版面吃 `mv.ratio`,
+WA 的 `CommunityMvSchema` 沒有這個欄位 —— 而它是 **C2,凍結,G4-a 零 diff**。
+實際去讀 DP 的來源:它自己也是 `RATIOS[index % RATIOS.length]`,**不是真資料**。
+所以改在 presentation 層推導(`community.ts` 的 `mvCoverRatio()`,依 id 一次指派),
+**契約零 diff**。等 API 真的長出這個欄位再換掉。
+
+**兩個 section 接真資料。** DP 靠「把同一份 catalog 反轉」湊出第二段,因為它只有一份;
+WA 有兩份真的:Top Picks ← `TRENDING_MVS`,Newly Released ← `NEW_MVS`。
+
+**Q6 第一次真正被實作 —— 而且第一版是錯的,被測試抓到。** 第一版用
+`window.history.length > 1` 判斷「有沒有歷史」。它**看起來對,實際是錯的**:
+那個數字包含 app 之前的那一筆(新分頁、上一個網站、Playwright 的 `about:blank`),
+所以**冷開一個 detail URL 也會宣稱自己有歷史**,`router.back()` 直接走出 app ——
+正好是 fallback 要防的那件事。測試當場停在 `about:blank`。
+改用 `src/lib/navHistory.ts`:模組層計數 client-side 導航,整頁載入自然歸零,
+**這正是要問的問題**。不用 per-tab web storage(G1-b 禁,且會糊掉 C5 的邊界)。
+兩個方向的變異測試都做了(恆真 → 冷開那支紅;恆假 → 有歷史那支紅)。
+
+**手機上撞到 A4 / A5(見 `DESIGNER-TODO.md`)。**
+
+- **A4 是一個已經進版的回歸,不是這個 slice 造成的。** DP 的 `AppLayout.css` 在 <767px
+  把所有 navbar 藏掉,而 **slice 2b 把 History 的篩選 tab 搬進了 `RoomNavbar`** ——
+  於是**手機上 History 的 All/MV/Songs/Liked 整組消失**(DOM 在,`display:none`)。
+  Liked 是有 spec 的行為(HIST-03)。2b 當時六個寬度的基準全部重錄,**等於把這個損失一起收下了**。
+  已用 `designer-overrides.css` 的 `:has()` 只放回「有 tabs 的 navbar」,`__top` 維持隱藏,
+  並補 7 支 e2e。**教訓:視覺基準重錄會吸收掉功能損失 —— 行為要由行為測試守,不是截圖。**
+- **A5 擋 `/watch`:** 手機 detail 畫面沒有任何返回途徑(見上面 CH2 的修正框)。
+
+**視覺基準變動 8 張,而且剛好只有這 8 張:** `explore-mvs` 六個寬度(刻意改版)+
+`history` 的 **320 / 375**(A4 override 放回 tabs 列)。`history` 的 768/1024/1440/1920
+**一張沒動** —— 反過來證明 override 只作用在手機分支。其餘 17 條 route 全數未動。
+
+**Gate:** typecheck · lint · test:run(84,含 8 支 `justifiedRows` 單元測試) · build ·
+G1-b · G2-a · D1-verbatim · G4 全綠;**e2e 69/69**(53 → +9 本 slice → +7 A4)。
+`e2e:visual` 115/115(8 張已重錄)。
 
 ### Phase 4 — 待設計師補件
 

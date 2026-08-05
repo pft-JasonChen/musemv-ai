@@ -37,3 +37,40 @@
 .tabs__tab:not(.tabs__tab--active) {
   color: rgba(255, 255, 255, 0.6);
 }
+
+/* DESIGNER-TODO A4 — the mobile navbar rule takes the tabs row with it.
+   AppLayout.css hides .sidebar/.navbar/.detail-navbar/.room-navbar/.footer
+   wholesale below 767px, because MobileHeader + MobileTabBar replace them. But
+   a navbar's TABS row is page content, not chrome: slice 2b moved History's
+   All / Music Videos / Songs / Liked filters into `tabsSlot`, so that rule
+   silently deleted them on phones — DOM present, display:none, no filtering
+   available at all. The Liked tab is a spec'd behaviour (HIST-03), not
+   decoration.
+
+   Reading it as an upstream oversight rather than intent: RoomNavbar.css ships
+   its own `@media (max-width: 767px)` block giving `.room-navbar__tabs` 16px
+   side padding, which is unreachable dead code while the parent is hidden.
+   Somebody styled this row for mobile; the layout rule just outranks them.
+
+   Product owner decided 2026-08-05: bring back the tabs row only. The __top row
+   (title, credits, Upgrade) stays hidden — MobileHeader genuinely does carry
+   those. `:has()` scopes this to navbars that actually have tabs, so a navbar
+   used purely as chrome (e.g. /explore/mvs's DetailNavbar, which passes no
+   tabsSlot) stays hidden exactly as DP intends.
+
+   Back navigation on phones is a SEPARATE open question and deliberately not
+   touched here — see DESIGNER-TODO A5.
+
+   DELETE THIS when a drop ships AppLayout.css that keeps the tabs row visible
+   below 767px. */
+@media (max-width: 767px) {
+  .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs),
+  .app-layout--mobile-app .detail-navbar:has(.detail-navbar__tabs) {
+    display: flex;
+  }
+
+  .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs) .room-navbar__top,
+  .app-layout--mobile-app .detail-navbar:has(.detail-navbar__tabs) .detail-navbar__top {
+    display: none;
+  }
+}

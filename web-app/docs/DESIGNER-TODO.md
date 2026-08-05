@@ -18,11 +18,11 @@
 
 axe 實測(WCAG AA,小型文字需 **4.5:1**):
 
-| 元件 | 前景 / 背景 | 實測對比 | 字級 |
-|---|---|---|---|
-| `.tabs__tab--active`(`Tabs.css`) | `#ffffff` on `#a855f7` | **3.95:1** | 13px / 700 |
-| ~~`.tabs__tab`(未選中)~~ | ~~`rgba(255,255,255,.4)`~~ → **已改 `.6`** | ~~3.74:1~~ → **約 6.6:1 ✅** | 13px / 700 |
-| `.badge--failed`(`Badge.css`) | `#ff2600` on `#643839` | **2.55:1** | 9px / 700 |
+| 元件                             | 前景 / 背景                                | 實測對比                     | 字級       |
+| -------------------------------- | ------------------------------------------ | ---------------------------- | ---------- |
+| `.tabs__tab--active`(`Tabs.css`) | `#ffffff` on `#a855f7`                     | **3.95:1**                   | 13px / 700 |
+| ~~`.tabs__tab`(未選中)~~         | ~~`rgba(255,255,255,.4)`~~ → **已改 `.6`** | ~~3.74:1~~ → **約 6.6:1 ✅** | 13px / 700 |
+| `.badge--failed`(`Badge.css`)    | `#ff2600` on `#643839`                     | **2.55:1**                   | 9px / 700  |
 
 > **更正:** 這份文件先前把 badge 記成 4.07:1 —— 那是拿卡片底色去合成算的。
 > axe 是拿**實際疊在封面圖上的底色** `#643839` 算,結果是 **2.55:1**,比先前寫的嚴重得多。
@@ -36,7 +36,7 @@ axe 實測(WCAG AA,小型文字需 **4.5:1**):
   這點要說清楚,免得日後補上登入測試時看起來像「突然壞掉」。
 - **Gate 立場:** 計畫的 G5-e 要求已移轉 route **零 axe violation**。等 a11y 測試補上登入時,
   這條就會真的擋。
-**進度(2026-08-04):**
+  **進度(2026-08-04):**
 
 - ✅ **未選中 tab 已拍板並上線** —— 產品決定改 `rgba(255,255,255,.6)`,實測約 6.6:1。
   **但修在 `src/styles/designer-overrides.css`,不是改 `Tabs.css`** —— `designer/` 下的檔案是
@@ -74,6 +74,43 @@ axe 實測(WCAG AA,小型文字需 **4.5:1**):
 
 - **需要的決定:** 這是刻意為這一頁做的微調,還是應該收斂回六階?
   若是刻意的,我們照搬不動;若是疏漏,請在下次交稿時對齊。
+
+### A4. `AppLayout.css` 的手機規則把 navbar 的 **tabs 列**一起藏掉 —— 已用 override 暫時處理
+
+`AppLayout.css:82-89` 在 `max-width: 767px` 把 `.sidebar` / `.navbar` / `.detail-navbar` /
+`.room-navbar` / `.footer` 整批 `display: none`,因為手機改用 MobileHeader + MobileTabBar。
+**對 chrome 是對的,對 tabs 列不對** —— navbar 的 tabs 列是「頁面內容」,不是 chrome。
+
+實際後果(已量測):我們把 History 的 **All / Music Videos / Songs / Liked** 篩選搬進
+`RoomNavbar` 的 `tabsSlot` 之後,這條規則讓它們**在手機上整組消失** ——
+DOM 在、`display:none`、使用者完全無法篩選。其中 **Liked 是有 spec 的行為(HIST-03)**,
+不是裝飾。
+
+**我們判斷這是疏漏而非刻意**,理由在稿子自己身上:`RoomNavbar.css` 檔尾**自己就寫了**
+一段 `@media (max-width: 767px)`,把 `.room-navbar__tabs` 的側邊 padding 調成 16px ——
+在父層被藏掉的前提下,那段是永遠跑不到的死碼。**有人為這一列做過手機樣式,只是被 layout 規則蓋掉了。**
+
+- **我方已做的事(2026-08-05,產品負責人決定):** 在 `designer-overrides.css` 用
+  `:has()` 只把「有 tabs 的 navbar」在 <767px 放回來,並單獨把 `__top`(標題/點數/Upgrade)
+  維持隱藏 —— 那一列確實由 MobileHeader 取代。沒有 tabs 的 navbar(例如 `/explore/mvs` 的
+  `DetailNavbar`)維持 DP 原樣隱藏。已補 7 支 e2e 鎖住這個行為。
+- **需要的決定:** 下次交稿請讓 tabs 列在 <767px 保持顯示。屆時我們刪掉 override。
+
+### A5. 手機上 detail 畫面**沒有任何返回途徑** —— 需要設計判斷
+
+承 A4:`.detail-navbar` 在 <767px 也是 `display: none`,而 **`MobileHeader` 沒有 back 控制項**
+(DP 與 WA 兩邊都沒有)。也就是說 **DP 的手機設計在 detail 畫面上完全沒有返回鍵**,
+只能靠底欄的 Explore / ＋ / History 三個入口。
+
+⚠️ 這與轉移計畫 §1.1 **CH2 的立論相反** —— 該條寫的是「DP 的 detail 畫面是繞著 `DetailNavbar`
+的返回鍵設計的,沒有它,12 個畫面在手機上失去唯一的返回途徑」。實際讀 DP 的 CSS,
+**那個返回鍵在手機上本來就不存在**。計畫的那句敘述需要更正。
+
+- **目前影響:** `/explore/mvs` 不受傷(它本身就是 Explore 的落點,底欄可達)。
+- **之後會受傷:** `/watch`、`/song/play`、`/mv/result`、`/mv/edit` 等 detail 畫面,
+  手機上會走進去出不來。**這擋 `/watch` 那個 slice。**
+- **需要的決定:** 手機 detail 畫面的返回要放哪裡?(MobileHeader 加 back?detail-navbar
+  在手機只留 back 一顆?還是別的?)請給稿。
 
 ---
 
