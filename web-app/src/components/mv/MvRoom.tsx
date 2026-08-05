@@ -1,12 +1,15 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
-import { SectionLabel } from "@/components/ui/SectionLabel";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
-import { TrendingMvsPanel } from "@/components/community/TrendingMvsPanel";
+import { DpIcon } from "@/components/ui/DpIcon";
+import { FloatingCTA } from "@/components/ui/FloatingCTA";
+import { ListItem } from "@/components/ui/ListItem";
+import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { ChooseSongModal } from "./ChooseSongModal";
 import { TrimAudioModal } from "./TrimAudioModal";
 import { FacePickerModal } from "./FacePickerModal";
@@ -15,8 +18,12 @@ import { ModeModal } from "./ModeModal";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import { MV_TYPES, SAMPLE_FACES, TEMPLATES, IDEAS, formatDuration } from "@/lib/mv/mock";
+import { NEW_MVS } from "@/lib/mv/community";
 import {
   COST_RENDER,
   COST_STORYBOARD,
@@ -29,18 +36,73 @@ import {
   type Song,
 } from "@/lib/mv/types";
 
+/**
+ * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3g) ────────────────────
+ *
+ * DP source: `MVCreatePage` — the largest screen in the drop (1,441 lines of
+ * TSX over 2,354 lines of CSS). Classes from
+ * `src/styles/designer/MVCreatePage.css`, verbatim, plus FloatingCTA/ListItem.
+ *
+ * ── SCOPE: THIS SLICE IS THE PAGE BODY, NOT THE FIVE SHEETS ─────────────────
+ *
+ * The plan recommended splitting this screen, and the split is drawn here:
+ * everything inside `.mv-create` is migrated, and the five overlays it opens —
+ * Choose Song, Trim Audio, Face Picker, Settings, Mode — still render WA's
+ * existing `Modal`-based components. They are unchanged and fully working; they
+ * are simply not yet wearing DP's sheet styling. That is recorded as slice 3g-2
+ * rather than half-done here, because each of DP's sheets is a substantial
+ * component in its own right (`SettingsSheet` alone is 140 lines) and mixing a
+ * migrated page with half-migrated sheets is harder to review than either.
+ *
+ * ── WHAT DP DOES NOT HAVE, AND MUST NOT BE LOST HERE ────────────────────────
+ *
+ * This screen is where most of G5-d's behaviour regression list lives. DP has
+ * none of it — its create button opens a sheet and nothing is ever charged:
+ *
+ * · S2's 30-second trim floor (`MIN_TRIM_SEC`, enforced in `TrimAudioModal`).
+ *   DP's `TrimAudioSheet` has only `TRIM_MIN_GAP = 0.08` — a fraction of the
+ *   track, not an absolute duration, so on a 60s track it permits a 4.8s clip.
+ * · GL-01 credit gating: below cost, route to IAP instead of starting a job.
+ * · `resetForNewMv()` before a new generation, so a previous storyboard or
+ *   result cannot leak into the next one.
+ * · MV-02 import validation (format allow-list + 50MB ceiling).
+ * · `EnhanceButton`, which goes through `api.enhancePrompt` (G5-d #10). DP
+ *   picks a random string from a local `ENHANCED_SUGGESTIONS` array.
+ * · The Ideas button. DP has Templates only.
+ *
+ * ── AND ONE THING DP HAS THAT WA DID NOT ────────────────────────────────────
+ *
+ * Per-photo NAMES — an editable label on each filled photo slot. Ported, and
+ * held the way DP holds it: as PAGE-LOCAL state (`photoNames`), not as a field
+ * on the photo.
+ *
+ * That is not a shortcut, it is the only correct place for it here.
+ * `CharacterPhoto` is `CharacterPhotoSchema` in `src/lib/api/schemas.ts`, which
+ * is contract surface C2 and frozen by G4 — adding a field there is an
+ * RD-facing wire change requiring a declared contract update and a
+ * CHANGELOG-RD entry, for something no request or response currently carries.
+ * DP keeps it local for its own reasons and the two happen to agree.
+ */
 export function MvRoom() {
   const router = useRouter();
   const { compose, setCompose, patchCompose, resetForNewMv } = useMvFlow();
   const { credits } = useCredits();
+  const { loggedIn } = useAuth();
+  const { locale } = useLocale();
   const [songOpen, setSongOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<number | null>(null);
+  /** Per-slot character names — page-local, exactly as DP holds them. */
+  const [photoNames, setPhotoNames] = useState<string[]>(["", ""]);
 
-  function showToast(msg: string) { setToast(msg); window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2600); }
+  function showToast(msg: string) {
+    setToast(msg);
+    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2600);
+  }
   const [pendingSong, setPendingSong] = useState<Song | null>(null);
   const [trimOpen, setTrimOpen] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
@@ -77,16 +139,33 @@ export function MvRoom() {
     const name = file.name.toLowerCase();
     const okExt = [".mp3", ".aac", ".wav", ".m4a"].some((ext) => name.endsWith(ext));
     const okType = /audio\/(mpeg|mp3|aac|wav|x-wav|wave|mp4|x-m4a)/.test(file.type);
-    if (!okExt && !okType) { showToast("Unsupported format. Use MP3, AAC, WAV, or M4A."); return; }
-    if (file.size > 50 * 1024 * 1024) { showToast("File too large. Maximum size is 50MB."); return; }
+    if (!okExt && !okType) {
+      showToast("Unsupported format. Use MP3, AAC, WAV, or M4A.");
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      showToast("File too large. Maximum size is 50MB.");
+      return;
+    }
     const url = URL.createObjectURL(file);
     const title = file.name.replace(/\.[^/.]+$/, "").trim() || "Imported audio";
     const open = (durationSec: number) =>
-      pickSong({ id: crypto.randomUUID(), source: "import", title, durationSec, art: "/assets/images/album-art/album_01.jpg", url });
+      pickSong({
+        id: crypto.randomUUID(),
+        source: "import",
+        title,
+        durationSec,
+        art: "/assets/images/album-art/album_01.jpg",
+        url,
+      });
     const probe = new Audio();
     probe.preload = "metadata";
     probe.src = url;
-    probe.addEventListener("loadedmetadata", () => open(Number.isFinite(probe.duration) ? Math.round(probe.duration) : 0), { once: true });
+    probe.addEventListener(
+      "loadedmetadata",
+      () => open(Number.isFinite(probe.duration) ? Math.round(probe.duration) : 0),
+      { once: true },
+    );
     probe.addEventListener("error", () => open(0), { once: true });
   }
   function addCroppedPhoto(url: string) {
@@ -97,159 +176,317 @@ export function MvRoom() {
     const photo: CharacterPhoto = { id: crypto.randomUUID(), url, fromSample: true };
     setCompose((c) => ({ ...c, photos: [...c.photos, photo].slice(0, 2) }));
   }
+  function setPhotoName(index: number, name: string) {
+    setPhotoNames((names) => names.map((n, i) => (i === index ? name : n)));
+  }
   function selectMode(mode: MvMode) {
     // GL-01: block generation when the balance can't cover the mode's cost and
     // route to IAP (buy credits) instead of starting a job that would go negative.
     const cost = mode === "storyboard_first" ? COST_STORYBOARD : COST_RENDER;
     setModeOpen(false);
-    if (credits < cost) { setBuyOpen(true); return; }
+    if (credits < cost) {
+      setBuyOpen(true);
+      return;
+    }
     resetForNewMv(); // discard any storyboard/result from a previous MV before starting fresh
-    router.push(mode === "storyboard_first" ? "/mv/thinking" : "/mv/creating");
+    router.push(localePath(locale, mode === "storyboard_first" ? "/mv/thinking" : "/mv/creating"));
   }
 
-  return (
-    <div className="mx-auto max-w-[1200px] px-4 pt-6 pb-28 sm:px-6 sm:pb-8">
-      <h1 className="mb-5 text-[26px] font-extrabold tracking-tight">AI Music Video</h1>
+  const settingsChips: [string, boolean][] = [
+    [compose.settings.ratio, true],
+    [compose.settings.resolution, true],
+    ["Title", compose.settings.title.on],
+    ["Author", compose.settings.author.on],
+    ["Subtitle", compose.settings.showSubtitle],
+    ["Watermark", compose.settings.watermark],
+  ];
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="flex flex-col gap-7">
-          <section>
-            <SectionLabel>Select MV Type</SectionLabel>
-            <div className="grid grid-cols-3 gap-2">
+  return (
+    <>
+      <RoomNavbar title="AI Music Video" />
+
+      <div className="mv-create">
+        <div className="mv-create__panel">
+          <div className="mv-create__section">
+            <p className="mv-create__label">SELECT MV TYPE</p>
+            <div className="mv-create__styles">
               {MV_TYPES.map((t) => {
                 const active = compose.mvType === t.id;
                 return (
                   <button
                     key={t.id}
+                    type="button"
+                    className={`mv-create__style-card${active ? " mv-create__style-card--active" : ""}`}
                     onClick={() => patchCompose({ mvType: t.id as MvType })}
-                    className="hover-lift relative aspect-[3/4] overflow-hidden rounded-xl"
-                    style={{ border: `2px solid ${active ? "var(--accent)" : "transparent"}`, background: "#1a1a1a" }}
                     aria-pressed={active}
                   >
-                    <video src={t.video} muted loop playsInline autoPlay className="absolute inset-0 h-full w-full object-cover" />
-                    <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,.85))" }} />
-                    <span className="absolute bottom-2 left-0 right-0 text-center text-[12px] font-bold text-white">{t.name}</span>
+                    {/* DP plays these on hover only. WA autoplays, as it did
+                        before the migration — three muted looping previews are
+                        the point of the row, and a hover-only preview is
+                        unreachable on a phone, which is most of the traffic. */}
+                    <video
+                      className="mv-create__style-video"
+                      src={t.video}
+                      muted
+                      loop
+                      playsInline
+                      autoPlay
+                      aria-hidden="true"
+                    />
+                    <div className="mv-create__style-scrim" aria-hidden="true" />
+                    <p className="mv-create__style-name">{t.name}</p>
                   </button>
                 );
               })}
             </div>
-          </section>
+          </div>
 
-          <section>
-            <SectionLabel required>Choose a Song</SectionLabel>
+          <div className="mv-create__section">
+            <p className="mv-create__label">
+              CHOOSE A SONG <span className="mv-create__label-optional">(Required)</span>
+            </p>
+
             {!compose.song ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="mv-create__song-options">
                 <button
+                  type="button"
+                  className="mv-create__song-option"
                   onClick={() => setSongOpen(true)}
-                  className="flex h-[68px] w-full items-center justify-center gap-2 rounded-xl border text-[14px] font-semibold"
-                  style={{ background: "var(--card)", borderColor: "var(--border-2)" }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" /></svg>
-                  Song Library
+                  <img
+                    src="/assets/icons/ui/ic_song_list.svg"
+                    alt=""
+                    className="mv-create__song-option-icon"
+                  />
+                  <span>Song Library</span>
                 </button>
                 <button
+                  type="button"
+                  className="mv-create__song-option"
                   onClick={() => audioFileRef.current?.click()}
-                  className="flex h-[68px] w-full items-center justify-center gap-2 rounded-xl border text-[14px] font-semibold"
-                  style={{ background: "var(--card)", borderColor: "var(--border-2)" }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 15V3m0 0L8 7m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
-                  Import audio
+                  <img
+                    src="/assets/icons/ui/ic_upload.svg"
+                    alt=""
+                    className="mv-create__song-option-icon"
+                  />
+                  <span>Import Audio</span>
                 </button>
-                <input
-                  ref={audioFileRef}
-                  type="file"
-                  accept="audio/*"
-                  className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) importAudio(f); e.target.value = ""; }}
-                />
               </div>
             ) : (
-              <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: "var(--card-2)" }}>
-                <button
-                  onClick={songPlayer.toggle}
-                  disabled={!compose.song.url}
-                  aria-label={songPlayer.playing ? "Pause song" : "Play song"}
-                  className="group relative h-11 w-11 shrink-0 overflow-hidden rounded-md"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={compose.song.art} alt="" className="h-full w-full object-cover" />
-                  {compose.song.url && (
-                    <span
-                      className="absolute inset-0 grid place-items-center text-white transition-all group-hover:brightness-110"
-                      style={{ background: "rgba(0,0,0,.35)" }}
-                    >
-                      {songPlayer.playing ? (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
-                      ) : (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20" /></svg>
-                      )}
-                    </span>
-                  )}
-                </button>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14px] font-semibold">{compose.song.title}</div>
-                  <div className="text-[12px]" style={{ color: "var(--text-2)" }}>
-                    {formatDuration(effectiveDurationSec(compose.song))}
-                    {compose.song.trim && (
-                      <span> · {formatDuration(compose.song.trim.start)}–{formatDuration(compose.song.trim.end)}</span>
-                    )}
-                  </div>
+              <div className="mv-create__song-added">
+                <div className="mv-create__song-added-header">
+                  <button
+                    type="button"
+                    className="mv-create__song-added-label"
+                    onClick={() => {
+                      songPlayer.pause();
+                      setSongOpen(true);
+                    }}
+                  >
+                    {compose.song.source === "import" ? "Imported Audio" : "Song Library"}
+                  </button>
+                  <button
+                    type="button"
+                    className="mv-create__song-clear"
+                    onClick={() => {
+                      songPlayer.pause();
+                      patchCompose({ song: null });
+                    }}
+                    aria-label="Remove song"
+                  >
+                    <DpIcon name="ic_close" className="mv-create__song-clear-icon" />
+                  </button>
                 </div>
-                <button onClick={editTrim} className="text-[13px] font-semibold" style={{ color: "var(--accent)" }}>Edit</button>
-                <button onClick={() => { songPlayer.pause(); setSongOpen(true); }} className="text-[13px] font-semibold" style={{ color: "var(--accent)" }}>Change</button>
-                <button aria-label="Remove song" onClick={() => { songPlayer.pause(); patchCompose({ song: null }); }} className="grid h-7 w-7 place-items-center rounded-full" style={{ background: "var(--card-3)" }}>×</button>
+                <div className="mv-create__song-divider" />
+                <div className="mv-create__song-row">
+                  <button
+                    type="button"
+                    className="mv-create__song-art"
+                    onClick={songPlayer.toggle}
+                    disabled={!compose.song.url}
+                    aria-label={songPlayer.playing ? "Pause song" : "Play song"}
+                  >
+                    {compose.song.art && <img src={compose.song.art} alt="" />}
+                    <span className="mv-create__song-art-scrim" aria-hidden="true" />
+                    <DpIcon
+                      name={songPlayer.playing ? "ic_pause" : "ic_play"}
+                      className="mv-create__song-art-icon"
+                    />
+                  </button>
+                  <div className="mv-create__song-info">
+                    <p className="mv-create__song-title">{compose.song.title}</p>
+                    <p className="mv-create__song-duration">
+                      {formatDuration(effectiveDurationSec(compose.song))}
+                      {compose.song.trim && (
+                        <span>
+                          {" "}
+                          · {formatDuration(compose.song.trim.start)}–
+                          {formatDuration(compose.song.trim.end)}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  {/* DP has one Change control here. WA has TWO distinct
+                      actions — Edit re-opens the trim on the SAME song, Change
+                      picks a different one — and the trim editor is the only
+                      way to reach S2's 30s floor after the fact. Collapsing
+                      them into DP's single button would silently delete the
+                      trim entry point, so both stay. */}
+                  <button
+                    type="button"
+                    className="mv-create__song-edit"
+                    onClick={editTrim}
+                    aria-label="Edit trim"
+                  >
+                    <DpIcon name="ic_edit" className="mv-create__song-edit-icon" />
+                  </button>
+                </div>
               </div>
             )}
-          </section>
+            <input
+              ref={audioFileRef}
+              type="file"
+              accept="audio/*"
+              className="mv-create__file-input"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importAudio(f);
+                e.target.value = "";
+              }}
+            />
+          </div>
 
-          <section>
-            <SectionLabel required>Describe Your Video Idea</SectionLabel>
-            <div className="rounded-xl border" style={{ background: "var(--card)", borderColor: "var(--border-2)" }}>
+          <div className="mv-create__section">
+            <p className="mv-create__label">
+              DESCRIBE YOUR VIDEO IDEA <span className="mv-create__label-optional">(Required)</span>
+            </p>
+            <div className="mv-create__input-box">
               <textarea
-                value={compose.description}
-                maxLength={DESCRIPTION_MAX}
-                onChange={(e) => patchCompose({ description: e.target.value })}
+                className="mv-create__textarea"
                 placeholder="Describe your video to help AI create a more compelling story."
-                className="min-h-[104px] w-full resize-none bg-transparent p-3 text-[14px] outline-none no-scrollbar"
-                style={{ color: "var(--text)", lineHeight: 1.55 }}
+                maxLength={DESCRIPTION_MAX}
+                value={compose.description}
+                onChange={(e) => patchCompose({ description: e.target.value })}
               />
-              <div className="flex items-center justify-between px-3 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setTemplatesOpen(true)} className="rounded-md px-2 py-1 text-[11px] font-semibold" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>Templates</button>
-                  <button onClick={() => patchCompose({ description: IDEAS[Math.floor(Math.random() * IDEAS.length)] })} className="rounded-md px-2 py-1 text-[11px] font-semibold" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>Ideas</button>
-                  <EnhanceButton value={compose.description} kind="mv" onEnhanced={(t) => patchCompose({ description: t })} />
+              <div className="mv-create__input-footer">
+                <div className="mv-create__input-actions">
+                  <button
+                    type="button"
+                    className="mv-create__idea-btn"
+                    onClick={() => setTemplatesOpen(true)}
+                  >
+                    <DpIcon name="ic_video" className="mv-create__idea-icon" />
+                    Templates
+                  </button>
+                  {/* WA-only, and kept: DP has no Ideas button. */}
+                  <button
+                    type="button"
+                    className="mv-create__idea-btn"
+                    onClick={() =>
+                      patchCompose({ description: IDEAS[Math.floor(Math.random() * IDEAS.length)] })
+                    }
+                  >
+                    <DpIcon name="ic_edit_ai" className="mv-create__idea-icon" />
+                    Ideas
+                  </button>
                 </div>
-                <span className="text-[12px]" style={{ color: "var(--text-2)" }}>{compose.description.length}/{DESCRIPTION_MAX}</span>
+                <div className="mv-create__footer-right">
+                  {/* G5-d #10: this goes through `api.enhancePrompt`. DP's
+                      equivalent picks a random local string. */}
+                  <EnhanceButton
+                    value={compose.description}
+                    kind="mv"
+                    onEnhanced={(t) => patchCompose({ description: t })}
+                    bem="mv-create"
+                  />
+                  <span className="mv-create__char-count">
+                    {compose.description.length}/{DESCRIPTION_MAX}
+                  </span>
+                  {compose.description.length > 0 && (
+                    <button
+                      type="button"
+                      className="mv-create__clear-btn"
+                      onClick={() => patchCompose({ description: "" })}
+                      aria-label="Clear"
+                    >
+                      <DpIcon name="ic_close" className="mv-create__clear-icon" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </section>
+          </div>
 
-          <section>
-            <SectionLabel>Upload Character Photo</SectionLabel>
-            <div className="grid grid-cols-2 gap-2">
-              {[0, 1].map((i) => {
-                const photo = compose.photos[i];
-                return photo ? (
-                  <div key={i} className="relative h-[150px] overflow-hidden rounded-xl">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photo.url} alt={`Character ${i + 1}`} className="h-full w-full object-cover" />
-                    <button
-                      aria-label="Remove photo"
-                      onClick={() => setCompose((c) => ({ ...c, photos: c.photos.filter((p) => p.id !== photo.id) }))}
-                      className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full text-white"
-                      style={{ background: "rgba(0,0,0,.5)" }}
-                    >×</button>
+          <div className="mv-create__section">
+            <p className="mv-create__label">UPLOAD CHARACTER PHOTO</p>
+            <div className="mv-create__photos">
+              {[0, 1].map((slot) => {
+                const photo = compose.photos[slot];
+                return (
+                  <div key={slot} className="mv-create__photo-slot">
+                    {photo ? (
+                      <div className="mv-create__photo-filled">
+                        <img src={photo.url} alt="" className="mv-create__photo-preview" />
+                        <div className="mv-create__photo-top">
+                          <button
+                            type="button"
+                            className="mv-create__photo-circle-btn"
+                            onClick={() =>
+                              setCompose((c) => ({
+                                ...c,
+                                photos: c.photos.filter((p) => p.id !== photo.id),
+                              }))
+                            }
+                            aria-label="Remove photo"
+                          >
+                            <DpIcon name="ic_close" className="mv-create__photo-circle-icon" />
+                          </button>
+                        </div>
+                        <div className="mv-create__photo-bottom">
+                          {editingName === slot ? (
+                            <input
+                              type="text"
+                              className="mv-create__photo-name-input"
+                              placeholder="Name"
+                              value={photoNames[slot] ?? ""}
+                              autoFocus
+                              onChange={(e) => setPhotoName(slot, e.target.value)}
+                              onBlur={() => setEditingName(null)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") setEditingName(null);
+                              }}
+                            />
+                          ) : (
+                            <p className="mv-create__photo-name">{photoNames[slot] || "Name"}</p>
+                          )}
+                          <button
+                            type="button"
+                            className="mv-create__photo-circle-btn"
+                            onClick={() => setEditingName(slot)}
+                            aria-label="Edit name"
+                          >
+                            <DpIcon name="ic_edit" className="mv-create__photo-circle-icon" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`mv-create__photo-add mv-create__photo-add--${slot === 0 ? "primary" : "tertiary"}`}
+                        onClick={() => fileRef.current?.click()}
+                      >
+                        <span className="mv-create__photo-add-circle">
+                          <DpIcon name="ic_add" className="mv-create__photo-add-icon" />
+                        </span>
+                        <span className="mv-create__photo-add-text">
+                          {slot === 0 ? "1st face photo" : "2nd face photo"}
+                          <br />
+                          <span className="mv-create__photo-add-optional">(Optional)</span>
+                        </span>
+                      </button>
+                    )}
                   </div>
-                ) : (
-                  <button
-                    key={i}
-                    onClick={() => fileRef.current?.click()}
-                    className="flex h-[150px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-[12px] font-semibold"
-                    style={{ background: "var(--card)", borderColor: "var(--border-2)", color: i === 0 ? "var(--text)" : "var(--text-2)" }}
-                  >
-                    <span className="grid h-9 w-9 place-items-center rounded-full text-white" style={{ background: i === 0 ? "var(--accent)" : "var(--card-3)" }}>+</span>
-                    {i === 0 ? "Add photo with single face" : "2nd face (optional)"}
-                  </button>
                 );
               })}
             </div>
@@ -257,74 +494,126 @@ export function MvRoom() {
               ref={fileRef}
               type="file"
               accept="image/*"
-              hidden
+              className="mv-create__file-input"
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) addPhotoFromFile(f);
                 e.target.value = "";
               }}
             />
-            <div className="mb-2 mt-3 text-[12px]" style={{ color: "var(--text-2)" }}>Sample Photos</div>
-            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <p className="mv-create__sample-label">Sample Photos</p>
+            <div className="mv-create__samples">
               {SAMPLE_FACES.map((src) => (
-                <button key={src} onClick={() => addSampleFace(src)} className="shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="Sample face" className="h-11 w-11 rounded-full object-cover" />
+                <button
+                  key={src}
+                  type="button"
+                  className="mv-create__sample"
+                  onClick={() => addSampleFace(src)}
+                  aria-label="Use sample photo"
+                >
+                  <img src={src} alt="" />
                 </button>
               ))}
             </div>
-          </section>
+          </div>
 
-          <section>
-            <SectionLabel>Settings</SectionLabel>
+          <div className="mv-create__section">
+            <p className="mv-create__label">SETTINGS</p>
             <button
+              type="button"
+              className="mv-create__settings"
               onClick={() => setSettingsOpen(true)}
               // Its visible content is just the current setting tags, which makes a poor
               // accessible name; the label also gives e2e a stable handle (G5-d #7).
               aria-label="Open MV settings"
-              className="flex w-full items-center gap-2 rounded-xl border p-3"
-              style={{ background: "var(--card)", borderColor: "var(--border-2)" }}
             >
-              <div className="flex flex-1 flex-wrap gap-2">
-                {[compose.settings.ratio, compose.settings.resolution, compose.settings.title.on && "Title", compose.settings.author.on && "Author", compose.settings.showSubtitle && "Subtitle", compose.settings.watermark && "Watermark"]
-                  .filter(Boolean)
-                  .map((tag) => (
-                    <span key={String(tag)} className="rounded-md px-2.5 py-1 text-[12px] font-semibold" style={{ background: "var(--card-3)" }}>{tag}</span>
-                  ))}
+              <div className="mv-create__settings-chips">
+                {settingsChips.map(([label, on]) => (
+                  <span
+                    key={label}
+                    className={`mv-create__settings-chip${on ? "" : " mv-create__settings-chip--dim"}`}
+                  >
+                    {label}
+                  </span>
+                ))}
               </div>
-              <span style={{ color: "var(--text-2)" }}>›</span>
+              <DpIcon name="ic_chevron-right" className="mv-create__settings-chevron" />
             </button>
-          </section>
+          </div>
+
+          <FloatingCTA alignToParent>
+            <button
+              type="button"
+              className={`mv-create__cta${ready ? " mv-create__cta--active" : ""}`}
+              disabled={!ready}
+              onClick={() => setModeOpen(true)}
+            >
+              <span>Create Music Video</span>
+              <DpIcon name="ic_arrow_right" className="mv-create__cta-icon" />
+            </button>
+          </FloatingCTA>
         </div>
 
-        <aside className="order-last lg:order-none lg:sticky lg:top-20 lg:self-start">
-          <TrendingMvsPanel />
-        </aside>
-      </div>
-
-      <div className="sticky bottom-[66px] sm:bottom-0 mt-8 -mx-4 border-t px-4 py-3 sm:-mx-6 sm:px-6" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
-        <Button className="w-full" disabled={!ready} onClick={() => setModeOpen(true)}>
-          Create Music Video
-        </Button>
-        {!ready && (
-          <p className="mt-2 text-center text-[12px]" style={{ color: "var(--text-2)" }}>
-            Add a song and a description to continue.
-          </p>
-        )}
+        <div className="mv-create__side">
+          <div className="mv-create__side-header">
+            <p className="mv-create__side-title">{loggedIn ? "My Creations" : "Trending MVs"}</p>
+            <Link href={localePath(locale, "/explore/mvs")} className="mv-create__side-see-all">
+              See all
+              <DpIcon name="ic_chevron-right" className="mv-create__side-see-all-icon" />
+            </Link>
+          </div>
+          <div className="mv-create__side-list">
+            {NEW_MVS.slice(0, 7).map((mv) => (
+              <Link
+                key={mv.id}
+                href={localePath(locale, `/watch?id=${mv.id}`)}
+                className="mv-create__side-item"
+              >
+                <ListItem title={mv.title} coverImage={mv.thumb} subtitle={mv.creator} />
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
       <ChooseSongModal open={songOpen} onClose={() => setSongOpen(false)} onPick={pickSong} />
-      <TrimAudioModal open={trimOpen} song={pendingSong} onClose={() => setTrimOpen(false)} onConfirm={(s) => { patchCompose({ song: s }); setTrimOpen(false); }} />
-      <FacePickerModal open={faceOpen} imageUrl={pendingPhoto} onClose={() => setFaceOpen(false)} onConfirm={addCroppedPhoto} />
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={compose.settings} onChange={(settings) => patchCompose({ settings })} />
+      <TrimAudioModal
+        open={trimOpen}
+        song={pendingSong}
+        onClose={() => setTrimOpen(false)}
+        onConfirm={(s) => {
+          patchCompose({ song: s });
+          setTrimOpen(false);
+        }}
+      />
+      <FacePickerModal
+        open={faceOpen}
+        imageUrl={pendingPhoto}
+        onClose={() => setFaceOpen(false)}
+        onConfirm={addCroppedPhoto}
+      />
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={compose.settings}
+        onChange={(settings) => patchCompose({ settings })}
+      />
       <ModeModal open={modeOpen} onClose={() => setModeOpen(false)} onSelect={selectMode} />
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
       {toast && (
-        <div className="fixed bottom-24 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg" style={{ background: "rgba(20,20,24,.95)" }}>
+        <div
+          className="fixed bottom-24 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
+          style={{ background: "rgba(20,20,24,.95)" }}
+        >
           {toast}
         </div>
       )}
-      <Modal open={templatesOpen} onClose={() => setTemplatesOpen(false)} title="Select a Template" maxWidth={560}>
+      <Modal
+        open={templatesOpen}
+        onClose={() => setTemplatesOpen(false)}
+        title="Select a Template"
+        maxWidth={560}
+      >
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {TEMPLATES.map((t) => (
             <button
@@ -337,7 +626,6 @@ export function MvRoom() {
               style={{ background: "var(--card-2)" }}
             >
               <div className="relative aspect-video">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={t.cover} alt="" className="h-full w-full object-cover" />
               </div>
               <div className="p-2 text-[12px] font-semibold">{t.name}</div>
@@ -345,6 +633,6 @@ export function MvRoom() {
           ))}
         </div>
       </Modal>
-    </div>
+    </>
   );
 }

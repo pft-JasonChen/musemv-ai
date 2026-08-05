@@ -40,14 +40,15 @@ export function RoomNavbar({ title, tabsSlot }: { title: string; tabsSlot?: Reac
         {loggedIn ? (
           <div className="room-navbar__actions">
             <Link href={profilePath} className="credit-balance" aria-label={t("profile.credits")}>
-              <span
-                className="credit-balance__icon"
-                style={{
-                  maskImage: 'url("/assets/icons/ui/ic_credit.svg")',
-                  WebkitMaskImage: 'url("/assets/icons/ui/ic_credit.svg")',
-                }}
-                aria-hidden="true"
-              />
+              {/* A REAL <img>. `CreditBalance.css` sizes this one with
+                  `.credit-balance img` — an ELEMENT selector — and gives it no
+                  mask treatment, because DP lets the coin keep its own gold.
+                  A `<span className="credit-balance__icon">` matches no rule at
+                  all: 0×0, transparent, mask clipping nothing. It was invisible
+                  on every migrated screen from slice 2b until `.iconcheck.mjs`
+                  measured it. The neighbouring `__add` IS a real mask class. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/icons/ui/ic_credit.svg" alt="" />
               <span data-testid="credit-balance">{credits}</span>
               <span
                 className="credit-balance__add"

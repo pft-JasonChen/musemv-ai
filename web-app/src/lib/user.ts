@@ -15,8 +15,20 @@ export interface CreditPack {
 export const CREDIT_PACKS: CreditPack[] = [
   { id: 8000, credits: 8000, price: "$239.99", sku: "ycm_ios_8000_credits_sub_discount" },
   { id: 5000, credits: 5000, price: "$148.99", sku: "ycm_ios_5000_credits_sub_discount" },
-  { id: 2000, credits: 2000, price: "$59.99", sku: "ycm_2000_credits_sub_discount", badge: "BEST VALUE" },
-  { id: 1000, credits: 1000, price: "$39.99", sku: "ycm_1000_credits_sub_discount", badge: "POPULAR" },
+  {
+    id: 2000,
+    credits: 2000,
+    price: "$59.99",
+    sku: "ycm_2000_credits_sub_discount",
+    badge: "BEST VALUE",
+  },
+  {
+    id: 1000,
+    credits: 1000,
+    price: "$39.99",
+    sku: "ycm_1000_credits_sub_discount",
+    badge: "POPULAR",
+  },
   { id: 600, credits: 600, price: "$23.99", sku: "ycm_600_credits_sub_discount" },
   { id: 300, credits: 300, price: "$14.99", sku: "ycm_300_credits_sub_discount" },
 ];
@@ -76,6 +88,20 @@ export interface SubscriptionPlan {
   /** Store SubscriptionID (Business Model "Subscription form"). */
   sku: string;
   badge?: string;
+  /**
+   * One-line pitch under the plan name. Added in slice 3f — DP's `UpgradeDialog`
+   * shows one per card and WA had nowhere to put the text. Copy is DP's; the
+   * prices next to it are still WA's (S20).
+   */
+  description: string;
+  /**
+   * Which of DP's three CTA treatments this card uses
+   * (`.upgrade-dialog__cta--{default|gradient|white}`). Card-level styling is
+   * per-plan in the Figma, not derived from selection state.
+   */
+  cta: "default" | "gradient" | "white";
+  /** DP's `--featured` card (raised border + emphasis). */
+  featured?: boolean;
 }
 
 // CR-02: Muse Pro plans (Business Model 2026-07-13, "Subscription Plans
@@ -84,9 +110,44 @@ export interface SubscriptionPlan {
 // follow the plan (weekly credits expire weekly, yearly credits expire yearly).
 // Weekly Pro is the default-selected plan.
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  { id: "weekly", name: "Weekly", price: "$19.99", credits: 200, cadence: "Weekly", per: "week", sku: "subscribe_1_week_no_trial_ycm", badge: "MOST POPULAR" },
-  { id: "weekly_pro", name: "Weekly Pro", price: "$29.99", credits: 1000, cadence: "Weekly", per: "week", sku: "subscribe_1_week_pro_no_trial_ycm", badge: "BEST VALUE" },
-  { id: "yearly", name: "Yearly", price: "$59.99", credits: 2000, cadence: "Yearly", per: "year", sku: "subscribe_12_month_no_trial_ycm" },
+  {
+    id: "weekly",
+    name: "Weekly",
+    price: "$19.99",
+    credits: 200,
+    cadence: "Weekly",
+    per: "week",
+    sku: "subscribe_1_week_no_trial_ycm",
+    badge: "MOST POPULAR",
+    description: "Everything you need to start creating.",
+    cta: "default",
+  },
+  {
+    id: "weekly_pro",
+    name: "Weekly Pro",
+    price: "$29.99",
+    credits: 1000,
+    cadence: "Weekly",
+    per: "week",
+    sku: "subscribe_1_week_pro_no_trial_ycm",
+    badge: "BEST VALUE",
+    // DP's copy, and it happens to be arithmetically true of WA's numbers too:
+    // 1,000 vs Weekly's 200 is exactly 5x.
+    description: "5x the credits, create more freely.",
+    cta: "gradient",
+    featured: true,
+  },
+  {
+    id: "yearly",
+    name: "Yearly",
+    price: "$59.99",
+    credits: 2000,
+    cadence: "Yearly",
+    per: "year",
+    sku: "subscribe_12_month_no_trial_ycm",
+    description: "Every feature unlocked, all year.",
+    cta: "white",
+  },
 ];
 
 /** Default-selected Muse Pro plan (Business Model: "Default on weekly pro"). */
@@ -94,11 +155,25 @@ export const DEFAULT_PLAN_ID: PlanId = "weekly_pro";
 
 // The Muse Pro benefit list (app IAP). A per-plan "Credits Expire {cadence}"
 // line is appended in SubscribeModal from the selected plan's cadence.
-export const MUSE_PRO_FEATURES: string[] = [
-  "MV without Watermark",
-  "Enable Download MV & Song",
-  "Priority AI Generation",
-  "Commercial License",
+//
+// Slice 3f paired each line with DP's icon (`ic_*` under
+// `public/assets/icons/ui/`) — DP's UpgradeDialog draws one per row and the
+// labels already matched one-for-one, so this is a widening, not a rewrite.
+export interface ProFeature {
+  label: string;
+  icon: string;
+}
+
+export const MUSE_PRO_FEATURES: ProFeature[] = [
+  { label: "MV without Watermark", icon: "ic_video_ai" },
+  { label: "Enable Download MV & Song", icon: "ic_download" },
+  { label: "Priority AI Generation", icon: "ic_flash" },
+  { label: "Commercial License", icon: "ic_shield_check" },
+];
+
+/** DP gives the yearly card one benefit the weekly cards do not have. */
+export const YEARLY_EXTRA_FEATURES: ProFeature[] = [
+  { label: "First Access to New Features", icon: "ic_star" },
 ];
 
 export interface CreditTxn {
@@ -107,15 +182,46 @@ export interface CreditTxn {
   date: string;
   /** Positive = credits added, negative = credits spent. */
   amount: number;
+  /**
+   * Icon filename for the ledger row (slice 3f). DP draws a per-kind icon and
+   * WA's rows had none, so every row carries one now. `ic_credit` is special:
+   * DP renders it as a plain `<img>` so the coin keeps its gold instead of
+   * being tinted white by the shared `currentColor` mask.
+   */
+  icon: string;
 }
 
 /** Recent credit ledger shown in the Credits Detail view (prototype seed). */
 export const CREDIT_TRANSACTIONS: CreditTxn[] = [
-  { id: 1, label: "Credit pack purchase", date: "2026-07-12", amount: 300 },
-  { id: 2, label: "MV render — Neon City Nights", date: "2026-07-11", amount: -200 },
-  { id: 3, label: "Song generation — Golden Hour", date: "2026-07-10", amount: -10 },
-  { id: 4, label: "Scene regenerate — Electric Dreams", date: "2026-07-09", amount: -20 },
-  { id: 5, label: "Daily sign-in bonus", date: "2026-07-09", amount: 20 },
-  { id: 6, label: "Storyboard — Starfall Serenade", date: "2026-07-08", amount: -20 },
-  { id: 7, label: "Welcome bonus", date: "2026-07-01", amount: 500 },
+  { id: 1, label: "Credit pack purchase", date: "2026-07-12", amount: 300, icon: "ic_credit" },
+  {
+    id: 2,
+    label: "MV render — Neon City Nights",
+    date: "2026-07-11",
+    amount: -200,
+    icon: "ic_video_ai",
+  },
+  {
+    id: 3,
+    label: "Song generation — Golden Hour",
+    date: "2026-07-10",
+    amount: -10,
+    icon: "ic_song_ai",
+  },
+  {
+    id: 4,
+    label: "Scene regenerate — Electric Dreams",
+    date: "2026-07-09",
+    amount: -20,
+    icon: "ic_script",
+  },
+  { id: 5, label: "Daily sign-in bonus", date: "2026-07-09", amount: 20, icon: "ic_gift" },
+  {
+    id: 6,
+    label: "Storyboard — Starfall Serenade",
+    date: "2026-07-08",
+    amount: -20,
+    icon: "ic_script",
+  },
+  { id: 7, label: "Welcome bonus", date: "2026-07-01", amount: 500, icon: "ic_gift" },
 ];

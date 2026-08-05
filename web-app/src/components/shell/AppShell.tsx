@@ -48,6 +48,8 @@ const OWN_CHROME = [
   "/profile",
   "/settings",
   "/watch",
+  "/creator",
+  "/mv/room",
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

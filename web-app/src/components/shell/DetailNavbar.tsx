@@ -106,14 +106,14 @@ export function DetailNavbar({
       */}
       {phoneBack && (
         <div className="mb-4 flex items-center gap-3 md:hidden">
-        <button
-          type="button"
-          aria-label="Back"
-          onClick={goBack}
-          className="icon-button icon-button--small icon-button--tertiary"
-        >
-          <DpIcon name="ic_arrow_left" className="icon-button__icon" />
-        </button>
+          <button
+            type="button"
+            aria-label="Back"
+            onClick={goBack}
+            className="icon-button icon-button--small icon-button--tertiary"
+          >
+            <DpIcon name="ic_arrow_left" className="icon-button__icon" />
+          </button>
           {title && <h1 className="text-[20px] font-extrabold">{title}</h1>}
         </div>
       )}
@@ -147,7 +147,10 @@ export function DetailNavbar({
           {loggedIn ? (
             <div className="detail-navbar__actions">
               <Link href={profilePath} className="credit-balance" aria-label={t("profile.credits")}>
-                <DpIcon name="ic_credit" className="credit-balance__icon" />
+                {/* `.credit-balance img` — an element selector, and no mask.
+                    See the note in RoomNavbar: the class form renders nothing. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/assets/icons/ui/ic_credit.svg" alt="" />
                 <span data-testid="credit-balance">{credits}</span>
                 <DpIcon name="ic_add" className="credit-balance__add" />
               </Link>

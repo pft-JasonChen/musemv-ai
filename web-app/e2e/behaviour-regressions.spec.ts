@@ -153,11 +153,18 @@ test("G5-d#2 insufficient balance routes to IAP instead of generating", async ({
   // The point: no job starts, no navigation, and an IAP surface opens instead.
   //
   // WHICH surface depends on tier (CR-06): credits are sold to Muse Pro subscribers
-  // only, so BuyCreditsModal renders SubscribeModal ("Muse Pro") for a free account
-  // and the pack picker ("Buy Credits") for a subscriber. This test signs in as a
-  // free user, so it gets Subscribe — accept either so the test tracks the rule
-  // rather than one tier's rendering of it.
-  await expect(page.getByRole("dialog", { name: /Muse Pro|Buy Credits/i })).toBeVisible();
+  // only, so BuyCreditsModal renders SubscribeModal for a free account and the pack
+  // picker ("Buy Credits") for a subscriber. This test signs in as a free user, so
+  // it gets Subscribe — accept either so the test tracks the rule rather than one
+  // tier's rendering of it.
+  //
+  // Slice 3f renamed the sell surface to DP's own title, "Upgrade Your Plan"
+  // (the "Muse Pro" name now belongs to the already-subscribed state). The copy
+  // is the selector, so it is updated here as part of that slice, not patched
+  // around — see AGENTS.md, "e2e selectors are exact UI copy".
+  await expect(
+    page.getByRole("dialog", { name: /Upgrade Your Plan|Muse Pro|Buy Credits/i }),
+  ).toBeVisible();
   expect(new URL(page.url()).pathname).toBe("/mv/room");
   expect(await balance(page), "a refused generation must not charge").toBe(left);
 });
@@ -259,7 +266,10 @@ test("G5-d#7 Pro gate: High resolution is locked for a free account", async ({ p
   await expect(high).toBeVisible();
   // MV-04: locked options are greyed with a crown and route to IAP instead of selecting.
   await high.click();
-  await expect(page.getByRole("dialog", { name: /Muse Pro|Subscribe/i })).toBeVisible();
+  // Slice 3f: DP's sell dialog is titled "Upgrade Your Plan".
+  await expect(
+    page.getByRole("dialog", { name: /Upgrade Your Plan|Muse Pro|Subscribe/i }),
+  ).toBeVisible();
   // And the setting must not have changed.
   await expect(dialog.getByRole("button", { name: /^Standard/ })).toBeVisible();
 });
@@ -1031,7 +1041,11 @@ test("3c / G7-2: every control on the account screens meets the 24x24 AA floor",
           els
             .map((el) => {
               const r = el.getBoundingClientRect();
-              return { cls: (el.className || "").toString().split(" ")[0], w: r.width, h: r.height };
+              return {
+                cls: (el.className || "").toString().split(" ")[0],
+                w: r.width,
+                h: r.height,
+              };
             })
             .filter((m) => m.w > 0 && m.h > 0 && (m.w < 24 || m.h < 24)),
         );
@@ -1098,4 +1112,356 @@ test("3d / R9: the creator link carries the locale prefix", async ({ page }) => 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/jpn/watch");
   await expect(page.locator(".mv-player__user")).toHaveAttribute("href", "/jpn/creator");
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3e — /creator migrated to DP's CommunityProfilePage
+// ════════════════════════════════════════════════════════════════════════════
+
+test("3e: all six options-menu actions exist and none of them is dead", async ({ page }) => {
+  // The handoff flagged this screen because DP's own Download and Delete only
+  // close the menu. The decision was to port all six and wire every one, so the
+  // regression to guard is "a control is present but does nothing" — which no
+  // screenshot and no render test can see. Each assertion below drives the
+  // action and checks the state it is supposed to change.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/creator?self=1");
+
+  const firstRow = page.locator(".community-profile__item").first();
+  const title = await firstRow.locator(".community-profile__copy > strong").innerText();
+
+  await firstRow.getByRole("button", { name: "More" }).click();
+  const menu = page.locator(".community-profile__menu");
+  await expect(menu).toBeVisible();
+
+  // All six are present.
+  await expect(menu.getByRole("menuitem", { name: /Edit MV/ })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: /^(Like|Unlike)$/ })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Share" })).toBeVisible();
+  await expect(menu.getByRole("switch")).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Download" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Delete" })).toBeVisible();
+
+  // Publish: MV confirms first (MV-vs-Song split), then toasts.
+  await menu.getByRole("switch").click();
+  await expect(page.getByRole("dialog", { name: "Ready to Go Public?" })).toBeVisible();
+  await page.getByRole("button", { name: "Publish" }).click();
+  await expect(page.getByText("Submitted for review")).toBeVisible();
+
+  // Delete: confirms, then the row actually leaves the list.
+  const before = await page.locator(".community-profile__item").count();
+  await firstRow.getByRole("button", { name: "More" }).click();
+  await menu.getByRole("menuitem", { name: "Delete" }).click();
+  await expect(page.getByRole("dialog", { name: "Delete" })).toBeVisible();
+  await page.getByRole("button", { name: "Delete" }).click();
+  await expect(page.locator(".community-profile__item")).toHaveCount(before - 1);
+  await expect(page.getByText(title, { exact: true })).toHaveCount(0);
+});
+
+test("3e: Download triggers a real download, not a menu close", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/creator?self=1");
+
+  const firstRow = page.locator(".community-profile__item").first();
+  await firstRow.getByRole("button", { name: "More" }).click();
+
+  const download = page.waitForEvent("download");
+  await page
+    .locator(".community-profile__menu")
+    .getByRole("menuitem", { name: "Download" })
+    .click();
+  expect((await download).suggestedFilename()).toMatch(/\.(mp4|mp3)$/);
+});
+
+test("3e: switching tabs does NOT write the URL", async ({ page }) => {
+  // 3b's lesson: a URL write is a page jump even with `replace`. DP changes tabs
+  // with history.replaceState; porting that would turn /creator into a navigation.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/creator?self=1");
+
+  await page.getByRole("button", { name: "Songs" }).click();
+  await expect(page.locator(".community-profile__item").first()).toBeVisible();
+  await expect(page).toHaveURL(/\/creator\?self=1$/);
+});
+
+test("3e: someone else's profile has no owner menu", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/creator");
+  await expect(page.locator(".community-profile__item").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "More" })).toHaveCount(0);
+  // Like and Share stay — they are public actions.
+  await expect(page.getByRole("button", { name: "Like" }).first()).toBeVisible();
+});
+
+test("3e / A5: /creator has a working back control at 375px", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/creator?self=1");
+  const back = page.getByRole("button", { name: "Back" });
+  await expect(back).toBeVisible();
+  const box = await back.boundingBox();
+  expect(box?.height ?? 0).toBeGreaterThan(0);
+});
+
+test("3e / R9: row links carry the locale prefix", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/jpn/creator?self=1");
+  await expect(page.locator(".community-profile__item-main").first()).toHaveAttribute(
+    "href",
+    /^\/jpn\//,
+  );
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3f — Credits IAP migrated to DP's CreditsDialog / UpgradeDialog / CreditsPage
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Open Credits Detail from the Profile screen's Credits stat. */
+async function openCreditsDetail(page: Page) {
+  await page.goto("/profile");
+  await page.getByText("Credits", { exact: true }).first().click();
+  await expect(page.locator(".credits-page__balance")).toBeVisible();
+}
+
+test("3f / S20: the plan prices are WA's, not DP's — including the period suffix", async ({
+  page,
+}) => {
+  // DP hardcodes $9.99 for Weekly and renders a literal "/ week" on ALL THREE
+  // cards, Yearly included. Porting its markup verbatim would have shipped a
+  // $59.99-per-week plan. This is the assertion that would have caught it.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openCreditsDetail(page);
+  await page.getByRole("button", { name: /Get Muse Pro|Buy More/ }).click();
+
+  const cards = page.locator(".upgrade-dialog__card");
+  await expect(cards).toHaveCount(3);
+  for (const [i, price, period] of [
+    [0, "$19.99", "/ week"],
+    [1, "$29.99", "/ week"],
+    [2, "$59.99", "/ year"],
+  ] as const) {
+    await expect(cards.nth(i).locator(".upgrade-dialog__price")).toContainText(price);
+    await expect(cards.nth(i).locator(".upgrade-dialog__price-period")).toHaveText(period);
+  }
+  await expect(page.getByText("$9.99")).toHaveCount(0);
+});
+
+test("3f / CR-06: a free account cannot reach Buy Credits", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openCreditsDetail(page);
+  // The gate is on the button's own label, and on what it opens.
+  await page.getByRole("button", { name: "Get Muse Pro" }).click();
+  await expect(page.getByRole("dialog", { name: "Upgrade Your Plan" })).toBeVisible();
+  await expect(page.locator(".credits-dialog__pack")).toHaveCount(0);
+});
+
+test("3f: subscribing from a card grants that plan's credits", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/profile");
+  const before = await balance(page);
+
+  await page.getByText("Credits", { exact: true }).first().click();
+  await page.getByRole("button", { name: "Get Muse Pro" }).click();
+  // DP's model is one Subscribe per card, not a shared selection — so which
+  // card is clicked has to decide which plan is bought.
+  await page
+    .locator(".upgrade-dialog__card--featured")
+    .getByRole("button", { name: "Subscribe" })
+    .click();
+
+  // Weekly Pro = 1,000 credits.
+  await expect.poll(() => balance(page)).toBe(before + 1000);
+});
+
+test("3f: buying a pack adds exactly that pack's credits", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/profile");
+
+  // Subscribe first — CR-06 means Buy Credits is unreachable otherwise.
+  await page.getByText("Credits", { exact: true }).first().click();
+  await page.getByRole("button", { name: "Get Muse Pro" }).click();
+  await page
+    .locator(".upgrade-dialog__card--featured")
+    .getByRole("button", { name: "Subscribe" })
+    .click();
+
+  const before = await balance(page);
+  await page.getByText("Credits", { exact: true }).first().click();
+  await page.getByRole("button", { name: "Buy More" }).click();
+  await expect(page.getByRole("dialog", { name: "Buy Credits" })).toBeVisible();
+
+  // Default selection is the BEST VALUE pack (2,000).
+  await page.getByRole("button", { name: /Buy Now/ }).click();
+  await expect.poll(() => balance(page)).toBe(before + 2000);
+});
+
+test("3f: a closed dialog is not in the tab order", async ({ page }) => {
+  // The `opacity: 0; pointer-events: none` trap G7 found on the lyrics overlay.
+  // DP's dialog overlays have exactly that closed state, so if these were
+  // always-mounted every page would carry six invisible pack buttons.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/profile");
+
+  const focusable = await page.evaluate(
+    () =>
+      [...document.querySelectorAll(".credits-dialog button, .upgrade-dialog button")].filter(
+        (el) => !el.closest("[inert]"),
+      ).length,
+  );
+  expect(focusable).toBe(0);
+});
+
+test("3f: Escape closes the dialog", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openCreditsDetail(page);
+  await page.getByRole("button", { name: "Get Muse Pro" }).click();
+  await expect(page.getByRole("dialog", { name: "Upgrade Your Plan" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Upgrade Your Plan" })).toHaveCount(0);
+});
+
+test("3f: CR-05 Restore Purchases survived DP's footer", async ({ page }) => {
+  // DP's footer is two dead `href="#"` links and has no Restore at all. WA's is
+  // a real action, so it took the slot — this is the affordance-loss check.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openCreditsDetail(page);
+  await page.getByRole("button", { name: "Get Muse Pro" }).click();
+  await page.getByRole("button", { name: "Restore Purchases" }).click();
+  await expect(page.getByText("No previous purchases found on this account.")).toBeVisible();
+});
+
+test("3f: the credit pill's coin icon actually paints", async ({ page }) => {
+  // `.credit-balance img` is an ELEMENT selector with no mask treatment, so the
+  // `<span className="credit-balance__icon">` this was ported as matched no rule
+  // at all — 0x0 and transparent on every migrated screen since slice 2b. A mask
+  // with nothing to clip is invisible without erroring, so nothing went red.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/watch");
+
+  const box = await page.locator(".credit-balance img").first().boundingBox();
+  expect(box?.width ?? 0).toBeGreaterThan(0);
+  expect(box?.height ?? 0).toBeGreaterThan(0);
+});
+
+test("3f: every mask icon on a migrated screen has something to clip", async ({ page }) => {
+  // The general form of the two bugs above. A mask-image on an element with no
+  // background paints nothing; a mask sized by an element selector the port did
+  // not use is 0x0. Both are silent. This sweeps for either.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+
+  for (const route of ["/watch", "/creator?self=1", "/profile", "/history", "/explore/mvs"]) {
+    await page.goto(route);
+    await page.waitForLoadState("networkidle");
+    const broken = await page.evaluate(() => {
+      const hidden = (el: Element) => {
+        for (let n: Element | null = el; n; n = n.parentElement) {
+          const s = getComputedStyle(n);
+          if (s.display === "none" || s.visibility === "hidden") return true;
+        }
+        return false;
+      };
+      return [...document.querySelectorAll("span, i")]
+        .filter((el) => {
+          const s = getComputedStyle(el);
+          const mask = s.maskImage !== "none" ? s.maskImage : s.webkitMaskImage;
+          if (!mask || mask === "none" || hidden(el)) return false;
+          const r = el.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0) return true;
+          return (
+            s.backgroundColor === "rgba(0, 0, 0, 0)" &&
+            (!s.backgroundImage || s.backgroundImage === "none")
+          );
+        })
+        .map((el) => el.className || el.tagName);
+    });
+    expect(broken, `invisible mask icons on ${route}`).toEqual([]);
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3g — /mv/room page body migrated to DP's MVCreatePage
+// ════════════════════════════════════════════════════════════════════════════
+
+test("3g: the page renders DP's blocks, not the old Tailwind layout", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/mv/room");
+  await expect(page.locator(".mv-create__panel")).toBeVisible();
+  await expect(page.locator(".mv-create__section")).toHaveCount(5);
+  await expect(page.locator(".mv-create__side")).toBeVisible();
+});
+
+test("3g: the CTA docks to the viewport bottom and tracks its column", async ({ page }) => {
+  // FloatingCTA is `position: fixed` and publishes its parent's geometry as
+  // custom properties. If that effect stops running the bar silently falls back
+  // to full viewport width — which a fullPage screenshot cannot show, because
+  // fixed elements are captured at scroll 0 wherever the viewport happens to be.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/mv/room");
+
+  const cta = page.locator(".floating-cta");
+  await expect(cta).toBeVisible();
+  const box = await cta.boundingBox();
+  expect(box!.y + box!.height).toBeLessThanOrEqual(901);
+  // Aligned to the panel column, not the whole window.
+  expect(box!.width).toBeLessThan(1440);
+  expect(box!.x).toBeGreaterThan(0);
+});
+
+test("3g: the character photo name is editable (DP-only affordance)", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/mv/room");
+
+  // Add a photo via a sample face so a filled slot exists.
+  await page.getByRole("button", { name: "Use sample photo" }).first().click();
+  await expect(page.locator(".mv-create__photo-filled")).toHaveCount(1);
+  await expect(page.locator(".mv-create__photo-name")).toHaveText("Name");
+
+  await page.getByRole("button", { name: "Edit name" }).click();
+  await page.locator(".mv-create__photo-name-input").fill("Ada");
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".mv-create__photo-name")).toHaveText("Ada");
+});
+
+test("3g / S2: the trim entry point survived the migration", async ({ page }) => {
+  // DP's song row has ONE control where WA has two (Edit trim vs Change song).
+  // Collapsing them to DP's single button would have deleted the only way back
+  // into the trim editor, and with it the only surface that enforces the 30s
+  // floor — behaviour that stays green while the affordance disappears.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/mv/room");
+
+  await composeMv(page);
+
+  await expect(page.locator(".mv-create__song-added")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit trim" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remove song" })).toBeVisible();
+});
+
+test("3g / R9: the My Creations rail links carry the locale prefix", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/jpn/mv/room");
+  await expect(page.locator(".mv-create__side-item").first()).toHaveAttribute("href", /^\/jpn\//);
+  await expect(page.locator(".mv-create__side-see-all")).toHaveAttribute(
+    "href",
+    "/jpn/explore/mvs",
+  );
 });

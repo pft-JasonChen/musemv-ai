@@ -221,7 +221,11 @@ export function CommunityMvPlayer() {
               </div>
               <Button className="mv-player__cta" onClick={createMv}>
                 Create MV
-                <DpIcon name="ic_arrow_right" className="button__icon" />
+                {/* `--mask` is what PAINTS it: `.button__icon` only sets 16×16,
+                    and DP's own Button splits the two (`__icon` alone is for its
+                    <img> form). Without the modifier this arrow was a 16×16 hole
+                    — found by `.iconcheck.mjs`, not by any screenshot. */}
+                <DpIcon name="ic_arrow_right" className="button__icon button__icon--mask" />
               </Button>
             </div>
           </div>

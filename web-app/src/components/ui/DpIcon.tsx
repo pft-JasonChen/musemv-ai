@@ -11,11 +11,27 @@
  *
  * This is NOT licence to convert WA's inline-`<svg>` backlog — AGENTS.md scopes
  * icon conversion to the screen being migrated.
+ *
+ * `as` exists because some of DP's stylesheets size their icons with an ELEMENT
+ * selector rather than a class — `CommunityProfilePage.css` has
+ * `.community-profile__social i { width: 12px }`. Rendering a `<span>` there
+ * matches nothing, and an unmatched mask is an invisible 0×0 box, not an error:
+ * the counts render, the icons beside them silently do not. Measured on this
+ * screen at all six widths before it was caught. Pass the tag DP used.
  */
-export function DpIcon({ name, className }: { name: string; className?: string }) {
+export function DpIcon({
+  name,
+  className,
+  as: Tag = "span",
+}: {
+  name: string;
+  className?: string;
+  /** The tag DP's stylesheet expects. Only matters when a rule selects by element. */
+  as?: "span" | "i";
+}) {
   const url = `url("/assets/icons/ui/${name}.svg")`;
   return (
-    <span
+    <Tag
       className={className}
       aria-hidden="true"
       style={{ maskImage: url, WebkitMaskImage: url }}

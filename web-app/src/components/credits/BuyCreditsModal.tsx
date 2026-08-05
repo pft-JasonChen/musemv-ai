@@ -1,11 +1,18 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useState } from "react";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { CREDIT_PACKS, CREDIT_SALE_PCT, DEFAULT_CREDIT_PACK_ID, displayDiscountPct, salePrice } from "@/lib/user";
+import { DpIcon } from "@/components/ui/DpIcon";
+import { DpDialog } from "@/components/ui/DpDialog";
+import {
+  CREDIT_PACKS,
+  CREDIT_SALE_PCT,
+  DEFAULT_CREDIT_PACK_ID,
+  displayDiscountPct,
+  salePrice,
+} from "@/lib/user";
 import { SubscribeModal } from "@/components/credits/SubscribeModal";
 
 interface Props {
@@ -14,6 +21,36 @@ interface Props {
   onPurchased?: (credits: number) => void;
 }
 
+/**
+ * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3f) ────────────────────
+ *
+ * DP source: `CreditsDialog` (Figma "IAP — Buy Credits - List_L", 1783:42703).
+ * Classes from `src/styles/designer/CreditsDialog.css`, verbatim.
+ *
+ * ── S20: THE LAYOUT IS DP'S, THE NUMBERS ARE CODE'S ─────────────────────────
+ *
+ * DP hardcodes its own pack table with the struck-through original price and the
+ * "20% OFF" tag baked in as strings. WA already models that properly:
+ * `CREDIT_PACKS` holds the Business Model's list prices and SKUs, and
+ * `CREDIT_SALE_PCT` derives the sale price, so the discount is one constant
+ * rather than twelve literals. Two of DP's six prices disagree with the
+ * Business Model outright — which is precisely why S20 says code wins.
+ *
+ * So this renders DP's layout (tags, struck original, current price, selected
+ * state) over WA's data. Setting `CREDIT_SALE_PCT = 0` removes every OFF tag and
+ * every struck price on its own; DP's hardcoded version cannot do that.
+ *
+ * ── WHAT IS NOT PORTED, AND WHY EACH ONE ────────────────────────────────────
+ *
+ * · DP's `Recover` button has no handler at all. Unlike `/creator`'s Download
+ *   and Delete — which had WA implementations waiting for them — there is no
+ *   credits-side restore behaviour in WA to wire this to. `SubscribeModal` owns
+ *   Restore, where it is real. Shipping it here would be a dead control, so it
+ *   stays out until there is something behind it.
+ * · DP's footer `Terms of Use` / `Privacy Policy` are `href="#"`. Same reason:
+ *   no such routes exist yet, and a link that goes nowhere is worse than none.
+ * · DP's `useMountTransition` — see `DpDialog` for the reasoning.
+ */
 export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
   const { credits, addCredits } = useCredits();
   const { subscribed } = useAuth();
@@ -30,84 +67,98 @@ export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
   // CR-06 (Business Model, Final Decision): credits are sold to Muse Pro
   // subscribers only. Buy Credits is never shown to a non-subscriber — every
   // entry point routes them to Subscribe, and this is the safety net for the
-  // in-flow "insufficient balance" path.
+  // in-flow "insufficient balance" path. Predates the migration; kept exactly.
   if (!subscribed) {
     return <SubscribeModal open={open} onClose={onClose} />;
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Buy Credits" maxWidth={460}>
-      <div className="mb-5">
-        <div className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-2)" }}>
-          Your balance
+    <DpDialog
+      open={open}
+      onClose={onClose}
+      block="credits-dialog"
+      label="Buy Credits"
+      title="Buy Credits"
+    >
+      <div className="credits-dialog__balance">
+        <p className="credits-dialog__balance-label">YOUR BALANCE</p>
+        <div className="credits-dialog__balance-row">
+          <div className="credits-dialog__balance-amount">
+            {/* A plain <img>, not a mask — DP keeps the coin's own gold here
+                rather than tinting it with currentColor like the other icons. */}
+            <img
+              src="/assets/icons/ui/ic_credit.svg"
+              alt=""
+              className="credits-dialog__balance-icon"
+            />
+            <span className="credits-dialog__balance-number">{credits}</span>
+            <span className="credits-dialog__balance-unit">Credits</span>
+          </div>
         </div>
-        <div className="flex items-end gap-1.5">
-          <span className="text-[40px] font-extrabold leading-none">{credits}</span>
-          <span className="mb-1.5 text-[12px] font-semibold" style={{ color: "var(--text-3)" }}>credits</span>
+      </div>
+
+      <div className="credits-dialog__scroll">
+        <p className="credits-dialog__section-label">Buy Credit Pack</p>
+
+        <div className="credits-dialog__packs">
+          {CREDIT_PACKS.map((p) => {
+            const active = p.id === selected;
+            const now = sale ? salePrice(p.price) : p.price;
+            return (
+              <div className="credits-dialog__pack-slot" key={p.id}>
+                {(p.badge || sale) && (
+                  <div className="credits-dialog__pack-tags">
+                    {p.badge && (
+                      <span
+                        className={`credits-dialog__tag credits-dialog__tag--${
+                          p.badge === "BEST VALUE" ? "purple" : "green"
+                        }`}
+                      >
+                        {p.badge}
+                      </span>
+                    )}
+                    {sale && (
+                      <span className="credits-dialog__tag credits-dialog__tag--pink">
+                        {displayDiscountPct(CREDIT_SALE_PCT)}% OFF
+                      </span>
+                    )}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className={`credits-dialog__pack${active ? " credits-dialog__pack--selected" : ""}`}
+                  onClick={() => setSelected(p.id)}
+                  aria-pressed={active}
+                >
+                  <div className="credits-dialog__pack-info">
+                    <p className="credits-dialog__pack-label">Add Credit</p>
+                    <div className="credits-dialog__pack-credits">
+                      <DpIcon name="ic_credits" className="credits-dialog__pack-credits-icon" />
+                      <span>{p.credits.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="credits-dialog__pack-price">
+                    {sale && <span className="credits-dialog__pack-original">{p.price}</span>}
+                    <span className="credits-dialog__pack-current">{now}</span>
+                  </div>
+                </button>
+              </div>
+            );
+          })}
         </div>
+
+        {/* CR-03: purchased credits are valid for 2 years (Business Model). DP's
+            copy says they "never expire", which contradicts it — WA's wording
+            wins for the same reason its prices do. */}
+        <p className="credits-dialog__disclaimer">
+          Purchased credits are valid for 2 years. Non-refundable and lost upon account deletion.
+          Prices may vary by region.
+        </p>
       </div>
 
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-[15px] font-bold">Credit Pack</span>
-        {/* TBD-CR-07 sample: limited-time sale banner. */}
-        {sale && (
-          <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white" style={{ background: "rgba(255,138,2,.85)" }}>
-            Limited-time · {displayDiscountPct(CREDIT_SALE_PCT)}% OFF
-          </span>
-        )}
-      </div>
-      <div className="flex flex-col gap-3">
-        {CREDIT_PACKS.map((p) => {
-          const active = p.id === selected;
-          const isBest = p.badge === "BEST VALUE";
-          const now = sale ? salePrice(p.price) : p.price;
-          return (
-            <button
-              key={p.id}
-              onClick={() => setSelected(p.id)}
-              className="relative flex items-center justify-between rounded-xl px-4 py-3 text-left transition-colors"
-              style={{
-                background: isBest ? "linear-gradient(to right, rgba(66,37,3,1), var(--card))" : "var(--card-2)",
-                border: `1.5px solid ${active ? (isBest ? "var(--gold)" : "var(--accent)") : "var(--border-2)"}`,
-              }}
-            >
-              {/* TBD-CR-07 sample: a card can carry its tier badge and a "% off" badge together. */}
-              <div className="absolute -top-2 right-3 flex items-center gap-1.5">
-                {p.badge && (
-                  <span className="rounded-full px-2 py-0.5 text-[9px] font-bold text-white" style={{ background: isBest ? "rgba(255,138,2,.85)" : "var(--accent)" }}>
-                    {p.badge}
-                  </span>
-                )}
-                {sale && (
-                  <span className="rounded-full px-2 py-0.5 text-[9px] font-bold text-white" style={{ background: "var(--red)" }}>
-                    {displayDiscountPct(CREDIT_SALE_PCT)}% OFF
-                  </span>
-                )}
-              </div>
-              <div>
-                <div className="text-[11px]" style={{ color: "var(--text-2)" }}>Add Credit</div>
-                <div className="text-[17px] font-bold">{p.credits.toLocaleString()}</div>
-              </div>
-              <div className="text-right">
-                {sale && (
-                  <div className="text-[12px] line-through" style={{ color: "var(--text-3)" }}>{p.price}</div>
-                )}
-                <div className="text-[20px] font-extrabold">{now}</div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      <p className="mt-3 text-center text-[11px]" style={{ color: "var(--text-3)" }}>
-        {/* CR-03: purchased credits are valid for 2 years (Business Model). */}
-        Purchased credits are valid for 2 years. Non-refundable. Prices may vary by region.
-      </p>
-
-      <div className="mt-4">
-        <Button className="w-full" onClick={buy}>Buy Now — {sale ? salePrice(pack.price) : pack.price}</Button>
-        <p className="mt-2 text-center text-[11px]" style={{ color: "var(--text-2)" }}>Subscriber-only · No commitment</p>
-      </div>
-    </Modal>
+      <button type="button" className="credits-dialog__cta" onClick={buy}>
+        Buy Now — {sale ? salePrice(pack.price) : pack.price}
+      </button>
+    </DpDialog>
   );
 }

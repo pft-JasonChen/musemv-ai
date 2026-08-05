@@ -303,13 +303,30 @@ console 是 `TypeError: Cannot read properties of undefined (reading 'id')`(song
 `.account-page__stats span`(「Credits」「MVs」「Songs」三個說明字)用
 `--neutral-dark-44`(`rgb(103,103,121)`)壓在頁面深色底上,**約 3.3–3.8:1**,AA 要求 4.5:1。
 
-- **是這次才暴露的,不是重複的 A1 / A9。** `--neutral-dark-44` 在 `src/styles/designer/`
-  底下**只有這一支檔用到** —— `/profile` 是第一條把這個配色帶到線上的 route。
 - **成因在上游。** `AccountPage.css` 與 DP 逐位元組相同(D1 已驗),所以不是我們搬錯。
 - **我們沒有自己挑顏色**,依 A1 的既有慣例。這是設計決定。
-- **需要的決定:** 這三個說明字要調到哪一階?(`--neutral-dark-54` 或更亮?
+- **需要的決定:** 這些說明字要調到哪一階?(`--neutral-dark-54` 或更亮?
   或者這種 caption 級文字要不要有自己的一階?)在那之前,若要先止血,
   可以在 `designer-overrides.css` 放一條暫時的覆寫 —— 但**要產品先拍板值**,我們不自己選。
+
+> #### ⚠️ 升級(2026-08-05,Slice 3e):**不是一支檔的疏漏,是 token 層級的選擇**
+>
+> A13 原本寫「`--neutral-dark-44` 在 `src/styles/designer/` 底下只有 `AccountPage.css`
+> 一支檔用到」。搬 `/creator` 時**同一個 token 又出現兩次**,axe 在 `/creator` 實測
+> **3.59:1**(`#676779` 壓 `#09090b`):
+>
+> | 選擇器                           | 內容               | 比值   |
+> | -------------------------------- | ------------------ | ------ |
+> | `.community-profile__stats span` | 「Plays」「Likes」 | 3.59:1 |
+> | `.community-profile__copy time`  | 每一列的日期       | 3.59:1 |
+>
+> **所以這不是「某一支 stylesheet 挑錯色」,而是「caption 級文字的預設階就是不到 AA」。**
+> 每多搬一條用到 caption 的 route,這個數字就多出現一次 —— 換句話說,
+> **修在 token 而不是修在個別檔案**,才會是一次修完。這一點請設計師一併決定。
+>
+> 目前處置(產品負責人 2026-08-05 拍板):**維持 verbatim,不自己挑值**,
+> 兩個選擇器加進 `e2e/a11y.spec.ts` 的既有排除清單(和 A8 的 accent pill 同一個機制),
+> 註解直接指回這一條。設計師給值之後,把排除拿掉就是驗收。
 
 > **順帶記一筆給自己的教訓(不是給設計師的):** 這一支在修 G7 finding 1 時,
 > 一度寫了 `badge--brand` / `badge--neutral` 兩個**根本不存在**的 modifier。
@@ -344,6 +361,32 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 > WCAG 2.1.1 缺陷(`TODO.md` #5)。`/watch` 改用 `src/components/ui/SeekBar.tsx`,
 > 有 `role="slider"`、方向鍵 / PageUp / Home / End,並補了測試。
 > **歌曲播放器可以直接改用同一支收掉 #5。**
+
+### A15. `UpgradeDialog` 三張卡片都寫死 `/ week`,**包含 Yearly** —— 稿面文案錯誤
+
+**發現於:** 2026-08-05,Slice 3f(Credits IAP 移轉)。
+
+`UpgradeDialog.tsx` 的價格列是:
+
+```tsx
+{
+  plan.price;
+}
+<span className="upgrade-dialog__price-period"> / week</span>;
+```
+
+`/ week` 是**寫死的字串**,不是從方案來的,所以 **Yearly 那張卡顯示「$59.99 / week」**。
+另外 `CreditsDialog` / `UpgradeDialog` 的價格與 Business Model 至少兩處不符
+(Weekly 寫 $9.99,實際 $19.99;credit pack 有兩檔對不上)。
+
+- **不擋開發,已在 WA 側處理完畢。** 依 S20「價格以 code 為準」,WA 版每張卡片的
+  週期後綴改成逐案輸出(`per` 欄位),數字全部取自 `SUBSCRIPTION_PLANS` / `CREDIT_PACKS`。
+  e2e 已斷言三張卡的價格與後綴,所以這件事不會再悄悄回來。
+- **仍要請設計師修上游的稿**,否則下一次 re-drop 又會帶回同一個錯字;而且
+  「$59.99 / week」這種數字錯誤如果出現在給老闆看的 review 版本,是會被當真的。
+- 另外兩個 dead control 一併回報:`CreditsDialog` 的 **Recover** 按鈕沒有任何 handler,
+  兩個 dialog 的 **Terms of Use / Privacy Policy** 都是 `href="#"`。
+  WA 版沒有搬這三個(沒有可接的行為),Restore Purchases 則用 WA 自己的實作補在 footer。
 
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 

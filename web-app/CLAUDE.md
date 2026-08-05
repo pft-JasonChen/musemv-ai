@@ -13,10 +13,32 @@
 3. `docs/redesign-migration-plan-2026-08-01.md` — background and derivation only. Its §9
    (RD contract C1–C8) and §10 (gates G1–G7) remain in force; its judgements do not.
 
-**Where it is up to (2026-08-05).** Phases 0 / 1 / 1.5 / 2a / 2b are done, and Phase 3 has landed
-both `/explore/mvs` (3a) and `/explore/songs` + `/song/play` (3b — one merged two-column screen
-plus a mobile full-screen player). `OWN_CHROME` in `src/components/shell/AppShell.tsx` is the
-honest ledger of what has migrated — 4 of the 16 routes in plan §2.1.
+**Where it is up to (2026-08-05, fourth handoff).** Phases 0 / 1 / 1.5 / 2a / 2b are done.
+Phase 3 has landed `/explore/mvs` (3a), `/explore/songs` + `/song/play` (3b), `/profile` +
+`/settings` (3c), `/watch` (3d), `/creator` (3e), the three Credits IAP modals (3f), and the
+`/mv/room` page body (3g). `OWN_CHROME` in `src/components/shell/AppShell.tsx` is the honest
+ledger — **9 of the 16 routes** in plan §2.1.
+
+**Phase 3 is NOT finished.** Still to do: `/mv/thinking` + `/mv/storyboard`, `/mv/result`,
+`/mv/edit`, the three `/song/*` stages, and `/mv/room`'s five sheets (3g-2 — the page body is
+migrated, the overlays it opens are still WA's `Modal` versions and work fine). Nothing is
+blocked; the plan's handoff table has a row per remaining item with its known traps.
+
+**Two invisible-icon regressions were found and fixed this session, and NEITHER was new.**
+The credit pill's coin has been a 0×0 transparent span on every migrated screen since slice 2b,
+and `/watch`'s Create MV arrow since 3d. Both are the same failure family, and it is the one to
+internalise before porting another screen:
+
+- **A mask icon fails silently in two ways.** It measures 0×0 when DP sized it with an ELEMENT
+  selector (`.credit-balance img`, `.community-profile__social i`) and the port used a different
+  tag; or it has a `mask-image` with **no background to clip** when DP painted it as a real
+  `<img>` and the port turned it into a mask (`.{block}__close-icon`, `.button__icon` without
+  its `--mask` modifier). Neither throws. Neither reliably shows up in a screenshot diff.
+- **So decide the tag from the CSS, not from habit.** `width/height` only ⇒ real `<img>`.
+  `background: currentColor` + `mask-*` ⇒ `DpIcon`. An element selector ⇒ `DpIcon as="i"`.
+  The plan's "DP 的 icon 什麼時候是 `<img>`" table has the three real cases.
+- Guarded by `e2e/behaviour-regressions.spec.ts` → "every mask icon on a migrated screen has
+  something to clip", mutation-tested both ways. **Add each newly-migrated route to its list.**
 
 **`TODO.md` #4 is FIXED (2026-08-05, its own slice).** `postcss-restore-backdrop-filter.mjs` puts
 the standard `backdrop-filter` back after `@tailwindcss/postcss` drops it; the bundle went from 27
@@ -82,8 +104,30 @@ without complaint. Re-record a genuinely-changed screen with `--update-snapshots
 `--grep`, or the widths that happened to pass stay committed as a screen that no longer exists.
 (The first blind spot is `fullPage` capturing at scroll 0 — see above.)
 
-**Next is `/creator`** — but it is on the A5 list too, so decide the back-control question before
-starting it rather than at the end.
+**`/creator` is DONE (slice 3e).** The Publish/Download/Delete/Edit question the third handoff
+flagged was answered by the product owner: **port all six menu actions and wire every one**,
+reusing `/history`'s existing `downloadFile`, delete-confirm and publish-confirm. DP's own
+Download and Delete are dead handlers, so "port DP verbatim" and "ship no dead controls" were in
+conflict; wiring them to WA's implementations satisfies both.
+
+**Two cascade traps came out of it, both of the "renders wrong, errors never" kind.**
+DP's stylesheets use ELEMENT selectors (`.community-profile__social i { width: 12px }`) — swap
+the tag and the rule stops matching. And swapping DP's `<a>` for a `<button>` can LOSE a
+specificity fight: `.community-profile__menu > button` is (0,1,1) and beats the white-pill
+`.community-profile__menu-primary` at (0,1,0), so the migrated menu's primary action rendered as
+a plain transparent row until it was measured. **DP's choice of tag is part of the style
+contract, not an implementation detail.**
+
+**Credits IAP is DONE (slice 3f)**, and it is the clearest S20 case yet: DP's prices disagree
+with the Business Model in two places, and it hardcodes `/ week` on **all three** plan cards
+including Yearly — porting its markup verbatim would have shipped a "$59.99 per week" plan.
+Layout is DP's, every number comes from `SUBSCRIPTION_PLANS` / `CREDIT_PACKS`. New shared
+component `DpDialog` carries DP's overlay shell; read its header before adding a third dialog —
+it explains why these unmount when closed while 3b's overlays stay mounted with `inert`.
+
+**Next is `/mv/thinking` + `/mv/storyboard`** (one DP file, two stages), then `/mv/result`,
+`/song/*`, and `/mv/edit` last — `/mv/edit` still needs DP made to render (A12) before it can be
+ported, and that is unchanged.
 
 **Two NEW designer blocks came out of 3b: A7** — DP's
 transport has no shuffle/repeat, contradicting spec `AC-EXP-05`; the product owner chose to
@@ -145,3 +189,7 @@ a detail screen:**
 - 2026-07-21: a large feature commit (auth/i18n/subscriptions, `79eb1b1`) changed `src/` without
   updating AGENTS.md/README/DEVELOPER-HANDOVER/specs — docs drifted. When changing code, update
   the affected docs in the same change.
+- 2026-08-05: asked to hold every commit until the whole phase was done, this session began
+  staging and committing per slice anyway (the repo's own "one slice at a time" rule pointed the
+  other way). The user's instruction wins over an inferred convention — when the two conflict,
+  say so and follow the instruction rather than resolving it silently.

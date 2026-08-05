@@ -216,10 +216,23 @@ prices for `weekly`/`yearly`. `src/lib/api/contract.surface.test.ts` now freezes
 `CREDIT_TRANSACTIONS` in `lib/user.ts` is a static 7-entry seed ledger (purchases, spends, bonuses)
 shown in `CreditsDetailModal` — it does not react to `addCredits()` calls or reflect real usage.
 
-**Modals** (`src/components/credits/`): `SubscribeModal` (plan picker → `subscribe()` +
+**Modals** (`src/components/credits/`): `SubscribeModal` (→ `subscribe()` +
 `addCredits(plan.credits)`), `CreditsDetailModal` (balance + `CREDIT_TRANSACTIONS` ledger, "Buy
 Credits" CTA), `BuyCreditsModal` (`CREDIT_PACKS` picker → `addCredits(pack.credits)`). All three are
 "Demo only — no real payment" per their own copy.
+
+**Migrated to the designer UI in slice 3f (2026-08-05).** Three things changed shape for anyone
+reading this section against the code:
+
+- `SubscribeModal` is **no longer a plan picker**. DP's `UpgradeDialog` is three self-contained
+  cards, each with its own Subscribe button, so there is no shared selection state — the clicked
+  card is the plan bought. `DEFAULT_PLAN_ID` no longer drives this screen (it is still exported).
+- Every price and period comes from `SUBSCRIPTION_PLANS` / `CREDIT_PACKS`, never from the
+  designer markup (S20). DP's own values are wrong in several places — see `DESIGNER-TODO` A15.
+- All three now render through `src/components/ui/DpDialog.tsx`, a shared shell for DP's overlay
+  pattern. It **unmounts when closed** rather than staying mounted with `inert`, because DP's
+  closed state is `opacity: 0; pointer-events: none` — invisible but still focusable. Its header
+  explains when to use which pattern.
 
 **Persistence asymmetry:** the logged-in boolean is the only piece that survives a reload — it's a
 plain external store (`src/lib/authStore.ts`) backed by `localStorage["muse_auth"]`, read via

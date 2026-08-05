@@ -97,6 +97,25 @@ refactors so the project typechecks after each individual edit (add the new befo
 - **Icons (D4).** Migrated screens use DP's `mask-image` + `currentColor`. All 84 of WA's
   `ic_*.svg` filenames already exist in DP's 90, so this is a rename, not a redraw. Convert
   **only the screen you are migrating** — the inline-`<svg>` backlog is not yours to mass-refactor.
+- **But NOT every DP icon is a mask, and guessing wrong renders nothing without erroring.**
+  Read the rule before choosing the tag:
+  - `width`/`height` only, no `mask-*` ⇒ DP paints it as a real `<img>`; use one. A `DpIcon`
+    there is a mask with no background to clip — invisible. (`.credit-balance img`,
+    `.{block}__close-icon`.)
+  - `background: currentColor` + `mask-*` ⇒ `DpIcon`.
+  - the selector names an ELEMENT (`.community-profile__social i`) ⇒ `DpIcon as="i"`. A `<span>`
+    matches no rule at all and computes to 0×0.
+  - a paint modifier exists (`.button__icon` sizes, `.button__icon--mask` paints) ⇒ pass **both**.
+
+  All four were shipped broken at least once. `e2e/behaviour-regressions.spec.ts`'s
+  "every mask icon on a migrated screen has something to clip" sweeps for both failure shapes —
+  **add your route to its list when you migrate one.**
+
+- **DP's choice of TAG is part of the style contract.** Beyond element selectors, swapping an
+  `<a>` for a `<button>` can lose a specificity fight: `.community-profile__menu > button` is
+  (0,1,1) and overrides the white-pill `.community-profile__menu-primary` at (0,1,0), so the
+  migrated menu's primary action silently rendered as a plain transparent row. Keep DP's element
+  and intercept the click for routing (R-9) instead of changing it.
 
 House style in one line:
 

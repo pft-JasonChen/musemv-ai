@@ -12,12 +12,37 @@
 
 ---
 
-## ▶ 下一個 session 從這裡開始(2026-08-05 第三次交接)
+## ▶ 下一個 session 從這裡開始(2026-08-05 第四次交接)
 
-**狀態:16 條 route 移轉了 7 條**(`OWN_CHROME` 是帳本)。
-本次 session 完成:`backdrop-filter` 修復 slice、3b 的 A-1/A-2 收尾、
-**3c**(`/profile` + `/settings`)、**A5 全域修復**、**3d**(`/watch`),
-以及 `docs/designer-todo-handover.html`(給 RD 的交付視圖)。
+**狀態:16 條 route 移轉了 9 條,外加 Credits IAP 三個 modal**(`OWN_CHROME` 是帳本)。
+本次 session 完成:**3e**(`/creator`)、**3f**(Credits IAP:Buy Credits / Upgrade /
+Credits Detail 三個 modal)、**3g**(`/mv/room` 的頁面本體)。
+
+**Phase 3 仍未完成。** 剩下 4 條 route(`/mv/thinking`、`/mv/storyboard`、`/mv/result`、
+`/mv/edit`)、`/song/*` 三個 stage,以及 `/mv/room` 的五個 sheet(3g-2)。
+不是被擋住,是這個 session 的工作量上限 —— 下一個 session 直接從下表接著做。
+
+### ⚠️ 這個 session 修掉的兩個**既有**回歸,兩個都不是這次做壞的
+
+兩個都靠一支新探針找出來,不是靠眼睛也不是靠截圖:
+
+1. **credit pill 的金幣 icon 從 slice 2b 起就是隱形的,每一條已移轉畫面都是。**
+   `CreditBalance.css` 寫的是 `.credit-balance img` —— **element selector,而且沒有 mask
+   treatment**(DP 讓那顆金幣保有自己的金色)。WA 把它移成
+   `<span className="credit-balance__icon">`,那個 class **在任何一支 stylesheet 裡都不存在**:
+   0×0、背景透明、mask 沒有東西可裁 —— **完全不會報錯**。
+2. **`/watch` 的 Create MV 箭頭 icon 同樣是隱形的(slice 3d 起)。**
+   `.button__icon` 只設 16×16,**是 `.button__icon--mask` 才上色**。少帶那個 modifier
+   就是一個 16×16 的洞。
+
+**通則(這是這個 session 最值得帶走的一條):**
+mask icon 有兩種安靜失敗的方式 —— **量到 0×0**(CSS 用 element selector,移植時換了標籤),
+與 **有 mask 但沒有底色可裁**(DP 那顆本來是 `<img>`,移植時當成 mask 搬)。
+兩種都不丟錯誤、都不一定被截圖抓到。
+**`e2e/behaviour-regressions.spec.ts` 的「every mask icon … has something to clip」
+現在會掃五條已移轉 route**,並且已做雙向 mutation 測試(把修復改回去→紅,改回來→綠)。
+
+### 剩下的 route,以及每一條已知的坑
 
 ### ⚡ A5 已經不再擋任何東西 —— 這是最重要的一件事
 
@@ -28,15 +53,102 @@
 
 ### 剩下 9 條 route + Credits IAP,以及每一條已知的坑
 
-| 順序 | route | DP 來源 | 開工前要知道的 |
-| --- | --- | --- | --- |
-| 1 | `/creator` | `CommunityProfilePage`(237 行 + 59 行 CSS) | ⚠️ **DP 的每項選單多了 Publish / Download / Delete / Edit 四個動作,WA 這個畫面沒有**(WA 的 publish 在 History)。照搬 = 上線四顆按不動的按鈕,是「掉 affordance」的鏡像。**要先決定哪幾個接真行為、哪幾個不搬。** DP 還用 `window.history.replaceState` 換 tab,要改成 state(3b 的教訓:寫 URL 就是跳頁)。 |
-| 2 | Credits IAP | `CreditsPage` + `CreditsDialog` + `UpgradeDialog` | 價格以 code 為準(S20,DP 寫 $9.99 是錯的)。非 route,是 modal。 |
-| 3 | `/mv/room` | `MVCreatePage`(2354 行 CSS,**最大**) | 含 TrimAudioSheet、face picker、5 個 sheet。S2 的 30 秒下限要保留(DP 沒有)。建議自己再拆成 2–3 個 slice。 |
-| 4 | `/mv/thinking` + `/mv/storyboard` | `MVStoryboardPage` 的兩個 stage | 同一支檔兩個狀態,一起做。 |
-| 5 | `/mv/result` | `MVResultPage` | `@needs-figma-recheck`。DP 有 20×20 的控制項(A10),不到 AA。 |
-| 6 | `/mv/edit` | `MVEditPage`(1054 行 CSS) | ⚠️ **DP 這一頁在 vendored 副本裡跑不起來(A12),連 1440 都是白畫面**,所以**沒有人看過它的任何寬度**。開工前先想辦法讓它 render,否則是盲搬。 |
-| 7 | `/song/create` + `/song/creating` + `/song/result` | `SongCreatePage` 三個 stage | S4 拿掉 BPM/Key。`SongResult` 待 Figma 覆核。 |
+| 順序     | route                                              | DP 來源                                           | 開工前要知道的                                                                                                                                                                                                                                                                                                              |
+| -------- | -------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~1~~ ✅ | `/creator`                                         | `CommunityProfilePage`(237 行 + 59 行 CSS)        | **已完成(Slice 3e,2026-08-05)。** 產品負責人拍板:**六個動作全部接真行為**,沿用 `/history` 既有的 `downloadFile` / 刪除確認 / PublishDialog,所以畫面與 DP 一致而且沒有死按鈕(DP 自己的 Download 與 Delete 是空的)。四件沒照搬的見元件檔頭註解。**這一支學到兩件會一直用到的事,見下方「3e 的兩個 cascade 陷阱」。**           |
+| ~~2~~ ✅ | Credits IAP                                        | `CreditsPage` + `CreditsDialog` + `UpgradeDialog` | **已完成(Slice 3f)。** 三個 modal 全部換上 DP 外觀,數字全部走 WA 常數(S20)。**DP 的價格錯兩處以上,而且三張卡片都寫死 `/ week` —— 含 Yearly**,照搬會上線一個「$59.99 每週」的方案;已用 `per` 逐案輸出。DP 沒有的 CR-05(已訂閱狀態、Restore Purchases)與 CR-06(非訂閱者不得進 Buy Credits)全部保留。新增共用元件 `DpDialog`。 |
+| ~~3~~ 🟡 | `/mv/room`                                         | `MVCreatePage`(2354 行 CSS,**最大**)              | **頁面本體已完成(Slice 3g)。五個 sheet 還沒搬 —— 見下方 3g-2。** S2 的 30 秒下限、GL-01 導購、`resetForNewMv`、MV-02 匯入驗證、`api.enhancePrompt` 全部保留並有測試。DP 的 per-photo 名稱已補上,**放頁面 local state**(DP 自己也是),因為 `CharacterPhotoSchema` 是凍結的 C2 契約面。                                        |
+| 4        | `/mv/thinking` + `/mv/storyboard`                  | `MVStoryboardPage` 的兩個 stage                   | 同一支檔兩個狀態,一起做。                                                                                                                                                                                                                                                                                                   |
+| 5        | `/mv/result`                                       | `MVResultPage`                                    | `@needs-figma-recheck`。DP 有 20×20 的控制項(A10),不到 AA。                                                                                                                                                                                                                                                                 |
+| 6        | `/mv/edit`                                         | `MVEditPage`(1054 行 CSS)                         | ⚠️ **DP 這一頁在 vendored 副本裡跑不起來(A12),連 1440 都是白畫面**,所以**沒有人看過它的任何寬度**。開工前先想辦法讓它 render,否則是盲搬。                                                                                                                                                                                   |
+| 7        | `/song/create` + `/song/creating` + `/song/result` | `SongCreatePage` 三個 stage                       | S4 拿掉 BPM/Key。`SongResult` 待 Figma 覆核。                                                                                                                                                                                                                                                                               |
+
+### ⛔ G7 獨立驗收:**這三支 slice 都還沒有跑**
+
+產品負責人 2026-08-05 拍板:每支 slice 只跑自動 gate,**六寬度並排比對(G5-b)與 G7 獨立驗收
+改成 Phase 3 結束時一次做完**(§10 本來就寫 G7 是「每個 Phase」)。
+**Phase 3 還沒結束,所以 G7 還沒跑,這一格現在是空的 —— 不是 PASS。**
+
+這一節照 §10.7 的規矩寫:**驗收結論在報告到手之前一個字都不要填。**
+前三次獨立驗收每一次都在建置者自報「全綠」之後才挖出東西,這一次的自動 gate 同樣全綠
+(見下),而那**不是**驗收。
+
+已跑完並全綠的是:`typecheck` / `lint` / `test:run`(84)/ `build`、
+`guard-greps.sh`、`check-designer-css.mjs`(28 支檔逐位元組相同)、
+`check-rd-changelog.sh`(C1–C8 零改動)、`e2e` **124/124**、
+`e2e:visual` 重錄後全綠。
+
+**下一個 session 要記得:Phase 3 收尾時 G7 要涵蓋 3e/3f/3g 三支,不只是最後那一支。**
+而且要從 `web-app/` 起 session 才拿得到具名的 `a11y-checker` / `design-reviewer`。
+
+### 視覺基準:這次重錄了 7 個畫面 × 6 個寬度 = 42 張,**全部是 `-linux`**
+
+紅掉的剛好是 7 個畫面,而且**其中 5 個不是我們改的**:
+
+| 畫面                                                                  | 為什麼變了                                                                                                                                |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `creator`、`mv-room`                                                  | 這次移轉的兩條,理所當然                                                                                                                   |
+| `mv-creating`、`mv-thinking`、`mv-storyboard`、`mv-result`、`mv-edit` | **它們沒有 flow state 時會 `router.replace()` 回 `/mv/room`** —— 所以這五張基準拍到的其實一直都是 MV Room 的畫面,MV Room 一改它們就跟著改 |
+
+**這件事下次還會發生,先記著:**中途 route 的視覺基準拍的是它的 flow guard 目的地,
+不是它自己。改 `/song/create` 的時候,`song-creating` / `song-result` 會用同樣的方式一起紅。
+
+反過來也值得記:`profile` / `settings` / `watch` / `history` / `explore-*` **一張都沒動**,
+即使這次修好了 credit pill 的金幣 icon —— 因為 `visual-baseline.spec.ts` **不 seed auth**,
+那顆藥丸只有登入才會出現。**所以視覺基準完全沒有保護到那個 bug,一次也沒有。**
+
+重錄用 `--update-snapshots=all` 搭 `--grep` 圈住那 7 個畫面(照 `AGENTS.md` 的規則),
+所以 6 個寬度都重寫,不是只補紅掉的那幾張。
+
+### 3g-2:`/mv/room` 的五個 sheet(下一個 session 的第一件事,或排在最後)
+
+3g 只搬了 `.mv-create` 裡面的東西。它開出去的五個覆蓋層 —— Choose Song、Trim Audio、
+Face Picker、Settings、Mode —— **仍然是 WA 既有的 `Modal` 版本,功能完全正常,只是還沒穿上
+DP 的 sheet 外觀**。刻意留成一整支 slice,因為 DP 每一個 sheet 都是有份量的元件
+(光 `SettingsSheet` 就 140 行),而「一半的頁面配一半的 sheet」比兩邊都完整更難 review。
+
+**搬的時候要注意:`TrimAudioSheet` 是 S2 的所在地。** DP 只有 `TRIM_MIN_GAP = 0.08` ——
+**那是整首歌的比例,不是絕對秒數**,所以一首 60 秒的歌它會放行 4.8 秒的片段。
+WA 的 `MIN_TRIM_SEC = 30` 必須留著,`e2e` 的「S2 trim floor」已經在守它。
+
+### 3e 的兩個 cascade 陷阱 —— 兩個都是「畫面不會壞,只會安靜地不對」
+
+搬 `/creator` 時各踩一次,而且**兩個都是六寬度截圖看不出來的那種**,是量出來的:
+
+1. **DP 用 ELEMENT selector 定義 icon 尺寸,換掉標籤就等於把 icon 關掉。**
+   `CommunityProfilePage.css` 寫的是 `.community-profile__social i { width: 12px }` ——
+   `i`,不是 class。`DpIcon` 一律 render `<span>`,所以三顆社群數據 icon 全部變成
+   **0×0**:數字照常出現,icon 安靜地不見,**沒有任何錯誤**。
+   已在 `DpIcon` 加 `as` prop 並把原因寫進它的檔頭。**搬新畫面時先 grep 那支 CSS 有沒有
+   element selector**(`\bi\b`、`> span`、`time`、`strong`),不要假設 class 就夠。
+2. **把 DP 的 `<a>` 改成 `<button>` 會輸掉 specificity。**
+   `.community-profile__menu > button` 是 (0,1,1),白色藥丸的
+   `.community-profile__menu-primary` 是 (0,1,0)。DP 那顆是 `<a>` 所以吃不到前者;
+   改成 button 之後 padding / 背景 / 對齊**全部被更高分的規則蓋掉**,
+   渲染成一顆沒有樣式的透明列 —— 一樣不會報錯。已改回 `<a>` + 攔截 click(R-9 照舊)。
+   **通則:DP 的標籤選擇本身就是樣式契約的一部分,不是實作細節。**
+
+驗證方式也記一下,因為「用看的」對這兩件事都無效:掃 DOM 找**可見卻 0×0 的 mask 元素**,
+以及直接讀 `getComputedStyle` 確認藥丸真的是白底置中。
+
+**3f 之後這一條升級成常設 gate。** 上面第 1 點只是「0×0」那一半;3f 又踩到另一半
+(**有 mask、但沒有底色可裁**),於是把兩種都寫成 `e2e/behaviour-regressions.spec.ts` 裡的
+「every mask icon on a migrated screen has something to clip」,掃五條已移轉 route。
+**搬新畫面時把那條 route 加進去。**
+
+### 一張表:DP 的 icon 什麼時候是 `<img>`、什麼時候是 mask
+
+這是這個 session 反覆踩的同一件事,直接列出來:
+
+| DP 怎麼寫                                       | 你要怎麼搬       | 判斷方法                                                 |
+| ----------------------------------------------- | ---------------- | -------------------------------------------------------- |
+| `<img src={icX} className="…__icon" />`         | **真的 `<img>`** | CSS 那條規則只有 `width/height`,**沒有 mask/background** |
+| `<span style={maskStyle(icX)} className="…" />` | `DpIcon`         | CSS 有 `background: currentColor` + `mask-*`             |
+| `<i style={maskStyle(icX)} />`                  | `DpIcon as="i"`  | CSS 用 element selector(`… i { … }`)                     |
+
+實際踩過的三個:`.credit-balance img`(要 img,搬成了 span)、`.{block}__close-icon`
+(要 img,搬成了 mask)、`.community-profile__social i`(要 `<i>`,搬成了 span)。
+**開工前先 grep 那支 CSS 的 `mask` 與 element selector,再決定標籤。**
 
 ### 三條這個 session 學到、會一直用到的事
 
