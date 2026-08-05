@@ -18,24 +18,39 @@ both `/explore/mvs` (3a) and `/explore/songs` + `/song/play` (3b — one merged 
 plus a mobile full-screen player). `OWN_CHROME` in `src/components/shell/AppShell.tsx` is the
 honest ledger of what has migrated — 4 of the 16 routes in plan §2.1.
 
-**Read `TODO.md` #4 before touching any migrated screen's chrome.** The production build strips
-the standard `backdrop-filter` and keeps only the `-webkit-` prefix, which Chrome 149 ignores —
-so **every frosted-glass surface in the migrated UI (13 of the 19 designer stylesheets) has no
-blur at all.** It is already visibly broken on `/explore/songs` at ≥1024px, where the song list
-scrolls sharply through the navbar's transparent lower half. Found during slice 3b's G7; not a DP
-defect and not 3b's doing; deliberately NOT fixed there because the fix changes every migrated
-screen at once. Do not patch it in `designer-overrides.css`.
+**`TODO.md` #4 is FIXED (2026-08-05, its own slice).** `postcss-restore-backdrop-filter.mjs` puts
+the standard `backdrop-filter` back after `@tailwindcss/postcss` drops it; the bundle went from 27
+prefixed / 8 standard declarations to 27 / 27, and `e2e/backdrop-filter.spec.ts` holds it there.
+**Two things about that fix are load-bearing if you ever touch the CSS pipeline:** the property is
+dropped by lightningcss's declaration MERGING (equal values ⇒ the last declaration wins the prefix
+set), which no target/minify setting turns off — measured across 8 configurations; and the repair
+has to run _after_ Tailwind, because Tailwind is both what inlines the `@import`s and what runs
+lightningcss. Do not "simplify" it by editing the designer stylesheets — they are gated verbatim.
 
-**Slice 3b left two things unfinished, and neither can be self-closed:**
+**Slice 3b's three loose ends are all closed (2026-08-05).** 12 visual baselines re-recorded on
+Linux (exactly 12 files, all `-linux`; the `-darwin` set stays unmaintained on purpose — do NOT
+re-record it to make it green). G7's a11y leg was re-run in an independent context. The
+`backdrop-filter` slice is done.
 
-1. **12 visual baselines need re-recording on Linux** (`explore-songs` / `song-play` × six
-   widths). The `-darwin` set has been unmaintained since the migration began — `git log` on
-   `explore-mvs-1440-darwin.png` stops at `8452d37`, before Phase 1 — so a macOS session cannot
-   produce the line that is actually maintained. Do NOT re-record `-darwin` to make it green.
-2. **G7 independent acceptance has not been run.** Plan §10.7: the building session must not
-   declare PASS. It needs `validation-reviewer` / `design-reviewer` in a fresh context.
+**The visual gate cannot see scroll-dependent bugs.** `visual-baseline.spec.ts` uses
+`fullPage: true`, which captures at scroll offset 0, so nothing is ever behind a sticky navbar.
+115/115 green proved nothing about the missing blur, and the fix changed **zero** baseline pixels
+on 17 routes. Anything that only manifests once the page scrolls — backdrop blur, scroll shadows,
+sticky stacking — has to be checked by scrolling and capturing yourself. This is A4's lesson's
+twin: A4 is "re-recording absorbs a loss", this is "the baseline cannot photograph the loss".
 
-**Next is `/watch`, still blocked by A5.** Two NEW designer blocks came out of 3b: **A7** — DP's
+**Mutation-test a new guard test in BOTH directions.** The first version of
+`e2e/backdrop-filter.spec.ts`'s CSS sweep walked the CSSOM and passed with AND without the fix —
+Chrome discards `-webkit-backdrop-filter` at parse time, so `getPropertyValue` returns empty for
+exactly the rules that are broken. Reading the test would never have revealed that; running the
+mutation did. A test that cannot fail is worse than no test.
+
+**Next is `/profile` + `/settings`** (product-owner decision, 2026-08-05): `/watch` is still
+blocked by A5, and waiting on the designer would mean idling. Mind R-8 there — `ProfileView.tsx`
+is one of only two real `useT()` consumers, so rewriting its JSX is exactly where hardcoded
+English silently creeps in, and it looks perfect in English.
+
+**Two NEW designer blocks came out of 3b: A7** — DP's
 transport has no shuffle/repeat, contradicting spec `AC-EXP-05`; the product owner chose to
 follow DP, so **code deliberately diverges from spec** until the designer answers. **A8** —
 `TopSongListItem.css` has zero media queries, so at 320px (the minimum supported width) song

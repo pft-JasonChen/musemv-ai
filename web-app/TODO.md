@@ -56,7 +56,31 @@ from 7 (1 high) to **2 moderate**, both from the `postcss` version pinned
 inside `next@16.2.x` itself — upstream, dev-time only, no fix short of a Next
 canary. Re-check after the next Next.js minor.
 
-## 4. The production build strips `backdrop-filter`, so every DP blur is dead (found 2026-08-05, Slice 3b G7)
+## 4. ~~The production build strips `backdrop-filter`, so every DP blur is dead~~ ✅ FIXED 2026-08-05 (found in Slice 3b's G7, fixed in its own slice)
+
+> **Resolved by `postcss-restore-backdrop-filter.mjs`.** Built CSS went from 27 prefixed /
+> 8 standard declarations to 27 / 27. Keep the rest of this entry: the diagnosis below was
+> right about the symptom but wrong about the cause, and the correction is worth having on
+> record. **What actually does it is `@tailwindcss/postcss`, not "the minifier"** —
+> lightningcss (which Tailwind runs internally) merges `backdrop-filter` and
+> `-webkit-backdrop-filter` when their values are equal, and the LAST declaration wins the
+> prefix set. DP writes them standard-first, so the standard form loses.
+>
+> **There is no configuration that turns this off** — measured across 8 lightningcss setups,
+> targets from `defaults` to `safari >= 9`, plus `minify: false`. Every one of them collapses
+> the pair. Source declaration ORDER is the only lever, and that lever is not ours to pull:
+> `src/styles/designer/*.css` are gated verbatim (D1). So the fix is a PostCSS plugin that
+> runs after Tailwind and re-adds the standard property to any rule left with only the
+> prefixed one. It is additive, so the 7 stylesheets that always worked are untouched, and it
+> no-ops if lightningcss ever stops collapsing the pair.
+>
+> **The "re-record baselines" part of the done-condition turned out to be unnecessary, and
+> that is the interesting part.** `e2e:visual` came back 103/103 unchanged on every route
+> except the 12 that were already stale. The gate screenshots `fullPage: true`, which captures
+> at scroll offset 0 — so **nothing is ever behind a sticky navbar** and no `backdrop-filter`
+> can ever affect a baseline pixel. The visual gate is structurally blind to this whole class
+> of bug. It was verified instead with a scrolled A/B at 1024/1440/1920, and locked down by
+> `e2e/backdrop-filter.spec.ts` (mutation-tested: 6/6 red with the plugin removed).
 
 **`backdrop-filter` never renders in a production build.** The CSS minifier in the
 `next build` pipeline keeps the obsolete `-webkit-` prefix and drops the standard
@@ -70,10 +94,10 @@ The source (`src/styles/designer/DetailNavbar.css`, verbatim from DP) declares
 **both**. Only the prefixed one survives — and **Chrome 149 ignores the prefixed
 form entirely**. Measured, in the same browser the e2e suite uses:
 
-| element style                          | computed `backdropFilter` |
-| -------------------------------------- | ------------------------- |
-| `-webkit-backdrop-filter: blur(8px)`   | `none`                    |
-| `backdrop-filter: blur(8px)`           | `blur(8px)`               |
+| element style                        | computed `backdropFilter` |
+| ------------------------------------ | ------------------------- |
+| `-webkit-backdrop-filter: blur(8px)` | `none`                    |
+| `backdrop-filter: blur(8px)`         | `blur(8px)`               |
 
 So this is not a headless artifact and not a DP defect — DP's CSS is correct. It is
 our build pipeline silently removing the only form that works.
@@ -106,3 +130,19 @@ systemic problem and leaves the other twelve.
 `.next/static/chunks/*.css`; a test asserting `getComputedStyle(navbar).backdropFilter
 !== "none"` on a production build so it cannot regress silently; the six widths
 re-checked and baselines re-recorded on Linux.
+
+**How it was actually closed (2026-08-05):**
+
+- `postcss-restore-backdrop-filter.mjs`, wired after `@tailwindcss/postcss`. Bundle went
+  27 prefixed / 8 standard → 27 / 27.
+- `e2e/backdrop-filter.spec.ts` — 5 computed-style cases (`.detail-navbar`, `.room-navbar`,
+  `.sidebar` at 1440; `.mobile-tabbar`, `.mobile-header` at 375) plus a sweep of the shipped
+  CSS text for any rule left with a prefixed declaration and no standard one.
+  **Mutation-tested both ways:** 6/6 red with the plugin removed, 6/6 green with it.
+- **The sweep had to read the stylesheet TEXT, not the CSSOM.** The first version walked
+  `document.styleSheets` and passed in BOTH states — Chrome does not implement
+  `-webkit-backdrop-filter`, so it discards the declaration while parsing and
+  `getPropertyValue("-webkit-backdrop-filter")` returns empty for exactly the rules that are
+  broken. A test that cannot fail is worse than no test; this one was caught by running the
+  mutation, not by reading it.
+- Baselines: only the 12 already-stale ones changed (see the note at the top of this entry).

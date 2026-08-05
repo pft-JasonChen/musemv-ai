@@ -3,40 +3,81 @@
 > **日期:** 2026-08-04
 > **DP(Designer Prototype):** `designer-prototype/`(in-repo,commit `568e64c`,2026-08-04)
 > **WA(Web App):** `web-app/` — 正式交付物
-> **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成;Phase 3 的 3a、3b 完成。**
+> **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成;Phase 3 的 3a、3b 完成,
+> 加上一個不動畫面的修復 slice「3-blur」(`backdrop-filter`,2026-08-05)。**
 > 新 UI 目前涵蓋:全域 shell(側欄 + 手機 chrome)、`/history` 整頁、`/explore/mvs`
 > (justified gallery)、`/explore/songs` + `/song/play`(合併成一個雙欄畫面 + 手機全螢幕播放器)。
 > **`OWN_CHROME` 是誠實的帳本:16 條 route 移轉了 4 條。**
 
 ---
 
-## ▶ 下一個 session 從這裡開始(2026-08-05 交接)
+## ▶ 下一個 session 從這裡開始(2026-08-05 第二次交接)
 
-**先讀這一節,再讀 §4 Phase 3。** 上一個 session 做完 Slice 3b 並跑完 G7。
+**先讀這一節,再讀 §4 Phase 3。** 上一個 session 做完 Slice 3b 並跑完 G7,留下 A-1 / A-2 / A-3
+三筆未結。**這一個 session 把三筆都收掉了**,做法是先做 A-3 那個修復 slice,並把 A-1 併進它的
+基準重錄一次完成。
 
-### A. 3b 的三筆未結,都不是可以自己收掉的
+### A. 3b 的三筆未結 —— 全部已結(2026-08-05)
 
-| #                                                 | 狀態                                                                                                                                                                                                                                                                   | 誰能收                                            |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| **A-1 視覺基準 12 張**                            | `explore-songs` / `song-play` 各六寬度**未重錄**。`visual-baseline.spec.ts-snapshots/` 有 `-linux` 與 `-darwin` 兩套,**移轉以來只有 `-linux` 被維護**(`explore-mvs-1440-darwin.png` 最後一次變更是 `8452d37`,Phase 1 之前)。macOS 上只能產出對不上那條線的 `-darwin`。 | **要在 Linux 環境**跑 `npm run e2e:visual:update` |
-| **A-2 G7 的 a11y leg**                            | `code-reviewer`(FAIL → 已修)與 `design-reviewer`(REMEDIATED)都跑完了;**`a11y-checker` 連續兩次被 API 錯誤中斷,沒有產出報告** —— 這一格是空白,不是 PASS。                                                                                                               | 重跑 `a11y-checker`(§10.7:建置者不得自我認證)     |
-| **A-3 `TODO.md` #4:build 砍掉 `backdrop-filter`** | **影響 19 支 designer stylesheet 中的 13 支**,不是 3b 的問題也不是 DP 的問題。已在 `/explore/songs` ≥1024px 造成實際可見的破圖(列表清晰穿過 navbar)。刻意沒在 3b 修:改 build 設定會一次動到所有已移轉畫面的外觀。                                                      | 自己一個 slice(含六寬度重檢 + 基準重錄)           |
+| #                                                 | 結果                                                                                                                                                 |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A-1 視覺基準 12 張**                            | ✅ **已在 Linux 重錄**。剛好 12 個檔案變動,全部是 `-linux`,`-darwin` 一張沒碰,其餘 17 條 route 的基準一張沒動。                                      |
+| **A-2 G7 的 a11y leg**                            | ✅ **已補跑**(獨立 context 代跑,不是具名的 `a11y-checker` —— 見下面的但書)。結論見 §A.2。                                                            |
+| **A-3 `TODO.md` #4:build 砍掉 `backdrop-filter`** | ✅ **已修**,自己一個 slice。bundle 從 27 prefixed / 8 standard 變成 **27 / 27**。原因與計畫預期的不同,見 §A.3 —— 那三件事都值得下一個 session 知道。 |
 
-> **A-3 不要用 `designer-overrides.css` 把 navbar 塗不透明。** 那是遮症狀,留下另外 12 支。
-> 細節、實測數字與「done 長什麼樣」都寫在 `TODO.md` #4。
+#### A.2 a11y 這一格是誰跑的(重要但書)
 
-### B. 下一個 slice 要先做一個決定
+`a11y-checker` 定義在 `web-app/.claude/agents/`,**只有以 `web-app/` 為 session root 才拿得到**。
+這個 session 的 root 是 repo root,所以名單裡沒有它 —— 這正是 `CLAUDE.md` 那條「web-app 的活要從
+`web-app/` 起 session」在講的事。**A-2 的封鎖原因從「API 錯誤」變成「agent 不在名單裡」。**
+產品負責人拍板:開一個獨立 context 的 general-purpose agent,餵它 `a11y-checker.md` 的原指令。
+這滿足 §10.7「建置者不得自我認證」的**用意**(獨立 context、不是建置者自己蓋章),
+但**它不是那支具名 agent**,所以這裡不寫成「`a11y-checker` PASS」。
+下次要正牌的,從 `web-app/` 起 session。
+
+#### A.3 A-3 的三個實測結論,每一個都跟計畫寫的不一樣
+
+1. **不是「minifier 設定」的問題,改設定救不回來。** 真正做這件事的是
+   `@tailwindcss/postcss` 內部的 lightningcss:它把 `backdrop-filter` 與
+   `-webkit-backdrop-filter` 在值相等時**合併成同一條**,**最後出現的那條決定要留哪個前綴**。
+   DP 一律標準在前、前綴在後,所以標準的那條每次都輸。
+   **實測 8 種 lightningcss 設定**(targets 從 `defaults` 到 `safari >= 9`,外加 `minify: false`)
+   **全部都會塌掉** —— 唯一的變因是原始碼的宣告順序,而那個順序不是我們能動的(D1 verbatim)。
+   所以解法是 `postcss-restore-backdrop-filter.mjs`:跑在 Tailwind **之後**,
+   把只剩前綴的規則補回標準屬性。它是**加法**,本來就正常的 7 支不受影響。
+2. **「會改動所有已移轉畫面的外觀、要全部重錄基準」—— 沒有發生,而且原因很重要。**
+   `e2e:visual` 回來 **103/103 未變**,只有本來就過期的那 12 張是紅的。
+   因為視覺基準用 `fullPage: true`,**是在 scroll 0 拍的 —— sticky navbar 後面永遠沒有東西**,
+   所以 `backdrop-filter` 不可能影響到任何一張基準的像素。
+   **⚠️ 視覺 gate 對這一整類 bug 是結構性失明的**,不是這次剛好沒拍到。
+   真正的驗收是**捲動後的 A/B**(1024 / 1440 / 1920):修之前完全重現回報的破圖
+   (歌曲列與縮圖清晰切過 Back 鍵與 tab pills),修之後那一列被柔化、控制項清楚可讀。
+3. **順手抓到一支「不可能失敗的測試」,是靠變異測試發現的,不是靠讀它。**
+   `e2e/backdrop-filter.spec.ts` 第一版用 `document.styleSheets` 掃 CSSOM,**在修好與沒修好兩種
+   狀態下都是綠的** —— Chrome 根本沒實作 `-webkit-backdrop-filter`,解析時就把那條丟掉,
+   於是 `getPropertyValue("-webkit-backdrop-filter")` 對**正好壞掉的那些規則**回傳空字串。
+   改成用 HTTP 抓 stylesheet **原始文字**來掃才會動。**兩個方向的變異測試都做了:
+   拿掉 plugin 6/6 紅,裝回去 6/6 綠。**
+
+> **原本那條「不要用 `designer-overrides.css` 把 navbar 塗不透明」的禁令,結果是對的而且沒有被違反。**
+> 修的是 build pipeline,`designer-overrides.css` 一個字都沒動。
+
+### B. 下一個 slice = `/profile` + `/settings`(2026-08-05 已拍板)
 
 §4 的順序是 `/watch` → `/profile` + `/settings` → `/creator` → Credits IAP → `/mv/room` → …
 **但 `/watch` 被 `DESIGNER-TODO` A5 擋住**(DP 在 <767px 藏掉所有 navbar,而 `MVDetailPage`
 沒有自己的返回鍵 —— 手機上進得去出不來)。A5 **不**擋 3b,已由實作確認:`SongDetailPage`
-自帶有返回鍵的全螢幕手機播放器。所以兩條路:
+自帶有返回鍵的全螢幕手機播放器。
 
-1. **先解 A5**(要設計師給稿或產品拍板一個返回方案),然後做 `/watch`;或
-2. **跳過 `/watch`,先做 `/profile` + `/settings`** —— 它們不是 detail 畫面,不受 A5 影響。
+**產品負責人決定:跳過 `/watch`,下一個畫面 slice 做 `/profile` + `/settings`。**
+理由:A5 要等設計師給稿,等它就是停工;`/profile` + `/settings` 不是 detail 畫面,不受 A5 影響。
+而且 **`/profile` 是目前僅有的兩個走 `useT()` 的畫面之一**(R-8),移轉它會順便驗證 i18n
+邊界有沒有被破壞 —— 這是別的畫面測不到的。`/watch` 等 A5 有答案再回頭做。
 
-**建議走 2**:A5 要等外部輸入,而 `/profile` 已經是唯一走 `useT()` 的畫面之一(R-8),
-把它移轉掉會同時驗證 i18n 邊界有沒有被破壞。**但這是產品決定,開工前先問。**
+> **開工前先讀 R-8。** i18n 邊界在這一支特別容易被無意間拓寬:`ProfileView.tsx` 是
+> `useT()` 的兩個真實消費者之一,重寫它的 JSX 時很容易把 `t()` 換成硬編英文,
+> 而**那在英文下看起來完全正常**。同樣地也不要順手把 `/settings` 拉進 `useT()` ——
+> 拓寬 scope 是獨立決定,不是 UI port 的副作用。
 
 ### C. 等設計師回覆的四筆(都不擋其他畫面)
 
@@ -53,6 +94,21 @@
    而 R-2 那幾支測試斷言 console 是空的。
 3. **`opacity: 0` 不等於 hidden** —— 仍在 tab order 與 a11y tree 裡。用常駐掛載 + `inert`,
    並且**掃 DOM 驗證**,不要用推論(3b 第一版就漏了同一畫面上的第二個遮罩)。
+
+### D2. 3-blur slice 再留下三條(2026-08-05)
+
+4. **視覺基準是 `fullPage: true`,永遠在 scroll 0 拍 —— 它看不見任何「捲動時才發生」的事。**
+   sticky navbar 後面在 scroll 0 沒有東西,所以 `backdrop-filter`、scroll-shadow、
+   sticky 疊層這一整類問題,基準 115 張全綠也證明不了。要驗它就得自己捲一下再拍。
+   這和 A4 是同一句話的兩面:**A4 是「基準會吸收掉功能損失」,D2-4 是「基準根本拍不到某些損失」。**
+5. **變異測試不只驗「測試會不會抓到 bug」,更會抓到「這支測試根本不可能失敗」。**
+   `backdrop-filter` 的 CSSOM 版掃描在修好與沒修好兩種狀態下都綠 —— 讀它讀不出來,
+   跑一次變異當場現形。**新增守門測試時,兩個方向都跑一次。**
+6. **「build 砍掉了 X」先確認是哪一段 pipeline 砍的,再去找開關。**
+   這次直覺是「minifier 設定 / browserslist」,實測 8 種設定全部無效,
+   真正的行為是 lightningcss 的**宣告合併**(值相等時後者決定前綴),
+   而 `@tailwindcss/postcss` 內部就跑了它 —— 想「跑在它前面修」也不行,
+   因為 `@import` 正是它 inline 的。**先用 20 行 probe 把行為釘死,再決定修哪裡。**
 
 ---
 

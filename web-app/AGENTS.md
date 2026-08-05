@@ -75,6 +75,13 @@ refactors so the project typechecks after each individual edit (add the new befo
   `:root` and consume it via `var()`.
 - Hover/press transitions and the focus-visible ring are applied globally in `globals.css` — don't
   re-add them per component.
+- **`backdrop-filter` only survives the build because of a PostCSS plugin.**
+  `postcss-restore-backdrop-filter.mjs` (wired after `@tailwindcss/postcss`) re-adds the standard
+  property to any rule that lightningcss left with only `-webkit-`. Without it every frosted-glass
+  surface renders flat in production while looking fine in `next dev`. Don't remove it, don't
+  reorder it before Tailwind, and don't "fix it properly" by editing `src/styles/designer/*.css` —
+  those are gated verbatim. Guarded by `e2e/backdrop-filter.spec.ts`; the whole diagnosis is in
+  `TODO.md` #4.
 
 ### Migrating a screen to the designer UI (`docs/redesign-migration-plan.md`)
 
@@ -173,6 +180,14 @@ House style in one line:
   the gate is real but narrower than it looks. It also only scans unprefixed English URLs
   (`discoverRoutes()` strips the `[locale]` segment); the 8 non-English locale trees aren't
   axe-scanned at all.
+- **The visual baseline is captured `fullPage: true`, i.e. at scroll offset 0.** Nothing is ever
+  behind a sticky navbar in those screenshots, so anything that only appears once the page scrolls
+  — backdrop blur, scroll shadows, sticky stacking — cannot show up as a baseline diff. 115/115
+  green is not evidence about those. Scroll and capture yourself instead.
+- **Mutation-test a new guard test in both directions before believing it.** Break the thing it
+  guards and watch it go red, then restore and watch it go green. `e2e/backdrop-filter.spec.ts`'s
+  first CSS sweep read the CSSOM and passed in BOTH states, because Chrome discards
+  `-webkit-backdrop-filter` while parsing — reading the test would never have shown that.
 - E2e selectors are exact UI copy: changing a button label or placeholder requires updating
   `e2e/*.spec.ts`. For localized components (nav, Profile) the copy lives in
   `src/lib/i18n/dictionaries/en.ts`, not the component — editing a dictionary value can break

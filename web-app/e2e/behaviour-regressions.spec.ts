@@ -833,6 +833,14 @@ test("3b / R9: the migrated links carry the locale prefix", async ({ page }) => 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/jpn/explore/songs");
 
+  // `evaluateAll` does NOT auto-wait — it resolves against whatever is in the DOM
+  // at that instant, and returns [] rather than retrying. The `.top-song` rows are
+  // server-rendered but the creator link inside them only exists after hydration
+  // (measured: `.top-song` = 16 immediately, `.top-song__user-row` = 0 until ~100ms),
+  // so this raced hydration and failed ~2 runs in 3. Anchor on the first link first;
+  // `toBeAttached` is the assertion that retries.
+  await expect(page.locator(".top-song__user-row").first()).toBeAttached();
+
   const hrefs = await page
     .locator(".top-song__user-row")
     .evaluateAll((els) => els.map((e) => e.getAttribute("href")));
