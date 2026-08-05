@@ -953,3 +953,47 @@ test("3c: the notification toggle survived the migration", async ({ page }) => {
   await sw.click();
   await expect(sw).toHaveAttribute("aria-checked", "false");
 });
+
+test("3c / G7-1: the Muse Pro row keeps a visible Subscribe CTA, not just a chevron", async ({
+  page,
+}) => {
+  // G7 found this: the migration kept the click target and dropped the pill, so
+  // the only purchase entry point on the screen looked identical to Notifications
+  // and Language. The action working is not the same as the affordance existing.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/profile");
+
+  const pill = page.locator(".account-page__rows .badge").first();
+  await expect(pill).toBeVisible();
+  await expect(pill).toHaveText(/Subscribe|Manage/);
+
+  // An invented modifier would still render — assert it actually picked up styling.
+  const bg = await pill.evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(bg, "the pill must resolve to a real Badge.css modifier").not.toBe("rgba(0, 0, 0, 0)");
+});
+
+test("3c / G7-2: every control on the account screens meets the 24x24 AA floor", async ({
+  page,
+}) => {
+  // WCAG 2.5.8. The edit-profile button arrived at 20x20 from DP's size="XSmall",
+  // a regression from WA's pre-migration 32x32 that only a measurement catches.
+  await login(page);
+  for (const route of ["/profile", "/settings"]) {
+    for (const width of [375, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(route);
+      const small = await page
+        .locator(".account-page button, .account-page a[href]")
+        .evaluateAll((els) =>
+          els
+            .map((el) => {
+              const r = el.getBoundingClientRect();
+              return { cls: (el.className || "").toString().split(" ")[0], w: r.width, h: r.height };
+            })
+            .filter((m) => m.w > 0 && m.h > 0 && (m.w < 24 || m.h < 24)),
+        );
+      expect(small, `${route} @${width} has sub-24px targets`).toEqual([]);
+    }
+  }
+});

@@ -236,15 +236,16 @@ WA 這邊有**兩份真的**清單(`TOP_PICKS_SONGS`、`NEW_SONGS`),所以 Slice
 
 **發現於:** 2026-08-05,把 DP 跑在 375px 逐頁量 `getBoundingClientRect()`。
 
-| DP page           | 控制項                       | 實測尺寸 | 對應 WA slice      |
-| ----------------- | ---------------------------- | -------- | ------------------ |
-| `AccountPage`(根) | `.icon-button`(編輯個人資料) | 20×20    | **`/profile`**     |
-| `SongCreatePage`  | `.toggle-switch__track`      | 36×20    | `/song/create`     |
-| `SongCreatePage`  | `.song-create__idea-btn`     | 51×20    | `/song/create`     |
-| `MVCreatePage`    | `.mv-create__idea-btn`       | 79×20    | `/mv/room`         |
-| `MVResultPage`    | `.mv-result__control-btn`    | 20×20    | `/mv/result`       |
-| `MVResultPage`    | `.toggle-switch__track`      | 36×20    | `/mv/result`       |
-| `HistoryPage`     | 兩個 `<a>`                   | ×18 高   | `/history`(已移轉) |
+| DP page           | 控制項                          | 實測尺寸 | 對應 WA slice                                                 |
+| ----------------- | ------------------------------- | -------- | ------------------------------------------------------------- |
+| `AccountPage`(根) | `.icon-button`(編輯個人資料)    | 20×20    | **`/profile`**                                                |
+| `SongCreatePage`  | `.toggle-switch__track`         | 36×20    | `/song/create`                                                |
+| `SongCreatePage`  | `.song-create__idea-btn`        | 51×20    | `/song/create`                                                |
+| `MVCreatePage`    | `.mv-create__idea-btn`          | 79×20    | `/mv/room`                                                    |
+| `MVResultPage`    | `.mv-result__control-btn`       | 20×20    | `/mv/result`                                                  |
+| `MVResultPage`    | `.toggle-switch__track`         | 36×20    | `/mv/result`                                                  |
+| `HistoryPage`     | 兩個 `<a>`                      | ×18 高   | `/history`(已移轉)                                            |
+| `AccountPage`(根) | `.icon-button`(`size="XSmall"`) | 20×20    | **`/profile`** —— 已移轉,**我方已改用 `--small`(28×28)**,見下 |
 
 - **門檻用的是 24×24(2.5.8 AA),不是 44×44。** 44 是 2.5.5 AAA。第一版量錯用了 44,
   於是把 `.mobile-header__subscribe`(30×30)與 `.mobile-header__account`(28×28)
@@ -253,6 +254,12 @@ WA 這邊有**兩份真的**清單(`TOP_PICKS_SONGS`、`NEW_SONGS`),所以 Slice
   `/account/credits`、`/community-profile` 全部 ≥24×24。
 - **需要的決定:** 這幾個要放大到 24,還是靠加大 hit area(padding / `::after`)?
   後者不動視覺,通常是設計師比較能接受的解法。**我們沒有自己改** —— 這些都在 verbatim stylesheet 裡。
+- **`AccountPage` 那一列是例外,我方已經改了,理由不同:** 其他幾個是 CSS 尺寸,
+  改了就等於改 verbatim stylesheet;但 `IconButton` 的大小是 **JSX 傳的 prop**
+  (`size="XSmall"`),換成 `--small` **一個字都不用動 `IconButton.css`**。
+  而且它不只是不到 AA —— **它同時是 WA 自己的回歸**:移轉前那顆編輯鍵是 32×32。
+  所以這是「還原既有行為」,不是替設計師決定尺寸。**若設計師確認 XSmall 是刻意的,請告知**,
+  我們再改回去並改用加大 hit area 的做法。
 
 ### A11. DP 在 320 / 375 **沒有任何水平溢出** —— 這是好消息,寫下來免得重查
 
@@ -280,6 +287,28 @@ console 是 `TypeError: Cannot read properties of undefined (reading 'id')`(song
   完全沒有人看過 —— 它也在 A5 的 `DetailNavbar` 名單上,只是量不到。
 - 想重跑這個稽核:把 `designer-prototype/` 複製到 repo 外,補 stub,再跑 `vite`。
   **不要在 `designer-prototype/` 裡面補檔**,那是唯讀參考。
+
+### A13. `AccountPage.css` 的 stats 說明文字 **約 3.3–3.8:1**,不到 WCAG AA —— 與 A1 同一類
+
+**發現於:** 2026-08-05,Slice 3c 的 G7 獨立驗收(axe 實測,1440 與 375 兩個寬度都紅)。
+
+`.account-page__stats span`(「Credits」「MVs」「Songs」三個說明字)用
+`--neutral-dark-44`(`rgb(103,103,121)`)壓在頁面深色底上,**約 3.3–3.8:1**,AA 要求 4.5:1。
+
+- **是這次才暴露的,不是重複的 A1 / A9。** `--neutral-dark-44` 在 `src/styles/designer/`
+  底下**只有這一支檔用到** —— `/profile` 是第一條把這個配色帶到線上的 route。
+- **成因在上游。** `AccountPage.css` 與 DP 逐位元組相同(D1 已驗),所以不是我們搬錯。
+- **我們沒有自己挑顏色**,依 A1 的既有慣例。這是設計決定。
+- **需要的決定:** 這三個說明字要調到哪一階?(`--neutral-dark-54` 或更亮?
+  或者這種 caption 級文字要不要有自己的一階?)在那之前,若要先止血,
+  可以在 `designer-overrides.css` 放一條暫時的覆寫 —— 但**要產品先拍板值**,我們不自己選。
+
+> **順帶記一筆給自己的教訓(不是給設計師的):** 這一支在修 G7 finding 1 時,
+> 一度寫了 `badge--brand` / `badge--neutral` 兩個**根本不存在**的 modifier。
+> `Badge.css` 只有 `purple / gold / processing / done / failed / hot / new / sale / popular`。
+> 不存在的 class **不會報錯**,只會安靜地渲染成沒有樣式的 pill —— 正是 A2 記的那個失敗形狀。
+> 已改用真的 modifier,並且該支測試會斷言 pill 的 `backgroundColor` 不是透明,
+> 所以「class 名打錯」這件事現在會被測出來,而不是靠肉眼。
 
 ---
 

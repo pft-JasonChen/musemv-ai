@@ -567,9 +567,34 @@ Credits 開餘額明細 modal(DP 是 `<a href="/account/credits">`,WA 沒有這�
 **元素選擇器**,而 WA 的 Credits 那格必須是 `<button>`(開 modal,不是 route),
 於是完全吃不到樣式。把同一組宣告指到 button 上,**視覺零差異**——這才是重點。
 
+**G7 獨立驗收:PASS WITH FINDINGS —— 三筆,兩筆已修,一筆記給設計師。**
+
+1. **Muse Pro 那一列的 Subscribe / Manage pill 不見了(已修)。** 點擊行為活著,
+   但**唯一的購買入口變得和 Notifications、Language 長得一模一樣**。DP 的那一列本來就只有
+   chevron,而 WA 移轉前有 pill —— 又是「行為留下、affordance 掉了、沒有任何測試會紅」的形狀,
+   與 A7(shuffle/repeat)同一類。已還原,並補測試斷言 pill 的 `backgroundColor` 不是透明。
+2. **編輯個人資料那顆鍵 20×20,不到 WCAG 2.5.8 AA 的 24×24(已修)。** 來自 DP 的
+   `size="XSmall"`,**而且同時是 WA 自己的回歸** —— 移轉前是 32×32。改成 `--small`(28×28),
+   與 `/settings` 的返回鍵一致。因為尺寸是 JSX prop 不是 CSS,**改它不需要動 verbatim stylesheet**。
+   已記進 `DESIGNER-TODO` A10。
+3. **`.account-page__stats` 的三個說明字約 3.3–3.8:1(未修,記成 A13)。** 逐位元組與 DP 相同,
+   成因在上游,依 A1 慣例**不自己挑顏色**。
+
+**修 G7-1 時自己又踩了一次 A2。** 一度寫了 `badge--brand` / `badge--neutral` 兩個**不存在**的
+modifier —— `Badge.css` 只有 purple / gold / processing / done / failed / hot / new / sale / popular。
+不存在的 class 不會報錯,只會安靜渲染成沒有樣式的 pill。**新測試現在會斷言 pill 真的有背景色**,
+所以打錯 class 名這件事從此是測得出來的,不是靠肉眼。
+
+**⚠️ 順帶量到視覺 gate 的第二個結構性盲點(第一個是 §A.3 的 scroll 0)。**
+`maxDiffPixelRatio: 0.002` 是**頁面面積的比例**,所以同一個固定尺寸的元素在寬視窗佔比更小:
+那顆 64×22 的 pill 在 320 / 375 **紅**,在 768 / 1024 / 1440 / 1920 **全部綠** ——
+同一個改動,六個寬度容忍了四個。**這代表桌機基準可以無聲地少掉一個控制項。**
+重錄時要用 `--update-snapshots=all`,否則只會改寫剛好紅掉的那幾張,
+其餘留在 repo 裡繼續代表一個已經不存在的畫面。
+
 **Gate:** typecheck ✓ lint ✓ test:run 84 ✓ build ✓ · `designer:check` 20 檔全 verbatim ✓ ·
 G1-b ✓(`#ffa614` 被硬擋下來,改用 `--premium`)· G2-a ✓ · G4-g ✓ ·
-**e2e 93/93**(89 → +4 本 slice)· `e2e:visual` 115/115,**剛好 12 張變動**
+**e2e 95/95**(89 → +4 本 slice → +2 G7 修正)· `e2e:visual` 115/115,**剛好 12 張變動**
 (`profile` / `settings` 各六寬度),其餘 17 條 route 一張沒動。
 
 #### Slice 3b — `/explore/songs` + `/song/play` ✅ **完成 2026-08-05**

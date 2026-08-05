@@ -184,6 +184,14 @@ House style in one line:
   behind a sticky navbar in those screenshots, so anything that only appears once the page scrolls
   — backdrop blur, scroll shadows, sticky stacking — cannot show up as a baseline diff. 115/115
   green is not evidence about those. Scroll and capture yourself instead.
+- **`maxDiffPixelRatio: 0.002` is a fraction of PAGE AREA, so the visual gate is far less
+  sensitive on wide viewports.** A fixed-size element is a bigger share of a 320px page than of
+  a 1440px one: measured 2026-08-05, restoring a 64×22 pill to `/profile` failed at 320 and 375
+  and **passed at 768/1024/1440/1920** — the same change, tolerated four times out of six. So a
+  control can appear or vanish on the desktop baselines without the gate saying a word. When a
+  screen really changed, re-record with `--update-snapshots=all` scoped by `--grep`; a plain
+  `--update-snapshots` only rewrites the widths that happened to fail and leaves the rest
+  committed as a screen that no longer exists.
 - **Mutation-test a new guard test in both directions before believing it.** Break the thing it
   guards and watch it go red, then restore and watch it go green. `e2e/backdrop-filter.spec.ts`'s
   first CSS sweep read the CSSOM and passed in BOTH states, because Chrome discards

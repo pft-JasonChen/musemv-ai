@@ -172,12 +172,16 @@ export function ProfileView() {
                 <strong>{profile.name}</strong>
                 <span>{profile.email}</span>
               </span>
-              {subscribed && <span className="badge badge--brand">{t("profile.musePro")}</span>}
+              {subscribed && <span className="badge badge--purple">{t("profile.musePro")}</span>}
               <button
                 type="button"
                 onClick={openEdit}
                 aria-label={t("profile.editProfile")}
-                className="icon-button icon-button--xsmall icon-button--tertiary"
+                // G7 finding 2: DP specifies size="XSmall" here, which computes to
+                // 20x20 — under WCAG 2.5.8 AA's 24x24 floor, and a regression from
+                // WA's pre-migration 32x32. `--small` is 28x28 and matches the back
+                // control on /settings. DP's spec is logged as DESIGNER-TODO A10.
+                className="icon-button icon-button--small icon-button--tertiary"
               >
                 <DpIcon name="ic_edit" className="icon-button__icon" />
               </button>
@@ -220,6 +224,20 @@ export function ProfileView() {
                 subscribed
                   ? `${planName ?? t("profile.musePro")} · ${t("profile.validity")}: 2026-08-10`
                   : t("profile.proSubtitle")
+              }
+              // G7 finding 1: DP's row ends in a bare chevron, which makes the only
+              // purchase entry point on this screen look identical to Notifications
+              // and Language. WA had an explicit Subscribe/Manage pill before the
+              // migration; the click target survived the port but the affordance
+              // did not, and nothing would have gone red. Kept, same as the
+              // /settings back control — a working affordance is not decoration.
+              right={
+                // `badge--purple` / `badge--processing` are real modifiers in
+                // Badge.css. An invented one (badge--brand) would not error — it
+                // would just render an unstyled pill, which is A2's failure mode.
+                <span className={`badge ${subscribed ? "badge--processing" : "badge--purple"}`}>
+                  {subscribed ? t("profile.manage") : t("profile.subscribe")}
+                </span>
               }
               onClick={() => (subscribed ? setCreditsDetailOpen(true) : setSubOpen(true))}
             />

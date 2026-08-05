@@ -68,6 +68,20 @@ assuming a screen is unaffected. **And WA sometimes already solves what DP dropp
 had a working Back at every width before the migration, so porting DP verbatim would have deleted
 it on phones. The in-page control stays (`md:hidden`, phones only) until A5 has a designer answer.
 
+**G7 on 3c came back PASS WITH FINDINGS and caught a real affordance regression** — the migration
+kept the Muse Pro row's click target and dropped its Subscribe/Manage pill, so the only purchase
+entry point on the screen looked exactly like Notifications and Language. Nothing would have gone
+red. That is the third time this pattern has bitten (A7's shuffle/repeat, A4's tabs row, now this):
+**when a migrated row loses a trailing control, the behaviour survives and the affordance dies
+silently.** Diff old vs new by control, not by screenshot.
+
+**The visual gate has a SECOND structural blind spot.** `maxDiffPixelRatio: 0.002` is a share of
+page area, so the same fixed-size element is a bigger fraction of a narrow page: restoring a 64×22
+pill failed at 320/375 and **passed at 768 through 1920**. Desktop baselines can lose a control
+without complaint. Re-record a genuinely-changed screen with `--update-snapshots=all` scoped by
+`--grep`, or the widths that happened to pass stay committed as a screen that no longer exists.
+(The first blind spot is `fullPage` capturing at scroll 0 — see above.)
+
 **Next is `/creator`** — but it is on the A5 list too, so decide the back-control question before
 starting it rather than at the end.
 
