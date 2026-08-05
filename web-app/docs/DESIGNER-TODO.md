@@ -296,6 +296,30 @@ console 是 `TypeError: Cannot read properties of undefined (reading 'id')`(song
 - 想重跑這個稽核:把 `designer-prototype/` 複製到 repo 外,補 stub,再跑 `vite`。
   **不要在 `designer-prototype/` 裡面補檔**,那是唯讀參考。
 
+### A13. `AccountPage.css` 的 stats 說明文字 **約 3.3–3.8:1**,不到 WCAG AA —— 與 A1 同一類
+
+**發現於:** 2026-08-05,Slice 3c 的 G7 獨立驗收(axe 實測,1440 與 375 兩個寬度都紅)。
+
+`.account-page__stats span`(「Credits」「MVs」「Songs」三個說明字)用
+`--neutral-dark-44`(`rgb(103,103,121)`)壓在頁面深色底上,**約 3.3–3.8:1**,AA 要求 4.5:1。
+
+- **是這次才暴露的,不是重複的 A1 / A9。** `--neutral-dark-44` 在 `src/styles/designer/`
+  底下**只有這一支檔用到** —— `/profile` 是第一條把這個配色帶到線上的 route。
+- **成因在上游。** `AccountPage.css` 與 DP 逐位元組相同(D1 已驗),所以不是我們搬錯。
+- **我們沒有自己挑顏色**,依 A1 的既有慣例。這是設計決定。
+- **需要的決定:** 這三個說明字要調到哪一階?(`--neutral-dark-54` 或更亮?
+  或者這種 caption 級文字要不要有自己的一階?)在那之前,若要先止血,
+  可以在 `designer-overrides.css` 放一條暫時的覆寫 —— 但**要產品先拍板值**,我們不自己選。
+
+> **順帶記一筆給自己的教訓(不是給設計師的):** 這一支在修 G7 finding 1 時,
+> 一度寫了 `badge--brand` / `badge--neutral` 兩個**根本不存在**的 modifier。
+> `Badge.css` 只有 `purple / gold / processing / done / failed / hot / new / sale / popular`。
+> 不存在的 class **不會報錯**,只會安靜地渲染成沒有樣式的 pill —— 正是 A2 記的那個失敗形狀。
+> 已改用真的 modifier,並且該支測試會斷言 pill 的 `backgroundColor` 不是透明,
+> 所以「class 名打錯」這件事現在會被測出來,而不是靠肉眼。
+
+---
+
 ### A14. `/watch` 移轉後少了 4 個資訊區塊,以及 375px 標題被截斷
 
 **發現於:** 2026-08-05,Slice 3d(`/watch` 移轉)。
@@ -320,30 +344,6 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 > WCAG 2.1.1 缺陷(`TODO.md` #5)。`/watch` 改用 `src/components/ui/SeekBar.tsx`,
 > 有 `role="slider"`、方向鍵 / PageUp / Home / End,並補了測試。
 > **歌曲播放器可以直接改用同一支收掉 #5。**
-
-### A13. `AccountPage.css` 的 stats 說明文字 **約 3.3–3.8:1**,不到 WCAG AA —— 與 A1 同一類
-
-**發現於:** 2026-08-05,Slice 3c 的 G7 獨立驗收(axe 實測,1440 與 375 兩個寬度都紅)。
-
-`.account-page__stats span`(「Credits」「MVs」「Songs」三個說明字)用
-`--neutral-dark-44`(`rgb(103,103,121)`)壓在頁面深色底上,**約 3.3–3.8:1**,AA 要求 4.5:1。
-
-- **是這次才暴露的,不是重複的 A1 / A9。** `--neutral-dark-44` 在 `src/styles/designer/`
-  底下**只有這一支檔用到** —— `/profile` 是第一條把這個配色帶到線上的 route。
-- **成因在上游。** `AccountPage.css` 與 DP 逐位元組相同(D1 已驗),所以不是我們搬錯。
-- **我們沒有自己挑顏色**,依 A1 的既有慣例。這是設計決定。
-- **需要的決定:** 這三個說明字要調到哪一階?(`--neutral-dark-54` 或更亮?
-  或者這種 caption 級文字要不要有自己的一階?)在那之前,若要先止血,
-  可以在 `designer-overrides.css` 放一條暫時的覆寫 —— 但**要產品先拍板值**,我們不自己選。
-
-> **順帶記一筆給自己的教訓(不是給設計師的):** 這一支在修 G7 finding 1 時,
-> 一度寫了 `badge--brand` / `badge--neutral` 兩個**根本不存在**的 modifier。
-> `Badge.css` 只有 `purple / gold / processing / done / failed / hot / new / sale / popular`。
-> 不存在的 class **不會報錯**,只會安靜地渲染成沒有樣式的 pill —— 正是 A2 記的那個失敗形狀。
-> 已改用真的 modifier,並且該支測試會斷言 pill 的 `backgroundColor` 不是透明,
-> 所以「class 名打錯」這件事現在會被測出來,而不是靠肉眼。
-
----
 
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 

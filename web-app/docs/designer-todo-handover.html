@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YouCam Muse — 設計師待辦交付單（RD 用）</title>
+    <style>
+      :root {
+        --bg: #0b0b0d; --panel: #141418; --panel2: #1b1b21; --line: #2a2a33;
+        --text: #f4f4f6; --text2: #a3a3ad; --text3: #74747f;
+        --block: #ff4d4f; --warn: #f59e0b; --ok: #22c55e; --brand: #a855f7; --info: #38bdf8;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f7f7f9; --panel: #fff; --panel2: #f0f0f3; --line: #dcdce3;
+          --text: #17171b; --text2: #55555f; --text3: #83838d;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #0b0b0d; --panel: #141418; --panel2: #1b1b21; --line: #2a2a33;
+        --text: #f4f4f6; --text2: #a3a3ad; --text3: #74747f;
+      }
+      :root[data-theme="light"] {
+        --bg: #f7f7f9; --panel: #fff; --panel2: #f0f0f3; --line: #dcdce3;
+        --text: #17171b; --text2: #55555f; --text3: #83838d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--bg); color: var(--text);
+        font: 15px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      }
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 20px 80px; }
+      h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.02em; }
+      h2 {
+        font-size: 20px; margin: 48px 0 14px; padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      h3 { font-size: 16px; margin: 26px 0 8px; }
+      p, li { color: var(--text2); }
+      strong { color: var(--text); }
+      code {
+        background: var(--panel2); padding: 1px 5px; border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em;
+        color: var(--text); word-break: break-word;
+      }
+      .sub { color: var(--text3); margin: 0 0 22px; }
+      .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+      th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { color: var(--text3); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+      td { color: var(--text2); }
+      .tag {
+        display: inline-block; padding: 2px 8px; border-radius: 999px;
+        font-size: 11px; font-weight: 700; white-space: nowrap;
+      }
+      .t-block { background: rgba(255,77,79,.16); color: var(--block); border: 1px solid rgba(255,77,79,.3); }
+      .t-warn  { background: rgba(245,158,11,.15); color: var(--warn); border: 1px solid rgba(245,158,11,.3); }
+      .t-ok    { background: rgba(34,197,94,.15); color: var(--ok); border: 1px solid rgba(34,197,94,.3); }
+      .t-info  { background: rgba(56,189,248,.15); color: var(--info); border: 1px solid rgba(56,189,248,.3); }
+      .card {
+        background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+        padding: 16px 18px; margin: 14px 0;
+      }
+      .card h3 { margin-top: 0; }
+      .ask {
+        background: var(--panel2); border-left: 3px solid var(--brand);
+        padding: 10px 14px; margin: 12px 0 0; border-radius: 0 8px 8px 0;
+      }
+      .ask strong { color: var(--brand); }
+      .kpi { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 8px; }
+      .kpi div {
+        flex: 1 1 150px; background: var(--panel); border: 1px solid var(--line);
+        border-radius: 10px; padding: 12px 14px;
+      }
+      .kpi b { display: block; font-size: 24px; color: var(--text); }
+      .kpi span { font-size: 12px; color: var(--text3); }
+      ul { padding-left: 20px; }
+      .note { font-size: 13px; color: var(--text3); }
+      footer { margin-top: 60px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--text3); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>設計師待辦交付單</h1>
+      <p class="sub">
+        YouCam Muse 網頁版 — 設計師新版 UI 轉移 · 產生於 2026-08-05 ·
+        來源 <code>web-app/docs/DESIGNER-TODO.md</code>（該檔為工程端的真實來源，本頁是它的交付視圖）
+      </p>
+
+      <div class="kpi">
+        <div><b>7 / 16</b><span>route 已移轉</span></div>
+        <div><b>2</b><span>擋開發（需設計決定）</span></div>
+        <div><b>9</b><span>不擋，但需回覆</span></div>
+        <div><b>4</b><span>完全沒有稿的畫面</span></div>
+      </div>
+
+      <h2>怎麼讀這份文件</h2>
+      <p>
+        每一項都標了<strong>是否擋開發</strong>。多數不擋 —— 工程端會照現況繼續搬，搬到了再回頭補。
+        每一項底下的紫色框是<strong>需要你回覆的那一個問題</strong>，其餘是背景說明。
+      </p>
+      <p class="note">
+        一個共通原則：<code>designer-prototype/</code> 底下的 CSS 在工程端是<strong>逐位元組複製</strong>的，
+        所以「在工程端先改一下」等於下次交稿會被覆蓋回去。凡是顏色、尺寸、版位的決定，都要回到設計稿改。
+      </p>
+
+      <h2>A. 擋開發的兩項</h2>
+
+      <div class="card">
+        <h3><span class="tag t-block">擋</span> A5 — 手機上 detail 畫面沒有任何返回途徑</h3>
+        <p>
+          <code>AppLayout.css</code> 在 &lt;767px 把 <code>.detail-navbar</code> 等整批
+          <code>display:none</code>，而 <code>MobileHeader</code> 沒有 back 控制項。
+          結果是手機上<strong>進得去、出不來</strong>。
+        </p>
+        <p>把 DP 跑在 375px 逐頁量「宣告了 back 但算出來高度是 0」，命中 <strong>5 個畫面</strong>：</p>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>DP 畫面</th><th>對應 route</th><th>375px 實測</th></tr></thead>
+            <tbody>
+              <tr><td><code>MVDetailPage</code></td><td>/watch</td><td>declared=1 visible=0</td></tr>
+              <tr><td><code>AccountPage</code>(settings)</td><td>/settings</td><td>declared=1 visible=0</td></tr>
+              <tr><td><code>CommunityProfilePage</code></td><td>/creator</td><td>declared=1 visible=0</td></tr>
+              <tr><td><code>MVResultPage</code></td><td>/mv/result</td><td>declared=1 visible=0</td></tr>
+              <tr><td><code>MVStoryboardPage</code></td><td>/mv/storyboard</td><td>declared=1 visible=0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          <code>SongDetailPage</code> 是唯一的例外，它自帶一個有返回鍵的全螢幕手機播放器 ——
+          <strong>那正是這題想要的答案的範例</strong>，只是沒有推廣到其他畫面。
+        </p>
+        <p>
+          <span class="tag t-ok">工程端已止血</span>
+          已在自家的 <code>DetailNavbar</code> 元件加一顆手機專用返回鍵（預設開啟，所以新畫面不會被關住），
+          底欄可達的畫面明確關閉。<strong>一個檔案、一個刪除點</strong>，你給稿後即可移除。
+        </p>
+        <div class="ask">
+          <strong>需要你決定：</strong>手機 detail 畫面的返回鍵放哪裡？
+          （MobileHeader 加 back？detail-navbar 手機只留 back 一顆？還是把 SongDetailPage 的頁內返回鍵推廣成通則？）
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="tag t-block">擋</span> B — 四個畫面完全沒有設計稿</h3>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>畫面</th><th>狀況</th></tr></thead>
+            <tbody>
+              <tr><td><code>/mv/creating</code></td><td>DP 完全沒有 MV render 的進度畫面。Song 與 Storyboard 都有 processing 態，唯獨 MV render 沒有</td></tr>
+              <tr><td><code>/share</code>、<code>/share/mv/[id]</code></td><td>只有 <code>ShareDialog</code> 元件，沒有分享落地頁</td></tr>
+              <tr><td>Landing page</td><td>已決定延後；<code>/home</code> 與 <code>/home-review-b</code> 兩版並存未選</td></tr>
+              <tr><td>Profile 頭像上傳 + 裁切</td><td><strong>完全空白。</strong><code>Change Photo</code> 是沒有 onClick 的死按鈕；全套件沒有 <code>type="file"</code>、沒有裁切 UI</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ask">
+          <strong>需要你決定：</strong>這四個要補稿，還是明確排除在本次範圍外？
+          （頭像那項你在 <code>PROJECT_CONTEXT.md</code> 已自述不在 prototype 範圍，但產品需要它。）
+        </div>
+      </div>
+
+      <h2>B. 不擋開發，但需要你回覆</h2>
+
+      <div class="card">
+        <h3><span class="tag t-warn">對比</span> A1 / A9 / A13 — 四處未達 WCAG AA</h3>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>元件</th><th>實測</th><th>需要</th><th>備註</th></tr></thead>
+            <tbody>
+              <tr><td><code>.tabs__tab--active</code></td><td><strong>3.95:1</strong></td><td>4.5:1</td><td>白字壓品牌紫</td></tr>
+              <tr><td><code>.badge--failed</code></td><td><strong>2.55:1</strong></td><td>4.5:1</td><td>疊在封面圖上算，比先前記的嚴重</td></tr>
+              <tr><td><code>.mobile-tabbar__label</code></td><td><strong>3.74:1</strong></td><td>4.5:1</td><td>成因是 <code>opacity:.4</code> 疊在近黑底</td></tr>
+              <tr><td><code>.account-page__stats span</code></td><td><strong>約 3.3–3.8:1</strong></td><td>4.5:1</td><td><code>--neutral-dark-44</code>，僅此一支檔用到</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          這四處是<strong>同一個系統性成因</strong>，不是四個獨立小問題：白字壓品牌紫，以及低不透明度次要文字壓深色底。
+          工程端<strong>沒有自己挑顏色</strong> —— 挑顏色是設計判斷。
+        </p>
+        <div class="ask">
+          <strong>需要你決定（擇一）：</strong>調整處理方式（加深底色 / 改深色文字 / 字級加大到 ≥18px 讓門檻降為 3:1 / 提高不透明度），
+          或明確接受這組例外。
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="tag t-warn">會靜默壞掉</span> A2 — 四個 token 在 <code>tokens.css</code> 裡不存在</h3>
+        <p>
+          <code>--neutral-dark-48</code>、<code>--neutral-dark-15</code>、
+          <code>--line-height-body-s</code>、<code>--font-weight-regular</code> 被引用但從未定義。
+        </p>
+        <p>
+          <strong>這是 CSS 最危險的失敗方式：沒有錯誤、沒有警告、build 照過，元素只是安靜地換了樣子。</strong>
+          工程端已加自動掃描，之後每次交稿會立刻抓到。
+        </p>
+        <div class="ask"><strong>需要你決定：</strong>這四處原本想用哪個值？是打錯字（48 → 44 或 54？），還是 tokens 少了這幾階？</div>
+      </div>
+
+      <div class="card">
+        <h3><span class="tag t-warn">手機版</span> A8 / A10 / A14 — 手機上的可用性問題</h3>
+        <ul>
+          <li><strong>A8：</strong><code>TopSongListItem.css</code> 一條 media query 都沒有。320px 標題只剩 <strong>1–2 個字元</strong>（「P…」「C…」），375px 約 10 字。手機上這份清單是 Explore 的頂層目的地。</li>
+          <li><strong>A14：</strong><code>.mv-player__title</code> 在 375px 截斷成「Cinemat…」，成因同上。</li>
+          <li><strong>A10：</strong>6 個控制項小於 24×24（WCAG 2.5.8 AA）：<code>toggle-switch__track</code> 36×20、<code>mv-create__idea-btn</code> 79×20、<code>mv-result__control-btn</code> 20×20、<code>song-create__idea-btn</code> 51×20、History 兩個 <code>&lt;a&gt;</code> 高 18。</li>
+        </ul>
+        <p class="note">
+          好消息一併回報：DP 在 320 / 375 <strong>沒有任何水平溢出</strong>，12 條 route 全部量過。版面本身是會縮的。
+        </p>
+        <div class="ask">
+          <strong>需要你決定：</strong>(1) 320–767px 的 song list 與 player title 怎麼排？請給手機 frame。
+          (2) 那 6 個控制項要放大到 24，還是靠加大 hit area（padding / <code>::after</code>，不動視覺）？
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="tag t-info">取捨</span> A6 / A7 / A14 — 稿與 spec 的落差</h3>
+        <ul>
+          <li><strong>A7：</strong>DP 的 transport 沒有 shuffle / repeat，但 spec <code>AC-EXP-05</code> 明文要求。<strong>產品已拍板照 DP</strong>，所以現在 code 是刻意違反 spec 的狀態。</li>
+          <li><strong>A6：</strong><code>SongDetailPage</code> 的 <code>Trending</code> tab 沒有對應資料（稿子自己的註解就說明那是假的）。工程端先不做這個 tab。</li>
+          <li><strong>A14：</strong><code>/watch</code> 移轉後少了 4 個區塊：<code># Music Video</code> 標籤、meta 行、統計（plays/likes/shares）、來源 prompt。已逐條比對 <code>AC-EXP-04</code>，<strong>四者都不在任何 AC 裡，所以不是 spec 違規</strong>，但 <code>/watch</code> 因此變成純播放器。</li>
+        </ul>
+        <div class="ask">
+          <strong>需要你決定：</strong>A7 請確認 shuffle/repeat 是刻意拿掉；A6 請說明 Trending 要餵什麼資料；
+          A14 若要保留統計 / prompt，請給一個能放它們的版位。
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="tag t-info">數值</span> D — 需要對齊的兩個數字</h3>
+        <ul>
+          <li><strong>S20：</strong>DP 的 <code>UpgradeDialog</code> 寫 <strong>$9.99</strong>，程式碼是 <strong>$19.99</strong>。已拍板以程式碼為準，請下次交稿對齊（其餘兩檔一致）。</li>
+          <li><strong>S2：</strong>spec 要求 MV 音訊 30 秒下限並顯示提示；DP 的 <code>TrimAudioSheet</code> 只有相對比例下限，沒有絕對秒數。已拍板保留 30 秒，<strong>需要對應的錯誤提示視覺</strong>。</li>
+          <li><strong>credits：</strong>DP 有 19 處硬寫 <code>390</code>。工程端會接真實餘額 —— 不需要你改，但<strong>餘額不足 / 歸零的視覺狀態目前沒有稿</strong>。</li>
+        </ul>
+        <div class="ask"><strong>需要你決定：</strong>30 秒下限的錯誤提示、以及餘額不足 / 歸零的狀態，各需要一張稿。</div>
+      </div>
+
+      <div class="card">
+        <h3><span class="tag t-info">其他</span> A3 / A4 / A12</h3>
+        <ul>
+          <li><strong>A3：</strong><code>HistoryPage.css</code> 的斷點是 480 / 767 / 900 / 1200，與議定的六階（320 / 375 / 768 / 1024 / 1440 / 1920）只有 767 對得上。是刻意還是疏漏？</li>
+          <li><strong>A4：</strong><code>AppLayout.css</code> 的手機規則把 navbar 的 <strong>tabs 列</strong>一起藏掉，導致 History 的篩選（含有 spec 的 Liked）在手機上整組消失。判斷是疏漏 —— 因為 <code>RoomNavbar.css</code> 自己就為那一列寫了手機樣式，只是被蓋掉了。工程端已用 override 暫時放回。<strong>請下次交稿讓 tabs 列在 &lt;767px 保持顯示。</strong></li>
+          <li><strong>A12：</strong>交付的 DP 副本<strong>跑不起來</strong>（缺 25 個媒體檔，vite 在 import 階段就失敗）。工程端補 stub 後 12/14 條可跑，但 <code>/song-detail</code> 與 <code>/mv-edit</code> 連桌機都是白畫面。<strong><code>/mv/edit</code> 的手機狀況因此沒有任何人看過。</strong></li>
+        </ul>
+      </div>
+
+      <h2>C. 你自述未完成的（照抄，以免遺漏）</h2>
+      <ul>
+        <li>Trim Audio 的精修與移動播放頭</li>
+        <li><code>SongResult</code> 尚待 Figma 覆核</li>
+        <li>Account / Credits / Community Profile / History 的六寬度視覺 pass</li>
+        <li><code>/home-review-b</code> 是暫時的 A/B 路由，選定方向後要刪除</li>
+        <li>Footer 的 Pricing / FAQ 仍是佔位連結</li>
+        <li>MV Create 臉部偵測的四個裁切位置是視覺微調的百分比</li>
+      </ul>
+
+      <h2>D. 工程端已處理，不需要你動作</h2>
+      <p class="note">留一份清單，免得重複討論。</p>
+      <ul>
+        <li>90 個 icon 檔名與原有的 84 個同源，已全數收進並改用 <code>mask-image</code> + <code>currentColor</code></li>
+        <li>檔名含空白只剩 8 個，都在未收進 repo 的 demo 媒體裡</li>
+        <li><code>sessionStorage</code> 登入：維持 <code>localStorage</code>，DP 的 <code>AuthProvider</code> 不搬</li>
+        <li><code>&lt;a href&gt;</code> 整頁導航：一律改成 <code>next/link</code> + locale 前綴，否則非英文語系會壞</li>
+        <li>DP 的進度條沒有鍵盤操作（WCAG 2.1.1），工程端已自建可用鍵盤的版本</li>
+      </ul>
+
+      <footer>
+        本頁由 <code>web-app/docs/DESIGNER-TODO.md</code> 產生，該檔為工程端真實來源。
+        設計師交新版後，依 <code>docs/redesign-migration-plan.md</code> §7 重跑對齊流程並更新兩者。
+      </footer>
+    </div>
+  </body>
+</html>
