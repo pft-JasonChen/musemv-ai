@@ -357,6 +357,21 @@ href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
 
 ### Phase 3 — 畫面(依相依性由低到高)
 
+> **開工前先讀:R-2 的第二個實例已經找到。** `MVDetailPage.tsx:316` 的 `MvGrid` 用了
+> **和 Sidebar 一模一樣**的寫法:
+> `useState(() => typeof window !== 'undefined' ? matchMedia(DESKTOP_QUERY).matches : false)`。
+> 這正是 Slice 2a 實測會拋 **React #418 hydration failed** 的那個 pattern。
+> 全 DP 掃過,這個危險寫法**只出現在兩支檔**:`Sidebar.tsx`(已修)與 `MVDetailPage.tsx`(待修)。
+> 套 §4 Phase 1.5 記錄的模式即可:SSR-safe 初值 + isomorphic `useLayoutEffect`。
+>
+> **`/explore/mvs` 的規模要先知道:** DP 的 `MVDetailPage` 是 436 行 + 330 行 CSS,而且它
+> **一支檔同時涵蓋我們兩條 route** —— 上半的 `.mv-player*` 是 `/watch`,下半的
+> `.mv-detail__grid*`(justified gallery,S15)才是 `/explore/mvs`。兩者要拆成兩個 slice 搬,
+> 不要一次吃掉。另需帶進 `Card` 與 `SectionHeader` 兩個共用元件,以及 `computeJustifiedRows` 的排版計算。
+>
+> `DetailNavbar`(64 行)隨這條 route 一起落地 —— 它是 **Q6「返回導向」第一次真正被實作**:
+> `router.back()`,無歷史時 fallback 到該區入口,不採 DP 的 `?from=` query。
+
 `/history`(已於 1.5 完成)→ `/explore/mvs` → `/explore/songs` → `/watch` → `/song/play` →
 `/profile` + `/settings` → `/creator` → Credits IAP → `/mv/room`(最大)→
 `/mv/thinking` + `/mv/storyboard` → `/mv/result` → `/mv/edit` →
