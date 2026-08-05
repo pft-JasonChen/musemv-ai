@@ -27,10 +27,24 @@ set), which no target/minify setting turns off — measured across 8 configurati
 has to run _after_ Tailwind, because Tailwind is both what inlines the `@import`s and what runs
 lightningcss. Do not "simplify" it by editing the designer stylesheets — they are gated verbatim.
 
-**Slice 3b's three loose ends are all closed (2026-08-05).** 12 visual baselines re-recorded on
-Linux (exactly 12 files, all `-linux`; the `-darwin` set stays unmaintained on purpose — do NOT
-re-record it to make it green). G7's a11y leg was re-run in an independent context. The
-`backdrop-filter` slice is done.
+**Slice 3b's three loose ends: A-1 and A-3 closed, A-2 run but NOT clean (2026-08-05).** 12 visual
+baselines re-recorded on Linux (exactly 12 files, all `-linux`; the `-darwin` set stays unmaintained
+on purpose — do NOT re-record it to make it green). G7's a11y leg was re-run in an independent
+context and came back **PASS WITH FINDINGS**: the blur-restore itself is clean (worst case 7.10:1
+across a 20-point scroll sweep, and both lyrics overlays verified correctly `inert`), but it
+measured two pre-existing **Serious** issues — `.mobile-tabbar__label` at 3.74:1 (→ `DESIGNER-TODO`
+A9) and a playback seek bar with no keyboard operability at all (→ `TODO.md` #5). Neither is fixed.
+
+**`e2e/a11y.spec.ts` has a THIRD blind spot, and it is why the contrast failure survived:** the
+spec never sets a viewport, so it runs at Playwright's desktop default and `.mobile-header` /
+`.mobile-tabbar` / the mobile full-screen player are all `display:none` to axe. The whole
+mobile-only chrome has never been scanned. (The two already-documented gaps are: it doesn't seed
+auth, and it only scans unprefixed English routes.)
+
+**Do not write an independent-review verdict before the review reports.** This session filled in
+"A-2 closed" while the audit was still measuring; the auditing agent saw those edits and explicitly
+declined to treat them as evidence. That is §10.7's failure mode in miniature — the acceptance
+cell stays empty until the report is in hand.
 
 **The visual gate cannot see scroll-dependent bugs.** `visual-baseline.spec.ts` uses
 `fullPage: true`, which captures at scroll offset 0, so nothing is ever behind a sticky navbar.

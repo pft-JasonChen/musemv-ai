@@ -189,6 +189,24 @@ WA 這邊有**兩份真的**清單(`TOP_PICKS_SONGS`、`NEW_SONGS`),所以 Slice
 - 我們**沒有自己改** —— 動 `top-song` 的行內配置就是在替設計師決定版面,
   而且會變成 `designer-overrides.css` 裡一條很難刪的規則。
 
+### A9. `MobileTabBar` 未選中的文字 **3.74:1**,不到 WCAG AA —— 與 A1 同一類,不能自己挑顏色
+
+**發現於:** 2026-08-05,`backdrop-filter` slice 的 G7 獨立 a11y 驗收(axe 實測)。
+
+`.mobile-tabbar__label` 在未選中態量到 **3.74–3.80:1**(`#6d6d6e` / `#6b6b6d` 壓
+`#09090b` / `#0b0b0d`),AA 要求 4.5:1。成因不是顏色本身,而是
+**`.mobile-tabbar__item { opacity: .4 }` 疊在近黑底上**把有效前景色整個拉灰。
+
+- **與 `backdrop-filter` 無關。** 那條 bar 自己的底是 `rgba(9, 9, 11, .95)` —— 95% 不透明,
+  blur 對它的對比幾乎沒有影響。這是**既有**問題,不是 blur 復原造成的。
+- **為什麼一直沒被擋下來:** `e2e/a11y.spec.ts` **從來沒有設 viewport**,跑在 Playwright 的
+  桌機預設寬度,而 `.mobile-tabbar` 在那裡是 `display: none` —— **axe 從來沒有掃過手機 chrome**。
+  這一條要補進 gate,但補之前得先有顏色決定,否則 gate 一加就紅。
+- **需要的決定:** 未選中 tab 的顏色要調到多少?(建議不要靠 `opacity` 壓,直接給一個
+  過得了 4.5:1 的 label 顏色;`opacity` 會連 icon 一起吃掉,而且無法逐項調。)
+- 我們**沒有自己挑顏色** —— 依 A1 的既有慣例,這是設計決定。
+  `MobileTabBar.css` 是 verbatim 的 designer stylesheet(D1),改它會失去 file-level re-sync。
+
 ---
 
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)

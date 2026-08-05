@@ -146,3 +146,41 @@ re-checked and baselines re-recorded on Linux.
   broken. A test that cannot fail is worse than no test; this one was caught by running the
   mutation, not by reading it.
 - Baselines: only the 12 already-stale ones changed (see the note at the top of this entry).
+
+## 5. The playback seek bar cannot be operated by keyboard (found 2026-08-05, G7 a11y audit)
+
+**WCAG 2.1.1 Keyboard, severity Serious.** Both progress tracks on the merged song screen —
+`.now-playing__progress` (desktop) and `.song-detail-mobile-player__progress` (mobile) — are
+plain `<div ref={trackRef} onPointerDown={...}>` in `SongDetailView.tsx`. No `tabIndex`, no
+`role`, no keydown handler; `useSeek` wires only `pointerdown` / `pointermove` / `pointerup`.
+
+Play / Pause / Prev / Next are real `<button>`s and ARE keyboard-operable, so the screen is not
+unusable — but **a keyboard-only user cannot scrub to an arbitrary position at all.**
+
+Found by the independent G7 audit of slice 3b, not by the standing gate: axe cannot detect a
+missing interaction affordance on a `<div>` that claims no role, so this needs the code read or
+a manual keyboard pass. It is 3b's code, not the `backdrop-filter` slice's.
+
+**Done looks like:** `role="slider"` + `tabIndex={0}` + `aria-valuenow` / `aria-valuemin` /
+`aria-valuemax` / `aria-label`, plus Arrow / Home / End key handling — or a styled native
+`<input type="range">`, which gets all of that for free. Either way it needs a behaviour test
+(seek with the keyboard, assert `currentTime` moved), because a screenshot cannot see it.
+
+**Ask before styling:** DP's design has no visible slider thumb affordance. Adding ARIA and key
+handling changes no pixels and is safe; changing how the track LOOKS is a designer decision.
+
+## 6. `e2e/a11y.spec.ts` never sets a viewport, so mobile chrome has never been scanned (found 2026-08-05)
+
+The spec runs at Playwright's default ~1280x720. At that width `.mobile-header`,
+`.mobile-tabbar`, and the mobile full-screen player are all `display: none`, so **axe has never
+seen any of the mobile-only chrome.** This is what let `DESIGNER-TODO` A9 (mobile tab-bar labels
+at 3.74:1) sit undetected.
+
+This is the THIRD documented blind spot in that gate, alongside the two already in `AGENTS.md`:
+it does not seed auth (so four guarded routes show only the sign-in modal to axe), and it only
+scans unprefixed English routes.
+
+**Done looks like:** the spec runs each discovered route at a mobile width as well as a desktop
+one. **Sequencing matters:** adding the mobile pass turns A9's contrast failure into an
+immediate gate failure, so either A9's colour decision lands first, or the mobile pass ships
+with A9 in the exclusion list and a comment pointing at it — the same pattern A1 already uses.
