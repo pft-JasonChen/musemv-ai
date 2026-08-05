@@ -5,8 +5,10 @@
 > **WA(Web App):** `web-app/` — 正式交付物
 > **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成;Phase 3 第一支 `/explore/mvs` 完成。**
 > 新 UI 目前涵蓋:全域 shell(側欄 + 手機 chrome)、`/history` 整頁、`/explore/mvs`
-> (justified gallery)。下一步是 `/explore/songs`。
+> (justified gallery)。**下一步是 Slice 3b(`/explore/songs` + `/song/play`),
+> pre-flight 已做完並記在 §4 Phase 3 的「3b 的 pre-flight」—— 開工直接讀那一節。**
 > ⚠️ **`/watch` 這個 slice 目前被 DESIGNER-TODO A5 擋住**(手機 detail 畫面沒有返回途徑)。
+> **A5 不擋 3b** —— `SongDetailPage` 自帶有返回鍵的全螢幕手機播放器,已讀 code 確認。
 
 ## 這份文件與 `redesign-migration-plan-2026-08-01.md` 的關係
 
@@ -435,6 +437,81 @@ href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
 - 這一支只需要 `TopSongListItem`,**不需要 `ListItem`**(該頁沒用到)。
 - 必須保留 WA 既有行為:歌詞、Create MV from song、share、like、credits 守門。
 
+##### 3b 的 pre-flight(2026-08-05,開工前對 code 實測)
+
+**A5 不擋這一支 —— 已實際讀過 DP 的 code 確認。** `SongDetailPage` 自帶一個全螢幕
+`MobileNowPlaying`(`SongDetailPage.tsx:269-470`),而且它**有自己的返回鍵**
+(`icArrowLeft` → `closeMobilePlayer()`)。`/watch` 之所以被 A5 擋住是因為 `MVDetailPage`
+沒有這個東西,不是因為「所有 detail 畫面都沒有」。清單那一半在手機上是 Explore 的頂層目的地
+(底欄可達),本來就不需要返回鍵。
+
+**手機全螢幕播放器的機制要換掉,行為保持一樣。** DP 是
+`window.history.pushState({...}, '', '/song-detail?id=…')` + `popstate` 監聽 + `history.back()`。
+WA 改成:手機點歌 → `router.push(localePath(locale, '/song/play?id=…'))`,
+**「播放器是否全開」由 `?id=` 是否存在決定**,返回沿用 3a 的 `navHistory.ts`
+(有歷史 → `router.back()`,冷開 → fallback 到 `/explore/songs`)。
+這剛好與「兩條 URL 共用同一畫面」的決定咬合:桌機 `?id=` 只是選中右欄,手機 `?id=` 是全螢幕 ——
+**與 DP 自己的規則一致**(它的註解就寫 explicit `?id=` deep link 直接開全螢幕播放器)。
+`pushState` 與 `popstate` 兩者都不要搬,`window.location.href =` 兩處(`:187`、`:367`,
+指向 creator)一律換成 `next/link` + `localePath()` —— 那兩處會被 G1-b 硬擋。
+
+**SSR 危險讀取在這一支有四處,只有一處是 R-2 的原形:**
+
+| 位置                    | 形狀                                                     | 後果                                                  | 作法                                         |
+| ----------------------- | -------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------- |
+| `:337` / `:468`         | `createPortal(…, document.body)` **render 期無條件執行** | **SSR 直接拋錯**,不是 hydration 不一致 —— 比 R-2 更硬 | mounted flag,掛載後才 portal                 |
+| `:473`                  | render 期讀 `window.location.search`                     | 同 R-2 類(不同形狀)                                   | `useSearchParams` + `<Suspense>`             |
+| `:533`                  | `selectSong` 裡讀 `matchMedia`                           | 在事件處理器內,**其實是安全的**                       | 但仍改走已定的 media-query hook,不要兩套來源 |
+| `:119-123` / `:322-326` | `pointermove`/`pointerup` 在 effect 內                   | 良性(本來就 SSR-safe)                                 | 照搬                                         |
+
+> ⚠️ 第一列是新發現,§4 Phase 3 的 pre-flight 只提到 `matchMedia` 與 `window.location.search`。
+> **`createPortal` 那兩處會讓 `next build` 當場失敗**,不是靜默問題 —— 但也因此不會被漏掉。
+
+**S3 在這一支一併實作(2026-08-05,產品負責人)。** §1.4 早就判定取消 30 秒試聽門檻,
+但 code 從沒改:`CommunitySongPlayer.tsx:22` 與 `SongDetail.tsx:14` 都還有
+`FREE_PREVIEW_SEC = 30`,`e2e/behaviour-regressions.spec.ts:266` 還在斷言**門檻存在**。
+3b 正好重寫其中一支,所以:
+
+- 移轉後的畫面**沒有** 30s 上限、沒有 `maxPct` 夾擠、沒有 seek 觸發的 `SubscribeModal` 導購。
+- **`G5-d #7` 的 preview 半段依 §5 反轉**成「播放不設上限」,清單維持 10 項。
+- **High 畫質(S1)那半段留給 `/mv/room` slice** —— 它住在還沒移轉的畫面,不在這一支動。
+- `SongDetail.tsx`(`/song/result` 用)的 `FREE_PREVIEW_SEC` **本支不動**,它屬後面的 slice。
+
+**音訊改接真的 `<audio>`,URL 在 presentation 層推導(2026-08-05,產品負責人)。**
+`CommunitySongSchema` 是 **C2,凍結**,沒有 `audio` 欄位;而 DP 整個播放器是繞著真 `<audio>` 建的
+(`duration` / `currentTime` / `onEnded` 全來自它)。WA 現況是 `setInterval` 假進度 + 寫死
+`DURATION = 125`。作法**照 3a 的 `ratio` 前例**:在 `community.ts` 依 id 一次指派到現有的
+2 個 mp3(`public/assets/songs/`),**契約零 diff**。等 API 長出 `audio` 欄位再換掉。
+代價已知並接受:所有歌只有 2 種聲音 —— 這是 demo 媒體(U4)的限制,不是這個做法的缺陷。
+
+**Tab 組成:取 3 個,不搬 Trending。** DP 是 4 個
+(`All` / `Top Picks` / `Trending` / `New Releases`),但**它自己的註解說那是假的** ——
+「no real per-tab data exists to actually filter by」,四個 tab 只是把同一份 catalog 用不同方式
+重排。WA 有兩份真資料,所以:`All` ← 兩份合併、`Top Picks` ← `TOP_PICKS_SONGS`、
+`New Releases` ← `NEW_SONGS`,**`Trending` 不做**(沒有對應的真資料)。
+與 3a「兩個 section 接真資料」同一個判斷,記進 `DESIGNER-TODO.md` 問設計師 Trending 要餵什麼。
+
+**歌詞面板:這一支帶 DP 的 `LyricsSheet`(105 行 + 230 行 CSS),WA 既有的 `LyricsPanel` 留著** ——
+它還被未移轉的 `/song/result` 與 `CreationDialog` 用著,刪它是後面 slice 的事。
+
+**預計動到的檔案:**
+
+- **新增** `src/styles/designer/SongDetailPage.css`(965 行)、`TopSongListItem.css`(239)、
+  `LyricsSheet.css`(230)—— 三支逐位元組複製;`src/components/ui/TopSongListItem.tsx`、
+  `src/components/ui/LyricsSheet.tsx`;`src/components/song/SongDetailView.tsx`(合併後的畫面)
+- **改寫** `src/components/community/SongExplore.tsx` 與
+  `src/components/community/CommunitySongPlayer.tsx` 併入上面那一支;
+  `src/app/[locale]/explore/songs/page.tsx`(**目前沒有 `<Suspense>`,要加**)與
+  `src/app/[locale]/song/play/page.tsx` 改指新 view
+- **編輯** `src/styles/designer.css`(+3 `@import`)、`src/components/shell/AppShell.tsx` 的
+  `OWN_CHROME`(+`/explore/songs`、`/song/play`)、`src/lib/mv/community.ts`(推導 audio URL)、
+  `e2e/behaviour-regressions.spec.ts`(反轉 G5-d#7 preview + 新增桌機不跳頁 / 手機全螢幕 / 返回 fallback)
+- **視覺基準** `explore-songs` 與 `song-play` 各六寬度 = 12 張重錄
+
+**這一支的行為測試清單(不能只靠截圖 —— A4 的教訓):** 桌機點歌只換右欄且 URL 不跳頁 ·
+手機點歌開全螢幕且返回回到清單 · 冷開 `?id=` 後返回落在 `/explore/songs` 而非走出 app ·
+免費帳號可播到底(S3)· `?tab=` 選中對應 tab · Create AI Song 的 `requireLogin` 守門仍在。
+
 #### Slice 3a — `/explore/mvs` ✅ **完成 2026-08-05**
 
 範圍照上面的 pre-flight 走:只搬 `MVDetailPage` 的**下半**(`.mv-detail__grid*`),
@@ -496,12 +573,12 @@ Blog、AI Storybook、S9 語言擴充。
 
 08-01 §10 的 G1–G7 continue to apply。本次**只改這四處**:
 
-| Gate          | 修訂                                                                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **G1-b**      | **新增** `<a href="/` grep(R-9)。既有 5 條(`import.meta`、`fetch(`、`MockMuseApi`、`sessionStorage`、`window.location.href=`)全部保留 |
-| **G5-d #7**   | **反轉**:從「Pro 門檻(High 畫質 crown、30 秒試聽)存在」改為「**High 對免費帳號可選、播放不設上限**」。清單維持 10 項                  |
-| **G5-d 新增** | S2(30 秒 trim 下限)與 Q2(中間頁不進歷史)各需一個 e2e                                                                                  |
-| **G2-a**      | 已生效(generator 預設路徑改指 in-repo DP)。此前它在所有非設計者機器上都是靜默 skip                                                    |
+| Gate          | 修訂                                                                                                                                                                                                                                                                                                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **G1-b**      | **新增** `<a href="/` grep(R-9)。既有 5 條(`import.meta`、`fetch(`、`MockMuseApi`、`sessionStorage`、`window.location.href=`)全部保留                                                                                                                                                                                                                      |
+| **G5-d #7**   | **反轉**:從「Pro 門檻(High 畫質 crown、30 秒試聽)存在」改為「**High 對免費帳號可選、播放不設上限**」。清單維持 10 項。**分兩次落地(2026-08-05):播放上限那半段在 Slice 3b 反轉**(它就住在 3b 要重寫的畫面),**High 畫質那半段等 `/mv/room` slice**。在 3b 之前,`e2e/behaviour-regressions.spec.ts:266` 斷言的是**尚未反轉的舊行為** —— 那不是遺漏,是還沒排到 |
+| **G5-d 新增** | S2(30 秒 trim 下限)與 Q2(中間頁不進歷史)各需一個 e2e                                                                                                                                                                                                                                                                                                       |
+| **G2-a**      | 已生效(generator 預設路徑改指 in-repo DP)。此前它在所有非設計者機器上都是靜默 skip                                                                                                                                                                                                                                                                         |
 
 ### 需要 `CHANGELOG-RD.md` 條目的變更
 

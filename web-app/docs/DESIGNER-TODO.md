@@ -107,10 +107,30 @@ DOM 在、`display:none`、使用者完全無法篩選。其中 **Liked 是有 s
 **那個返回鍵在手機上本來就不存在**。計畫的那句敘述需要更正。
 
 - **目前影響:** `/explore/mvs` 不受傷(它本身就是 Explore 的落點,底欄可達)。
-- **之後會受傷:** `/watch`、`/song/play`、`/mv/result`、`/mv/edit` 等 detail 畫面,
-  手機上會走進去出不來。**這擋 `/watch` 那個 slice。**
+- **之後會受傷:** `/watch`、`/mv/result`、`/mv/edit` 等 detail 畫面,手機上會走進去出不來。
+  **這擋 `/watch` 那個 slice。**
+- ✅ **`/song/play` 是例外,不受傷(2026-08-05 讀 code 更正)。** `SongDetailPage` 自己就有一個
+  全螢幕的 `MobileNowPlaying`(`SongDetailPage.tsx:269-470`),而且**它有自己的返回鍵**
+  (`ic_arrow_left` → `closeMobilePlayer()`)。也就是說設計師在**這一個**畫面解決了手機返回,
+  只是解法住在頁面內部而不是 chrome 裡。**這反而是 A5 想要的答案的參考範例** ——
+  問題是它沒有推廣到其他 detail 畫面。
 - **需要的決定:** 手機 detail 畫面的返回要放哪裡?(MobileHeader 加 back?detail-navbar
-  在手機只留 back 一顆?還是別的?)請給稿。
+  在手機只留 back 一顆?還是把 `MobileNowPlaying` 的頁內返回鍵推廣成通則?)請給稿。
+
+### A6. `SongDetailPage` 的 `Trending` tab 沒有對應資料 —— 不擋開發
+
+`SongDetailPage.tsx:31` 有四個 tab(`All` / `Top Picks` / `Trending` / `New Releases`),
+但**該檔自己的註解就說明了那是假的**:「no real per-tab data exists to actually filter by
+(Top Picks/Trending/New Releases aren't distinguished in the song data)」——
+四個 tab 只是把同一份 catalog 用不同方式重排(reverse / A→Z / Z→A)。
+
+WA 這邊有**兩份真的**清單(`TOP_PICKS_SONGS`、`NEW_SONGS`),所以 Slice 3b 的作法是:
+`All` ← 兩份合併、`Top Picks` ← `TOP_PICKS_SONGS`、`New Releases` ← `NEW_SONGS`,
+**`Trending` 先不做**。與 `/explore/mvs` 的兩個 section 接真資料同一個判斷 ——
+寧可少一個 tab,不要用排序假裝一個分類存在。
+
+- **需要的決定:** `Trending` 的定義是什麼?(近 7 天播放成長?總播放數?人工精選?)
+  給了定義我們就能接真資料把它加回來。若它其實只是視覺佔位,請在下次交稿移除。
 
 ---
 
