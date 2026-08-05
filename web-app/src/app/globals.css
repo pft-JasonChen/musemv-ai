@@ -9,6 +9,8 @@
 @import "../styles/token-aliases.css";
 @import "tailwindcss";
 @import "../styles/designer.css";
+/* Patches on DP's verbatim CSS, pending upstream fixes. Must load last. */
+@import "../styles/designer-overrides.css";
 
 /* Map design tokens -> Tailwind v4 theme so utilities resolve to our tokens. */
 @theme inline {

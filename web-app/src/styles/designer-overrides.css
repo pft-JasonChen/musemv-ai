@@ -1,0 +1,39 @@
+/* ============================================================================
+   designer-overrides.css — WA patches on top of DP's verbatim stylesheets.
+
+   WHY THIS FILE EXISTS AT ALL
+     Everything in `src/styles/designer/` is a byte-identical copy of the drop,
+     and `npm run designer:check` enforces that. So when a defect is found in DP's
+     CSS we cannot just fix it there: the check would fail, and the next re-sync
+     would silently revert the fix and take the reasoning with it. The fix belongs
+     upstream in Figma. This file is what we do WHILE WAITING for that.
+
+   THE RULES FOR ADDING ANYTHING HERE — it is a liability, keep it tiny:
+     1. Only for a defect already written up in `docs/DESIGNER-TODO.md`.
+     2. Only when the product owner has decided the value. Not a place to have
+        design opinions.
+     3. One rule, narrowest possible selector, with a comment naming the
+        DESIGNER-TODO entry and the exact condition for DELETING it.
+     4. Delete on the next drop that ships the upstream fix. `designer:check`
+        will not remind you — this list is maintained by hand, so keep it short
+        enough that reading it is cheap.
+
+   Loaded AFTER `designer.css` in globals.css. Same specificity as DP's own rules,
+   so source order decides — which is the whole mechanism. Don't reorder them.
+   ========================================================================== */
+
+/* DESIGNER-TODO A1 — unselected tab contrast.
+   DP ships `color: rgba(255, 255, 255, 0.4)`, which composites to #7a7a7d on
+   #212127 for 3.74:1 at 13px/700, under the 4.5:1 that WCAG AA wants for small
+   text. Product owner decided 2026-08-04: raise it to 0.6, which measures ~6.6:1.
+   DELETE THIS when a drop ships Tabs.css with 0.6 (or another passing value).
+
+   `:not(.tabs__tab--active)` is load-bearing, not tidiness. DP sets the active
+   tab's white text with `.tabs__tab--active`, which has the SAME specificity as
+   a bare `.tabs__tab` — and this file loads later, so a bare selector wins and
+   silently turns the active tab's #ffffff into #dcbbfc (white at 60% over the
+   purple). Caught by measuring after the change; it is exactly the failure rule
+   3 above is about. */
+.tabs__tab:not(.tabs__tab--active) {
+  color: rgba(255, 255, 255, 0.6);
+}
