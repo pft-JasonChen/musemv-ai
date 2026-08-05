@@ -123,25 +123,25 @@
 
 ### 2.1 本次要移轉(16 route + Credits IAP)
 
-| WA route                    | DP 來源                                           | 備註                                         |
-| --------------------------- | ------------------------------------------------- | -------------------------------------------- |
-| `/history`                  | `HistoryPage`                                     | **第一支**,R-1/R-2 spike 用                  |
-| `/explore/mvs`              | `MVDetailPage`                                    | justified gallery(S15,刻意改版)              |
-| `/explore/songs`            | `SongDetailPage` `?tab=New Releases`              | 取其清單區塊                                 |
-| `/watch`                    | `MVDetailPage` `?id=`                             | 取其播放器狀態                               |
-| `/song/play`                | `SongDetailPage`                                  |                                              |
-| `/mv/room`                  | `MVCreatePage`(1,441 行,最大)                     | 含 `TrimAudioSheet`、face picker、5 個 sheet |
-| `/mv/thinking`              | `MVStoryboardPage` `stage='processing'`           |                                              |
-| `/mv/storyboard`            | `MVStoryboardPage` `stage='edit'`                 |                                              |
-| `/mv/result`                | `MVResultPage`                                    | `@needs-figma-recheck`                       |
-| `/mv/edit`                  | `MVEditPage`(785 行)                              | `@needs-figma-recheck`                       |
-| `/song/create`              | `SongCreatePage` `stage='form'`                   | S4 拿掉 BPM/Key                              |
-| `/song/creating`            | `SongCreatePage` `stage='processing'`             |                                              |
-| `/song/result`              | `SongCreatePage` `stage='result'`                 | `@needs-figma-recheck`                       |
-| `/profile`                  | `AccountPage`                                     |                                              |
-| `/settings`                 | `AccountPage` `/account/settings`                 |                                              |
-| `/creator`                  | `CommunityProfilePage`                            |                                              |
-| Credits IAP(modal,非 route) | `CreditsPage` + `CreditsDialog` + `UpgradeDialog` | 價格讀 WA 常數(S20)                          |
+| WA route                    | DP 來源                                           | 備註                                                                                          |
+| --------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `/history`                  | `HistoryPage`                                     | **第一支**,R-1/R-2 spike 用                                                                   |
+| `/explore/mvs`              | `MVDetailPage`                                    | justified gallery(S15,刻意改版)                                                               |
+| `/explore/songs`            | `SongDetailPage` `?tab=New Releases`              | ⚠️ **拆法已改,見 Phase 3 的 Slice 3b** —— 清單無法單獨抽出,與 `/song/play` 共用同一個移轉畫面 |
+| `/watch`                    | `MVDetailPage` `?id=`                             | 取其播放器狀態                                                                                |
+| `/song/play`                | `SongDetailPage`                                  | 與 `/explore/songs` 同一個 slice(3b),同一個畫面                                               |
+| `/mv/room`                  | `MVCreatePage`(1,441 行,最大)                     | 含 `TrimAudioSheet`、face picker、5 個 sheet                                                  |
+| `/mv/thinking`              | `MVStoryboardPage` `stage='processing'`           |                                                                                               |
+| `/mv/storyboard`            | `MVStoryboardPage` `stage='edit'`                 |                                                                                               |
+| `/mv/result`                | `MVResultPage`                                    | `@needs-figma-recheck`                                                                        |
+| `/mv/edit`                  | `MVEditPage`(785 行)                              | `@needs-figma-recheck`                                                                        |
+| `/song/create`              | `SongCreatePage` `stage='form'`                   | S4 拿掉 BPM/Key                                                                               |
+| `/song/creating`            | `SongCreatePage` `stage='processing'`             |                                                                                               |
+| `/song/result`              | `SongCreatePage` `stage='result'`                 | `@needs-figma-recheck`                                                                        |
+| `/profile`                  | `AccountPage`                                     |                                                                                               |
+| `/settings`                 | `AccountPage` `/account/settings`                 |                                                                                               |
+| `/creator`                  | `CommunityProfilePage`                            |                                                                                               |
+| Credits IAP(modal,非 route) | `CreditsPage` + `CreditsDialog` + `UpgradeDialog` | 價格讀 WA 常數(S20)                                                                           |
 
 ### 2.2 不在本次範圍 —— 要回報給設計師的 todo
 
@@ -397,6 +397,43 @@ href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
 **替換** JSX 結構與 class 名;**逐條比對** §8 差異,發現新差異就記錄,不自行決定。
 
 **Gate(每個 route):** G1 + G4 + **G5(含行為回歸清單)** + G6 + G7。
+
+#### Slice 3b — `/explore/songs` + `/song/play`:**§2.1 的拆法在這裡行不通,已改**(2026-08-05)
+
+§2.1 原本把 `/explore/songs` 寫成「取 `SongDetailPage` 的**清單區塊**」,`/song/play` 另外一條。
+**照做會得到半個設計。** `MVDetailPage` 能拆是因為它的播放器是**整寬、疊在**整寬 grid 上面;
+`SongDetailPage` 不是 —— 它在 ≥1024px 是 **1:1 雙欄**:
+
+```css
+@media (min-width: 1024px) {
+  .song-detail {
+    flex-wrap: nowrap;
+  }
+  .song-detail__lists {
+    flex: 0 0 calc(50% - 20px);
+  } /* 清單 = 左半 */
+}
+```
+
+`SongDetailPage.tsx:575-603` 的 `.song-detail__lists` 與 `<NowPlaying>` 是**兄弟節點,
+共用同一份 `activeId` / `playing` / 同一個 `<audio>`**。CSS 註解自己引了 Figma
+1409:34847 / 1778:28997:「兩個等寬 516px 欄位,真正的 1:1」。只搬左欄 =
+1440px 下右半邊空著。
+
+兩邊的模型本來就不同:**WA** 是 `/explore/songs` 清單 → 點擊 `router.push("/song/play?id=")`
+(`SongExplore.tsx:40`);**DP** 是同一個畫面,桌機點歌只換右欄不導航,手機才開全螢幕播放器。
+
+**決定(2026-08-05,產品負責人):兩條 URL 共用同一個移轉畫面。**
+`/explore/songs` 與 `/song/play` 都渲染 DP 完整的 `SongDetailPage`(清單 + 播放器雙欄),
+差別只在 `?id=` / `?tab=`。
+
+- **C7 契約零 diff** —— 兩個 `page.tsx` 都保留,URL 形狀沒變,G4-c 照樣過,
+  現有指向這兩條 URL 的連結全部照常運作。這是選這個做法而不是「合併成一條 route」的關鍵理由。
+- **行為變更:桌機點歌不再跳頁,改成換右欄。** 需要自己的 e2e。
+- **`SongDetailPage.tsx:473` 在 render 期讀 `window.location.search`** —— R-2 同一類的
+  SSR 危險讀取(不同形狀:不是 `matchMedia`)。WA 一律改用 `useSearchParams`。
+- 這一支只需要 `TopSongListItem`,**不需要 `ListItem`**(該頁沒用到)。
+- 必須保留 WA 既有行為:歌詞、Create MV from song、share、like、credits 守門。
 
 #### Slice 3a — `/explore/mvs` ✅ **完成 2026-08-05**
 
