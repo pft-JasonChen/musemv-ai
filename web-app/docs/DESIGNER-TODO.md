@@ -122,6 +122,31 @@ DOM 在、`display:none`、使用者完全無法篩選。其中 **Liked 是有 s
 - **目前影響:** `/explore/mvs` 不受傷(它本身就是 Explore 的落點,底欄可達)。
 - **之後會受傷:** `/watch`、`/mv/result`、`/mv/edit` 等 detail 畫面,手機上會走進去出不來。
   **這擋 `/watch` 那個 slice。**
+
+> #### ⚠️ A5 的實際範圍是 **5 個畫面,不是 1 個**(2026-08-05 實測,把 DP 跑起來量的)
+>
+> 上面「之後會受傷」是推測;現在有數字了。做法:把 DP 跑在 375px,對每一頁掃
+> 「宣告了 back 控制項,但算出來高度是 0」的元素。**DP 有 9 支 page 用 `DetailNavbar`**,
+> 其中 5 支在手機上真的**進得去、出不來**:
+>
+> | DP page                 | WA route         | 375px 量到           |
+> | ----------------------- | ---------------- | -------------------- |
+> | `MVDetailPage`          | `/watch`         | declared=1 visible=0 |
+> | `AccountPage`(settings) | **`/settings`**  | declared=1 visible=0 |
+> | `CommunityProfilePage`  | `/creator`       | declared=1 visible=0 |
+> | `MVResultPage`          | `/mv/result`     | declared=1 visible=0 |
+> | `MVStoryboardPage`      | `/mv/storyboard` | declared=1 visible=0 |
+>
+> 不受傷的(量過,列出來免得重查):`/account` 根頁、`/history`、`/mv-create`、
+> `/song-create` 根本沒宣告 back(它們是 `RoomNavbar` 的頂層落點,底欄可達);
+> `/account/credits` declared=2 **visible=1**(有一顆活的);`/song-detail` 見 A5 既有的例外說明。
+> `MVEditPage`(`/mv/edit`)**沒量到** —— 見 A12,它在 vendored 這份 DP 裡跑不起來。
+>
+> **對計畫的直接影響:`/settings` 也在名單上。** 轉移計畫原本判定
+> 「`/profile` + `/settings` 不是 detail 畫面,不受 A5 影響」——**那句話對 `/profile` 成立,
+> 對 `/settings` 不成立**。DP 的 `/account/settings` 用的就是
+> `<DetailNavbar backHref="/account">`,而它在 375px 是 `display:none`、back 鍵高度 0。
+
 - ✅ **`/song/play` 是例外,不受傷(2026-08-05 讀 code 更正)。** `SongDetailPage` 自己就有一個
   全螢幕的 `MobileNowPlaying`(`SongDetailPage.tsx:269-470`),而且**它有自己的返回鍵**
   (`ic_arrow_left` → `closeMobilePlayer()`)。也就是說設計師在**這一個**畫面解決了手機返回,
@@ -206,6 +231,55 @@ WA 這邊有**兩份真的**清單(`TOP_PICKS_SONGS`、`NEW_SONGS`),所以 Slice
   過得了 4.5:1 的 label 顏色;`opacity` 會連 icon 一起吃掉,而且無法逐項調。)
 - 我們**沒有自己挑顏色** —— 依 A1 的既有慣例,這是設計決定。
   `MobileTabBar.css` 是 verbatim 的 designer stylesheet(D1),改它會失去 file-level re-sync。
+
+### A10. 手機上 6 個控制項小於 24×24(WCAG 2.5.8 AA)—— 依畫面列,不擋開發
+
+**發現於:** 2026-08-05,把 DP 跑在 375px 逐頁量 `getBoundingClientRect()`。
+
+| DP page           | 控制項                       | 實測尺寸 | 對應 WA slice      |
+| ----------------- | ---------------------------- | -------- | ------------------ |
+| `AccountPage`(根) | `.icon-button`(編輯個人資料) | 20×20    | **`/profile`**     |
+| `SongCreatePage`  | `.toggle-switch__track`      | 36×20    | `/song/create`     |
+| `SongCreatePage`  | `.song-create__idea-btn`     | 51×20    | `/song/create`     |
+| `MVCreatePage`    | `.mv-create__idea-btn`       | 79×20    | `/mv/room`         |
+| `MVResultPage`    | `.mv-result__control-btn`    | 20×20    | `/mv/result`       |
+| `MVResultPage`    | `.toggle-switch__track`      | 36×20    | `/mv/result`       |
+| `HistoryPage`     | 兩個 `<a>`                   | ×18 高   | `/history`(已移轉) |
+
+- **門檻用的是 24×24(2.5.8 AA),不是 44×44。** 44 是 2.5.5 AAA。第一版量錯用了 44,
+  於是把 `.mobile-header__subscribe`(30×30)與 `.mobile-header__account`(28×28)
+  誤報成失敗 —— **那兩個是過的**,寫在這裡免得下一個人重複誤判。
+- **量過而且乾淨的:** `/home`、`/mv-detail`、`/mv-storyboard`、`/account/settings`、
+  `/account/credits`、`/community-profile` 全部 ≥24×24。
+- **需要的決定:** 這幾個要放大到 24,還是靠加大 hit area(padding / `::after`)?
+  後者不動視覺,通常是設計師比較能接受的解法。**我們沒有自己改** —— 這些都在 verbatim stylesheet 裡。
+
+### A11. DP 在 320 / 375 **沒有任何水平溢出** —— 這是好消息,寫下來免得重查
+
+同一輪實測順帶量的:12 條 DP route × {320, 375},`documentElement.scrollWidth` **全部等於視窗寬**,
+沒有一個元素超出視窗邊界。**DP 的版面本身是會縮的**,手機問題不是「排版爆掉」,
+而是 A5(沒返回鍵)、A8(文字被截到剩 1–2 字)、A9(對比)、A10(觸控目標)這種
+**不改變 `scrollWidth` 的**失敗。
+
+> ⚠️ **量的方法本身有一次假陰性,值得記下來。** 第一版只量水平溢出,12 條 route 全部「乾淨」——
+> 但 A8 那種「標題被 ellipsis 截到剩 1 個字」根本不影響 `scrollWidth`。
+> 拿已知會壞的 WA `/explore/songs` @320 去反測探針,才確認探針漏了整整 32 個被截斷的元素。
+> **探針要先在已知壞掉的案例上驗過,才能相信它說「乾淨」。**
+
+### A12. vendored 的 DP **跑不起來**,`/song-detail` 與 `/mv-edit` 連桌機都是白畫面
+
+`PROVENANCE.md` 已經寫了「this copy will not `npm run dev` with real media」——
+實測確認,而且比預期嚴重:少的不只是圖,`vite` 直接在 import 階段就失敗。
+
+把 25 個缺檔補成 stub 之後其餘 12 條 route 都正常,但**這兩條在 320 / 375 / 1440 都是白的**,
+console 是 `TypeError: Cannot read properties of undefined (reading 'id')`(song-detail)與
+`reading 'video'`(mv-edit)—— **三個寬度都一樣,所以不是手機問題,是 fixture 依賴被排除的媒體。**
+
+- `/song-detail` 已經移轉完(3b),**WA 那份現在才是可量的基準**,不影響。
+- **`/mv/edit` 那個 slice 開工前要先想辦法把 `MVEditPage` 跑起來**,否則它的手機狀況
+  完全沒有人看過 —— 它也在 A5 的 `DetailNavbar` 名單上,只是量不到。
+- 想重跑這個稽核:把 `designer-prototype/` 複製到 repo 外,補 stub,再跑 `vite`。
+  **不要在 `designer-prototype/` 裡面補檔**,那是唯讀參考。
 
 ---
 

@@ -59,10 +59,17 @@ Chrome discards `-webkit-backdrop-filter` at parse time, so `getPropertyValue` r
 exactly the rules that are broken. Reading the test would never have revealed that; running the
 mutation did. A test that cannot fail is worse than no test.
 
-**Next is `/profile` + `/settings`** (product-owner decision, 2026-08-05): `/watch` is still
-blocked by A5, and waiting on the designer would mean idling. Mind R-8 there — `ProfileView.tsx`
-is one of only two real `useT()` consumers, so rewriting its JSX is exactly where hardcoded
-English silently creeps in, and it looks perfect in English.
+**`/profile` + `/settings` are DONE (slice 3c, 2026-08-05).** `OWN_CHROME` now lists 6 of 16.
+Two things from it are worth carrying forward. **A5 is bigger than the plan said:** it was
+recorded as blocking `/watch` alone, but running DP at 375px and sweeping for "declares a back
+control whose computed height is 0" found **five** screens — `/watch`, `/settings`, `/creator`,
+`/mv/result`, `/mv/storyboard` (DESIGNER-TODO A5 has the table). So check that table before
+assuming a screen is unaffected. **And WA sometimes already solves what DP dropped:** `/settings`
+had a working Back at every width before the migration, so porting DP verbatim would have deleted
+it on phones. The in-page control stays (`md:hidden`, phones only) until A5 has a designer answer.
+
+**Next is `/creator`** — but it is on the A5 list too, so decide the back-control question before
+starting it rather than at the end.
 
 **Two NEW designer blocks came out of 3b: A7** — DP's
 transport has no shuffle/repeat, contradicting spec `AC-EXP-05`; the product owner chose to

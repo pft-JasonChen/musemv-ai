@@ -74,3 +74,36 @@
     display: none;
   }
 }
+
+/* ── Slice 3c: /profile's Credits stat is a button, not a link ──────────────
+   DP's account stats are three `<a>`s: Credits -> /account/credits, MVs and
+   Songs -> the creator page. WA has no /credits route — the balance breakdown
+   is `CreditsDetailModal`, opened in place — so that one entry has to be a
+   `<button>` or it would be a link that goes nowhere.
+
+   `AccountPage.css` styles the row with `.account-page__stats a`, an element
+   selector, so a button matches nothing and loses the whole cell layout. This
+   re-points the same declarations at the button. It is NOT a visual change:
+   the two render identically, which is the point.
+
+   DELETE THIS if a drop ships a class-based selector (e.g. an
+   `.account-page__stats-item` on each cell) instead of the bare `a`. */
+.account-page__stats button {
+  display: flex;
+  height: 67px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.account-page__stats button:hover {
+  background: var(--neutral-dark-09);
+}

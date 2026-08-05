@@ -4,10 +4,11 @@
 > **DP(Designer Prototype):** `designer-prototype/`(in-repo,commit `568e64c`,2026-08-04)
 > **WA(Web App):** `web-app/` — 正式交付物
 > **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成;Phase 3 的 3a、3b 完成,
-> 加上一個不動畫面的修復 slice「3-blur」(`backdrop-filter`,2026-08-05)。**
+> 加上一個不動畫面的修復 slice「3-blur」(`backdrop-filter`),以及 3c(`/profile` + `/settings`),
+> 皆 2026-08-05。**
 > 新 UI 目前涵蓋:全域 shell(側欄 + 手機 chrome)、`/history` 整頁、`/explore/mvs`
 > (justified gallery)、`/explore/songs` + `/song/play`(合併成一個雙欄畫面 + 手機全螢幕播放器)。
-> **`OWN_CHROME` 是誠實的帳本:16 條 route 移轉了 4 條。**
+> **`OWN_CHROME` 是誠實的帳本:16 條 route 移轉了 6 條。**
 
 ---
 
@@ -534,6 +535,42 @@ href 一律用 **WA 自己的 route**(D3),不採 DP 的 `?from=` 方案。
 **替換** JSX 結構與 class 名;**逐條比對** §8 差異,發現新差異就記錄,不自行決定。
 
 **Gate(每個 route):** G1 + G4 + **G5(含行為回歸清單)** + G6 + G7。
+
+#### Slice 3c — `/profile` + `/settings` ✅ **完成 2026-08-05**
+
+DP 來源是 `AccountPage`(219 行 + 73 行 CSS),**一支檔同時是兩條 route** ——
+`/account` 與 `/account/settings` 靠 `isSettings` 分支。WA 本來就是兩個獨立 route,
+所以 DP 那個 render 期讀 `window.location.pathname` 的寫法(R-2 同類)**自然消失**,不需要處理。
+
+**這一支最重要的發現:`/settings` 其實被 A5 擋住,而計畫說它不會。**
+原文寫「`/profile` + `/settings` 不是 detail 畫面,不受 A5 影響」——
+**對 `/profile` 成立,對 `/settings` 不成立**。DP 的 settings 分支用
+`<DetailNavbar backHref="/account">`,而 `DetailNavbar` 在 <767px 是 `display:none`。
+實測 DP 本身:375px 時那顆 back 的 `getBoundingClientRect().height` 是 **0**。
+
+而 **WA 移轉前的 `/settings` 本來就有一顆每個寬度都能用的 Back**
+(`aria-label="Back"` → `router.back()`)。所以照搬 DP = **在手機上刪掉一個本來能用的控制項**,
+正是 A4 那個「重錄基準把功能損失一起收下」的形狀。
+**作法:保留頁內 back(`md:hidden`,只在手機顯示),桌機仍走 `DetailNavbar`。**
+這是**還原 WA 既有行為**,不是自己發明設計;A5 有答案之後再收掉。
+**已做兩個方向的變異測試**:把頁內 back 改成永遠 `hidden` → 該支當場紅在 `toBeVisible`,改回來就綠。
+
+**其餘 WA 行為全部保留,而且都有測試守著:** 通知 toggle(DP 只是一行靜態 "On" + chevron,
+照搬會把一個能用的開關降級成裝飾)· Language 開 9 語系選單(DP 是靜態 "English")·
+Credits 開餘額明細 modal(DP 是 `<a href="/account/credits">`,WA 沒有這條 route)·
+頭像編輯 · 法遵連結 · `AuthGuard`。
+
+**R-8 邊界原封不動。** `/profile` 是僅有的兩個 `useT()` 消費者之一,重寫 JSX 時
+**每一個字串都留在 `t()`**;`/settings` 維持硬編英文,**沒有**順手拉進 `useT()`。
+
+**一條 `designer-overrides.css`。** DP 的 stats 三格用 `.account-page__stats a` 這個
+**元素選擇器**,而 WA 的 Credits 那格必須是 `<button>`(開 modal,不是 route),
+於是完全吃不到樣式。把同一組宣告指到 button 上,**視覺零差異**——這才是重點。
+
+**Gate:** typecheck ✓ lint ✓ test:run 84 ✓ build ✓ · `designer:check` 20 檔全 verbatim ✓ ·
+G1-b ✓(`#ffa614` 被硬擋下來,改用 `--premium`)· G2-a ✓ · G4-g ✓ ·
+**e2e 93/93**(89 → +4 本 slice)· `e2e:visual` 115/115,**剛好 12 張變動**
+(`profile` / `settings` 各六寬度),其餘 17 條 route 一張沒動。
 
 #### Slice 3b — `/explore/songs` + `/song/play` ✅ **完成 2026-08-05**
 

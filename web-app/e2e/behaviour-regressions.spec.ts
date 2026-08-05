@@ -886,3 +886,70 @@ test("3b / A4: the song screen's tabs are usable on a phone", async ({ page }) =
     "true",
   );
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3c — /profile + /settings migrated to DP's AccountPage
+// ════════════════════════════════════════════════════════════════════════════
+
+test("3c / A5: /settings still has a reachable back control on a phone", async ({ page }) => {
+  // THE test for this slice. DP puts Back in DetailNavbar, which AppLayout.css
+  // hides below 767px — measured on DP itself: height 0 at 375px. WA's
+  // pre-migration /settings had a working Back at every width, so porting DP
+  // verbatim would have deleted it on phones and no screenshot would have
+  // complained (A4's lesson). If this goes red, that regression is back.
+  await login(page);
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/profile");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/settings");
+
+  const back = page.getByRole("button", { name: "Back" });
+  await expect(back).toBeVisible();
+  const box = await back.boundingBox();
+  expect(box, "Back must have a real hit area, not a 0-height ghost").not.toBeNull();
+  expect(box!.height).toBeGreaterThan(0);
+
+  await back.click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/profile");
+});
+
+test("3c: the Credits stat opens the balance breakdown instead of navigating", async ({ page }) => {
+  // DP's three stats are all <a>. WA has no /credits route — Credits is a modal —
+  // so that one is a <button>. If it ever becomes a link it would 404 silently.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/profile");
+  await page.getByRole("button", { name: /Credits/ }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page).toHaveURL(/\/profile$/);
+});
+
+test("3c / R-8: the migrated profile still renders through useT()", async ({ page }) => {
+  // /profile is one of only two real useT() consumers. DP hardcodes English, so
+  // the failure mode here is invisible in English: the screen would look perfect
+  // and the other 8 locales would silently lose their dictionary. Asserting the
+  // locale-prefixed tree renders and keeps its prefix is the cheap proxy.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/jpn/profile");
+  // Scoped to the account rows — the Sidebar has its own History link, so an
+  // unscoped match is a strict-mode violation rather than a real assertion.
+  await expect(
+    page.locator(".account-page__rows").getByRole("link", { name: /History/ }),
+  ).toHaveAttribute("href", "/jpn/history");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/jpn/settings");
+});
+
+test("3c: the notification toggle survived the migration", async ({ page }) => {
+  // DP's Notifications row is a static "On" subtitle with a chevron; WA's is a
+  // real switch over real state. Copying DP verbatim would have silently
+  // downgraded a working control into decoration.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/profile");
+  const sw = page.getByRole("switch", { name: /Notifications/i });
+  await expect(sw).toHaveAttribute("aria-checked", "true");
+  await sw.click();
+  await expect(sw).toHaveAttribute("aria-checked", "false");
+});

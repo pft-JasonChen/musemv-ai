@@ -40,7 +40,14 @@ import { MobileTabBar } from "./MobileTabBar";
  * page renders inside the layout, so the layout can only be told which routes to
  * stay out of the way for.
  */
-const OWN_CHROME = ["/history", "/explore/mvs", "/explore/songs", "/song/play"];
+const OWN_CHROME = [
+  "/history",
+  "/explore/mvs",
+  "/explore/songs",
+  "/song/play",
+  "/profile",
+  "/settings",
+];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
