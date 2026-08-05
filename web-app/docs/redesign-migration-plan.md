@@ -8,11 +8,56 @@
 > 皆 2026-08-05。**
 > 新 UI 目前涵蓋:全域 shell(側欄 + 手機 chrome)、`/history` 整頁、`/explore/mvs`
 > (justified gallery)、`/explore/songs` + `/song/play`(合併成一個雙欄畫面 + 手機全螢幕播放器)。
-> **`OWN_CHROME` 是誠實的帳本:16 條 route 移轉了 6 條。**
+> **`OWN_CHROME` 是誠實的帳本:16 條 route 移轉了 7 條。**
 
 ---
 
-## ▶ 下一個 session 從這裡開始(2026-08-05 第二次交接)
+## ▶ 下一個 session 從這裡開始(2026-08-05 第三次交接)
+
+**狀態:16 條 route 移轉了 7 條**(`OWN_CHROME` 是帳本)。
+本次 session 完成:`backdrop-filter` 修復 slice、3b 的 A-1/A-2 收尾、
+**3c**(`/profile` + `/settings`)、**A5 全域修復**、**3d**(`/watch`),
+以及 `docs/designer-todo-handover.html`(給 RD 的交付視圖)。
+
+### ⚡ A5 已經不再擋任何東西 —— 這是最重要的一件事
+
+原本 A5 擋住剩下 10 條裡的 5 條。現在**修在 `DetailNavbar` 一個元件裡**
+(`phoneBack`,預設開),所以 `/creator`、`/mv/result`、`/mv/storyboard`、`/mv/edit`
+**直接可以做,不需要再處理返回鍵** —— 用到 `DetailNavbar` 就自動有。
+底欄可達的畫面才需要明確傳 `phoneBack={false}`。
+
+### 剩下 9 條 route + Credits IAP,以及每一條已知的坑
+
+| 順序 | route | DP 來源 | 開工前要知道的 |
+| --- | --- | --- | --- |
+| 1 | `/creator` | `CommunityProfilePage`(237 行 + 59 行 CSS) | ⚠️ **DP 的每項選單多了 Publish / Download / Delete / Edit 四個動作,WA 這個畫面沒有**(WA 的 publish 在 History)。照搬 = 上線四顆按不動的按鈕,是「掉 affordance」的鏡像。**要先決定哪幾個接真行為、哪幾個不搬。** DP 還用 `window.history.replaceState` 換 tab,要改成 state(3b 的教訓:寫 URL 就是跳頁)。 |
+| 2 | Credits IAP | `CreditsPage` + `CreditsDialog` + `UpgradeDialog` | 價格以 code 為準(S20,DP 寫 $9.99 是錯的)。非 route,是 modal。 |
+| 3 | `/mv/room` | `MVCreatePage`(2354 行 CSS,**最大**) | 含 TrimAudioSheet、face picker、5 個 sheet。S2 的 30 秒下限要保留(DP 沒有)。建議自己再拆成 2–3 個 slice。 |
+| 4 | `/mv/thinking` + `/mv/storyboard` | `MVStoryboardPage` 的兩個 stage | 同一支檔兩個狀態,一起做。 |
+| 5 | `/mv/result` | `MVResultPage` | `@needs-figma-recheck`。DP 有 20×20 的控制項(A10),不到 AA。 |
+| 6 | `/mv/edit` | `MVEditPage`(1054 行 CSS) | ⚠️ **DP 這一頁在 vendored 副本裡跑不起來(A12),連 1440 都是白畫面**,所以**沒有人看過它的任何寬度**。開工前先想辦法讓它 render,否則是盲搬。 |
+| 7 | `/song/create` + `/song/creating` + `/song/result` | `SongCreatePage` 三個 stage | S4 拿掉 BPM/Key。`SongResult` 待 Figma 覆核。 |
+
+### 三條這個 session 學到、會一直用到的事
+
+1. **`e2e:visual` 的容忍值是「頁面面積的比例」**(`maxDiffPixelRatio: 0.002`),
+   所以同一個固定尺寸元素在寬視窗佔比更小 —— 實測一顆 64×22 的 pill 在 320/375 紅、
+   在 768~1920 全綠。**畫面真的改了就用 `--update-snapshots=all` 加 `--grep`**,
+   否則只會改寫剛好紅掉的那幾張,其餘留在 repo 裡代表一個不存在的畫面。
+2. **視覺基準是 `fullPage` 在 scroll 0 拍的**,所以捲動才會發生的事(blur、sticky 疊層)
+   它結構性看不到。要自己捲一下再拍。
+3. **每次獨立驗收都抓到自己回報「全綠」之後才浮出來的東西**,三次都是。
+   §10.7 不是形式。**驗收結論在報告到手之前一個字都不要填。**
+
+### 這個 session 沒做完的,以及為什麼
+
+**Phase 3 沒有完成 —— 只做到 7/16。** 不是被什麼擋住,是 session 的工作量上限。
+每一支 slice 都已 commit 並 push,所以直接從上表第 1 列接著做即可。
+**`/creator` 那個 Publish/Delete 的決定要先問產品**,其餘可以直接開工。
+
+---
+
+## ▶ 下一個 session 從這裡開始(2026-08-05 第二次交接 —— 已過期,保留供追溯)
 
 **先讀這一節,再讀 §4 Phase 3。** 上一個 session 做完 Slice 3b 並跑完 G7,留下 A-1 / A-2 / A-3
 三筆未結。**這一個 session 把三筆都收掉了**,做法是先做 A-3 那個修復 slice,並把 A-1 併進它的
