@@ -17,7 +17,7 @@
 | ------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | **G5-b — design**   | V1–V6, six-width WA-vs-DP comparison                                       | Opened all 116 WA and 42 DP screenshots as images, weighted to 320/375, cropping and pixel-sampling as needed |
 | **G7 — affordance** | B1–B3, control-by-control diff against `5296f1a` (pre-Phase-3) / `6a82ace` | Read the git diff of every migrated component; read the code for each product rule                            |
-| **G7 — a11y**       | A1–A5, live axe + keyboard/focus at 375 **and** 1440                       | _pending — this row stays empty until the report is in hand (§10.7)_                                          |
+| **G7 — a11y**       | A1–A5, live axe + keyboard/focus at 375 **and** 1440                       | **RAN, THEN DISCARDED — its environment was broken. See §6. Still owed.**                                     |
 
 Criteria: `CRITERIA.md` in the evidence pack. Evidence: 116 WA states + 42 DP references at
 320 / 375 / 768 / 1024 / 1440 / 1920.
@@ -38,11 +38,11 @@ review opened no screenshots at all. Where both were silent, the criterion is NO
 | **V4** layout matches DP where a twin exists                                  | **PARTIAL**                  | design PASS on 3g/3h/3i/3j/3k; **3e has no usable DP twin** (see §4) |
 | **V5** no off-palette / unstyled control                                      | **PASS**                     | design — its one FAIL was a harness artefact (§4)                    |
 | **V6** empty / loading / disabled states                                      | **PASS**                     | design                                                               |
-| **A1** WCAG AA contrast                                                       | _pending_                    | a11y                                                                 |
-| **A2** keyboard reach + visible focus ring                                    | _pending_                    | a11y (design: NO EVIDENCE from stills)                               |
-| **A3** dialog role / name / Escape / tab order                                | _pending_                    | a11y                                                                 |
-| **A4** icons actually paint                                                   | _pending_                    | a11y (design's one FAIL was a harness artefact)                      |
-| **A5** touch targets ≥24×24, count did not grow                               | _pending_                    | a11y                                                                 |
+| **A1** WCAG AA contrast                                                       | **NOT RUN**                  | a11y                                                                 |
+| **A2** keyboard reach + visible focus ring                                    | **NOT RUN**                  | a11y (design: NO EVIDENCE from stills)                               |
+| **A3** dialog role / name / Escape / tab order                                | **NOT RUN**                  | a11y                                                                 |
+| **A4** icons actually paint                                                   | **NOT RUN**                  | a11y (design's one FAIL was a harness artefact)                      |
+| **A5** touch targets ≥24×24, count did not grow                               | **NOT RUN**                  | a11y                                                                 |
 | **B1** no control silently lost vs pre-migration                              | **FAIL** — 1 high, 5 med/low | affordance                                                           |
 | **B2** no dead controls                                                       | **FAIL** — 1                 | affordance                                                           |
 | **B3** product rules preserved (S2, GL-01, MV-12, MV-13, MV-08, SONG-03, R-9) | **PASS**, all seven          | affordance                                                           |
@@ -58,19 +58,19 @@ enabled state _first_, so it can actually fail.
 Ranked as the reviewers ranked them. **None of these is a product rule (B3) — they are affordances
 and labels**, which is precisely the class the automated gates cannot see.
 
-| ID        | Sev  | Finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| --------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **3i-1**  | HIGH | **The finished MV can no longer be un-muted.** `5296f1a`'s `MvDetail` used `<video controls>`, so the native bar carried volume. `MvResult.tsx:193` hardcodes `muted` with no state behind it and the hand-built bar has only play/pause, times, seek, fullscreen — the audio of a ~200-credit render is unreachable. `MvEditor.tsx:145/437` got this right on the sibling screen. DP is also muted-with-no-toggle, so this is "ported DP verbatim, lost a WA affordance". |
-| **3g2-1** | MED  | **Settings' Cancel and Confirm are the same action.** `SettingsModal.tsx:68` passes `onConfirm: onClose`, and `MvSheet.tsx:124-138` wires Cancel to `onClose` too. Settings commit on touch, so Cancel cancels nothing. **New with the migration** — the pre-migration `Modal` had no Cancel at all.                                                                                                                                                                       |
-| **3g-3**  | MED  | **"My Creations" over community fixtures.** `MvRoom.tsx:557` and `SongCompose.tsx:364` title the rail "My Creations" when logged in, but render `NEW_MVS` / `TOP_PICKS_SONGS` with other creators' names as the subtitle. Both routes are auth-guarded, so the mislabelled branch is the one nearly every user sees. Pre-migration `TrendingMvsPanel` was honestly titled "Trending from community".                                                                       |
-| **3j-1**  | MED  | **Song Result lost ±15s, leaving no keyboard seek at all.** The transport slots went to prev/next track, and `.song-result__progress` is a bare `<div onPointerDown>`. `useAudioPlayer.nudge` still exists, now unused here.                                                                                                                                                                                                                                               |
-| **3g-1**  | MED  | **MV Room's disabled CTA lost its reason line** ("Add a song and a description to continue."). Not a DP-fidelity constraint — `SongCompose.tsx:362` kept its equivalent inside migrated markup, using a DP class.                                                                                                                                                                                                                                                          |
-| **3k-1**  | MED  | **MV Edit lost the on-screen MV-08 warning** ("Edits aren't saved — Merge MV re-renders…"). The rule is still enforced; only its explanation is gone, and Merge is disabled with no stated reason.                                                                                                                                                                                                                                                                         |
-| **3e-1**  | MED  | **Share is unreachable at ≤767px on a profile you do not own.** `CommunityProfilePage.css:57` hides the Share icon below 768px and the only other Share is inside the owner-gated menu. Pre-migration it lived in the always-rendered More menu.                                                                                                                                                                                                                           |
-| **3e-2**  | MED  | **`/creator` rows collide at 768px.** `.community-profile__social` has no `overflow`/`min-width` constraint (unlike the sibling `__copy > strong`), so a 2–3 digit share count spills into `.community-profile__actions`. Absent at 1024 (room) and below 768 (different layout). Verified in `wa/3e-creator-768.png`.                                                                                                                                                     |
-| **3i-2**  | MED  | **Two new keyboard-inoperable seek bars** (`MvResult.tsx:215`, `MvEditor.tsx:421`), both bare `<div onPointerDown>`. `TODO.md` #5 records this class but scopes itself to slice 3b. On `/mv/result` it is a regression — the pre-migration `<video controls>` was keyboard-seekable.                                                                                                                                                                                       |
-| **3g2-2** | LOW  | Face Picker's explicit **Cancel** is gone. Dismissal survives three other ways (header Close, backdrop, Escape), so nobody is stranded; it is the undocumented part that is the finding.                                                                                                                                                                                                                                                                                   |
-| **3g-2**  | LOW  | **"Change song" survives as a control but not as an affordance** — the explicit `Change` button became a label whose only accessible name is the noun "Song Library" / "Imported Audio".                                                                                                                                                                                                                                                                                   |
+| ID        | Sev  | Status | Finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------- | ---- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **3i-1**  | HIGH | FIXED | **The finished MV can no longer be un-muted.** `5296f1a`'s `MvDetail` used `<video controls>`, so the native bar carried volume. `MvResult.tsx:193` hardcodes `muted` with no state behind it and the hand-built bar has only play/pause, times, seek, fullscreen — the audio of a ~200-credit render is unreachable. `MvEditor.tsx:145/437` got this right on the sibling screen. DP is also muted-with-no-toggle, so this is "ported DP verbatim, lost a WA affordance". |
+| **3g2-1** | MED  | FIXED | **Settings' Cancel and Confirm are the same action.** `SettingsModal.tsx:68` passes `onConfirm: onClose`, and `MvSheet.tsx:124-138` wires Cancel to `onClose` too. Settings commit on touch, so Cancel cancels nothing. **New with the migration** — the pre-migration `Modal` had no Cancel at all.                                                                                                                                                                       |
+| **3g-3**  | MED  | FIXED | **"My Creations" over community fixtures.** `MvRoom.tsx:557` and `SongCompose.tsx:364` title the rail "My Creations" when logged in, but render `NEW_MVS` / `TOP_PICKS_SONGS` with other creators' names as the subtitle. Both routes are auth-guarded, so the mislabelled branch is the one nearly every user sees. Pre-migration `TrendingMvsPanel` was honestly titled "Trending from community".                                                                       |
+| **3j-1**  | MED  | TODO 7a | **Song Result lost ±15s, leaving no keyboard seek at all.** The transport slots went to prev/next track, and `.song-result__progress` is a bare `<div onPointerDown>`. `useAudioPlayer.nudge` still exists, now unused here.                                                                                                                                                                                                                                               |
+| **3g-1**  | MED  | TODO 7h | **MV Room's disabled CTA lost its reason line** ("Add a song and a description to continue."). Not a DP-fidelity constraint — `SongCompose.tsx:362` kept its equivalent inside migrated markup, using a DP class.                                                                                                                                                                                                                                                          |
+| **3k-1**  | MED  | FIXED | **MV Edit lost the on-screen MV-08 warning** ("Edits aren't saved — Merge MV re-renders…"). The rule is still enforced; only its explanation is gone, and Merge is disabled with no stated reason.                                                                                                                                                                                                                                                                         |
+| **3e-1**  | MED  | A18 | **Share is unreachable at ≤767px on a profile you do not own.** `CommunityProfilePage.css:57` hides the Share icon below 768px and the only other Share is inside the owner-gated menu. Pre-migration it lived in the always-rendered More menu.                                                                                                                                                                                                                           |
+| **3e-2**  | MED  | A17 | **`/creator` rows collide at 768px.** `.community-profile__social` has no `overflow`/`min-width` constraint (unlike the sibling `__copy > strong`), so a 2–3 digit share count spills into `.community-profile__actions`. Absent at 1024 (room) and below 768 (different layout). Verified in `wa/3e-creator-768.png`.                                                                                                                                                     |
+| **3i-2**  | MED  | TODO 7a | **Two new keyboard-inoperable seek bars** (`MvResult.tsx:215`, `MvEditor.tsx:421`), both bare `<div onPointerDown>`. `TODO.md` #5 records this class but scopes itself to slice 3b. On `/mv/result` it is a regression — the pre-migration `<video controls>` was keyboard-seekable.                                                                                                                                                                                       |
+| **3g2-2** | LOW  | TODO 7b | Face Picker's explicit **Cancel** is gone. Dismissal survives three other ways (header Close, backdrop, Escape), so nobody is stranded; it is the undocumented part that is the finding.                                                                                                                                                                                                                                                                                   |
+| **3g-2**  | LOW  | TODO 7c | **"Change song" survives as a control but not as an affordance** — the explicit `Change` button became a label whose only accessible name is the noun "Song Library" / "Imported Audio".                                                                                                                                                                                                                                                                                   |
 
 ### Also noted, outside the criteria
 
@@ -118,10 +118,51 @@ Not acceptance. Listed so the numbers are on the same page as the verdicts.
 | `guard-greps.sh`, incl. the raw-hex ratchet | pass                              |
 | `check-designer-css.mjs`                    | pass — 33 files byte-identical    |
 | `check-rd-changelog.sh` (G4-g)              | pass                              |
-| `npm run e2e`                               | 150/150                           |
-| `npm run e2e:visual`                        | 115/115                           |
+| `npm run e2e`                               | 154/154 (+4 new guards)           |
+| `npm run e2e:visual`                        | 115/115 (24 `-linux` re-recorded) |
 | C1–C8 contract diff `5296f1a..HEAD`         | **empty** — see `CHANGELOG-RD.md` |
 
 **What that table is worth is the point of this document.** Every gate above was green while
 eleven affordance findings were sitting in the code, one of them a paid deliverable losing its
 audio. The gates protect the contract and the rules; they have never protected the affordances.
+
+
+---
+
+## 6. The a11y leg ran, and its result was thrown away. Read this before re-running it.
+
+**A1–A5 are NOT RUN.** An audit did run — axe plus DOM sweeps at 375 and 1440 across all 24
+states — and it produced a long, confident, specific report. It was discarded in full, because
+the page it measured was missing its stylesheet.
+
+**How it surfaced.** Its headline finding was `.mv-song-picker__use` painted at `opacity: 0` yet
+still focusable — exactly the trap A2 names, and entirely plausible. Verifying it, the pill
+measured `opacity: 1` on a row that was neither hovered nor active, which contradicted both the
+finding and the CSS source. That contradiction is the only reason any of this was caught.
+
+**What was actually wrong.** The page requested a CSS chunk that returned **500**. The missing
+file was the **238 KB designer stylesheet** — every `.mv-*`, `.song-*`, `.upgrade-dialog__*`
+rule in the product. The server had been started at 08:25 and something rebuilt `.next`
+underneath it at 08:46; `next start` reads its manifest once at boot, so it kept requesting a
+chunk the rebuild had deleted. The audit's two runs finished at 08:43 and 08:46 — inside that
+window. So every contrast ratio, every touch-target measurement and the A2 finding describe a
+barely-styled DOM.
+
+On a correct build the pill reads `opacity: 0` by default and `1` once Tab moves focus into the
+row, at both widths. The finding does not reproduce.
+
+**Two of its findings did survive**, because they are DOM-level and a missing stylesheet cannot
+fake them, and both are fixed: `.mv-edit__scene-versions` carried an `aria-label` on a bare
+`<div>` (role `generic` prohibits it, so the name was dropped from the accessibility tree), and
+`.mv-storyboard__lyrics` scrolled with no keyboard way in.
+
+**Before re-running, prove the CSS loads and say so in the report.** Fetch the page, extract
+every `_next/static/chunks/*.css` it references, and confirm each returns 200 with a non-trivial
+body — one must be ~238 KB. A cheap live assertion works too: `.mv-song-picker__use` must
+compute to `opacity: 0` on a row that is neither hovered nor active. **And never run
+`npm run build` against a running `next start`** — rebuild and restart together.
+
+**The general lesson, which is not about a11y.** A reviewer measuring a broken environment does
+not return an error. It returns findings — plausible, specific, and wrong — and the more
+thorough it is, the more convincing the wrongness. The environment has to be proven before the
+measurements mean anything, and the reviewer is not the one who can prove it.

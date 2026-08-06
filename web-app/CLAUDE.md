@@ -29,11 +29,27 @@ eager glob — **a glob that matches nothing does not throw, it yields `[]`**, s
 `STORYBOARD_CLIPS[0]` was `undefined` and the page died on `.video` one layer away from the cause.
 Supply both and all six widths render. The upstream fix is to ship the assets (DESIGNER-TODO A12).
 
-**What is left is ACCEPTANCE, not migration. G5-b (six-width side-by-side) and G7 (independent
-acceptance) owe EIGHT slices** — 3e / 3f / 3g / 3g-2 / 3h / 3i / 3j / 3k. The product owner's
-2026-08-05 decision was that each slice runs only the automated gates and the review happens once
-at the end of Phase 3. **That end has now arrived**, so this is the next thing to do — and the
-acceptance cell stays EMPTY until the reports are in hand, per §10.7.
+**ACCEPTANCE IS PART-DONE. The full record is `docs/PHASE-3-ACCEPTANCE.md` — read it before
+re-running anything.** Two of the three reviews are complete and their verdicts are in that file:
+
+- **G5-b design (V1–V6): PASS except V3** (`/creator` rows collide at 768 → DESIGNER-TODO **A17**)
+  **and V4 partial** — `3e-creator`'s DP reference set is DP's sign-in wall at every width, so
+  there is no twin to compare against.
+- **G7 affordance (B1–B3): B3 PASS on all seven product rules**, B1 and B2 FAIL with eleven
+  findings. Five were plain losses and are FIXED with mutation-tested guards (unmute on
+  `/mv/result`, Settings' Cancel, the "My Creations" rail label on both create screens, MV Edit's
+  MV-08 sentence, two DOM-level axe violations). The rest are `TODO.md` **#7a–7h** and
+  DESIGNER-TODO **A17/A18**.
+- **G7 a11y (A1–A5): NOT RUN.** An audit ran and was discarded — see the next block.
+
+**A reviewer measuring a broken environment returns findings, not errors.** The a11y audit ran two
+full sweeps against a page whose **238 KB designer stylesheet was 500ing**: the server had been
+started before a rebuild replaced `.next`, and `next start` reads its manifest once at boot. It
+returned a long, specific, confident report about a barely-styled DOM. It surfaced only because
+its headline finding (`.mv-song-picker__use` focusable at `opacity: 0`) contradicted the CSS when
+checked — on a sound build the pill is `0` by default and `1` once Tab enters the row. **Prove the
+CSS loads before trusting any browser measurement**, and never `npm run build` against a running
+`next start`. The rule is now in `AGENTS.md`; the full diagnosis is PHASE-3-ACCEPTANCE §6.
 
 **Two invisible-icon regressions were found and fixed this session, and NEITHER was new.**
 The credit pill's coin has been a 0×0 transparent span on every migrated screen since slice 2b,

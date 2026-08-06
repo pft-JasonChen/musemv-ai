@@ -184,3 +184,55 @@ scans unprefixed English routes.
 one. **Sequencing matters:** adding the mobile pass turns A9's contrast failure into an
 immediate gate failure, so either A9's colour decision lands first, or the mobile pass ships
 with A9 in the exclusion list and a comment pointing at it — the same pattern A1 already uses.
+
+## 7. Affordance findings from the Phase 3 acceptance review that need a decision (found 2026-08-06)
+
+The G7 affordance review diffed every migrated component against `5296f1a` control-by-control.
+Five findings were plain losses and were fixed with guards (see `docs/PHASE-3-ACCEPTANCE.md`).
+These are the rest — each needs a designer or product answer first, so none was patched around.
+
+**7a. `/song/result` lost ±15s, which leaves no keyboard way to seek.** DP's transport spends
+those two slots on prev/next through the playlist. `useAudioPlayer.nudge` still exists and is
+now unused on this screen, and `.song-result__progress` is a bare `<div onPointerDown>`. This is
+**item #5 above happening on a second screen** — and it now also applies to `.mv-result__progress`
+and `.mv-edit__progress`, both bare `<div onPointerDown>` too. On `/mv/result` it is a
+REGRESSION: the pre-migration screen was `<video controls>`, which is keyboard-seekable.
+**Done looks like:** #5's fix applied to all four tracks at once, plus a decision on whether
+±15s comes back alongside prev/next or stays dropped.
+
+**7b. The Face Picker's explicit Cancel is gone.** Dismissal still works three other ways
+(header Close, backdrop, Escape), so nobody is stranded — the finding is that it was dropped
+silently. Decide: restore it, or record the omission in the component header as deliberate.
+
+**7c. "Change song" survives as a control but not as an affordance.** The explicit `Change`
+button became `.mv-create__song-added-label`, whose only accessible name is the noun
+"Song Library" / "Imported Audio". A user who wants a different song has to guess it is
+clickable.
+
+**7d. `/song/result`'s Download and volume/mute are `display: none` below 1024px**
+(`SongCreatePage.css:1089`). Both are new controls, so nothing was lost — but the result
+autoplays and phone users get no volume control at all. Designer question.
+
+**7e. Dead code: `src/components/community/TrendingMvsPanel.tsx` has had zero consumers since
+slice 3g.** Delete it, or say why it stays.
+
+**7f. Out-of-scope R-9 leaks.** `HistoryView.tsx` builds unprefixed `rowHref`s (clicks are
+intercepted, so only middle-click / copy-link lose the locale prefix) and `SettingsView.tsx:170`
+does `router.push("/")`. Neither is migrated code, but both are the same shape R-9 exists to
+prevent, and both are invisible when testing in English.
+
+**7g. The rails on `/mv/room` and `/song/create` show community fixtures.** The migration's
+"My Creations" title was corrected to "Trending MVs" / "Trending Songs" so the label matches the
+data. Whether those rails should instead show the user's OWN history (which `useHistory()`
+already has) is a product decision, not a rename — the guard test asserts the pairing, so
+either answer stays honest.
+
+**7h. `/mv/room`'s disabled CTA lost its reason line** ("Add a song and a description to
+continue."). Not a DP-fidelity constraint — `/song/create` KEPT its equivalent inside migrated
+markup, using `.song-create__title-hint`. `MVCreatePage.css` simply has no counterpart class,
+and inventing one, borrowing `song-create__`'s, or adding an override all break a rule
+(`designer-overrides.css` takes only already-decided defects; a class no stylesheet defines
+renders as nothing). **Done looks like:** the designer adds a hint class to `MVCreatePage.css`,
+after which this is a two-line change. Until then `/mv/room` disables the button and says
+nothing, while `/song/create` explains itself — an inconsistency, recorded rather than papered
+over.

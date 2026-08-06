@@ -228,6 +228,19 @@ House style in one line:
   (opening a sheet from another sheet leaves both mounted for 300ms, the outgoing one still near
   opacity 1) and until its overlay reads opacity 1. `sheetSettled()` in
   `e2e/behaviour-regressions.spec.ts` is that helper — use it before any geometric assertion.
+- **Never run `npm run build` against a running `next start` — and prove the CSS loads before
+  believing any measurement taken in a browser.** `next start` reads its build manifest once, at
+  boot, so a rebuild underneath it deletes the chunks the served HTML still asks for. Measured
+  2026-08-06: the page kept requesting a CSS chunk that had been replaced, that request returned
+  **500**, and the missing file was the **238 KB designer stylesheet** — every `.mv-*`,
+  `.song-*`, `.upgrade-dialog__*` rule in the product. The page still rendered, still passed
+  `toBeVisible()`, still answered every query. A G7 a11y audit ran two full sweeps against it and
+  returned a long, specific, confident report describing a barely-styled DOM; the whole thing had
+  to be thrown away. **A broken environment does not report an error, it reports findings.** So:
+  rebuild and restart together, and before trusting contrast, geometry or computed style, fetch
+  the page, pull out every `_next/static/chunks/*.css` it references and confirm each one is 200
+  with a real body (one is ~238 KB). One cheap live assertion does the same job:
+  `.mv-song-picker__use` must compute to `opacity: 0` on a row that is neither hovered nor active.
 - **Mutation-test a new guard test in both directions before believing it.** Break the thing it
   guards and watch it go red, then restore and watch it go green. `e2e/backdrop-filter.spec.ts`'s
   first CSS sweep read the CSSOM and passed in BOTH states, because Chrome discards

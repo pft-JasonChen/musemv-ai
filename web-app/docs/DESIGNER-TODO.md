@@ -428,6 +428,41 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
   spacer 同樣落在最前面。所以這不是單一頁面的疏漏,是這個交錯手法本身的副作用 ——
   **上游修的時候兩頁一起修**(給 spacer 一個大於最後一個 section 的 `order`)。
 
+### A17. `CommunityProfilePage` 在 768px 讓 stats 文字撞進右側按鈕
+
+**發現於:** 2026-08-06,Phase 3 驗收(G5-b 六階寬度比對)。證據:`3e-creator-768.png`。
+
+`/creator` 的每一列右側是 Like / Share / More;左側 `.community-profile__social` 是
+播放數・愛心數・分享數。**分享數只要 2–3 位數,文字就會溢出去壓到 Like 按鈕上**——
+截圖裡 `8`、`45`、`13` 三列都撞到,`0`、`19` 兩列沒有。
+
+- 成因:同一列的 `.community-profile__copy > strong`(標題)有
+  `overflow: hidden; text-overflow: ellipsis`,但 `.community-profile__social` **兩者都沒有**,
+  也沒有 `min-width: 0`,所以它不會截斷,只會把 flex 容器撐開、擠進
+  `.community-profile__actions`。
+- **只發生在 768 這一階。** 1024 以上欄寬夠;767 以下是另一套手機排版。
+  `@media (max-width: 1100px)` 把清單欄縮窄,是觸發條件。
+- **不擋開發**,但 768 是議定的六階之一,不是邊角案例。
+- **修法(上游):** 給 `.community-profile__social` 加 `overflow: hidden` + `min-width: 0`,
+  或讓它在空間不足時 `flex-shrink`。WA 這邊**沒有 override** —— 照 A16 的規矩,
+  `designer-overrides.css` 只收「已寫進本文件、且產品負責人已裁示」的缺陷。
+
+### A18. 手機上「不是自己的」創作者頁**沒有任何分享入口**
+
+**發現於:** 2026-08-06,Phase 3 驗收(G7 affordance 比對)。
+
+`CommunityProfilePage.css:57` 在 `max-width: 767px` 把
+`.community-profile__actions > .icon-button:nth-child(2)`(也就是 Share)`display: none`。
+剩下的 Share 只存在於 `⋯` 選單裡,而那個選單只有**看自己的頁面時**才 render
+(`ownerMenu = self && loggedIn`)。合起來:**手機 + 別人的創作者頁 = 分享不到。**
+
+- 移轉前 Share 在永遠存在的 More 選單裡,所以這是**移轉造成的功能流失**,
+  不是 DP 沒設計。
+- 這是 A5 那一類的親戚:手機規則藏掉一個控制項,行為還在、affordance 沒了,
+  沒有任何測試會紅。
+- **需要設計判斷:** 手機上這一列要留 Share 嗎?若要,放哪裡(列上?長按?底部 sheet?)。
+- WA 這邊同樣**沒有 override**,先記在這裡等裁示。
+
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 
 | 畫面                           | 狀況                                                                                                                                                        | 影響                                              |
