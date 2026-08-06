@@ -43,6 +43,7 @@ import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialog
 export function MvSheet({
   open,
   onClose,
+  onCancel,
   label,
   title,
   variant,
@@ -51,6 +52,16 @@ export function MvSheet({
 }: {
   open: boolean;
   onClose: () => void;
+  /**
+   * What the footer's Cancel does, when dismissing and cancelling are not the
+   * same thing. Defaults to `onClose`.
+   *
+   * G7 finding 3g2-1: the Settings sheet commits every control on touch, so a
+   * Cancel wired to `onClose` sat next to Confirm doing the identical thing —
+   * a dead control the MIGRATION introduced (the pre-migration `Modal` had no
+   * Cancel at all). Sheets that commit on Confirm can keep the default.
+   */
+  onCancel?: () => void;
   /** Accessible name for the dialog. */
   label: string;
   /** Header title. Omitted for the Mode sheet, whose header is a close button alone. */
@@ -124,7 +135,7 @@ export function MvSheet({
             <button
               type="button"
               className="mv-sheet__footer-btn mv-sheet__footer-btn--cancel"
-              onClick={onClose}
+              onClick={onCancel ?? onClose}
             >
               Cancel
             </button>

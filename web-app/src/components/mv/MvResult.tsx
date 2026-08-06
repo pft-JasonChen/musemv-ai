@@ -87,6 +87,12 @@ export function MvResult() {
   const progressRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
+  // G7 finding 3i-1. The pre-migration screen was a `<video controls>`, so the
+  // native bar carried volume; DP's is a hand-built bar with no volume control
+  // and a hardcoded `muted`, which left the audio of a COST_RENDER-priced
+  // render unreachable. `MvEditor` already solves this the same way on the
+  // sibling screen, so the treatment is DP's own, not an invention.
+  const [muted, setMuted] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -190,7 +196,7 @@ export function MvResult() {
               poster={poster}
               autoPlay
               loop
-              muted
+              muted={muted}
               playsInline
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
@@ -228,6 +234,17 @@ export function MvResult() {
                 />
               </div>
               <span className="mv-result__time">{formatTime(duration)}</span>
+              <button
+                type="button"
+                className="mv-result__control-btn"
+                onClick={() => setMuted((m) => !m)}
+                aria-label={muted ? "Unmute" : "Mute"}
+              >
+                <DpIcon
+                  name={muted ? "ic_speaker_off" : "ic_speaker_on"}
+                  className="mv-result__control-icon"
+                />
+              </button>
               <button
                 type="button"
                 className="mv-result__control-btn"

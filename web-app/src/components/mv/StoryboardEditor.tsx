@@ -284,7 +284,10 @@ export function StoryboardEditor() {
 
           <div className="mv-storyboard__section mv-storyboard__section--lyrics">
             <p className="mv-storyboard__label">LYRICS</p>
-            <div className="mv-storyboard__lyrics">
+            {/* G7 a11y: this panel scrolls, so a keyboard-only user needs a way
+                into it (axe `scrollable-region-focusable`, WCAG 2.1.1). It holds
+                no focusable children of its own, hence tabindex on the region. */}
+            <div className="mv-storyboard__lyrics" tabIndex={0} role="region" aria-label="Lyrics">
               {buildTimedLines(storyboard.lyrics, songDuration).map((l, i) => (
                 <div key={i} className="mv-storyboard__lyrics-line">
                   <span className="mv-storyboard__lyrics-time">{fmtTs(l.t)}</span>

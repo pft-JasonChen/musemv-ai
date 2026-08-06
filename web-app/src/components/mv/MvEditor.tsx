@@ -311,7 +311,14 @@ export function MvEditor() {
         </div>
         <div className="mv-edit__divider" />
         <div className="mv-edit__scene-history">
-          <div className="mv-edit__scene-versions" aria-label="Generated scene history">
+          {/* G7 a11y: a bare <div> has role `generic`, which does not permit
+              aria-label — the name was silently dropped from the a11y tree
+              (axe `aria-prohibited-attr`). `group` is the role that carries it. */}
+          <div
+            className="mv-edit__scene-versions"
+            role="group"
+            aria-label="Generated scene history"
+          >
             {versions.map((v, i) => (
               <span key={`${v}-${i}`} className="mv-edit__scene-version">
                 <img src={clipCover(selectedClip + i + 1)} alt="" />
@@ -455,7 +462,6 @@ export function MvEditor() {
                 </button>
               </div>
             </div>
-
           </div>
 
           {/* Its OWN section, not part of --storyboard: DP hides
@@ -464,6 +470,16 @@ export function MvEditor() {
               inside the storyboard section makes that rule match nothing and
               the desktop editor leaks onto phones. */}
           <div className="mv-edit__section mv-edit__section--scene-editor">{sceneEditor}</div>
+
+          {/* G7 finding 3k-1: MV-08 is still enforced, but the migration lost
+              the one sentence that EXPLAINED it — so Merge sat disabled with no
+              stated reason and edits looked saved. `mv-edit__sublabel` is DP's
+              own muted explanatory line, already used on this screen for
+              "Select to edit storyboard"; no new class, no override. */}
+          <p className="mv-edit__sublabel">
+            Recreate ({COST_REGEN} credits) replaces a scene directly. Edits aren&apos;t saved —
+            Merge MV ({COST_RENDER} credits) re-renders the video with your changes.
+          </p>
 
           <div className="mv-edit__ctas">
             <button

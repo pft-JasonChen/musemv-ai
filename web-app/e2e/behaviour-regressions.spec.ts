@@ -1500,7 +1500,7 @@ test("3g / S2: the trim entry point survived the migration", async ({ page }) =>
   await expect(page.getByRole("button", { name: "Remove song" })).toBeVisible();
 });
 
-test("3g / R9: the My Creations rail links carry the locale prefix", async ({ page }) => {
+test("3g / R9: the create-screen rail links carry the locale prefix", async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/jpn/mv/room");
@@ -2247,4 +2247,95 @@ test("3k: Delete this Project confirms before discarding", async ({ page }) => {
   await page.locator(".mv-edit__delete-btn").click();
   await page.getByRole("dialog", { name: "Delete" }).getByRole("button", { name: "Delete" }).click();
   await page.waitForURL("**/history");
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// G7 acceptance findings — affordances the migration lost, and their guards
+//
+// Every one of these shipped through typecheck, lint, vitest, e2e 150/150 and
+// visual 115/115. They are affordances, not rules, and no gate looked at them
+// until a reviewer diffed the migrated components control-by-control against
+// the pre-migration code. These tests are what stops each one coming back.
+// ════════════════════════════════════════════════════════════════════════════
+
+test("G7 3i-1: the finished MV can be un-muted", async ({ page }) => {
+  // Pre-migration this was a `<video controls>`, so volume came free with the
+  // native bar. DP's bar is hand-built and has no volume control at all, so
+  // porting it verbatim left the audio of a COST_RENDER render unreachable.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await renderToResult(page);
+
+  const video = page.locator(".mv-result__video");
+  await expect(video).toHaveJSProperty("muted", true);
+
+  await page.getByRole("button", { name: "Unmute" }).click();
+  await expect(video).toHaveJSProperty("muted", false);
+  await page.getByRole("button", { name: "Mute" }).click();
+  await expect(video).toHaveJSProperty("muted", true);
+});
+
+test("G7 3g2-1: the Settings sheet's Cancel actually cancels", async ({ page }) => {
+  // Every control in this sheet commits on touch, so a Cancel wired to onClose
+  // did exactly what Confirm did. The Cancel is the migration's own addition —
+  // the pre-migration Modal had no footer — which is what made it easy to miss.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+
+  const chips = page.locator(".mv-create__settings-chips");
+  await expect(chips).toContainText("9:16");
+
+  await page.getByRole("button", { name: "Open MV settings" }).click();
+  await sheetSettled(page);
+  await page.getByRole("button", { name: "16:9" }).click();
+  await page.locator(".mv-sheet__footer-btn--cancel").click();
+  await expect(chips).toContainText("9:16");
+
+  // ...and Confirm still keeps the change, or "Cancel reverts" would be
+  // satisfied by a sheet that never commits anything at all.
+  await page.getByRole("button", { name: "Open MV settings" }).click();
+  await sheetSettled(page);
+  await page.getByRole("button", { name: "16:9" }).click();
+  await page.locator(".mv-sheet__footer-btn--confirm").click();
+  await expect(chips).toContainText("16:9");
+});
+
+test("G7 3g-3: a rail titled for the user's own work does not show other people's", async ({
+  page,
+}) => {
+  // Both create screens titled their rail "My Creations" when logged in while
+  // rendering community fixtures with other creators' names underneath. Both
+  // routes are auth-guarded, so the lying branch was the one almost every user
+  // saw. The assertion is on the pairing, not on the wording: a rail may say
+  // "My Creations" only if its items link into the user's own creations.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+
+  for (const [url, rail, seeAll] of [
+    ["/mv/room", ".mv-create__side-title", ".mv-create__side-see-all"],
+    ["/song/create", ".song-create__side-title", ".song-create__side-see-all"],
+  ] as const) {
+    await page.goto(url);
+    const title = (await page.locator(rail).innerText()).trim();
+    const href = await page.locator(seeAll).getAttribute("href");
+    if (/my creations/i.test(title)) {
+      expect(href, `"${title}" on ${url} must lead to the user's own work`).toContain("/history");
+    } else {
+      expect(href).toContain("/explore/");
+    }
+  }
+});
+
+test("G7 3k-1: MV Edit still explains why Merge is disabled", async ({ page }) => {
+  // MV-08 stayed enforced through the migration; the sentence that EXPLAINED it
+  // did not, so Merge sat disabled with no stated reason and edits looked saved.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openEditor(page);
+
+  await expect(page.locator(".mv-edit__merge-btn")).toBeDisabled();
+  await expect(page.locator(".mv-edit__sublabel").filter({ hasText: /aren.t saved/i })).toBeVisible();
 });

@@ -13,7 +13,6 @@ import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { GENRES, MOODS, VOCALS, SONG_IDEAS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
@@ -70,7 +69,6 @@ export function SongCompose() {
   const { locale } = useLocale();
   const { songCompose: s, patchSongCompose: patch, resetForNewSong } = useSongFlow();
   const { credits } = useCredits();
-  const { loggedIn } = useAuth();
   const [buyOpen, setBuyOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const ready = isSongReady(s);
@@ -364,9 +362,10 @@ export function SongCompose() {
 
         <div className="song-create__side">
           <div className="song-create__side-header">
-            <p className="song-create__side-title">
-              {loggedIn ? "My Creations" : "Trending Songs"}
-            </p>
+            {/* G7 finding 3g-3, the same defect as `/mv/room`'s rail: the
+                logged-in title claimed "My Creations" over `TOP_PICKS_SONGS`,
+                which are other creators' songs. Title now matches the data. */}
+            <p className="song-create__side-title">Trending Songs</p>
             <Link href={localePath(locale, "/explore/songs")} className="song-create__side-see-all">
               See all
               <DpIcon name="ic_chevron-right" className="song-create__side-see-all-icon" />

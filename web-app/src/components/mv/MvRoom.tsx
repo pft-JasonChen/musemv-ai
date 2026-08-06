@@ -18,7 +18,6 @@ import { TemplateSheet } from "./TemplateSheet";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
@@ -85,7 +84,6 @@ export function MvRoom() {
   const router = useRouter();
   const { compose, setCompose, patchCompose, resetForNewMv } = useMvFlow();
   const { credits } = useCredits();
-  const { loggedIn } = useAuth();
   const { locale } = useLocale();
   const [songOpen, setSongOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -554,7 +552,12 @@ export function MvRoom() {
 
         <div className="mv-create__side">
           <div className="mv-create__side-header">
-            <p className="mv-create__side-title">{loggedIn ? "My Creations" : "Trending MVs"}</p>
+            {/* G7 finding 3g-3: this said "My Creations" when logged in, over
+                `NEW_MVS` — community fixtures, with other people's names as the
+                subtitle. `/mv/room` is auth-guarded, so the lying branch was the
+                one nearly every user saw. The title now matches the data; the
+                real history rail is a product decision, not a rename. */}
+            <p className="mv-create__side-title">Trending MVs</p>
             <Link href={localePath(locale, "/explore/mvs")} className="mv-create__side-see-all">
               See all
               <DpIcon name="ic_chevron-right" className="mv-create__side-see-all-icon" />

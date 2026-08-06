@@ -56,6 +56,17 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
   const set = (patch: Partial<MvSettings>) => onChange({ ...settings, ...patch });
   const { subscribed } = useAuth();
   const [subOpen, setSubOpen] = useState(false);
+  // G7 finding 3g2-1. Every control here commits on touch, so the footer's
+  // Cancel — which the MIGRATION introduced; the old `Modal` had none — was
+  // wired to `onClose` and did precisely what Confirm did. Snapshot what the
+  // sheet opened with and put it back, which is the only reading of "Cancel"
+  // a user would expect next to "Confirm".
+  const [opened, setOpened] = useState(settings);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setOpened(settings);
+  }
   const highLocked = !subscribed;
 
   return (
@@ -63,6 +74,10 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
       <MvSheet
         open={open}
         onClose={onClose}
+        onCancel={() => {
+          onChange(opened);
+          onClose();
+        }}
         label="Settings"
         title="Settings"
         confirm={{ onConfirm: onClose, ariaLabel: "Apply" }}
