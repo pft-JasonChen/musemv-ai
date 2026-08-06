@@ -87,9 +87,17 @@ refactors so the project typechecks after each individual edit (add the new befo
 
 - **Which token names to write (R-5).** Migrated markup uses **DP's native names**
   (`var(--radius-lg)`, `var(--color-…)`). `token-aliases.css` exists only so components that
-  have NOT been migrated keep working; it shrinks with every slice and is deleted at the end.
+  have NOT been migrated keep working.
   Do not "tidy" migrated markup back onto the WA aliases — that is the one change that would
-  make the alias layer permanent. (The reverse rule is impossible anyway: DP's 52 stylesheets
+  make the alias layer permanent.
+  **"It is deleted at the end" turned out to be false, and the end has arrived.** Measured
+  2026-08-06 with all 16 routes migrated: of its **110** names, **25** are consumed by the app,
+  **53** are reachable only through the `.t-*` classes inside the file itself (which have zero
+  adoption — the file says so), and **32** are referenced from nowhere at all. So the layer did
+  not shrink to nothing; it shrank to 25 live names plus 85 dead ones. Deleting the dead 85 is a
+  design-system change under the ASK FIRST rule above — **propose it, don't do it as a side
+  quest** — and until someone does, this file should describe the 110/25 reality rather than
+  promise a deletion that did not happen. (The reverse rule is impossible anyway: DP's 52 stylesheets
   are copied verbatim and already reference DP names, and rewriting them forfeits file-level
   re-sync on the next drop.)
 - **Style purity.** A migrated component's classes come from `src/styles/designer/`. Don't mix
