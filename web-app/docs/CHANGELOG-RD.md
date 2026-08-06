@@ -23,6 +23,50 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-06 — Phase 3 finished (16 of 16 routes). **C1–C8 diff for RD purposes: ZERO.**
+
+**Surface:** none. This entry exists because the migration was large enough that "no contract
+change" is itself the thing RD needs stated, not assumed.
+
+**What happened:** the whole designer-UI migration landed — slices 3a…3k, every route in the
+plan's §2.1 table. Eleven screens were rewritten, six overlays replaced, four shared components
+added (`MvSheet`, `TemplateSheet`, `useDialogTransition`, `DpIcon`'s `as` prop).
+
+**Verified, not asserted.** `git diff 5296f1a..HEAD` is EMPTY for every gated surface:
+
+| Surface | Path                                                              | Diff |
+| ------- | ----------------------------------------------------------------- | ---- |
+| C1      | `src/lib/api/contract.ts`                                         | none |
+| C2      | `src/lib/api/schemas.ts`                                          | none |
+| C3      | `src/lib/api/index.ts`                                            | none |
+| C4      | `src/components/providers/**` (hook return keys)                  | none |
+| C5      | `src/lib/authStore.ts`                                            | none |
+| C6      | `src/lib/i18n/config.ts`, `src/middleware.ts`                     | none |
+| C7      | every `src/app/**/page.tsx` (URL shapes)                          | none |
+| C8      | `src/lib/mv/types.ts` (`COST_*`, `DEFAULT_SETTINGS`, predicates)  | none |
+
+Reproduce it yourself:
+
+```bash
+git diff --stat 5296f1a HEAD -- src/lib/api src/lib/authStore.ts src/lib/i18n/config.ts \
+  src/middleware.ts src/lib/mv/types.ts src/components/providers 'src/app'
+```
+
+**The one `src/lib` file that DID change is `src/lib/user.ts`** (+123/−17, slice 3f) — the
+`SUBSCRIPTION_PLANS` / `CREDIT_PACKS` data. It is not a gated surface, but it is where the
+Business Model's prices and credit grants live, so RD should read it before wiring real IAP.
+The designer prototype's own markup disagreed with the Business Model in two places and
+hardcoded `/ week` on all three plan cards including Yearly; WA renders every number from this
+file instead, which is why it grew.
+
+**Still owed to RD as its own PR, deliberately NOT done here:** S4's removal of `bpm` /
+`musicKey` from `SongCompose`. §11 requires a C8 change to travel alone. Slice 3j removed the
+Tempo and Key CONTROLS from `/song/create` and left the FIELDS untouched, still carrying
+`DEFAULT_SONG_COMPOSE`'s values into every request. `e2e`'s `3j / S4` guards that boundary in
+both directions.
+
+---
+
 ## 2026-08-05 — `/explore/songs` and `/song/play` now render one shared view; **URL shapes unchanged**
 
 **Surface:** C7 (`src/app/[locale]/explore/songs/page.tsx`, `src/app/[locale]/song/play/page.tsx`).
