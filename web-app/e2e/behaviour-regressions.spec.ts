@@ -641,15 +641,35 @@ test("R9 /explore/mvs: card and creator links carry the locale prefix", async ({
   await expect(page.locator(".detail-navbar__back")).toHaveAttribute("href", "/jpn");
 });
 
-test("/explore/mvs: clicking a card still opens the dialog, not a navigation", async ({ page }) => {
-  // The migration replaced markup, not behaviour. If a later slice moves this
-  // screen to real navigation that is a deliberate decision — this test is where
-  // it should show up.
+test("/explore/mvs: clicking a card NAVIGATES to /watch, it does not open a dialog", async ({
+  page,
+}) => {
+  // Slice 3a kept WA's in-place `CommunityMvDialog` and this test asserted it,
+  // with a note that a later slice moving to real navigation would be "a
+  // deliberate decision — this test is where it should show up". It showed up on
+  // 2026-08-06: DP's grid links at `/mv-detail?id=`, which is this app's
+  // `/watch`, and the product owner reported the dialog as a DP mismatch.
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/explore/mvs");
   await page.locator(".mv-detail__grid-item").first().click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page).toHaveURL(/\/explore\/mvs$/);
+  await page.waitForURL(/\/watch\?id=/);
+  await expect(page.locator(".mv-player__stage")).toBeVisible();
+  // And nothing modal is left behind on the way.
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("landing page: clicking a Trending MV lands on the same /watch screen", async ({ page }) => {
+  // Item 7 of the same report. This route already navigated; the test exists so
+  // that stays true — it and /explore/mvs must not drift into two behaviours.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  // The Trending rail is a 45s infinite marquee, so the card is never "stable"
+  // and Playwright will retry the click until it times out. Stop the animation
+  // rather than force-clicking a moving target.
+  await page.addStyleTag({ content: ".marquee-animate { animation: none !important; }" });
+  await page.locator(".marquee-animate button").first().click();
+  await page.waitForURL(/\/watch\?id=/);
+  await expect(page.locator(".mv-player__stage")).toBeVisible();
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1964,9 +1984,12 @@ test("3i / MV-12 + MV-13: publish confirms first, and blocks Edit until unpublis
   );
 
   await page.getByRole("switch", { name: "Publish to community" }).click();
-  await page.getByRole("dialog", { name: "Ready to Go Public?" }).getByRole("button", {
-    name: "Confirm",
-  }).click();
+  await page
+    .getByRole("dialog", { name: "Ready to Go Public?" })
+    .getByRole("button", {
+      name: "Confirm",
+    })
+    .click();
   await expect(page.getByRole("switch", { name: "Publish to community" })).toHaveAttribute(
     "aria-checked",
     "true",
@@ -2245,7 +2268,10 @@ test("3k: Delete this Project confirms before discarding", async ({ page }) => {
   expect(new URL(page.url()).pathname).toBe("/mv/edit");
 
   await page.locator(".mv-edit__delete-btn").click();
-  await page.getByRole("dialog", { name: "Delete" }).getByRole("button", { name: "Delete" }).click();
+  await page
+    .getByRole("dialog", { name: "Delete" })
+    .getByRole("button", { name: "Delete" })
+    .click();
   await page.waitForURL("**/history");
 });
 
@@ -2310,22 +2336,75 @@ test("G7 3g-3: a rail titled for the user's own work does not show other people'
   // routes are auth-guarded, so the lying branch was the one almost every user
   // saw. The assertion is on the pairing, not on the wording: a rail may say
   // "My Creations" only if its items link into the user's own creations.
+  //
+  // 2026-08-06: the rail now has TWO modes again (items 4/5), so the pairing is
+  // checked against the ITEM hrefs rather than "See all" — DP drops "See all"
+  // entirely in the My Creations branch, so its absence is not evidence.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
 
-  for (const [url, rail, seeAll] of [
-    ["/mv/room", ".mv-create__side-title", ".mv-create__side-see-all"],
-    ["/song/create", ".song-create__side-title", ".song-create__side-see-all"],
+  for (const [url, rail, item, own] of [
+    ["/mv/room", ".mv-create__side-title", ".mv-create__side-item", "/mv/result"],
+    ["/song/create", ".song-create__side-title", ".song-create__side-item", "/song/result"],
   ] as const) {
     await page.goto(url);
     const title = (await page.locator(rail).innerText()).trim();
-    const href = await page.locator(seeAll).getAttribute("href");
-    if (/my creations/i.test(title)) {
-      expect(href, `"${title}" on ${url} must lead to the user's own work`).toContain("/history");
-    } else {
-      expect(href).toContain("/explore/");
+    const hrefs = await page
+      .locator(item)
+      .evaluateAll((els) => els.map((e) => e.getAttribute("href") ?? ""));
+    expect(hrefs.length, `${url} rail has no items`).toBeGreaterThan(0);
+    for (const href of hrefs) {
+      if (/my creations/i.test(title)) {
+        expect(href, `"${title}" on ${url} must lead to the user's own work`).toContain(own);
+      } else {
+        expect(href, `"${title}" on ${url} must lead to community content`).not.toContain(own);
+      }
     }
   }
+});
+
+test("items 4/5: a signed-in user with nothing generated still sees Trending", async ({ page }) => {
+  // DP can key this on `isSignedIn` alone because its MY_CREATIONS fixture is
+  // never empty. WA's comes from real (session-local) History, so the signed-in
+  // branch has to also require that the user HAS something — otherwise the rail
+  // is a "My Creations" heading over nothing.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+
+  await page.goto("/mv/room");
+  await expect(page.locator(".mv-create__side-title")).toHaveText("Trending MVs");
+  await expect(page.locator(".mv-create__side-see-all")).toBeVisible();
+
+  await page.goto("/song/create");
+  await expect(page.locator(".song-create__side-title")).toHaveText("Trending Songs");
+  await expect(page.locator(".song-create__side-see-all")).toBeVisible();
+});
+
+test("items 4/5: generating a song flips /song/create's rail to My Creations", async ({ page }) => {
+  // The other half of the pair, and the one that would silently rot: the rail
+  // only changes once History has a completed entry, and History is in-memory,
+  // so this has to be driven through a real generation in the same page context.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await expect(page.locator(".song-create__side-title")).toHaveText("Trending Songs");
+
+  await page
+    .getByPlaceholder(/A bittersweet love song/)
+    .fill("An upbeat summer anthem about chasing dreams with friends.");
+  await page.getByRole("button", { name: /Create Song/ }).click();
+  await page.waitForURL("**/song/result", { timeout: 30_000 });
+
+  // IN-APP navigation, deliberately. History is in-memory (`HistoryProvider`),
+  // so a `page.goto` here would reload the app, empty it, and the rail would
+  // correctly read "Trending Songs" again — a green-looking test measuring the
+  // wrong thing.
+  await page.locator(".sidebar__nav-item[href$='/song/create']").click();
+  await page.waitForURL("**/song/create");
+  await expect(page.locator(".song-create__side-title")).toHaveText("My Creations");
+  // DP renders no "See all" in this branch.
+  await expect(page.locator(".song-create__side-see-all")).toHaveCount(0);
 });
 
 test("G7 3k-1: MV Edit still explains why Merge is disabled", async ({ page }) => {
@@ -2337,5 +2416,125 @@ test("G7 3k-1: MV Edit still explains why Merge is disabled", async ({ page }) =
   await openEditor(page);
 
   await expect(page.locator(".mv-edit__merge-btn")).toBeDisabled();
-  await expect(page.locator(".mv-edit__sublabel").filter({ hasText: /aren.t saved/i })).toBeVisible();
+  await expect(
+    page.locator(".mv-edit__sublabel").filter({ hasText: /aren.t saved/i }),
+  ).toBeVisible();
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// 2026-08-06 — the DP mismatches the product owner reported, and their guards
+//
+// Items 1/2/3 of that report, all one shape: /history's done rows opened a
+// pre-migration modal (`CreationDialog`) instead of the result screens DP links
+// them at, and neither result screen could get back to History. Nothing was red
+// — the modal worked, and Back "worked" too, it just went somewhere else.
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The cover link of the first DONE row of a given kind on /history. The card
+ * shows no type LABEL — the type lives in the cover's modifier class, which is
+ * also what DP keys its per-type cover treatment on.
+ */
+function doneCover(page: Page, kind: "music-video" | "song") {
+  return page.locator(`.history-card--done .history-card__cover--${kind}`).first();
+}
+
+test("item 3: a done MV row opens /mv/result, not a dialog", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+
+  await doneCover(page, "music-video").click();
+  await page.waitForURL(/\/mv\/result\?id=/);
+  await expect(page.locator(".mv-result__player")).toBeVisible();
+  await expect(page.locator("[role=dialog][aria-modal=true]")).toHaveCount(0);
+});
+
+test("item 3: a done song row opens /song/result, not a dialog", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+
+  await doneCover(page, "song").click();
+  await page.waitForURL(/\/song\/result\?id=/);
+  await expect(page.locator(".song-result__player")).toBeVisible();
+  // Specifically the pre-migration `Modal` shape (`role=dialog aria-modal=true`),
+  // not "any dialog": this screen keeps its Lyrics sheet MOUNTED and `inert`
+  // while closed (the 3b pattern) and DP's overlay closes to `opacity: 0`, which
+  // Playwright still reports as visible. A bare dialog count would be 1 forever.
+  await expect(page.locator("[role=dialog][aria-modal=true]")).toHaveCount(0);
+});
+
+test("item 3: the row href matches where the click actually goes", async ({ page }) => {
+  // The href is not decoration — it is what middle-click and copy-link use, and
+  // it carries the locale prefix (R-9). If the two ever disagree, copy-link
+  // silently sends someone somewhere the app never navigates.
+  await login(page);
+  await page.goto("/jpn/history");
+  const hrefs = await page
+    .locator(".history-card__copy a")
+    .evaluateAll((els) => els.map((e) => e.getAttribute("href") ?? ""));
+  expect(hrefs.length).toBeGreaterThan(0);
+  for (const href of hrefs) expect(href).toMatch(/^\/jpn\//);
+  expect(hrefs.some((h) => h.startsWith("/jpn/mv/result?id="))).toBe(true);
+  expect(hrefs.some((h) => h.startsWith("/jpn/song/result?id="))).toBe(true);
+});
+
+test("items 1/2: Back on both result screens returns to /history", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+
+  for (const [kind, url] of [
+    ["music-video", /\/mv\/result\?id=/],
+    ["song", /\/song\/result\?id=/],
+  ] as const) {
+    await page.goto("/history");
+    await doneCover(page, kind).click();
+    await page.waitForURL(url);
+    await page.locator(".detail-navbar__back").click();
+    await page.waitForURL(/\/history$/);
+  }
+});
+
+test("items 1/2: /song/result carries a back control at all — it had none", async ({ page }) => {
+  // It rendered `RoomNavbar`, which has no back affordance; DP switches this one
+  // stage of SongCreatePage to `DetailNavbar backHref="/history"`.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+  await doneCover(page, "song").click();
+  await page.waitForURL(/\/song\/result\?id=/);
+  await expect(page.locator(".detail-navbar__back")).toBeVisible();
+  await expect(page.locator(".room-navbar")).toHaveCount(0);
+});
+
+test("item 1: after a fresh render, Back off /mv/result is not a no-op loop", async ({ page }) => {
+  // The generation screens forward themselves the moment the artifact exists, so
+  // while they were `push`ed, Back from the result landed on /mv/creating, which
+  // 350ms later pushed the result straight back. Indistinguishable from "Back
+  // does nothing". They `replace` now, so Back reaches the compose screen.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await renderToResult(page);
+
+  await page.locator(".detail-navbar__back").click();
+  await expect(page).not.toHaveURL(/\/mv\/(result|creating)/);
+});
+
+test("item 3: Share from an opened history row carries that row's id", async ({ page }) => {
+  // The result screens derived their share id by matching a LIVE History job.
+  // A seed row is a fixture, not a job, so opening one and hitting Share built
+  // `/share?id=` — a link that resolves to the expired state. The id in the URL
+  // is what fixes it, which is also why these pages now read `?id=`.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+  await doneCover(page, "music-video").click();
+  await page.waitForURL(/\/mv\/result\?id=/);
+  const id = new URL(page.url()).searchParams.get("id");
+
+  await page.locator(".mv-result__action").filter({ hasText: "Share" }).click();
+  const field = page.getByRole("dialog").locator("input");
+  await expect(field).toHaveValue(new RegExp(`/share\\?id=${id}$`));
 });

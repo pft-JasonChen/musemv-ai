@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { NEW_MVS, TRENDING_MVS, mvCoverRatio, type CommunityMv } from "@/lib/mv/community";
 import { CommunityEmpty, useOnline } from "@/components/community/EmptyState";
-import { CommunityMvDialog } from "./CommunityMvDialog";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Card } from "@/components/ui/Card";
@@ -28,11 +27,15 @@ import {
  * `src/styles/designer/MVDetailPage.css`, verbatim; no Tailwind in this subtree
  * (G3-d).
  *
- * WHAT DID NOT CHANGE. Clicking a video still opens `CommunityMvDialog` in
- * place, exactly as before — the plan's per-screen rule is to replace JSX and
- * class names while keeping WA's behaviour, and dialog-vs-navigate is a
- * behaviour change that would need its own slice and its own e2e. The offline
- * and empty states (EXP-06) are also unchanged.
+ * CLICKING A CARD NAVIGATES (2026-08-06). Slice 3a deliberately kept WA's
+ * in-place `CommunityMvDialog`, on the grounds that dialog-vs-navigate is a
+ * behaviour change needing its own slice and its own e2e. This is that slice:
+ * the product owner reported the dialog as a DP mismatch. DP's grid links at
+ * `/mv-detail?id=…`, which is this app's `/watch` — the screen migrated in 3d
+ * from the very same DP file's upper half. So the destination already existed
+ * and already had the player, the like/share and the Create MV CTA; the dialog
+ * was a second, older rendering of the same thing. It is gone from this screen.
+ * The offline and empty states (EXP-06) are unchanged.
  *
  * TWO SECTIONS, REAL DATA. DP shows "Top Picks" and "Newly Released" and fills
  * the second by REVERSING the same catalog — it has no second list. WA has two
@@ -51,7 +54,7 @@ type GridItem = CommunityMv & { ratio: MvRatio };
 const withRatio = (items: readonly CommunityMv[]): GridItem[] =>
   items.map((m) => ({ ...m, ratio: mvCoverRatio(m.id) }));
 
-function MvGrid({ items, onOpen }: { items: readonly GridItem[]; onOpen: (id: string) => void }) {
+function MvGrid({ items }: { items: readonly GridItem[] }) {
   const { locale } = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -88,19 +91,12 @@ function MvGrid({ items, onOpen }: { items: readonly GridItem[]; onOpen: (id: st
   /**
    * The href is WA's own route for playing a community MV (D3 — DP's
    * `/mv-detail?id=&from=` scheme is not adopted, and Q6 rejects `?from=`
-   * outright). The click is intercepted so it opens the dialog instead, which
-   * is what this screen has always done; the real href is what makes
-   * middle-click and "copy link address" work and what lets axe see a link with
-   * a destination. Same convention as the /history card.
+   * outright, so the id travels but the origin does not). No intercepted click
+   * any more: this is a plain `next/link` navigation, so middle-click, copy-link
+   * and a normal click all reach the same place.
    */
   function link(mv: GridItem) {
-    return {
-      href: localePath(locale, `/watch?id=${mv.id}`),
-      onClick: (e: React.MouseEvent) => {
-        e.preventDefault();
-        onOpen(mv.id);
-      },
-    };
+    return { href: localePath(locale, `/watch?id=${mv.id}`) };
   }
 
   function card(mv: GridItem) {
@@ -159,8 +155,7 @@ function MvGrid({ items, onOpen }: { items: readonly GridItem[]; onOpen: (id: st
   );
 }
 
-export function MvExplore({ initialPlayId }: { initialPlayId?: string }) {
-  const [playId, setPlayId] = useState<string | null>(initialPlayId ?? null);
+export function MvExplore() {
   const online = useOnline();
 
   const topPicks = withRatio(TOP_PICKS);
@@ -191,18 +186,16 @@ export function MvExplore({ initialPlayId }: { initialPlayId?: string }) {
               {/* This page is already the "See all" destination, so neither
                   section links anywhere further. */}
               <SectionHeader title="Top Picks Music Videos" mobileTitle="Top Picks" />
-              <MvGrid items={topPicks} onOpen={setPlayId} />
+              <MvGrid items={topPicks} />
             </section>
 
             <section className="mv-detail__grid-section">
               <SectionHeader title="Newly Released Music Videos" mobileTitle="New MVs" />
-              <MvGrid items={newlyReleased} onOpen={setPlayId} />
+              <MvGrid items={newlyReleased} />
             </section>
           </>
         )}
       </div>
-
-      <CommunityMvDialog open={playId != null} mvId={playId} onClose={() => setPlayId(null)} />
     </>
   );
 }

@@ -29,6 +29,33 @@ eager glob — **a glob that matches nothing does not throw, it yields `[]`**, s
 `STORYBOARD_CLIPS[0]` was `undefined` and the page died on `.video` one layer away from the cause.
 Supply both and all six widths render. The upstream fix is to ship the assets (DESIGNER-TODO A12).
 
+**SEVEN DP MISMATCHES CAME BACK FROM THE PRODUCT OWNER AFTER PHASE 3 MERGED (2026-08-06), AND
+ALL SEVEN WERE INVISIBLE TO EVERY GATE.** The full table is `docs/PHASE-3-ACCEPTANCE.md` §8. Three
+lessons are worth carrying into the next slice rather than re-deriving:
+
+- **A scope decision that changes what the user sees is a product decision.** Four of the seven
+  were places a slice decided something defensible — "keep WA's behaviour" (`/explore/mvs` kept its
+  dialog), "the title now matches the data" (the rails were pinned to "Trending", deleting DP's
+  signed-in branch), "that needs its own slice" — and recorded it in a comment or, worse, in a
+  PASSING TEST. `e2e` literally asserted "clicking a card still opens the dialog, not a
+  navigation". A test can hold a decision in place long after the decision is wrong; if the
+  decision is about what the user sees, ask instead of encoding it.
+- **The reported symptom was not the defect.** "Back on `/mv/result` doesn't reach History" reads
+  like a wrong `fallbackPath`. It was a two-screen LOOP: `GenerationView` forwards itself when
+  `alreadyDone`, and it was `push`ing, so Back landed on `/mv/creating` which pushed the result
+  back 350ms later. Both generation screens `replace` now. And `fallbackPath` on those screens is
+  nearly unreachable anyway (`hasInAppHistory()` is true on every route that can reach them with
+  flow state) — changing it alone would have shipped a fix that fixed nothing.
+- **`visual-baseline.spec.ts` never photographs `/mv/result` or `/song/result`.** It cold-`goto`s
+  each route with auth but no flow state, and both screens `router.replace()` out — so those two
+  baselines are pictures of `/mv/room` and `/song/create`. Measured: replacing `/song/result`'s
+  ENTIRE navbar changed zero pixels and the gate stayed 115/115. Third instance of the same class
+  as the `fullPage` and `maxDiffPixelRatio` blind spots.
+
+**What that work left behind, on purpose:** `CommunityMvDialog`, `CreationDialog`, `MvDetail`,
+`SongDetail` (+ the already-dead `TrendingMvsPanel`) have **zero consumers**. Deleting five
+components is ASK FIRST — proposed, not done.
+
 **ACCEPTANCE IS PART-DONE. The full record is `docs/PHASE-3-ACCEPTANCE.md` — read it before
 re-running anything.** Two of the three reviews are complete and their verdicts are in that file:
 
@@ -253,3 +280,6 @@ a detail screen:**
   staging and committing per slice anyway (the repo's own "one slice at a time" rule pointed the
   other way). The user's instruction wins over an inferred convention — when the two conflict,
   say so and follow the instruction rather than resolving it silently.
+- 2026-08-06: seven DP mismatches were reported against merged Phase 3 work. Four came from slices
+  that recorded a user-visible scope decision in a comment or a passing test instead of asking. When
+  a slice is about to keep WA behaviour that DP does differently, that is a question, not a note.

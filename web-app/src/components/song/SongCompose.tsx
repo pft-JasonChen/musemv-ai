@@ -12,7 +12,11 @@ import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { creationHref, useOpenCreation } from "@/components/history/useOpenCreation";
+import { MOCK_USER } from "@/lib/user";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { GENRES, MOODS, VOCALS, SONG_IDEAS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
@@ -68,7 +72,14 @@ export function SongCompose() {
   const router = useRouter();
   const { locale } = useLocale();
   const { songCompose: s, patchSongCompose: patch, resetForNewSong } = useSongFlow();
+  const { loggedIn } = useAuth();
+  const { history } = useHistory();
+  const openCreation = useOpenCreation();
   const { credits } = useCredits();
+
+  // Items 4/5 (2026-08-06) — see the rail's note in `MvRoom.tsx`.
+  const mySongs = history.filter((h) => h.kind === "song" && h.status === "completed");
+  const showMine = loggedIn && mySongs.length > 0;
   const [buyOpen, setBuyOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const ready = isSongReady(s);
@@ -360,27 +371,58 @@ export function SongCompose() {
           {!ready && <p className="song-create__title-hint">Describe your song to continue.</p>}
         </div>
 
+        {/* Same two-mode rail as `/mv/room` — the reasoning is written up once,
+            in `MvRoom.tsx`. DP: `{isSignedIn ? 'My Creations' : 'Trending Songs'}`
+            with "See all" in the signed-out branch only. */}
         <div className="song-create__side">
           <div className="song-create__side-header">
-            {/* G7 finding 3g-3, the same defect as `/mv/room`'s rail: the
-                logged-in title claimed "My Creations" over `TOP_PICKS_SONGS`,
-                which are other creators' songs. Title now matches the data. */}
-            <p className="song-create__side-title">Trending Songs</p>
-            <Link href={localePath(locale, "/explore/songs")} className="song-create__side-see-all">
-              See all
-              <DpIcon name="ic_chevron-right" className="song-create__side-see-all-icon" />
-            </Link>
+            <p className="song-create__side-title">
+              {showMine ? "My Creations" : "Trending Songs"}
+            </p>
+            {!showMine && (
+              <Link
+                href={localePath(locale, "/explore/songs")}
+                className="song-create__side-see-all"
+              >
+                See all
+                <DpIcon name="ic_chevron-right" className="song-create__side-see-all-icon" />
+              </Link>
+            )}
           </div>
           <div className="song-create__side-list">
-            {TOP_PICKS_SONGS.slice(0, 7).map((song) => (
-              <Link
-                key={song.id}
-                href={localePath(locale, `/song/play?id=${song.id}`)}
-                className="song-create__side-item"
-              >
-                <ListItem title={song.title} coverImage={song.cover} subtitle={song.creator} />
-              </Link>
-            ))}
+            {showMine
+              ? mySongs.slice(0, 7).map((song) => (
+                  <Link
+                    key={song.id}
+                    href={localePath(locale, creationHref({ id: song.id, kind: "song" }))}
+                    className="song-create__side-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openCreation({
+                        id: song.id,
+                        kind: "song",
+                        title: song.title,
+                        thumb: song.thumb,
+                        resultUrl: song.resultUrl,
+                      });
+                    }}
+                  >
+                    <ListItem
+                      title={song.title}
+                      coverImage={song.thumb}
+                      subtitle={MOCK_USER.name}
+                    />
+                  </Link>
+                ))
+              : TOP_PICKS_SONGS.slice(0, 7).map((song) => (
+                  <Link
+                    key={song.id}
+                    href={localePath(locale, `/song/play?id=${song.id}`)}
+                    className="song-create__side-item"
+                  >
+                    <ListItem title={song.title} coverImage={song.cover} subtitle={song.creator} />
+                  </Link>
+                ))}
           </div>
         </div>
       </div>

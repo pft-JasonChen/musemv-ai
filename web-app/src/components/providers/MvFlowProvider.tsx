@@ -8,7 +8,14 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { api, pollJob } from "@/lib/api";
 import { StoryboardSchema } from "@/lib/api/schemas";
-import { COST_RENDER, COST_STORYBOARD, DEFAULT_COMPOSE, type ComposeState, type MvJob, type Storyboard } from "@/lib/mv/types";
+import {
+  COST_RENDER,
+  COST_STORYBOARD,
+  DEFAULT_COMPOSE,
+  type ComposeState,
+  type MvJob,
+  type Storyboard,
+} from "@/lib/mv/types";
 import { useHistory } from "./HistoryProvider";
 import { useCredits } from "./CreditsProvider";
 import { IDLE_GEN, toGen, type Gen } from "./progress";
@@ -23,6 +30,15 @@ interface MvFlowValue {
   saveStoryboard: (sb: Storyboard) => void;
   storyboardDirty: boolean;
   resultUrl: string | null;
+  /**
+   * Hydrate the flow with an ALREADY-FINISHED render, so `/mv/result` can be
+   * opened for something the user made earlier instead of only for the video
+   * this session just produced. `/history` uses it (with `setCompose`) to route
+   * a done MV row at its own result screen; nothing else should.
+   *
+   * C4 addition, not a rename — see `docs/CHANGELOG-RD.md` 2026-08-06.
+   */
+  setResultUrl: React.Dispatch<React.SetStateAction<string | null>>;
   startStoryboard: () => void;
   startRender: () => void;
   /** Discard any prior storyboard/result before generating a brand-new MV (keeps the compose form). */
@@ -118,13 +134,20 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
           title: compose.song?.title ?? "Untitled MV",
           thumb: job.thumb,
         });
-        track(job, (done) => {
-          if (!done.storyboard) return;
-          setStoryboard(done.storyboard);
-          setSavedJson(JSON.stringify(done.storyboard));
-        }, refund);
+        track(
+          job,
+          (done) => {
+            if (!done.storyboard) return;
+            setStoryboard(done.storyboard);
+            setSavedJson(JSON.stringify(done.storyboard));
+          },
+          refund,
+        );
       })
-      .catch(() => { refund(); setGen((g) => ({ ...g, status: "failed" })); });
+      .catch(() => {
+        refund();
+        setGen((g) => ({ ...g, status: "failed" }));
+      });
   }, [compose, track, upsertGenerating, addCredits]);
 
   const startRender = useCallback(() => {
@@ -143,13 +166,20 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
           title: compose.song?.title ?? "Untitled MV",
           thumb: job.thumb,
         });
-        track(job, (done) => {
-          if (!done.resultUrl) return;
-          setResultUrl(done.resultUrl);
-          markCompleted(done.id, done.resultUrl);
-        }, refund);
+        track(
+          job,
+          (done) => {
+            if (!done.resultUrl) return;
+            setResultUrl(done.resultUrl);
+            markCompleted(done.id, done.resultUrl);
+          },
+          refund,
+        );
       })
-      .catch(() => { refund(); setGen((g) => ({ ...g, status: "failed" })); });
+      .catch(() => {
+        refund();
+        setGen((g) => ({ ...g, status: "failed" }));
+      });
   }, [compose, storyboard, track, upsertGenerating, markCompleted, addCredits]);
 
   // A brand-new MV must discard any storyboard/result/job left over from a
@@ -185,6 +215,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         saveStoryboard,
         storyboardDirty,
         resultUrl,
+        setResultUrl,
         startStoryboard,
         startRender,
         resetForNewMv,

@@ -19,7 +19,15 @@ interface Props {
   alreadyDone: boolean;
 }
 
-export function GenerationView({ kind, title, subtitle, estimate, nextHref, start, alreadyDone }: Props) {
+export function GenerationView({
+  kind,
+  title,
+  subtitle,
+  estimate,
+  nextHref,
+  start,
+  alreadyDone,
+}: Props) {
   const router = useRouter();
   // MV and Song generations each own their progress; pick by what this screen shows.
   const mvGen = useMvFlow().gen;
@@ -38,9 +46,16 @@ export function GenerationView({ kind, title, subtitle, estimate, nextHref, star
   // `gen` resets to idle, so the job status never reaches "done" and the screen
   // would hang at 0%. `alreadyDone` means the artifact already exists — forward
   // to the next screen instead of waiting on a generation that will never run.
+  //
+  // `replace`, not `push` (2026-08-06). This screen forwards itself the moment
+  // the artifact exists, so leaving it on the history stack makes Back from the
+  // result a no-op LOOP: back lands here, `alreadyDone` is true, and 350ms later
+  // it pushes the result again. That is not a theoretical stack tidy-up — it is
+  // what made "Back on /mv/result does nothing" reproducible. With `replace`,
+  // Back from the result reaches the screen the user actually came from.
   useEffect(() => {
     if (alreadyDone || gen.status === "done") {
-      const t = setTimeout(() => router.push(nextHref), 350);
+      const t = setTimeout(() => router.replace(nextHref), 350);
       return () => clearTimeout(t);
     }
   }, [alreadyDone, gen.status, nextHref, router]);
@@ -49,18 +64,36 @@ export function GenerationView({ kind, title, subtitle, estimate, nextHref, star
 
   if (gen.status === "failed") {
     return (
-      <div className="mx-auto flex max-w-[520px] flex-col items-center px-6 py-16 text-center" role="alert">
-        <div className="grid h-[88px] w-[88px] place-items-center rounded-full" style={{ background: "var(--card-2)" }}>
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FF4E50" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <div
+        className="mx-auto flex max-w-[520px] flex-col items-center px-6 py-16 text-center"
+        role="alert"
+      >
+        <div
+          className="grid h-[88px] w-[88px] place-items-center rounded-full"
+          style={{ background: "var(--card-2)" }}
+        >
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#FF4E50"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
           </svg>
         </div>
         <h1 className="mt-7 text-[22px] font-extrabold">Generation Failed</h1>
         <p className="mt-2 text-[14px]" style={{ color: "var(--text-2)" }}>
-          Something went wrong while generating. Your credits were not charged — you can retry now or adjust your input and try again.
+          Something went wrong while generating. Your credits were not charged — you can retry now
+          or adjust your input and try again.
         </p>
         <div className="mt-8 flex gap-2">
-          <Button variant="ghost" onClick={() => router.push(backHref)}>Back</Button>
+          <Button variant="ghost" onClick={() => router.push(backHref)}>
+            Back
+          </Button>
           <Button onClick={start}>Retry</Button>
         </div>
       </div>
@@ -77,8 +110,14 @@ export function GenerationView({ kind, title, subtitle, estimate, nextHref, star
         <svg width="140" height="140" viewBox="0 0 140 140" className="-rotate-90">
           <circle cx="70" cy="70" r={r} fill="none" stroke="var(--card-2)" strokeWidth="8" />
           <circle
-            cx="70" cy="70" r={r} fill="none" stroke="var(--accent)" strokeWidth="8"
-            strokeLinecap="round" strokeDasharray={`${dash} ${circ}`}
+            cx="70"
+            cy="70"
+            r={r}
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray={`${dash} ${circ}`}
             style={{ transition: "stroke-dasharray .15s linear" }}
           />
         </svg>
@@ -86,20 +125,36 @@ export function GenerationView({ kind, title, subtitle, estimate, nextHref, star
       </div>
 
       <h1 className="mt-7 text-[22px] font-extrabold">{title}</h1>
-      <p className="mt-2 text-[14px]" style={{ color: "var(--text-2)" }}>{subtitle}</p>
-      <p className="mt-4 text-[13px] font-semibold" style={{ color: "var(--accent)" }}>{gen.step}</p>
+      <p className="mt-2 text-[14px]" style={{ color: "var(--text-2)" }}>
+        {subtitle}
+      </p>
+      <p className="mt-4 text-[13px] font-semibold" style={{ color: "var(--accent)" }}>
+        {gen.step}
+      </p>
 
       <div className="mt-6 w-full rounded-full" style={{ background: "var(--card-2)", height: 6 }}>
-        <div className="h-full rounded-full" style={{ width: `${gen.progress}%`, background: "var(--mv-grad)", transition: "width .15s linear" }} />
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${gen.progress}%`,
+            background: "var(--mv-grad)",
+            transition: "width .15s linear",
+          }}
+        />
       </div>
 
       <div className="mt-5 text-[12px]" style={{ color: "var(--text-2)" }}>
-        Estimated time remaining<br />
-        <span className="text-[14px] font-bold" style={{ color: "var(--text)" }}>{estimate}</span>
+        Estimated time remaining
+        <br />
+        <span className="text-[14px] font-bold" style={{ color: "var(--text)" }}>
+          {estimate}
+        </span>
       </div>
 
       <div className="mt-8">
-        <Button variant="ghost" onClick={() => router.push("/history")}>View Later</Button>
+        <Button variant="ghost" onClick={() => router.push("/history")}>
+          View Later
+        </Button>
       </div>
       <p className="sr-only">{kind} generation in progress</p>
     </div>

@@ -10,14 +10,20 @@
 The signed-in user's **"My Creations"** list (`/history`, auth-gated). It merges **live in-memory jobs**
 (from the MV/Song flow providers) with a **static seed** of sample creations, shown as filterable
 cards with a per-row `⋯` options menu (like/share/download/delete/publish + Edit MV / Create MV).
-Opening a row routes to the right destination (detail dialog, storyboard editor, or community
-player).
+Opening a row routes to the right destination: **its own result screen** (`/mv/result` or
+`/song/result`), the storyboard editor, or the community player.
 
 **In scope:** `history/HistoryView` (`/history`), its cards + `⋯` menu, the delete/publish confirm
 modals.
-**Out of scope (cross-referenced):** `CreationDialog` detail content (areas 02 MV / 03 song);
-`ShareDialog` (area 10); the seed flow into `/mv/edit`/`/mv/storyboard`/`/mv/room` (area 02); the
-community player `/song/play` (area 04).
+**Out of scope (cross-referenced):** the result screens themselves (`/mv/result` area 02,
+`/song/result` area 03); `ShareDialog` (area 10); the seed flow into
+`/mv/edit`/`/mv/storyboard`/`/mv/room` (area 02); the community player `/song/play` (area 04).
+
+**2026-08-06 — the row dialog is gone.** A done MV/song row used to open `CreationDialog`, a
+pre-migration modal. DP has no such dialog: its History rows link straight at `/mv-result` and
+`/song-create?stage=result`. Rows now navigate there, seeding the flow first via
+`useOpenCreation` (both result screens guard on flow state). `CreationDialog`, `MvDetail` and
+`SongDetail` therefore have no consumer left.
 
 **As-built vs App F15 (HIST-02/03/05/06 + MV-13 landed 2026-07-23, now synced to app):** retention is
 **permanent** (no 14-day copy); the **Liked** tab shows **only community-liked content**; Storyboard
@@ -33,8 +39,8 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 
 | Route / Component | Owns UI | Reads/writes state | `MuseApi` |
 |---|---|---|---|
-| `/history` → `history/HistoryView` | title + retention note, filter chips, card grid, `⋯` menu (portal), delete + publish-confirm modals, toasts | `useHistory().history`, local `removed`/`ov`(overrides)/`selected`/`openMenu`/`share`/`del`/`pubConfirm`; `useMvFlow().{setStoryboard,saveStoryboard,setCompose}` (seedFlow) | **none** |
-| `mv/CreationDialog` | detail view for a tapped MV/Song row | see areas 02/03 | — |
+| `/history` → `history/HistoryView` | title + retention note, filter chips, card grid, `⋯` menu (portal), delete + publish-confirm modals, toasts | `useHistory().history`, local `removed`/`ov`(overrides)/`openMenu`/`share`/`del`/`pubConfirm`; `useOpenCreation()` / `useSeedMvFlow()` | **none** |
+| `history/useOpenCreation` | — (hook) | seeds `useMvFlow().{setCompose,setStoryboard,saveStoryboard,setResultUrl}` or `useSongFlow().setSongResult`, then routes to the result screen | — |
 | `ui/ShareDialog` | share composer | see area 10 | — |
 
 **Data sources:** `useHistory()` (live jobs, in-memory) + `HISTORY_SAMPLES` (static seed in
@@ -58,7 +64,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
   hover-play (MV only), **status pill** (Generating…=gold / Failed=red / Done=green; community=none),
   **kind badge** (MV / SONG / STORYBOARD icon), title, stats (plays/likes/shares for done mv/song) or
   `meta`, date.
-- **Open row** (`HistoryView.tsx:110-115`): `processing` → not clickable; community song → `router.push(/song/play?id=…)` (id = `communitySongId`, area 04); `storyboard` → `seedFlow` + `/mv/storyboard?id=…` (area 02); else open `CreationDialog`.
+- **Open row** (`HistoryView.openRow`): `processing` → not clickable; community song → `/song/play?id=…` (id = `communitySongId`, area 04); `storyboard` → seed + `/mv/storyboard?id=…` (area 02); **done MV → seed + `/mv/result?id=…`; done song → seed + `/song/result?id=…`** (2026-08-06). Every card href is locale-prefixed (R-9) and matches where the click goes, so middle-click and copy-link agree with it.
 - **Storyboard "Create" pill (HIST-05, 2026-07-23):** done storyboard cards render a **"Create MV"
   pill** in the card footer (calls `createMv(r)`), in addition to the menu CTA.
 - **`⋯` menu** (`Menu`, portal) — contents depend on row type:
@@ -67,10 +73,10 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
   - **Publish (toggle) / Download / normal Delete**: non-community, non-failed, mv|song only. **Delete is hidden** when an MV is published/reviewing or a song is published.
   - **Standalone Delete**: also shown for **failed** and **storyboard** rows (`:355`).
   - **Net per type (as-built 2026-07-24):** MV = Edit MV (or "Unpublish to edit" when published) + Like/Share/Publish/Download/Delete · Song = Create MV + Like/Share/Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
-- **Publish** (`HistoryView.tsx:125-137`): **MV** → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. **Song** → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ `TBD-MV-06`, area 04). **The `⋯` menu and a row's own `CreationDialog` share this same `published`/`reviewing` state** (2026-07-24) — publishing from either surface updates both, so a row opened via its detail dialog and its "..." menu never disagree.
-- **Delete** (`HistoryView.tsx:194-200`): confirm modal → adds id to `removed` (list-local; not a server delete). `CreationDialog` delete does the same.
+- **Publish** (`HistoryView.tsx:125-137`): **MV** → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. **Song** → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ `TBD-MV-06`, area 04). **2026-08-06: the row's `published`/`reviewing` override is now the `⋯` menu's alone** — the dialog that used to share it is gone, and the result screens hold their own publish state (they are a different surface with their own MV-12 confirm).
+- **Delete** (`HistoryView`): confirm modal → adds id to `removed` (list-local; not a server delete).
 - **Download** (`HistoryView.tsx:118-122`): song → `SAMPLE_AUDIO` as `{title}.mp3`; else `SAMPLE_RESULT_VIDEO` as `{title}.mp4` (fixture media, not the row's own render). 🔒
-- **`seedFlow`** (`HistoryView.tsx:78-89`): builds a `mockStoryboard` from the row title/thumb and sets compose, so Edit/Create/Storyboard entries render for that row (synthesized state — cross-ref area 02 MV-P6 external entries).
+- **Seeding** (`history/useOpenCreation`): builds a `mockStoryboard` from the row title/thumb and sets compose, so Edit/Create/Storyboard entries render for that row (synthesized state — cross-ref area 02 MV-P6 external entries). `useOpenCreation` additionally sets `resultUrl` / `songResult` and navigates. 🔒 A seed row has no rendered artifact, so it falls back to `SAMPLE_RESULT_VIDEO` / `SAMPLE_AUDIO`.
 - 🔒 **All in-memory:** live rows vanish on reload (seed samples remain, being static); like/publish/delete are local overrides.
 
 ---
@@ -84,7 +90,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - **HIST-P1-S2** Tap a filter chip (All / Music Videos / Songs / Liked). **System:** re-filters per §3 rules.
 
 ### HIST-P2 — Open a creation
-- **HIST-P2-S1** Tap a **done MV/song** card → `CreationDialog` (detail; areas 02/03).
+- **HIST-P2-S1** Tap a **done MV** card → seed → `/mv/result?id=…` (area 02); a **done song** card → seed → `/song/result?id=…` (area 03).
 - **HIST-P2-S2** Tap a **storyboard** card → `seedFlow` → `/mv/storyboard?id=…` (area 02).
 - **HIST-P2-S3** Tap a **community** row → `/song/play?id=…` (area 04). **Processing** rows are inert.
 
@@ -123,7 +129,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - **AC-HIST-01** — WHEN `/history` loads for a signed-in user, THE SYSTEM SHALL show live jobs prepended to the seed samples, under the **All** filter (community rows excluded).
 - **AC-HIST-02** — WHEN a filter chip is selected, THE SYSTEM SHALL show only rows matching it (All=own, Music Videos=mv/storyboard, Songs=song, **Liked=community-liked only**).
 - **AC-HIST-03** — WHILE a row is `processing`, THE SYSTEM SHALL show a Generating pill and disable open + the `⋯` menu; WHEN `failed`, show a Failed pill and a **Delete-only** menu; storyboard rows SHALL show a **Create MV pill** plus a **Create MV + Delete** menu.
-- **AC-HIST-04** — WHEN a done MV/song card is tapped, THE SYSTEM SHALL open `CreationDialog`; a storyboard → `/mv/storyboard`; a community row → `/song/play`.
+- **AC-HIST-04** — WHEN a done MV card is tapped, THE SYSTEM SHALL seed the MV flow and route to `/mv/result?id=…`; a done song → `/song/result?id=…`; a storyboard → `/mv/storyboard`; a community row → `/song/play`. No detail dialog is opened.
 - **AC-HIST-05** — WHEN **Publish** is invoked on an MV, THE SYSTEM SHALL show the "Ready to Go Public?" confirm and, on confirm, mark it reviewing/published with a "Submitted for review" toast; a song publishes immediately without a confirm.
 - **AC-HIST-06** — WHEN **Delete** is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.
 - **AC-HIST-07** — WHEN **Edit MV / Create MV** is chosen, THE SYSTEM SHALL seed flow state and route to `/mv/edit` / `/mv/storyboard`|`/mv/room` respectively.
@@ -135,7 +141,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 ## 7. Per-path QA checklist
 
 - [ ] **HIST-P1**: All excludes community; **Liked shows community-liked only**; empty filter → empty state (AC-01/02, E5).
-- [ ] **HIST-P2**: done mv/song → dialog; storyboard → editor; community → player; processing inert (AC-03/04).
+- [ ] **HIST-P2**: done mv → `/mv/result?id=`; done song → `/song/result?id=`; storyboard → editor; community → player; processing inert (AC-03/04).
 - [ ] **HIST-P3**: like toggles + count; Share dialog w/ correct url; Download toast (AC-08).
 - [ ] **HIST-P4**: MV publish → confirm → review toast; song publish → immediate (AC-05).
 - [ ] **HIST-P5**: delete confirm removes row; hidden for published/reviewing (AC-06).
@@ -162,7 +168,8 @@ See also global: `TBD-GL-04` (persistence), and `TBD-MV-06` (publish → communi
 flowchart TD
   H["/history (My Creations)"] --> Filter["Filter: All · MV · Songs · Liked"]
   H --> Row{Tap row}
-  Row -->|done mv/song| Dialog["CreationDialog (areas 02/03)"]
+  Row -->|done mv| MvR["/mv/result?id= (area 02)"]
+  Row -->|done song| SongR["/song/result?id= (area 03)"]
   Row -->|storyboard| SB["/mv/storyboard (area 02)"]
   Row -->|community| Play["/song/play (area 04)"]
   Row -->|processing| Inert["(inert)"]

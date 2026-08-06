@@ -3,8 +3,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { useRouter } from "next/navigation";
-import { RoomNavbar } from "@/components/shell/RoomNavbar";
+import { useRouter, useSearchParams } from "next/navigation";
+import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { ListItem } from "@/components/ui/ListItem";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
@@ -82,6 +82,7 @@ function formatTime(seconds: number): string {
  */
 export function SongResultView() {
   const router = useRouter();
+  const idParam = useSearchParams().get("id");
   const { locale } = useLocale();
   const { songResult, resetForRecreate } = useSongFlow();
   const { patchCompose } = useMvFlow();
@@ -221,12 +222,24 @@ export function SongResultView() {
   }
 
   const progressRatio = duration ? currentTime / duration : 0;
+  // Opened from a `/history` row the id is in the URL and there is no live
+  // History job to match on (seed rows are fixtures, not jobs) — without it
+  // Share would build `/share?id=`, which resolves to the expired state.
   const shareId =
-    history.find((h) => h.kind === "song" && h.resultUrl === songResult.audioUrl)?.id ?? "";
+    idParam ??
+    history.find((h) => h.kind === "song" && h.resultUrl === songResult.audioUrl)?.id ??
+    "";
 
   return (
     <>
-      <RoomNavbar title="AI Song" />
+      {/*
+        DP switches this stage's chrome from RoomNavbar to
+        `<DetailNavbar title="AI Song" backHref="/history" />` — the result stage
+        is the one stage of `SongCreatePage` that gets a back control, and it
+        points at History. WA keeps Q6's `router.back()` and uses `/history` as
+        the fallback for a cold entry.
+      */}
+      <DetailNavbar title="AI Song" fallbackPath="/history" />
 
       <div className="song-create">
         <div className="song-create__panel song-create__panel--full">
@@ -261,7 +274,7 @@ export function SongResultView() {
                             generated — dropping it is the A14 information loss.
                             Typography borrowed from the same stylesheet rather
                             than a class no rule defines. */}
-                        {activeIndex === 0 && (
+                        {activeIndex === 0 && songResult.genre && songResult.mood && (
                           <p className="song-create__title-hint">
                             {songResult.genre} · {songResult.mood}
                             {songResult.instrumental ? " · Instrumental" : ""}
