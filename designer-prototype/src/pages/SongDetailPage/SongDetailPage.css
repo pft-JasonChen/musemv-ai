@@ -1,0 +1,965 @@
+/*
+  Song Detail Page — Figma "Top Picks Songs — See All — Community_L"
+  (nodes 1409:34847 at 1440, 1549:27425 at 1920; node 1778:28997 is the same
+  1440 frame with lyrics open instead of cover art) — desktop only. Below
+  the app-mobile breakpoint, tapping a song takes over the whole screen
+  with the dedicated .song-detail-mobile-player instead (Figma "Song Player
+  — Community", node 120:1023) — see that section further down.
+*/
+
+.song-detail {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 40px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .song-detail {
+    padding: 0 32px 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .song-detail {
+    flex-wrap: nowrap;
+    padding: 0 60px 40px;
+  }
+}
+
+/* Tabs now render inside DetailNavbar itself (via its tabsSlot prop) so the
+   two share one sticky background box — see DetailNavbar.css. */
+
+/* =========================================================
+ * Left — Tabs + song list
+ * ======================================================= */
+
+.song-detail__lists {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 20px;
+  flex: 1;
+}
+
+/* Figma (nodes 1409:34847, 1778:28997) shows Lists and Now Playing as two
+   equal 516px columns at 1440 — a true 1:1 split. Plain flex:1 on both
+   somehow doesn't split evenly once Now Playing is position:sticky (it
+   over-grows by the same amount Lists under-grows, consistently, in
+   testing) — using an explicit calc() against the row's own 40px gap
+   sidesteps that and guarantees an exact 1:1 split at any width. */
+@media (min-width: 1024px) {
+  .song-detail__lists {
+    flex: 0 0 calc(50% - 20px);
+  }
+}
+
+.song-detail__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/*
+  Figma: at >=1920 the plays/likes/shares stats move out of the stacked
+  text column to sit in their own row between the heading and the actions.
+  TopSongListItem always renders both variants; this just swaps which one
+  is visible, scoped to this page only.
+*/
+@media (min-width: 1920px) {
+  .song-detail .top-song__social--stacked {
+    display: none;
+  }
+
+  .song-detail .top-song__social--inline {
+    display: flex;
+    width: 195px;
+    flex-shrink: 0;
+  }
+}
+
+/* =========================================================
+ * Right — Now Playing panel (fixed width, matches Figma at both sizes)
+ * ======================================================= */
+
+.now-playing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .now-playing {
+    /* Figma (nodes 1409:34847, 1778:28997) has Lists and Now Playing as two
+       equal 516px columns at 1440 (a 1:1 split, not Now Playing pinned to a
+       fixed width) — flex:1 here matches .song-detail__lists's own flex:1
+       so both share the row equally at any width, rather than hardcoding
+       516px (which would only hold at exactly this one viewport/sidebar
+       state). */
+    width: auto;
+    min-width: 0;
+    flex: 0 0 calc(50% - 20px);
+    padding: 20px 16px;
+    /* Stays in view while the song list scrolls past it. align-self is
+       needed because a flex row stretches children to full height by
+       default, which would make position:sticky have no room to move.
+       top matches DetailNavbar's own rendered height (back row + tabs row,
+       now merged into one sticky box) so they don't overlap once stuck. */
+    align-self: flex-start;
+    position: sticky;
+    top: 124px;
+  }
+}
+
+.now-playing__art {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.45);
+  transition:
+    max-width 0.2s ease,
+    border-radius 0.2s ease;
+}
+
+.now-playing__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Turntable feel while a song is actually playing — paused (not reset)
+   when playback pauses, so it resumes spinning from the same angle rather
+   than snapping back to the start. */
+.now-playing__art-image {
+  position: absolute;
+  inset: 0;
+  animation: now-playing-spin 30s linear infinite;
+  animation-play-state: paused;
+  transition: opacity 0.2s ease;
+}
+
+/* Crossfades out instead of unmounting when lyrics open — see the
+   "always mount, toggle a modifier class" transition convention in
+   AGENTS.md. */
+.now-playing__art-image--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.now-playing__art-image--spinning {
+  animation-play-state: running;
+}
+
+@keyframes now-playing-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.now-playing__controller {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.now-playing__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.now-playing__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.now-playing__title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 26px;
+  letter-spacing: -0.2px;
+}
+
+.now-playing__user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.now-playing__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  background-image: linear-gradient(45deg, #ff6bce 14.639%, var(--color-accent-purple) 50%, #4338ca 85.361%);
+}
+
+.now-playing__avatar-icon {
+  width: 8.7px;
+  height: 8.7px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.now-playing__username {
+  color: var(--neutral-dark-74);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+}
+
+.now-playing__meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.now-playing__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: none;
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+}
+
+.now-playing__icon-btn--active {
+  color: var(--color-accent-purple);
+}
+
+/*
+  Lyrics — mic button toggles this. Generated (not official) lyrics, one
+  song at a time, highlighted line-by-line as playback progresses. No
+  background fill anywhere here on purpose — the cover photo is hidden
+  while lyrics are showing (see SongDetailPage.tsx), so this sits directly
+  on the page's own background instead of a flat or image-backed panel.
+  Mobile (<768px, the default): a bottom-sheet popup over a dimmed
+  backdrop, position:fixed so .now-playing__art's own overflow:hidden
+  circle doesn't clip it. Desktop (>=768px): replaces the album art in
+  place instead — .now-playing__art--lyrics-open swaps the circle for a
+  rounded rect so the text isn't cropped into a circle.
+*/
+.now-playing__art--lyrics-open {
+  border-radius: var(--radius-pill);
+}
+
+@media (min-width: 768px) {
+  .now-playing__art--lyrics-open {
+    max-width: 400px;
+    border-radius: var(--radius-xl);
+  }
+}
+
+.now-playing__lyrics-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.now-playing__lyrics-overlay--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.now-playing__lyrics-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.now-playing__lyrics-panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-height: 60vh;
+  box-sizing: border-box;
+  border-radius: 24px 24px 0 0;
+  background: none;
+}
+
+.now-playing__lyrics-close {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+.now-playing__lyrics-close-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+@media (min-width: 768px) {
+  .now-playing__lyrics-overlay {
+    position: absolute;
+    align-items: stretch;
+    z-index: 3;
+  }
+
+  .now-playing__lyrics-backdrop {
+    display: none;
+  }
+
+  .now-playing__lyrics-close {
+    display: none;
+  }
+
+  .now-playing__lyrics-panel {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: inherit;
+  }
+}
+
+.now-playing__lyrics-lines {
+  width: 100%;
+  height: 100%;
+  /* Just enough inset to keep the text clear of the panel's rounded
+     corners (the parent clips to that curve) — not the full 24px pulled
+     out earlier, this is only fixing the corner clip, not re-padding the
+     whole panel. */
+  padding: 12px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.now-playing__lyrics-lines::-webkit-scrollbar {
+  display: none;
+}
+
+.now-playing__lyrics-line {
+  margin: 0;
+  padding: 6px 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  transition: color 0.2s ease;
+}
+
+.now-playing__lyrics-line--active {
+  color: var(--neutral-dark-100);
+}
+
+.now-playing__icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.now-playing__progress {
+  position: relative;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.now-playing__progress-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+}
+
+.now-playing__progress-fill {
+  position: absolute;
+  left: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+}
+
+.now-playing__progress-thumb {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.now-playing__time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+}
+
+.now-playing__transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 70px;
+}
+
+.now-playing__transport-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: none;
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+}
+
+.now-playing__transport-icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.now-playing__play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: pointer;
+  color: var(--neutral-dark-04);
+}
+
+.now-playing__play-icon {
+  width: 32px;
+  height: 32px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.now-playing__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 46px;
+  padding: 14px 12px;
+  border: none;
+  border-radius: 34px;
+  box-sizing: border-box;
+  background: linear-gradient(90deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+}
+
+/* Desktop-only large-CTA rule (same convention as Song Create's "Create
+   Song" button) — auto-width with horizontal padding instead of stretching
+   full-width, centered under its column. Mobile keeps full-width. */
+@media (min-width: 1024px) {
+  .now-playing__cta {
+    width: auto;
+    min-width: 320px;
+    align-self: center;
+    padding: 0 16px;
+  }
+}
+
+.now-playing__cta-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* =========================================================
+ * Mobile-only full-screen player — Figma "Song Player — Community"
+ * (node 120:1023). Below the app-mobile breakpoint, the desktop Now
+ * Playing panel (with its own plain inline lyrics overlay) never shows at
+ * all — MobileNowPlaying is the only "now playing" surface on mobile,
+ * reached by tapping a song row, which hides the list and shows this
+ * instead, covering the whole screen (including Sidebar/MobileHeader/
+ * MobileTabBar, which all sit at z-index 20 or below — see
+ * SongDetailPage.tsx's MobileNowPlaying + selectSong/closeMobilePlayer).
+ * Only one Figma frame was given, sized around a 320–375 phone; the rest
+ * of this app's mobile range (up to 767px) scales the same proportions
+ * rather than guessing a second breakpoint.
+ * ======================================================= */
+
+@media (max-width: 767px) {
+  .now-playing {
+    display: none;
+  }
+
+  .song-detail--mobile-player-open .song-detail__lists {
+    display: none;
+  }
+}
+
+.song-detail-mobile-player {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .song-detail-mobile-player--open {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--neutral-dark-04);
+  }
+}
+
+.song-detail-mobile-player__bg {
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  width: 120%;
+  height: 120%;
+  object-fit: cover;
+  filter: blur(20px);
+}
+
+.song-detail-mobile-player__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(9, 9, 11, 0.3) 0%, var(--neutral-dark-04) 75%);
+}
+
+.song-detail-mobile-player__header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: max(env(safe-area-inset-top), 16px) 16px 10px;
+}
+
+.song-detail-mobile-player__back {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+.song-detail-mobile-player__back-icon {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.song-detail-mobile-player__header-title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+}
+
+.song-detail-mobile-player__header-spacer {
+  flex-shrink: 0;
+  width: 28px;
+}
+
+.song-detail-mobile-player__art-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+}
+
+.song-detail-mobile-player__art {
+  width: min(200px, 55vw);
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-pill);
+  object-fit: cover;
+  box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.45);
+  animation: now-playing-spin 30s linear infinite;
+  animation-play-state: paused;
+}
+
+.song-detail-mobile-player__art--spinning {
+  animation-play-state: running;
+}
+
+.song-detail-mobile-player__bottom {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 16px;
+  padding: 0 16px max(env(safe-area-inset-bottom), 16px);
+}
+
+.song-detail-mobile-player__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.song-detail-mobile-player__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.song-detail-mobile-player__title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 26px;
+  letter-spacing: -0.2px;
+}
+
+.song-detail-mobile-player__user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.song-detail-mobile-player__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  background-image: linear-gradient(45deg, #ff6bce 14.639%, var(--color-accent-purple) 50%, #4338ca 85.361%);
+}
+
+.song-detail-mobile-player__avatar-icon {
+  width: 8.7px;
+  height: 8.7px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.song-detail-mobile-player__username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-74);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
+.song-detail-mobile-player__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.song-detail-mobile-player__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: none;
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+}
+
+.song-detail-mobile-player__icon-btn--active {
+  color: var(--color-accent-purple);
+}
+
+.song-detail-mobile-player__icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.song-detail-mobile-player__progress {
+  position: relative;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.song-detail-mobile-player__progress-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+}
+
+.song-detail-mobile-player__progress-fill {
+  position: absolute;
+  left: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+}
+
+.song-detail-mobile-player__progress-thumb {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.song-detail-mobile-player__time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+}
+
+.song-detail-mobile-player__transport {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 35px;
+}
+
+.song-detail-mobile-player__transport-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: none;
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+}
+
+.song-detail-mobile-player__transport-icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.song-detail-mobile-player__play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: pointer;
+  color: var(--neutral-dark-04);
+}
+
+.song-detail-mobile-player__play-icon {
+  width: 32px;
+  height: 32px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.song-detail-mobile-player__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 46px;
+  padding: 14px 12px;
+  border: none;
+  border-radius: 34px;
+  box-sizing: border-box;
+  background: linear-gradient(90deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+}
+
+.song-detail-mobile-player__cta-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}

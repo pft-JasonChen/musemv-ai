@@ -1,0 +1,77 @@
+/*
+  Section Header — Figma "List/Section Header" (used across New MVs, Top
+  Picks, New Songs). Title font is Roboto — the only place in this design
+  that departs from Inter — no --font-family token for it, hardcoded here.
+*/
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 0;
+}
+
+.section-header__title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: Roboto, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.section-header__title--mobile {
+  display: none;
+}
+
+/* App-mobile layout (see layoutMode.ts) — Figma "Section" style: 17px Inter
+   Bold with a shorter, abbreviated title, instead of the desktop 24px Roboto
+   heading. Both titles stay in the DOM; only visibility swaps. */
+@media (max-width: 767px) {
+  .app-layout--mobile-app .section-header__title--desktop {
+    display: none;
+  }
+
+  .app-layout--mobile-app .section-header__title--mobile {
+    display: block;
+    font-family: var(--font-family-primary);
+    font-size: 17px;
+    font-weight: var(--font-weight-bold);
+    line-height: 22px;
+    letter-spacing: -0.17px;
+  }
+}
+
+.section-header__see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  margin: -6px -10px;
+  border-radius: var(--radius-md);
+  color: var(--color-accent-purple);
+  text-decoration: none;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-s);
+  transition: background-color 0.15s ease;
+}
+
+.section-header__see-all:hover {
+  background-color: var(--white-15);
+}
+
+.section-header__see-all-icon {
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}

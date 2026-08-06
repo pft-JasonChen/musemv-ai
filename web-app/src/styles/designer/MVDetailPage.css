@@ -1,0 +1,330 @@
+/*
+  MV Detail Page — Figma "New MVs — See All — Community_L_Portrait/Landscape"
+  (nodes 1459:10288 / 1459:11202). Only a 1440px desktop frame exists in
+  Figma for this page — no mobile/tablet mockup was provided, so the
+  responsive behavior below (grid wrapping to fewer columns) is a reasonable
+  default, not a confirmed design.
+*/
+
+.mv-detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 40px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+}
+
+@media (min-width: 768px) {
+  .mv-detail {
+    padding: 0 32px 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mv-detail {
+    padding: 0 60px 40px;
+  }
+}
+
+/* =========================================================
+ * Video player
+ * ======================================================= */
+
+.mv-player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.3);
+  background: var(--neutral-dark-14);
+}
+
+.mv-player__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(10px);
+}
+
+.mv-player__backdrop-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(to bottom, rgba(9, 9, 11, 0.3) 0%, #09090b 100%);
+}
+
+.mv-player__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.mv-player__video {
+  cursor: pointer;
+}
+
+.mv-player__stage:not(.mv-player__stage--portrait) .mv-player__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mv-player__stage--portrait .mv-player__video {
+  height: 100%;
+  width: auto;
+}
+
+.mv-player__floating {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 16px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, #070707 100%);
+}
+
+.mv-player__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mv-player__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mv-player__title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 26px;
+  letter-spacing: -0.2px;
+}
+
+.mv-player__user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mv-player__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  background-image: linear-gradient(45deg, #ff6bce 14.639%, var(--color-accent-purple) 50%, #4338ca 85.361%);
+}
+
+.mv-player__avatar-icon {
+  width: 8.7px;
+  height: 8.7px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-player__username {
+  color: var(--neutral-dark-74);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+}
+
+.mv-player__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.mv-player__like-share {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Figma "MV Controller" (node 1459:10300) has these as plain Neutral/Dark/100
+   icons, not IconButton--ghost's default muted Neutral/Dark/64 — scoped here
+   rather than changing that shared default, which other Ghost icon buttons
+   elsewhere may rely on. */
+.mv-player__action-icon.icon-button--ghost {
+  color: var(--neutral-dark-100);
+}
+
+.mv-player__action-icon--active.icon-button--ghost {
+  color: var(--color-accent-purple);
+}
+
+.mv-player__controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.mv-player__control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+}
+
+.mv-player__control-icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-player__progress {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.mv-player__progress-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+}
+
+.mv-player__progress-fill {
+  position: absolute;
+  left: 0;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+}
+
+.mv-player__progress-thumb {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.mv-player__time {
+  flex-shrink: 0;
+  color: var(--neutral-dark-74);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+}
+
+/* =========================================================
+ * Grid
+ * ======================================================= */
+
+.mv-detail__grid-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Desktop (>=1024px): a stack of justified rows, each filled edge to edge —
+   see MvGrid's computeJustifiedRows. Below that, MvGrid instead renders the
+   simpler fixed-width wrapping grid (.mv-detail__grid--wrap). */
+.mv-detail__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mv-detail__grid-row {
+  display: flex;
+  gap: 20px;
+}
+
+.mv-detail__grid--wrap {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.mv-detail__grid-item {
+  display: block;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+/* Fixed per-ratio widths only apply to the wrapping fallback — the
+   justified-row layout sets each item's width inline (row height * its own
+   aspect ratio) instead. */
+.mv-detail__grid--wrap .mv-detail__grid-item {
+  width: 173px;
+}
+
+.mv-detail__grid--wrap .mv-detail__grid-item--4-3 {
+  width: 308px;
+}
+
+@media (max-width: 1023px) {
+  .mv-detail__grid--wrap .mv-detail__grid-item,
+  .mv-detail__grid--wrap .mv-detail__grid-item--4-3 {
+    width: calc(50% - 10px);
+  }
+}
+
+@media (max-width: 639px) {
+  .mv-detail__grid--wrap .mv-detail__grid-item,
+  .mv-detail__grid--wrap .mv-detail__grid-item--4-3 {
+    width: 100%;
+  }
+}

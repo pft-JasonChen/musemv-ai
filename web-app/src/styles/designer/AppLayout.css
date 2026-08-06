@@ -1,0 +1,99 @@
+.app-layout {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-bg-primary);
+}
+
+.app-layout__main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+  Absolute (not fixed) on purpose: position:fixed proved unreliable at narrow
+  viewport widths (the containing block it resolved against didn't match the
+  real viewport, causing horizontal overflow). Absolute relative to
+  .app-layout covers the same full-page area and scrolls with the page,
+  which is fine for a purely decorative background.
+*/
+.app-layout__background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  width: 100%;
+  /* 80% of the viewport, NOT of .app-layout's own height — .app-layout is
+     as tall as the whole scrollable page, so a % height here would stretch
+     the video down through most of the page on any page with a lot of
+     content below the fold. vh is measured against the viewport instead,
+     so it stays sized to roughly "one screen" regardless of page length. */
+  height: 80vh;
+  object-fit: cover;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
+}
+
+.app-layout__background--fading {
+  opacity: 0;
+}
+
+/* Figma's 70% black fill for most of the video, fading the rest of the way
+   to the solid page background color so the video doesn't just cut off at
+   80vh with a visible seam. These stops are in vh to match
+   .app-layout__background's own 80vh height — this element is inset:0
+   (spanning the whole scrollable page), so a %-based gradient here would
+   fade out relative to the page's total height instead of where the video
+   actually ends, leaving a hard line right at the 80vh mark on any page
+   taller than one screen. */
+.app-layout__background-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.7) 0,
+    rgba(0, 0, 0, 0.7) 55vh,
+    var(--color-bg-primary) 85vh,
+    var(--color-bg-primary) 100%
+  );
+  pointer-events: none;
+}
+
+.app-layout__content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+/*
+  App-mobile variant (see src/config/layoutMode.ts): below 767px this swaps
+  Sidebar/Navbar/Footer + the colorflow background for MobileHeader/
+  MobileTabBar on a plain dark background, matching the manager's app
+  design. Nothing here is deleted — flipping MOBILE_LAYOUT back to
+  'desktop-sync' restores the collapsed-Sidebar mobile layout instantly.
+*/
+@media (max-width: 767px) {
+  .app-layout--mobile-app .sidebar,
+  .app-layout--mobile-app .navbar,
+  .app-layout--mobile-app .detail-navbar,
+  .app-layout--mobile-app .room-navbar,
+  .app-layout--mobile-app .footer {
+    display: none;
+  }
+
+  .app-layout--mobile-app .app-layout__background,
+  .app-layout--mobile-app .app-layout__background-scrim {
+    display: none;
+  }
+
+  .app-layout--mobile-app {
+    background: #09090b;
+  }
+}

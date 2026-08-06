@@ -1,0 +1,71 @@
+/* ============================================================================
+   designer.css — the single entry point for DP's BEM stylesheets (plan D1).
+
+   Phase 1 wires the pipeline and leaves it EMPTY on purpose: the plumbing is
+   proved to build and to change nothing before any rule flows through it.
+
+   HOW THIS FILLS UP
+     Each migrated screen copies its DP stylesheet(s) verbatim into
+     `src/styles/designer/` and adds one `@import` line below. Verbatim is the
+     point — it is what makes a designer re-drop a file-level copy instead of a
+     merge (see designer-prototype/PROVENANCE.md).
+
+   WHY ONE ENTRY FILE AND NOT CSS MODULES
+     Next only allows global (non-module) CSS to be imported from a layout, and
+     DP's class names are already globally-scoped BEM. Routing them through one
+     file imported by globals.css means the JSX keeps DP's `className` strings
+     untouched. CSS Modules would require rewriting every class reference and
+     would forfeit that.
+
+   ORDER MATTERS
+     globals.css imports this LAST, after tailwind, so a DP rule beats a Tailwind
+     utility of equal specificity on a migrated screen. Migrated components are
+     not supposed to mix the two anyway (Gate G3-d) — this is the backstop for
+     when they meet at a shared element.
+
+   PROVEN BY THE /history SPIKE (R-1/U2, closed 2026-08-04) — AND THE MECHANISM
+     IS NOT THE ORDER. Tailwind v4 emits `@layer base, components, …`; this file
+     is imported WITHOUT a layer, and an unlayered rule always beats a layered one
+     regardless of specificity or source order. That is what makes D1 work.
+     The consequence to remember: a Tailwind utility mixed into a migrated
+     component silently loses. Gate G3-d's "don't mix" is that measurement, not a
+     style preference.
+   ========================================================================== */
+
+/* Each file below is byte-identical to its counterpart in designer-prototype/.
+   `npm run designer:check` proves that, and proves every var(--token) they use
+   actually resolves. Do not edit these files to fix a bug — fix it upstream and
+   re-drop, or the next re-sync silently reverts you. */
+@import "./designer/AppLayout.css";
+@import "./designer/Sidebar.css";
+@import "./designer/MobileHeader.css";
+@import "./designer/MobileTabBar.css";
+@import "./designer/RoomNavbar.css";
+@import "./designer/DetailNavbar.css";
+@import "./designer/IconButton.css";
+@import "./designer/Button.css";
+@import "./designer/CreditBalance.css";
+@import "./designer/UpgradeButton.css";
+@import "./designer/Tabs.css";
+@import "./designer/ToggleSwitch.css";
+@import "./designer/Badge.css";
+@import "./designer/Card.css";
+@import "./designer/SectionHeader.css";
+@import "./designer/TopSongListItem.css";
+@import "./designer/LyricsSheet.css";
+@import "./designer/HistoryPage.css";
+@import "./designer/MVDetailPage.css";
+@import "./designer/SongDetailPage.css";
+@import "./designer/AccountPage.css";
+@import "./designer/CommunityProfilePage.css";
+@import "./designer/CreditsPage.css";
+@import "./designer/CreditsDialog.css";
+@import "./designer/UpgradeDialog.css";
+@import "./designer/FloatingCTA.css";
+@import "./designer/ListItem.css";
+@import "./designer/MVCreatePage.css";
+@import "./designer/MVStoryboardPage.css";
+@import "./designer/MVResultPage.css";
+@import "./designer/Chip.css";
+@import "./designer/SongCreatePage.css";
+@import "./designer/MVEditPage.css";

@@ -1,0 +1,363 @@
+/*
+  ListItem — Figma "List/List Item/dt" (node 1270:21039). Neither the Song
+  nor the Community variant has its own border/background in Figma — both
+  are meant to sit inside ONE shared bordered container (e.g. My Creations'
+  side-list, or a wrapping card on Home's New Songs), separated by that
+  container's own `gap`, with a hover highlight instead of a permanent box
+  per row. An earlier version gave Community its own border+background
+  ("standalone card") that Figma never specified — removed so both variants
+  share the exact same borderless treatment.
+*/
+
+.list-item {
+  container-type: inline-size;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: var(--radius-lg);
+  transition: background-color 0.15s ease;
+}
+
+.list-item:hover {
+  background-color: var(--white-15);
+}
+
+.list-item--song {
+  flex-wrap: nowrap;
+}
+
+.list-item__subtitle {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body-m);
+  letter-spacing: -0.14px;
+}
+
+.list-item__chevron {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background-color: var(--neutral-dark-64);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* Album art + info stay together; Actions drops to its own line (right-
+   aligned) once the row is too narrow to fit both — see ListItem.tsx. */
+.list-item__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+/* =========================================================
+ * Album art
+ * ======================================================= */
+
+.list-item__album-art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 13.182px;
+  overflow: hidden;
+  background: var(--neutral-dark-24);
+}
+
+@media (min-width: 480px) {
+  .list-item__album-art {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* Figma gives Song a smaller, squarer art box (rounded-10, p-12) than
+   Community's bigger rounder one (rounded-13.182, p-18) — a fixed 44px
+   matches Song's actual 60px row height with its 8px vertical padding. */
+.list-item__album-art--song {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+
+.list-item__album-art--song .list-item__play-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.list-item__album-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.list-item__album-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.list-item__play-icon {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* =========================================================
+ * Info — Song variant's title + subtitle
+ * ======================================================= */
+
+.list-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* =========================================================
+ * Community variant's title/user/stats layout
+ *
+ * Figma gives Community a genuinely different arrangement depending on how
+ * much room it has (its own Mobile vs Desktop variants) — not just smaller
+ * text. Narrow: title, then username, then stats, all stacked in one
+ * column. Wide: title+username stay a 2-line block, but stats break out
+ * into their own side-by-side column next to it instead of stacking under
+ * the username. Driven by this component's own rendered width (container
+ * query), not viewport width — the same ListItem appears in a roomy
+ * 2-column list (Home's New Songs) and a narrow 432px sidebar (My
+ * Creations) at the same viewport size.
+ * ======================================================= */
+
+.list-item__community-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item__community-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+@container (min-width: 560px) {
+  .list-item__community-body {
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .list-item__community-heading {
+    flex: 1;
+  }
+}
+
+.list-item__title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-s);
+}
+
+.list-item__user-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.list-item__user-row:hover .list-item__username {
+  color: var(--neutral-dark-100);
+}
+
+.list-item__avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background-image: linear-gradient(45deg, #ff6bce 14.639%, var(--color-accent-purple) 50%, #4338ca 85.361%);
+}
+
+.list-item__avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.list-item__avatar-icon {
+  width: 9px;
+  height: 9px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.list-item__username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body-m);
+  letter-spacing: -0.14px;
+}
+
+.list-item__social-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .list-item__social-row {
+    gap: 20px;
+  }
+}
+
+@container (min-width: 560px) {
+  .list-item__social-row {
+    flex-shrink: 0;
+    gap: 24px;
+  }
+}
+
+.list-item__stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.list-item__stat-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* =========================================================
+ * Actions — like toggle, share, Create button
+ * ======================================================= */
+
+.list-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+@media (min-width: 480px) {
+  .list-item__actions {
+    gap: 16px;
+  }
+}
+
+/* The share count is already visible in the social row at this width, so the
+   standalone share button is dropped to save space rather than overflow. */
+@media (max-width: 479px) {
+  .list-item__share {
+    display: none;
+  }
+}
+
+.list-item__like,
+.list-item__share {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--neutral-dark-64);
+}
+
+.list-item__like--active {
+  color: var(--color-accent-purple);
+}
+
+.list-item__share {
+  opacity: 0.4;
+}
+
+.list-item__like-icon,
+.list-item__share-icon {
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}

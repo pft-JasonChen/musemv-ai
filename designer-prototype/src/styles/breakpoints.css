@@ -1,0 +1,44 @@
+/*
+  YCM RWD Breakpoints
+  ---------------------------------------------
+  採 Mobile First 寫法：先寫小螢幕的預設樣式，
+  再用 min-width 往上覆寫大螢幕的樣式。
+
+  Minimum supported width : 320px (無對應 media query，直接寫在預設樣式裡)
+  Mobile      / XS : 375px
+  Tablet      / S  : 768px
+  Laptop      / M  : 1024px
+  Desktop     / L  : 1440px
+  Wide Desktop/ XL : 1920px
+
+  使用方式範例：
+  .box {
+    padding: 16px;
+  }
+
+  @media (min-width: 768px) {
+    .box {
+      padding: 24px;
+    }
+  }
+*/
+
+/* Mobile / XS: 375px 以上 */
+@media (min-width: 375px) {
+}
+
+/* Tablet / S: 768px 以上 */
+@media (min-width: 768px) {
+}
+
+/* Laptop / M: 1024px 以上 */
+@media (min-width: 1024px) {
+}
+
+/* Desktop / L: 1440px 以上 */
+@media (min-width: 1440px) {
+}
+
+/* Wide Desktop / XL: 1920px 以上 */
+@media (min-width: 1920px) {
+}

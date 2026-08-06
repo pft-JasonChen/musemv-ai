@@ -1,0 +1,60 @@
+.room-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to bottom, #09090b 0%, rgba(9, 9, 11, 0) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.room-navbar__top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 60px;
+}
+
+.room-navbar__tabs {
+  padding: 0 60px 16px;
+}
+
+.room-navbar__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  /* .room-navbar__top has no space-between of its own, so without this the
+     actions just trail immediately after the title instead of sitting at
+     the far right — same fix as DetailNavbar's own .detail-navbar__actions. */
+  margin-left: auto;
+}
+
+.room-navbar__title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+  line-height: 32px;
+  letter-spacing: -0.26px;
+}
+
+.room-navbar__login {
+  margin-left: auto;
+}
+
+/* Side padding was fixed at 60px regardless of viewport — harmless while no
+   page used tabsSlot, but History's tabs (now living here, see below) need
+   this to match its own page body's 16px mobile padding for the bleed
+   trick in HistoryPage.css to line up correctly. */
+@media (max-width: 767px) {
+  .room-navbar__top {
+    padding: 20px 16px;
+  }
+
+  .room-navbar__tabs {
+    padding: 0 16px 16px;
+  }
+}

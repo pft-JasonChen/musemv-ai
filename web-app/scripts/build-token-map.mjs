@@ -33,12 +33,47 @@ const flag = (name, fallback) => {
 };
 const CHECK = args.includes("--check");
 const WA_ROOT = resolve(new URL("..", import.meta.url).pathname);
-const DP_ROOT = resolve(flag("--dp", join(homedir(), "Downloads", "YCM-main")));
 
-const WA_TOKENS = join(WA_ROOT, "src", "styles", "tokens.css");
+// DP now lives IN the repo (`designer-prototype/`, vendored 2026-08-04 from
+// github.com/marukox1105/YCM — see its PROVENANCE.md). Before that it was expected at
+// ~/Downloads/YCM-main, which exists on exactly one laptop; the Stop gate's G2-a leg
+// therefore "skipped" everywhere else and looked green while checking nothing. Prefer
+// the in-repo copy, keep the old path as a fallback so an existing local checkout
+// still works, and let --dp override both.
+const IN_REPO_DP = resolve(WA_ROOT, "..", "designer-prototype");
+const DP_ROOT = resolve(
+  flag("--dp", existsSync(IN_REPO_DP) ? IN_REPO_DP : join(homedir(), "Downloads", "YCM-main")),
+);
+
+// The WA side of the map moved on 2026-08-04 (Phase 1 / D2). `tokens.css` used to hold
+// WA's own names; it is now the DESIGNER's file, copied wholesale from the drop. Reading
+// it as "WA" would compare DP against itself — every row a trivial match, and the one
+// thing the map exists to record (which WA legacy name corresponds to which DP token)
+// silently gone. WA's names now live in token-aliases.css, so that is the WA side.
+const WA_TOKENS = join(WA_ROOT, "src", "styles", "token-aliases.css");
 const DP_TOKENS = join(DP_ROOT, "src", "styles", "tokens.css");
 const OUT_MD = join(WA_ROOT, "docs", "token-map.md");
 const OUT_JSON = join(WA_ROOT, "docs", "token-map.json");
+
+/**
+ * Emit source paths RELATIVE TO THE GIT ROOT, never absolute.
+ *
+ * WHY (found 2026-08-05, slice 3b): the generated map recorded absolute paths —
+ * `/home/user/musemv-ai/designer-prototype/…` from the machine that last ran it.
+ * `--check` regenerates and compares whole files, so on ANY other machine those
+ * two lines differ and G2-a fails with "tokens moved without regenerating" when
+ * no token has moved. It blocked the Stop gate on a macOS checkout with a diff
+ * that was nothing but the absolute path.
+ *
+ * Regenerating to fix it would only flip the failure onto the next machine —
+ * exactly the ping-pong the `-darwin`/`-linux` visual baselines are already stuck
+ * in. Relative paths make the artifact machine-independent, so the check goes
+ * back to measuring the one thing it is for: whether the TOKENS changed. The date
+ * line is stripped from the comparison for the same reason (see `strip` below);
+ * this is the same problem the author already solved once.
+ */
+const REPO_ROOT = resolve(WA_ROOT, "..");
+const rel = (p) => p.replace(REPO_ROOT + "/", "");
 
 // ── parse ───────────────────────────────────────────────────────────────────
 /**
@@ -53,32 +88,68 @@ const OUT_JSON = join(WA_ROOT, "docs", "token-map.json");
  *   appears to change with no real change. That would corrupt the D2 token swap at the
  *   foundation, so the theme is now explicit.
  *
+ * WHY THIS IS NOT LINE-BASED (fixed 2026-08-04)
+ *   The first version split on "\n" and anchored `^(--name): value;` at the start of each
+ *   trimmed line. That silently dropped declarations at BOTH ends of the comparison:
+ *     · WA packs three per line — `--fs-body-l: 17px; --fw-body-l: 500; --lh-body-l: 22px;`
+ *       — so only the `--fs-*` was seen. **30 of WA's 110 tokens** (every `--fw-*` and
+ *       `--lh-*`) were invisible, while `CATEGORY()` below already had `line-height` and
+ *       `weight` branches waiting for them. G2-b diffs line-height, so the map that G2-a
+ *       gates on was blind to a property the next gate down measures.
+ *     · DP writes gradients across several lines, so all **4 `--gradient-*`** were missed
+ *       and §1's gradient row printed "(absent)" — reading as "DP dropped it" when DP in
+ *       fact defines `--gradient-mv` at 90deg. That is S16, the exact conflict the row exists
+ *       to surface, reported as a non-finding.
+ *   Both failures were silent: a smaller map looks like a cleaner one. Scan blocks, not lines.
+ *
  * Returns { dark, light, themed } — `dark` is the comparison set (WA has no light theme),
  * `themed` names the variables that exist in both so the report can say so out loud.
  */
 function parseTokens(file) {
-  const src = readFileSync(file, "utf8");
+  // Comments are stripped first so a commented-out `--foo: bar;` never counts as a token.
+  const src = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   const dark = new Map();
   const light = new Map();
-  // Track which selector block each declaration falls in. Blocks are flat here (no
-  // nesting in either token file), so a simple scan is enough and stays predictable.
-  let inLight = false;
-  let inDark = false;
-  for (const rawLine of src.split("\n")) {
-    const line = rawLine.trim();
-    if (/^[.:[\w][^{]*\{\s*$/.test(line) || /\{\s*$/.test(line)) {
-      // A selector line. `:root` alone is the base (dark in WA, light in DP — but DP
-      // pairs it with [data-theme="light"], which is what identifies it).
-      inLight = /\[data-theme=["']?light/.test(line) || /^:root,\s*$/.test(line);
-      inDark = /\[data-theme=["']?dark/.test(line);
+
+  // Walk the source tracking brace depth, collecting each top-level {selector, body}.
+  // Neither token file nests blocks, but depth-tracking keeps that from mattering.
+  let selector = "";
+  let body = "";
+  let depth = 0;
+  const blocks = [];
+  for (const ch of src) {
+    if (ch === "{") {
+      if (depth === 0) body = "";
+      else body += ch;
+      depth++;
+      continue;
     }
-    const m = line.match(/^(--[\w-]+)\s*:\s*([^;]+);/);
-    if (!m) continue;
-    const [, name, value] = [m[0], m[1], m[2].trim().replace(/\s+/g, " ")];
-    if (inDark) dark.set(name, value);
-    else if (inLight) light.set(name, value);
-    else { dark.set(name, value); light.set(name, value); }  // theme-neutral
+    if (ch === "}") {
+      depth--;
+      if (depth === 0) { blocks.push({ selector: selector.trim(), body }); selector = ""; }
+      else body += ch;
+      continue;
+    }
+    if (depth === 0) selector += ch;
+    else body += ch;
   }
+
+  for (const { selector: sel, body: text } of blocks) {
+    // `:root` alone is the base (dark in WA, light in DP). DP identifies its light block
+    // by the [data-theme="light"] selector, so match on that rather than on file order.
+    const isLight = /\[data-theme=["']?light/.test(sel);
+    const isDark = /\[data-theme=["']?dark/.test(sel);
+    // `[^;]+` spans newlines here — that is what admits DP's multi-line gradients — and
+    // the global flag is what admits WA's several-per-line packing.
+    for (const m of text.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+      const name = m[1];
+      const value = m[2].trim().replace(/\s+/g, " ");
+      if (isDark) dark.set(name, value);
+      else if (isLight) light.set(name, value);
+      else { dark.set(name, value); light.set(name, value); }  // theme-neutral
+    }
+  }
+
   const themed = [...dark.keys()].filter((k) => light.has(k) && light.get(k) !== dark.get(k));
   return { dark, light, themed };
 }
@@ -252,7 +323,7 @@ const section = (title, rs) => rs.length === 0 ? "" : [
 const md = `# Token map — WA ⇄ DP
 
 > **GENERATED — do not hand-edit.** \`node scripts/build-token-map.mjs\`
-> Sources: \`${WA_TOKENS.replace(WA_ROOT + "/", "")}\` · \`${DP_TOKENS}\`
+> Sources: \`${rel(WA_TOKENS)}\` · \`${rel(DP_TOKENS)}\`
 > Generated ${stamp}. Gate **G2-a** (\`redesign-migration-plan-2026-08-01.md\` §10).
 
 Matching is **by value**, which is what plan §4.1 asserts is already true ("顏色不是重畫,
@@ -343,7 +414,7 @@ ${dpOnly.map(([n, v]) => `| \`${n}\` | \`${esc(normalise(resolved(dp, v)))}\` |`
 const json = {
   generatedBy: "scripts/build-token-map.mjs",
   generated: stamp,
-  sources: { wa: WA_TOKENS, dp: DP_TOKENS },
+  sources: { wa: rel(WA_TOKENS), dp: rel(DP_TOKENS) },
   counts: { wa: wa.size, dp: dp.size, ...tally, dpOnly: dpOnly.length },
   conflicts: conflictRows,
   rows,

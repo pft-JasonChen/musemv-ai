@@ -23,8 +23,18 @@ test("MV creation: compose -> storyboard -> render -> result", async ({ page }) 
   // the whole 20s expect timeout. (Fixed 2026-08-02: this suite was in no gate,
   // so the breakage sat unnoticed. That is what C2 is about.)
   const chooseSong = page.getByRole("dialog", { name: "Choose Song" });
-  await chooseSong.getByRole("button", { name: "Use", exact: true }).first().click(); // AC2 (opens Trim)
-  await page.getByRole("button", { name: "Use Trimmed Audio", exact: true }).click();
+  // Slice 3g-2: DP reveals the row's "Use" pill only while the row is active
+  // (`opacity: 0; pointer-events: none` otherwise), so the row has to be
+  // hovered before the pill will accept a click.
+  const songRow = chooseSong.locator(".mv-song-picker__row").first();
+  await songRow.hover();
+  await songRow.getByRole("button", { name: "Use", exact: true }).click(); // AC2 (opens Trim)
+  // Slice 3g-2: DP's sheets confirm with a Cancel/Confirm footer, not WA's old
+  // "Use Trimmed Audio" button.
+  await page
+    .getByRole("dialog", { name: "Trim Audio" })
+    .getByRole("button", { name: "Confirm", exact: true })
+    .click();
   await expect(cta).toBeEnabled();
 
   await cta.click(); // AC5
@@ -33,7 +43,7 @@ test("MV creation: compose -> storyboard -> render -> result", async ({ page }) 
   await page.waitForURL("**/mv/storyboard"); // AC10
   await expect(page.getByText("Scene 1")).toBeVisible();
 
-  await page.getByRole("button", { name: /Generate MV/ }).click(); // AC14
+  await page.getByRole("button", { name: /Create MV/ }).click(); // AC14
   await page.waitForURL("**/mv/result"); // AC11
   await expect(page.locator("video")).toBeVisible(); // AC15
 });

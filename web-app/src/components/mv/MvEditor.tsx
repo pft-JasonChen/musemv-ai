@@ -1,432 +1,792 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { createPortal } from "react-dom";
+import { DetailNavbar } from "@/components/shell/DetailNavbar";
+import { DpIcon } from "@/components/ui/DpIcon";
+import { FloatingCTA } from "@/components/ui/FloatingCTA";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { COST_RENDER } from "@/lib/mv/types";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
+import { downloadFile } from "@/lib/download";
+import { COST_RENDER, DESCRIPTION_MAX, type Scene } from "@/lib/mv/types";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
 
 const COST_REGEN = 20;
 const COST_COVER = 10;
 
-// MV-08: the app-consistent Edit MV has no Project mode — edits are ephemeral,
-// Regenerate scene / Recreate cover OVERWRITE directly (no take/cover trays,
-// no Save, no undo), and Merge MV is the re-render enabled by any pending edit.
-// The richer "pick a take / cover variant" + Save UI is intentionally HIDDEN
-// (not deleted) behind this flag so we can develop toward it later.
-const LEGACY_TAKE_TRAY_UI = false;
-
-interface Take { id: string; video: string; status: "ready" | "generating" }
-interface CoverTake { id: string; image: string; status: "ready" | "generating" }
-
-function I({ d, size = 18 }: { d: string; size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
-}
-function Bolt() {
-  return <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg>;
-}
-function Toggle({ on }: { on: boolean }) {
-  return (
-    <span className="relative inline-block h-5 w-9 rounded-full transition-colors" style={{ background: on ? "var(--accent)" : "var(--card-3)" }}>
-      <span className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all" style={{ left: on ? "18px" : "2px" }} />
-    </span>
-  );
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds)) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+/** Storyboard clip thumbnails, one per scene — WA's own asset set. */
+const clipCover = (i: number) => `/assets/videos/storyboard-clips/clip_${(i % 19) + 1}.jpg`;
+
+/**
+ * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3k — the last route) ───
+ *
+ * DP source: `MVEditPage` (Figma "Edit MV_L" node 1351:28314 desktop /
+ * "Edit MV" node 49:53 mobile). Classes from
+ * `src/styles/designer/MVEditPage.css`, verbatim.
+ *
+ * ── A12 IS CLOSED, AND IT WAS NEVER ABOUT THIS ROUTE ────────────────────────
+ *
+ * Four handoffs recorded "DP's `/mv-edit` is a white screen at every width, so
+ * porting it would be blind". Run outside the repo with the route's own query
+ * string, it turned out to be TWO missing-asset faults in the vendored drop,
+ * neither of them specific to this page:
+ *
+ * 1. `src/assets/hero/*` (9 videos + 9 stills) is absent, and
+ *    `HomePage/HeroBannerSection.tsx` imports them by name. One unresolved
+ *    import fails the whole module graph, so EVERY route was white — not just
+ *    this one. That is why the symptom looked page-specific and wasn't.
+ * 2. `src/assets/storyboard-clips/` is absent too, and `data/storyboardClips.ts`
+ *    reads it with Vite's eager glob helper. A glob that matches nothing is not an
+ *    error — it yields `[]`, so `STORYBOARD_CLIPS[0]` is `undefined` and the
+ *    page throws on `.video` at first render. Silent input, loud crash, one
+ *    layer away from the cause.
+ *
+ * With both supplied in a scratch copy the page renders at all six widths, and
+ * this port is against what it actually looks like. Recorded in DESIGNER-TODO
+ * A12; the fix belongs upstream (ship the assets), not here.
+ *
+ * ── WHAT DP DOES NOT HAVE, AND IS KEPT ──────────────────────────────────────
+ *
+ * · **MV-08.** Edits are ephemeral and there is no Project mode: Recreate
+ *   OVERWRITES (no take tray, no variant picker, no Save, no undo), and Merge
+ *   MV is the re-render. The old `LEGACY_TAKE_TRAY_UI` flag and the tray it
+ *   hid are gone — DP has no design for them, and a flag guarding dead markup
+ *   inside a migrated screen is worse than the decision it recorded.
+ * · **Merge is enabled only by a pending edit** (`dirty`). DP's Merge is always
+ *   live, so porting it verbatim would let a user pay `COST_RENDER` to
+ *   re-render an unchanged video.
+ * · **GL-01** on Merge and on both Recreates: below the cost, route to IAP.
+ *   DP charges nothing and only checks sign-in.
+ * · `resetForRerender()` before `/mv/creating`, so the previous rendered video
+ *   cannot survive into the merge.
+ * · `EnhanceButton`'s real `api.enhancePrompt` round-trip (G5-d #10), DP-skinned
+ *   via `bem="mv-edit"`. DP appends a canned sentence.
+ * · The title/author ON-OFF switches. DP has the text inputs only, but
+ *   `settings.title.on` / `settings.author.on` are `MvSettingsSchema` fields —
+ *   contract surface C2 — and they decide whether the caption is burned in at
+ *   all. Composed from DP's own `.mv-edit__toggle-row`, the box it already uses
+ *   for Subtitle and Watermark.
+ *
+ * ── AND WHAT DP HAS THAT WA DID NOT ─────────────────────────────────────────
+ *
+ * The per-clip storyboard strip with an inline video preview and its own
+ * transport, the scene-version history row, the cover lightbox, and — below
+ * 768px — a full-screen `MobileSceneDetail` instead of an inline editor,
+ * because DP's phone frame has no room for one. All ported.
+ *
+ * "Delete this Project" is DP's own control with a dead handler. Per the
+ * `/creator` precedent (3e: port every action, wire every one), it confirms
+ * with History's wording and then discards the in-memory flow and leaves —
+ * which is what deleting an uncommitted project means in a flow whose state is
+ * in memory. It does not invent a backend delete.
+ *
+ * Every `.mv-edit__*-icon` is a `background-color` + `mask-*` rule, so they are
+ * all `DpIcon`. The only `<img>`-shaped rules on this screen are
+ * `.mv-edit__merge-credits img` / `.mv-edit__regen-credits img` (the coins) and
+ * the real `.mv-edit__clip img` / `.mv-edit__scene-version img` thumbnails.
+ */
 export function MvEditor() {
   const router = useRouter();
-  const { storyboard, setStoryboard, saveStoryboard, storyboardDirty, compose, setCompose, resetForRerender } = useMvFlow();
+  const { locale } = useLocale();
+  const {
+    storyboard,
+    setStoryboard,
+    saveStoryboard,
+    storyboardDirty,
+    compose,
+    setCompose,
+    resetForRerender,
+    resetForNewMv,
+  } = useMvFlow();
   const { credits, addCredits } = useCredits();
+  const isPhone = useMediaQuery(PHONE_QUERY);
 
-  const typeIdx = Math.max(0, MV_TYPES.findIndex((t) => t.id === compose.mvType));
+  const typeIdx = Math.max(
+    0,
+    MV_TYPES.findIndex((t) => t.id === compose.mvType),
+  );
   const defaultPreview = MV_TYPES[typeIdx].video;
   const pool = MV_TYPES.map((t) => t.video);
 
-  const [added, setAdded] = useState<Record<string, Take[]>>({});
-  const [selected, setSelected] = useState<Record<string, string>>({});
-  const [active, setActive] = useState<string | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  // Output settings are baked into the rendered video, so any change requires a
-  // re-render — track it so it enables Merge MV.
+  const [selectedClip, setSelectedClip] = useState(0);
+  const [sceneVideo, setSceneVideo] = useState<Record<string, string>>({});
+  const [sceneVersions, setSceneVersions] = useState<Record<string, string[]>>({});
+  const [regenBusy, setRegenBusy] = useState(false);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [coverBusy, setCoverBusy] = useState(false);
+  const [coverLightbox, setCoverLightbox] = useState(false);
+  const [mobileSceneOpen, setMobileSceneOpen] = useState(false);
   const [settingsDirty, setSettingsDirty] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
-  const [coverModalOpen, setCoverModalOpen] = useState(false);
-  const [coverPreviewOpen, setCoverPreviewOpen] = useState(false);
-  // Cover variants mirror the scene "takes" tray: Recreate adds a take, the
-  // selected one becomes the cover on Merge. The original is derived in render.
-  const [coverAdded, setCoverAdded] = useState<CoverTake[]>([]);
-  const [coverSelected, setCoverSelected] = useState<string | null>(null);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  // Tolerant redirect: wait briefly so a persisted storyboard can hydrate.
   useEffect(() => {
     if (storyboard) return;
-    const t = setTimeout(() => router.replace("/mv/room"), 400);
+    const t = setTimeout(() => router.replace(localePath(locale, "/mv/room")), 400);
     return () => clearTimeout(t);
-  }, [storyboard, router]);
+  }, [storyboard, router, locale]);
+
+  useEffect(() => {
+    if (!coverLightbox) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setCoverLightbox(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [coverLightbox]);
 
   if (!storyboard) return null;
 
-  const origId = (sid: string) => `${sid}-o`;
-  const takesFor = (sid: string): Take[] => [{ id: origId(sid), video: defaultPreview, status: "ready" }, ...(added[sid] ?? [])];
-  const selectedFor = (sid: string) => selected[sid] ?? origId(sid);
-  const activeId = active ?? storyboard.scenes[0]?.id;
-  const activeScene = storyboard.scenes.find((s) => s.id === activeId) ?? storyboard.scenes[0];
-  const activeTakes = takesFor(activeScene.id);
-  const activeVideo = activeTakes.find((t) => t.id === selectedFor(activeScene.id))?.video ?? defaultPreview;
-
-  const coverOrigId = "cover-o";
-  const coverTakes: CoverTake[] = [{ id: coverOrigId, image: storyboard.coverImage, status: "ready" }, ...coverAdded];
-  const coverSelectedId = coverSelected ?? coverOrigId;
-  const activeCover = coverTakes.find((t) => t.id === coverSelectedId)?.image ?? storyboard.coverImage;
-  const coverBusy = coverAdded.some((t) => t.status === "generating");
+  const scenes = storyboard.scenes;
+  const scene: Scene = scenes[selectedClip] ?? scenes[0];
+  const activeVideo = sceneVideo[scene.id] ?? defaultPreview;
+  const activeCover = coverImage ?? storyboard.coverImage;
+  const versions = sceneVersions[scene.id] ?? [];
 
   // MV-08: Merge is enabled by ANY pending edit — a regenerated scene, a
   // recreated cover, an output-settings change, or an edited scene/cover prompt
-  // (storyboardDirty), since there is no separate Save to commit text edits.
+  // (`storyboardDirty`), since there is no separate Save to commit text edits.
   const dirty =
-    storyboard.scenes.some((s) => selectedFor(s.id) !== origId(s.id)) ||
-    coverSelectedId !== coverOrigId ||
-    settingsDirty ||
-    storyboardDirty;
+    Object.keys(sceneVideo).length > 0 || coverImage != null || settingsDirty || storyboardDirty;
 
   const settings = compose.settings;
-  const patchSettings = (p: Partial<typeof settings>) => {
+  function patchSettings(p: Partial<typeof settings>) {
     setCompose((c) => ({ ...c, settings: { ...c.settings, ...p } }));
     setSettingsDirty(true); // output settings change the rendered video → needs Merge
-  };
-
-  function updateScene(id: string, text: string) {
-    setStoryboard((sb) => (sb ? { ...sb, scenes: sb.scenes.map((s) => (s.id === id ? { ...s, text } : s)) } : sb));
   }
 
-  function regenerate(sid: string) {
-    const takeId = `${sid}-${Date.now()}`;
-    const others = pool.filter((v) => v !== defaultPreview);
-    const video = others[Math.floor(Math.random() * others.length)] ?? defaultPreview;
-    // MV-08: overwrite directly — the regenerated take replaces the prior one
-    // (no tray to pick from). The old take is discarded, not kept.
-    setAdded((a) => ({ ...a, [sid]: [{ id: takeId, video, status: "generating" }] }));
+  function updateScene(id: string, text: string) {
+    setStoryboard((sb) =>
+      sb ? { ...sb, scenes: sb.scenes.map((s) => (s.id === id ? { ...s, text } : s)) } : sb,
+    );
+  }
+
+  function recreateScene() {
+    if (regenBusy) return;
+    if (credits < COST_REGEN) {
+      setBuyOpen(true);
+      return;
+    }
+    setRegenBusy(true);
     addCredits(-COST_REGEN);
-    setTimeout(() => {
-      setAdded((a) => ({ ...a, [sid]: (a[sid] ?? []).map((t) => (t.id === takeId ? { ...t, status: "ready" } : t)) }));
-      setSelected((s) => ({ ...s, [sid]: takeId })); // auto-select → overwrites the shown scene
+    const others = pool.filter((v) => v !== activeVideo);
+    const next = others[Math.floor(Math.random() * others.length)] ?? defaultPreview;
+    window.setTimeout(() => {
+      // MV-08: overwrite directly. The version strip is a RECORD of what was
+      // generated, not a tray to pick a different outcome from.
+      setSceneVideo((m) => ({ ...m, [scene.id]: next }));
+      setSceneVersions((m) => ({ ...m, [scene.id]: [...(m[scene.id] ?? []), next] }));
+      setRegenBusy(false);
     }, 2600);
   }
 
-  function regenerateCover() {
+  function recreateCover() {
     if (coverBusy) return;
-    const id = `cover-${Date.now()}`;
-    const image = randomCoverImage();
-    // MV-08: overwrite directly — replace the cover instead of adding a variant.
-    setCoverAdded([{ id, image, status: "generating" }]);
-    setCoverModalOpen(false);
+    if (credits < COST_COVER) {
+      setBuyOpen(true);
+      return;
+    }
+    setCoverBusy(true);
     addCredits(-COST_COVER);
-    setTimeout(() => {
-      setCoverAdded((a) => a.map((t) => (t.id === id ? { ...t, status: "ready" } : t)));
-      setCoverSelected(id); // auto-select the newly generated cover
+    const next = randomCoverImage();
+    window.setTimeout(() => {
+      setCoverImage(next);
+      setCoverBusy(false);
     }, 2200);
   }
 
   function merge() {
-    if (!dirty || !storyboard) return;
-    // GL-01: Merge MV is the re-render; the render cost is charged on generation
-    // start in the provider (startRender). Block + route to IAP when unaffordable.
-    if (credits < COST_RENDER) { setBuyOpen(true); return; }
-    const committed = { ...storyboard, coverImage: activeCover }; // commit the chosen cover
+    if (!dirty) return;
+    // GL-01: the render cost is charged on generation start in the provider.
+    // Block and route to IAP when the balance cannot cover it.
+    if (credits < COST_RENDER) {
+      setBuyOpen(true);
+      return;
+    }
+    const committed = { ...storyboard!, coverImage: activeCover };
     setStoryboard(committed);
     saveStoryboard(committed);
-    resetForRerender(); // clear the prior rendered video so the merge actually re-renders
-    router.push("/mv/creating");
+    resetForRerender(); // clear the prior render so the merge actually re-renders
+    router.push(localePath(locale, "/mv/creating"));
   }
 
-  function save() {
-    if (!storyboard) return;
-    saveStoryboard(storyboard);
-    setToast("Saved");
-    setTimeout(() => setToast(null), 1800);
+  function deleteProject() {
+    setDeleteConfirm(false);
+    resetForNewMv();
+    router.push(localePath(locale, "/history"));
   }
 
-  const mvName = (settings.title.on && settings.title.text) || compose.song?.title || "Untitled MV";
+  function togglePlay() {
+    const v = videoRef.current;
+    if (!v) return;
+    // The rejection has to be caught: without user activation play() rejects
+    // with NotAllowedError and the unhandled rejection prints to the console,
+    // which the R-2 specs assert is empty.
+    if (v.paused) void v.play().catch(() => {});
+    else v.pause();
+  }
 
-  return (
-    <div className="mx-auto max-w-[1100px] px-4 pt-6 pb-24 sm:px-6">
-      {/* Header */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <button aria-label="Back" onClick={() => router.back()} className="grid h-9 w-9 shrink-0 place-items-center rounded-full" style={{ background: "var(--card-2)", color: "var(--text-2)" }}><I d="M15 18l-6-6 6-6" /></button>
-          <div className="min-w-0">
-            <h1 className="truncate text-[22px] font-extrabold tracking-tight">{mvName}</h1>
-            <div className="text-[12px]" style={{ color: "var(--text-2)" }}>Edit MV · {storyboard.scenes.length} shots</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* MV-08: Save is removed — edits are ephemeral and committed only by
-              Merge MV. The legacy Save control is hidden (not deleted) behind the flag. */}
-          {LEGACY_TAKE_TRAY_UI && (
-            <button onClick={save} disabled={!storyboardDirty} className="h-10 rounded-xl px-4 text-[14px] font-bold transition-opacity disabled:opacity-40" style={{ background: storyboardDirty ? "var(--card-2)" : "transparent", color: storyboardDirty ? "var(--text)" : "var(--text-2)", border: "1px solid var(--border-2)" }}>
-              {storyboardDirty ? "Save" : "Saved"}
+  function seekFromClientX(clientX: number) {
+    const track = progressRef.current;
+    const v = videoRef.current;
+    if (!track || !v || !v.duration) return;
+    const rect = track.getBoundingClientRect();
+    v.currentTime = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) * v.duration;
+  }
+
+  function onProgressPointerDown(event: ReactPointerEvent) {
+    seekFromClientX(event.clientX);
+    const onMove = (e: PointerEvent) => seekFromClientX(e.clientX);
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  const progressRatio = duration ? currentTime / duration : 0;
+
+  const sceneEditor = (
+    <>
+      <div className="mv-edit__scene-header">
+        <p className="mv-edit__scene-title">SCENE {scene.index}</p>
+        <p className="mv-edit__scene-time">{scene.range}</p>
+      </div>
+      <div className="mv-edit__input-box">
+        <textarea
+          className="mv-edit__textarea"
+          maxLength={DESCRIPTION_MAX}
+          value={scene.text}
+          onChange={(e) => updateScene(scene.id, e.target.value)}
+          aria-label={`Scene ${scene.index}`}
+        />
+        <div className="mv-edit__input-footer">
+          <EnhanceButton
+            value={scene.text}
+            kind="storyboard"
+            onEnhanced={(t) => updateScene(scene.id, t)}
+            bem="mv-edit"
+          />
+          <span className="mv-edit__char-count">
+            {scene.text.length}/{DESCRIPTION_MAX}
+          </span>
+          {scene.text.length > 0 && (
+            <button
+              type="button"
+              className="mv-edit__clear-btn"
+              onClick={() => updateScene(scene.id, "")}
+              aria-label="Clear scene"
+            >
+              <DpIcon name="ic_close" className="mv-edit__clear-icon" />
             </button>
           )}
-          <Button onClick={merge} disabled={!dirty} className="!h-10 px-5 text-[14px]">
-            <I d="M7 8 3 12l4 4M17 8l4 4-4 4M14 4l-4 16" size={16} /> Merge MV
-            <span className="ml-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-bold" style={{ background: "rgba(255,255,255,.18)" }}><Bolt /> {COST_RENDER}</span>
-          </Button>
         </div>
-      </div>
-
-      {/* Context chip bar (read-only) + Output settings */}
-      <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border p-2.5" style={{ borderColor: "var(--border-2)", background: "var(--card)" }}>
-        <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
-          <I d="M15 10l4.5-2.5v9L15 14M3 7h12v10H3z" size={14} /> {MV_TYPES[typeIdx].name}
-        </span>
-        <span className="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[12px]" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
-          <I d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" size={14} />
-          {compose.song?.title ?? "No song"}
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px]" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>{settings.ratio}</span>
-        <span className="text-[11px]" style={{ color: "var(--text-3)" }}>Style &amp; song are locked after creation</span>
-        <button onClick={() => setSettingsOpen(true)} className="ml-auto inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-semibold" style={{ borderColor: "var(--border-2)", color: "var(--text)" }}>
-          <I d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 13a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.5A1.7 1.7 0 0 0 11 3.1V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9.5a1.7 1.7 0 0 0 1.6 1.5H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" size={14} /> Output settings
-        </button>
-      </div>
-
-      {/* Cover — large preview + variants tray (Recreate adds a take; pick which to use) */}
-      <div className="mb-5 rounded-xl border p-3" style={{ borderColor: "var(--border-2)", background: "var(--card)" }}>
-        <div className="flex gap-4">
-          {/* Large preview of the selected cover — click to view full size */}
-          <button
-            onClick={() => setCoverPreviewOpen(true)}
-            aria-label="View cover full size"
-            className="group/cov relative shrink-0 overflow-hidden rounded-lg"
-            style={{ width: 104, aspectRatio: "9 / 16", background: "var(--card-2)" }}
+        <div className="mv-edit__divider" />
+        <div className="mv-edit__scene-history">
+          {/* G7 a11y: a bare <div> has role `generic`, which does not permit
+              aria-label — the name was silently dropped from the a11y tree
+              (axe `aria-prohibited-attr`). `group` is the role that carries it. */}
+          <div
+            className="mv-edit__scene-versions"
+            role="group"
+            aria-label="Generated scene history"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={activeCover} alt="MV cover" className="h-full w-full object-cover" style={{ opacity: coverBusy ? 0.5 : 1 }} />
-            <span className="absolute bottom-1.5 right-1.5 grid h-6 w-6 place-items-center rounded-full text-white opacity-80 transition-opacity group-hover/cov:opacity-100" style={{ background: "rgba(0,0,0,.6)" }}>
-              <I d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" size={12} />
+            {versions.map((v, i) => (
+              <span key={`${v}-${i}`} className="mv-edit__scene-version">
+                <img src={clipCover(selectedClip + i + 1)} alt="" />
+              </span>
+            ))}
+          </div>
+          {/* DP builds this one from the shared `Button` component
+              (`variant="PrimaryPayg"`), NOT from `.mv-edit__regen-btn` — the
+              cover's Recreate is the one with its own block. `.mv-edit__recreate-scene`
+              alone is just `flex: 0 0 auto`, so dropping the `.button--*` classes
+              leaves an unstyled row, and there is no refresh icon on this variant.
+              The coin is a real `<img className="button__icon">`: `.button__icon`
+              sizes, `.button__icon--mask` paints — and only the mask modifier
+              turns it into a mask. */}
+          <button
+            type="button"
+            className="button button--large button--primary-payg mv-edit__recreate-scene"
+            onClick={recreateScene}
+            disabled={regenBusy}
+          >
+            <span className="button__label">{regenBusy ? "Recreating…" : "Recreate"}</span>
+            <span className="button__credits">
+              <img className="button__icon" src="/assets/icons/ui/ic_credit.svg" alt="" />
+              <span className="button__credits-count">{COST_REGEN}</span>
             </span>
           </button>
-
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div className="text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: "var(--text-3)" }}>Cover</div>
-            <button
-              onClick={() => setCoverModalOpen(true)}
-              className="mt-1 text-left text-[13px] leading-snug"
-              style={{ color: "var(--text-2)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}
-            >
-              {storyboard.coverDescription}
-            </button>
-            <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
-              <button
-                onClick={() => setCoverModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold"
-                style={{ borderColor: "var(--border-2)", color: "var(--text)" }}
-              >
-                <I d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" size={13} /> Edit description
-              </button>
-              <button
-                onClick={regenerateCover}
-                disabled={coverBusy}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold text-white transition-opacity disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg,#FF6BCE,#A855F7,#4338CA)" }}
-              >
-                <I d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5" size={13} /> Recreate
-                <span className="inline-flex items-center gap-0.5"><Bolt /> {COST_COVER}</span>
-              </button>
-            </div>
-          </div>
         </div>
-
-        {/* Variants tray — MV-08: hidden (not deleted). Recreate now overwrites the
-            cover directly; the picker returns when we build the richer editor. */}
-        {LEGACY_TAKE_TRAY_UI && (coverTakes.length > 1 || coverBusy) && (
-          <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--border-3)" }}>
-            <div className="mb-2 text-[11px]" style={{ color: "var(--text-2)" }}>Pick which cover to use</div>
-            <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
-              {coverTakes.map((t, i) => {
-                const inUse = coverSelectedId === t.id;
-                const isOrig = t.id === coverOrigId;
-                return (
-                  <button key={t.id} onClick={() => t.status === "ready" && setCoverSelected(t.id)} disabled={t.status !== "ready"} className="shrink-0 text-left">
-                    <div className="relative overflow-hidden rounded-lg" style={{ width: 64, aspectRatio: "9 / 16", border: inUse ? "2px solid var(--accent)" : "0.5px solid var(--border-2)", background: "var(--card-2)" }}>
-                      {t.status === "generating" ? (
-                        <span className="grid h-full w-full place-items-center"><span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" /></span>
-                      ) : (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={t.image} alt="" className="h-full w-full object-cover" />
-                      )}
-                      {inUse && <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-white" style={{ background: "var(--accent)" }}><I d="M20 6 9 17l-5-5" size={11} /></span>}
-                    </div>
-                    <div className="mt-1 text-center text-[10px]" style={{ color: inUse ? "var(--accent)" : "var(--text-3)" }}>{t.status === "generating" ? "…" : isOrig ? "original" : `take ${i}`}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
+    </>
+  );
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-        {/* Main: preview + scene strip */}
-        <div className="flex flex-col gap-4">
-          <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: "16 / 9", background: "#0e0e12" }}>
-            <video key={activeVideo} src={activeVideo} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full" style={{ objectFit: settings.ratio === "9:16" ? "contain" : "cover" }} />
-            <span className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: "rgba(0,0,0,.55)" }}>Scene {activeScene.index} · {activeScene.range}</span>
-          </div>
+  return (
+    <>
+      <DetailNavbar title="Edit Music Video" fallbackPath="/mv/result" />
 
-          <div>
-            <div className="mb-2 text-[12px]" style={{ color: "var(--text-2)" }}>Timeline · {storyboard.scenes.length} scenes</div>
-            <div className="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar">
-              {storyboard.scenes.map((s) => {
-                const isActive = s.id === activeScene.id;
-                const generating = (added[s.id] ?? []).some((t) => t.status === "generating");
-                const vid = takesFor(s.id).find((t) => t.id === selectedFor(s.id))?.video ?? defaultPreview;
-                return (
-                  <button key={s.id} onClick={() => setActive(s.id)} className="shrink-0 text-left">
-                    <div className="relative overflow-hidden rounded-lg" style={{ width: 104, aspectRatio: "16 / 10", border: isActive ? "2px solid var(--accent)" : "0.5px solid var(--border-2)" }}>
-                      <video src={vid} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-                      {generating && <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-white" style={{ background: "rgba(0,0,0,.6)" }}><span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" /></span>}
-                    </div>
-                    <div className="mt-1 text-center text-[10px]" style={{ color: isActive ? "var(--accent)" : "var(--text-3)" }}>Scene {s.index}</div>
+      <div className="mv-edit">
+        <div className="mv-edit__panel">
+          <div className="mv-edit__section mv-edit__section--storyboard">
+            <p className="mv-edit__label">STORYBOARD</p>
+            <p className="mv-edit__sublabel">Select to edit storyboard</p>
+
+            <div className="mv-edit__clips-shell">
+              <div className="mv-edit__clips">
+                {scenes.map((s, index) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`mv-edit__clip${index === selectedClip ? " mv-edit__clip--active" : ""}`}
+                    onClick={() => {
+                      setSelectedClip(index);
+                      setCurrentTime(0);
+                      // Desktop switches the inline preview; phones have no
+                      // inline editor at all, so a tap opens the full-screen one.
+                      if (isPhone) setMobileSceneOpen(true);
+                    }}
+                    aria-label={`Scene ${s.index}`}
+                    aria-pressed={index === selectedClip}
+                  >
+                    <img src={clipCover(index)} alt="" />
+                    <span className="mv-edit__clip-scrim" aria-hidden="true" />
+                    <span className="mv-edit__clip-number">{index + 1}</span>
                   </button>
-                );
-              })}
+                ))}
+              </div>
+              <span className="mv-edit__clips-gradient" aria-hidden="true" />
             </div>
-          </div>
-        </div>
 
-        {/* Side: edit panel */}
-        <div className="flex flex-col rounded-2xl border p-4" style={{ borderColor: "var(--border-2)", background: "var(--card)" }}>
-          <div className="text-[12px]" style={{ color: "var(--text-2)" }}>Scene {activeScene.index} · {activeScene.range}</div>
-          <div className="mt-2 mb-1 text-[11px]" style={{ color: "var(--text-3)" }}>Video generation prompt</div>
-          <textarea
-            value={activeScene.text}
-            onChange={(e) => updateScene(activeScene.id, e.target.value)}
-            maxLength={2500}
-            className="min-h-[120px] w-full resize-none rounded-lg border bg-transparent p-2.5 text-[13px] outline-none no-scrollbar"
-            style={{ background: "var(--card-2)", borderColor: "var(--border-2)", color: "var(--text)", lineHeight: 1.5 }}
-          />
-          <div className="mb-3 mt-1 flex items-center justify-between">
-            <EnhanceButton value={activeScene.text} kind="scene" onEnhanced={(t) => updateScene(activeScene.id, t)} />
-            <span className="text-[10px]" style={{ color: "var(--text-3)" }}>{activeScene.text.length} / 2500</span>
-          </div>
-
-          <button
-            onClick={() => regenerate(activeScene.id)}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-[14px] font-bold text-white transition-all hover:brightness-110 active:scale-[0.98]"
-            style={{ background: "var(--accent)" }}
-          >
-            <I d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5" size={16} /> Regenerate scene
-            <span className="ml-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px]" style={{ background: "rgba(255,255,255,.2)" }}><Bolt /> {COST_REGEN}</span>
-          </button>
-
-          {/* Takes tray — MV-08: hidden (not deleted). Regenerate now overwrites the
-              scene directly; the take picker returns with the richer editor later. */}
-          {LEGACY_TAKE_TRAY_UI && (
-          <>
-          <div className="mt-4 mb-2 text-[11px]" style={{ color: "var(--text-2)" }}>Pick which take to use</div>
-          <div className="grid grid-cols-3 gap-2">
-            {activeTakes.map((t, i) => {
-              const inUse = selectedFor(activeScene.id) === t.id;
-              const isOrig = t.id === origId(activeScene.id);
-              return (
-                <button key={t.id} onClick={() => t.status === "ready" && setSelected((s) => ({ ...s, [activeScene.id]: t.id }))} disabled={t.status !== "ready"} className="text-left">
-                  <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: "1", border: inUse ? "2px solid var(--accent)" : "0.5px solid var(--border-2)", background: "var(--card-2)" }}>
-                    {t.status === "generating" ? (
-                      <span className="grid h-full w-full place-items-center"><span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" /></span>
-                    ) : (
-                      <video src={t.video} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-                    )}
-                    {inUse && <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full text-white" style={{ background: "var(--accent)" }}><I d="M20 6 9 17l-5-5" size={12} /></span>}
-                  </div>
-                  <div className="mt-1 text-[10px]" style={{ color: inUse ? "var(--accent)" : "var(--text-3)" }}>{t.status === "generating" ? "generating…" : isOrig ? "original" : `take ${i + 1}`}</div>
+            <div ref={previewRef} className="mv-edit__preview">
+              <video
+                ref={videoRef}
+                className="mv-edit__preview-video mv-edit__preview-video--portrait"
+                src={activeVideo}
+                poster={clipCover(selectedClip)}
+                autoPlay
+                loop
+                muted={muted}
+                playsInline
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                onClick={togglePlay}
+              />
+              {/* A <button>, not DP's download anchor: `guard-greps.sh` bans a
+                  literal internal href, and this is a real action anyway. */}
+              <button
+                type="button"
+                className="mv-edit__media-action mv-edit__media-action--download"
+                onClick={() => downloadFile(activeVideo, `scene-${scene.index}.mp4`)}
+                aria-label="Download video"
+              >
+                <DpIcon name="ic_download" className="mv-edit__media-action-icon" />
+              </button>
+              <div className="mv-edit__preview-controls">
+                <button
+                  type="button"
+                  className="mv-edit__control-btn"
+                  onClick={togglePlay}
+                  aria-label={playing ? "Pause" : "Play"}
+                >
+                  <DpIcon
+                    name={playing ? "ic_pause" : "ic_play"}
+                    className="mv-edit__control-icon"
+                  />
                 </button>
-              );
-            })}
+                <span className="mv-edit__time">{formatTime(currentTime)}</span>
+                <div
+                  className="mv-edit__progress"
+                  ref={progressRef}
+                  onPointerDown={onProgressPointerDown}
+                >
+                  <div className="mv-edit__progress-track" />
+                  <div
+                    className="mv-edit__progress-fill"
+                    style={{ width: `${progressRatio * 100}%` }}
+                  />
+                  <div
+                    className="mv-edit__progress-thumb"
+                    style={{ left: `${progressRatio * 100}%` }}
+                  />
+                </div>
+                <span className="mv-edit__time">{formatTime(duration)}</span>
+                <button
+                  type="button"
+                  className="mv-edit__control-btn"
+                  onClick={() => setMuted((m) => !m)}
+                  aria-label={muted ? "Unmute" : "Mute"}
+                >
+                  <DpIcon
+                    name={muted ? "ic_speaker_off" : "ic_speaker_on"}
+                    className="mv-edit__control-icon"
+                  />
+                </button>
+                <button
+                  type="button"
+                  className="mv-edit__control-btn"
+                  onClick={() => previewRef.current?.requestFullscreen?.().catch(() => {})}
+                  aria-label="Fullscreen"
+                >
+                  <DpIcon name="ic_expand" className="mv-edit__control-icon" />
+                </button>
+              </div>
+            </div>
           </div>
-          </>
-          )}
-          <p className="mt-3 text-[11px] leading-relaxed" style={{ color: "var(--text-3)" }}>
-            Regenerate scene ({COST_REGEN} credits) replaces this scene directly. Edits aren&apos;t saved — Merge MV ({COST_RENDER} credits) re-renders the video with your changes.
+
+          {/* Its OWN section, not part of --storyboard: DP hides
+              `.mv-edit__section--scene-editor` (and `.mv-edit__preview`) below
+              768px, where `MobileSceneDetail` replaces both. Nesting these
+              inside the storyboard section makes that rule match nothing and
+              the desktop editor leaks onto phones. */}
+          <div className="mv-edit__section mv-edit__section--scene-editor">{sceneEditor}</div>
+
+          {/* G7 finding 3k-1: MV-08 is still enforced, but the migration lost
+              the one sentence that EXPLAINED it — so Merge sat disabled with no
+              stated reason and edits looked saved. `mv-edit__sublabel` is DP's
+              own muted explanatory line, already used on this screen for
+              "Select to edit storyboard"; no new class, no override. */}
+          <p className="mv-edit__sublabel">
+            Recreate ({COST_REGEN} credits) replaces a scene directly. Edits aren&apos;t saved —
+            Merge MV ({COST_RENDER} credits) re-renders the video with your changes.
           </p>
+
+          <div className="mv-edit__ctas">
+            <button
+              type="button"
+              className="mv-edit__delete-btn"
+              onClick={() => setDeleteConfirm(true)}
+            >
+              <DpIcon name="ic_delete" className="mv-edit__delete-icon" />
+              Delete this Project
+            </button>
+          </div>
+
+          <FloatingCTA alignToParent>
+            <button type="button" className="mv-edit__merge-btn" onClick={merge} disabled={!dirty}>
+              <span>Merge MV</span>
+              <span className="mv-edit__merge-credits">
+                <img src="/assets/icons/ui/ic_credit.svg" alt="" />
+                {COST_RENDER}
+              </span>
+            </button>
+          </FloatingCTA>
+        </div>
+
+        <div className="mv-edit__side">
+          <div className="mv-edit__section mv-edit__section--cover">
+            <p className="mv-edit__label">COVER IMAGE</p>
+            <div
+              className={`mv-edit__cover-image${coverBusy ? " mv-edit__cover-image--processing" : ""}`}
+            >
+              <img
+                src={activeCover}
+                alt=""
+                className="mv-edit__cover-media mv-edit__cover-media--portrait"
+              />
+              {/* Always mounted; the modifier above toggles opacity/pointer-events. */}
+              <div className="mv-edit__cover-processing" aria-hidden="true">
+                <DpIcon name="ic_refresh" className="mv-edit__cover-processing-icon" />
+              </div>
+              <button
+                type="button"
+                className="mv-edit__media-action mv-edit__media-action--download"
+                onClick={() => downloadFile(activeCover, "cover.jpg")}
+                aria-label="Download cover image"
+              >
+                <DpIcon name="ic_download" className="mv-edit__media-action-icon" />
+              </button>
+              <button
+                type="button"
+                className="mv-edit__media-action mv-edit__media-action--expand"
+                onClick={() => setCoverLightbox(true)}
+                aria-label="Expand cover image"
+              >
+                <DpIcon name="ic_expand" className="mv-edit__media-action-icon" />
+              </button>
+            </div>
+
+            {/* Mobile-only label — desktop's single COVER IMAGE heading covers
+                both boxes, phones split them into two labelled cards. */}
+            <p className="mv-edit__label mv-edit__label--cover-description">COVER DESCRIPTION</p>
+            <div className="mv-edit__input-box">
+              <textarea
+                className="mv-edit__textarea"
+                maxLength={DESCRIPTION_MAX}
+                value={storyboard.coverDescription}
+                onChange={(e) =>
+                  setStoryboard((sb) => (sb ? { ...sb, coverDescription: e.target.value } : sb))
+                }
+                aria-label="Cover description"
+              />
+              <div className="mv-edit__input-footer">
+                <EnhanceButton
+                  value={storyboard.coverDescription}
+                  kind="storyboard"
+                  onEnhanced={(t) =>
+                    setStoryboard((sb) => (sb ? { ...sb, coverDescription: t } : sb))
+                  }
+                  bem="mv-edit"
+                />
+                <span className="mv-edit__char-count">
+                  {storyboard.coverDescription.length}/{DESCRIPTION_MAX}
+                </span>
+                {storyboard.coverDescription.length > 0 && (
+                  <button
+                    type="button"
+                    className="mv-edit__clear-btn"
+                    onClick={() =>
+                      setStoryboard((sb) => (sb ? { ...sb, coverDescription: "" } : sb))
+                    }
+                    aria-label="Clear cover prompt"
+                  >
+                    <DpIcon name="ic_close" className="mv-edit__clear-icon" />
+                  </button>
+                )}
+              </div>
+              <div className="mv-edit__divider" />
+              <button
+                type="button"
+                className="mv-edit__regen-btn"
+                onClick={recreateCover}
+                disabled={coverBusy}
+              >
+                <DpIcon
+                  name="ic_refresh"
+                  className={`mv-edit__regen-icon${coverBusy ? " mv-edit__enhance-icon--spinning" : ""}`}
+                />
+                <span>Recreate</span>
+                <span className="mv-edit__regen-credits">
+                  <img src="/assets/icons/ui/ic_credit.svg" alt="" />
+                  {COST_COVER}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="mv-edit__section mv-edit__section--title">
+            <p className="mv-edit__label">MV TITLE</p>
+            {/* The ON/OFF switch is WA-only — `settings.title.on` is a contract
+                field and decides whether the caption is burned in at all. */}
+            <div className="mv-edit__toggle-row">
+              <div className="mv-edit__toggle-text">
+                <p className="mv-edit__toggle-title">Show MV title</p>
+                <p className="mv-edit__toggle-state">{settings.title.on ? "On" : "Off"}</p>
+              </div>
+              <ToggleSwitch
+                checked={settings.title.on}
+                ariaLabel="Show MV title"
+                onChange={(on) => patchSettings({ title: { ...settings.title, on } })}
+              />
+            </div>
+            <div className="mv-edit__field-box">
+              <input
+                type="text"
+                className="mv-edit__field-input"
+                value={settings.title.text}
+                disabled={!settings.title.on}
+                onChange={(e) =>
+                  patchSettings({ title: { ...settings.title, text: e.target.value } })
+                }
+                aria-label="MV title"
+              />
+              {settings.title.text.length > 0 && (
+                <button
+                  type="button"
+                  className="mv-edit__clear-btn"
+                  onClick={() => patchSettings({ title: { ...settings.title, text: "" } })}
+                  aria-label="Clear MV title"
+                >
+                  <DpIcon name="ic_close" className="mv-edit__clear-icon" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mv-edit__section mv-edit__section--author">
+            <p className="mv-edit__label">AUTHOR NAME</p>
+            <div className="mv-edit__toggle-row">
+              <div className="mv-edit__toggle-text">
+                <p className="mv-edit__toggle-title">Show author name</p>
+                <p className="mv-edit__toggle-state">{settings.author.on ? "On" : "Off"}</p>
+              </div>
+              <ToggleSwitch
+                checked={settings.author.on}
+                ariaLabel="Show author name"
+                onChange={(on) => patchSettings({ author: { ...settings.author, on } })}
+              />
+            </div>
+            <div className="mv-edit__field-box">
+              <input
+                type="text"
+                className="mv-edit__field-input"
+                value={settings.author.text}
+                disabled={!settings.author.on}
+                onChange={(e) =>
+                  patchSettings({ author: { ...settings.author, text: e.target.value } })
+                }
+                aria-label="Author name"
+              />
+              {settings.author.text.length > 0 && (
+                <button
+                  type="button"
+                  className="mv-edit__clear-btn"
+                  onClick={() => patchSettings({ author: { ...settings.author, text: "" } })}
+                  aria-label="Clear author name"
+                >
+                  <DpIcon name="ic_close" className="mv-edit__clear-icon" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mv-edit__toggle-row mv-edit__toggle-row--subtitle">
+            <div className="mv-edit__toggle-text">
+              <p className="mv-edit__toggle-title">Show Subtitle</p>
+              <p className="mv-edit__toggle-state">{settings.showSubtitle ? "On" : "Off"}</p>
+            </div>
+            <ToggleSwitch
+              checked={settings.showSubtitle}
+              ariaLabel="Show Subtitle"
+              onChange={(showSubtitle) => patchSettings({ showSubtitle })}
+            />
+          </div>
+
+          <div className="mv-edit__toggle-row mv-edit__toggle-row--watermark">
+            <div className="mv-edit__toggle-text">
+              <p className="mv-edit__toggle-title">Show Watermark</p>
+              <p className="mv-edit__toggle-state">{settings.watermark ? "On" : "Off"}</p>
+            </div>
+            <ToggleSwitch
+              checked={settings.watermark}
+              ariaLabel="Show Watermark"
+              onChange={(watermark) => patchSettings({ watermark })}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Output settings modal */}
-      <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Output settings" maxWidth={440}>
-        <div className="flex flex-col gap-4">
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[13px] font-semibold">MV title</span>
-              <button onClick={() => patchSettings({ title: { ...settings.title, on: !settings.title.on } })} aria-label="Toggle title"><Toggle on={settings.title.on} /></button>
-            </div>
-            <input value={settings.title.text} disabled={!settings.title.on} onChange={(e) => patchSettings({ title: { ...settings.title, text: e.target.value } })} placeholder="Enter MV title" className="w-full rounded-xl border bg-transparent px-3 py-2 text-[13px] outline-none disabled:opacity-40" style={{ background: "var(--card-2)", borderColor: "var(--border-2)", color: "var(--text)" }} />
-          </div>
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[13px] font-semibold">Author name</span>
-              <button onClick={() => patchSettings({ author: { ...settings.author, on: !settings.author.on } })} aria-label="Toggle author"><Toggle on={settings.author.on} /></button>
-            </div>
-            <input value={settings.author.text} disabled={!settings.author.on} onChange={(e) => patchSettings({ author: { ...settings.author, text: e.target.value } })} placeholder="Enter author name" className="w-full rounded-xl border bg-transparent px-3 py-2 text-[13px] outline-none disabled:opacity-40" style={{ background: "var(--card-2)", borderColor: "var(--border-2)", color: "var(--text)" }} />
-          </div>
-          <div className="flex items-center justify-between border-t pt-3" style={{ borderColor: "var(--border-3)" }}>
-            <span className="text-[13px] font-semibold">Show subtitle</span>
-            <button onClick={() => patchSettings({ showSubtitle: !settings.showSubtitle })} aria-label="Toggle subtitle"><Toggle on={settings.showSubtitle} /></button>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-semibold">Show watermark</span>
-            <button onClick={() => patchSettings({ watermark: !settings.watermark })} aria-label="Toggle watermark"><Toggle on={settings.watermark} /></button>
-          </div>
-          <Button className="mt-1 w-full" onClick={() => setSettingsOpen(false)}>Done</Button>
-        </div>
-      </Modal>
-
-      {/* Cover Description modal */}
-      <Modal open={coverModalOpen} onClose={() => setCoverModalOpen(false)} title="Cover Description" maxWidth={460}>
-        <div className="flex flex-col gap-3">
-          <textarea
-            value={storyboard.coverDescription}
-            onChange={(e) => setStoryboard((sb) => (sb ? { ...sb, coverDescription: e.target.value } : sb))}
-            maxLength={2500}
-            className="min-h-[120px] w-full resize-none rounded-xl border bg-transparent p-3 text-[14px] outline-none no-scrollbar"
-            style={{ background: "var(--card-2)", borderColor: "var(--border-2)", color: "var(--text)", lineHeight: 1.5 }}
-          />
-          <div className="flex items-center justify-between">
-            <EnhanceButton value={storyboard.coverDescription} kind="cover" onEnhanced={(t) => setStoryboard((sb) => (sb ? { ...sb, coverDescription: t } : sb))} />
-            <span className="text-[12px]" style={{ color: "var(--text-3)" }}>{storyboard.coverDescription.length}/2500</span>
-          </div>
-          <button
-            onClick={regenerateCover}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-[14px] font-bold text-white transition-all hover:brightness-110 active:scale-[0.98]"
-            style={{ background: "linear-gradient(135deg,#FF6BCE,#A855F7,#4338CA)" }}
+      {/* Phone-only full-screen scene editor. Rendered only when the phone query
+          matches, so its duplicate controls are never in the desktop tab order. */}
+      {isPhone &&
+        mobileSceneOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="mv-edit-mobile-scene"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Scene ${scene.index}`}
           >
-            <I d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5" size={16} /> Regenerate Cover
-            <span className="ml-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px]" style={{ background: "rgba(255,255,255,.2)" }}><Bolt /> {COST_COVER}</span>
-          </button>
+            <div className="mv-edit-mobile-scene__header">
+              <button
+                type="button"
+                className="mv-edit-mobile-scene__back"
+                onClick={() => setMobileSceneOpen(false)}
+                aria-label="Back"
+              >
+                <DpIcon name="ic_arrow_left" className="mv-edit-mobile-scene__back-icon" />
+              </button>
+              <p className="mv-edit-mobile-scene__header-title">SCENE {scene.index}</p>
+              <span className="mv-edit-mobile-scene__header-spacer" aria-hidden="true" />
+            </div>
+
+            <div className="mv-edit-mobile-scene__body">
+              <div className="mv-edit-mobile-scene__preview">
+                <video
+                  className="mv-edit-mobile-scene__preview-video"
+                  src={activeVideo}
+                  poster={clipCover(selectedClip)}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+              </div>
+              {sceneEditor}
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {coverLightbox &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="mv-edit__lightbox-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Cover image preview"
+            onClick={() => setCoverLightbox(false)}
+          >
+            <button
+              type="button"
+              className="mv-edit__lightbox-close"
+              onClick={() => setCoverLightbox(false)}
+              aria-label="Close"
+            >
+              <DpIcon name="ic_close" className="mv-edit__lightbox-close-icon" />
+            </button>
+            <img
+              src={activeCover}
+              alt=""
+              className="mv-edit__lightbox-image"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>,
+          document.body,
+        )}
+
+      <Modal
+        open={deleteConfirm}
+        onClose={() => setDeleteConfirm(false)}
+        title="Delete"
+        maxWidth={380}
+      >
+        <p className="mb-5 text-[14px]" style={{ color: "var(--text-2)" }}>
+          Are you sure you want to delete this project? This action cannot be undone.
+        </p>
+        <div className="flex gap-2">
+          <Button variant="secondary" className="flex-1" onClick={() => setDeleteConfirm(false)}>
+            Cancel
+          </Button>
+          <Button className="flex-1" onClick={deleteProject}>
+            Delete
+          </Button>
         </div>
       </Modal>
-
-      {/* Cover full-size lightbox */}
-      {coverPreviewOpen && (
-        <div className="anim-fade fixed inset-0 z-[110] flex items-center justify-center p-6" style={{ background: "rgba(0,0,0,.88)" }} onClick={() => setCoverPreviewOpen(false)} role="dialog" aria-modal="true" aria-label="Cover preview">
-          <button aria-label="Close preview" onClick={() => setCoverPreviewOpen(false)} className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full text-white" style={{ background: "rgba(255,255,255,.15)" }}>
-            <I d="M6 6l12 12M18 6L6 18" size={18} />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={activeCover} alt="MV cover" className="anim-pop max-h-[86vh] w-auto rounded-xl object-contain" style={{ aspectRatio: "9 / 16", boxShadow: "0 20px 60px rgba(0,0,0,.5)" }} onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg" style={{ background: "rgba(20,20,24,.95)" }}>{toast}</div>
-      )}
 
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
-    </div>
+    </>
   );
 }

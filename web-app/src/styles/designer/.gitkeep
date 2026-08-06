@@ -1,0 +1,3 @@
+DP's BEM stylesheets land here, one per migrated screen, copied verbatim from
+designer-prototype/src/**. Register each one with an @import in ../designer.css.
+Empty until the /history spike (plan Phase 1.5).

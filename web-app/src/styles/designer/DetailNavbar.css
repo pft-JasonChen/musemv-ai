@@ -1,0 +1,94 @@
+.detail-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to bottom, #09090b 0%, rgba(9, 9, 11, 0) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.detail-navbar__top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 60px;
+}
+
+/* Shares the same background/blur box as .detail-navbar__top above instead
+   of being its own separate bar — see DetailNavbar's tabsSlot prop. */
+.detail-navbar__tabs {
+  padding: 0 60px 16px;
+}
+
+.detail-navbar__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  /* Pushes to the far right regardless of which back/title combination
+     precedes it (icon-only back + title, or the original "‹ Back" text
+     link with no title) — .detail-navbar__top has no space-between of its
+     own, so without this the actions just trail immediately after
+     whatever comes before them. */
+  margin-left: auto;
+}
+
+.detail-navbar__back {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-label-s);
+  letter-spacing: -0.12px;
+}
+
+.detail-navbar__back--icon-only {
+  flex-shrink: 0;
+}
+
+.detail-navbar__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  text-align: left;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+  line-height: 32px;
+  letter-spacing: -0.26px;
+}
+
+.detail-navbar__back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: var(--radius-pill);
+  border: 0.6px solid var(--white-15);
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.detail-navbar__back-icon {
+  width: 20px;
+  height: 20px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.detail-navbar__login {
+  margin-left: auto;
+}

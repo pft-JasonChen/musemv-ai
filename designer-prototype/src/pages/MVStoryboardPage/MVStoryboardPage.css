@@ -1,0 +1,857 @@
+/*
+  Edit Storyboard — Figma "Edit Storyboard_L" (node 1344:26880). Same page
+  shell/section conventions as MVCreatePage (MVCreatePage.css) throughout.
+*/
+
+.mv-storyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 20px 20px 60px;
+}
+
+@media (min-width: 768px) {
+  .mv-storyboard {
+    padding: 20px 32px 60px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mv-storyboard {
+    flex-direction: row;
+    gap: 48px;
+    padding: 20px 60px 60px;
+  }
+}
+
+/* While processing there's only the one centered column (no panel/side
+   split) — same "collapse to full-width, stay centered" adaptation Song
+   Create's Processing stage already uses. */
+.mv-storyboard--processing {
+  align-items: center;
+  justify-content: center;
+}
+
+.mv-storyboard__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .mv-storyboard__panel {
+    flex: 700 1 0;
+    width: auto;
+    max-width: 700px;
+  }
+}
+
+.mv-storyboard__side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+/*
+  Mobile-only reorder — Figma "Edit Script" (node 287:3967) interleaves the
+  two desktop columns into one sequence: Character Image → MV Song →
+  Visual Style → Story → Story Line → Lyrics (Lyrics ends up last, not
+  bundled with Character Image/MV Song, so this can't just move the whole
+  .mv-storyboard__side block — same display:contents + per-section `order`
+  technique as MVEditPage's mobile reorder).
+*/
+@media (max-width: 1023px) {
+  .mv-storyboard__panel,
+  .mv-storyboard__side {
+    display: contents;
+  }
+
+  .mv-storyboard__section--char-image {
+    order: 1;
+  }
+
+  .mv-storyboard__section--mv-song {
+    order: 2;
+  }
+
+  .mv-storyboard__section--visual-style {
+    order: 3;
+  }
+
+  .mv-storyboard__section--story {
+    order: 4;
+  }
+
+  .mv-storyboard__section--story-line {
+    order: 5;
+  }
+
+  .mv-storyboard__section--lyrics {
+    order: 6;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mv-storyboard__side {
+    flex: 332 1 0;
+    width: auto;
+    max-width: 332px;
+    align-self: flex-start;
+    position: sticky;
+    top: 100px;
+  }
+}
+
+.mv-storyboard__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mv-storyboard__label {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-xs);
+}
+
+/* =========================================================
+ * Visual Style / Story — read-only display cards
+ * ======================================================= */
+
+.mv-storyboard__display-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-09);
+}
+
+.mv-storyboard__display-card--flat {
+  border: none;
+  background: var(--neutral-dark-14);
+}
+
+.mv-storyboard__display-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+}
+
+.mv-storyboard__display-text--muted {
+  color: var(--neutral-dark-84);
+}
+
+/* =========================================================
+ * Story Line — collapsible header + scene cards
+ * ======================================================= */
+
+.mv-storyboard__storyline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.mv-storyboard__storyline-chevron {
+  width: 20px;
+  height: 20px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+.mv-storyboard__storyline-chevron--open {
+  transform: rotate(-90deg);
+}
+
+.mv-storyboard__scenes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mv-storyboard__scene {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mv-storyboard__scene-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.mv-storyboard__scene-title {
+  margin: 0;
+  color: var(--color-accent-purple);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.13px;
+}
+
+.mv-storyboard__scene-time {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+}
+
+.mv-storyboard__input-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-09);
+}
+
+/* Figma "List Input / Processing" (node 1343:23937) — while Enhance is
+   running, everything but the Enhance button itself dims to look disabled. */
+.mv-storyboard__input-box--processing .mv-storyboard__textarea,
+.mv-storyboard__input-box--processing .mv-storyboard__char-count {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.mv-storyboard__textarea {
+  width: 100%;
+  min-height: 76px;
+  padding: 0;
+  border: none;
+  background: none;
+  resize: none;
+  outline: none;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
+}
+
+.mv-storyboard__input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mv-storyboard__char-count {
+  color: rgba(255, 255, 255, 0.4);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+}
+
+.mv-storyboard__enhance-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 24px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+  white-space: nowrap;
+}
+
+.mv-storyboard__input-box--processing .mv-storyboard__enhance-btn {
+  background: var(--color-accent-purple);
+  color: var(--neutral-dark-100);
+}
+
+.mv-storyboard__enhance-icon {
+  width: 14px;
+  height: 14px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+@keyframes mv-storyboard-enhance-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.mv-storyboard__enhance-icon--spinning {
+  animation: mv-storyboard-enhance-spin 1s linear infinite;
+}
+
+/* =========================================================
+ * Create MV CTA — same non-stretch-on-desktop rule as elsewhere
+ * ======================================================= */
+
+.mv-storyboard__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 46px;
+  border: none;
+  border-radius: 34px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+  box-shadow: 0 8px 12px 0 rgba(168, 85, 247, 0.32);
+  color: var(--neutral-dark-100);
+  text-decoration: none;
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.mv-storyboard__cta-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+@media (min-width: 1024px) {
+  .mv-storyboard__cta {
+    width: auto;
+    min-width: 230px;
+    align-self: center;
+    padding: 0 16px;
+  }
+}
+
+/* =========================================================
+ * Right — Character Image / MV Song / Lyrics
+ * ======================================================= */
+
+.mv-storyboard__char-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-04);
+}
+
+.mv-storyboard__char-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mv-storyboard__char-download,
+.mv-storyboard__char-expand {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  box-sizing: border-box;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.mv-storyboard__char-download {
+  top: 8px;
+}
+
+.mv-storyboard__char-expand {
+  bottom: 8px;
+}
+
+.mv-storyboard__char-download img,
+.mv-storyboard__char-expand img {
+  width: 16px;
+  height: 16px;
+}
+
+.mv-storyboard__image-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 32px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.mv-storyboard__image-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(90vw, 1080px);
+  height: min(84vh, 720px);
+  overflow: hidden;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-2xl);
+  background: var(--neutral-dark-04);
+}
+
+.mv-storyboard__image-preview > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mv-storyboard__image-preview-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.mv-storyboard__image-preview-close img {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 767px) {
+  .mv-storyboard__image-preview-overlay {
+    padding: 20px;
+  }
+
+  .mv-storyboard__image-preview {
+    width: 100%;
+    height: 80vh;
+  }
+}
+
+.mv-storyboard__song {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-09);
+}
+
+.mv-storyboard__song-art {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--neutral-dark-24);
+  cursor: pointer;
+}
+
+.mv-storyboard__song-art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mv-storyboard__song-art-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.mv-storyboard__song-art-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-storyboard__song-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.mv-storyboard__song-title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.13px;
+}
+
+.mv-storyboard__song-duration {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+}
+
+.mv-storyboard__song-current-time {
+  color: var(--neutral-dark-100);
+}
+
+.mv-storyboard__lyrics {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--neutral-dark-14);
+}
+
+.mv-storyboard__lyrics-line {
+  display: flex;
+  gap: 8px;
+}
+
+.mv-storyboard__lyrics-time {
+  flex-shrink: 0;
+  color: var(--neutral-dark-44);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+}
+
+.mv-storyboard__lyrics-text {
+  color: var(--neutral-dark-84);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.6;
+}
+
+/* =========================================================
+ * Processing — Figma "Create Storyboard — Processing" (node 48:93)
+ * ======================================================= */
+
+.mv-storyboard-processing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  min-height: 420px;
+  padding: 60px 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.mv-storyboard-processing__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 230px;
+  height: 230px;
+  box-sizing: border-box;
+  padding: 20px;
+  border-radius: var(--radius-2xl);
+  background:
+    linear-gradient(45deg, rgba(168, 85, 247, 0) 39.4%, rgba(168, 85, 247, 0.1) 74.8%, rgba(168, 85, 247, 0) 110.1%),
+    linear-gradient(135.19deg, #1a0533 1.8%, #0a1628 50.9%, #1a0533 100%);
+}
+
+.mv-storyboard-processing__icon {
+  width: 54px;
+  height: 54px;
+  background-color: var(--color-accent-purple);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-storyboard-processing__percent {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 50px;
+  letter-spacing: -0.42px;
+}
+
+.mv-storyboard-processing__caption {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+}
+
+.mv-storyboard-processing__message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 320px;
+}
+
+.mv-storyboard-processing__title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 26px;
+  letter-spacing: -0.2px;
+}
+
+.mv-storyboard-processing__subtitle {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
+}
+
+.mv-storyboard-processing__progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 192px;
+}
+
+.mv-storyboard-processing__progress-track {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--white-15);
+  overflow: hidden;
+}
+
+.mv-storyboard-processing__progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(1.07deg, #ff6bce 14.6%, #a855f7 85.4%);
+  transition: width 0.3s ease;
+}
+
+.mv-storyboard-processing__eta-label {
+  margin: 0;
+  color: var(--neutral-dark-44);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+}
+
+.mv-storyboard-processing__eta-value {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.13px;
+}
+
+.mv-storyboard-processing__view-later {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  height: 44px;
+  padding: 0 24px;
+  box-sizing: border-box;
+  border: 1px solid var(--white-15);
+  border-radius: 14px;
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-84);
+  text-decoration: none;
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.14px;
+  transition: background-color 0.15s ease;
+}
+
+.mv-storyboard-processing__view-later:hover {
+  background: var(--neutral-dark-24);
+}
+
+@media (min-width: 1024px) {
+  .mv-storyboard-processing {
+    gap: 48px;
+    min-height: 520px;
+    padding: 80px 24px;
+  }
+
+  .mv-storyboard-processing__card {
+    gap: 10px;
+    width: 280px;
+    height: 280px;
+    padding: 24px;
+  }
+
+  .mv-storyboard-processing__icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .mv-storyboard-processing__percent {
+    font-size: 48px;
+    line-height: 58px;
+    letter-spacing: -0.48px;
+  }
+
+  .mv-storyboard-processing__caption {
+    font-size: var(--font-body-l);
+    line-height: var(--line-height-body-l);
+  }
+
+  .mv-storyboard-processing__message {
+    gap: 8px;
+    max-width: 440px;
+  }
+
+  .mv-storyboard-processing__title {
+    font-size: var(--font-title-l);
+    line-height: var(--line-height-title-l);
+    letter-spacing: -0.26px;
+  }
+
+  .mv-storyboard-processing__subtitle {
+    font-size: var(--font-body-l);
+    line-height: var(--line-height-body-l);
+    letter-spacing: -0.17px;
+  }
+
+  .mv-storyboard-processing__progress {
+    gap: 12px;
+    max-width: 360px;
+  }
+
+  .mv-storyboard-processing__progress-track {
+    height: 4px;
+  }
+
+  .mv-storyboard-processing__eta-label {
+    font-size: var(--font-body-s);
+    line-height: 16px;
+    letter-spacing: 0;
+  }
+
+  .mv-storyboard-processing__eta-value {
+    font-size: var(--font-title-xs);
+    line-height: var(--line-height-title-xs);
+    letter-spacing: 0;
+  }
+
+  .mv-storyboard-processing__view-later {
+    min-width: 230px;
+    height: 46px;
+    padding: 0 16px;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-title-xs);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-title-xs);
+    letter-spacing: 0;
+  }
+}

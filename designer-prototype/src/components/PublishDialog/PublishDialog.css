@@ -1,0 +1,76 @@
+.publish-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(9, 9, 11, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.publish-dialog-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.publish-dialog {
+  width: min(100%, 380px);
+  padding: 32px;
+  border: 1px solid var(--white-15);
+  border-radius: 28px;
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-100);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.42);
+  transform: scale(0.96);
+  transition: transform 0.3s ease;
+}
+
+.publish-dialog-overlay--visible .publish-dialog {
+  transform: scale(1);
+}
+
+.publish-dialog h2 {
+  margin: 0 0 12px;
+  font-size: var(--font-title-s);
+  line-height: var(--line-height-title-s);
+  text-align: center;
+}
+
+.publish-dialog p {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-size: var(--font-body-s);
+  line-height: var(--line-height-body-s);
+  text-align: center;
+}
+
+.publish-dialog__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.publish-dialog__actions button {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-24);
+  color: var(--neutral-dark-100);
+  font: inherit;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.publish-dialog__actions .publish-dialog__confirm {
+  border-color: var(--neutral-dark-100);
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}

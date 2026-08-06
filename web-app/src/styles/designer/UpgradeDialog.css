@@ -1,0 +1,366 @@
+.upgrade-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.upgrade-dialog-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.upgrade-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.upgrade-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  max-width: 944px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 32px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-3xl);
+  background: var(--neutral-dark-09);
+  box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
+  scrollbar-width: none;
+  transform: scale(0.96);
+  transition: transform 0.3s ease;
+}
+
+.upgrade-dialog-overlay--visible .upgrade-dialog {
+  transform: scale(1);
+}
+
+.upgrade-dialog::-webkit-scrollbar {
+  display: none;
+}
+
+.upgrade-dialog__header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.upgrade-dialog__header-spacer,
+.upgrade-dialog__close {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.upgrade-dialog__title {
+  flex: 1;
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-m);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.2px;
+  text-align: center;
+}
+
+.upgrade-dialog__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.upgrade-dialog__close-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.upgrade-dialog__cards {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.upgrade-dialog__card {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-2xl);
+  background: var(--neutral-dark-14);
+}
+
+/* Gradient stroke — border-color can't take a gradient directly, so this
+   uses the double-background trick: an opaque padding-box layer paints the
+   card's own background, leaving only the 1.5px border-box ring for the
+   gradient layer underneath to show through. */
+.upgrade-dialog__card--featured {
+  border-width: 1.5px;
+  border-color: transparent;
+  background:
+    linear-gradient(var(--neutral-dark-14), var(--neutral-dark-14)) padding-box,
+    linear-gradient(135deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%) border-box;
+}
+
+.upgrade-dialog__card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upgrade-dialog__plan-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Groups the plan name + PRO badge so they sit tight against each other —
+   this group (not the name alone) is what stretches, so the tag on the
+   other side still gets pushed to the far right of the row. */
+.upgrade-dialog__plan-name-group {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.upgrade-dialog__plan-name {
+  margin: 0;
+  min-width: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  line-height: 22px;
+}
+
+.upgrade-dialog__pro-badge {
+  flex-shrink: 0;
+  padding: 3px 5px;
+  border-radius: 6px;
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+  font-family: var(--font-family-primary);
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  line-height: 11px;
+}
+
+.upgrade-dialog__tag {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  line-height: 11px;
+  white-space: nowrap;
+}
+
+.upgrade-dialog__tag--green {
+  border: 1px solid rgba(1, 179, 123, 0.4);
+  background: rgba(1, 179, 123, 0.6);
+}
+
+.upgrade-dialog__tag--purple {
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  background: rgba(145, 50, 255, 0.6);
+}
+
+.upgrade-dialog__plan-desc {
+  margin: 0;
+  color: var(--neutral-dark-54);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+}
+
+.upgrade-dialog__price {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-l);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.26px;
+}
+
+.upgrade-dialog__price-period {
+  color: var(--white-40);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
+.upgrade-dialog__cta {
+  height: 46px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 34px;
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  transition: opacity 0.15s ease;
+}
+
+.upgrade-dialog__cta:hover {
+  opacity: 0.85;
+}
+
+.upgrade-dialog__cta--default {
+  background: var(--white-15);
+  color: var(--neutral-dark-84);
+}
+
+.upgrade-dialog__cta--gradient {
+  background: linear-gradient(90deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+  color: var(--neutral-dark-100);
+}
+
+.upgrade-dialog__cta--white {
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}
+
+.upgrade-dialog__details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upgrade-dialog__credits {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+}
+
+.upgrade-dialog__credits-icon {
+  width: 12px;
+  height: 12px;
+  align-self: center;
+}
+
+.upgrade-dialog__credits-number {
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.17px;
+}
+
+.upgrade-dialog__credits-label {
+  color: var(--white-80);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.12px;
+}
+
+.upgrade-dialog__divider {
+  height: 1px;
+  background: var(--white-15);
+}
+
+.upgrade-dialog__features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upgrade-dialog__feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+}
+
+.upgrade-dialog__feature-icon-box {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: var(--white-15);
+}
+
+.upgrade-dialog__feature-icon {
+  width: 12px;
+  height: 12px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.upgrade-dialog__footer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+}
+
+.upgrade-dialog__footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.upgrade-dialog__footer a:hover {
+  text-decoration: underline;
+}
+
+/* No separate mobile frame was given beyond the same 3 plans stacked
+   instead of in a row — same convention as this app's other dialogs
+   (centered card that just narrows/stacks below the mobile breakpoint). */
+@media (max-width: 767px) {
+  .upgrade-dialog__cards {
+    flex-direction: column;
+  }
+}

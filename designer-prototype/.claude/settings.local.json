@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__b46bbd74-4a5c-4b97-9d90-e388ea8929aa__get_design_context",
+      "Bash(node -e ' *)",
+      "mcp__b46bbd74-4a5c-4b97-9d90-e388ea8929aa__get_metadata"
+    ]
+  }
+}

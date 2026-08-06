@@ -1,0 +1,93 @@
+.new-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.new-songs__layout {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.new-songs__column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.new-songs__item {
+  display: block;
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .new-songs__layout {
+    flex-direction: column;
+  }
+}
+
+/*
+  App-mobile variant (see src/config/layoutMode.ts) — Figma "New Songs"
+  (node 369:7558) swipes through the same songs as full-width pages of 3
+  with dot indicators, instead of the 2-column list above.
+*/
+.new-songs__mobile-pager {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .app-layout--mobile-app .new-songs__layout {
+    display: none;
+  }
+
+  .app-layout--mobile-app .new-songs__mobile-pager {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+  }
+}
+
+.new-songs__mobile-track {
+  display: flex;
+  width: 100%;
+  touch-action: pan-y;
+}
+
+.new-songs__mobile-page {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 100%;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.new-songs__dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0 0;
+}
+
+.new-songs__dot {
+  width: 6px;
+  height: 4px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  cursor: pointer;
+  transition:
+    width 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.new-songs__dot--active {
+  width: 16px;
+  background: var(--neutral-dark-100);
+}

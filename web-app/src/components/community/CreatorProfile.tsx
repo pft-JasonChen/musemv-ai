@@ -1,115 +1,474 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CREATOR_MVS, CREATOR_SONGS, DEFAULT_CREATOR, formatCount, type CommunityMv, type CommunitySong } from "@/lib/mv/community";
-import { Heart, Share, Headphones } from "@/components/community/ui";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
+import { DetailNavbar } from "@/components/shell/DetailNavbar";
+import { Tabs } from "@/components/shell/RoomNavbar";
+import { DpIcon } from "@/components/ui/DpIcon";
+import { IconButton } from "@/components/ui/IconButton";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { ShareDialog } from "@/components/ui/ShareDialog";
+import { buildShareUrl } from "@/lib/share";
+import { downloadFile } from "@/lib/download";
+import { SAMPLE_AUDIO } from "@/lib/mv/mock";
+import {
+  CREATOR_MVS,
+  CREATOR_SONGS,
+  DEFAULT_CREATOR,
+  formatCount,
+  type CommunityMv,
+  type CommunitySong,
+} from "@/lib/mv/community";
 import { MOCK_USER } from "@/lib/user";
 
-function I({ d, size = 16 }: { d: string; size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={d} /></svg>;
+/**
+ * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3e) ────────────────────
+ *
+ * DP source: `CommunityProfilePage` (Figma 1700:36586 / 1711:43159).
+ * Classes come from `src/styles/designer/CommunityProfilePage.css`, verbatim.
+ *
+ * ── THE PER-ITEM MENU: SIX ACTIONS, ALL OF THEM REAL ────────────────────────
+ *
+ * The handoff flagged this screen as needing a product decision before it could
+ * be built. DP's menu has Edit / Like / Share / Publish / Download / Delete, but
+ * two of those are dead in DP itself — its Download and Delete handlers only
+ * close the menu. Porting that verbatim would have shipped two buttons that do
+ * nothing, which is the mirror image of the affordance-dropping regression G7
+ * caught on the Muse Pro row.
+ *
+ * Decision (product owner, 2026-08-05): port all six and wire every one to real
+ * behaviour, reusing the implementations `/history` already has —
+ *   · Publish  → MV confirms first, Song toggles straight away, both toast.
+ *                Same MV-vs-Song split as History/MV Result/Song Create.
+ *   · Download → `downloadFile`, the same helper History's menu calls.
+ *   · Delete   → History's confirm modal, then the row leaves the list.
+ *   · Edit     → `/mv/edit` for an MV, `/song/create` for a song.
+ * So the screen looks like DP and has no dead controls.
+ *
+ * The three mutations are component state over static fixtures. That matches
+ * every other community surface in this prototype — `CREATOR_MVS`/`CREATOR_SONGS`
+ * are consts, there is no store behind them, and History does exactly the same
+ * with its own `removed` set. A reload restores the seed data, deliberately.
+ *
+ * ── FOUR THINGS DP DOES THAT ARE NOT PORTED ─────────────────────────────────
+ *
+ * 1. `window.history.replaceState` on tab change. 3b's pre-flight measured what
+ *    that costs: a URL write is a page jump even with `replace`. The active tab
+ *    is component state, seeded from `?tab=` on first render only.
+ * 2. `document.referrer` for the back target. Q6 rejected origin-in-the-URL
+ *    schemes; `DetailNavbar` does `router.back()` with a section fallback.
+ * 3. Bare anchors to DP's own paths for navigation. R-9: every link goes through
+ *    the router with `localePath()`, or the locale prefix is silently lost.
+ * 4. DP's own-profile sign-in gate as a route guard. `/creator` stays public —
+ *    someone else's profile is public content, and adding a sixth guarded route
+ *    would change the C7 route map (G4). Logged out, the owner menu simply is
+ *    not rendered.
+ *
+ * A5 needs nothing here: `DetailNavbar` defaults `phoneBack` to true.
+ */
+
+type ProfileTab = "mv" | "songs";
+const PROFILE_TABS = [
+  { id: "mv" as const, label: "Music Videos" },
+  { id: "songs" as const, label: "Songs" },
+];
+
+interface ProfileItem {
+  id: string;
+  title: string;
+  cover: string;
+  plays: number;
+  likes: number;
+  shares: number;
+  date: string;
+  kind: "mv" | "song";
+  /** Where the row's cover/title goes — WA's own routes (D3), not DP's `?from=`. */
+  href: string;
+  /** What Download saves. MVs carry a real clip; songs share the demo track. */
+  downloadUrl: string;
+  downloadName: string;
 }
 
-function Stat({ icon, value }: { icon: React.ReactNode; value: number }) {
-  return <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--text-2)" }}>{icon} {formatCount(value)}</span>;
-}
-
-function Row({ thumb, title, plays, likes, shares, date, kind, onOpen }: { thumb: string; title: string; plays: number; likes: number; shares: number; date: string; kind: "mv" | "song"; onOpen: () => void }) {
-  const [liked, setLiked] = useState(false);
-  const [menu, setMenu] = useState(false);
-  return (
-    <div className="flex items-center gap-3 border-b py-3" style={{ borderColor: "var(--border-3)" }}>
-      <button onClick={onOpen} aria-label={`Open ${title}`} className="relative h-[56px] w-[56px] shrink-0 overflow-hidden rounded-lg" style={{ background: "var(--card)" }}>
-        <img src={thumb} alt="" className="h-full w-full object-cover" />
-        {/* 20% scrim + type-indicator icon */}
-        <span className="pointer-events-none absolute inset-0" style={{ background: "rgba(0,0,0,0.2)" }} />
-        <span className="pointer-events-none absolute left-1 top-1 text-white">
-          <I d={kind === "song" ? "M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" : "M15 10l4.5-2.5v9L15 14M4 7h11v10H4z"} size={12} />
-        </span>
-      </button>
-      <button onClick={onOpen} className="min-w-0 flex-1 text-left">
-        <div className="truncate text-[14px] font-bold">{title}</div>
-        <div className="mt-1 flex items-center gap-3">
-          <Stat icon={<Headphones />} value={plays} />
-          <Stat icon={<Heart filled={liked} />} value={likes + (liked ? 1 : 0)} />
-          <Stat icon={<Share />} value={shares} />
-        </div>
-        <div className="mt-0.5 text-[11px]" style={{ color: "var(--text-3)" }}>{date}</div>
-      </button>
-      <div className="relative shrink-0">
-        <button aria-label="More" onClick={() => setMenu((m) => !m)} onBlur={() => setTimeout(() => setMenu(false), 150)} className="grid h-8 w-8 place-items-center rounded-full" style={{ background: "var(--card-2)", color: "var(--text-2)" }}>
-          <I d="M12 5h.01M12 12h.01M12 19h.01" />
-        </button>
-        {menu && (
-          <div className="absolute right-0 top-9 z-10 w-36 overflow-hidden rounded-xl border py-1 shadow-lg" style={{ background: "var(--card)", borderColor: "var(--border-2)" }}>
-            <button onMouseDown={() => setLiked((l) => !l)} className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] font-semibold" style={{ color: liked ? "var(--accent)" : "var(--text)" }}><Heart size={16} filled={liked} /> {liked ? "Unlike" : "Like"}</button>
-            <button onMouseDown={() => setMenu(false)} className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] font-semibold"><Share size={16} /> Share</button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function toggle(set: ReadonlySet<string>, id: string): Set<string> {
+  const next = new Set(set);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
 }
 
 export function CreatorProfile() {
   const router = useRouter();
   const params = useSearchParams();
-  const self = params.get("self") === "1";
-  const c = DEFAULT_CREATOR;
-  const [tab, setTab] = useState<"mv" | "songs">(params.get("tab") === "songs" ? "songs" : "mv");
+  const { locale } = useLocale();
+  const { loggedIn } = useAuth();
 
-  const name = self ? MOCK_USER.name : c.name;
-  const email = self ? MOCK_USER.email : c.email;
+  const self = params.get("self") === "1";
+  // Seeded from the URL, then owned by the component — see note 1 above.
+  const [tab, setTab] = useState<ProfileTab>(params.get("tab") === "songs" ? "songs" : "mv");
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [liked, setLiked] = useState<ReadonlySet<string>>(() => new Set());
+  const [published, setPublished] = useState<ReadonlySet<string>>(() => new Set());
+  const [removed, setRemoved] = useState<ReadonlySet<string>>(() => new Set());
+  const [share, setShare] = useState<ProfileItem | null>(null);
+  const [pubConfirm, setPubConfirm] = useState<ProfileItem | null>(null);
+  const [del, setDel] = useState<ProfileItem | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const creator = DEFAULT_CREATOR;
+  const name = self ? MOCK_USER.name : creator.name;
+  const email = self ? MOCK_USER.email : creator.email;
+  // Only your own items are yours to edit, publish or delete — DP gates the menu
+  // the same way (`isOwnProfile`). Logged out, there is no "own" to speak of.
+  const ownerMenu = self && loggedIn;
+
+  function showToast(msg: string) {
+    setToast(msg);
+    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2200);
+  }
+
+  const items = useMemo<ProfileItem[]>(() => {
+    const rows: ProfileItem[] =
+      tab === "mv"
+        ? CREATOR_MVS.map((m: CommunityMv) => ({
+            id: m.id,
+            title: m.title,
+            cover: m.thumb,
+            plays: m.plays,
+            likes: m.likes,
+            shares: m.shares,
+            date: m.date,
+            kind: "mv",
+            href: `/watch?id=${m.id}`,
+            downloadUrl: m.video,
+            downloadName: `${m.title}.mp4`,
+          }))
+        : CREATOR_SONGS.map((s: CommunitySong) => ({
+            id: s.id,
+            title: s.title,
+            cover: s.cover,
+            plays: s.plays,
+            likes: s.likes,
+            shares: s.shares,
+            date: s.date,
+            kind: "song",
+            href: `/song/play?id=${s.id}`,
+            downloadUrl: SAMPLE_AUDIO,
+            downloadName: `${s.title}.mp3`,
+          }));
+    return rows.filter((r) => !removed.has(r.id));
+  }, [tab, removed]);
+
+  // Dismiss the open menu on an outside click or Escape — DP's behaviour, with
+  // the listeners scoped to the open state so nothing is bound while closed.
+  useEffect(() => {
+    if (!openMenu) return;
+    function onPointerDown(e: MouseEvent) {
+      if (!(e.target as Element).closest(".community-profile__menu-shell")) setOpenMenu(null);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpenMenu(null);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [openMenu]);
+
+  function open(item: ProfileItem) {
+    router.push(localePath(locale, item.href));
+  }
+
+  function doPublish(item: ProfileItem, next: boolean) {
+    setOpenMenu(null);
+    // An MV going public is reviewed first, so it confirms; a song is immediate.
+    if (next && item.kind === "mv") {
+      setPubConfirm(item);
+      return;
+    }
+    setPublished((s) => toggle(s, item.id));
+    showToast(next ? "Published success" : "Unpublished success");
+  }
+
+  function confirmPublish() {
+    if (!pubConfirm) return;
+    setPublished((s) => toggle(s, pubConfirm.id));
+    setPubConfirm(null);
+    showToast("Submitted for review");
+  }
+
+  function doDownload(item: ProfileItem) {
+    setOpenMenu(null);
+    downloadFile(item.downloadUrl, item.downloadName);
+    showToast("Download started");
+  }
+
+  function confirmDelete() {
+    if (!del) return;
+    setRemoved((s) => new Set(s).add(del.id));
+    setDel(null);
+    showToast("Deleted");
+  }
+
+  function doEdit(item: ProfileItem) {
+    setOpenMenu(null);
+    router.push(localePath(locale, item.kind === "mv" ? "/mv/edit" : "/song/create"));
+  }
 
   return (
-    <div className="mx-auto max-w-[760px] px-4 py-6 sm:px-6">
-      <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--text-2)" }}>
-        <I d="M15 18l-6-6 6-6" /> Back
-      </button>
+    <>
+      <DetailNavbar fallbackPath={self ? "/profile" : "/explore/mvs"} />
 
-      {/* Header */}
-      <div className="flex flex-col items-center gap-3 text-center">
-        {self ? (
-          <span className="grid h-[88px] w-[88px] place-items-center rounded-full text-white" style={{ background: "var(--mv-grad)", fontWeight: 700, fontSize: 34 }}>{name.charAt(0)}</span>
-        ) : (
-          <img src={c.avatar} alt="" className="h-[88px] w-[88px] rounded-full object-cover" />
-        )}
-        <div>
-          <div className="text-[22px] font-extrabold leading-tight">{name}</div>
-          <div className="text-[12px]" style={{ color: "var(--text-2)" }}>{email}</div>
+      <section className="community-profile">
+        <aside className="community-profile__summary">
+          <div className="community-profile__identity">
+            {/* WA's data decides which of DP's two avatar treatments applies:
+                the community creator has a photo, the mock signed-in user does
+                not, so `self` gets DP's gradient fallback. */}
+            {self ? (
+              <span className="community-profile__avatar-fallback">
+                <DpIcon name="ic_account" />
+              </span>
+            ) : (
+              <img src={creator.avatar} alt="" />
+            )}
+            <div>
+              <h1>{name}</h1>
+              <p>{email}</p>
+            </div>
+          </div>
+          <div className="community-profile__stats">
+            <div>
+              <strong>{creator.plays}</strong>
+              <span>Plays</span>
+            </div>
+            <i />
+            <div>
+              <strong>{creator.likes}</strong>
+              <span>Likes</span>
+            </div>
+          </div>
+        </aside>
+
+        <div className="community-profile__main">
+          <Tabs tabs={PROFILE_TABS} active={tab} onChange={setTab} />
+
+          <div className="community-profile__list">
+            {items.map((item) => {
+              const isLiked = liked.has(item.id);
+              const isPublished = published.has(item.id);
+              const menuOpen = openMenu === item.id;
+              return (
+                <article className="community-profile__item" key={item.id}>
+                  {/* An anchor with a real destination, click-intercepted so it
+                      routes in-app — the same arrangement /history's card uses,
+                      and what keeps middle-click and "copy link address" honest. */}
+                  <a
+                    className="community-profile__item-main"
+                    href={localePath(locale, item.href)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      open(item);
+                    }}
+                  >
+                    <span className="community-profile__cover">
+                      <img src={item.cover} alt="" />
+                      <DpIcon name={item.kind === "mv" ? "ic_video" : "ic_song"} />
+                    </span>
+                    <span className="community-profile__copy">
+                      <strong>{item.title}</strong>
+                      {/* `<i>`, not `<span>`: the stylesheet sizes these with
+                          `.community-profile__social i`. See DpIcon's `as`. */}
+                      <span className="community-profile__social">
+                        <span>
+                          <DpIcon as="i" name="ic_headphones" />
+                          {formatCount(item.plays)}
+                        </span>
+                        <span>
+                          <DpIcon as="i" name="ic_favorite_off" />
+                          {formatCount(item.likes + (isLiked ? 1 : 0))}
+                        </span>
+                        <span>
+                          <DpIcon as="i" name="ic_share" />
+                          {formatCount(item.shares)}
+                        </span>
+                      </span>
+                      <time>{item.date}</time>
+                    </span>
+                  </a>
+
+                  {/* Order is load-bearing: the phone rule hides
+                      `.community-profile__actions > .icon-button:nth-child(2)`,
+                      i.e. Share. Reordering these silently hides the wrong one. */}
+                  <div className="community-profile__actions">
+                    <IconButton
+                      size="small"
+                      variant="ghost"
+                      icon={isLiked ? "ic_favorite_on" : "ic_favorite_off"}
+                      label={isLiked ? "Unlike" : "Like"}
+                      onClick={() => setLiked((s) => toggle(s, item.id))}
+                    />
+                    <IconButton
+                      size="small"
+                      variant="ghost"
+                      icon="ic_share"
+                      label="Share"
+                      onClick={() => setShare(item)}
+                    />
+                    {ownerMenu && (
+                      <div className="community-profile__menu-shell">
+                        <IconButton
+                          size="xsmall"
+                          variant="tertiary"
+                          icon="ic_more"
+                          label="More"
+                          onClick={() => setOpenMenu((c) => (c === item.id ? null : item.id))}
+                        />
+                        {menuOpen && (
+                          <div className="community-profile__menu" role="menu">
+                            {/* An `<a>` on purpose, and NOT interchangeable with a
+                                `<button>`. The stylesheet's shared rule matches
+                                `.community-profile__menu > button` — specificity
+                                (0,1,1) — while the white-pill rule is
+                                `.community-profile__menu-primary`, (0,1,0). As a
+                                button this element loses padding, background and
+                                alignment to the more specific rule and renders as
+                                a plain transparent list item. DP is an anchor, so
+                                the pill wins there; the click is intercepted so
+                                navigation still goes through the router (R-9). */}
+                            <a
+                              role="menuitem"
+                              className="community-profile__menu-primary"
+                              href={localePath(
+                                locale,
+                                item.kind === "mv" ? "/mv/edit" : "/song/create",
+                              )}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                doEdit(item);
+                              }}
+                            >
+                              <DpIcon name="ic_edit" />
+                              {item.kind === "mv" ? "Edit MV" : "Edit Song"}
+                            </a>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => setLiked((s) => toggle(s, item.id))}
+                            >
+                              <DpIcon name={isLiked ? "ic_favorite_on" : "ic_favorite_off"} />
+                              {isLiked ? "Unlike" : "Like"}
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                setOpenMenu(null);
+                                setShare(item);
+                              }}
+                            >
+                              <DpIcon name="ic_share" />
+                              Share
+                            </button>
+                            {/* Not a menuitem: the row's action lives in the
+                                switch, and a `role="menuitem"` wrapper around a
+                                `role="switch"` would nest two widget roles. */}
+                            <div className="community-profile__menu-publish">
+                              <span>
+                                {/* `<i>` again — `.community-profile__menu-publish i`. */}
+                                <DpIcon as="i" name="ic_publish" />
+                                Publish
+                              </span>
+                              <ToggleSwitch
+                                checked={isPublished}
+                                onChange={(next) => doPublish(item, next)}
+                                ariaLabel={`Publish ${item.title}`}
+                              />
+                            </div>
+                            <button type="button" role="menuitem" onClick={() => doDownload(item)}>
+                              <DpIcon name="ic_download" />
+                              Download
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="community-profile__menu-delete"
+                              onClick={() => {
+                                setOpenMenu(null);
+                                setDel(item);
+                              }}
+                            >
+                              <DpIcon name="ic_delete" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
-        <div className="mt-1 flex items-center gap-8">
-          <div className="text-center"><div className="text-[20px] font-extrabold">{c.plays}</div><div className="text-[11px]" style={{ color: "var(--text-3)" }}>Plays</div></div>
-          <div className="h-8 w-px" style={{ background: "var(--border-2)" }} />
-          <div className="text-center"><div className="text-[20px] font-extrabold">{c.likes}</div><div className="text-[11px]" style={{ color: "var(--text-3)" }}>Likes</div></div>
+      </section>
+
+      <ShareDialog
+        open={share !== null}
+        onClose={() => setShare(null)}
+        title={share?.title ?? ""}
+        url={share ? buildShareUrl(share.id) : ""}
+      />
+
+      <Modal
+        open={pubConfirm != null}
+        onClose={() => setPubConfirm(null)}
+        title="Ready to Go Public?"
+        maxWidth={420}
+      >
+        <p className="mb-4 text-[14px]" style={{ color: "var(--text-2)" }}>
+          Once published, your creation is visible to the community and may be shared on our
+          channels. It goes through a short review first.
+        </p>
+        <div className="flex gap-2">
+          <Button variant="ghost" className="flex-1" onClick={() => setPubConfirm(null)}>
+            Cancel
+          </Button>
+          <Button className="flex-1" onClick={confirmPublish}>
+            Publish
+          </Button>
         </div>
-      </div>
+      </Modal>
 
-      {/* Tabs */}
-      <div className="mt-6 flex gap-2">
-        {([["mv", "Music Videos"], ["songs", "Songs"]] as const).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className="rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors"
-            style={{ background: tab === key ? "var(--accent)" : "var(--card-2)", color: tab === key ? "#fff" : "var(--text-2)" }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Modal open={del != null} onClose={() => setDel(null)} title="Delete" maxWidth={380}>
+        <p className="mb-4 text-[14px]" style={{ color: "var(--text-2)" }}>
+          Are you sure you want to delete this item? This action cannot be undone.
+        </p>
+        <div className="flex gap-2">
+          <Button variant="ghost" className="flex-1" onClick={() => setDel(null)}>
+            Cancel
+          </Button>
+          <Button className="flex-1" onClick={confirmDelete}>
+            Delete
+          </Button>
+        </div>
+      </Modal>
 
-      {/* List */}
-      <div className="mt-4">
-        {tab === "mv"
-          ? CREATOR_MVS.map((m: CommunityMv) => (
-              <Row key={m.id} thumb={m.thumb} title={m.title} plays={m.plays} likes={m.likes} shares={m.shares} date={m.date} kind="mv" onOpen={() => router.push(`/watch?id=${m.id}`)} />
-            ))
-          : CREATOR_SONGS.map((s: CommunitySong) => (
-              <Row key={s.id} thumb={s.cover} title={s.title} plays={s.plays} likes={s.likes} shares={s.shares} date={s.date} kind="song" onOpen={() => router.push(`/song/play?id=${s.id}`)} />
-            ))}
-      </div>
-    </div>
+      {toast && (
+        <div
+          className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
+          style={{ background: "rgba(20,20,24,.95)" }}
+        >
+          {toast}
+        </div>
+      )}
+    </>
   );
 }

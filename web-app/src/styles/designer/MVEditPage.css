@@ -1,0 +1,1054 @@
+/*
+  Edit MV — Figma "Edit MV_L" (node 1351:28314). Same page shell/section
+  conventions as MVCreatePage/MVStoryboardPage/MVResultPage.
+*/
+
+.mv-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 20px 20px 60px;
+}
+
+@media (min-width: 768px) {
+  .mv-edit {
+    padding: 20px 32px 60px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mv-edit {
+    flex-direction: row;
+    gap: 48px;
+    padding: 20px 60px 60px;
+  }
+}
+
+.mv-edit__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .mv-edit__panel {
+    flex: 700 1 0;
+    width: auto;
+    max-width: 700px;
+  }
+}
+
+.mv-edit__side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .mv-edit__side {
+    flex: 332 1 0;
+    width: auto;
+    max-width: 332px;
+    align-self: flex-start;
+    position: sticky;
+    top: 100px;
+  }
+}
+
+/*
+  Mobile-only reorder — Figma "Edit MV" (node 49:53) interleaves sections
+  from both columns into one sequence: Cover Image → Cover Description →
+  Storyboard clips → MV Title → Author Name → toggles → Delete. Rather than
+  duplicating this JSX for mobile, .mv-edit__panel/__side go display:contents
+  below 768px so their section children become direct flex items of
+  .mv-edit itself, each individually given the Figma order via the
+  `order` property — desktop's two-column grouping is untouched above
+  768px. The video preview + per-scene textarea have no mobile equivalent
+  here at all (see .mv-edit__section--scene-editor below) — tapping a clip
+  opens MobileSceneDetail (a full-screen view) instead.
+*/
+@media (max-width: 767px) {
+  .mv-edit__panel,
+  .mv-edit__side {
+    display: contents;
+  }
+
+  .mv-edit__section--cover {
+    order: 1;
+  }
+
+  .mv-edit__section--storyboard {
+    order: 2;
+  }
+
+  .mv-edit__section.mv-edit__section--scene-editor {
+    display: none;
+  }
+
+  .mv-edit__section--title {
+    order: 3;
+  }
+
+  .mv-edit__section--author {
+    order: 4;
+  }
+
+  .mv-edit__toggle-row--subtitle {
+    order: 5;
+  }
+
+  .mv-edit__toggle-row--watermark {
+    order: 6;
+  }
+
+  .mv-edit__ctas {
+    order: 7;
+  }
+}
+
+.mv-edit__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mv-edit__label {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-xs);
+}
+
+/* Mobile splits the Cover section into two stacked cards (image, then
+   description) instead of one "COVER IMAGE" heading over both — see the
+   comment on .mv-edit__label--cover-description in MVEditPage.tsx. */
+.mv-edit__label--cover-description {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mv-edit__section--cover > .mv-edit__label:first-child {
+    display: none;
+  }
+
+  .mv-edit__label--cover-description {
+    display: block;
+  }
+}
+
+.mv-edit__sublabel {
+  margin: -8px 0 0;
+  color: var(--neutral-dark-44);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.14px;
+}
+
+/* =========================================================
+ * Storyboard — clip strip + preview
+ * ======================================================= */
+
+.mv-edit__clips {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mv-edit__clips-shell {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.mv-edit__clips::-webkit-scrollbar {
+  display: none;
+}
+
+.mv-edit__clips-gradient {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 62px;
+  height: 84px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(9, 9, 11, 0) 0%, var(--neutral-dark-04) 100%);
+}
+
+.mv-edit__clip {
+  position: relative;
+  flex-shrink: 0;
+  width: 84px;
+  height: 84px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mv-edit__clip img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mv-edit__clip-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 60%);
+}
+
+.mv-edit__clip-number {
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.12px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.mv-edit__clip--active::after,
+.mv-edit__scene-version--active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 2.5px var(--color-accent-purple);
+  pointer-events: none;
+}
+
+.mv-edit__preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Figma's mobile storyboard row is just the clip thumbnails — no inline
+   preview player (tapping a clip opens MobileSceneDetail instead). */
+@media (max-width: 767px) {
+  .mv-edit__preview {
+    display: none;
+  }
+}
+
+.mv-edit__preview-video {
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.mv-edit__preview-video--portrait {
+  height: 100%;
+  width: auto;
+  aspect-ratio: 9 / 16;
+}
+
+.mv-edit__preview-video--landscape {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.mv-edit__media-action {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  box-sizing: border-box;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  color: var(--neutral-dark-100);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.mv-edit__media-action:hover {
+  background: var(--white-40);
+}
+
+.mv-edit__media-action--download {
+  top: 16px;
+  right: 16px;
+}
+
+.mv-edit__media-action--expand {
+  right: 16px;
+  bottom: 16px;
+}
+
+.mv-edit__media-action-icon {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-edit__preview-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  padding: 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.mv-edit__control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+.mv-edit__control-icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-edit__time {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
+.mv-edit__progress {
+  position: relative;
+  flex: 1;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.mv-edit__progress-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+}
+
+.mv-edit__progress-fill {
+  position: absolute;
+  left: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+}
+
+.mv-edit__progress-thumb {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* =========================================================
+ * Scene editor
+ * ======================================================= */
+
+.mv-edit__scene-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mv-edit__scene-title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.mv-edit__scene-time {
+  margin: 0 0 0 auto;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.13px;
+}
+
+.mv-edit__input-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-09);
+}
+
+/* Figma "List Input / Processing" (node 1343:23937) — while Enhance is
+   running, everything but the Enhance button itself dims to look disabled. */
+.mv-edit__input-box--processing .mv-edit__textarea,
+.mv-edit__input-box--processing .mv-edit__char-count {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.mv-edit__textarea {
+  width: 100%;
+  min-height: 84px;
+  padding: 0;
+  border: none;
+  background: none;
+  resize: none;
+  outline: none;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
+}
+
+.mv-edit__input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.mv-edit__char-count {
+  color: rgba(255, 255, 255, 0.4);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+}
+
+.mv-edit__enhance-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 24px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+  white-space: nowrap;
+}
+
+.mv-edit__input-box--processing .mv-edit__enhance-btn {
+  background: var(--color-accent-purple);
+  color: var(--neutral-dark-100);
+}
+
+.mv-edit__enhance-icon {
+  width: 14px;
+  height: 14px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+@keyframes mv-edit-enhance-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.mv-edit__enhance-icon--spinning {
+  animation: mv-edit-enhance-spin 1s linear infinite;
+}
+
+.mv-edit__clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 4px;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.mv-edit__clear-btn:hover {
+  background: var(--white-40);
+}
+
+.mv-edit__clear-icon {
+  width: 12px;
+  height: 12px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-edit__divider {
+  height: 1px;
+  background: var(--white-15);
+}
+
+.mv-edit__recreate-scene {
+  flex: 0 0 auto;
+}
+
+.mv-edit__scene-history {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.mv-edit__scene-versions {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mv-edit__scene-versions::-webkit-scrollbar {
+  display: none;
+}
+
+.mv-edit__scene-version {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mv-edit__scene-version--active {
+  box-shadow: none;
+}
+
+.mv-edit__scene-version img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* =========================================================
+ * Bottom CTAs
+ * ======================================================= */
+
+.mv-edit__ctas {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 20px 0;
+}
+
+@media (min-width: 1024px) {
+  .mv-edit__ctas {
+    justify-content: center;
+  }
+}
+
+.mv-edit__delete-btn {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 180px;
+  height: 46px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border: 1px solid var(--white-15);
+  border-radius: 34px;
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.14px;
+}
+
+@media (min-width: 1024px) {
+  .mv-edit__delete-btn {
+    flex: none;
+    width: 230px;
+  }
+}
+
+.mv-edit__delete-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-edit__merge-btn {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 46px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border: none;
+  border-radius: 34px;
+  background: linear-gradient(135deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+@media (max-width: 374px) {
+  .mv-edit__delete-btn {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mv-edit__merge-btn {
+    flex: none;
+    width: 230px;
+  }
+}
+
+.mv-edit__merge-credits {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.mv-edit__merge-credits img {
+  width: 16px;
+  height: 16px;
+}
+
+/* =========================================================
+ * Right — Cover Image / MV Title / Author Name / toggles
+ * ======================================================= */
+
+.mv-edit__cover-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-09);
+}
+
+.mv-edit__cover-media {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+}
+
+.mv-edit__cover-media--portrait {
+  height: 100%;
+  width: auto;
+  aspect-ratio: 9 / 16;
+}
+
+.mv-edit__cover-media--landscape {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+/* Recreate "processing" feel — always mounted, opacity/pointer-events
+   toggled by the modifier class (see AGENTS.md transition convention)
+   rather than conditionally rendered, so it can fade in instead of
+   popping in instantly. */
+.mv-edit__cover-processing {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(9, 9, 11, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.mv-edit__cover-image--processing .mv-edit__cover-processing {
+  opacity: 1;
+}
+
+.mv-edit__cover-processing-icon {
+  width: 28px;
+  height: 28px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  animation: mv-edit-enhance-spin 1s linear infinite;
+}
+
+.mv-edit__regen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.12px;
+  align-self: center;
+}
+
+.mv-edit__regen-btn:disabled {
+  background: var(--neutral-dark-24);
+  color: var(--neutral-dark-44);
+  cursor: not-allowed;
+}
+
+.mv-edit__regen-btn:disabled .mv-edit__regen-credits {
+  opacity: var(--opacity-disabled);
+}
+
+.mv-edit__regen-icon {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-edit__regen-credits {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.mv-edit__regen-credits img {
+  width: 14px;
+  height: 14px;
+}
+
+.mv-edit__field-box {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 48px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-09);
+}
+
+.mv-edit__field-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  background: none;
+  outline: none;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.14px;
+}
+
+.mv-edit__toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.mv-edit__toggle-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.mv-edit__toggle-title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-l);
+  font-weight: var(--font-weight-bold);
+  line-height: 22px;
+}
+
+.mv-edit__toggle-state {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.14px;
+}
+
+/* =========================================================
+ * Cover image lightbox — click the expand button to view it larger.
+ * ======================================================= */
+
+.mv-edit__lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.mv-edit__lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  cursor: pointer;
+}
+
+.mv-edit__lightbox-close-icon {
+  width: 18px;
+  height: 18px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-edit__lightbox-image {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 14px;
+  object-fit: contain;
+  box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================================
+ * Mobile-only full-screen Scene Detail — opened by tapping a storyboard
+ * clip (see MVEditPage.tsx's MobileSceneDetail). Portalled to <body> for
+ * the same reason as SongDetailPage's MobileNowPlaying: .app-layout__content
+ * sets z-index:1 on itself, trapping any descendant's z-index below its
+ * siblings (MobileHeader/MobileTabBar at z-index:20) — escaping to <body>
+ * sidesteps that stacking context entirely.
+ * ======================================================= */
+
+.mv-edit-mobile-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--neutral-dark-04);
+}
+
+.mv-edit-mobile-scene__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: max(env(safe-area-inset-top), 16px) 16px 12px;
+}
+
+.mv-edit-mobile-scene__back {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+.mv-edit-mobile-scene__back-icon {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-edit-mobile-scene__header-title {
+  flex: 1;
+  margin: 0;
+  overflow: hidden;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mv-edit-mobile-scene__header-spacer {
+  flex-shrink: 0;
+  width: 32px;
+}
+
+.mv-edit-mobile-scene__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px max(env(safe-area-inset-bottom), 20px);
+}
+
+.mv-edit-mobile-scene__preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-09);
+}
+
+.mv-edit-mobile-scene__preview-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mv-edit-mobile-scene__preview-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 100%);
+}

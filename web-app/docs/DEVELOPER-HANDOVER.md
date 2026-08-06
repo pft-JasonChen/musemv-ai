@@ -124,10 +124,10 @@ Also budget for these **production gaps** (fine for a demo, not for launch):
   failure (§6 has the full table and the guard locations). What is still demo-grade is
   `CREDIT_TRANSACTIONS`: a static 7-entry seed that never reflects real usage, and the fact
   that the balance itself is in-memory and resets on reload. Wire both to the backend.
-  *(Corrected 2026-08-03. This bullet used to read "Credits are cosmetic … nothing
+  _(Corrected 2026-08-03. This bullet used to read "Credits are cosmetic … nothing
   decrements the balance", contradicting §6 in the same document — §6 was fixed on 08-02
   and this one was missed. If you read only §4, you would have built against a false
-  premise.)*
+  premise.)_
 - **Community is undefined** — screens exist, product definition doesn't. TODO.md #1.
 - **`/` axe gate fails** (accent-contrast, pre-existing) — TODO.md #2.
 - **npm audit**: 7 dev-tooling findings (Storybook/Vitest chain) — TODO.md #3.
@@ -147,6 +147,7 @@ does the inverse. Every route lives under `src/app/[locale]/…`, and
 
 **Middleware routing** (`src/middleware.ts`, matcher excludes `_next`, `/api`, and any path with a
 dot): for each request it inspects the first path segment —
+
 - Segment is a non-default locale (`/jpn/...`) → served as-is, no rewrite.
 - Segment is the default locale (`/enu/...`) → canonicalized: redirect to the same path with the
   `/enu` prefix stripped (default locale must never appear in the URL bar).
@@ -185,7 +186,7 @@ an in-place navigation. `localePath()` is the preferred pattern going forward.
    (`{ native, english }`); add an entry to `HTML_LANG` (the BCP-47 tag); if the locale needs
    Accept-Language matching, add a case to `tagToLocale()`.
 2. `src/lib/i18n/dictionaries/`: add `<code>.ts` exporting `export const <code>: Partial<Dictionary>
-   = {}` (or populated, if translations are ready).
+= {}` (or populated, if translations are ready).
 3. `src/lib/i18n/dictionaries/index.ts`: import the new dictionary and add it to the `DICTIONARIES`
    record.
 4. Nothing else needs touching — `generateStaticParams()` derives its list from `LOCALES`, and
@@ -200,11 +201,11 @@ derived, not stored — `guest` (logged out) → `free` (logged in, `loggedIn` t
 `addCredits(plan.credits)` separately. `PlanId` and the three tiers live in `src/lib/user.ts`
 (`SUBSCRIPTION_PLANS`) — the as-approved Business Model (2026-07-13) figures:
 
-| `PlanId` | Name | Price | Credits | Cadence | Badge | Store SKU |
-|---|---|---|---|---|---|---|
-| `weekly` | Weekly | $19.99 | 200 | Weekly | MOST POPULAR | `subscribe_1_week_no_trial_ycm` |
-| `weekly_pro` | Weekly Pro | $29.99 | 1000 | Weekly | BEST VALUE | `subscribe_1_week_pro_no_trial_ycm` |
-| `yearly` | Yearly | $59.99 | 2000 | Yearly | — | `subscribe_12_month_no_trial_ycm` |
+| `PlanId`     | Name       | Price  | Credits | Cadence | Badge        | Store SKU                           |
+| ------------ | ---------- | ------ | ------- | ------- | ------------ | ----------------------------------- |
+| `weekly`     | Weekly     | $19.99 | 200     | Weekly  | MOST POPULAR | `subscribe_1_week_no_trial_ycm`     |
+| `weekly_pro` | Weekly Pro | $29.99 | 1000    | Weekly  | BEST VALUE   | `subscribe_1_week_pro_no_trial_ycm` |
+| `yearly`     | Yearly     | $59.99 | 2000    | Yearly  | —            | `subscribe_12_month_no_trial_ycm`   |
 
 `DEFAULT_PLAN_ID` is `weekly_pro`. Credits granted per cycle expire on the plan's cadence.
 (Corrected 2026-08-02 — this table previously listed a non-existent `super` plan and the wrong
@@ -215,10 +216,23 @@ prices for `weekly`/`yearly`. `src/lib/api/contract.surface.test.ts` now freezes
 `CREDIT_TRANSACTIONS` in `lib/user.ts` is a static 7-entry seed ledger (purchases, spends, bonuses)
 shown in `CreditsDetailModal` — it does not react to `addCredits()` calls or reflect real usage.
 
-**Modals** (`src/components/credits/`): `SubscribeModal` (plan picker → `subscribe()` +
+**Modals** (`src/components/credits/`): `SubscribeModal` (→ `subscribe()` +
 `addCredits(plan.credits)`), `CreditsDetailModal` (balance + `CREDIT_TRANSACTIONS` ledger, "Buy
 Credits" CTA), `BuyCreditsModal` (`CREDIT_PACKS` picker → `addCredits(pack.credits)`). All three are
 "Demo only — no real payment" per their own copy.
+
+**Migrated to the designer UI in slice 3f (2026-08-05).** Three things changed shape for anyone
+reading this section against the code:
+
+- `SubscribeModal` is **no longer a plan picker**. DP's `UpgradeDialog` is three self-contained
+  cards, each with its own Subscribe button, so there is no shared selection state — the clicked
+  card is the plan bought. `DEFAULT_PLAN_ID` no longer drives this screen (it is still exported).
+- Every price and period comes from `SUBSCRIPTION_PLANS` / `CREDIT_PACKS`, never from the
+  designer markup (S20). DP's own values are wrong in several places — see `DESIGNER-TODO` A15.
+- All three now render through `src/components/ui/DpDialog.tsx`, a shared shell for DP's overlay
+  pattern. It **unmounts when closed** rather than staying mounted with `inert`, because DP's
+  closed state is `opacity: 0; pointer-events: none` — invisible but still focusable. Its header
+  explains when to use which pattern.
 
 **Persistence asymmetry:** the logged-in boolean is the only piece that survives a reload — it's a
 plain external store (`src/lib/authStore.ts`) backed by `localStorage["muse_auth"]`, read via
@@ -234,13 +248,13 @@ the contract. `e2e/behaviour-regressions.spec.ts` now proves each row.)
 
 Costs live in `src/lib/mv/types.ts` and are frozen by `src/lib/api/contract.surface.test.ts` (C8):
 
-| Constant | Value | Charged where | On failure |
-|---|---|---|---|
-| `COST_STORYBOARD` | 20 | `MvFlowProvider.startStoryboard()` — `addCredits(-20)` at job start | refunded |
-| `COST_RENDER` | 200 | `MvFlowProvider.startRender()` — `addCredits(-200)` at job start | refunded |
-| `COST_SONG` | 10 | `SongFlowProvider` / `SongCompose` | refunded |
-| `COST_SONG_RECREATE` | 50 | `SongResultView` recreate | refunded |
-| Enhance | 0 then 1 | `CreditsProvider.consumeEnhance()` — first per session free (SONG-04) | n/a |
+| Constant             | Value    | Charged where                                                         | On failure |
+| -------------------- | -------- | --------------------------------------------------------------------- | ---------- |
+| `COST_STORYBOARD`    | 20       | `MvFlowProvider.startStoryboard()` — `addCredits(-20)` at job start   | refunded   |
+| `COST_RENDER`        | 200      | `MvFlowProvider.startRender()` — `addCredits(-200)` at job start      | refunded   |
+| `COST_SONG`          | 10       | `SongFlowProvider` / `SongCompose`                                    | refunded   |
+| `COST_SONG_RECREATE` | 50       | `SongResultView` recreate                                             | refunded   |
+| Enhance              | 0 then 1 | `CreditsProvider.consumeEnhance()` — first per session free (SONG-04) | n/a        |
 
 The charge/refund rule is **GL-01**: charge when the job starts, refund from the poll's `onError`
 so the "credits were not charged" failure copy stays true. See the `refund` closures in
@@ -250,11 +264,11 @@ so the "credits were not charged" failure copy stays true. See the `refund` clos
 only `MvFlowProvider` makes it look absent, because `startStoryboard()`/`startRender()` charge
 unconditionally. The balance check sits one level up, at the point the user commits:
 
-| Path | Guard | Location |
-|---|---|---|
+| Path            | Guard                                                                                                  | Location              |
+| --------------- | ------------------------------------------------------------------------------------------------------ | --------------------- |
 | MV (both modes) | `if (credits < cost) { setBuyOpen(true); return; }` where `cost` is `COST_STORYBOARD` or `COST_RENDER` | `MvRoom.selectMode()` |
-| Song create | `credits < COST_SONG` | `SongCompose` |
-| Song recreate | `credits < COST_SONG_RECREATE` | `SongResultView` |
+| Song create     | `credits < COST_SONG`                                                                                  | `SongCompose`         |
+| Song recreate   | `credits < COST_SONG_RECREATE`                                                                         | `SongResultView`      |
 
 All three open `BuyCreditsModal` and return early — no job starts, nothing is charged.
 `e2e/behaviour-regressions.spec.ts` proves this for the MV path (390 − 20 − 200 = 170, which is
@@ -270,9 +284,16 @@ Highlights engineers most often trip on:
 
 - **Styling:** colors via inline `style={{ background: "var(--card)" }}` from
   `tokens.css`; sizes as Tailwind arbitrary px (`text-[14px]`); radii via the remapped
-  `rounded-*` names; breakpoints are only `sm:` (640, bottom-bar→sidebar) and `lg:` (1024).
-  Never edit token values — they're synced from the mobile Figma. New semantic color =
-  new token in `tokens.css` consumed via `var()`.
+  `rounded-*` names. New semantic color = new token in `tokens.css` consumed via `var()`.
+  **Breakpoints are six tiers — 320 / 375 / 768 / 1024 / 1440 / 1920** (changed 2026-08-04,
+  `docs/redesign-migration-plan.md` §1.2); they are both the code breakpoints and the six
+  screenshot widths. This replaced the old "only `sm:` (640) and `lg:` (1024)" rule, and the
+  shell's phone cutover moves 640 → 768 as part of the Shell slice — until that lands you
+  will still see `sm:` doing that job.
+  **Never hand-edit a single token value** — but note the source changed on the same date:
+  `tokens.css` is synced from the DESIGNER prototype (`designer-prototype/`), not the mobile
+  Figma, and is replaced wholesale per drop. WA-specific semantic names go in
+  `src/styles/token-aliases.css`.
 - **State:** contexts stay small and domain-shaped. New async capability = schema →
   contract endpoint → mock impl → provider callback → domain hook (recipe in AGENTS.md).
 - **Pages stay thin**; interactive code lives in `src/components/<area>/`.
@@ -296,11 +317,18 @@ all exit 0.
 
 ## 9. Key references
 
-| What | Where |
-|---|---|
-| Working agreement / conventions | `AGENTS.md` |
-| Deferred decisions | `TODO.md` |
-| MV flow spec (EARS acceptance criteria) | `specs/mv-creation-flow.spec.md` |
-| Backend contract | `src/lib/api/contract.ts` + `schemas.ts` |
-| Design tokens | `src/styles/tokens.css` |
-| Source-of-truth mobile prototype | `../ycmuse-app-prototype/` (reference only — never import) |
+| What                                    | Where                                                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Working agreement / conventions         | `AGENTS.md`                                                                                             |
+| Deferred decisions                      | `TODO.md`                                                                                               |
+| MV flow spec (EARS acceptance criteria) | `specs/mv-creation-flow.spec.md`                                                                        |
+| Backend contract                        | `src/lib/api/contract.ts` + `schemas.ts`                                                                |
+| Design tokens                           | `src/styles/tokens.css` (synced from `designer-prototype/`)                                             |
+| **UI source of truth**                  | **`../designer-prototype/`** — the designer's WEB prototype (DP). Copy its DOM and CSS; never its state |
+| Flow reference (mobile)                 | `../ycmuse-app-prototype/` — source of truth for **flow only**, not UI. Reference; never import         |
+| UI migration plan of record             | `docs/redesign-migration-plan.md`                                                                       |
+
+> **Two prototypes, two jobs — confusing them has already produced one wrong conclusion here.**
+> The last row used to read "Source-of-truth mobile prototype", which was true when written and
+> became misleading on 2026-08-04: the mobile prototype still defines **flow**, but the new **UI**
+> now comes from the designer's web prototype. See `docs/UI-INTEGRATION-HANDOFF.md` §0.

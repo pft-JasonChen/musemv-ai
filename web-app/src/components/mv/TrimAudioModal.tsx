@@ -1,8 +1,10 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useRef, useState } from "react";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import type { PointerEvent as ReactPointerEvent } from "react";
+import { MvSheet } from "./MvSheet";
+import { DpIcon } from "@/components/ui/DpIcon";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import { formatDuration } from "@/lib/mv/mock";
 import type { Song } from "@/lib/mv/types";
@@ -14,19 +16,69 @@ interface Props {
   onConfirm: (song: Song) => void;
 }
 
-// deterministic pseudo-random bar heights
-const BARS = Array.from({ length: 56 }, (_, i) => 0.3 + (Math.sin(i * 1.7) * 0.5 + 0.5) * 0.7);
+/**
+ * Figma "Trim Audio" (node 90:1452) waveform's own 45 bar heights, copied from
+ * DP verbatim — there is no real audio analysis to derive real ones from.
+ */
+const BARS = [
+  6, 16, 10, 26, 14, 36, 8, 28, 16, 38, 12, 32, 21, 42, 16, 34, 12, 26, 18, 22, 14, 18, 8, 20, 6,
+  16, 10, 26, 14, 36, 8, 28, 16, 38, 12, 32, 21, 6, 16, 34, 12, 26, 18, 22, 14,
+];
 const DEFAULT_START_PCT = 15;
 const DEFAULT_END_PCT = 70;
-// MV-01: an MV needs at least 30s of audio; the trim can't be shorter than this.
+/** S2 / MV-01: an MV needs at least 30s of audio; the trim can't be shorter. */
 const MIN_TRIM_SEC = 30;
+/** Handles can't cross. A PERCENTAGE clamp, deliberately looser than the 30s rule. */
+const MIN_GAP_PCT = 5;
 
+/**
+ * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3g-2) ──────────────────
+ *
+ * DP source: `TrimAudioSheet` inside `MVCreatePage.tsx`. Classes from
+ * `src/styles/designer/MVCreatePage.css` (`.mv-trim-sheet__*`), verbatim.
+ *
+ * ── S2 LIVES HERE, AND DP'S VERSION OF IT IS NOT EQUIVALENT ─────────────────
+ *
+ * DP enforces `TRIM_MIN_GAP = 0.08` — eight percent OF THE TRACK, not an
+ * absolute duration. On a 60-second song that permits a 4.8-second clip. The
+ * plan (§1.4, S2) decided WA's absolute `MIN_TRIM_SEC = 30` wins, so DP's
+ * constant is NOT ported and the rule keeps both of its halves: the user is
+ * told why (`minimum 30s`) and the confirming action is blocked, in the footer
+ * and in the phone header check alike.
+ *
+ * The 5% handle clamp is a SEPARATE, looser rule and stays as it was: it only
+ * stops the two handles crossing. If it were raised to the 30s floor the error
+ * state would be unreachable and `e2e`'s "S2 trim floor" would pass because the
+ * rule could never be violated, not because it is enforced.
+ *
+ * ── TWO THINGS DP HAS NO CLASS FOR ──────────────────────────────────────────
+ *
+ * · The floor's reason line. Rendered with DP's own `.mv-trim-sheet__desc`
+ *   typography, tinted with the native `--color-action-danger` token when the
+ *   selection is short.
+ * · The playback playhead. DP's sheet previews the WHOLE song and draws no
+ *   position marker; WA's preview is confined to the trim range, where a marker
+ *   is what tells you the preview restarted at the handle. There is no DP class
+ *   to reuse, so it is inline-styled — the alternative, inventing a class name
+ *   no stylesheet defines, is the documented invisible-element trap, and the
+ *   designer stylesheets are gated byte-for-byte and cannot gain one.
+ *
+ * A11y parity note: the handles keep WA's `role="slider"` + `aria-label` +
+ * `aria-valuenow` (which `e2e`'s S2 test locates them by). Like WA's pre-
+ * migration version they are still pointer-only; that gap is unchanged by this
+ * slice, not introduced by it.
+ */
 export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
   const total = song?.durationSec && song.durationSec > 0 ? song.durationSec : 180;
   const trackRef = useRef<HTMLDivElement>(null);
-  const [startPct, setStartPct] = useState(DEFAULT_START_PCT);
-  const [endPct, setEndPct] = useState(DEFAULT_END_PCT);
-  const drag = useRef<null | "start" | "end">(null);
+  // ONE piece of state, not two: each handle clamps against the other, and the
+  // window `pointermove` listener below closes over the render that installed
+  // it. A functional update reads both edges live; two separate `useState`s
+  // would need refs written during render, which `react-hooks/refs` rejects.
+  const [{ startPct, endPct }, setTrim] = useState({
+    startPct: DEFAULT_START_PCT,
+    endPct: DEFAULT_END_PCT,
+  });
 
   const startSec = Math.round((startPct / 100) * total);
   const endSec = Math.round((endPct / 100) * total);
@@ -36,33 +88,48 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
     range: { start: startSec, end: endSec },
   });
 
-  // Re-seed the handles each time the dialog opens: from the song's existing
-  // trim when re-editing, otherwise the defaults (render-phase adjustment).
+  // Re-seed the handles each time the sheet opens: from the song's existing trim
+  // when re-editing, otherwise the defaults (render-phase adjustment).
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
       if (song?.trim && total > 0) {
-        setStartPct((song.trim.start / total) * 100);
-        setEndPct((song.trim.end / total) * 100);
+        setTrim({
+          startPct: (song.trim.start / total) * 100,
+          endPct: (song.trim.end / total) * 100,
+        });
       } else {
-        setStartPct(DEFAULT_START_PCT);
-        setEndPct(DEFAULT_END_PCT);
+        setTrim({ startPct: DEFAULT_START_PCT, endPct: DEFAULT_END_PCT });
       }
     }
   }
 
-  function pctFromEvent(clientX: number) {
-    const el = trackRef.current;
-    if (!el) return 0;
-    const r = el.getBoundingClientRect();
-    return Math.min(100, Math.max(0, ((clientX - r.left) / r.width) * 100));
-  }
-  function onMove(e: React.PointerEvent) {
-    if (!drag.current) return;
-    const p = pctFromEvent(e.clientX);
-    if (drag.current === "start") setStartPct(Math.min(p, endPct - 5));
-    else setEndPct(Math.max(p, startPct + 5));
+  function dragHandle(edge: "start" | "end") {
+    return (event: ReactPointerEvent) => {
+      event.stopPropagation();
+      const track = trackRef.current;
+      if (!track) return;
+
+      function updateFrom(clientX: number) {
+        const rect = track!.getBoundingClientRect();
+        const pct = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100));
+        setTrim((t) =>
+          edge === "start"
+            ? { ...t, startPct: Math.min(pct, t.endPct - MIN_GAP_PCT) }
+            : { ...t, endPct: Math.max(pct, t.startPct + MIN_GAP_PCT) },
+        );
+      }
+
+      updateFrom(event.clientX);
+      const onMove = (e: PointerEvent) => updateFrom(e.clientX);
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    };
   }
 
   const selectedSec = endSec - startSec;
@@ -84,88 +151,100 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
   if (!song) return null;
 
   return (
-    <Modal open={open} onClose={close} title="Trim Audio" maxWidth={460}>
-      <p className="mb-4 text-[14px]" style={{ color: "var(--text-2)" }}>
-        Keep only the part of the audio you like best.
-      </p>
-
-      <div className="mb-4 flex items-center gap-3 rounded-xl p-3" style={{ background: "var(--card-2)" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={song.art} alt="" className="h-10 w-10 rounded-md object-cover" />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[14px] font-semibold">{song.title}</div>
-          <div className="text-[12px]" style={{ color: "var(--text-2)" }}>{formatDuration(total)}</div>
-        </div>
-        {song.url && (
-          <button
-            onClick={toggle}
-            aria-label={playing ? "Pause preview" : "Play trimmed section"}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white transition-all hover:brightness-110"
-            style={{ background: "var(--accent)" }}
-          >
-            {playing ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20" /></svg>
-            )}
-          </button>
-        )}
+    <MvSheet
+      open={open}
+      onClose={close}
+      label="Trim Audio"
+      title="Trim Audio"
+      variant="mv-trim-sheet"
+      confirm={{ onConfirm: confirm, disabled: tooShort }}
+    >
+      <div className="mv-trim-sheet__intro">
+        <p className="mv-trim-sheet__title">Trim Audio</p>
+        <p className="mv-trim-sheet__desc">Only trim the audio to the parts you like the best.</p>
       </div>
 
-      <div className="mb-1 flex justify-between text-[12px]" style={{ color: "var(--text-2)" }}>
-        <span>{formatDuration(startSec)}</span>
-        <span>{formatDuration(endSec)}</span>
-      </div>
-
-      <div
-        ref={trackRef}
-        className="relative h-16 select-none overflow-hidden rounded-lg"
-        style={{ background: "var(--card-2)", touchAction: "none" }}
-        onPointerMove={onMove}
-        onPointerUp={() => (drag.current = null)}
-        onPointerLeave={() => (drag.current = null)}
-      >
-        <div className="flex h-full items-center gap-[2px] px-2">
-          {BARS.map((h, i) => {
-            const p = (i / BARS.length) * 100;
-            const inRegion = p >= startPct && p <= endPct;
-            return (
-              <div key={i} className="flex-1 rounded-full" style={{ height: `${h * 100}%`, background: inRegion ? "var(--accent)" : "var(--card-4)" }} />
-            );
-          })}
-        </div>
-        <div className="absolute inset-y-0" style={{ left: `${startPct}%`, right: `${100 - endPct}%`, background: "rgba(168,85,247,.16)" }} />
-        {playheadPct != null && (
-          <div
-            className="pointer-events-none absolute inset-y-1 w-0.5 rounded-full bg-white"
-            style={{ left: `${Math.min(endPct, Math.max(startPct, playheadPct))}%`, opacity: playing ? 1 : 0.5 }}
-            aria-hidden
+      <div className="mv-trim-sheet__song">
+        <button
+          type="button"
+          className="mv-trim-sheet__song-art"
+          onClick={toggle}
+          disabled={!song.url}
+          aria-label={playing ? "Pause preview" : "Play trimmed section"}
+        >
+          {song.art && <img src={song.art} alt="" />}
+          <span className="mv-trim-sheet__song-art-scrim" aria-hidden="true" />
+          <DpIcon
+            name={playing ? "ic_pause" : "ic_play"}
+            className="mv-trim-sheet__song-art-icon"
           />
-        )}
-        {(["start", "end"] as const).map((which) => (
-          <div
-            key={which}
-            onPointerDown={(e) => { drag.current = which; e.currentTarget.setPointerCapture(e.pointerId); }}
-            className="absolute top-0 bottom-0 w-3 cursor-ew-resize"
-            style={{ left: `calc(${which === "start" ? startPct : endPct}% - 6px)` }}
-            role="slider"
-            aria-label={which === "start" ? "Trim start" : "Trim end"}
-            aria-valuenow={which === "start" ? startSec : endSec}
-          >
-            <div className="mx-auto h-full w-1 rounded-full" style={{ background: "var(--accent)" }} />
+        </button>
+        <div className="mv-trim-sheet__song-info">
+          <p className="mv-trim-sheet__song-title">{song.title}</p>
+          <p className="mv-trim-sheet__song-duration">{formatDuration(total)}</p>
+        </div>
+      </div>
+
+      <div className="mv-trim-sheet__trimmer">
+        <div className="mv-trim-sheet__time-row">
+          <span>{formatDuration(startSec)}</span>
+          <span>{formatDuration(endSec)}</span>
+        </div>
+        <div className="mv-trim-sheet__waveform" ref={trackRef}>
+          <div className="mv-trim-sheet__bars" aria-hidden="true">
+            {BARS.map((height, i) => (
+              <span key={i} className="mv-trim-sheet__bar" style={{ height: `${height}px` }} />
+            ))}
           </div>
-        ))}
+          <div
+            className="mv-trim-sheet__selection"
+            style={{ left: `${startPct}%`, width: `${endPct - startPct}%` }}
+            aria-hidden="true"
+          />
+          {playheadPct != null && (
+            // No DP class exists for this — see the header note.
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                top: 4,
+                bottom: 4,
+                left: `${Math.min(endPct, Math.max(startPct, playheadPct))}%`,
+                width: 2,
+                borderRadius: 1,
+                background: "var(--neutral-dark-100)",
+                opacity: playing ? 1 : 0.5,
+                pointerEvents: "none",
+              }}
+            />
+          )}
+          <button
+            type="button"
+            className="mv-trim-sheet__handle mv-trim-sheet__handle--start"
+            style={{ left: `${startPct}%` }}
+            onPointerDown={dragHandle("start")}
+            role="slider"
+            aria-label="Trim start"
+            aria-valuenow={startSec}
+          />
+          <button
+            type="button"
+            className="mv-trim-sheet__handle mv-trim-sheet__handle--end"
+            style={{ left: `${endPct}%` }}
+            onPointerDown={dragHandle("end")}
+            role="slider"
+            aria-label="Trim end"
+            aria-valuenow={endSec}
+          />
+        </div>
+        <p
+          className="mv-trim-sheet__desc"
+          style={tooShort ? { color: "var(--color-action-danger)" } : undefined}
+        >
+          Selected: {formatDuration(selectedSec)}
+          {tooShort && ` · minimum ${MIN_TRIM_SEC}s`}
+        </p>
       </div>
-
-      <p className="mt-2 text-[12px]" style={{ color: tooShort ? "var(--red)" : "var(--text-2)" }}>
-        Selected: {formatDuration(selectedSec)}
-        {tooShort && ` · minimum ${MIN_TRIM_SEC}s`}
-      </p>
-
-      <div className="mt-4 flex gap-2">
-        <Button variant="secondary" className="flex-1" onClick={close}>Cancel</Button>
-        <Button className="flex-1" disabled={tooShort} onClick={confirm}>Use Trimmed Audio</Button>
-      </div>
-    </Modal>
+    </MvSheet>
   );
 }

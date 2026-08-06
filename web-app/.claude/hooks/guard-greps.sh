@@ -68,6 +68,21 @@ hard "sessionStorage — DP's draft mechanism must not come across (auth uses lo
      "grep -rn 'sessionStorage' src"
 hard "window.location.href assignment — use next/navigation router instead" \
      "grep -rn 'window\.location\.href[[:space:]]*=' src"
+# R-9 (redesign-migration-plan.md §1.3). DP navigates with `<a href="/home">` — 32 of
+# them — and WA's locale prefixes come from localePath() or the NEXT_LOCALE cookie ->
+# middleware redirect. Port that pattern and every navigation becomes a full page load
+# AND drops the prefix; the cookie redirect still lands on the right page, so it looks
+# perfect in English and is broken in the other 8 locales. That is invisible to whoever
+# tests it, which is why it is a grep and not a review note. Internal links only —
+# `href="https://…"`, `mailto:`, and `#anchor` are untouched.
+#
+# KNOW WHAT THIS DOES NOT CATCH. It matches literal internal hrefs only. In DP today
+# that is 17 of them — but another 20 are `<a href={item.href}>`, and a grep cannot
+# see through a variable. So this rule raises the floor, it does not close the door:
+# reviewers still have to check that migrated links go through next/link, and the
+# G5-d i18n test (9 locale prefixes resolve) remains the real backstop.
+hard "<a href=\"/…> — internal links must use next/link + localePath() or the locale prefix is lost (R-9)" \
+     "grep -rn '<a[[:space:]][^>]*href=\"/' src"
 
 # ── raw-hex ratchet ─────────────────────────────────────────────────────────
 if [ -f "$BASELINE" ]; then
