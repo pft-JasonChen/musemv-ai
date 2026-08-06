@@ -64,3 +64,8 @@
 @import "./designer/FloatingCTA.css";
 @import "./designer/ListItem.css";
 @import "./designer/MVCreatePage.css";
+@import "./designer/MVStoryboardPage.css";
+@import "./designer/MVResultPage.css";
+@import "./designer/Chip.css";
+@import "./designer/SongCreatePage.css";
+@import "./designer/MVEditPage.css";

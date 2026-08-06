@@ -4,7 +4,6 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Modal } from "@/components/ui/Modal";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { FloatingCTA } from "@/components/ui/FloatingCTA";
@@ -15,6 +14,7 @@ import { TrimAudioModal } from "./TrimAudioModal";
 import { FacePickerModal } from "./FacePickerModal";
 import { SettingsModal } from "./SettingsModal";
 import { ModeModal } from "./ModeModal";
+import { TemplateSheet } from "./TemplateSheet";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
@@ -22,7 +22,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
-import { MV_TYPES, SAMPLE_FACES, TEMPLATES, IDEAS, formatDuration } from "@/lib/mv/mock";
+import { MV_TYPES, SAMPLE_FACES, IDEAS, formatDuration } from "@/lib/mv/mock";
 import { NEW_MVS } from "@/lib/mv/community";
 import {
   COST_RENDER,
@@ -43,16 +43,14 @@ import {
  * TSX over 2,354 lines of CSS). Classes from
  * `src/styles/designer/MVCreatePage.css`, verbatim, plus FloatingCTA/ListItem.
  *
- * ── SCOPE: THIS SLICE IS THE PAGE BODY, NOT THE FIVE SHEETS ─────────────────
+ * ── SCOPE: 3g WAS THE PAGE BODY; 3g-2 ADDED THE OVERLAYS ────────────────────
  *
- * The plan recommended splitting this screen, and the split is drawn here:
- * everything inside `.mv-create` is migrated, and the five overlays it opens —
- * Choose Song, Trim Audio, Face Picker, Settings, Mode — still render WA's
- * existing `Modal`-based components. They are unchanged and fully working; they
- * are simply not yet wearing DP's sheet styling. That is recorded as slice 3g-2
- * rather than half-done here, because each of DP's sheets is a substantial
- * component in its own right (`SettingsSheet` alone is 140 lines) and mixing a
- * migrated page with half-migrated sheets is harder to review than either.
+ * The plan recommended splitting this screen. 3g migrated everything inside
+ * `.mv-create`; 3g-2 migrated the overlays it opens — Choose Song, Trim Audio,
+ * Face Picker, Settings, Mode, and the Templates sheet 3g had left as an inline
+ * Tailwind `Modal` here. They share `MvSheet`, which carries DP's `.mv-sheet`
+ * shell; the face picker has its own DP block and does not use it. Each sheet's
+ * own header records what DP does not have and what could not be ported.
  *
  * ── WHAT DP DOES NOT HAVE, AND MUST NOT BE LOST HERE ────────────────────────
  *
@@ -608,31 +606,14 @@ export function MvRoom() {
           {toast}
         </div>
       )}
-      <Modal
+      <TemplateSheet
         open={templatesOpen}
         onClose={() => setTemplatesOpen(false)}
-        title="Select a Template"
-        maxWidth={560}
-      >
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {TEMPLATES.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                patchCompose({ description: t.prompt });
-                setTemplatesOpen(false);
-              }}
-              className="overflow-hidden rounded-xl text-left"
-              style={{ background: "var(--card-2)" }}
-            >
-              <div className="relative aspect-video">
-                <img src={t.cover} alt="" className="h-full w-full object-cover" />
-              </div>
-              <div className="p-2 text-[12px] font-semibold">{t.name}</div>
-            </button>
-          ))}
-        </div>
-      </Modal>
+        onApply={(prompt) => {
+          patchCompose({ description: prompt });
+          setTemplatesOpen(false);
+        }}
+      />
     </>
   );
 }

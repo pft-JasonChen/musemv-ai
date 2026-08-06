@@ -211,6 +211,15 @@ House style in one line:
   screen really changed, re-record with `--update-snapshots=all` scoped by `--grep`; a plain
   `--update-snapshots` only rewrites the widths that happened to fail and leaves the rest
   committed as a screen that no longer exists.
+- **Never measure a DP overlay while it is still animating in.** `.mv-sheet` scales 0.96 -> 1 and
+  its overlay fades 0 -> 1 over 300ms, and `toBeVisible()` is true for `opacity: 0` — so a
+  `getComputedStyle` or `boundingBox()` taken right after the assertion describes a card that no
+  longer exists a frame later. Measured 2026-08-06: about one run in three of the S2 drag test
+  failed that way, and **the failure was indistinguishable from the 30s floor not being
+  enforced**. Two things have to settle, not one: wait until there is EXACTLY ONE sheet in the DOM
+  (opening a sheet from another sheet leaves both mounted for 300ms, the outgoing one still near
+  opacity 1) and until its overlay reads opacity 1. `sheetSettled()` in
+  `e2e/behaviour-regressions.spec.ts` is that helper — use it before any geometric assertion.
 - **Mutation-test a new guard test in both directions before believing it.** Break the thing it
   guards and watch it go red, then restore and watch it go green. `e2e/backdrop-filter.spec.ts`'s
   first CSS sweep read the CSSOM and passed in BOTH states, because Chrome discards

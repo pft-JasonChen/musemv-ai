@@ -13,16 +13,27 @@
 3. `docs/redesign-migration-plan-2026-08-01.md` — background and derivation only. Its §9
    (RD contract C1–C8) and §10 (gates G1–G7) remain in force; its judgements do not.
 
-**Where it is up to (2026-08-05, fourth handoff).** Phases 0 / 1 / 1.5 / 2a / 2b are done.
-Phase 3 has landed `/explore/mvs` (3a), `/explore/songs` + `/song/play` (3b), `/profile` +
-`/settings` (3c), `/watch` (3d), `/creator` (3e), the three Credits IAP modals (3f), and the
-`/mv/room` page body (3g). `OWN_CHROME` in `src/components/shell/AppShell.tsx` is the honest
-ledger — **9 of the 16 routes** in plan §2.1.
+**Where it is up to (2026-08-06, fifth handoff).** Phases 0 / 1 / 1.5 / 2a / 2b are done and
+**Phase 3's migration work is COMPLETE — 16 of 16 routes**, per `OWN_CHROME` in
+`src/components/shell/AppShell.tsx`. Landed: `/explore/mvs` (3a), `/explore/songs` + `/song/play`
+(3b), `/profile` + `/settings` (3c), `/watch` (3d), `/creator` (3e), the three Credits IAP modals
+(3f), the `/mv/room` page body (3g) and its six overlays (3g-2), `/mv/thinking` +
+`/mv/storyboard` (3h), `/mv/result` (3i), the three `/song/*` stages (3j), and `/mv/edit` (3k).
 
-**Phase 3 is NOT finished.** Still to do: `/mv/thinking` + `/mv/storyboard`, `/mv/result`,
-`/mv/edit`, the three `/song/*` stages, and `/mv/room`'s five sheets (3g-2 — the page body is
-migrated, the overlays it opens are still WA's `Modal` versions and work fine). Nothing is
-blocked; the plan's handoff table has a row per remaining item with its known traps.
+**A12 is closed, and the four handoffs that recorded it were describing the wrong thing.** It was
+never "DP's `/mv-edit` page does not render". Run DP outside the repo and it is TWO batches of
+missing assets, neither page-specific: `src/assets/hero/*` is absent and `HeroBannerSection.tsx`
+imports it BY NAME, so one unresolved import took the whole module graph down and **every** route
+was white; and `src/assets/storyboard-clips/` is absent and `storyboardClips.ts` reads it with an
+eager glob — **a glob that matches nothing does not throw, it yields `[]`**, so
+`STORYBOARD_CLIPS[0]` was `undefined` and the page died on `.video` one layer away from the cause.
+Supply both and all six widths render. The upstream fix is to ship the assets (DESIGNER-TODO A12).
+
+**What is left is ACCEPTANCE, not migration. G5-b (six-width side-by-side) and G7 (independent
+acceptance) owe EIGHT slices** — 3e / 3f / 3g / 3g-2 / 3h / 3i / 3j / 3k. The product owner's
+2026-08-05 decision was that each slice runs only the automated gates and the review happens once
+at the end of Phase 3. **That end has now arrived**, so this is the next thing to do — and the
+acceptance cell stays EMPTY until the reports are in hand, per §10.7.
 
 **Two invisible-icon regressions were found and fixed this session, and NEITHER was new.**
 The credit pill's coin has been a 0×0 transparent span on every migrated screen since slice 2b,
@@ -125,9 +136,42 @@ Layout is DP's, every number comes from `SUBSCRIPTION_PLANS` / `CREDIT_PACKS`. N
 component `DpDialog` carries DP's overlay shell; read its header before adding a third dialog —
 it explains why these unmount when closed while 3b's overlays stay mounted with `inert`.
 
-**Next is `/mv/thinking` + `/mv/storyboard`** (one DP file, two stages), then `/mv/result`,
-`/song/*`, and `/mv/edit` last — `/mv/edit` still needs DP made to render (A12) before it can be
-ported, and that is unchanged.
+**Four slices landed 2026-08-06 (3g-2 / 3h / 3i / 3j), and four lessons came with them.**
+
+- **When measuring `opacity`, wait for the transition to finish AND check you are measuring the
+  right element.** Both of 3g-2's new guards failed on their first run in a way that looked
+  exactly like the bug they guard: `toBeVisible()` is true for `opacity: 0`, and DP's overlay
+  animates opacity over 300ms, so reading `getComputedStyle` straight after the assertion returns
+  an interpolated value. Worse, picking a song OPENS Trim and CLOSES Choose Song in one commit —
+  for 300ms two sheets are mounted, and the outgoing one is still near opacity 1 while the
+  incoming one is still near 0. "The first overlay reads 1" passes instantly, against the wrong
+  sheet. The settled condition is **exactly one sheet in the DOM, at full opacity**.
+- **`display: contents` promotes EVERY child, including `FloatingCTA`'s spacer.** DP's storyboard
+  interleaves its two columns below 1024px that way; the spacer has no `order`, so it sorts to the
+  TOP and the bottom clearance it exists to provide is gone. Ported as-is with **no override** —
+  `designer-overrides.css` only takes defects already written up and already decided — and
+  recorded as **DESIGNER-TODO A16**.
+- **"DP has fewer controls than WA" came up four times in four slices**, and every one of them
+  would have deleted behaviour silently: Settings' title/author switches (C2 contract fields),
+  MV-04's High-quality crown, `/mv/result`'s MV-13 unpublish-before-edit, `/song/result`'s
+  genre·mood line. Same shape A4 and G7 have now caught five times over.
+- **S4 has a line through it that must not be crossed by accident.** The route table says remove
+  BPM/Key from `/song/create`; §11 says removing the `bpm` / `musicKey` FIELDS is a C8 change
+  needing its own PR. 3j removed the CONTROLS only and left the fields untouched. `e2e`'s
+  `3j / S4` guards that boundary in both directions.
+
+**Slice 3k (`/mv/edit`) added two traps of its own, both invisible at 1440:**
+
+- **A section modifier can be load-bearing for a rule that only exists on phones.** DP hides
+  `.mv-edit__section--scene-editor` and `.mv-edit__preview` below 768px and replaces both with a
+  full-screen `MobileSceneDetail`. The first pass nested the scene editor inside
+  `--storyboard`, so that rule matched nothing — perfect at 1440, wrong at 375, and no automated
+  gate would have said a word.
+- **DP does not always use its own page block.** `/mv/edit`'s scene Recreate is the SHARED
+  `Button` component (`variant="PrimaryPayg"`), not `.mv-edit__regen-btn`, and it has no refresh
+  icon at all. `.mv-edit__recreate-scene` on its own is just `flex: 0 0 auto`, so omitting the
+  `.button--*` classes leaves an unstyled row; and its coin is `.button__icon` WITHOUT `--mask`,
+  so porting it as a mask is the `/watch` arrow bug again. The mask-icon sweep caught it.
 
 **Two NEW designer blocks came out of 3b: A7** — DP's
 transport has no shuffle/repeat, contradicting spec `AC-EXP-05`; the product owner chose to

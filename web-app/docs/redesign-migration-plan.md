@@ -3,16 +3,111 @@
 > **日期:** 2026-08-04
 > **DP(Designer Prototype):** `designer-prototype/`(in-repo,commit `568e64c`,2026-08-04)
 > **WA(Web App):** `web-app/` — 正式交付物
-> **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成;Phase 3 的 3a、3b 完成,
-> 加上一個不動畫面的修復 slice「3-blur」(`backdrop-filter`),以及 3c(`/profile` + `/settings`),
-> 皆 2026-08-05。**
-> 新 UI 目前涵蓋:全域 shell(側欄 + 手機 chrome)、`/history` 整頁、`/explore/mvs`
-> (justified gallery)、`/explore/songs` + `/song/play`(合併成一個雙欄畫面 + 手機全螢幕播放器)。
-> **`OWN_CHROME` 是誠實的帳本:16 條 route 移轉了 7 條。**
+> **狀態:** 決策已拍板。**Phase 0 / 1 / 1.5 / 2a / 2b 完成;Phase 3 的 16 條 route 全部移轉完畢
+> (2026-08-06)。** `OWN_CHROME` 是誠實的帳本:**16 / 16。**
+> **剩下的不是移轉,是驗收** —— G5-b 六寬度並排與 G7 獨立驗收欠八支 slice,見下。
 
 ---
 
-## ▶ 下一個 session 從這裡開始(2026-08-05 第四次交接)
+## ▶ 下一個 session 從這裡開始(2026-08-06 第五次交接)
+
+**狀態:16 條 route 全部移轉完畢。Phase 3 的移轉工作結束。**
+本次 session 完成:**3g-2**(`/mv/room` 的六個覆蓋層)、**3h**(`/mv/thinking` + `/mv/storyboard`)、
+**3i**(`/mv/result`)、**3j**(`/song/create` + `/song/creating` + `/song/result`)、
+**3k**(`/mv/edit`,並查明 A12)。
+
+### ✅ 16 / 16 —— `/mv/edit` 也做完了(slice 3k),A12 一併查明
+
+**A12 四次交接都記成「`/mv-edit` 這一頁跑不起來」,那個描述是錯的。**
+用 `?from=history` 把 DP 跑在 repo 外之後,真正的成因是**兩批漏掉的素材**,而且都不是這一頁的:
+
+1. `src/assets/hero/`(9 影片 + 9 靜圖)整批不在,而 `HomePage/HeroBannerSection.tsx`
+   用具名 import 引它們。**一個 import 解不到,整個 module graph 就失敗 —— 所以每一條 route
+   都是白的**,不只 `/mv-edit`。這就是為什麼症狀看起來像單一頁面問題,其實不是。
+2. `src/assets/storyboard-clips/` 也整批不在,而 `data/storyboardClips.ts` 用 Vite 的 eager
+   glob 讀它。**glob 讀不到東西不會報錯**,只給 `[]`,於是 `STORYBOARD_CLIPS[0]` 是 `undefined`,
+   `MVEditPage` 第一次 render 就掛在 `.video`。**輸入靜靜地空掉,錯誤在一層之外炸開。**
+
+補齊後六個寬度全部正常,3k 是照著實際畫面搬的,不是盲搬。細節與重跑步驟在 DESIGNER-TODO A12。
+
+**3k 移轉時抓到的兩件事:**
+
+- **`.mv-edit__section--scene-editor` 必須是自己一個 section。** DP 在 `<768px` 用
+  `display: none` 把它和 `.mv-edit__preview` 一起藏掉,改由全螢幕的 `MobileSceneDetail` 取代。
+  第一版把它包在 `--storyboard` 裡面,那條規則就一條都對不到 —— **1440 完全看不出來,375 直接錯**。
+- **DP 的「Recreate 場景」不是 `.mv-edit__regen-btn`,是共用的 `Button` 元件**
+  (`variant="PrimaryPayg"`),而且**沒有 refresh icon**。`.mv-edit__recreate-scene` 自己只有
+  `flex: 0 0 auto`,少帶 `.button--*` 就是一顆沒有樣式的列。它的金幣是
+  `.button__icon`(**沒有** `--mask`),用 mask 搬就是 `/watch` 那顆箭頭的翻版。
+  是 mask-icon 掃描測試抓到的,不是眼睛。
+
+### ⛔ G5-b 六寬度並排 與 G7 獨立驗收:**八支 slice 都還沒跑**
+
+產品負責人 2026-08-05 的裁示沒有變:每支 slice 只跑自動 gate,六寬度並排比對(G5-b)與 G7 獨立驗收
+**留到 Phase 3 結束時一次做完**。移轉已經結束,所以**現在就是該做的時候**,
+待驗收的是 **3e / 3f / 3g / 3g-2 / 3h / 3i / 3j / 3k 八支**,不是最後一支。
+**這一格現在是空的 —— 不是 PASS。** §10.7 的規矩照舊:**驗收結論在報告到手之前一個字都不要填。**
+而且要從 `web-app/` 起 session 才拿得到具名的 `a11y-checker` / `design-reviewer`。
+
+已跑完並全綠的是:`typecheck` / `lint` / `test:run`(84)/ `build`、`guard-greps.sh`、
+`check-designer-css.mjs`(32 支檔逐位元組相同)、`check-rd-changelog.sh`(C1–C8 零改動)、
+`e2e` **150/150**、`e2e:visual` **115/115**(重錄了 song 三個畫面 × 6 寬 = 18 張,全部 `-linux`;
+`mv-edit` 一張都沒紅,因為它沒有 flow state 時仍然 `router.replace()` 回 `/mv/room`)。
+
+### 這次的四支 slice,以及每一支留下的東西
+
+**3g-2 —— `/mv/room` 的覆蓋層(六個,不是五個)。** 交接表寫五個,實際上還有第七個覆蓋層:
+3g 留在 `MvRoom` 裡的 Templates `Modal`(Tailwind)。一併搬了,因為「一半的畫面配一個沒搬的 modal」
+正是 3g 自己的檔頭反對的組合。新增共用元件 `MvSheet`(DP 的 `.mv-sheet` 外殼),
+`DpDialog` 的 mount/fade/`inert` 邏輯抽成 `useDialogTransition`(第二個消費者才抽,照 `DpIcon` 的規矩)。
+
+**3h —— 一支 DP 檔、兩個 WA route。** `GenerationView` 沒有動:它同時服務 `/mv/creating` 與
+`/song/creating`,而 DP 對前者根本沒有設計(見 §B)。`/mv/thinking` 拿到 DP 的
+`.mv-storyboard-processing`,`/mv/creating` 維持原狀。
+
+**3i —— `/mv/result` 不再走 `MvDetail`。** `MvDetail` 還被 `CreationDialog`(History 的列 dialog)
+用著,整支改掉等於順手重做一個沒人看過的畫面。DETAIL 清單補回 DP 沒有的三列(Character / Music / Scenes)。
+
+**3j —— `/song/result` 不再走 `SongDetail`,而且順手拿掉了 30 秒試聽上限。**
+這是 S3 早就判定取消、3b 已經在 `/song/play` 反轉過的規則;留著會讓兩個播放畫面對同一條規則有不同答案。
+`SongDetail` 裡的上限仍在,服務它剩下那個未移轉的消費者。
+
+### 這次踩到 / 學到的四件事
+
+1. **`opacity` 動畫會讓「看得見嗎」這種量測在 transition 中途量到錯的值。**
+   3g-2 的兩支新 guard 第一版都紅,而且紅得跟要防的 bug 一模一樣:`toBeVisible()` 對
+   `opacity: 0` 回 true,DP 的 overlay 又是 300ms 的 opacity 過場,所以緊接著讀
+   `getComputedStyle` 讀到的是插值。**量 opacity 之前先等它停。**
+2. **而且要等的不只是「進來的那個」。** 選歌 → Trim 是同一個 commit 裡「開一個、關一個」,
+   有 300ms 兩個 sheet 同時在 DOM 裡;此時**要走的那個還在 opacity ≈ 1,要來的那個還在 ≈ 0**。
+   「第一個 overlay 讀到 1」會立刻通過 —— 通過在錯的元素上。判定條件改成
+   **DOM 裡剛好一個 sheet,而且它的 overlay opacity 是 1**。
+3. **DP 用 `display: contents` 交錯兩欄時,`FloatingCTA` 的 spacer 會被排到最前面。**
+   `.mv-storyboard__panel` 在 <1024px 是 `display: contents`,spacer 沒有 `order` 所以是 0,
+   排在所有 `order: 1…6` 的 section 前面 —— 手機版標題下多出 84px 空白,而且 spacer 本來要保留的
+   底部淨空沒有了。**照搬,沒有加 override**(`designer-overrides.css` 的規矩是只處理已寫進
+   DESIGNER-TODO、且產品負責人已裁示的缺陷),已記為 **DESIGNER-TODO A16**。
+4. **「DP 沒有的控制項」這次出現了四次,四次都補回去了。** Settings 的 title/author 開關(C2 契約欄位)、
+   MV-04 的 High 畫質 crown、`/mv/result` 的 MV-13「發布中不能編輯」、`/song/result` 的 genre·mood 行。
+   四個都是 DP 的畫面**比 WA 少東西**,照搬就會靜靜刪掉行為而測試全綠 —— 就是 A4 / G7 抓過三次的同一件事。
+
+### S4 的界線,下一個 session 不要越過
+
+計畫的 route 表寫「`/song/create` 拿掉 BPM/Key」,§11 的契約表寫「拿掉 `bpm` / `musicKey` 是 **C8 變更,
+必須獨立 PR,不可夾在 UI slice 裡**」。兩句話都對:**3j 只拿掉了表單上的控制項**,
+`SongCompose` 的 `bpm` / `key` 欄位原封不動,照舊帶著 `DEFAULT_SONG_COMPOSE` 的值送出。
+**刪欄位仍然是 §11 要的那個獨立 PR。** e2e 有一支 `3j / S4` 就是在守這條界線。
+
+### 視覺基準:只有 song 三個畫面紅,而且原因跟上次一樣
+
+`song-create` / `song-creating` / `song-result` × 6 寬 = 18 張重錄。
+`mv-thinking` / `mv-storyboard` / `mv-result` / `mv-edit` **一張都沒紅** —— 因為它們沒有 flow state 時
+`router.replace()` 回 `/mv/room`,而 `/mv/room` 這次沒動。**中途 route 的視覺基準拍的是它的 flow guard
+目的地,不是它自己**,這件事上一次交接就寫了,這一次原封不動再驗證一次。
+
+---
+
+## ▶ 下一個 session 從這裡開始(2026-08-05 第四次交接 —— 已過期,保留供追溯)
 
 **狀態:16 條 route 移轉了 9 條,外加 Credits IAP 三個 modal**(`OWN_CHROME` 是帳本)。
 本次 session 完成:**3e**(`/creator`)、**3f**(Credits IAP:Buy Credits / Upgrade /

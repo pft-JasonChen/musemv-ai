@@ -50,6 +50,13 @@ const OWN_CHROME = [
   "/watch",
   "/creator",
   "/mv/room",
+  "/mv/thinking",
+  "/mv/storyboard",
+  "/mv/result",
+  "/song/create",
+  "/song/creating",
+  "/song/result",
+  "/mv/edit",
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

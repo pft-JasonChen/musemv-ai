@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useDialogTransition, useEscapeToClose } from "./useDialogTransition";
 
 /**
  * The shell DP's dialogs share — `CreditsDialog` and `UpgradeDialog` are the
@@ -14,24 +14,9 @@ import { createPortal } from "react-dom";
  *
  * Extracted on its second consumer rather than copied twice.
  *
- * ── WHY THIS IS NOT `useMountTransition`, AND NOT ALWAYS-MOUNTED EITHER ─────
- *
- * DP fades these with `useMountTransition`, which WA deliberately did not port:
- * 3b's overlays needed to stay mounted so their transition played in BOTH
- * directions, and `inert` handled the a11y half. That reasoning does not carry
- * over here, and copying either pattern blindly would be wrong:
- *
- * · Always-mounted is the WRONG default for THIS markup. The closed state is
- *   `opacity: 0; pointer-events: none` — invisible to eye and mouse, still in
- *   the tab order and the a11y tree. That is the exact defect G7 found on
- *   `.now-playing__lyrics-overlay`. A permanently-mounted Buy Credits dialog
- *   would put six pack buttons in every page's tab order.
- * · So this unmounts when closed, like WA's own `Modal`. The `--visible` class
- *   is then added on the frame AFTER mount, because a node that is inserted
- *   with its final class never transitions — the browser has no previous value
- *   to animate from. Closing waits for the fade before unmounting, with the
- *   card marked `inert` for that window so nothing is focusable while it is on
- *   its way out.
+ * The mount/fade/`inert` bookkeeping — and the reasoning for why it is neither
+ * DP's `useMountTransition` nor 3b's always-mounted overlays — moved to
+ * `useDialogTransition` when `MvSheet` (slice 3g-2) became its second consumer.
  *
  * Escape and backdrop clicks both close, matching `Modal`.
  */
@@ -53,52 +38,8 @@ export function DpDialog({
   title?: string;
   children: React.ReactNode;
 }) {
-  // `closing` keeps the node mounted for the fade-out after `open` goes false.
-  // The transition is detected DURING RENDER by comparing against a stored
-  // previous value, not in an effect: calling `setState` synchronously in an
-  // effect body causes the cascading re-render `react-hooks/set-state-in-effect`
-  // rejects. This is React's documented "adjust state when a prop changes"
-  // pattern — a set during render re-runs this component immediately, before
-  // anything is committed, so no extra paint happens.
-  const [closing, setClosing] = useState(false);
-  const [visible, setVisible] = useState(false);
-  const [prevOpen, setPrevOpen] = useState(open);
-
-  if (prevOpen !== open) {
-    setPrevOpen(open);
-    if (!open) {
-      setClosing(true);
-      setVisible(false);
-    }
-  }
-
-  const mounted = open || closing;
-
-  useEffect(() => {
-    if (!open) return;
-    // Next frame, so there is a 0 -> 1 to transition FROM. A node inserted with
-    // its final class never animates — the browser has no previous value.
-    const raf = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(raf);
-  }, [open]);
-
-  useEffect(() => {
-    if (!closing) return;
-    // Matches `transition: opacity .3s` in both stylesheets. If they ever
-    // disagree the dialog unmounts early — a clipped fade, not a stuck overlay,
-    // so it fails in the harmless direction.
-    const timer = window.setTimeout(() => setClosing(false), 300);
-    return () => window.clearTimeout(timer);
-  }, [closing]);
-
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  const { mounted, visible } = useDialogTransition(open);
+  useEscapeToClose(open, onClose);
 
   if (!mounted || typeof document === "undefined") return null;
 

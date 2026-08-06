@@ -281,20 +281,32 @@ WA 這邊有**兩份真的**清單(`TOP_PICKS_SONGS`、`NEW_SONGS`),所以 Slice
 > 拿已知會壞的 WA `/explore/songs` @320 去反測探針,才確認探針漏了整整 32 個被截斷的元素。
 > **探針要先在已知壞掉的案例上驗過,才能相信它說「乾淨」。**
 
-### A12. vendored 的 DP **跑不起來**,`/song-detail` 與 `/mv-edit` 連桌機都是白畫面
+### A12. vendored 的 DP **跑不起來** —— ✅ 2026-08-06 已查明,是**兩批漏掉的素材**,不是頁面問題
 
 `PROVENANCE.md` 已經寫了「this copy will not `npm run dev` with real media」——
 實測確認,而且比預期嚴重:少的不只是圖,`vite` 直接在 import 階段就失敗。
 
-把 25 個缺檔補成 stub 之後其餘 12 條 route 都正常,但**這兩條在 320 / 375 / 1440 都是白的**,
-console 是 `TypeError: Cannot read properties of undefined (reading 'id')`(song-detail)與
-`reading 'video'`(mv-edit)—— **三個寬度都一樣,所以不是手機問題,是 fixture 依賴被排除的媒體。**
+**這一條前四次交接都記成「`/mv-edit` 這一頁跑不起來」,那是錯的。** 2026-08-06 把
+`designer-prototype/` 複製到 repo 外、逐層補上缺檔之後,查出來是兩個各自獨立的漏素材:
 
-- `/song-detail` 已經移轉完(3b),**WA 那份現在才是可量的基準**,不影響。
-- **`/mv/edit` 那個 slice 開工前要先想辦法把 `MVEditPage` 跑起來**,否則它的手機狀況
-  完全沒有人看過 —— 它也在 A5 的 `DetailNavbar` 名單上,只是量不到。
-- 想重跑這個稽核:把 `designer-prototype/` 複製到 repo 外,補 stub,再跑 `vite`。
+1. **`src/assets/hero/`(9 支影片 + 9 張靜圖)整批不在。**
+   `HomePage/HeroBannerSection.tsx` 用具名 import 引它們,一個 import 解不到就整個 module
+   graph 失敗 —— 所以**每一條 route 都是白的**,不是這一頁。症狀看起來像頁面問題,其實不是。
+2. **`src/assets/storyboard-clips/` 也整批不在。**
+   `data/storyboardClips.ts` 用 Vite 的 eager glob 讀它。**glob 讀不到東西不會報錯**,只會給 `[]`,
+   於是 `STORYBOARD_CLIPS[0]` 是 `undefined`,`MVEditPage` 第一次 render 就掛在 `.video`。
+   輸入靜靜地空掉,錯誤在一層之外炸開 —— 這是這一條難查的真正原因。
+
+補上這兩批(clip 的 `.jpg` 直接用 WA `public/assets/videos/storyboard-clips/` 的,
+`.mp4` 用任一支影片充當)之後,**`/mv-edit?from=history` 六個寬度全部正常 render**,
+slice 3k 就是照著它搬的。
+
+- **請設計師把這兩個資料夾補進 drop。** WA 這邊不需要動作了,但下一次 re-drop 如果又漏,
+  同樣的白畫面會再來一次,而且一樣會被誤判成某一頁的問題。
+- 重跑方式:把 `designer-prototype/` 複製到 repo 外,補齊這兩批素材,再跑 `vite`。
   **不要在 `designer-prototype/` 裡面補檔**,那是唯讀參考。
+- `/song-detail` 的 `reading 'id'` 是同一個成因的另一個受害者;那條 route 已經移轉完(3b),
+  **WA 那份現在才是可量的基準**,不影響。
 
 ### A13. `AccountPage.css` 的 stats 說明文字 **約 3.3–3.8:1**,不到 WCAG AA —— 與 A1 同一類
 
@@ -387,6 +399,34 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 - 另外兩個 dead control 一併回報:`CreditsDialog` 的 **Recover** 按鈕沒有任何 handler,
   兩個 dialog 的 **Terms of Use / Privacy Policy** 都是 `href="#"`。
   WA 版沒有搬這三個(沒有可接的行為),Restore Purchases 則用 WA 自己的實作補在 footer。
+
+### A16. `MVStoryboardPage` 手機版把 `FloatingCTA` 的 spacer 排到**畫面最上面**
+
+**發現於:** 2026-08-06,Slice 3h(`/mv/thinking` + `/mv/storyboard` 移轉)。
+
+`MVStoryboardPage.css` 在 `max-width: 1023px` 把 `.mv-storyboard__panel` 與
+`.mv-storyboard__side` 設成 `display: contents`,再用 `order: 1…6` 把兩欄交錯成單一序列
+(Character Image → MV Song → Visual Style → Story → Story Line → Lyrics)。
+
+`display: contents` 會把 panel 的**每一個**子元素都提升成 `.mv-storyboard` 的 flex item ——
+包含 `FloatingCTA` 自己 render 的 `.floating-cta__spacer`。那個 spacer 沒有 `order`,
+所以是 `order: 0`,**排在所有 order 1–6 的 section 前面**。後果有兩個,而且兩個都只在手機出現:
+
+1. 標題列下方多出約 **84px 的空白**(spacer 在手機是 `height: 84px`)。
+2. **spacer 完全失去作用。** 它存在的理由是給頁尾留出被 `position: fixed` CTA 蓋住的空間;
+   跑到最上面之後,最後一個 section(LYRICS)底部沒有任何淨空,被 CTA 蓋住。
+
+- **不擋開發。** WA 版**照搬,沒有 override** —— `designer-overrides.css` 的規矩是
+  「只處理已寫進本文件、且產品負責人已裁示的缺陷」,這一條兩者都還沒有。
+- **修法很小:** 上游給 `.mv-storyboard .floating-cta__spacer`(或 `.mv-storyboard__panel > *`
+  的最後一個)一個 `order: 7`。只影響 `<1024px`。
+- 同一支 `FloatingCTA` 在 `MVCreatePage` 沒有這個問題,因為 `.mv-create__panel`
+  **不是** `display: contents`。所以這是 `display: contents` 交錯排版特有的副作用,
+  不是 `FloatingCTA` 自己的 bug。
+- **2026-08-06 補充:`MVEditPage` 有一模一樣的問題。** 它的 `.mv-edit__panel` /
+  `.mv-edit__side` 在 `max-width: 767px` 也是 `display: contents` + `order: 1…7`,
+  spacer 同樣落在最前面。所以這不是單一頁面的疏漏,是這個交錯手法本身的副作用 ——
+  **上游修的時候兩頁一起修**(給 spacer 一個大於最後一個 section 的 `order`)。
 
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 

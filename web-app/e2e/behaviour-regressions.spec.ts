@@ -53,13 +53,28 @@ async function composeMv(page: Page, description = MV_DESCRIPTION) {
     .getByPlaceholder("Describe your video to help AI create a more compelling story.")
     .fill(description);
   await page.getByRole("button", { name: "Song Library" }).click();
-  // Name matching is substring-by-default and Modal portals to document.body, so an
-  // unscoped { name: "Use" } can resolve to a page-level "Use …" button under the
+  // Name matching is substring-by-default and the sheet portals to document.body, so
+  // an unscoped { name: "Use" } can resolve to a page-level "Use …" button under the
   // scrim. Scope to the dialog and match exactly. (Same trap fixed in mv-flow.spec.ts.)
   const chooseSong = page.getByRole("dialog", { name: "Choose Song" });
-  await chooseSong.getByRole("button", { name: "Use", exact: true }).first().click();
-  await page.getByRole("button", { name: "Use Trimmed Audio", exact: true }).click();
+  // Slice 3g-2: DP reveals the row's "Use" pill only while the row is active, so
+  // hover the row first or the pill is `pointer-events: none`.
+  const songRow = chooseSong.locator(".mv-song-picker__row").first();
+  await songRow.hover();
+  await songRow.getByRole("button", { name: "Use", exact: true }).click();
+  await trimConfirm(page).click();
   await expect(page.getByRole("button", { name: "Create Music Video" })).toBeEnabled();
+}
+
+/**
+ * The Trim sheet's confirming action. Slice 3g-2 replaced WA's "Use Trimmed Audio"
+ * button with DP's Cancel/Confirm footer row (the phone header check is the same
+ * action, and is the only one rendered below 768px).
+ */
+function trimConfirm(page: Page) {
+  return page
+    .getByRole("dialog", { name: "Trim Audio" })
+    .getByRole("button", { name: "Confirm", exact: true });
 }
 
 /** Kick off a storyboard-first generation from a composed MV room. */
@@ -86,7 +101,7 @@ test("G5-d#1 charges COST_STORYBOARD then COST_RENDER at job start", async ({ pa
     `storyboard should charge exactly ${COST_STORYBOARD} (GL-01 charges at job start)`,
   ).toBe(before - COST_STORYBOARD);
 
-  await page.getByRole("button", { name: /Generate MV/ }).click();
+  await page.getByRole("button", { name: /Create MV/ }).click();
   await page.waitForURL("**/mv/result");
   expect(await balance(page), `render should charge exactly ${COST_RENDER}`).toBe(
     before - COST_STORYBOARD - COST_RENDER,
@@ -137,7 +152,7 @@ test("G5-d#2 insufficient balance routes to IAP instead of generating", async ({
   await composeMv(page);
   await startStoryboard(page);
   await page.waitForURL("**/mv/storyboard");
-  await page.getByRole("button", { name: /Generate MV/ }).click();
+  await page.getByRole("button", { name: /Create MV/ }).click();
   await page.waitForURL("**/mv/result");
 
   const left = await balance(page);
@@ -365,7 +380,9 @@ test("G5-d#10 enhancePrompt round-trips through api, not a local fake", async ({
   const original = "summer road trip";
   await box.fill(original);
 
-  const enhance = page.getByRole("button", { name: "Enhance with AI" }).first();
+  // Slice 3j: the DP-skinned EnhanceButton labels itself "Enhance" (DP's own
+  // copy) instead of WA's "Enhance with AI". The behaviour under it is unchanged.
+  const enhance = page.getByRole("button", { name: "Enhance", exact: true }).first();
   await expect(enhance).toBeVisible();
   await enhance.click();
 
@@ -402,9 +419,18 @@ test("S2 trim floor: a selection under 30s is rejected with a reason", async ({ 
 
   await page.getByRole("button", { name: "Song Library" }).click();
   const chooseSong = page.getByRole("dialog", { name: "Choose Song" });
-  await chooseSong.getByRole("button", { name: "Use", exact: true }).first().click();
+  const songRow = chooseSong.locator(".mv-song-picker__row").first();
+  await songRow.hover();
+  await songRow.getByRole("button", { name: "Use", exact: true }).click();
 
-  const confirm = page.getByRole("button", { name: "Use Trimmed Audio", exact: true });
+  const confirm = trimConfirm(page);
+  // Wait out the sheet's ENTRY transition before measuring anything geometric.
+  // `.mv-sheet` scales 0.96 -> 1 over 300ms, so a `boundingBox()` taken while it
+  // is still growing describes a card that no longer exists by `mouse.down()` —
+  // the handle has moved out from under the cursor and the drag lands short.
+  // Measured 2026-08-06: roughly one run in three failed exactly that way, and
+  // the failure is indistinguishable from the floor not being enforced.
+  await sheetSettled(page);
   // The default handles (15%–70% of a 114s track ≈ 63s) clear the floor, so the
   // dialog opens usable — otherwise this test would pass for the wrong reason.
   await expect(confirm).toBeEnabled();
@@ -415,9 +441,11 @@ test("S2 trim floor: a selection under 30s is rejected with a reason", async ({ 
   const endBox = await endHandle.boundingBox();
   expect(startBox && endBox, "both trim handles must be rendered").toBeTruthy();
 
-  // Each handle is `left: calc(pct% - 6px)` with width 12px, so its CENTRE sits
-  // exactly on its percentage. Two known centres (15% and 70%) give the track
-  // geometry without having to locate the track element itself.
+  // Each handle is `left: pct%` with `margin-left: -6px` and width 12px (DP's
+  // `.mv-trim-sheet__handle`; WA's pre-3g-2 version spelled the same geometry as
+  // `left: calc(pct% - 6px)`), so its CENTRE sits exactly on its percentage. Two
+  // known centres (15% and 70%) give the track geometry without having to locate
+  // the track element itself.
   const startCentre = startBox!.x + startBox!.width / 2;
   const endCentre = endBox!.x + endBox!.width / 2;
   const trackWidth = (endCentre - startCentre) / 0.55;
@@ -1356,39 +1384,56 @@ test("3f: the credit pill's coin icon actually paints", async ({ page }) => {
   expect(box?.height ?? 0).toBeGreaterThan(0);
 });
 
+/**
+ * Sweep whatever is on screen right now for mask icons that paint nothing. A
+ * `mask-image` on an element with no background clips nothing; a mask sized by
+ * an ELEMENT selector the port did not use is 0x0. Both are silent — no error,
+ * and not reliably visible in a screenshot diff.
+ *
+ * Extracted from the 3f route sweep when 3g-2 needed to run it against overlays
+ * that only exist while open, which no `page.goto()` can reach.
+ */
+async function invisibleMaskIcons(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const hidden = (el: Element) => {
+      for (let n: Element | null = el; n; n = n.parentElement) {
+        const s = getComputedStyle(n);
+        if (s.display === "none" || s.visibility === "hidden") return true;
+      }
+      return false;
+    };
+    return [...document.querySelectorAll("span, i")]
+      .filter((el) => {
+        const s = getComputedStyle(el);
+        const mask = s.maskImage !== "none" ? s.maskImage : s.webkitMaskImage;
+        if (!mask || mask === "none" || hidden(el)) return false;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) return true;
+        return (
+          s.backgroundColor === "rgba(0, 0, 0, 0)" &&
+          (!s.backgroundImage || s.backgroundImage === "none")
+        );
+      })
+      .map((el) => el.className || el.tagName);
+  });
+}
+
 test("3f: every mask icon on a migrated screen has something to clip", async ({ page }) => {
-  // The general form of the two bugs above. A mask-image on an element with no
-  // background paints nothing; a mask sized by an element selector the port did
-  // not use is 0x0. Both are silent. This sweeps for either.
+  // The general form of the two bugs above. Add each newly-migrated route here.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
 
-  for (const route of ["/watch", "/creator?self=1", "/profile", "/history", "/explore/mvs"]) {
+  for (const route of [
+    "/watch",
+    "/creator?self=1",
+    "/profile",
+    "/history",
+    "/explore/mvs",
+    "/mv/room", // slice 3g
+  ]) {
     await page.goto(route);
     await page.waitForLoadState("networkidle");
-    const broken = await page.evaluate(() => {
-      const hidden = (el: Element) => {
-        for (let n: Element | null = el; n; n = n.parentElement) {
-          const s = getComputedStyle(n);
-          if (s.display === "none" || s.visibility === "hidden") return true;
-        }
-        return false;
-      };
-      return [...document.querySelectorAll("span, i")]
-        .filter((el) => {
-          const s = getComputedStyle(el);
-          const mask = s.maskImage !== "none" ? s.maskImage : s.webkitMaskImage;
-          if (!mask || mask === "none" || hidden(el)) return false;
-          const r = el.getBoundingClientRect();
-          if (r.width === 0 || r.height === 0) return true;
-          return (
-            s.backgroundColor === "rgba(0, 0, 0, 0)" &&
-            (!s.backgroundImage || s.backgroundImage === "none")
-          );
-        })
-        .map((el) => el.className || el.tagName);
-    });
-    expect(broken, `invisible mask icons on ${route}`).toEqual([]);
+    expect(await invisibleMaskIcons(page), `invisible mask icons on ${route}`).toEqual([]);
   }
 });
 
@@ -1464,4 +1509,742 @@ test("3g / R9: the My Creations rail links carry the locale prefix", async ({ pa
     "href",
     "/jpn/explore/mvs",
   );
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3g-2 — /mv/room's six overlays migrated to DP's sheets
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Wait out the sheet's own fade before measuring anything about opacity.
+ *
+ * `toBeVisible()` is not enough and the first version of these tests learned it
+ * the hard way: Playwright treats `opacity: 0` as visible, and DP's overlay
+ * animates opacity over 300ms, so `getComputedStyle` right after the assertion
+ * returns an INTERPOLATED value near 0 for every control in the sheet. The
+ * failure looked exactly like the bug being guarded against.
+ *
+ * It also has to wait for the PREVIOUS sheet to leave. Choosing a song opens
+ * Trim and closes Choose Song in the same commit, so for 300ms two sheets are
+ * mounted — and the outgoing one is still near opacity 1 at the instant the
+ * incoming one is still near 0. A naive "first overlay reads 1" check passes
+ * immediately against the wrong sheet, then measures its controls as they fade.
+ * So: settled means exactly one sheet in the DOM, at full opacity.
+ */
+async function sheetSettled(page: Page) {
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const sheets = document.querySelectorAll(".mv-sheet, .face-picker");
+        if (sheets.length !== 1) return -1;
+        const overlay = sheets[0].closest(".mv-sheet-overlay, .face-picker-overlay");
+        return overlay ? Number(getComputedStyle(overlay).opacity) : -1;
+      }),
+    )
+    .toBe(1);
+}
+
+/** Open each of the overlays in turn and run `fn` while it is on screen and settled. */
+async function forEachSheet(page: Page, fn: (name: string) => Promise<void>) {
+  // Choose Song -> Trim Audio (the trim sheet is only reachable through it).
+  await page.getByRole("button", { name: "Song Library" }).click();
+  await expect(page.getByRole("dialog", { name: "Choose Song" })).toBeVisible();
+  await sheetSettled(page);
+  await fn("Choose Song");
+
+  const songRow = page
+    .getByRole("dialog", { name: "Choose Song" })
+    .locator(".mv-song-picker__row")
+    .first();
+  await songRow.hover();
+  await songRow.getByRole("button", { name: "Use", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Trim Audio" })).toBeVisible();
+  await sheetSettled(page);
+  await fn("Trim Audio");
+  await trimConfirm(page).click();
+
+  await page.getByRole("button", { name: "Open MV settings" }).click();
+  await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+  await sheetSettled(page);
+  await fn("Settings");
+  await page
+    .getByRole("dialog", { name: "Settings" })
+    .getByRole("button", { name: "Cancel" })
+    .click();
+
+  await page.getByRole("button", { name: "Templates" }).click();
+  await expect(page.getByRole("dialog", { name: "Select a Template" })).toBeVisible();
+  await sheetSettled(page);
+  await fn("Select a Template");
+  await page
+    .getByRole("dialog", { name: "Select a Template" })
+    .getByRole("button", { name: "Cancel" })
+    .click();
+
+  // Face Picker: a sample photo skips the file input, which Playwright cannot fill.
+  // It goes straight into a filled slot, so the picker is exercised on its own below.
+
+  await page
+    .getByPlaceholder("Describe your video to help AI create a more compelling story.")
+    .fill(MV_DESCRIPTION);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  await expect(page.getByRole("dialog", { name: /How would you like to create/ })).toBeVisible();
+  await sheetSettled(page);
+  await fn("Mode");
+}
+
+test("3g-2: every mask icon inside the migrated sheets has something to clip", async ({ page }) => {
+  // The 3f sweep can only see what a `goto` renders. These five only exist while
+  // open, and every one of them carries masks DP paints as `<img>` somewhere else
+  // on the same screen — the exact confusion that shipped `.{block}__close-icon`
+  // and `.button__icon` blank.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+
+  await forEachSheet(page, async (name) => {
+    expect(await invisibleMaskIcons(page), `invisible mask icons in the ${name} sheet`).toEqual([]);
+  });
+});
+
+test("3g-2: every control a sheet puts in the tab order is visible once focused", async ({
+  page,
+}) => {
+  test.slow(); // focuses every control in five sheets and waits out each transition
+
+  // DP hides the header check at >=768px with `opacity: 0; pointer-events: none`,
+  // which is invisible to the eye and the mouse but NOT to the keyboard — the
+  // defect G7 found on `.now-playing__lyrics-overlay`. `MvSheet` renders that
+  // check only when the phone query matches, so on desktop it must not exist.
+  //
+  // WHY THE ASSERTION IS "VISIBLE WHEN FOCUSED", NOT "NEVER AT ZERO OPACITY".
+  // A static sweep for opacity-0 focusables cannot express this screen: DP's
+  // `.mv-song-picker__use` is DESIGNED to sit at zero until its row is active,
+  // and the port makes focus one of the things that activates it. The invariant
+  // that distinguishes the design from the defect is what happens on focus — so
+  // this focuses each control in turn and requires it to be painted by then.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+
+  await forEachSheet(page, async (name) => {
+    const ghosts = await page.evaluate(async () => {
+      const root = document.querySelector(".mv-sheet, .face-picker");
+      if (!root) return ["NO SHEET IN THE DOM"];
+      const sel = "a[href], button:not([disabled]), input, select, textarea, [tabindex]";
+      const bad: string[] = [];
+      for (const el of [...root.querySelectorAll(sel)] as HTMLElement[]) {
+        el.focus();
+        // Longest opacity transition on this screen is 300ms (the overlay);
+        // the pill's own is 150ms.
+        await new Promise((r) => setTimeout(r, 320));
+        // Opacity multiplies down the tree, so an ancestor at 0 hides the subtree.
+        let painted = 1;
+        for (let n: Element | null = el; n; n = n.parentElement) {
+          painted *= Number(getComputedStyle(n).opacity);
+        }
+        if (painted === 0) bad.push(el.className || el.tagName);
+      }
+      return bad;
+    });
+    expect(ghosts, `focusable but unpainted controls in the ${name} sheet`).toEqual([]);
+  });
+});
+
+test("3g-2 / S2: the 30s floor blocks DP's footer Confirm, not just WA's old button", async ({
+  page,
+}) => {
+  // The floor moved from a WA-authored button to DP's Cancel/Confirm footer. The
+  // rule is only enforced if the NEW control is the one that goes disabled — a
+  // port that styled the footer but left the guard on the old element would look
+  // right and charge for a 4-second MV.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+
+  await page.getByRole("button", { name: "Song Library" }).click();
+  const songRow = page
+    .getByRole("dialog", { name: "Choose Song" })
+    .locator(".mv-song-picker__row")
+    .first();
+  await songRow.hover();
+  await songRow.getByRole("button", { name: "Use", exact: true }).click();
+
+  const sheet = page.getByRole("dialog", { name: "Trim Audio" });
+  await expect(sheet.locator(".mv-trim-sheet__waveform")).toBeVisible();
+  // Same reason as the older S2 test: measure only after the scale-in finishes.
+  await sheetSettled(page);
+  await expect(trimConfirm(page)).toBeEnabled();
+
+  const endHandle = page.getByRole("slider", { name: "Trim end" });
+  const startBox = (await page.getByRole("slider", { name: "Trim start" }).boundingBox())!;
+  const endBox = (await endHandle.boundingBox())!;
+  const startCentre = startBox.x + startBox.width / 2;
+  const endCentre = endBox.x + endBox.width / 2;
+  const trackWidth = (endCentre - startCentre) / 0.55;
+  const y = endBox.y + endBox.height / 2;
+
+  await page.mouse.move(endCentre, y);
+  await page.mouse.down();
+  await page.mouse.move(startCentre - 0.15 * trackWidth + 0.25 * trackWidth, y, { steps: 12 });
+  await page.mouse.up();
+
+  await expect(trimConfirm(page)).toBeDisabled();
+  await expect(sheet.getByText(/minimum 30s/)).toBeVisible();
+});
+
+test("3g-2: the Choose Song 'Use' pill is reachable by keyboard, not hover only", async ({
+  page,
+}) => {
+  // DP ships `.mv-song-picker__use` at `opacity: 0; pointer-events: none`,
+  // revealed by `:hover`. Ported as designed that leaves one invisible, unusable
+  // but FOCUSABLE pill per row. The port makes focus inside a row count as
+  // active, which needs no new CSS — the designer stylesheets are gated verbatim.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+
+  await page.getByRole("button", { name: "Song Library" }).click();
+  const use = page
+    .getByRole("dialog", { name: "Choose Song" })
+    .locator(".mv-song-picker__row")
+    .first()
+    .getByRole("button", { name: "Use", exact: true });
+
+  // Before focus: DP's hidden state. Focus alone must reveal AND enable it.
+  await sheetSettled(page);
+  expect(await use.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("none");
+  await use.focus();
+  await expect(use).toBeFocused();
+  // `opacity` is animated over 150ms, so poll rather than read once — the first
+  // version of this test read an interpolated 0 and failed for the wrong reason.
+  await expect.poll(() => use.evaluate((el) => Number(getComputedStyle(el).opacity))).toBe(1);
+  expect(await use.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("auto");
+
+  // And it actually works from the keyboard.
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Trim Audio" })).toBeVisible();
+});
+
+test("3g-2: DP's sheet chrome replaced WA's Modal on every overlay", async ({ page }) => {
+  // A shape check, so a half-migrated overlay cannot hide behind green behaviour
+  // tests: each one must be a `.mv-sheet` (or the face picker's own DP block),
+  // and none of them WA's old `Modal`.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+
+  await forEachSheet(page, async (name) => {
+    await expect(page.locator(".mv-sheet"), `${name} should be the only DP sheet`).toHaveCount(1);
+    await expect(page.locator(".mv-sheet__footer-btn--confirm")).toHaveCount(
+      name === "Choose Song" || name === "Mode" ? 0 : 1,
+    );
+  });
+});
+
+test("3g-2: the face picker wears DP's block and still crops the real upload", async ({ page }) => {
+  // DP's face picker is a canned demo over one bundled group photo. WA's takes
+  // the user's own file. The port keeps WA's crop inside DP's shell, so both the
+  // block AND the real controls have to be present.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+
+  await page.locator('input[type="file"][accept="image/*"]').setInputFiles({
+    name: "face.png",
+    mimeType: "image/png",
+    // 1x1 PNG — enough for the canvas crop to succeed.
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    ),
+  });
+
+  const picker = page.getByRole("dialog", { name: "Select a Face" });
+  await expect(picker).toBeVisible();
+  await expect(page.locator(".face-picker__preview")).toBeVisible();
+  await expect(page.getByRole("slider", { name: "Crop size" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Use This Face", exact: true }).click();
+  await expect(page.locator(".mv-create__photo-filled")).toHaveCount(1);
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3h — /mv/thinking + /mv/storyboard (one DP file, two stages)
+// ════════════════════════════════════════════════════════════════════════════
+
+test("3h: both stages render DP's blocks, not the old Tailwind layout", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+  await composeMv(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  await page.getByText("Create Storyboard First").click();
+
+  // Stage 1 — processing. Caught before it completes; the mock job takes seconds.
+  await expect(page.locator(".mv-storyboard--processing")).toBeVisible();
+  await expect(page.locator(".mv-storyboard-processing__card")).toBeVisible();
+  await expect(page.locator(".mv-storyboard-processing__progress-fill")).toBeVisible();
+
+  // Stage 2 — edit.
+  await page.waitForURL("**/mv/storyboard");
+  await expect(page.locator(".mv-storyboard__panel")).toBeVisible();
+  await expect(page.locator(".mv-storyboard__side")).toBeVisible();
+  // The six sections DP's phone reorder addresses by class. A missing modifier
+  // does not break the desktop layout at all — it silently drops that section to
+  // the end of the single-column phone sequence, which is invisible at 1440.
+  for (const mod of ["visual-style", "story", "story-line", "char-image", "mv-song", "lyrics"]) {
+    await expect(
+      page.locator(`.mv-storyboard__section--${mod}`),
+      `section modifier --${mod} must survive the port`,
+    ).toHaveCount(1);
+  }
+});
+
+test("3h: every mask icon on both storyboard stages has something to clip", async ({ page }) => {
+  // Neither stage is reachable by `goto` — both guard on flow state — so the 3f
+  // route sweep structurally cannot cover them.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+  await composeMv(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  await page.getByText("Create Storyboard First").click();
+
+  await expect(page.locator(".mv-storyboard-processing__card")).toBeVisible();
+  expect(await invisibleMaskIcons(page), "invisible mask icons on /mv/thinking").toEqual([]);
+
+  await page.waitForURL("**/mv/storyboard");
+  await expect(page.locator(".mv-storyboard__panel")).toBeVisible();
+  expect(await invisibleMaskIcons(page), "invisible mask icons on /mv/storyboard").toEqual([]);
+});
+
+test("3h: the character image's Download and Expand survived, and Expand really opens", async ({
+  page,
+}) => {
+  // Both are DP-only affordances this slice ADDED, and both are the icon shape
+  // that fails silently: `.mv-storyboard__char-download img` is an ELEMENT
+  // selector setting width/height only, so porting them as `DpIcon` spans would
+  // give two 0x0 holes inside two visible circles.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+  await composeMv(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  await page.getByText("Create Storyboard First").click();
+  await page.waitForURL("**/mv/storyboard");
+
+  for (const label of ["Download character image", "Expand character image"]) {
+    const box = await page.getByRole("button", { name: label }).locator("img").boundingBox();
+    expect(box?.width ?? 0, `${label} icon must have a size`).toBeGreaterThan(0);
+  }
+
+  await page.getByRole("button", { name: "Expand character image" }).click();
+  const preview = page.getByRole("dialog", { name: "Character image preview" });
+  await expect(preview).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(preview).toHaveCount(0);
+});
+
+test("3h: STORY LINE collapses, and the scenes are the job's, not DP's mock", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+  await composeMv(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  await page.getByText("Create Storyboard First").click();
+  await page.waitForURL("**/mv/storyboard");
+
+  // DP hardcodes exactly four `MOCK_SCENES`; these come from the storyboard the
+  // mock backend generated, so the count tracks the job rather than the design.
+  const scenes = page.locator(".mv-storyboard__scene");
+  const count = await scenes.count();
+  expect(count).toBeGreaterThan(0);
+
+  const toggle = page.getByRole("button", { name: /STORY LINE/ });
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(scenes).toHaveCount(0);
+  await toggle.click();
+  await expect(scenes).toHaveCount(count);
+});
+
+test("3h / GL-01: the storyboard CTA still states its cost and still gates on it", async ({
+  page,
+}) => {
+  // DP's CTA reads "Create MV", navigates unconditionally, and never says what
+  // it costs. This is the second place a 200-credit charge can start, so both
+  // the number and the gate have to survive the reskin.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+  await composeMv(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  await page.getByText("Create Storyboard First").click();
+  await page.waitForURL("**/mv/storyboard");
+
+  const cta = page.locator(".mv-storyboard__cta");
+  await expect(cta).toContainText("Create MV");
+  await expect(cta).toContainText("200");
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3i — /mv/result migrated to DP's MVResultPage
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Compose an MV and take the direct-render path all the way to /mv/result. */
+async function renderToResult(page: Page) {
+  await page.goto("/mv/room");
+  await composeMv(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  await page.getByText("Create MV Directly").click();
+  await page.waitForURL("**/mv/result", { timeout: 60_000 });
+  await expect(page.locator(".mv-result__player")).toBeVisible();
+}
+
+test("3i: the result page renders DP's blocks and picks a layout from the aspect", async ({
+  page,
+}) => {
+  test.slow(); // a full mock render
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await renderToResult(page);
+
+  await expect(page.locator(".mv-result__panel")).toBeVisible();
+  await expect(page.locator(".mv-result__side")).toBeVisible();
+  // DEFAULT_SETTINGS.ratio is 9:16, so DP's portrait treatment (blurred backdrop
+  // behind a pillarboxed video) is the one that must be applied.
+  await expect(page.locator(".mv-result__player--portrait")).toHaveCount(1);
+  await expect(page.locator(".mv-result__bg")).toBeVisible();
+});
+
+test("3i: every mask icon on the result page has something to clip", async ({ page }) => {
+  // /mv/result guards on flow state, so the 3f route sweep cannot reach it. This
+  // screen also mixes both icon kinds one line apart — `.mv-result__action img`
+  // is a real <img>, the control/reaction/publish icons are masks.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await renderToResult(page);
+
+  expect(await invisibleMaskIcons(page), "invisible mask icons on /mv/result").toEqual([]);
+
+  // And the other half of the trap: the four quick-action icons must have a size.
+  for (const label of ["Download", "Share", "Edit MV", "Recreate"]) {
+    const box = await page
+      .getByRole("button", { name: label, exact: true })
+      .locator("img")
+      .boundingBox();
+    expect(box?.width ?? 0, `${label} icon must have a size`).toBeGreaterThan(0);
+  }
+});
+
+test("3i / MV-12 + MV-13: publish confirms first, and blocks Edit until unpublished", async ({
+  page,
+}) => {
+  // DP's Publish toggle flips with no confirmation and its Edit MV is an
+  // unconditional link, so both rules are WA-only and both are the kind that
+  // survive a reskin as dead state.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await renderToResult(page);
+
+  await expect(page.getByRole("button", { name: "Edit MV", exact: true })).toBeVisible();
+
+  // MV-12: turning it ON asks first, and cancelling leaves it off.
+  await page.getByRole("switch", { name: "Publish to community" }).click();
+  const confirm = page.getByRole("dialog", { name: "Ready to Go Public?" });
+  await expect(confirm).toBeVisible();
+  await confirm.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("switch", { name: "Publish to community" })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+
+  await page.getByRole("switch", { name: "Publish to community" }).click();
+  await page.getByRole("dialog", { name: "Ready to Go Public?" }).getByRole("button", {
+    name: "Confirm",
+  }).click();
+  await expect(page.getByRole("switch", { name: "Publish to community" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+
+  // MV-13: the Edit slot is now Unpublish, not gone.
+  await expect(page.getByRole("button", { name: "Edit MV", exact: true })).toHaveCount(0);
+  const unpublish = page.getByRole("button", { name: "Unpublish to edit" });
+  await expect(unpublish).toBeVisible();
+
+  // Unpublishing is immediate — no second confirm — and Edit comes back.
+  await unpublish.click();
+  await expect(page.getByRole("button", { name: "Edit MV", exact: true })).toBeVisible();
+});
+
+test("3i: the DETAIL list kept the three rows DP dropped", async ({ page }) => {
+  // DP's DETAIL has six rows and none of them is Music, Scenes or Character.
+  // Those came from WA's `MvDetail`, and dropping them is exactly the silent
+  // information loss the /watch migration was pulled up on (DESIGNER-TODO A14).
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await renderToResult(page);
+
+  const detail = page.locator(".mv-result__section").last();
+  for (const key of [
+    "Author",
+    "MV Type",
+    "Music",
+    "Aspect Ratio",
+    "Quality",
+    "Scenes",
+    "Character",
+    "Subtitle",
+    "Watermark",
+  ]) {
+    await expect(detail.getByText(key, { exact: true }), `DETAIL row "${key}"`).toBeVisible();
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3j — /song/create + /song/creating + /song/result (one DP file, 3 stages)
+// ════════════════════════════════════════════════════════════════════════════
+
+test("3j: all three song stages render DP's blocks", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+
+  await expect(page.locator(".song-create__panel")).toBeVisible();
+  await expect(page.locator(".song-create__side")).toBeVisible();
+
+  await page
+    .getByPlaceholder(/A bittersweet love song/)
+    .fill("An upbeat summer anthem about chasing dreams with friends.");
+  await page.getByRole("button", { name: /Create Song/ }).click();
+
+  await expect(page.locator(".song-processing__wave")).toBeVisible();
+  await expect(page.locator(".song-processing__progress-fill")).toBeVisible();
+
+  await page.waitForURL("**/song/result", { timeout: 30_000 });
+  await expect(page.locator(".song-result__player")).toBeVisible();
+  await expect(page.locator(".song-result__creations")).toBeVisible();
+});
+
+test("3j: every mask icon on the migrated song stages has something to clip", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+
+  await page.goto("/song/create");
+  await page.waitForLoadState("networkidle");
+  expect(await invisibleMaskIcons(page), "invisible mask icons on /song/create").toEqual([]);
+
+  // Custom mode has a different control set (info button, Lyrics idea button).
+  await page.getByRole("button", { name: "Custom", exact: true }).click();
+  await expect(page.locator(".song-create__style")).toBeVisible();
+  expect(await invisibleMaskIcons(page), "invisible mask icons on /song/create custom").toEqual([]);
+
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
+  await page
+    .getByPlaceholder(/A bittersweet love song/)
+    .fill("An upbeat summer anthem about chasing dreams with friends.");
+  await page.getByRole("button", { name: /Create Song/ }).click();
+  await page.waitForURL("**/song/result", { timeout: 30_000 });
+  await expect(page.locator(".song-result__player")).toBeVisible();
+  expect(await invisibleMaskIcons(page), "invisible mask icons on /song/result").toEqual([]);
+});
+
+test("3j / S4: the Tempo and Key CONTROLS are gone; the contract fields are not", async ({
+  page,
+}) => {
+  // S4 removes BPM/Key from this form. §11 says removing the FIELDS is a C8
+  // change needing its own PR, so this slice removes only the controls — the
+  // distinction is the whole point, and a later session must not "finish the
+  // job" here by accident.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.getByRole("button", { name: "Custom", exact: true }).click();
+
+  await expect(page.getByRole("slider", { name: "Tempo (BPM)" })).toHaveCount(0);
+  await expect(page.getByText(/\d+ BPM/)).toHaveCount(0);
+  // Genre / Mood / Vocal are the three chip groups that DO survive.
+  await expect(page.locator(".song-create__chip-group")).toHaveCount(3);
+});
+
+test("3j / SONG-03: Recreate names its price and gates on the balance", async ({ page }) => {
+  // DP's Recreate is free and just returns to the form. WA's is a paid re-roll,
+  // which is exactly the kind of rule a reskin drops without anything going red.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page
+    .getByPlaceholder(/A bittersweet love song/)
+    .fill("An upbeat summer anthem about chasing dreams with friends.");
+  await page.getByRole("button", { name: /Create Song/ }).click();
+  await page.waitForURL("**/song/result", { timeout: 30_000 });
+
+  const recreate = page.locator(".song-result__cta-secondary");
+  await expect(recreate).toContainText("Recreate");
+  await expect(recreate).toContainText("50");
+});
+
+test("3j: the result still says what was generated, not just its title", async ({ page }) => {
+  // DP's `.song-result__meta` holds the title alone. Genre/mood is the only
+  // description of the generated track on this screen — the A14 loss shape.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page
+    .getByPlaceholder(/A bittersweet love song/)
+    .fill("An upbeat summer anthem about chasing dreams with friends.");
+  await page.getByRole("button", { name: /Create Song/ }).click();
+  await page.waitForURL("**/song/result", { timeout: 30_000 });
+
+  await expect(page.locator(".song-result__meta")).toContainText(/Pop · Uplifting/);
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Slice 3k — /mv/edit, the last route (A12 closed)
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Compose an MV, render it directly, and open the editor from the result. */
+async function openEditor(page: Page) {
+  await page.goto("/mv/room");
+  await composeMv(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  await page.getByText("Create MV Directly").click();
+  await page.waitForURL("**/mv/result", { timeout: 60_000 });
+  await page.getByRole("button", { name: "Edit MV", exact: true }).click();
+  await page.waitForURL("**/mv/edit", { timeout: 20_000 });
+  await expect(page.locator(".mv-edit__panel")).toBeVisible();
+}
+
+test("3k: /mv/edit renders DP's blocks, and the scene editor is its own section", async ({
+  page,
+}) => {
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openEditor(page);
+
+  await expect(page.locator(".mv-edit__side")).toBeVisible();
+  await expect(page.locator(".mv-edit__preview")).toBeVisible();
+  // `.mv-edit__section--scene-editor` is `display: none` below 768px and
+  // `MobileSceneDetail` replaces it. Nesting it inside --storyboard (which was
+  // the first attempt) makes that rule match nothing and leaks the desktop
+  // editor onto phones — invisible at 1440, wrong at 375.
+  await expect(page.locator(".mv-edit__section--scene-editor")).toHaveCount(1);
+  // The six sections DP's phone reorder addresses by class.
+  for (const mod of ["storyboard", "scene-editor", "cover", "title", "author"]) {
+    await expect(
+      page.locator(`.mv-edit__section--${mod}`),
+      `section modifier --${mod} must survive the port`,
+    ).toHaveCount(1);
+  }
+});
+
+test("3k: the desktop scene editor does not leak onto phones", async ({ page }) => {
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 375, height: 900 });
+  await openEditor(page);
+
+  await expect(page.locator(".mv-edit__section--scene-editor")).toBeHidden();
+  await expect(page.locator(".mv-edit__preview")).toBeHidden();
+
+  // Tapping a clip opens DP's full-screen editor instead.
+  await page.locator(".mv-edit__clip").first().click();
+  const sheet = page.getByRole("dialog", { name: /Scene \d/ });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.locator(".mv-edit-mobile-scene__preview-video")).toBeVisible();
+  await sheet.getByRole("button", { name: "Back" }).click();
+  await expect(sheet).toHaveCount(0);
+});
+
+test("3k: every mask icon on /mv/edit has something to clip", async ({ page }) => {
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openEditor(page);
+  expect(await invisibleMaskIcons(page), "invisible mask icons on /mv/edit").toEqual([]);
+
+  // And the <img>-shaped rules on this screen, checked the other way round.
+  // `.mv-edit__recreate-scene` is the shared Button component, whose coin is
+  // `.button__icon` WITHOUT `--mask` — the modifier is what paints, so a mask
+  // span there is the `/watch` arrow bug again.
+  for (const sel of [
+    ".mv-edit__merge-credits img",
+    ".mv-edit__regen-credits img",
+    ".mv-edit__recreate-scene .button__icon",
+  ]) {
+    const box = await page.locator(sel).first().boundingBox();
+    expect(box?.width ?? 0, `${sel} must have a size`).toBeGreaterThan(0);
+  }
+});
+
+test("3k / MV-08: Merge is inert until something is edited, then it costs", async ({ page }) => {
+  // DP's Merge is always live and free. WA charges COST_RENDER for a re-render,
+  // so an always-enabled Merge would let a user pay to re-render an unchanged
+  // video — the rule is WA-only and exactly the kind a reskin drops silently.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openEditor(page);
+
+  const merge = page.locator(".mv-edit__merge-btn");
+  await expect(merge).toBeDisabled();
+  await expect(merge).toContainText("200");
+
+  // Any edit arms it — here, an output-settings change.
+  await page.getByRole("switch", { name: "Show Watermark" }).click();
+  await expect(merge).toBeEnabled();
+});
+
+test("3k / GL-01: Recreate routes to IAP when the balance cannot cover it", async ({ page }) => {
+  // Two Recreates on this screen (scene 20, cover 10) and DP charges for
+  // neither. Drain the balance with two full generations, then check the gate.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openEditor(page);
+  const before = await balance(page);
+  expect(before, "precondition: the balance must be under the scene cost").toBeLessThan(200);
+
+  // Cover recreate costs 10 and the balance is far above that, so use the
+  // scene recreate (20) only when it is genuinely unaffordable.
+  if (before < 20) {
+    await page.locator(".mv-edit__recreate-scene").click();
+    await expect(
+      page.getByRole("dialog", { name: /Upgrade Your Plan|Muse Pro|Buy Credits/i }),
+    ).toBeVisible();
+    expect(await balance(page), "a refused recreate must not charge").toBe(before);
+  } else {
+    // Affordable: it charges exactly COST_REGEN and records a version.
+    await page.locator(".mv-edit__recreate-scene").click();
+    await expect.poll(() => balance(page)).toBe(before - 20);
+  }
+});
+
+test("3k: Delete this Project confirms before discarding", async ({ page }) => {
+  // DP ships this control with a dead handler. Per the /creator precedent it is
+  // wired — but to a confirm first, and then only to discarding the in-memory
+  // flow, not to an invented backend delete.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openEditor(page);
+
+  await page.locator(".mv-edit__delete-btn").click();
+  const confirm = page.getByRole("dialog", { name: "Delete" });
+  await expect(confirm).toBeVisible();
+  await confirm.getByRole("button", { name: "Cancel" }).click();
+  expect(new URL(page.url()).pathname).toBe("/mv/edit");
+
+  await page.locator(".mv-edit__delete-btn").click();
+  await page.getByRole("dialog", { name: "Delete" }).getByRole("button", { name: "Delete" }).click();
+  await page.waitForURL("**/history");
 });
