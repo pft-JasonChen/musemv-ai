@@ -25,8 +25,16 @@ import { CommunityEmpty } from "@/components/community/EmptyState";
  * ── This is the screen A5 blocked ───────────────────────────────────────────
  * `MVDetailPage` is where A5 was first found: DP hides every navbar below 767px
  * and this page has no in-page back, so on a phone it was enterable and not
- * leavable. `DetailNavbar` now emits its own phone back control (default on),
- * so the block is gone rather than worked around here.
+ * leavable. WA worked around it with a bespoke control inside `DetailNavbar`;
+ * the 2026-08-06 drop (`2670ed2`) answered it upstream — AppLayout stopped
+ * hiding `.detail-navbar` and DetailNavbar.css grew a compact 50px back+title
+ * bar — so the workaround is deleted and this screen is on DP's own control.
+ *
+ * DP goes one step further here and passes `hideMobileBar`, because its
+ * MVDetailPage renders a Figma-specific `.mv-player__mobile-header` instead.
+ * That header is NOT ported yet, so WA keeps DetailNavbar's bar: it is the
+ * same affordance, and dropping one before building the other is exactly how
+ * A5 happened the first time.
  *
  * ── What DP's overlay drops, and why that is allowed ────────────────────────
  * WA's pre-migration screen had a side panel with a "# Music Video" badge, the

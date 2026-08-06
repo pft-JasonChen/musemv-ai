@@ -1439,36 +1439,26 @@
   }
 }
 
+/* No per-item border/background box — flat rows like every other ListItem
+   usage in the app (NewSongsSection etc.), just the shared hover highlight
+   ListItem already provides. Was previously wrapped in its own bordered
+   card, which is why it also had to override the inner ListItem's own
+   hover state away to avoid a double-highlight — no longer needed. */
 .song-result__creations-item {
   display: block;
   width: 100%;
   box-sizing: border-box;
   padding: 0;
-  overflow: hidden;
-  border-radius: var(--radius-2xl);
-  border: 1px solid var(--white-15);
-  background: var(--black-60);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: none;
   text-decoration: none;
   text-align: left;
   color: inherit;
   cursor: pointer;
-  transition: background-color 0.15s ease;
 }
 
-.song-result__creations-item:hover,
-.song-result__creations-item--active {
-  background: var(--white-15);
-}
-
-.song-result__creations-item .list-item {
-  min-height: 100%;
-  padding: 16px;
-  border-radius: inherit;
-}
-
-.song-result__creations-item .list-item:hover {
-  background: transparent;
+.song-result__creations-item--active .list-item {
+  background-color: var(--white-15);
 }
 

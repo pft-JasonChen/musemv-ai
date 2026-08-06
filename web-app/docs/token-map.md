@@ -2,7 +2,7 @@
 
 > **GENERATED — do not hand-edit.** `node scripts/build-token-map.mjs`
 > Sources: `web-app/src/styles/token-aliases.css` · `designer-prototype/src/styles/tokens.css`
-> Generated 2026-08-05. Gate **G2-a** (`redesign-migration-plan-2026-08-01.md` §10).
+> Generated 2026-08-06. Gate **G2-a** (`redesign-migration-plan-2026-08-01.md` §10).
 
 Matching is **by value**, which is what plan §4.1 asserts is already true ("顏色不是重畫,
 是改名對映"). It cannot tell you which *name* is semantically correct — that is the

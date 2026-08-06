@@ -19,6 +19,18 @@ the keyboard-seek half**, so four playback seek bars stay pointer-only (WCAG 2.1
 on `/mv/result` that is a regression against the pre-migration `<video controls>`. Offered
 separately, deferred anyway, accepted knowingly.
 
+**DROP 2 IS VENDORED (`2670ed2`, 2026-08-06).** `designer-prototype/` is no longer `568e64c`.
+`tokens.css` and every icon are byte-identical to drop 1; 13 of 33 gated stylesheets moved and are
+re-copied. The one lesson worth carrying, because it is the fourth instance of the same shape:
+**a re-sync can BREAK a screen through an override that used to be correct.** WA's A4 override hid
+`.detail-navbar__top`; the drop put the new mobile back control inside `__top` and, separately,
+hid `.detail-navbar__tabs` on phones on purpose. Both halves cancelled and `/explore/songs`
+measured a 375×50 bar with neither tabs nor a way back — typecheck, lint, vitest, build,
+guard-greps and designer-css were all green through it. **When a drop lands, re-read every entry
+in `designer-overrides.css` against the new CSS, not just the diff of the copied files.**
+A5 is closed by this drop and WA's `phoneBack` workaround is deleted; details in
+`docs/DESIGNER-TODO.md` A5 and `docs/NEXT-SESSION.md` §2.
+
 **The designer-UI migration is live.** The package landed 2026-08-04 and is vendored at
 `../designer-prototype/` (DP). Read in this order:
 

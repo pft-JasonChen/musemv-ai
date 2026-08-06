@@ -766,7 +766,7 @@ export function SongDetailView() {
           entry, and it is what the mobile player's back control uses too. */}
       {/* A5: no phone back — the list half is an Explore tab-bar destination. The
           full-screen mobile player has its own back (that is why 3b was safe). */}
-      <DetailNavbar fallbackPath="/explore/songs" tabsSlot={tabsSlot} phoneBack={false} />
+      <DetailNavbar fallbackPath="/explore/songs" tabsSlot={tabsSlot} hideMobileBar />
 
       {!online ? (
         <CommunityEmpty variant="offline" />

@@ -58,19 +58,40 @@
    used purely as chrome (e.g. /explore/mvs's DetailNavbar, which passes no
    tabsSlot) stays hidden exactly as DP intends.
 
-   Back navigation on phones is a SEPARATE open question and deliberately not
-   touched here — see DESIGNER-TODO A5.
+   HALF OF THIS WAS DELETED ON THE 2026-08-06 DROP (`2670ed2`), and the half that
+   went is the interesting one. That drop answers A5: AppLayout.css no longer
+   hides `.detail-navbar` below 767px at all, and DetailNavbar.css gives it a
+   compact back+title bar — INSIDE `.detail-navbar__top`. So the rule below that
+   hid `__top` was, from that drop onward, hiding the very back control the
+   designer had just added. Worse, the same drop hides `.detail-navbar__tabs` on
+   mobile on purpose ("not designed for mobile yet"), so the override's own
+   reason to exist was gone too: measured at 375px on `/explore/songs`, the
+   navbar rendered 375x50 with `__top` display:none AND `__tabs` display:none —
+   an empty bar with neither tabs nor a way back. Both halves of one override
+   cancelling out, and nothing would have gone red.
 
-   DELETE THIS when a drop ships AppLayout.css that keeps the tabs row visible
-   below 767px. */
+   Product owner decided 2026-08-06: FOLLOW DP. `/explore/songs` and `/song/play`
+   get the back control and lose their tab pills on phones. The cost is real and
+   is recorded rather than hidden: WA's three tabs are three different catalogs
+   (unlike DP's four, which reorder one), so a phone user now sees only the
+   default catalog. If that turns out to matter, it is a designer request for a
+   mobile tabs design, not an override.
+
+   WHAT REMAINS is the `.room-navbar` half, and it is still needed for exactly
+   the original reason. That drop's RoomNavbar.css says so in as many words:
+   pages that don't pass `mobileBackHref` — "(History)" — stay hidden on mobile
+   via AppLayout's `:not(.room-navbar--mobile-back)` rule. So History's All /
+   Music Videos / Songs / Liked filters are still deleted on phones without this,
+   and HIST-03 is spec'd behaviour.
+
+   DELETE THIS when a drop ships an AppLayout.css that keeps History's tabs row
+   visible below 767px. */
 @media (max-width: 767px) {
-  .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs),
-  .app-layout--mobile-app .detail-navbar:has(.detail-navbar__tabs) {
+  .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs) {
     display: flex;
   }
 
-  .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs) .room-navbar__top,
-  .app-layout--mobile-app .detail-navbar:has(.detail-navbar__tabs) .detail-navbar__top {
+  .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs) .room-navbar__top {
     display: none;
   }
 }

@@ -348,8 +348,16 @@
   App-mobile variant (see src/config/layoutMode.ts) — Figma "Top Hero
   Banner" (node 369:7479), matched against the reference build's infinite
   draggable carousel (scottwu630/ycmuse-prototype muse-prototype-v1.html):
-  fixed 272x153 cards, auto-rotating, swipeable, looping infinitely — see
-  HeroBannerMobile in HeroBannerSection.tsx for the drag/loop logic.
+  auto-rotating, swipeable, looping infinitely — see HeroBannerMobile in
+  HeroBannerSection.tsx for the drag/loop logic.
+
+  Card size is NOT a fixed px size: Figma's 272×153 is specified against its
+  320px mobile frame, i.e. the card is 85% of screen width at a fixed 16:9
+  ratio (272/320 = 0.85; 272:153 simplifies exactly to 16:9) — so it's
+  expressed here as 85vw + aspect-ratio, scaling up on wider phones instead
+  of staying pinned at 272px. HeroBannerSection.tsx measures the actual
+  rendered card width at runtime for its drag/translateX math instead of
+  assuming a constant, since the width is no longer fixed.
 
   Note: Figma tints each card's scrim with a hue matched to its own photo.
   Our 8 items don't have per-item hues defined, so this uses one consistent
@@ -376,7 +384,7 @@
 .hero-banner-mobile__track {
   display: flex;
   gap: 8px;
-  padding-inline: max(0px, calc((100% - 272px) / 2));
+  padding-inline: max(0px, calc((100% - 85vw) / 2));
   will-change: transform;
 }
 
@@ -385,11 +393,16 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  width: 272px;
-  height: 153px;
+  /* Was space-between, which relied on the now-removed "Trending MV" badge
+     as a second flex child to anchor .hero-banner-mobile__bottom to the
+     card's bottom edge — with the badge gone, space-between on the single
+     remaining child pushed the title/subtitle text to the top instead. */
+  justify-content: flex-end;
+  width: 85vw;
+  aspect-ratio: 16 / 9;
   box-sizing: border-box;
   padding: 8px;
+  /* Hardcoded to match Figma exactly — no token is 14px. */
   border-radius: 14px;
   overflow: hidden;
   background: var(--neutral-dark-14);
@@ -407,38 +420,6 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, var(--black-40) 100%);
-}
-
-.hero-banner-mobile__badge {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 6px;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  color: var(--neutral-dark-100);
-  font-family: var(--font-family-primary);
-  font-size: 10px;
-  font-weight: var(--font-weight-bold);
-  white-space: nowrap;
-}
-
-.hero-banner-mobile__badge-icon {
-  width: 12px;
-  height: 12px;
-  background-color: currentColor;
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: contain;
 }
 
 /* Only the centered/active card reveals its title, subtitle, and CTA —

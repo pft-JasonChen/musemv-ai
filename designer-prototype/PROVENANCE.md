@@ -7,10 +7,10 @@
 | | |
 |---|---|
 | Upstream | `https://github.com/marukox1105/YCM` (`main`) |
-| Commit | `568e64ce8120d882b1d1d4a7a617e55dd6f7ac5b` |
-| Commit date | 2026-08-04 18:13:54 +0800 |
-| Commit subject | Add mock face selection and polish shared UI |
-| Vendored | 2026-08-04 |
+| Commit | `2670ed200146ff5e10f53216aeedc9454f47697b` |
+| Commit date | 2026-08-06 17:24:15 +0800 |
+| Commit subject | Widen SongPlayBar title space, cap progress bar width, and re-center row |
+| Vendored | 2026-08-06 (drop 2; drop 1 was `568e64c`, 2026-08-04) |
 | Also deployed at | Vercel (see the upstream `PROJECT_CONTEXT.md` → Deployment) |
 
 ## Why it is vendored rather than cloned per-machine
@@ -30,8 +30,8 @@ reference them in place.
 
 ## What was excluded from the drop
 
-The upstream repo is 582 MB — 281 MB of it git history, 295 MB of it demo media. Vendored
-here is the code, CSS, tokens, icons and small assets (**7.7 MB**). Excluded:
+The upstream repo is 583 MB — 281 MB of it git history, 295 MB of it demo media. Vendored
+here is the code, CSS, tokens, icons and small assets (**8.2 MB** as of drop 2). Excluded:
 
 | Path | Size | Why |
 |---|---|---|

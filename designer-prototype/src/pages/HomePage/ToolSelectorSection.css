@@ -51,13 +51,13 @@
 
 .tool-selector__card--bright::before {
   background:
-    radial-gradient(53.76% 100% at 50% 100%, rgba(79, 4, 155, 0.65) 0%, rgba(79, 4, 155, 0) 100%),
+    radial-gradient(72.44% 134.75% at 50% 100%, rgba(103, 0, 205, 0.65) 0%, rgba(103, 0, 205, 0) 100%),
     rgba(9, 9, 11, 0.6);
 }
 
 .tool-selector__card:not(.tool-selector__card--bright)::before {
   background:
-    radial-gradient(53.76% 100% at 50% 100%, rgba(142, 25, 27, 0.65) 0%, rgba(142, 25, 27, 0) 100%),
+    radial-gradient(64.92% 120.76% at 50% 100%, rgba(189, 22, 24, 0.65) 0%, rgba(142, 25, 27, 0) 100%),
     rgba(9, 9, 11, 0.6);
 }
 
@@ -77,11 +77,15 @@
 }
 
 .tool-selector__card--bright .tool-selector__glow {
-  background: radial-gradient(90% 160% at 50% 100%, rgba(79, 4, 155, 0.85) 0%, rgba(79, 4, 155, 0) 100%);
+  background:
+    radial-gradient(103.35% 134.75% at 50% 100%, rgba(130, 4, 255, 0.65) 0%, rgba(79, 4, 155, 0) 100%),
+    rgba(9, 9, 11, 0.6);
 }
 
 .tool-selector__card:not(.tool-selector__card--bright) .tool-selector__glow {
-  background: radial-gradient(90% 160% at 50% 100%, rgba(142, 25, 27, 0.85) 0%, rgba(142, 25, 27, 0) 100%);
+  background:
+    radial-gradient(92.83% 132.2% at 50% 100%, rgba(198, 0, 3, 0.65) 0%, rgba(142, 25, 27, 0) 100%),
+    rgba(9, 9, 11, 0.6);
 }
 
 .tool-selector__card:hover .tool-selector__glow {
@@ -116,6 +120,18 @@
     gap: 20px;
     height: 118px;
     padding: 16px 16px 16px 32px;
+  }
+}
+
+/* Tablet/small-laptop only (768–1023px): the description wraps to 4-5 lines
+   at this width and reads as clutter, so it's clamped to 2 lines with an
+   ellipsis instead — desktop (1024px+) keeps the full, unclamped text. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tool-selector__description {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
@@ -165,6 +181,14 @@
   line-height: var(--line-height-title-s);
 }
 
+/* Shorter app-mobile copy ("Music Video" / "AI Song" vs desktop's "Music
+   Video Creator" / "AI Song Composer") — same dual-element, CSS-toggled
+   pattern as SectionHeader's title--desktop/--mobile, since CSS can't swap
+   text content, only which element is visible. */
+.tool-selector__title--mobile {
+  display: none;
+}
+
 .tool-selector__description {
   margin: 0;
   color: var(--neutral-dark-89);
@@ -208,6 +232,9 @@
     align-items: flex-start;
     gap: 4px;
     padding: 8px 10px;
+    /* Figma "Cards" (369:7501) uses 14px here, not the desktop card's
+       --radius-xl (20px) — hardcoded to match since no token is 14px. */
+    border-radius: 14px;
     border: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -244,5 +271,13 @@
     color: var(--neutral-dark-100);
     font-size: 15px;
     line-height: 18px;
+  }
+
+  .app-layout--mobile-app .tool-selector__title--desktop {
+    display: none;
+  }
+
+  .app-layout--mobile-app .tool-selector__title--mobile {
+    display: block;
   }
 }

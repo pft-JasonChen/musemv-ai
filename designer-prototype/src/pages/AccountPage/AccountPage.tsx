@@ -152,14 +152,23 @@ function AccountPage() {
 
   if (!isSignedIn) {
     return (
-      <AppLayout navbar={<RoomNavbar title="Account" credits={0} />}>
+      <AppLayout navbar={<RoomNavbar title="Account" credits={0} mobileBackHref="/home" />} showMobileHeader={false}>
         <section className="account-page" />
       </AppLayout>
     )
   }
 
   return (
-    <AppLayout navbar={isSettings ? <DetailNavbar credits={390} backHref="/account" /> : <RoomNavbar title="Account" credits={390} />}>
+    <AppLayout
+      navbar={
+        isSettings ? (
+          <DetailNavbar credits={390} backHref="/account" mobileTitle="Settings" />
+        ) : (
+          <RoomNavbar title="Account" credits={390} mobileBackHref="/home" />
+        )
+      }
+      showMobileHeader={false}
+    >
       <section className="account-page">
         <div className="account-page__content">
           {isSettings ? (

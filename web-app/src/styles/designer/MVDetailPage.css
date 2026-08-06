@@ -17,6 +17,13 @@
   padding: 0 20px 40px;
 }
 
+.mv-detail__mobile-header,
+.mv-player__mobile-header,
+.mv-player__mobile-profile,
+.mv-player__cta-mobile {
+  display: none;
+}
+
 @media (min-width: 768px) {
   .mv-detail {
     padding: 0 32px 40px;
@@ -326,5 +333,322 @@
   .mv-detail__grid--wrap .mv-detail__grid-item,
   .mv-detail__grid--wrap .mv-detail__grid-item--4-3 {
     width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .mv-detail {
+    gap: 0;
+    min-height: 100svh;
+    padding: 0 16px 24px;
+  }
+
+  .mv-detail--selected {
+    height: 100svh;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* Figma node 361-7375: fixed H50 bar (its own 90px frame minus a
+     40px status-bar reservation we don't need — our page has no separate
+     status-bar spacer), solid Neutral/Dark/04 fill (not a gradient), a
+     10px top gap before the content so it doesn't sit flush against the
+     very top edge, and a 1px inside white-9% bottom border. */
+  .mv-detail__mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 28px 1fr 28px;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    margin: 0 -16px;
+    padding: 10px 16px 0;
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .mv-detail__mobile-header h1 {
+    margin: 0;
+    color: var(--neutral-dark-100);
+    font-size: var(--font-title-s);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-title-s);
+    text-align: center;
+  }
+
+  .mv-detail__mobile-back,
+  .mv-player__mobile-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-pill);
+    background: var(--neutral-dark-14);
+    color: var(--neutral-dark-100);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .mv-detail__mobile-back span,
+  .mv-player__mobile-back-icon {
+    width: 16px;
+    height: 16px;
+    background: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+  }
+
+  .mv-detail__grid-section {
+    display: none;
+  }
+
+  .mv-detail__grid-section--primary {
+    display: flex;
+    gap: 0;
+  }
+
+  .mv-detail--selected .mv-detail__grid-section {
+    display: none;
+  }
+
+  .mv-detail__grid-section--primary .section-header {
+    display: none;
+  }
+
+  .mv-detail__mobile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    padding-top: 10px;
+  }
+
+  .mv-detail__mobile-column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .mv-detail__mobile-grid .card--video {
+    gap: 5px;
+  }
+
+  .mv-detail__mobile-grid .card__cover {
+    padding: 0;
+    border-radius: 12px;
+  }
+
+  .mv-detail__mobile-grid .card__cover-scrim,
+  .mv-detail__mobile-grid .card__play-row {
+    display: none;
+  }
+
+  .mv-detail__mobile-grid .card__title {
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: -0.13px;
+  }
+
+  .mv-detail__mobile-grid .card__avatar {
+    width: 12px;
+    height: 12px;
+  }
+
+  .mv-detail__mobile-grid .card__avatar-icon {
+    width: 6px;
+    height: 6px;
+  }
+
+  .mv-detail__mobile-grid .card__username,
+  .mv-detail__mobile-grid .card__likes-count {
+    font-size: 9px;
+    line-height: 11px;
+  }
+
+  .mv-detail__mobile-grid .card__likes-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .mv-player {
+    height: 100svh;
+    aspect-ratio: auto;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .mv-player__mobile-header {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: 28px 1fr 28px;
+    align-items: center;
+    gap: 6px;
+    padding: 54px 16px 22px;
+    background: linear-gradient(to bottom, rgba(9, 9, 11, 0.92), rgba(9, 9, 11, 0));
+  }
+
+  .mv-player__mobile-heading {
+    min-width: 0;
+    text-align: center;
+  }
+
+  .mv-player__mobile-heading p,
+  .mv-player__mobile-heading span {
+    display: block;
+    margin: 0;
+  }
+
+  .mv-player__mobile-heading p {
+    overflow: hidden;
+    color: var(--neutral-dark-100);
+    font-size: var(--font-title-s);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-title-s);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mv-player__mobile-heading span {
+    color: var(--neutral-dark-84);
+    font-size: var(--font-caption-m);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-caption-m);
+  }
+
+  .mv-player__backdrop,
+  .mv-player__backdrop-scrim {
+    display: none;
+  }
+
+  .mv-player__stage {
+    align-items: center;
+    background: #09090b;
+  }
+
+  .mv-player__stage:not(.mv-player__stage--portrait) .mv-player__video {
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+
+  .mv-player__stage--portrait .mv-player__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .mv-player__floating {
+    gap: 10px;
+    padding: 20px 16px 40px;
+  }
+
+  /* Figma (both the landscape "LAN 4:3" frame and the portrait "POR" one,
+     node 361-6195) puts the playback controls directly under the video,
+     with the CTA as the very last element at the bottom — for both
+     ratios, not just landscape as an earlier pass assumed. Flipped
+     visually via flex order rather than reordering the DOM. */
+  .mv-player__meta-row {
+    order: 2;
+  }
+
+  .mv-player__controls {
+    order: 1;
+  }
+
+  .mv-player__meta-row {
+    width: 100%;
+  }
+
+  .mv-player__meta {
+    display: none;
+  }
+
+  .mv-player__actions {
+    width: 100%;
+  }
+
+  .mv-player__mobile-profile {
+    position: fixed;
+    right: 16px;
+    top: 43%;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 2px solid var(--neutral-dark-100);
+    border-radius: var(--radius-pill);
+    background: linear-gradient(45deg, #ff6bce 14.639%, var(--color-accent-purple) 50%, #4338ca 85.361%);
+    color: var(--neutral-dark-100);
+  }
+
+  .mv-player__mobile-profile .mv-player__avatar-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mv-player__like-share {
+    position: fixed;
+    right: 16px;
+    top: calc(43% + 42px);
+    z-index: 3;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mv-player__like-share .icon-button {
+    background: rgba(9, 9, 11, 0.8);
+  }
+
+  /* Figma's mobile player CTA (node 361-5803) is the gradient pill already
+     used by Large Primary buttons elsewhere (var(--gradient-mv)) with
+     Large's own 14px/16px padding — not Medium Primary's flat-purple/14px-
+     radius look this was wrongly overriding into. Kept as a mobile-only
+     override (not size="Large" on the shared element) so desktop, which
+     already renders this same Button at size="Medium", is untouched. */
+  .mv-player__cta.button--medium {
+    width: 100%;
+    min-width: 0;
+    padding: 14px 16px;
+    background: var(--gradient-mv);
+    border-radius: var(--radius-pill);
+  }
+
+  .mv-player__cta-desktop {
+    display: none;
+  }
+
+  .mv-player__cta-mobile {
+    display: inline;
+  }
+
+  .mv-player__controls {
+    height: 40px;
+    gap: 10px;
+  }
+
+  .mv-player__time,
+  .mv-player__fullscreen {
+    display: none;
+  }
+
+  .mv-player__progress-track,
+  .mv-player__progress-fill {
+    height: 3px;
   }
 }

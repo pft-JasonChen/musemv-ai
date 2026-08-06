@@ -109,7 +109,50 @@ DOM 在、`display:none`、使用者完全無法篩選。其中 **Liked 是有 s
   `DetailNavbar`)維持 DP 原樣隱藏。已補 7 支 e2e 鎖住這個行為。
 - **需要的決定:** 下次交稿請讓 tabs 列在 <767px 保持顯示。屆時我們刪掉 override。
 
-### A5. 手機上 detail 畫面**沒有任何返回途徑** —— 需要設計判斷
+### A5. 手機上 detail 畫面**沒有任何返回途徑** —— ✅ **2026-08-06 設計師已在 drop `2670ed2` 回答,WA 已接上**
+
+> **結論先寫在最前面,因為下面整段是「當時還沒答案」的記錄,現在有了。**
+>
+> 設計師在 `2670ed2` 這個 drop 直接改掉成因,而不是給一個 case-by-case 的答覆:
+>
+> - `AppLayout.css` 的手機隱藏清單**把 `.detail-navbar` 整條拿掉了**,`.room-navbar` 則改成
+>   `:not(.room-navbar--mobile-back)` —— 也就是預設仍然隱藏,但頁面可以用新的
+>   `mobileBackHref` prop 選擇加入。
+> - `DetailNavbar.css` 在 `<767px` 給了一條 **50px 高的 compact bar**,用 `__top` 排成
+>   `28px 1fr 28px` 的 grid:左邊返回鍵、中間標題、右邊留白。新增 `mobileTitle`(桌機保留
+>   「‹ Back」文字連結、手機才顯示標題)與 `hideMobileBar`(頁面自己畫了 mobile header 時抑制)。
+> - `RoomNavbar.css` 用 `--mobile-back` modifier 做同一套處理。
+>
+> **WA 這一側已經接上(2026-08-06,DP re-sync slice):** `DetailNavbar.tsx` 加了
+> `mobileTitle` / `hideMobileBar`,並**刪掉了 WA 自己那套 Tailwind 權宜控制項**(原本的
+> `phoneBack` prop)—— 兩個返回鍵疊在同一個手機畫面上本身就是缺陷。`phoneBack={false}` 的兩個
+> caller(`/explore/mvs`、`/explore/songs`)改成 `hideMobileBar`,行為與 drop 前完全相同。
+>
+> 375px 實測(production build,已先證明 238KB stylesheet 是 200):
+>
+> | route                             | `.detail-navbar`        | 可用返回控制項             |
+> | --------------------------------- | ----------------------- | -------------------------- |
+> | `/explore/songs`、`/explore/mvs`  | `none`(`hideMobileBar`) | 0 —— tab bar 可達,刻意如此 |
+> | `/watch`、`/creator`、`/settings` | **375×50**              | **1**                      |
+>
+> **兩個沒有一起解決的,記在這裡免得被當成已完成:**
+>
+> 1. **DP 自己更進一步,WA 沒有跟。** DP 的 `MVDetailPage` 傳 `hideMobileBar`,改用自己的
+>    `.mv-detail__mobile-header` / `.mv-player__mobile-header`(返回鍵 + 標題 + 副標)。那兩個
+>    header **還沒移轉**,所以 WA 的 `/watch` 目前用 `DetailNavbar` 的 bar —— 同樣的能力,
+>    先不拆。要拆的話必須先蓋好再拆,A5 第一次發生就是反過來做的。
+> 2. **`RoomNavbar` 的 `mobileBackHref` 還沒接進 WA。** DP 用在 AccountPage 與 SongCreatePage。
+>    不接不會少任何東西(現況本來就是隱藏),但這是這個 drop 帶來、尚未採用的能力。
+>
+> **A4 的 override 因此砍掉一半。** 見 `designer-overrides.css`:`.detail-navbar` 那一半必須刪,
+> 因為它藏的 `__top` 正是設計師剛把返回鍵放進去的地方 —— 而同一個 drop 又刻意藏掉
+> `.detail-navbar__tabs`(「not designed for mobile yet」),兩者相加讓 `/explore/songs` 在 375px
+> 變成一條 **375×50、既沒 tabs 也沒返回鍵的空 bar**,而且不會有任何測試變紅。
+> `.room-navbar` 那一半**保留** —— DP 的註解明講 History 沒傳 `mobileBackHref`,仍然整條隱藏,
+> HIST-03 的篩選 tabs 還是靠這個 override 活著。
+
+<details>
+<summary>以下是 2026-08-05 之前的原始記錄(當時還沒有答案),保留備查</summary>
 
 承 A4:`.detail-navbar` 在 <767px 也是 `display: none`,而 **`MobileHeader` 沒有 back 控制項**
 (DP 與 WA 兩邊都沒有)。也就是說 **DP 的手機設計在 detail 畫面上完全沒有返回鍵**,
@@ -162,6 +205,12 @@ DOM 在、`display:none`、使用者完全無法篩選。其中 **Liked 是有 s
 > 底欄可達的畫面(`/explore/mvs`、`/explore/songs` 清單半邊)明確傳 `phoneBack={false}`。
 > **一個檔案、一個刪除點。** 設計師給稿後,把這段拿掉即可,不需要逐頁清。
 > 已有 e2e 守住三件事:該有的有、該沒有的沒有、桌機不重複。
+>
+> **上面這段描述的 `phoneBack` 已於 2026-08-06 刪除** —— 「設計師給稿後把這段拿掉」就是這次做的事。
+> 那三個 e2e 斷言一個字都沒改,因為它們寫的是「375px 有沒有可用的返回控制項」,不是「有沒有那顆
+> Tailwind 按鈕」;實作被換掉而測試照樣通過,這正是當初寫成行為測試而非標記測試的理由。
+
+</details>
 
 ### A6. `SongDetailPage` 的 `Trending` tab 沒有對應資料 —— 不擋開發
 

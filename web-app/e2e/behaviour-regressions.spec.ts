@@ -951,14 +951,44 @@ test("3b / A4: the song screen's tabs are usable on a phone", async ({ page }) =
 
 // A5's fix lives in DetailNavbar, so this sweep covers every route that renders
 // one — and automatically covers each new migrated detail screen as it lands.
-// DP hides `.detail-navbar` below 767px and its MobileHeader has no back, so
-// without this the screens are enterable and not leavable on a phone. Measured
-// on DP itself: 5 of its pages declare a back whose computed height is 0 at 375.
+// DP used to hide `.detail-navbar` below 767px with no back in its MobileHeader,
+// so the screens were enterable and not leavable on a phone. Measured on DP
+// itself: 5 of its pages declared a back whose computed height was 0 at 375.
+//
+// The 2026-08-06 drop answers it upstream, and this test deliberately did NOT
+// change with it. It asserts a usable back control exists at 375 — it never
+// asserted WHICH element provides one — so the same assertions now cover DP's
+// compact mobile bar instead of WA's deleted Tailwind row. A guard written
+// against behaviour survives the implementation being replaced; one written
+// against markup would have had to be rewritten, and a rewritten guard proves
+// nothing about the migration it was meant to catch.
+//
 // Only the routes that NEED it: a screen the mobile tab bar can reach (Explore,
-// Create, History) passes phoneBack={false}, because back solves nothing there.
+// Create, History) passes `hideMobileBar`, because back solves nothing there.
 // Every migrated detail screen from here on gets it by default, so this list
 // grows with the migration rather than being remembered.
 const DETAIL_NAVBAR_ROUTES = ["/settings", "/watch"];
+
+/**
+ * A back control identified by its ACCESSIBLE NAME, not by its tag.
+ *
+ * These guards used to say `getByRole("button", { name: "Back" })`, which was
+ * true of WA's own workaround and is not true of DP's — the 2026-08-06 drop's
+ * control is an `<a>`, and R-9 requires it stay one. Widening the role is a
+ * legitimate update; the assertion it feeds ("there is a usable way back at
+ * 375px") has not moved an inch.
+ *
+ * Keeping the NAME half strict is the point. On a phone DP hides the visible
+ * word "Back", so an unlabelled anchor computes to an empty accessible name and
+ * this query finds nothing — which is exactly what happened on the first run of
+ * the re-sync and is why `DetailNavbar` now labels the anchor unconditionally.
+ * A `.detail-navbar__back` CSS selector would have passed straight through that.
+ */
+function backControl(page: import("@playwright/test").Page) {
+  return page
+    .getByRole(/* button or link */ "link", { name: "Back" })
+    .or(page.getByRole("button", { name: "Back" }));
+}
 
 for (const route of DETAIL_NAVBAR_ROUTES) {
   test(`A5: ${route} has a working back control at 375px`, async ({ page }) => {
@@ -966,7 +996,7 @@ for (const route of DETAIL_NAVBAR_ROUTES) {
     await page.setViewportSize({ width: 375, height: 800 });
     await page.goto(route);
 
-    const back = page.getByRole("button", { name: "Back" });
+    const back = backControl(page);
     await expect(back).toBeVisible();
     const box = await back.boundingBox();
     expect(box, `${route}: Back must have a real hit area, not a 0-height ghost`).not.toBeNull();
@@ -979,7 +1009,7 @@ test("A5: a mobile tab-bar destination does NOT get a phone back row", async ({ 
   await login(page);
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto("/explore/mvs");
-  await expect(page.getByRole("button", { name: "Back" })).toHaveCount(0);
+  await expect(backControl(page)).toHaveCount(0);
 });
 
 test("A5: the phone back control is NOT duplicated on desktop", async ({ page }) => {
@@ -1003,7 +1033,7 @@ test("3c / A5: /settings still has a reachable back control on a phone", async (
   await page.getByRole("button", { name: "Settings" }).click();
   await expect.poll(() => new URL(page.url()).pathname).toBe("/settings");
 
-  const back = page.getByRole("button", { name: "Back" });
+  const back = backControl(page);
   await expect(back).toBeVisible();
   const box = await back.boundingBox();
   expect(box, "Back must have a real hit area, not a 0-height ghost").not.toBeNull();
@@ -1249,7 +1279,7 @@ test("3e / A5: /creator has a working back control at 375px", async ({ page }) =
   await login(page);
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto("/creator?self=1");
-  const back = page.getByRole("button", { name: "Back" });
+  const back = backControl(page);
   await expect(back).toBeVisible();
   const box = await back.boundingBox();
   expect(box?.height ?? 0).toBeGreaterThan(0);

@@ -4,6 +4,7 @@ import IconButtonShowcase from './IconButtonShowcase'
 import CardShowcase from './CardShowcase'
 import ListItemShowcase from './ListItemShowcase'
 import BadgeShowcase from './BadgeShowcase'
+import TabsShowcase from './TabsShowcase'
 import './ComponentsPage.css'
 
 const NAV_ITEMS = [
@@ -12,6 +13,7 @@ const NAV_ITEMS = [
   { key: 'card', label: 'Card' },
   { key: 'list-item', label: 'List Item' },
   { key: 'badge', label: 'Badge' },
+  { key: 'tabs', label: 'Tabs' },
 ] as const
 
 type ComponentKey = (typeof NAV_ITEMS)[number]['key']
@@ -46,6 +48,7 @@ function ComponentsPage() {
           {activeKey === 'card' && <CardShowcase />}
           {activeKey === 'list-item' && <ListItemShowcase />}
           {activeKey === 'badge' && <BadgeShowcase />}
+          {activeKey === 'tabs' && <TabsShowcase />}
         </div>
       </div>
     </div>

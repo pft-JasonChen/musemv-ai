@@ -530,7 +530,11 @@ function BlogPage({ version }: { version: BlogVersion }) {
   )
 
   return (
-    <AppLayout navbar={<RoomNavbar title="Blog" credits={390} tabsSlot={controls} />} showFooter>
+    <AppLayout
+      navbar={<RoomNavbar title="Blog" credits={390} tabsSlot={controls} mobileBackHref="/home" />}
+      showFooter
+      showMobileHeader={false}
+    >
       <div id="blog-top" className={`blog-page blog-page--${version}`}>
         {version === 1 && <BlogOne articles={visibleArticles} />}
         {version === 3 && <BlogThree articles={visibleArticles} />}

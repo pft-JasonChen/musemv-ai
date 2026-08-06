@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import Button from '../../components/Button/Button'
 import IconButton from '../../components/IconButton/IconButton'
-import icStar from '../../assets/icons/ic_star.svg'
 import icChevronLeft from '../../assets/icons/ic_chevron-left.svg'
 import icChevronRight from '../../assets/icons/ic_chevron-right.svg'
 import video01 from '../../assets/hero/hero_01_Vintage Car-tmp-tmp.mp4?url'
@@ -12,19 +11,21 @@ import thumb02 from '../../assets/hero/hero_02_Splash.png'
 import video03 from '../../assets/hero/hero_03_Urban Fashion-tmp-tmp.mp4?url'
 import thumb03 from '../../assets/hero/hero_03_Urban Fashion.png'
 import video04 from '../../assets/hero/hero_04_midnight_static-tmp-tmp.mp4?url'
-import thumb04 from '../../assets/hero/hero_04_midnight_static.jpg'
+import thumb04 from '../../assets/hero/hero_04_midnight_static.jpeg'
 import video05 from '../../assets/hero/hero_05_pastel_film_converted.mp4?url'
-import thumb05 from '../../assets/hero/hero_05_pastel_film.jpg'
+import thumb05 from '../../assets/hero/hero_05_pastel_film.jpeg'
 import video06 from '../../assets/hero/hero_06_alice_in_wonderland.mp4?url'
 import thumb06 from '../../assets/hero/hero_06_alice_in_wonderland.jpg'
 import video07 from '../../assets/hero/hero_07_jpop.mp4?url'
-import thumb07 from '../../assets/hero/hero_07_jpop.jpg'
+import thumb07 from '../../assets/hero/hero_07_jpop.jpeg'
 import video08 from '../../assets/hero/hero_08_paper_wonderland_converted.mp4?url'
-import thumb08 from '../../assets/hero/hero_08_paper_wonderland.jpg'
+import thumb08 from '../../assets/hero/hero_08_paper_wonderland.jpeg'
 import './HeroBannerSection.css'
 
 // Mock content — no API to call yet, this is UI-only per project scope.
-const HERO_ITEMS = [
+// Exported so HeroBannerSectionV3 (the home-review-c proposal) can reuse the
+// same catalog instead of duplicating mock data.
+export const HERO_ITEMS = [
   { title: 'Vintage Drive', subtitle: 'Retro | 2-3 min', video: video01, thumbnail: thumb01 },
   { title: 'Splash Zone', subtitle: 'Energetic | 2-3 min', video: video02, thumbnail: thumb02 },
   { title: 'Urban Runway', subtitle: 'Fashion | 2-3 min', video: video03, thumbnail: thumb03 },
@@ -37,10 +38,6 @@ const HERO_ITEMS = [
 
 const ROTATE_INTERVAL_MS = 3000
 const FADE_MS = 250
-
-function maskStyle(src: string): CSSProperties {
-  return { maskImage: `url("${src}")`, WebkitMaskImage: `url("${src}")` }
-}
 
 // Fixed marketing headline (Figma node 1805:43562's "Text + CTA") — unlike
 // the video title/subtitle above it, this is NOT tied to which hero video is
@@ -111,14 +108,17 @@ function HeroHeadline() {
 
 // App-mobile variant only (see layoutMode.ts) — Figma "Top Hero Banner"
 // (node 369:7479), matched against the reference build's infinite draggable
-// carousel (scottwu630/ycmuse-prototype muse-prototype-v1.html): fixed
-// 272x153 cards, a single clone on each side for the infinite loop (rather
-// than the desktop carousel's 3-copy trick above, since this recenters via
-// drag release instead of free scroll), and only the centered card's
-// title/subtitle/CTA are revealed — the rest stay image+badge only.
-const MOBILE_CARD_W = 272
+// carousel (scottwu630/ycmuse-prototype muse-prototype-v1.html): a single
+// clone on each side for the infinite loop (rather than the desktop
+// carousel's 3-copy trick above, since this recenters via drag release
+// instead of free scroll), and only the centered card's title/subtitle/CTA
+// are revealed — the rest stay image+badge only.
+//
+// Card width is NOT a fixed px size (see HeroBannerSection.css — it's 85vw,
+// scaling with screen width instead of staying pinned at Figma's 272px/320
+// reference), so the drag/snap math below can't use a constant either — it
+// measures the actual rendered card width on mount and on resize instead.
 const MOBILE_GAP = 8
-const MOBILE_STEP = MOBILE_CARD_W + MOBILE_GAP
 const MOBILE_AUTO_MS = 4000
 const MOBILE_ANIM_MS = 380
 const MOBILE_DRAG_THRESHOLD = 60
@@ -136,7 +136,17 @@ function HeroBannerMobile() {
   const domIndexRef = useRef(1)
   const dragRef = useRef({ startX: 0, dragging: false })
   const timerRef = useRef<number | undefined>(undefined)
+  // Card width is 85vw (see HeroBannerSection.css), not a fixed px size, so
+  // the step (card + gap) used for all translateX math is measured from the
+  // actual rendered card instead of a constant — kept in a ref (not state)
+  // since it's read inside drag handlers that shouldn't re-render on change.
+  const stepRef = useRef(0)
   const [activeReal, setActiveReal] = useState(0)
+
+  function measureStep() {
+    const firstCard = trackRef.current?.firstElementChild
+    return firstCard instanceof HTMLElement ? firstCard.offsetWidth + MOBILE_GAP : 0
+  }
 
   function setTrackX(x: number, animated: boolean) {
     const track = trackRef.current
@@ -147,7 +157,7 @@ function HeroBannerMobile() {
 
   function goToDom(domIndex: number, animated: boolean) {
     domIndexRef.current = domIndex
-    setTrackX(-domIndex * MOBILE_STEP, animated)
+    setTrackX(-domIndex * stepRef.current, animated)
     setActiveReal(mobileRealIndex(domIndex))
   }
 
@@ -169,16 +179,26 @@ function HeroBannerMobile() {
   }
 
   useEffect(() => {
+    stepRef.current = measureStep()
     goToDom(1, false)
     startAuto()
     function handleVisibility() {
       if (document.hidden) window.clearInterval(timerRef.current)
       else startAuto()
     }
+    // Card width is viewport-relative (85vw), so its px size changes on
+    // resize/rotate — remeasure and snap the track to the (new) current
+    // card without a transition, same as the initial mount above.
+    function handleResize() {
+      stepRef.current = measureStep()
+      setTrackX(-domIndexRef.current * stepRef.current, false)
+    }
     document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('resize', handleResize)
     return () => {
       window.clearInterval(timerRef.current)
       document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('resize', handleResize)
     }
     // Mount-only: goToDom/startAuto close over refs, not state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -188,13 +208,13 @@ function HeroBannerMobile() {
     dragRef.current = { startX: event.clientX, dragging: true }
     event.currentTarget.setPointerCapture(event.pointerId)
     window.clearInterval(timerRef.current)
-    setTrackX(-domIndexRef.current * MOBILE_STEP, false)
+    setTrackX(-domIndexRef.current * stepRef.current, false)
   }
 
   function handlePointerMove(event: ReactPointerEvent) {
     if (!dragRef.current.dragging) return
     const dx = event.clientX - dragRef.current.startX
-    setTrackX(-domIndexRef.current * MOBILE_STEP + dx, false)
+    setTrackX(-domIndexRef.current * stepRef.current + dx, false)
   }
 
   function handlePointerUp(event: ReactPointerEvent) {
@@ -230,10 +250,6 @@ function HeroBannerMobile() {
                 <img src={item.thumbnail} alt="" className="hero-banner-mobile__bg" draggable={false} />
               )}
               <div className="hero-banner-mobile__scrim" aria-hidden="true" />
-              <span className="hero-banner-mobile__badge">
-                <span className="hero-banner-mobile__badge-icon" style={maskStyle(icStar)} aria-hidden="true" />
-                Trending MV
-              </span>
               <div className={`hero-banner-mobile__bottom${isActive ? ' hero-banner-mobile__bottom--active' : ''}`}>
                 <div className="hero-banner-mobile__text">
                   <p className="hero-banner-mobile__title">{item.title}</p>

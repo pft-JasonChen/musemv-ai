@@ -17,7 +17,8 @@ function ToolSelectorSection() {
           <span className="tool-selector__icon" style={maskStyle(icVideoAi)} aria-hidden="true" />
         </div>
         <div className="tool-selector__text">
-          <p className="tool-selector__title">Music Video Creator</p>
+          <p className="tool-selector__title tool-selector__title--desktop">Music Video Creator</p>
+          <p className="tool-selector__title tool-selector__title--mobile">Music Video</p>
           <p className="tool-selector__description">
             Upload your selfie, choose a style, and watch AI craft a stunning music video in minutes.
           </p>
@@ -36,7 +37,8 @@ function ToolSelectorSection() {
           <span className="tool-selector__icon" style={maskStyle(icSongAi)} aria-hidden="true" />
         </div>
         <div className="tool-selector__text">
-          <p className="tool-selector__title">AI Song Composer</p>
+          <p className="tool-selector__title tool-selector__title--desktop">AI Song Composer</p>
+          <p className="tool-selector__title tool-selector__title--mobile">AI Song</p>
           <p className="tool-selector__description">
             Write your lyrics, pick a style, and AI generates a full song ready to share or use in your MV.
           </p>

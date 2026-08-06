@@ -57,8 +57,9 @@ export function useBackNavigation(fallbackPath: string) {
 export function DetailNavbar({
   fallbackPath,
   title,
+  mobileTitle,
   tabsSlot,
-  phoneBack = true,
+  hideMobileBar = false,
 }: {
   /** Where "back" goes when there is no history — the section entry, per Q6. */
   fallbackPath: string;
@@ -66,16 +67,26 @@ export function DetailNavbar({
    *  centred page title instead of the "‹ Back" text. Passing a title switches to
    *  that layout; omitting it keeps MV/Song Detail's original behaviour. */
   title?: string;
+  /**
+   * Phone-only heading, for a screen whose DESKTOP layout keeps the "‹ Back"
+   * text link (i.e. passes no `title`) but still needs something in the compact
+   * mobile bar. Ignored when `title` is set — that already drives both.
+   * New in the 2026-08-06 drop; DP uses it for `/creator` and Settings.
+   */
+  mobileTitle?: string;
   /** Extra content (e.g. a Tabs row) rendered as a second row inside this SAME
-   *  sticky box, so the two share one background instead of showing a seam. */
+   *  sticky box, so the two share one background instead of showing a seam.
+   *  NOTE: the 2026-08-06 drop hides `.detail-navbar__tabs` below 767px on
+   *  purpose ("not designed for mobile yet"), so a tabs row is desktop-only. */
   tabsSlot?: React.ReactNode;
   /**
-   * A5: render the phone-only back control. Defaults to TRUE so a new detail
-   * screen fails safe — being trapped on a phone is much worse than an extra
-   * control. Pass `false` only for a screen the mobile tab bar can already
-   * reach (Explore, Create, History), where back solves nothing and costs a row.
+   * Suppress the compact mobile bar entirely. Two reasons to pass it, and DP
+   * uses it for the first: the page renders its OWN mobile header (DP's
+   * MVDetailPage list/player views do), so the two would stack; or the route is
+   * reachable from the mobile tab bar, where a back control solves nothing —
+   * which is what WA's retired `phoneBack={false}` meant.
    */
-  phoneBack?: boolean;
+  hideMobileBar?: boolean;
 }) {
   const { loggedIn, subscribed, openSignIn } = useAuth();
   const { credits } = useCredits();
@@ -87,38 +98,26 @@ export function DetailNavbar({
   return (
     <>
       {/*
-        ── A5: the phone back control ──────────────────────────────────────────
-        `AppLayout.css` sets `.detail-navbar { display: none }` below 767px, and
-        DP's `MobileHeader` carries no back affordance, so on a phone every
-        detail screen is enterable and not leavable. Measured on DP itself:
-        five of its pages declare a back control whose computed height is 0 at
-        375px (DESIGNER-TODO A5 has the table).
+        ── A5 IS ANSWERED, AND WA'S WORKAROUND IS GONE (2026-08-06 drop) ───────
+        Until this drop, `AppLayout.css` set `.detail-navbar { display: none }`
+        below 767px and DP's `MobileHeader` carried no back affordance, so every
+        detail screen was enterable and not leavable on a phone. WA filled the
+        gap with its own Tailwind row right here — deliberately NOT using
+        `.detail-navbar` classes, because that box was the thing being hidden.
 
-        This element is WA's OWN — it is not a DP element and deliberately does
-        not use `.detail-navbar` classes, because that box is the thing being
-        hidden. Putting it here rather than in each view means one definition
-        for all five affected routes and ONE place to delete when a drop ships
-        a mobile back affordance. `/settings` had a bespoke copy of this; it now
-        comes from here.
+        `2670ed2` supersedes it: AppLayout no longer hides `.detail-navbar` at
+        all, and DetailNavbar.css gives it a compact 50px back+title bar built
+        out of `__top` on a 28px/1fr/28px grid. So the workaround is deleted
+        rather than kept alongside — two back controls stacked on one phone
+        screen is its own defect, and `.detail-navbar--hide-mobile-bar` is now
+        the supported way to say "this route does not need one".
 
-        Guarded by `e2e/behaviour-regressions.spec.ts` — "A5: every DetailNavbar
-        route has a working back control at 375px".
+        The guard does NOT change: `e2e/behaviour-regressions.spec.ts`'s "A5:
+        every DetailNavbar route has a working back control at 375px" still has
+        to pass, now against DP's control instead of ours. That is the point of
+        having written it against BEHAVIOUR rather than against the markup.
       */}
-      {phoneBack && (
-        <div className="mb-4 flex items-center gap-3 md:hidden">
-          <button
-            type="button"
-            aria-label="Back"
-            onClick={goBack}
-            className="icon-button icon-button--small icon-button--tertiary"
-          >
-            <DpIcon name="ic_arrow_left" className="icon-button__icon" />
-          </button>
-          {title && <h1 className="text-[20px] font-extrabold">{title}</h1>}
-        </div>
-      )}
-
-      <header className="detail-navbar">
+      <header className={`detail-navbar${hideMobileBar ? " detail-navbar--hide-mobile-bar" : ""}`}>
         <div className="detail-navbar__top">
           {/*
           A real anchor to the fallback, with the click intercepted so it runs
@@ -134,15 +133,44 @@ export function DetailNavbar({
               goBack();
             }}
             className={`detail-navbar__back${title ? " detail-navbar__back--icon-only" : ""}`}
-            aria-label={title ? "Back" : undefined}
+            /*
+              ALWAYS labelled, which is a deliberate divergence from DP.
+
+              DP labels this only in its icon-only form, and relies on the visible
+              word "Back" the rest of the time. That reasoning stops holding at
+              767px: the 2026-08-06 drop hides `.detail-navbar__back-label`, so
+              the anchor's only child is an aria-hidden mask span and its
+              accessible name computes to EMPTY — an unnamed link that is the
+              sole way off the screen on a phone (WCAG 2.4.4 / 4.1.2).
+
+              It is worth knowing how this was caught, because it was nearly
+              missed: a DOM sweep counting "controls whose text matches /back/"
+              reported one on every affected route and looked like proof. It was
+              reading `textContent`, which still returns text inside a
+              `display: none` element. `getByRole(..., { name })` does not, and
+              the four A5 e2e guards went red. The cheap measurement agreed with
+              the wrong answer; the accessibility-tree one did not.
+
+              Costs no pixels, so it needs no designer decision — but DP has the
+              same hole, hence DESIGNER-TODO A19.
+            */
+            aria-label="Back"
           >
             <span className="detail-navbar__back-button">
               <DpIcon name="ic_arrow_left" className="detail-navbar__back-icon" />
             </span>
-            {!title && "Back"}
+            {/* The 2026-08-06 drop wraps this word in its own span and hides
+                THAT below 767px, so the compact mobile bar's 28px/1fr/28px grid
+                gets a 28px back cell instead of a "‹ Back" text link wide enough
+                to shove the title off centre. A bare string here still renders
+                on a phone and no rule can reach it. */}
+            {!title && <span className="detail-navbar__back-label">Back</span>}
           </a>
 
           {title && <p className="detail-navbar__title">{title}</p>}
+          {!title && mobileTitle && (
+            <p className="detail-navbar__title detail-navbar__title--mobile-only">{mobileTitle}</p>
+          )}
 
           {loggedIn ? (
             <div className="detail-navbar__actions">

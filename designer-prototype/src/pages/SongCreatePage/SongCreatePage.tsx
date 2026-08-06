@@ -70,6 +70,10 @@ const ENHANCED_SUGGESTIONS = [
 
 // Same catalog as everywhere else in the app — no fabricated song data.
 const MY_CREATIONS = SONGS.slice(0, 7)
+// Same slice/order as Home's NewSongsSection — reused here (not MY_CREATIONS)
+// when the result view was reached from SongDetailPage's community catalog,
+// since showing the signed-in user's own songs there wouldn't make sense.
+const NEWLY_RELEASED_SONGS = SONGS.slice(6, 12)
 
 // Figma "Create Song — Processing" (node 49:92) — bar heights taken as-is
 // from the design, animated into an equalizer pulse instead of the static
@@ -183,8 +187,21 @@ function SongProcessing({ onComplete }: { onComplete: () => void }) {
 // background and no custom back/home nav bar — both would duplicate this
 // app's existing RoomNavbar/MobileHeader chrome, which stays visible here
 // the same way it did through the Processing stage.
-function SongResult({ song, onRecreate }: { song: (typeof SONGS)[number]; onRecreate: () => void }) {
-  const [playlist] = useState(() => [song, ...MY_CREATIONS.filter((creation) => creation.id !== song.id)])
+function SongResult({
+  song,
+  onRecreate,
+  fromSongDetail = false,
+}: {
+  song: (typeof SONGS)[number]
+  onRecreate: () => void
+  /** SongDetailPage's community catalog reuses this result view instead of
+   *  its own player (see SongCreatePage's isDetailNavbarResult) — the
+   *  "keep exploring" grid below should offer more of that same community
+   *  catalog then, not the signed-in user's own My Creations. */
+  fromSongDetail?: boolean
+}) {
+  const secondaryCatalog = fromSongDetail ? NEWLY_RELEASED_SONGS : MY_CREATIONS
+  const [playlist] = useState(() => [song, ...secondaryCatalog.filter((creation) => creation.id !== song.id)])
   const [activeSongIndex, setActiveSongIndex] = useState(0)
   const activeSong = playlist[activeSongIndex]
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -468,7 +485,7 @@ function SongResult({ song, onRecreate }: { song: (typeof SONGS)[number]; onRecr
           too, rather than dropping it, is this build's own reasonable
           default (flagged for confirmation). */}
       <div className="song-result__creations">
-        <p className="song-result__creations-title">My Creations</p>
+        <p className="song-result__creations-title">{fromSongDetail ? 'Newly Released Songs' : 'My Creations'}</p>
         <div className="song-result__creations-grid">
           {playlist.map((creation, index) => (
             <button
@@ -479,7 +496,10 @@ function SongResult({ song, onRecreate }: { song: (typeof SONGS)[number]; onRecr
             >
               <ListItem
                 title={creation.title}
+                username={creation.username}
                 coverImage={creation.cover}
+                cta
+                createHref={`/song-create?stage=result&id=${creation.id}${fromSongDetail ? '&from=song-detail' : ''}`}
                 plays={0}
                 likes={0}
                 shares={0}
@@ -514,7 +534,17 @@ function SongCreatePage() {
   const requestedResultSong = params.get('stage') === 'result'
     ? SONGS.find((song) => song.id === params.get('id')) ?? null
     : null
-  const isHistoryResult = params.get('from') === 'history' && requestedResultSong !== null
+  const resultFrom = params.get('from')
+  // History and SongDetailPage both reuse this same result-stage player
+  // instead of building their own — each needs its own backHref, not the
+  // Feature Room's usual bare RoomNavbar.
+  const isDetailNavbarResult = requestedResultSong !== null && (resultFrom === 'history' || resultFrom === 'song-detail')
+  const resultBackHref = resultFrom === 'song-detail' ? '/song-detail' : '/history'
+  // Every current "Create" entry point (New Songs Section today) passes
+  // from=home, and unrecognized/missing values fall back there too — the
+  // same "safe fallback after a direct deep link" convention MV/Song
+  // Detail's own source-aware back navigation already uses.
+  const mobileBackHref = '/home'
   const [stage, setStage] = useState<'form' | 'processing' | 'result'>(requestedResultSong ? 'result' : 'form')
   const [resultSong, setResultSong] = useState<(typeof SONGS)[number] | null>(requestedResultSong)
   const [mode, setMode] = useState<SongMode>('Simple')
@@ -556,10 +586,11 @@ function SongCreatePage() {
   return (
     <AppLayout
       navbar={
-        isHistoryResult
-          ? <DetailNavbar title="AI Song" credits={390} backHref="/history" />
-          : <RoomNavbar title="AI Song" credits={390} />
+        isDetailNavbarResult
+          ? <DetailNavbar title="AI Song" credits={390} backHref={resultBackHref} />
+          : <RoomNavbar title="AI Song" credits={390} mobileBackHref={mobileBackHref} />
       }
+      showMobileHeader={false}
     >
       <div className="song-create">
         <div className={`song-create__panel${stage !== 'form' ? ' song-create__panel--full' : ''}`}>
@@ -571,7 +602,11 @@ function SongCreatePage() {
               }}
             />
           ) : stage === 'result' && resultSong ? (
-            <SongResult song={resultSong} onRecreate={() => setStage('form')} />
+            <SongResult
+              song={resultSong}
+              onRecreate={() => setStage('form')}
+              fromSongDetail={resultFrom === 'song-detail'}
+            />
           ) : (
             <>
           <Tabs tabs={['Simple', 'Custom']} active={mode} onChange={(tab) => setMode(tab as SongMode)} />

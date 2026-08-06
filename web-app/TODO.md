@@ -193,7 +193,7 @@ with A9 in the exclusion list and a comment pointing at it — the same pattern 
 ## 7. Affordance findings from the Phase 3 acceptance review (found 2026-08-06)
 
 > **SCOPE RULE, set by the product owner 2026-08-06.** This phase's job is that **the code
-> architecture is sound enough for RD to wire the backend**. A finding that is *purely UI* and
+> architecture is sound enough for RD to wire the backend**. A finding that is _purely UI_ and
 > does not touch the contract, the providers, or a product rule is **deliberately left unfixed**
 > until the designer ships the next DP drop. That covers most of 7a–7h below and most of
 > `DESIGNER-TODO`. It is a decision, not a backlog that slipped.
@@ -259,6 +259,27 @@ when logged out or when the user has made nothing, **My Creations** over `useHis
 they have. Title, rows and "See all" switch together. The extra "and has made something"
 condition is WA-specific: DP can key on sign-in alone because its `MY_CREATIONS` fixture is never
 empty. Guarded in `e2e` (three tests, including the signed-in-but-empty case).
+
+**7i. Two capabilities drop 2 (`2670ed2`) shipped and WA has not adopted.** Neither costs
+anything today — the current behaviour is unchanged and nothing is lost — but both are the
+designer's answer to A5 and WA is only using half of it.
+
+- **`RoomNavbar`'s `mobileBackHref`.** DP passes it on AccountPage and SongCreatePage; a
+  RoomNavbar that gets it renders the same 50px compact back bar `DetailNavbar` now has, via a
+  `.room-navbar--mobile-back` modifier that `AppLayout.css` explicitly exempts from its mobile
+  hide rule. WA's RoomNavbar has no such prop, so `/mv/room`, `/song/create` and `/profile` stay
+  hidden on phones exactly as before. **Not a regression, an unused affordance.** `/history`
+  correctly stays out of it — DP's own comment names History as the page that keeps the old
+  behaviour, which is also why the `.room-navbar` half of the A4 override must stay.
+- **DP's page-specific mobile headers.** `MVDetailPage` passes `hideMobileBar` and draws
+  `.mv-detail__mobile-header` / `.mv-player__mobile-header` itself (back + title + a
+  "Singing | 1-2 min" style subtitle). WA has not ported those, so `/watch` keeps
+  `DetailNavbar`'s generic bar instead. **Do not pass `hideMobileBar` there until the replacement
+  exists** — deleting the affordance before building its successor is precisely how A5 happened.
+
+**Done looks like:** the prop threaded through `RoomNavbar.tsx` with the same
+`localePath`-and-intercept treatment `DetailNavbar` uses (R-9), and either the two mobile headers
+ported or a recorded decision that DetailNavbar's bar is good enough for WA.
 
 **7h. `/mv/room`'s disabled CTA lost its reason line** ("Add a song and a description to
 continue."). Not a DP-fidelity constraint — `/song/create` KEPT its equivalent inside migrated

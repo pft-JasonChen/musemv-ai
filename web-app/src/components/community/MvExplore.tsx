@@ -169,7 +169,7 @@ export function MvExplore() {
           back to Home, since this page IS its section's entry point. */}
       {/* A5: no phone back — Explore is a mobile tab-bar destination, so there is
           nothing to be trapped in and the row would only cost vertical space. */}
-      <DetailNavbar fallbackPath="/" phoneBack={false} />
+      <DetailNavbar fallbackPath="/" hideMobileBar />
 
       <div className="mv-detail">
         {/* EXP-06's offline/empty states are still WA's Tailwind component. It

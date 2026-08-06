@@ -46,6 +46,10 @@
   transform: scale(1);
 }
 
+.share-dialog__handle {
+  display: none;
+}
+
 .share-dialog__header {
   display: flex;
   align-items: center;
@@ -136,4 +140,35 @@
 
 .share-dialog__copy:hover {
   opacity: 0.9;
+}
+
+/* Same centered-dialog-becomes-bottom-sheet convention as LyricsSheet/
+   LoginModal below the mobile breakpoint. */
+@media (max-width: 767px) {
+  .share-dialog-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .share-dialog {
+    max-width: none;
+    border-radius: 26px 26px 0 0;
+    box-shadow: none;
+    /* Bottom sheet slides up instead of the desktop dialog's scale-in. */
+    transform: translateY(100%);
+  }
+
+  .share-dialog-overlay--visible .share-dialog {
+    transform: translateY(0);
+  }
+
+  .share-dialog__handle {
+    display: block;
+    align-self: center;
+    width: 36px;
+    height: 4px;
+    margin-bottom: 12px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.15);
+  }
 }

@@ -114,7 +114,7 @@ function MVResultPage() {
   const editHref = fromHistory ? '/mv-edit?from=history' : '/mv-edit'
 
   return (
-    <AppLayout navbar={<DetailNavbar title="Result" credits={390} backHref={backHref} />}>
+    <AppLayout navbar={<DetailNavbar title="Result" credits={390} backHref={backHref} />} showMobileHeader={false}>
       <div className="mv-result">
         <div className="mv-result__panel">
           <div

@@ -4,6 +4,16 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Disable iOS Safari's automatic text-size adjustment — without this,
+     it silently boosts/shrinks font sizes on top of whatever our own
+     breakpoint media queries specify, so text reads as continuously
+     scaling with viewport width instead of snapping cleanly between the
+     mobile and desktop font-size values we actually author. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   min-width: 320px;

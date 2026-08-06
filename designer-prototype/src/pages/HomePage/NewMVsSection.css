@@ -61,3 +61,43 @@
   opacity: 1;
   pointer-events: auto;
 }
+
+/*
+  App-mobile variant (see src/config/layoutMode.ts) — Figma "MV Template"
+  cards (node 369:7545 etc.): a much smaller card than desktop's 6-per-row
+  formula, with 12px radius (not --radius-xl) and small type. Figma's 110px
+  is against its 320px frame (110/320 = 34.375%) — expressed as vw (not a
+  fixed px) so the ~2.5-cards-visible reveal holds at wider phone widths too
+  instead of only being correct at exactly 320px (same reasoning as the
+  Hero card's 85vw — see HeroBannerSection.css). Capped at 160px (reached
+  at ~465px width, well within this 767px-max range) so it stays a visibly
+  compact "mini card" on larger phones/foldables instead of approaching
+  desktop's own 200px floor — this range never reaches the desktop layout
+  itself, so nothing above 767px depends on this cap.
+*/
+@media (max-width: 767px) {
+  .app-layout--mobile-app .new-mvs__row-wrapper {
+    --new-mvs-card-width: min(34.375vw, 160px);
+  }
+
+  .app-layout--mobile-app .new-mvs__row {
+    gap: 10px;
+  }
+
+  .app-layout--mobile-app .new-mvs .card--flat {
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .app-layout--mobile-app .new-mvs .card__title {
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: -0.13px;
+  }
+
+  .app-layout--mobile-app .new-mvs .card__subtitle {
+    font-size: 9px;
+    line-height: 11px;
+    letter-spacing: -0.09px;
+  }
+}

@@ -18,6 +18,7 @@ import icPause from '../../assets/icons/ic_pause.svg'
 import icSpeakerOn from '../../assets/icons/ic_speaker_on.svg'
 import icSpeakerOff from '../../assets/icons/ic_speaker_off.svg'
 import icExpand from '../../assets/icons/ic_expand.svg'
+import icArrowLeft from '../../assets/icons/ic_arrow_left.svg'
 import { MUSIC_VIDEOS } from '../../data/musicVideos'
 import type { MvRatio } from '../../data/musicVideos'
 import './MVDetailPage.css'
@@ -40,12 +41,12 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-function VideoPlayer({ item }: { item: (typeof MV_CATALOG)[number] }) {
+function VideoPlayer({ item, backHref }: { item: (typeof MV_CATALOG)[number]; backHref: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<HTMLDivElement>(null)
 
-  const [isPortrait, setIsPortrait] = useState(false)
+  const isPortrait = item.ratio === '3:4'
   const [playing, setPlaying] = useState(true)
   const [muted, setMuted] = useState(true)
   const [liked, setLiked] = useState(false)
@@ -56,7 +57,6 @@ function VideoPlayer({ item }: { item: (typeof MV_CATALOG)[number] }) {
   function handleLoadedMetadata() {
     const video = videoRef.current
     if (!video) return
-    setIsPortrait(video.videoHeight > video.videoWidth)
     setDuration(video.duration)
   }
 
@@ -113,7 +113,17 @@ function VideoPlayer({ item }: { item: (typeof MV_CATALOG)[number] }) {
   const progressRatio = duration ? currentTime / duration : 0
 
   return (
-    <div className="mv-player" ref={playerRef}>
+    <div className={`mv-player${isPortrait ? ' mv-player--portrait' : ''}`} ref={playerRef}>
+      <div className="mv-player__mobile-header">
+        <a href={backHref} className="mv-player__mobile-back" aria-label="Back to Trending MVs">
+          <span className="mv-player__mobile-back-icon" style={maskStyle(icArrowLeft)} aria-hidden="true" />
+        </a>
+        <div className="mv-player__mobile-heading">
+          <p>{item.title}</p>
+          <span>{item.ratio === '3:4' ? 'Singing | 1-2 min' : 'Storytelling | 2-3 min'}</span>
+        </div>
+        <span className="mv-player__mobile-header-spacer" aria-hidden="true" />
+      </div>
       {isPortrait && (
         <video className="mv-player__backdrop" src={item.video} muted loop autoPlay playsInline aria-hidden="true" />
       )}
@@ -152,6 +162,14 @@ function VideoPlayer({ item }: { item: (typeof MV_CATALOG)[number] }) {
           </div>
 
           <div className="mv-player__actions">
+            <button
+              type="button"
+              className="mv-player__mobile-profile"
+              onClick={() => (window.location.href = communityProfileHref(item.username))}
+              aria-label={`View ${item.username}'s profile`}
+            >
+              <span className="mv-player__avatar-icon" style={maskStyle(icAccount)} aria-hidden="true" />
+            </button>
             <div className="mv-player__like-share">
               <IconButton
                 size="Medium"
@@ -177,7 +195,8 @@ function VideoPlayer({ item }: { item: (typeof MV_CATALOG)[number] }) {
               className="mv-player__cta"
               onClick={() => { window.location.href = '/mv-create' }}
             >
-              Create MV
+              <span className="mv-player__cta-desktop">Create MV</span>
+              <span className="mv-player__cta-mobile">Create Music Video</span>
             </Button>
           </div>
         </div>
@@ -215,7 +234,7 @@ function VideoPlayer({ item }: { item: (typeof MV_CATALOG)[number] }) {
             />
           </button>
 
-          <button type="button" className="mv-player__control-btn" onClick={toggleFullscreen} aria-label="Fullscreen">
+          <button type="button" className="mv-player__control-btn mv-player__fullscreen" onClick={toggleFullscreen} aria-label="Fullscreen">
             <span className="mv-player__control-icon" style={maskStyle(icExpand)} aria-hidden="true" />
           </button>
         </div>
@@ -316,10 +335,20 @@ function MvGrid({ items, source }: { items: readonly MusicVideoWithMeta[]; sourc
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia(DESKTOP_QUERY).matches : false,
   )
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false,
+  )
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(DESKTOP_QUERY)
     const handleChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches)
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)')
+    const handleChange = (event: MediaQueryListEvent) => setIsMobile(event.matches)
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [])
@@ -335,13 +364,52 @@ function MvGrid({ items, source }: { items: readonly MusicVideoWithMeta[]; sourc
   // Below Laptop width, the justified-row math (built around the 1440
   // desktop frame Figma provides) doesn't have room to work with — fall
   // back to the simpler fixed-width wrapping grid instead.
+  if (isMobile) {
+    // A plain index % 2 split looks even by count, but MUSIC_VIDEOS alternates
+    // ratio by index too (RATIOS[index % 2] in musicVideos.ts) — so it landed
+    // every 3:4 (taller) item in one column and every 4:3 (shorter) item in
+    // the other, making one column run far longer than the other. Greedily
+    // adding each item to whichever column's estimated height (both columns
+    // share the same width, so 1/aspectRatio is a valid proportional height)
+    // is currently smaller keeps the two columns balanced regardless of the
+    // source ratio pattern.
+    const columns: MusicVideoWithMeta[][] = [[], []]
+    const columnHeights = [0, 0]
+    items.forEach((mv) => {
+      const shorter = columnHeights[0] <= columnHeights[1] ? 0 : 1
+      columns[shorter].push(mv)
+      columnHeights[shorter] += 1 / aspectRatioOf(mv.ratio)
+    })
+    return (
+      <div className="mv-detail__mobile-grid" ref={containerRef}>
+        {columns.map((column, columnIndex) => (
+          <div className="mv-detail__mobile-column" key={columnIndex}>
+            {column.map((mv) => (
+              <a key={mv.id} href={`/mv-detail?id=${mv.id}&from=${source}&view=all`} className="mv-detail__grid-item">
+                <Card
+                  type="Video"
+                  ratio={mv.ratio}
+                  community
+                  title={mv.title}
+                  username={mv.username}
+                  likes={mv.likes}
+                  coverImage={mv.cover}
+                />
+              </a>
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   if (!isDesktop) {
     return (
       <div className="mv-detail__grid mv-detail__grid--wrap" ref={containerRef}>
         {items.map((mv) => (
           <a
             key={mv.id}
-            href={`/mv-detail?id=${mv.id}&from=${source}`}
+            href={`/mv-detail?id=${mv.id}&from=${source}&view=all`}
             className={`mv-detail__grid-item mv-detail__grid-item--${mv.ratio.replace(':', '-')}`}
           >
             <Card
@@ -369,7 +437,7 @@ function MvGrid({ items, source }: { items: readonly MusicVideoWithMeta[]; sourc
           {row.items.map((mv) => (
             <a
               key={mv.id}
-              href={`/mv-detail?id=${mv.id}&from=${source}`}
+              href={`/mv-detail?id=${mv.id}&from=${source}&view=all`}
               className="mv-detail__grid-item"
               style={{ width: row.coverHeight * aspectRatioOf(mv.ratio) }}
             >
@@ -398,6 +466,7 @@ const NEWLY_RELEASED = [...MV_CATALOG].reverse()
 function MVDetailPage() {
   const params = new URLSearchParams(window.location.search)
   const selected = MV_CATALOG.find((mv) => mv.id === params.get('id'))
+  const fromAll = params.get('view') === 'all'
   const requestedSource = params.get('from')
   const source =
     requestedSource === 'mv-create' || requestedSource === 'history' || requestedSource === 'community-profile'
@@ -413,14 +482,23 @@ function MVDetailPage() {
           : '/home'
 
   return (
-    <AppLayout navbar={<DetailNavbar credits={390} backHref={backHref} />}>
-      <div className="mv-detail">
-        {selected && <VideoPlayer item={selected} />}
+    <AppLayout navbar={<DetailNavbar credits={390} backHref={backHref} hideMobileBar />} showMobileHeader={false}>
+      <div className={`mv-detail${selected ? ' mv-detail--selected' : ''}`}>
+        {!selected && (
+          <header className="mv-detail__mobile-header">
+            <a href={backHref} className="mv-detail__mobile-back" aria-label="Back">
+              <span style={maskStyle(icArrowLeft)} aria-hidden="true" />
+            </a>
+            <h1>Trending MVs</h1>
+            <span className="mv-detail__mobile-header-spacer" aria-hidden="true" />
+          </header>
+        )}
+        {selected && <VideoPlayer item={selected} backHref={fromAll ? `/mv-detail?from=${source}` : backHref} />}
 
         {/* This page is already the "See all" destination, so neither
             section links anywhere further. */}
-        <section className="mv-detail__grid-section">
-          <SectionHeader title="Top Picks Music Videos" showSeeAll={false} />
+        <section className="mv-detail__grid-section mv-detail__grid-section--primary">
+          <SectionHeader title="Trending Music Videos" showSeeAll={false} />
           <MvGrid items={MV_CATALOG} source={source} />
         </section>
 

@@ -50,7 +50,97 @@ gap, not an oversight.
 
 ---
 
-## 2. The DP re-sync — measured 2026-08-06, so you do not have to
+## 2. The DP re-sync — ⛔ **STARTED, THEN BLOCKED. Do not treat it as done. Read §2.0 first.**
+
+### 2.0 The blocker, and why "13 stylesheets changed" understated the job
+
+**Two of the 13 gated stylesheets assume DOM that WA does not have.** Re-copying them verbatim —
+which is exactly what gate G2-b demands — therefore deletes working screens. This was NOT visible
+in the file-level diff, in `check-designer-css.mjs`, or in typecheck/lint/vitest/build/guard-greps,
+all of which went green. It was found by `e2e`, and only after a first e2e run had to be thrown
+away for measuring a poisoned environment (see the note at the end of this section).
+
+| Stylesheet           | What the drop did                                                                                         | What it does to WA today                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `SongDetailPage.css` | **Deleted the entire `.now-playing__*` block** — 54 rules down to 2                                       | `/song/play`'s desktop player is WA's slice-3b markup with no stylesheet behind it                             |
+| `MVDetailPage.css`   | Below 768px hides **every** `.mv-detail__grid-section` and expects `.mv-detail__mobile-grid` to take over | `/explore/mvs` renders **blank on phones** — the grid is `hidden` and WA has no mobile grid to replace it with |
+
+**The `.now-playing__*` deletion is not a tidy-up: DP replaced that player with `SongPlayBar`.**
+`SongDetailPage.tsx` now does `{player.isOpen && <SongPlayBar player={player} />}`, and so does
+`HomePage/NewSongsSection.tsx`. So the component this file listed under "not yet assessed —
+nobody has decided whether it is in scope" is **load-bearing for the re-sync**, not optional:
+`SongPlayBar.tsx` (147) + `SongPlayBar.css` (261) + `hooks/useSongPlayer.ts` (146).
+
+**That is a product decision and it has not been made.** WA's `/song/play` is a full-screen Now
+Playing surface; DP's replacement is a persistent bottom bar that also appears on the landing
+page and hides itself below 768px. Adopting it changes what `/song/play` IS, which is exactly the
+class of change the error log says to ask about rather than encode.
+
+**Three ways out, for whoever picks this up — the product owner picks, not the session:**
+
+1. **Adopt `SongPlayBar`** (and port `.mv-detail__mobile-grid` + DP's two mobile headers). This is
+   the faithful drop-2 result, and it makes the landing page slice easier because
+   `NewSongsSection` needs the same bar. Biggest, and it is a real UX change to `/song/play`.
+2. **Hold `SongDetailPage.css` and `MVDetailPage.css` at drop 1** and take the other 11. Cheap and
+   green today, but it breaks G2-b's "33 files byte-identical" on purpose, so it has to be a
+   recorded exception with an expiry, not a silent skip — and it forfeits file-level re-sync for
+   the two biggest stylesheets, which is the whole reason D1 copies them verbatim.
+3. **Revert the re-sync**, keep this document, and do it as its own properly-budgeted slice
+   alongside the landing page (which needs `SongPlayBar` anyway).
+
+**State of the branch as committed:** the drop is vendored, all 13 stylesheets are re-copied, the
+A5 work below is complete and correct, and **`e2e` is red on 7 tests** — 2 of them the blocker
+above, 4 the A5 selector change (fixed, unverified), 1 the deliberate mobile-tabs removal whose
+guard still asserts the old decision. `typecheck` / `lint` / `vitest` / `build` / `guard-greps` /
+`check-designer-css` are all green, which is precisely the point: **six green gates and two
+deleted screens.**
+
+**And a warning about how you measure this.** The first full `e2e` reported **26** failures. Run
+again alone on a quiet machine it reported **7**. The 19 that evaporated were the Stop hook firing
+a second concurrent `e2e` against the same port and build — the documented poisoning, third
+occurrence. Before believing any red list here: one run, one machine, and prove the 238 KB
+stylesheet is 200 first.
+
+### 2.1 The measurements — all verified, all held
+
+> **Status: the drop is vendored and the 13 stylesheets are re-copied.**
+> `PROVENANCE.md` now names `2670ed2`; `check-designer-css.mjs` is back to 33/33 verbatim.
+> Every number in this section was re-verified against the real upstream clone before acting on
+> it, and every one was right: `src/styles/` byte-identical, `src/assets/icons/` byte-identical,
+> exactly 13 of 33 gated stylesheets changed and 0 removed, upstream HEAD still `2670ed2`.
+> `npm run token-map` moved one line — the generated date — which is the same fact from a
+> second direction.
+>
+> **What the re-sync turned out to change, beyond CSS bytes:**
+>
+> - **A5 is answered upstream** (see `DESIGNER-TODO.md` A5, now closed). `AppLayout.css` stopped
+>   hiding `.detail-navbar` on phones and `DetailNavbar.css` grew a 50px compact back+title bar;
+>   `RoomNavbar` got the same via a `mobileBackHref` opt-in. WA's own Tailwind workaround
+>   (`phoneBack`) is deleted and the three A5 e2e assertions were left untouched on purpose —
+>   they assert a usable back control at 375, not which element provides it, so they carried
+>   straight over to DP's implementation.
+> - **Half of the A4 override had to go, and NOT noticing would have shipped an empty navbar.**
+>   The override hid `.detail-navbar__top` — which is exactly where the designer had just put the
+>   back control — while the same drop deliberately hides `.detail-navbar__tabs` on mobile. Both
+>   halves cancelling: `/explore/songs` measured 375×50 at 375px with neither tabs nor a way back.
+>   No gate would have said a word. The `.room-navbar` half stays; DP's own comment confirms
+>   History is still hidden on phones, so HIST-03's filters still depend on it.
+> - **Product owner decided 2026-08-06: follow DP on the mobile tabs.** `/explore/songs` and
+>   `/song/play` lose their tab pills on phones. The cost is recorded in the override's header
+>   rather than hidden: WA's three tabs are three different catalogs, so a phone user now sees
+>   only the default one.
+>
+> **Still not adopted from this drop** (nothing is lost by the delay, but they are real gaps):
+> `RoomNavbar`'s `mobileBackHref`; DP's page-specific `.mv-detail__mobile-header` /
+> `.mv-player__mobile-header`, which is why `/watch` keeps `DetailNavbar`'s bar instead of
+> passing `hideMobileBar` the way DP does.
+>
+> **Untouched by the drop, so still open:** A6, A7, A8 (`TopSongListItem.css` still has zero
+> media queries — the only change was `flex-wrap: wrap` → `nowrap`), A9 (`.mobile-tabbar__label`
+> still `opacity: 0.4`), A13, A15 (`/ week` still hardcoded on all three plan cards), A16, A17,
+> A18. Do not re-check these against the drop; it was done.
+
+### The original measurement, kept because it is the record
 
 Upstream is **`2670ed2`, 2026-08-06 17:24 +0800**, "Widen SongPlayBar title space, cap progress bar
 width, and re-center row". Vendored is `568e64c` (2026-08-04). Measured with a read-only clone;
