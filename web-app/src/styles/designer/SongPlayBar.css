@@ -1,0 +1,261 @@
+/* =========================================================
+ * Desktop-only narrow bottom playbar — see SongPlayBar.tsx and
+ * hooks/useSongPlayer.ts. Hidden below the app-mobile breakpoint (mobile
+ * pages keep their own full-screen "Now Playing" takeover instead).
+ * ======================================================= */
+
+.song-bar {
+  position: fixed;
+  /* left is set inline (SongPlayBar.tsx measures Sidebar's real,
+     user-toggleable width via ResizeObserver) — a transformed ancestor
+     would constrain position:fixed to that ancestor's box instead of the
+     viewport, which stops it from staying pinned while the page scrolls,
+     so this can't be solved by nesting inside a positioned wrapper. */
+  right: 0;
+  bottom: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  /* The progress bar's max-width (see .song-bar__progress) caps how much
+     of the bar's free space it soaks up, so without this the leftover
+     space just sits unused after the last item instead of the whole row
+     sitting centered in the bar. */
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 24px;
+  /* Translucent + blurred (not a flat fill) so scrolled-past content is
+     still faintly visible moving underneath, same glass effect as
+     DetailNavbar/RoomNavbar's own sticky header. */
+  background: rgba(9, 9, 11, 0.75);
+  border-top: 1px solid var(--white-15);
+  box-shadow: 0 -8px 32px 0 rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@media (max-width: 767px) {
+  .song-bar {
+    display: none;
+  }
+}
+
+.song-bar__cover {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.4);
+}
+
+.song-bar__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 1 220px;
+  min-width: 0;
+}
+
+.song-bar__title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-body-m);
+}
+
+.song-bar__username {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+}
+
+.song-bar__transport {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.song-bar__transport-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: none;
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+}
+
+.song-bar__transport-icon {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.song-bar__play {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  cursor: pointer;
+  color: var(--neutral-dark-04);
+}
+
+.song-bar__play-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.song-bar__time {
+  flex-shrink: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-caption-m);
+  font-weight: var(--font-weight-medium);
+}
+
+.song-bar__progress {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  max-width: 320px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.song-bar__progress-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+}
+
+.song-bar__progress-fill {
+  position: absolute;
+  left: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+}
+
+.song-bar__progress-thumb {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.song-bar__icon-btn {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: none;
+  cursor: pointer;
+  color: var(--neutral-dark-74);
+}
+
+.song-bar__icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* Same hover-reveal vertical slider as SongCreatePage's own volume control
+   (.song-result__volume) — reused here rather than a plain mute toggle. */
+.song-bar__volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.song-bar__volume-slider {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 112px;
+  box-sizing: border-box;
+  padding: 12px 0;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-14);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.song-bar__volume:hover .song-bar__volume-slider,
+.song-bar__volume:focus-within .song-bar__volume-slider {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.song-bar__volume-slider input {
+  width: 4px;
+  height: 88px;
+  margin: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  accent-color: var(--neutral-dark-100);
+  cursor: pointer;
+}

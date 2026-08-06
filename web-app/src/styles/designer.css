@@ -56,6 +56,11 @@
 @import "./designer/HistoryPage.css";
 @import "./designer/MVDetailPage.css";
 @import "./designer/SongDetailPage.css";
+/* New in drop 2. DP extracted the desktop preview bar out of SongDetailPage so
+   Home's "Newly Released Songs" could reuse it, which is why it arrives as its
+   own stylesheet rather than as lines inside SongDetailPage.css. Gated like the
+   rest — 34 files now, not 33. */
+@import "./designer/SongPlayBar.css";
 @import "./designer/AccountPage.css";
 @import "./designer/CommunityProfilePage.css";
 @import "./designer/CreditsPage.css";

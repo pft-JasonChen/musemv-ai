@@ -65,6 +65,58 @@ away for measuring a poisoned environment (see the note at the end of this secti
 | `SongDetailPage.css` | **Deleted the entire `.now-playing__*` block** — 54 rules down to 2                                       | `/song/play`'s desktop player is WA's slice-3b markup with no stylesheet behind it                             |
 | `MVDetailPage.css`   | Below 768px hides **every** `.mv-detail__grid-section` and expects `.mv-detail__mobile-grid` to take over | `/explore/mvs` renders **blank on phones** — the grid is `hidden` and WA has no mobile grid to replace it with |
 
+> ### ⚠️ CORRECTION (same day, before anyone acts on the paragraph below)
+>
+> **"DP replaced the player with `SongPlayBar`" is WRONG, and the product owner caught it.**
+> The claim was inferred from the CSS diff — `.now-playing__*` gone, a new `.song-bar` file —
+> without reading where DP moved the BEHAVIOUR. `SongPlayBar`'s own header says what it is: a
+> desktop **preview** bar started from a row's album-art play icon, "so browsing can continue
+> while a preview keeps playing". It is not the main player and it deletes nothing.
+>
+> What drop 2 actually did to `/song-detail`, from `SongDetailPage.tsx`'s own comment:
+>
+> > Desktop no longer has its own Now Playing column — clicking a row navigates straight to
+> > SongCreatePage's result-stage player instead, the same template/route History-origin results
+> > already reuse.
+>
+> | surface                | drop 2                                                                                    |
+> | ---------------------- | ----------------------------------------------------------------------------------------- |
+> | desktop `/song-detail` | **list only**; a row click navigates to `/song-create?stage=result&id=…&from=song-detail` |
+> | desktop preview        | cover play icon → `SongPlayBar`, without leaving the list                                 |
+> | phone                  | `MobileNowPlaying` + `LyricsSheet`, **unchanged**                                         |
+>
+> So **AC-EXP-05 loses nothing** — its disc player, Like, Lyrics and Create CTA all still exist,
+> on the result screen (desktop) and in the full-screen player (phone). The earlier claim that
+> adopting the bar deletes four of its five requirements was the same mistake twice in one
+> session: reading a CSS diff and reasoning about the product instead of reading the markup.
+>
+> **The real cost is elsewhere, and it is bigger than the bar.**
+>
+> 1. **It reverses a decision WA took the day before.** Slice 3b made a desktop row click swap
+>    the right-hand column and deliberately leave the URL alone, rewrote `AC-EXP-03` to say so,
+>    and pinned it with `e2e`'s "3b desktop: clicking a song swaps the right column without
+>    navigating". Drop 2 says navigate. Whichever way it goes, that assertion and that criterion
+>    move together — this is the error log's "a test can hold a decision in place after the
+>    decision is wrong", arriving on schedule.
+> 2. **WA has no shared result template to navigate TO.** DP's phrase "the same template
+>    History-origin results already reuse" is true of DP and false here:
+>    `SongResultView.tsx:130` is `if (!songResult) router.replace("/song/create")`, so
+>    `/song/result` is bound to SongFlow state and a community id bounces straight back out. It
+>    resolves an `?id=` for history rows (line 229) but never for a community song. **Adopting
+>    DP's routing therefore means turning `/song/result` into a shared player that resolves
+>    creation results, history items AND community songs** — a real change to a migrated screen
+>    with SONG-03 guards on it, not a one-line `router.push`.
+>
+> **Groundwork already on the branch:** `SongPlayBar.css` is copied into `src/styles/designer/`
+> and imported (the gated set is **34** files now, not 33). Nothing consumes `.song-bar` yet, so
+> it is inert — deliberately left in place so the next session starts from a synced stylesheet
+> rather than re-deriving this.
+>
+> **Do not port DP's `useSongPlayer` wholesale.** `SongDetailView` already owns equivalent state,
+> already resolves audio through `songAudioUrl()`, and already `.catch()`es `audio.play()` —
+> which DP's hook does NOT, and an uncaught `NotAllowedError` is a console error that the R-2
+> specs fail on.
+
 **The `.now-playing__*` deletion is not a tidy-up: DP replaced that player with `SongPlayBar`.**
 `SongDetailPage.tsx` now does `{player.isOpen && <SongPlayBar player={player} />}`, and so does
 `HomePage/NewSongsSection.tsx`. So the component this file listed under "not yet assessed —
