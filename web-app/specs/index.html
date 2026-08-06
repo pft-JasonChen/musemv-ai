@@ -358,6 +358,12 @@
 (code is the source of truth, per <code>AGENTS.md</code>), then flags divergences from the mobile<br>
 <strong>App Spec v3.0</strong> and open questions for the product owner to resolve.<br>
 <strong>Not a parity contract.</strong> The web build is a deliberate desktop-native redesign, not a 1:1 port.</p>
+<p><strong>Designer-UI migration status (2026-08-06): complete, 16 of 16 routes.</strong> Every screen described<br>
+here now renders the designer prototype's markup and stylesheets, except <code>/mv/creating</code> and<br>
+<code>/share</code>, which were deliberately left on the old UI. Where a UI slice deliberately diverged from<br>
+a criterion below, the criterion is <strong>annotated in place rather than rewritten away</strong> — look for<br>
+⚠️ in areas 02, 03 and 07. Change log for RD: <code>../docs/CHANGELOG-RD.md</code>; the migration's own<br>
+record: <code>../docs/redesign-migration-plan.md</code>.</p>
 </blockquote>
 <hr>
 <h2 id="0-how-to-read-these-specs">0. How to read these specs</h2>
@@ -445,7 +451,7 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 </tr>
 <tr>
 <td><code>/explore/songs</code></td>
-<td><code>community/SongExplore</code></td>
+<td><code>song/SongDetailView</code></td>
 <td>04</td>
 <td>—</td>
 <td>F14</td>
@@ -459,7 +465,7 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 </tr>
 <tr>
 <td><code>/song/play</code></td>
-<td><code>community/CommunitySongPlayer</code></td>
+<td><code>song/SongDetailView</code> (same view as <code>/explore/songs</code>)</td>
 <td>04</td>
 <td>—</td>
 <td>F13</td>
@@ -571,11 +577,13 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 </tr>
 </tbody>
 </table>
-<p><strong>Modals / sheets (no route)</strong> — specced inside the owning area:<br>
-- Credits/IAP: <code>SubscribeModal</code>, <code>BuyCreditsModal</code>, <code>CreditsDetailModal</code> → area 07 (F20)<br>
-- Auth: <code>SignInModal</code> → area 09 (F22)<br>
-- Account menu, Edit-profile → area 06 (F18)<br>
-- MV sheets: <code>ChooseSongModal</code>, <code>TrimAudioModal</code>, <code>FacePickerModal</code>, <code>SettingsModal</code>, <code>ModeModal</code>, Templates (inline modal) → area 02</p>
+<p><strong>Modals / sheets (no route)</strong> — specced inside the owning area:</p>
+<ul>
+<li>Credits/IAP: <code>SubscribeModal</code>, <code>BuyCreditsModal</code>, <code>CreditsDetailModal</code> → area 07 (F20)</li>
+<li>Auth: <code>SignInModal</code> → area 09 (F22)</li>
+<li>Account menu, Edit-profile → area 06 (F18)</li>
+<li>MV sheets: <code>ChooseSongModal</code>, <code>TrimAudioModal</code>, <code>FacePickerModal</code>, <code>SettingsModal</code>, <code>ModeModal</code>, Templates (inline modal) → area 02</li>
+</ul>
 <hr>
 <h2 id="2-app-shell-global-chrome-detail-areas01-app-shellmd">2. App-shell &amp; global chrome (detail → <code>areas/01-app-shell.md</code>)</h2>
 <ul>
@@ -691,7 +699,7 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 <tr>
 <td>F09</td>
 <td>Edit MV</td>
-<td><strong>Adapted → sync App</strong> (<code>TBD-MV-08</code>): regenerate overwrites directly, take/cover picker removed, no Save</td>
+<td><strong>Adapted → sync App</strong> (<code>TBD-MV-08</code>): regenerate overwrites directly, take/cover picker removed, no Save. The <code>LEGACY_TAKE_TRAY_UI</code> flag that hid the old trays was deleted in the migration — see area 02 MV-P5</td>
 <td>02</td>
 </tr>
 <tr>
@@ -703,19 +711,19 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 <tr>
 <td>F11</td>
 <td>AI Song Feature Room</td>
-<td><strong>Adapted → sync App</strong> — Custom adds BPM slider + Key selector; Lyrics/Idea is a free-form textarea (SONG-01)</td>
+<td><strong>Adapted</strong> — Lyrics/Idea is a free-form textarea (SONG-01). ⚠️ The BPM slider + Key selector were <strong>removed</strong> by the designer-UI migration (plan S4, 2026-08-06); the <code>bpm</code>/<code>key</code> fields remain on the contract — area 03 §1</td>
 <td>03</td>
 </tr>
 <tr>
 <td>F12</td>
 <td>Song Result &amp; Lyrics</td>
-<td><strong>Adapted → sync App</strong> — <strong>30s free-preview gate</strong>, Pro unlocks full (SONG-02); synced Lyrics sheet</td>
+<td><strong>Adapted</strong> — synced Lyrics sheet; player over a <strong>My Creations</strong> playlist. ⚠️ The <strong>30s free-preview gate is cancelled</strong> (S3), so SONG-02 no longer describes either player screen — area 03 §1</td>
 <td>03</td>
 </tr>
 <tr>
 <td>F13</td>
 <td>Song Player</td>
-<td><strong>Adapted</strong> 🔒 seed (simulated playback) — <strong>adds shuffle/repeat + 30s gate</strong> (EXP-04, SONG-02)</td>
+<td><strong>Adapted</strong> 🔒 seed — real <code>&lt;audio&gt;</code>, <strong>no 30s gate</strong> (S3 landed 2026-08-05). ⚠️ shuffle/repeat <strong>removed</strong> by the designer-UI migration, still an open divergence from AC-EXP-05 — <code>DESIGNER-TODO.md</code> A7 / plan S21</td>
 <td>04</td>
 </tr>
 <tr>
@@ -1058,12 +1066,20 @@ mock/in-memory behaviour.</p>
 photos, output settings) → choose a generation mode → watch generation → (optionally) review/edit a<br>
 storyboard → view the result → share/publish or refine in Edit MV.</p>
 <p><strong>In scope:</strong> <code>/mv/room</code>, <code>/mv/thinking</code>, <code>/mv/storyboard</code>, <code>/mv/creating</code>, <code>/mv/result</code>, <code>/mv/edit</code><br>
-and the sheets <code>ChooseSongModal</code>, <code>TrimAudioModal</code>, <code>FacePickerModal</code>, <code>SettingsModal</code>, <code>ModeModal</code>,<br>
-Templates (inline modal in <code>MvRoom</code>).<br>
+and the six <code>/mv/room</code> overlays — <code>ChooseSongModal</code>, <code>TrimAudioModal</code>, <code>FacePickerModal</code>,<br>
+<code>SettingsModal</code>, <code>ModeModal</code>, <code>TemplateSheet</code>.</p>
+<blockquote>
+<p><strong>Naming, as of the designer-UI migration (slice 3g-2, 2026-08-06):</strong> all six are now DP<br>
+<strong>sheets</strong> (<code>MvSheet</code> → <code>.mv-sheet</code>), not the WA <code>&lt;Modal&gt;</code> this document was written against.<br>
+The five <code>*Modal.tsx</code> filenames were kept so RD's existing references still resolve; <strong>Templates<br>
+is no longer inline in <code>MvRoom</code></strong> — it is its own component, <code>TemplateSheet.tsx</code>. Where this<br>
+document says "modal" about one of these six, read "sheet". <code>/mv/creating</code> is the one route in<br>
+this area <strong>not</strong> migrated, deliberately (it is the shared <code>GenerationView</code>).<br>
 <strong>Out of scope (other areas):</strong> community MV player <code>/watch</code> (04); the app-shell chrome (01); the<br>
 credits/IAP modals (07); sign-in (09).<br>
 <strong>External entry points into this flow (see area 05 / <code>CreationDialog</code>):</strong> History/Community rows can<br>
 enter <code>/mv/edit</code>, <code>/mv/room</code> with <strong>synthesized</strong> MvFlow state — documented in MV-P6 below.</p>
+</blockquote>
 <p><strong>Key divergences from the app</strong> (details inline): no MV-type intro-carousel screen; every song (incl.<br>
 sample) passes through Trim. <strong>Synced to app 2026-07-23:</strong> create is auth-gated at the action (GL-02);<br>
 <strong>Quality "High" is Pro-gated</strong> (MV-04); <strong>Trim enforces ≥30s</strong> (MV-01) and <strong>import is limited to<br>
@@ -1085,7 +1101,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <tr>
 <td><code>/mv/room</code></td>
 <td><code>mv/MvRoom</code></td>
-<td>type picker, Choose Song, Describe, photos, Settings, CTA, Templates modal</td>
+<td>type picker, Choose Song, Describe, photos, Settings, CTA, Templates sheet</td>
 <td><code>useMvFlow().compose</code>, <code>patchCompose</code>, <code>resetForNewMv</code></td>
 <td><code>enhancePrompt</code> (Describe)</td>
 </tr>
@@ -1112,7 +1128,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 </tr>
 <tr>
 <td><code>/mv/result</code></td>
-<td><code>MvResult</code> → <code>MvDetail</code></td>
+<td><code>MvResult</code> (self-contained since 3i)</td>
 <td>video stage, like/dislike, share, download, publish toggle, Recreate, Edit MV</td>
 <td><code>resultUrl</code>, <code>compose</code>, <code>storyboard</code>, <code>useHistory</code></td>
 <td>—</td>
@@ -1120,7 +1136,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <tr>
 <td><code>/mv/edit</code></td>
 <td><code>MvEditor</code></td>
-<td>Back, cover, scene timeline, output settings, Merge MV (MV-08: no Save; take/cover-variant trays hidden behind <code>LEGACY_TAKE_TRAY_UI</code>)</td>
+<td>Back, cover (+ lightbox), per-clip storyboard strip w/ preview + scene-version row, scene editor (phones: full-screen <code>MobileSceneDetail</code>), output settings, Delete this Project, Merge MV (MV-08: no Save, no take tray)</td>
 <td><code>storyboard</code>, <code>compose</code>, <code>useCredits().{credits,addCredits}</code></td>
 <td><code>enhancePrompt</code> (scene, cover)</td>
 </tr>
@@ -1132,16 +1148,20 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <code>RENDER_MS≈11000</code>).</p>
 <hr>
 <h2 id="3-state-model-rules">3. State model &amp; rules</h2>
-<p><strong>Compose (<code>ComposeState</code>)</strong> — <code>src/lib/mv/types.ts</code> / <code>schemas.ts</code>:<br>
-- <code>mvType</code>: <code>singing</code> (default) | <code>storytelling</code> | <code>hybrid</code>.<br>
-- <code>song</code>: <code>null</code> | <code>{ id, source: library|import|sample|link, title, durationSec, art, url?, trim?{start,end}, lyrics? }</code> — <strong>required</strong>.<br>
-- <code>description</code>: string, <strong>hard cap 2500</strong> (<code>DESCRIPTION_MAX</code>) — <strong>required</strong> (non-empty after trim).<br>
-- <code>photos</code>: 0–2 <code>CharacterPhoto</code> (optional).<br>
-- <code>settings</code>: <code>ratio</code> 9:16(def)/16:9 · <code>resolution</code> <strong>Standard(def)/High</strong> · <code>title{on:true,text}</code> · <code>author{on:true,text}</code> · <code>showSubtitle:true</code> · <code>watermark:false</code>.<br>
-- <strong>CTA-ready</strong> (<code>isComposeReady</code>): <code>song != null &amp;&amp; description.trim() !== ""</code>.</p>
-<p><strong>Job (<code>MvJob</code>)</strong> — <code>queued → processing(0–100, step) → done | failed</code>. <code>mode: storyboard_first | direct</code>.<br>
-- <code>storyboard_first</code> completes with <code>job.storyboard</code>; <code>direct</code>/<code>renderMvJob</code> complete with <code>job.resultUrl</code>.<br>
-- <code>[fail]</code> anywhere in <code>description</code> (mock <code>FAIL_TRIGGER</code>) → job fails at ~60%. <strong>The fail marker is captured at <code>createMvJob</code> and reused by <code>renderMvJob</code></strong> — so on the storyboard-first path a <code>[fail]</code> job fails at the <strong>storyboard (thinking)</strong> stage; the post-edit render does not independently re-check. On the direct path it fails at <strong>creating</strong>.</p>
+<p><strong>Compose (<code>ComposeState</code>)</strong> — <code>src/lib/mv/types.ts</code> / <code>schemas.ts</code>:</p>
+<ul>
+<li><code>mvType</code>: <code>singing</code> (default) | <code>storytelling</code> | <code>hybrid</code>.</li>
+<li><code>song</code>: <code>null</code> | <code>{ id, source: library|import|sample|link, title, durationSec, art, url?, trim?{start,end}, lyrics? }</code> — <strong>required</strong>.</li>
+<li><code>description</code>: string, <strong>hard cap 2500</strong> (<code>DESCRIPTION_MAX</code>) — <strong>required</strong> (non-empty after trim).</li>
+<li><code>photos</code>: 0–2 <code>CharacterPhoto</code> (optional).</li>
+<li><code>settings</code>: <code>ratio</code> 9:16(def)/16:9 · <code>resolution</code> <strong>Standard(def)/High</strong> · <code>title{on:true,text}</code> · <code>author{on:true,text}</code> · <code>showSubtitle:true</code> · <code>watermark:false</code>.</li>
+<li><strong>CTA-ready</strong> (<code>isComposeReady</code>): <code>song != null &amp;&amp; description.trim() !== ""</code>.</li>
+</ul>
+<p><strong>Job (<code>MvJob</code>)</strong> — <code>queued → processing(0–100, step) → done | failed</code>. <code>mode: storyboard_first | direct</code>.</p>
+<ul>
+<li><code>storyboard_first</code> completes with <code>job.storyboard</code>; <code>direct</code>/<code>renderMvJob</code> complete with <code>job.resultUrl</code>.</li>
+<li><code>[fail]</code> anywhere in <code>description</code> (mock <code>FAIL_TRIGGER</code>) → job fails at ~60%. <strong>The fail marker is captured at <code>createMvJob</code> and reused by <code>renderMvJob</code></strong> — so on the storyboard-first path a <code>[fail]</code> job fails at the <strong>storyboard (thinking)</strong> stage; the post-edit render does not independently re-check. On the direct path it fails at <strong>creating</strong>.</li>
+</ul>
 <p><strong>Storyboard (<code>Storyboard</code>)</strong>: <code>characterImage</code>, <code>visualStyle</code> (editable), <code>scenes[]</code> (<code>{id, index, range, text}</code>; <code>text</code> editable, <code>id</code> is the React key + update key), <code>story</code> (read-only), <code>lyrics</code> (read-only, timestamped), <code>coverImage</code>, <code>coverDescription</code>. Persisted to <code>localStorage["mv-storyboard"]</code>; schema <code>.parse()</code> backfills older shapes. <code>storyboardDirty</code> = current storyboard ≠ last saved (i.e. scene text / visual style / cover description changed).</p>
 <p><strong>Costs:</strong> storyboard 20 · render 200 (<code>types.ts</code>); Edit-MV regen-scene 20 / cover 10 / merge 10 (hardcoded in <code>MvEditor.tsx</code>). Charging conflict → <code>TBD-GL-01</code>.</p>
 <hr>
@@ -1215,10 +1235,10 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <li><strong>MV-P3-S2</strong> <code>/mv/creating</code>: <code>startRender()</code> (uses saved storyboard via <code>renderMvJob</code> if present, else <code>createMvJob(direct)</code>) and inserts a Generating row; ring/progress; estimate "~2 minutes" (display-only; mock ≈11s); View Later → <code>/history</code>.</li>
 <li><strong>MV-P3-S3</strong> On <code>done</code> → <code>/mv/result</code>.</li>
 </ul>
-<h3 id="mv-p4-result-actions-mvresult-via-mvdetail">MV-P4 — Result &amp; actions (<code>/mv/result</code> via <code>MvDetail</code>)</h3>
+<h3 id="mv-p4-result-actions-mvresult-self-contained-since-slice-3i">MV-P4 — Result &amp; actions (<code>/mv/result</code>, self-contained since slice 3i)</h3>
 <ul>
 <li><strong>MV-P4-S1</strong> Video autoplays <strong>muted + looped</strong> with native controls on a square stage. ⚠️ App autoplays speaker-on; muted is a web/browser choice.</li>
-<li><strong>MV-P4-S2</strong> Like / Dislike (mutually exclusive, local state) · <strong>Share</strong> (<code>ShareDialog</code>, link) · <strong>Download</strong> (<code>resultUrl</code>) · <strong>Publish to community</strong> toggle. <strong>DECIDED (<code>TBD-MV-12</code>, sync App):</strong> toggling Publish <strong>on</strong> opens a <strong>"Ready to Go Public?" confirm dialog</strong> (the same one History uses, area 05); on confirm → <strong>Published · pending review</strong>; toggling off <strong>unpublishes</strong>. On publish the client sends a <strong>language/locale code</strong> so the backend can rank the community feed locale-primary (backend/Curation — see area 04 §3; code format TBD <code>TBD-EXP-10</code>). (Feed pipeline/destination → <code>TBD-MV-06</code>, spec-only.) 🔒 On this fresh-generation screen, publish state is <strong>local to <code>MvDetail</code></strong> (<code>MvResult</code> has no History row to share it with yet); opening the <em>same</em> creation later from History uses the controlled path described in area 05 §3, where the row's <code>⋯</code> menu and its detail dialog share one state.</li>
+<li><strong>MV-P4-S2</strong> Like / Dislike (mutually exclusive, local state) · <strong>Share</strong> (<code>ShareDialog</code>, link) · <strong>Download</strong> (<code>resultUrl</code>) · <strong>Publish to community</strong> toggle. <strong>DECIDED (<code>TBD-MV-12</code>, sync App):</strong> toggling Publish <strong>on</strong> opens a <strong>"Ready to Go Public?" confirm dialog</strong> (the same one History uses, area 05); on confirm → <strong>Published · pending review</strong>; toggling off <strong>unpublishes</strong>. On publish the client sends a <strong>language/locale code</strong> so the backend can rank the community feed locale-primary (backend/Curation — see area 04 §3; code format TBD <code>TBD-EXP-10</code>). (Feed pipeline/destination → <code>TBD-MV-06</code>, spec-only.) 🔒 On this fresh-generation screen, publish state is <strong>local to <code>MvResult</code></strong> (there is no History row to share it with yet); opening the <em>same</em> creation later from History uses the controlled path described in area 05 §3, where the row's <code>⋯</code> menu and its detail dialog share one state.</li>
 <li><strong>MV-P4-S3</strong> Info panel: type/character tags, title (settings title or song title), author (settings or <code>MOCK_USER.name</code>), Music row, Generation Detail (character, author, style, ratio, quality, scenes, subtitle).</li>
 <li><strong>MV-P4-S4</strong> <strong>Recreate</strong> → <code>/mv/room</code> (keeps compose). <strong>Edit MV</strong> → <code>/mv/edit</code> (direct-mode renders, which have no storyboard, get a <code>mockStoryboard()</code> first). <strong>DECIDED rule (<code>TBD-MV-13</code>):</strong> a <strong>published</strong> (or in-review) MV must be <strong>unpublished before editing</strong> — while published, the Edit MV button renders <strong>neutral (white bg / black text)</strong> labeled <strong>"Unpublish to edit"</strong>; tapping it unpublishes, after which it returns to the accent <strong>"Edit MV"</strong> and opens the editor. No per-screen back arrow on Result — the shell handles back.</li>
 </ul>
@@ -1227,19 +1247,22 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <p><strong>DECIDED (<code>TBD-MV-08</code>, sync App — supersedes the earlier "keep the multi-take tray" reading):</strong><br>
 this version has <strong>no "Project" mode</strong> → <strong>no Save</strong>; edits are <strong>ephemeral</strong> (leaving <code>/mv/edit</code><br>
 loses them). Regenerate <strong>overwrites in place</strong> with <strong>no take/cover picker</strong> and <strong>no undo</strong>. The<br>
-prototype's multi-take + cover-variant trays and the Save button are <strong>hidden and code-marked</strong><br>
-(not deleted) for a future richer version — see <code>../../docs/handoff-2026-07-23.md</code>. Behaviour matches App F09.</p>
-<p><strong>As-built (MV-08 landed 2026-07-23):</strong> Save + the "Pick which take/cover to use" trays are hidden<br>
-behind the <code>LEGACY_TAKE_TRAY_UI = false</code> flag in <code>MvEditor.tsx</code> (kept for the future richer version);<br>
-Regenerate/Recreate auto-select the new result so it overwrites in place. <strong>Merge MV is the<br>
-re-render, priced at <code>COST_RENDER</code> (200)</strong> — the former local <code>COST_MERGE</code> (10) was removed to avoid<br>
-double-charging with GL-01 (see the handoff reconciliation note).</p>
+prototype's multi-take + cover-variant trays and the Save button were <strong>hidden and code-marked</strong><br>
+(not deleted) for a future richer version. Behaviour matches App F09.</p>
+<p><strong>As-built (MV-08 landed 2026-07-23; re-stated 2026-08-06, slice 3k):</strong> Regenerate/Recreate<br>
+auto-select the new result so it overwrites in place. <strong>Merge MV is the re-render, priced at<br>
+<code>COST_RENDER</code> (200)</strong> — the former local <code>COST_MERGE</code> (10) was removed to avoid double-charging<br>
+with GL-01. ⚠️ <strong>The <code>LEGACY_TAKE_TRAY_UI = false</code> flag and the hidden tray markup are GONE</strong><br>
+(3k): the designer prototype has no design for them, and a flag guarding dead markup inside a<br>
+migrated screen is worse than the decision it recorded. MV-08's rule is unchanged — only its<br>
+escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 </blockquote>
 <ul>
 <li><strong>MV-P5-S1</strong> Header: per-screen <strong>Back</strong>, MV name, "N shots", <strong>Merge MV</strong> (<code>COST_RENDER</code>, 200). <strong>No Save button.</strong> Context chips (type/song/ratio) are <strong>read-only</strong> — "Style &amp; song are locked after creation".</li>
-<li><strong>MV-P5-S2</strong> <strong>Cover:</strong> large preview (tap → lightbox); Edit description (modal + Enhance); <strong>Recreate</strong> cover (<code>10</code>, <code>addCredits(-10)</code>) <strong>overwrites the cover directly</strong> — no "pick which cover" tray, no undo.</li>
-<li><strong>MV-P5-S3</strong> <strong>Scenes:</strong> timeline of scene thumbnails; side panel edits the active scene's prompt (max 2500 + Enhance); <strong>Regenerate scene</strong> (<code>20</code>, <code>addCredits(-20)</code>) <strong>overwrites that scene's video directly</strong> — no "pick which take" tray, no undo.</li>
-<li><strong>MV-P5-S4</strong> <strong>Output settings</strong> modal: MV title/author toggles+inputs, Show subtitle, Show watermark (no ratio/quality here).</li>
+<li><strong>MV-P5-S2</strong> <strong>Cover:</strong> large preview (Expand → lightbox, Download); a <strong>Cover description</strong> textarea + Enhance; <strong>Recreate</strong> cover (<code>10</code>, <code>addCredits(-10)</code>) <strong>overwrites the cover directly</strong> — no "pick which cover" tray, no undo.</li>
+<li><strong>MV-P5-S3</strong> <strong>Scenes:</strong> a per-clip storyboard strip with an inline video preview and its own transport; the scene editor edits the active scene's prompt (max 2500 + Enhance) and shows a <strong>scene-version history row</strong>; <strong>Recreate scene</strong> (<code>20</code>, <code>addCredits(-20)</code>) <strong>overwrites that scene's video directly</strong> — no "pick which take" tray, no undo. <strong>Below 768px the inline editor and the preview are replaced by a full-screen <code>MobileSceneDetail</code></strong> (DP's phone frame has no room for the inline pair).</li>
+<li><strong>MV-P5-S4</strong> <strong>Output settings are inline sections of the right rail, not a modal</strong>: MV title toggle+input, Author name toggle+input, Show Subtitle, Show Watermark (no ratio/quality here). The two ON-OFF switches are WA's — DP ships the text inputs alone, but <code>settings.title.on</code> / <code>settings.author.on</code> are <code>MvSettingsSchema</code> fields (contract surface C2) and decide whether the caption is burned in at all.</li>
+<li><strong>MV-P5-S6</strong> <strong>Delete this Project</strong> (DP's control; DP's own handler is dead) confirms with History's wording and then discards the in-memory flow and leaves — which is what deleting an uncommitted project means when the flow state is in memory. It does <strong>not</strong> call a backend delete.</li>
 <li><strong>MV-P5-S5</strong> <strong>Merge MV</strong> → <code>resetForRerender()</code> → <code>/mv/creating</code>, where <code>startRender</code> charges <code>COST_RENDER</code> (200, refunded on failure — GL-01); re-renders the MV from the current (overwritten) cover/scenes + edited text. Enabled by <strong>any</strong> pending edit (text, regenerate, cover, or settings — incl. <code>storyboardDirty</code>). If <code>credits &lt; COST_RENDER</code>, Merge opens <code>BuyCreditsModal</code> instead.</li>
 </ul>
 <h3 id="mv-p6-supporting-sheets-external-entries">MV-P6 — Supporting sheets &amp; external entries</h3>
@@ -1249,7 +1272,7 @@ double-charging with GL-01 (see the handoff reconciliation note).</p>
 <li><strong>MV-P6-C TrimAudioModal:</strong> waveform + two drag handles; default select 15%→70%; min 5% gap; live preview of the selected region; <strong>Use Trimmed Audio</strong> stores <code>trim{start,end}</code> (full <code>durationSec</code> unchanged). <strong>MV-01 (2026-07-23):</strong> the selected length must be <strong>≥30s</strong> — below that the button is disabled and a "minimum 30s" hint shows. ⚠️ Sample-song trimming is web-new (app trims only library-import).</li>
 <li><strong>MV-P6-D FacePickerModal:</strong> manual crop square + size slider (256×256 JPEG). Detected-face suggestions are supported by the component but <strong>not passed</strong> from <code>/mv/room</code> (manual-crop only as-built). ⚠️ App auto-detects up to 6 faces (→ <code>TBD-MV-03</code>).</li>
 <li><strong>MV-P6-E SettingsModal:</strong> Aspect Ratio 9:16/16:9 · Quality <strong>Standard/High</strong> (SD/HD icons). <strong>MV-04 (2026-07-23):</strong> on the free plan <strong>"High" is greyed with a crown</strong>; tapping it opens <code>SubscribeModal</code> (IAP) instead of selecting. Subscribers select it normally. · Title/Author toggles+inputs · Show Subtitle · Show Watermark.</li>
-<li><strong>Templates</strong> (inline <code>&lt;Modal&gt;</code> in <code>MvRoom</code>, not a separate component): grid of <code>TEMPLATES</code>; selecting fills <code>description</code> with the template prompt. ⚠️ Does <strong>not</strong> auto-select/lock a song (the old web spec claimed it did → <code>TBD-MV-05</code>).</li>
+<li><strong>MV-P6-F TemplateSheet</strong> (its own component since 3g-2 — it used to be an inline <code>&lt;Modal&gt;</code> in <code>MvRoom</code>): grid of <code>TEMPLATES</code>; selecting fills <code>description</code> with the template prompt. ⚠️ Does <strong>not</strong> auto-select/lock a song (the old web spec claimed it did → <code>TBD-MV-05</code>).</li>
 <li><strong>External entries (<code>CreationDialog</code>, area 05):</strong> from History/Community — <strong>Recreate</strong> → <code>/mv/room</code> (MV synthesizes compose with the row title); <strong>Edit MV</strong> → <code>/mv/edit</code> (fabricates a <code>mockStoryboard()</code> + a synthetic song with <code>durationSec:0</code>); <strong>Use in MV</strong> → <code>/mv/room</code> with a synthesized <code>library</code> song (<code>durationSec:0</code>). RD/QA: these enter the flow with placeholder state, not a real compose.</li>
 </ul>
 <hr>
@@ -1332,7 +1355,7 @@ double-charging with GL-01 (see the handoff reconciliation note).</p>
 <li>[ ] <strong>MV-P2</strong>: Storyboard First → Generating row appears in History at start → progress 0→100 <em>(visual)</em> → storyboard with ≥1 editable scene; <strong>MV Song plays on tap, not editable</strong>; <strong>no Save button</strong>; edits carried into Generate MV (AC-05/06/07/08).</li>
 <li>[ ] <strong>MV-P3</strong>: Directly → progress → result with <code>&lt;video&gt;</code> (AC-05/09/10).</li>
 <li>[ ] <strong>MV-P4</strong>: like/dislike exclusivity; Share dialog opens; Download triggers; <strong>Publish on → "Ready to Go Public?" confirm</strong>; <strong>published → Edit MV shows "Unpublish to edit"</strong>; Recreate returns to room prefilled; Edit MV opens editor when unpublished (AC-10, MV-E7).</li>
-<li>[ ] <strong>MV-P5</strong>: regen scene <strong>overwrites</strong> in place (−20, no picker); cover recreate <strong>overwrites</strong> (−10); <strong>no Save button</strong> (trays hidden behind <code>LEGACY_TAKE_TRAY_UI</code>); Merge charges <code>COST_RENDER</code> (−200) on re-render, or opens IAP when short; edits lost on leaving the page (AC-12/13/19).</li>
+<li>[ ] <strong>MV-P5</strong>: regen scene <strong>overwrites</strong> in place (−20, no picker); cover recreate <strong>overwrites</strong> (−10); <strong>no Save button and no tray markup at all</strong> (the <code>LEGACY_TAKE_TRAY_UI</code> flag was deleted in 3k); Merge charges <code>COST_RENDER</code> (−200) on re-render, or opens IAP when short; edits lost on leaving the page (AC-12/13/19). Check the phone path too: below 768px the scene editor is <code>MobileSceneDetail</code>, not the inline pair.</li>
 <li>[ ] <strong>MV-P6-C</strong>: trim handles move, 5% min gap holds, preview plays selected region (AC-16).</li>
 <li>[ ] <strong>MV-P6</strong>: Enhance replaces each of the 4 fields (AC-14).</li>
 <li>[ ] <strong>MV-E1</strong>: <code>[fail]</code> → error + Retry, Retry re-fails (AC-11). <strong>MV-E2</strong>: reload <code>/mv/storyboard</code> → redirect to room. <strong>MV-E3</strong>: logged-out → sign-in modal. <strong>MV-E4</strong>: reload <code>/mv/thinking</code> with hydrated storyboard → confirm behaviour vs <code>TBD-MV-09</code>.</li>
@@ -1405,15 +1428,28 @@ result (disc player + synced Lyrics sheet) → use the song in an MV or recreate
 <strong>Out of scope (cross-referenced):</strong> the community song player <code>/song/play</code> (area 04 —<br>
 <code>CommunitySongPlayer</code>); <code>SongDetail</code> is <strong>shared</strong> with History's <code>CreationDialog</code> (area 05);<br>
 <code>ShareDialog</code> (area 10); Use-in-MV lands in <code>/mv/room</code> (area 02).</p>
-<p><strong>As-built vs App F11–F13 (SONG-01…05 landed 2026-07-23, now synced to app):</strong> Custom mode has<br>
-Genre / Mood / Vocal chips + Title <strong>plus a BPM slider and a Key selector</strong> (SONG-01;<br>
-<code>SongComposeSchema</code> gains defaulted <code>bpm</code>/<code>key</code>); the <strong>Lyrics / Idea</strong> input is a free-form textarea<br>
-(app-style — Ideas / Lyrics samples + Enhance), matching the app prototype; free users get a <strong>30s<br>
-free-preview gate</strong><br>
-(Pro unlocks full playback) in <code>SongDetail</code> and the community song player (SONG-02); <strong>Recreate charges<br>
-<code>COST_SONG_RECREATE</code> (50) and keeps the prior song in History</strong> (SONG-03); <strong>AI Enhance is free the<br>
-first time per session, then 1 credit</strong> (SONG-04); the compose credit pill shows the <strong>live balance</strong><br>
-(SONG-05). Generation itself now charges <code>COST_SONG</code> (10) on start (GL-01, insufficient → IAP).</p>
+<p><strong>As-built vs App F11–F13 (SONG-01…05 landed 2026-07-23; amended 2026-08-06 by the designer-UI<br>
+migration, slice 3j):</strong> Custom mode has Genre / Mood / Vocal chips + Title; the <strong>Lyrics / Idea</strong><br>
+input is a free-form textarea (app-style — Ideas / Lyrics samples + Enhance), matching the app<br>
+prototype; <strong>Recreate charges <code>COST_SONG_RECREATE</code> (50) and keeps the prior song in History</strong><br>
+(SONG-03); <strong>AI Enhance is free the first time per session, then 1 credit</strong> (SONG-04); the compose<br>
+credit pill shows the <strong>live balance</strong> (SONG-05). Generation itself charges <code>COST_SONG</code> (10) on<br>
+start (GL-01, insufficient → IAP).</p>
+<p><strong>Two of SONG-01/02 no longer describe the code — both by decision, both recorded here:</strong></p>
+<ul>
+<li>⚠️ <strong>SONG-01's BPM slider and Key selector are GONE from the form</strong> (plan S4, slice 3j). The<br>
+  designer prototype has neither control. <strong>The <code>bpm</code> / <code>key</code> FIELDS on <code>SongComposeSchema</code> are<br>
+  untouched</strong> and still carry <code>DEFAULT_SONG_COMPOSE</code>'s values into every request — plan §11 makes<br>
+  removing them a <strong>C8 contract change that must be its own PR</strong>, so the slice removed the controls<br>
+  only. RD: build against the fields, not against the (absent) UI. Guarded in both directions by<br>
+<code>e2e/behaviour-regressions.spec.ts</code> → <code>3j / S4</code>.</li>
+<li>⚠️ <strong>SONG-02's 30s free-preview gate is CANCELLED</strong> (plan §1.4, S3) and <code>/song/result</code> no longer<br>
+  enforces it. <code>/song/play</code> dropped it in slice 3b; <code>/song/result</code> dropped it in 3j when it stopped<br>
+  rendering <code>SongDetail</code>. <code>FREE_PREVIEW_SEC</code> still exists inside <code>SongDetail.tsx</code> for its one<br>
+  remaining unmigrated consumer, History's <code>CreationDialog</code> — so the cap is alive in History and<br>
+  dead on both player screens. That inconsistency is deliberate and ends when <code>CreationDialog</code> is<br>
+  migrated.</li>
+</ul>
 <hr>
 <h2 id="2-route-component-state-api-map-rd">2. Route / component / state / API map (RD)</h2>
 <table>
@@ -1430,7 +1466,7 @@ first time per session, then 1 credit</strong> (SONG-04); the compose credit pil
 <tr>
 <td><code>/song/create</code></td>
 <td><code>song/SongCompose</code> (🔒 <strong>Auth</strong>)</td>
-<td>Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, BPM/Key (Custom), Title, Ideas/Lyrics/Enhance, <strong>Create Song</strong> CTA</td>
+<td>Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, Ideas/Lyrics/Enhance, <strong>Create Song</strong> CTA</td>
 <td><code>useSongFlow().{songCompose,patchSongCompose,resetForNewSong}</code></td>
 <td><code>enhancePrompt</code> (song/lyrics)</td>
 </tr>
@@ -1443,44 +1479,69 @@ first time per session, then 1 credit</strong> (SONG-04); the compose credit pil
 </tr>
 <tr>
 <td><code>/song/result</code></td>
-<td><code>song/SongResultView</code> → <code>SongDetail</code></td>
-<td>disc player, progress/seek, ±15s, Lyrics sheet, Share, Use-in-MV, Recreate</td>
-<td><code>songResult</code>, <code>useMvFlow().patchCompose</code> (Use-in-MV), <code>useHistory</code> (share id)</td>
+<td><code>song/SongResultView</code> (self-contained)</td>
+<td>player + progress/seek, prev/next transport, volume/mute, Like, Share, Download, Lyrics sheet, Publish toggle, Use-in-MV, Recreate, <strong>My Creations</strong> playlist</td>
+<td><code>songResult</code>, <code>useHistory</code> (earlier songs + share id), <code>useMvFlow().patchCompose</code> (Use-in-MV), <code>useCredits</code> (Recreate)</td>
 <td>—</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Provider:</strong> <code>SongFlowProvider</code> (<code>useSongFlow</code>) — compose form, job polling, result; feeds<br>
-<code>HistoryProvider</code> on start/complete/fail. <code>LyricsPanel</code> = the synced-lyrics bottom sheet opened from<br>
-<code>SongDetail</code>. 🔒 mock generation (<code>GenerationView</code> shared with MV).</p>
+<code>HistoryProvider</code> on start/complete/fail. 🔒 mock generation (<code>GenerationView</code> shared with MV).</p>
+<p>⚠️ <strong><code>/song/result</code> no longer renders <code>SongDetail</code></strong> (slice 3j). It is DP's own markup, and its<br>
+lyrics sheet is the shared <code>ui/LyricsSheet</code>, not <code>LyricsPanel</code>. <code>SongDetail</code> + <code>LyricsPanel</code> are<br>
+still live — but only under History's <code>CreationDialog</code> (area 05), which is not migrated. Anything<br>
+this area used to say about <code>/song/result</code> "sharing <code>SongDetail</code> with History" now describes<br>
+History alone.</p>
 <hr>
 <h2 id="3-state-model-rules">3. State model &amp; rules</h2>
-<p><strong>Compose (<code>SongCompose</code>)</strong> — <code>types.ts</code> / <code>schemas.ts</code>:<br>
-- <code>mode</code>: <code>simple</code> (default) | <code>custom</code>.<br>
-- <code>describe</code>: string (Simple), max 2500 (<code>DESCRIPTION_MAX</code>).<br>
-- <code>instrumental</code>: boolean (both modes) — when ON in Custom, the Lyrics field is replaced by "No lyrics needed…".<br>
-- <code>lyrics</code>: string (Custom), max 2500.<br>
-- <code>genre</code> (default "Pop"), <code>mood</code> (default "Uplifting"), <code>vocal</code> (nullable, optional), <code>title</code> (optional).<br>
-- <strong>CTA-ready</strong> (<code>isSongReady</code>): <strong>Custom → always ready</strong>; <strong>Simple → <code>describe.trim() !== ""</code></strong>.<br>
-- Cost: <code>COST_SONG = 10</code> shown on the <strong>Create Song</strong> CTA (label matches the app prototype, 2026-07-23).<br>
-- Custom-mode musical controls (SONG-01): <strong>BPM slider</strong> (<code>BPM_MIN 60</code>–<code>BPM_MAX 200</code>) and a <strong>Key</strong><br>
-  chip selector (<code>SONG_KEYS</code>, clearable = "Auto"), both persisted on <code>songCompose.{bpm,key}</code>. The<br>
-<strong>Lyrics / Idea</strong> field is a <strong>free-form textarea</strong> (<code>s.lyrics</code>, max 2500) with Idea / Lyrics sample<br>
-  fills + Enhance — matching the app prototype (an earlier per-line editor was reverted 2026-07-23).<br>
-- Compose helpers: <strong>Ideas</strong> (Simple: random <code>SONG_IDEAS</code>; Custom: Idea + Lyrics sample fills),<br>
+<p><strong>Compose (<code>SongCompose</code>)</strong> — <code>types.ts</code> / <code>schemas.ts</code>:</p>
+<ul>
+<li><code>mode</code>: <code>simple</code> (default) | <code>custom</code>.</li>
+<li><code>describe</code>: string (Simple), max 2500 (<code>DESCRIPTION_MAX</code>).</li>
+<li><code>instrumental</code>: boolean (both modes) — when ON in Custom, the Lyrics field is replaced by "No lyrics needed…".</li>
+<li><code>lyrics</code>: string (Custom), max 2500.</li>
+<li><code>genre</code> (default "Pop"), <code>mood</code> (default "Uplifting"), <code>vocal</code> (nullable, optional), <code>title</code> (optional).</li>
+<li><strong>CTA-ready</strong> (<code>isSongReady</code>): <strong>Custom → always ready</strong>; <strong>Simple → <code>describe.trim() !== ""</code></strong>.</li>
+<li>Cost: <code>COST_SONG = 10</code> shown on the <strong>Create Song</strong> CTA (label matches the app prototype, 2026-07-23).</li>
+<li>Custom-mode <strong>Lyrics / Idea</strong> field: a <strong>free-form textarea</strong> (<code>s.lyrics</code>, max 2500) with Idea /<br>
+  Lyrics sample fills + Enhance — matching the app prototype (an earlier per-line editor was<br>
+  reverted 2026-07-23).</li>
+<li>⚠️ <strong>No BPM slider and no Key selector</strong> (S4 / 3j — see §1). <code>bpm</code> (<code>BPM_MIN 60</code>–<code>BPM_MAX 200</code>)<br>
+  and <code>key</code> (<code>SONG_KEYS</code>, nullable = "Auto") are still schema fields with defaults, still sent on<br>
+  every request, and now <strong>unreachable from the UI</strong>. <code>BPM_MIN</code> / <code>BPM_MAX</code> / <code>SONG_KEYS</code> remain<br>
+  exported from <code>src/lib/mv/types.ts</code> for the same reason.</li>
+<li>DP's <strong>Song Length</strong> slider is not ported: DP ships it behind <code>SHOW_SONG_LENGTH = false</code>, and<br>
+  whether that is a temporary hide or a removal is open question U1 for the designer.</li>
+<li>Compose helpers: <strong>Ideas</strong> (Simple: random <code>SONG_IDEAS</code>; Custom: Idea + Lyrics sample fills),<br>
 <strong>Enhance</strong> (<code>enhancePrompt</code>; Custom lyrics offers Refine Idea vs Refine Lyrics; <strong>first free/session<br>
   then 1 cr</strong> via <code>useCredits().{enhanceCost,consumeEnhance}</code> — SONG-04), a supported-languages info<br>
-  popover (Custom). The inline <strong><code>CreditPill</code> shows the live balance</strong> (SONG-05).</p>
+  popover (Custom). The inline <strong><code>CreditPill</code> shows the live balance</strong> (SONG-05).</li>
+</ul>
 <p><strong>Job (<code>SongJob</code> → <code>SongResult</code>)</strong>: <code>createSongJob(compose)</code> → poll <code>getSongJob</code> → on done sets<br>
 <code>songResult</code> ({title, cover, genre, mood, durationSec, audioUrl?, instrumental, lyrics?}) and marks<br>
 History completed. Generation estimate "~1 minute" (display-only; mock timing).</p>
-<p><strong>Result (<code>SongDetail</code>)</strong>: circular disc cover (spins while playing), progress bar w/ seek, ±15s nudge,<br>
-play/pause; <strong>Lyrics</strong> button → <code>LyricsPanel</code> (synced timed lines highlighting the current line + mini<br>
-player) when lyrics exist; <strong>Share</strong> → <code>ShareDialog</code>; CTAs <strong>Use in Music Video</strong> and <strong>Recreate</strong>.<br>
-<strong>No Like</strong> (own creation). <strong>SONG-02:</strong> free accounts play only the first <strong>30s</strong> (a "Free preview ·<br>
-first 30s — upgrade to Muse Pro" prompt opens <code>SubscribeModal</code>); subscribers play in full.<br>
-- <strong>Use in Music Video</strong> → <code>patchCompose({ song: {source:"library", …, lyrics} })</code> + <code>/mv/room</code> (area 02).<br>
-- <strong>Recreate</strong> (SONG-03) → charges <code>COST_SONG_RECREATE</code> (50) via <code>resetForRecreate()</code> and routes to <code>/song/creating</code> to generate a fresh take, <strong>keeping the previous song in History</strong>; if <code>credits &lt; 50</code>, opens <code>BuyCreditsModal</code> instead.</p>
+<p><strong>Result (<code>SongResultView</code>, DP markup since 3j)</strong>: cover + title + <code>genre · mood</code> line, progress bar<br>
+w/ seek, play/pause and <strong>prev/next transport across the playlist</strong>, volume + mute (desktop);<br>
+<strong>Lyrics</strong> → the shared <code>LyricsSheet</code> (synced timed lines + mini player) when lyrics exist;<br>
+<strong>Share</strong> → <code>ShareDialog</code>; <strong>Download</strong> (desktop); a <strong>Publish to community</strong> toggle (GL-02 — Song<br>
+publishes on the action with no confirm, unlike MV's MV-12); CTAs <strong>Use in Music Video</strong> and<br>
+<strong>Recreate · 50 Credits</strong>; and a <strong>My Creations</strong> grid of the user's earlier songs from <code>useHistory</code><br>
+that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelled — see §1).</p>
+<ul>
+<li>⚠️ <strong>A Like button now exists on your own creation</strong>, ported from DP's player, <code>aria-pressed</code><br>
+  and local-only (no API, no History write). The spec's long-standing rule was <strong>no Like on an own<br>
+  creation</strong> — flagged, not resolved. Product owner / designer call: keep DP's control, or drop it<br>
+  as WA did. Until then AC-SONG-06's "and no Like" is a KNOWN divergence.</li>
+<li>
+<p>⚠️ <strong>±15s nudge is gone</strong> — DP's transport spends those two slots on prev/next through the<br>
+  playlist. Seek by dragging the progress bar is unaffected.</p>
+</li>
+<li>
+<p><strong>Use in Music Video</strong> → <code>patchCompose({ song: {source:"library", …, lyrics} })</code> + <code>/mv/room</code> (area 02).</p>
+</li>
+<li><strong>Recreate</strong> (SONG-03) → charges <code>COST_SONG_RECREATE</code> (50) via <code>resetForRecreate()</code> and routes to <code>/song/creating</code> to generate a fresh take, <strong>keeping the previous song in History</strong>; if <code>credits &lt; 50</code>, opens <code>BuyCreditsModal</code> instead.</li>
+</ul>
 <p>🔒 <code>songResult</code> is in-memory; a reload on <code>/song/creating</code> or <code>/song/result</code> triggers the flow-guard<br>
 (redirect to <code>/song/create</code>).</p>
 <hr>
@@ -1489,8 +1550,8 @@ first 30s — upgrade to Muse Pro" prompt opens <code>SubscribeModal</code>); su
 <h3 id="song-p1-compose">SONG-P1 — Compose</h3>
 <ul>
 <li><strong>SONG-P1-S1</strong> Arrive <code>/song/create</code> (auth-gated); <strong>Simple</strong> tab default; <strong>Create Song</strong> disabled until <code>describe</code> non-empty. Hint "Describe your song to continue."</li>
-<li><strong>SONG-P1-S2</strong> Toggle <strong>Instrumental</strong> (both modes). Simple: describe + Ideas + Enhance. </li>
-<li><strong>SONG-P1-S3</strong> Switch to <strong>Custom</strong>: free-form <strong>Lyrics / Idea</strong> textarea (or "No lyrics needed" when Instrumental) + Ideas/Lyrics/Enhance; Genre/Mood chips + Vocal (optional, clearable); <strong>BPM slider</strong> + <strong>Key</strong> selector (SONG-01); optional Title. Custom CTA always enabled.</li>
+<li><strong>SONG-P1-S2</strong> Toggle <strong>Instrumental</strong> (both modes). Simple: describe + Ideas + Enhance.</li>
+<li><strong>SONG-P1-S3</strong> Switch to <strong>Custom</strong>: free-form <strong>Lyrics / Idea</strong> textarea (or "No lyrics needed" when Instrumental) + Ideas/Lyrics/Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. <em>(No BPM/Key row since 3j — §1.)</em></li>
 <li><strong>SONG-P1-S4</strong> Tap <strong>Create Song</strong> (<code>10</code>) → <code>resetForNewSong()</code> → <code>/song/creating</code>.</li>
 </ul>
 <h3 id="song-p2-generation">SONG-P2 — Generation</h3>
@@ -1500,9 +1561,10 @@ first 30s — upgrade to Muse Pro" prompt opens <code>SubscribeModal</code>); su
 </ul>
 <h3 id="song-p3-result">SONG-P3 — Result</h3>
 <ul>
-<li><strong>SONG-P3-S1</strong> Disc player autoloads; play/pause, seek, ±15s.</li>
-<li><strong>SONG-P3-S2</strong> <strong>Lyrics</strong> → <code>LyricsPanel</code> (synced highlight + mini player) — only when lyrics exist. In practice this means <strong>Custom mode + non-instrumental + typed lyrics</strong>; Simple mode never sets <code>lyrics</code>, so a Simple-mode result has no Lyrics sheet.</li>
-<li><strong>SONG-P3-S3</strong> <strong>Share</strong> → <code>ShareDialog</code>. <strong>Use in Music Video</strong> → <code>/mv/room</code> with the song pre-loaded (incl. lyrics). <strong>Recreate</strong> → charges 50 cr and regenerates (<code>/song/creating</code>), keeping the prior song in History (SONG-03).</li>
+<li><strong>SONG-P3-S1</strong> Player autoloads; play/pause, drag-to-seek, prev/next through <strong>My Creations</strong>, volume/mute on desktop. Playback is not capped (SONG-02 cancelled).</li>
+<li><strong>SONG-P3-S2</strong> <strong>Lyrics</strong> → the shared <code>LyricsSheet</code> (synced highlight + mini player) — only when lyrics exist. In practice this means <strong>Custom mode + non-instrumental + typed lyrics</strong>; Simple mode never sets <code>lyrics</code>, so a Simple-mode result has no Lyrics sheet.</li>
+<li><strong>SONG-P3-S3</strong> <strong>Share</strong> → <code>ShareDialog</code>; <strong>Download</strong> saves the mp3 (desktop). <strong>Use in Music Video</strong> → <code>/mv/room</code> with the song pre-loaded (incl. lyrics). <strong>Recreate</strong> → charges 50 cr and regenerates (<code>/song/creating</code>), keeping the prior song in History (SONG-03).</li>
+<li><strong>SONG-P3-S4</strong> <strong>Publish</strong> toggle publishes the song to the community immediately when switched on — sign-in required, <strong>no confirm step</strong> (GL-02; MV's equivalent does confirm, MV-12).</li>
 </ul>
 <hr>
 <h2 id="5-error-edge-states">5. Error &amp; edge states</h2>
@@ -1545,8 +1607,9 @@ first 30s — upgrade to Muse Pro" prompt opens <code>SubscribeModal</code>); su
 <li><strong>AC-SONG-03</strong> — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Ideas/Enhance fills are not capped.)</li>
 <li><strong>AC-SONG-04</strong> — WHEN <strong>Create Song</strong> is tapped, THE SYSTEM SHALL <code>resetForNewSong()</code>, insert a Generating History row, and navigate to <code>/song/creating</code>.</li>
 <li><strong>AC-SONG-05</strong> — WHILE the song job is <code>processing</code>, THE SYSTEM SHALL show progress, step, an estimate, and View Later → <code>/history</code>; on <code>done</code> navigate to <code>/song/result</code>.</li>
-<li><strong>AC-SONG-06</strong> — WHEN <code>/song/result</code> loads, THE SYSTEM SHALL expose seek/±15s, Share, a Lyrics sheet (when lyrics exist), Use in Music Video, and Recreate — and no Like. WHILE not subscribed, playback SHALL be capped at 30s with an upgrade prompt (SONG-02); WHILE subscribed, it SHALL play in full.</li>
-<li><strong>AC-SONG-11</strong> — WHILE in Custom mode, THE SYSTEM SHALL expose a BPM slider (60–200) and a Key selector persisted on <code>songCompose.{bpm,key}</code>, and a free-form Lyrics / Idea textarea (SONG-01).</li>
+<li><strong>AC-SONG-06</strong> — WHEN <code>/song/result</code> loads, THE SYSTEM SHALL expose drag-to-seek, prev/next across My Creations, Share, Download, a Lyrics sheet (when lyrics exist), a Publish toggle, Use in Music Video, and Recreate. Playback SHALL NOT be capped for any account.</li>
+<li>⚠️ <strong>Two clauses of the original AC-SONG-06 are now knowingly untrue and are NOT rewritten away.</strong> <em>(a)</em> "<strong>±15s</strong>" — removed in 3j; DP's transport uses those slots for prev/next. <em>(b)</em> "<strong>and no Like</strong>" — DP's player has a Like and it was ported (local state only). <em>(c)</em> the 30s cap it required is cancelled by S3 (§1). (a) and (b) need a product/designer decision; (c) is already decided.</li>
+<li><strong>AC-SONG-11</strong> — ⚠️ <strong>SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.</strong> It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and <code>songCompose.{bpm,key}</code> persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident.</li>
 <li><strong>AC-SONG-12</strong> — WHEN Recreate is invoked with <code>credits ≥ 50</code>, THE SYSTEM SHALL charge 50 and regenerate while keeping the prior song in History; otherwise it SHALL open the buy-credits IAP (SONG-03).</li>
 <li><strong>AC-SONG-13</strong> — WHEN AI Enhance is used, THE SYSTEM SHALL charge nothing the first time per session and 1 credit each time after (SONG-04).</li>
 <li><strong>AC-SONG-07</strong> — WHEN <strong>Use in Music Video</strong> is tapped, THE SYSTEM SHALL pre-load the song (incl. lyrics) into MV compose and navigate to <code>/mv/room</code>.</li>
@@ -1559,7 +1622,7 @@ first 30s — upgrade to Muse Pro" prompt opens <code>SubscribeModal</code>); su
 <ul>
 <li>[ ] <strong>SONG-P1</strong>: Simple CTA gated by describe; Custom CTA always on; Instrumental hides lyrics (AC-01/02).</li>
 <li>[ ] <strong>SONG-P2</strong>: Generate → Generating row + progress → result (AC-04/05).</li>
-<li>[ ] <strong>SONG-P3</strong>: full playback (no 30s lock), seek/±15s; Lyrics sheet when lyrics; Share; Use-in-MV pre-loads song in <code>/mv/room</code>; Recreate → compose (AC-06/07).</li>
+<li>[ ] <strong>SONG-P3</strong>: full playback (no 30s lock); drag-to-seek; prev/next across My Creations; Lyrics sheet when lyrics; Share; Download; Publish toggle; Use-in-MV pre-loads song in <code>/mv/room</code>; Recreate → compose (AC-06/07).</li>
 <li>[ ] <strong>SONG-E1</strong>: failure → Back + Retry (AC-08). <strong>SONG-E2</strong>: reload → redirect compose. <strong>SONG-E3</strong>: logged-out → sign-in.</li>
 <li>[ ] <strong>AC-09</strong>: start job → balance unchanged. <strong>AC-10</strong>: 3 screens clean at 4 widths <em>(visual)</em>.</li>
 </ul>
@@ -1581,6 +1644,18 @@ first 30s — upgrade to Muse Pro" prompt opens <code>SubscribeModal</code>); su
 <td><strong>TBD-SONG-07</strong></td>
 <td>⏳ <strong>TBD</strong> — the Custom info popover lists 11 languages; confirm the real supported-language set for lyric generation.</td>
 </tr>
+<tr>
+<td><strong>TBD-SONG-08</strong></td>
+<td>🎨 <strong>Designer/PO (from 3j)</strong> — <code>/song/result</code> gained a <strong>Like</strong> on the user's own creation (DP's control, local state only). Keep it and give it a backing action, or drop it? See AC-SONG-06 (b).</td>
+</tr>
+<tr>
+<td><strong>TBD-SONG-09</strong></td>
+<td>🎨 <strong>Designer/PO (from 3j)</strong> — <strong>±15s</strong> was dropped for prev/next. Confirm, or find room for both. See AC-SONG-06 (a).</td>
+</tr>
+<tr>
+<td><strong>TBD-SONG-10</strong></td>
+<td>🔧 <strong>RD (from 3j / S4)</strong> — <code>bpm</code> / <code>key</code> are now unreachable from the UI but still on <code>SongComposeSchema</code> and still sent. Deleting them is the C8 PR plan §11 requires; leaving them is also a valid answer. Decide before backend integration, not during.</td>
+</tr>
 </tbody>
 </table>
 <p>See also global: <code>TBD-GL-01</code> (credit charging — incl. <code>COST_SONG=10</code> vs app 50).</p>
@@ -1588,17 +1663,21 @@ first 30s — upgrade to Muse Pro" prompt opens <code>SubscribeModal</code>); su
 <h2 id="9-flow-diagram">9. Flow diagram</h2>
 <pre><code class="language-mermaid">flowchart TD
   Create[&quot;/song/create (Simple / Custom)&quot;] --&gt;|Generate Song 10cr| Creating[&quot;/song/creating&quot;]
-  Creating --&gt;|done| Result[&quot;/song/result (disc player)&quot;]
-  Result --&gt;|Lyrics| Sheet[&quot;LyricsPanel (synced)&quot;]
+  Creating --&gt;|done| Result[&quot;/song/result (player + My Creations)&quot;]
+  Result --&gt;|Lyrics| Sheet[&quot;LyricsSheet (synced)&quot;]
   Result --&gt;|Use in Music Video| Room[&quot;/mv/room (song pre-loaded, area 02)&quot;]
   Result --&gt;|Recreate| Create
   Creating -.View Later.-&gt; Hist[&quot;/history&quot;]
   Creating -.-&gt;|job fails| Err[&quot;Generation Failed → Back / Retry&quot;]
 </code></pre>
 <hr>
-<p><strong>Decisions (as-built):</strong> Simple default; Custom adds BPM/Key + free-form Lyrics/Idea textarea; 30s<br>
-free-preview gate for non-subscribers; Recreate costs 50cr and keeps the prior song; song result has<br>
-no Like; generation is mock and display-only on credits (except the real <code>COST_SONG</code> charge).</p>
+<p><strong>Decisions (as-built, 2026-08-06):</strong> Simple default; Custom is Genre/Mood/Vocal chips + Title +<br>
+a free-form Lyrics/Idea textarea, <strong>no BPM/Key controls</strong> (S4 — the fields stay); <strong>no free-preview<br>
+cap on either player screen</strong> (S3), the cap surviving only inside <code>SongDetail</code> for History;<br>
+<code>/song/result</code> is DP's player over a <strong>My Creations</strong> playlist with a Publish toggle; Recreate costs<br>
+50cr and keeps the prior song; generation is mock and display-only on credits (except the real<br>
+<code>COST_SONG</code> charge). <strong>Open, deliberately unresolved:</strong> the ported Like on an own creation, and the<br>
+±15s controls it replaced (TBD-SONG-08/09).</p>
 </article>
 <article class="doc" id="doc-04" data-name="Explore &amp; Community" data-file="areas/04-explore-community.md">
 <h1 id="area-04-explore-community">Area 04 — Explore &amp; Community</h1>
@@ -1616,13 +1695,16 @@ eligibility gating, no moderation, no publish→feed pipeline, and <strong>no co
 <h2 id="1-overview-scope">1. Overview &amp; scope</h2>
 <p>The discovery + community-consumption surface: the Home feed, the two "See all" explore pages, the MV<br>
 video player, the community song player, and the creator profile.</p>
-<p><strong>In scope:</strong> <code>home/HomeView</code> (<code>/</code>), <code>community/MvExplore</code> (<code>/explore/mvs</code>), <code>community/SongExplore</code><br>
-(<code>/explore/songs</code>), <code>community/CommunityMvPlayer</code> (<code>/watch</code>), <code>community/CommunitySongPlayer</code><br>
-(<code>/song/play</code>), <code>community/CreatorProfile</code> (<code>/creator</code>), <code>community/CommunityMvDialog</code> (modal player),<br>
+<p><strong>In scope:</strong> <code>home/HomeView</code> (<code>/</code>), <code>community/MvExplore</code> (<code>/explore/mvs</code>),<br>
+<code>song/SongDetailView</code> (<strong>both</strong> <code>/explore/songs</code> and <code>/song/play</code> — merged 2026-08-05, Slice 3b;<br>
+it replaced <code>community/SongExplore</code> and <code>community/CommunitySongPlayer</code>, both deleted),<br>
+<code>community/CommunityMvPlayer</code> (<code>/watch</code>), <code>community/CreatorProfile</code> (<code>/creator</code>), <code>community/CommunityMvDialog</code> (modal player),<br>
 <code>community/TrendingMvsPanel</code> (rendered inside <code>/mv/room</code> — area 02), and the shared<br>
 <code>community/ui.tsx</code> primitives.<br>
 <strong>Out of scope (cross-referenced):</strong> the shell (area 01); the actual create flows the CTAs lead into<br>
-(areas 02/03); sign-in (area 09); <code>ShareDialog</code> (area 10). <code>LyricsPanel</code> is shared with area 03.</p>
+(areas 02/03); sign-in (area 09); <code>ShareDialog</code> (area 10). ⚠️ <strong><code>LyricsPanel</code> is no longer shared<br>
+with area 03</strong> — <code>/song/result</code> moved to the shared <code>ui/LyricsSheet</code> in slice 3j, so <code>LyricsPanel</code>'s<br>
+only remaining consumer is History's <code>CreationDialog</code> (area 05).</p>
 <p><strong>Key divergences from the app:</strong> rails are <strong>static seed</strong>, not ranked (Curation PRD) ⚠️; <code>/watch</code><br>
 has <strong>no 9:16↔3:4 toggle and no swipe-up feed</strong> (App F10) ⚠️ (<code>TBD-EXP-03</code>); <code>/song/play</code> is still a<br>
 <strong>simulated timer with no real audio</strong>, but now has <strong>shuffle + repeat and the 30s free-preview gate</strong><br>
@@ -1698,18 +1780,23 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <hr>
 <h2 id="3-state-model-rules">3. State model &amp; rules</h2>
 <h3 id="31-the-four-rails-home-seed-not-ranked">3.1 The four rails (Home) — 🔒 seed, not ranked</h3>
-<p><code>HomeView</code> renders four sections mirroring the Curation PRD rails, but each is a <strong>fixed seed array</strong>:<br>
-- <strong>Trending MV</strong> — auto-scrolling infinite <strong>marquee</strong> (<code>TRENDING_MVS</code> cloned ×2); card → <code>/watch?id</code>.<br>
-- <strong>New MVs</strong> — horizontal scroll, <code>NEW_MVS.slice(0,8)</code>, portrait 3:4 cards; "See all" → <code>/explore/mvs</code>.<br>
-- <strong>Top Picks Songs</strong> — horizontal scroll, <code>TOP_PICKS_SONGS</code>, square cards; card → <code>/song/play?id</code>; "See all" → <code>/explore/songs</code>.<br>
-- <strong>New Songs</strong> — 2-col grid, <code>NEW_SONGS.slice(0,6)</code>; row → <code>/song/play?id</code>; per-row Like (local), Share (<code>ShareDialog</code>), <strong>Create</strong> → <code>createFromSong</code> (<code>requireLogin</code> → <code>patchSongCompose</code> → <code>/song/create</code>).<br>
-- <strong>Hero CTAs</strong>: "AI Music Video Studio" → <code>requireLogin(→ /mv/room)</code>; "AI Audio Lab" → <code>requireLogin(→ /song/create)</code> (auth triggers — area 09).<br>
-- ⚠️ <strong>No ranking, refresh, eligibility, or dedup</strong> from the Curation PRD — ordering is array order (<code>TBD-EXP-01</code>).<br>
-- 📄 <strong>Publish→feed locale contract (backend; spec-only).</strong> When a creation is published (area 02/05) it carries a <strong>language/locale code</strong>. The backend returns each feed <strong>already ranked locale-primary</strong> (viewer's locale first, then engagement signals per the Curation PRD). The <strong>frontend just requests and displays</strong> the server-sorted data — no client-side ranking; "we only ask, the backend sorts." The <strong>code format (2-char ISO <code>en</code> vs 3-char product <code>enu</code>, etc.) is RD-TBD</strong> → <code>TBD-EXP-10</code> (relates to i18n <code>TBD-GL-06</code>). No prototype change now (mock feed stays seed).</p>
+<p><code>HomeView</code> renders four sections mirroring the Curation PRD rails, but each is a <strong>fixed seed array</strong>:</p>
+<ul>
+<li><strong>Trending MV</strong> — auto-scrolling infinite <strong>marquee</strong> (<code>TRENDING_MVS</code> cloned ×2); card → <code>/watch?id</code>.</li>
+<li><strong>New MVs</strong> — horizontal scroll, <code>NEW_MVS.slice(0,8)</code>, portrait 3:4 cards; "See all" → <code>/explore/mvs</code>.</li>
+<li><strong>Top Picks Songs</strong> — horizontal scroll, <code>TOP_PICKS_SONGS</code>, square cards; card → <code>/song/play?id</code>; "See all" → <code>/explore/songs</code>.</li>
+<li><strong>New Songs</strong> — 2-col grid, <code>NEW_SONGS.slice(0,6)</code>; row → <code>/song/play?id</code>; per-row Like (local), Share (<code>ShareDialog</code>), <strong>Create</strong> → <code>createFromSong</code> (<code>requireLogin</code> → <code>patchSongCompose</code> → <code>/song/create</code>).</li>
+<li><strong>Hero CTAs</strong>: "AI Music Video Studio" → <code>requireLogin(→ /mv/room)</code>; "AI Audio Lab" → <code>requireLogin(→ /song/create)</code> (auth triggers — area 09).</li>
+<li>⚠️ <strong>No ranking, refresh, eligibility, or dedup</strong> from the Curation PRD — ordering is array order (<code>TBD-EXP-01</code>).</li>
+<li>📄 <strong>Publish→feed locale contract (backend; spec-only).</strong> When a creation is published (area 02/05) it carries a <strong>language/locale code</strong>. The backend returns each feed <strong>already ranked locale-primary</strong> (viewer's locale first, then engagement signals per the Curation PRD). The <strong>frontend just requests and displays</strong> the server-sorted data — no client-side ranking; "we only ask, the backend sorts." The <strong>code format (2-char ISO <code>en</code> vs 3-char product <code>enu</code>, etc.) is RD-TBD</strong> → <code>TBD-EXP-10</code> (relates to i18n <code>TBD-GL-06</code>). No prototype change now (mock feed stays seed).</li>
+</ul>
 <h3 id="32-explore-pages">3.2 Explore pages</h3>
 <ul>
-<li><strong><code>/explore/mvs</code></strong> (<code>MvExplore</code>): responsive grid (2/3/4 cols) of <code>[...TRENDING_MVS, ...NEW_MVS]</code>; card → <strong><code>CommunityMvDialog</code></strong> (modal player); Back → <code>/</code>. Every card's creator avatar is <code>DEFAULT_CREATOR.avatar</code> ⚠️. (<code>MvExplore</code> also accepts an <code>initialPlayId</code> deep-link prop, but the route never passes it — currently dead.)</li>
-<li><strong><code>/explore/songs</code></strong> (<code>SongExplore</code>): "Top Picks" + "New Songs" lists; row → <code>/song/play?id</code>; creator → <code>/creator</code>; <strong>Create</strong> → <code>requireLogin</code> → <code>patchSongCompose</code> + <code>/song/create</code> (gated at the click, consistent with Home — GL-02/EXP-02); Back → <code>router.back()</code>.</li>
+<li><strong><code>/explore/mvs</code></strong> (<code>MvExplore</code>): <strong>two sections</strong> (Top Picks ← <code>TRENDING_MVS</code>, Newly Released ← <code>NEW_MVS</code>), each a <strong>justified-row gallery</strong> at ≥1024px and a wrapping grid below; card → <strong><code>CommunityMvDialog</code></strong> (modal player); Back → <code>DetailNavbar</code>'s <code>router.back()</code> with a fallback to <code>/</code>. Every card's creator avatar is <code>DEFAULT_CREATOR.avatar</code> ⚠️. (<code>MvExplore</code> also accepts an <code>initialPlayId</code> deep-link prop, but the route never passes it — currently dead.)<blockquote>
+<p><strong>Corrected 2026-08-05.</strong> Was described as a "responsive grid (2/3/4 cols) of <code>[...TRENDING_MVS, ...NEW_MVS]</code>" with "Back → <code>/</code>". Slice <strong>3a</strong> replaced that with the designer's justified gallery and two real sections and did not update this line; caught while fixing the equivalent drift for <code>/explore/songs</code>.</p>
+</blockquote>
+</li>
+<li><strong><code>/explore/songs</code></strong> (<code>song/SongDetailView</code> — <strong>the same component as <code>/song/play</code></strong>, merged in Slice 3b): tabbed list (All / Top Picks / New Releases) beside a Now Playing column, 1:1 at ≥1024px; row → selects in Now Playing at ≥768px, opens the full-screen player at <code>/song/play?id</code> below that; creator → <code>/creator</code>; <strong>Create</strong> → <code>requireLogin</code> → <code>patchSongCompose</code> + <code>/song/create</code> (gated at the click, consistent with Home — GL-02/EXP-02); Back → <code>DetailNavbar</code>'s <code>router.back()</code> with a fallback to <code>/explore/songs</code>.</li>
 </ul>
 <h3 id="33-mv-player-watch-communitymvdialog">3.3 MV player — <code>/watch</code> + <code>CommunityMvDialog</code></h3>
 <ul>
@@ -1717,15 +1804,33 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <li><code>CommunityMvDialog</code> is the same experience as a <strong>modal</strong> (1:1 <code>object-contain</code> stage), used from <code>/explore/mvs</code>.</li>
 <li>⚠️ App F10 offers a 9:16↔3:4 aspect toggle and a swipe-up "next MV" community feed; web has neither (<code>TBD-EXP-03</code>).</li>
 </ul>
-<h3 id="34-song-player-songplay-communitysongplayer">3.4 Song player — <code>/song/play</code> (<code>CommunitySongPlayer</code>)</h3>
+<h3 id="34-song-player-songplay-songsongdetailview-shared-with-exploresongs">3.4 Song player — <code>/song/play</code> (<code>song/SongDetailView</code>, shared with <code>/explore/songs</code>)</h3>
+<blockquote>
+<p><strong>Rewritten 2026-08-05 (Slice 3b).</strong> This section described the pre-migration<br>
+<code>CommunitySongPlayer</code>, which no longer exists. Both URLs now render one screen.</p>
+</blockquote>
 <ul>
-<li>Reads <code>?id</code>; <strong>EXP-09 fix (2026-07-23):</strong> the player picks the <strong>playlist the song belongs to</strong> —<br>
-<code>CREATOR_SONGS</code> for <code>cps-*</code> ids, else <code>ALL_COMMUNITY_SONGS</code> — so creator deep-links play the right<br>
-  track and Prev/Next stay within that set. <strong>disc</strong> cover (spins while playing); <strong>playback is a<br>
-  simulated <code>setInterval</code> progress over <code>DURATION=125s</code> — no real <code>&lt;audio&gt;</code></strong> ⚠️; <strong>shuffle</strong> (random<br>
-  next) + <strong>repeat</strong> (loops the track); click-to-seek; <strong>Like</strong> (gated, local), <strong>Share</strong>, <strong>Lyrics</strong><br>
-  → <code>LyricsPanel</code>; <strong>Create AI Song</strong> (gated) → <code>patchSongCompose</code> → <code>/song/create</code>.</li>
-<li><strong>SONG-02 30s gate:</strong> free accounts can only play/scrub the first 30s (an upgrade prompt opens <code>SubscribeModal</code>); subscribers play in full.</li>
+<li>Reads <code>?id</code> via <code>useSearchParams</code>; <strong>EXP-09 still holds:</strong> the <strong>playlist follows the song</strong> —<br>
+  a <code>cps-*</code> id switches the left list to <code>CREATOR_SONGS</code> (and then no tab is marked active, since<br>
+  none is driving the list); clicking any tab returns to the community catalog. <strong>EXP-06 still<br>
+  holds:</strong> an id that resolves to nothing renders the not-found <code>CommunityEmpty</code> with an<br>
+  "Explore Songs" CTA, not a silent fall back to the first song.</li>
+<li><strong>disc</strong> cover (spins while playing); <strong>playback is a real <code>&lt;audio&gt;</code> element</strong> — duration,<br>
+  currentTime, seek and "advance on ended" all come from it. Audio URLs are derived per id by<br>
+<code>songAudioUrl()</code> in <code>src/lib/mv/community.ts</code>, because <code>CommunitySongSchema</code> is frozen contract<br>
+  surface (C2) and has no <code>audio</code> field. ⚠️ Known cost: the whole catalog maps onto the two demo<br>
+  mp3s in <code>public/assets/songs/</code>, so every song is one of two sounds (demo-media limit U4).</li>
+<li>Click/drag-to-seek; <strong>Like</strong> (gated, per-id, shared between the list row and the player),<br>
+<strong>Share</strong>, <strong>Lyrics</strong> (desktop: an overlay replacing the cover art; mobile: DP's <code>LyricsSheet</code>);<br>
+<strong>Create AI Song</strong> (gated) → <code>patchSongCompose</code> → <code>/song/create</code>.</li>
+<li><strong>Below 768px</strong> the Now Playing column is replaced by a full-screen player (DP's<br>
+<code>MobileNowPlaying</code>, portalled to <code>&lt;body&gt;</code>) whose own back control returns to the list via<br>
+<code>router.back()</code> with a fallback to <code>/explore/songs</code>. "Open" is derived from <code>?id=</code> being present.</li>
+<li><strong>No 30s gate.</strong> Free accounts play in full (decision S3; <code>G5-d #7</code>'s preview half is inverted in<br>
+<code>e2e/behaviour-regressions.spec.ts</code>). <code>SubscribeModal</code> is not reachable from this screen.</li>
+<li>⚠️ <strong>No shuffle / repeat.</strong> Removed to match the designer's transport; this contradicts<br>
+<code>AC-EXP-05</code> as written before 2026-08-05 and is an open designer question —<br>
+<code>docs/DESIGNER-TODO.md</code> A7, plan S21.</li>
 </ul>
 <h3 id="35-creator-profile-creator-creatorprofile">3.5 Creator profile — <code>/creator</code> (<code>CreatorProfile</code>)</h3>
 <ul>
@@ -1756,7 +1861,10 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 </ul>
 <h3 id="exp-p3-explore-songs">EXP-P3 — Explore Songs</h3>
 <ul>
-<li><strong>EXP-P3-S1</strong> <code>/explore/songs</code>: Top Picks + New Songs lists. Row → <code>/song/play?id</code>; creator → <code>/creator</code>; <strong>Create</strong> → <code>/song/create</code> (pre-filled).</li>
+<li><strong>EXP-P3-S1</strong> <code>/explore/songs</code>: one tabbed list — <strong>All</strong> / <strong>Top Picks</strong> / <strong>New Releases</strong> — beside a Now Playing column (the same screen as <code>/song/play</code>; see §3.2). Row → selects that song in Now Playing at ≥768px, or opens the full-screen player at <code>/song/play?id</code> below 768px; creator → <code>/creator</code>; <strong>Create</strong> → <code>/song/create</code> (pre-filled). Switching a tab changes the list only and must NOT change what is playing.<blockquote>
+<p><strong>Rewritten 2026-08-05 (Slice 3b), flagged by the G7 reviewer.</strong> Was: "Top Picks + New Songs lists. Row → <code>/song/play?id</code>". Two things changed: the two stacked lists became three tabs (<code>Trending</code> deliberately not built — <code>DESIGNER-TODO.md</code> A6), and the row click stopped navigating on desktop. <strong>The "must NOT change what is playing" clause is also a G7 finding</strong> — the default was derived live from the visible list, so changing a browse filter restarted playback; now guarded by an e2e.</p>
+</blockquote>
+</li>
 </ul>
 <h3 id="exp-p4-watch-mv-player">EXP-P4 — Watch (MV player)</h3>
 <ul>
@@ -1826,9 +1934,21 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <ul>
 <li><strong>AC-EXP-01</strong> — WHEN <code>/</code> loads, THE SYSTEM SHALL render the hero CTAs and the four seed rails (Trending MV marquee, New MVs, Top Picks Songs, New Songs) in seed order.</li>
 <li><strong>AC-EXP-02</strong> — WHEN a hero CTA or a New-Songs <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>requireLogin</code> and, on success, navigate to the create flow (pre-filling the song for Create-from-song).</li>
-<li><strong>AC-EXP-03</strong> — WHEN an MV card is tapped, THE SYSTEM SHALL open <code>/watch?id</code> (Home) or <code>CommunityMvDialog</code> (Explore); a song card → <code>/song/play?id</code>.</li>
+<li><strong>AC-EXP-03</strong> — WHEN an MV card is tapped, THE SYSTEM SHALL open <code>/watch?id</code> (Home) or <code>CommunityMvDialog</code> (Explore). WHEN a song card is tapped <strong>from Home</strong>, THE SYSTEM SHALL navigate to <code>/song/play?id</code>. WHEN a song row is tapped <strong>on <code>/explore/songs</code></strong>, THE SYSTEM SHALL, below 768px, open the full-screen player at <code>/song/play?id</code>; and at 768px and above, select that song in the Now Playing column <strong>without navigating</strong>.<blockquote>
+<p><strong>Corrected 2026-08-05 (Slice 3b).</strong> This criterion previously said a song card always routes to <code>/song/play?id</code>, which the merge of <code>/explore/songs</code> and <code>/song/play</code> made false on desktop — the two are now one screen, so a desktop row click swaps the right-hand column and deliberately leaves the URL alone (asserted by <code>e2e/behaviour-regressions.spec.ts</code>, "3b desktop: clicking a song swaps the right column without navigating"). Home is NOT migrated and still navigates, which is why the criterion is now split by entry point. <strong>Found by the Gate G7 reviewer:</strong> the same change rewrote <code>AC-EXP-05</code> with a full rationale and left this sibling — and <code>EXP-P3-S1</code> — asserting the old behaviour.</p>
+</blockquote>
+</li>
 <li><strong>AC-EXP-04</strong> — WHEN <code>/watch</code> loads, THE SYSTEM SHALL play the MV muted in 3:4 with play/pause + mute, and expose Like, Share, and <strong>Create Music Video</strong> → <code>/mv/room</code> pre-filled.</li>
-<li><strong>AC-EXP-05</strong> — WHEN <code>/song/play</code> loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community), show the disc player with simulated progress, Prev/Next, <strong>shuffle + repeat</strong>, Like/Share, a Lyrics sheet when lyrics exist, and <strong>Create AI Song</strong> → <code>/song/create</code> pre-filled. WHILE not subscribed, playback SHALL cap at 30s with an upgrade prompt (SONG-02).</li>
+<li><strong>AC-EXP-05</strong> — WHEN <code>/song/play</code> loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community), show the disc player with <strong>real <code>&lt;audio&gt;</code> progress</strong>, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist, and <strong>Create AI Song</strong> → <code>/song/create</code> pre-filled. Playback SHALL NOT be capped for free accounts.<blockquote>
+<p><strong>Rewritten 2026-08-05 by the designer-UI migration (Slice 3b). Three changes, all deliberate:</strong></p>
+<ol>
+<li><strong>The 30s cap is gone</strong> — plan §1.4 decided S1/S3 cancel the Pro playback gate; 3b is where it actually landed. <code>e2e/behaviour-regressions.spec.ts</code> asserts the inverse ("S3 / G5-d#7 inverted"), so it cannot creep back.</li>
+<li><strong>Progress is a real <code>&lt;audio&gt;</code> element</strong>, not <code>setInterval</code> against a hardcoded <code>DURATION = 125</code>. URLs are derived per id in <code>community.ts</code> (<code>songAudioUrl</code>) — the frozen <code>CommunitySongSchema</code> (C2) has no <code>audio</code> field, so there is no contract change. Known cost: the whole catalog maps onto two mp3s (demo-media limit U4).</li>
+<li>⚠️ <strong><code>shuffle + repeat</code> REMOVED, and this is an open divergence, not a settled decision.</strong> DP's transport has only prev/play/next. The product owner chose to follow DP on 2026-08-05 and ask the designer — see <code>docs/DESIGNER-TODO.md</code> <strong>A7</strong> and plan <strong>S21</strong>. If the designer supplies a five-button transport, this criterion goes back to requiring them; if the product confirms the removal, this note goes away. <strong>Do not "fix" the code to match an older copy of this line.</strong></li>
+</ol>
+<p>Same screen also merged with <code>/explore/songs</code> — one view behind two URLs. EXP-09's playlist resolution survives: a <code>cps-*</code> id makes the LIST the creator's playlist.</p>
+</blockquote>
+</li>
 <li><strong>AC-EXP-08</strong> — WHEN a community <strong>Like</strong> or <strong>Create MV/Song</strong> is invoked while logged out, THE SYSTEM SHALL open the sign-in modal at the action and run it on success (GL-02).</li>
 <li><strong>AC-EXP-09</strong> — WHEN a <code>/watch</code> or <code>/song/play</code> id is unresolvable, THE SYSTEM SHALL show a not-found state; WHEN an explore grid is empty or the browser is offline, THE SYSTEM SHALL show the empty / offline state (EXP-06).</li>
 <li><strong>AC-EXP-06</strong> — WHEN <code>/creator</code> loads, THE SYSTEM SHALL show the profile header + stats and MV/Songs tabs whose rows open the respective players; <code>?self=1</code> shows <code>MOCK_USER</code> identity.</li>
@@ -2357,11 +2477,13 @@ restore-purchases are backend/store concerns this spec does <strong>not</strong>
 <hr>
 <h2 id="1-overview-scope">1. Overview &amp; scope</h2>
 <p>Credit balance + the three monetization modals. <code>CreditsProvider</code> holds an in-memory balance;<br>
-<code>SubscribeModal</code> (Muse Pro plans), <code>BuyCreditsModal</code> (credit packs), and <code>CreditsDetailModal</code> (balance<br>
-+ ledger) are opened from the shell, account menu, and profile. Disclaimer copy differs per modal:<br>
-only <strong><code>SubscribeModal</code></strong> says "Demo only — no real payment. Subscription credits expire each cycle.";<br>
+<code>SubscribeModal</code> (Muse Pro plans), <code>BuyCreditsModal</code> (credit packs), and <code>CreditsDetailModal</code> (balance</p>
+<ul>
+<li>ledger) are opened from the shell, account menu, and profile. Disclaimer copy differs per modal:<br>
+  only <strong><code>SubscribeModal</code></strong> says "Demo only — no real payment. Subscription credits expire each cycle.";<br>
 <code>BuyCreditsModal</code> says purchased credits are <strong>valid for 2 years</strong> (non-refundable / prices-vary);<br>
-<code>CreditsDetailModal</code> has none.</p>
+<code>CreditsDetailModal</code> has none.</li>
+</ul>
 <p><strong>In scope:</strong> <code>providers/CreditsProvider</code>, <code>credits/SubscribeModal</code>, <code>credits/BuyCreditsModal</code>,<br>
 <code>credits/CreditsDetailModal</code>; the plan/pack/ledger data in <code>lib/user.ts</code>.<br>
 <strong>Out of scope (cross-referenced):</strong> entry points — header credits badge + account menu Buy Credits<br>
@@ -2393,6 +2515,23 @@ form" tables — annotated <em>price/SKU 須跟後台一樣</em>). <code>SUBSCRI
 <p><strong>Restore Purchases</strong> and the <strong>"already on Muse Pro"</strong> state exist. Still mock: <strong>no native IAP</strong> —<br>
 purchase is instant <code>addCredits</code> 🔒 (<code>TBD-CR-01</code>); the discount %-off / strike-through display and the<br>
 grid/list/popup layout <em>proposals</em> from the Business Model are <strong>not</strong> built (<code>TBD-CR-07</code>).</p>
+<p><strong>Amended 2026-08-06 by the designer-UI migration (slice 3f).</strong> All three dialogs are now DP's<br>
+markup on the shared <code>ui/DpDialog</code> shell (they <strong>unmount when closed</strong>, unlike the 3b overlays that<br>
+stay mounted with <code>inert</code>). Two things about that port matter to RD:</p>
+<ul>
+<li>⚠️ <strong><code>SubscribeModal</code> is no longer a radio picker.</strong> DP's <code>UpgradeDialog</code> is three self-contained<br>
+  cards, each with its own Subscribe button — a deliberate interaction redesign, ported as designed.<br>
+  There is no <code>selected</code> state and <strong><code>DEFAULT_PLAN_ID</code> no longer drives this screen</strong> (it stays<br>
+  exported because it is the Business Model's stated default and other code may want it).</li>
+<li><strong>Every number still comes from <code>lib/user.ts</code>, not from DP</strong> (S20). DP's own comp shows $9.99 for<br>
+  Weekly against WA's $19.99, and hardcodes a literal "/ week" on <strong>all three</strong> cards including<br>
+  Yearly — porting its markup verbatim would have shipped a "$59.99 per week" plan. WA models the<br>
+  billing period per plan (<code>SubscriptionPlan.per</code>), so Yearly reads "/ year". <strong>Layout is DP's,<br>
+  pricing is the Business Model's; keep it that way on the next designer drop.</strong></li>
+</ul>
+<p>3f also widened <code>lib/user.ts</code> (the only <code>src/lib</code> file Phase 3 touched): per-plan <code>description</code>,<br>
+<code>cta</code> treatment and <code>featured</code> flag, <code>per</code>, an icon per <code>MUSE_PRO_FEATURES</code> entry, and<br>
+<code>YEARLY_EXTRA_FEATURES</code> — DP gives the yearly card one benefit the weekly cards do not have.</p>
 <hr>
 <h2 id="2-route-component-state-api-map-rd">2. Route / component / state / API map (RD)</h2>
 <table>
@@ -2443,27 +2582,34 @@ grid/list/popup layout <em>proposals</em> from the Business Model are <strong>no
 <code>MvEditor</code>, <code>SongResultView</code>). <code>CreditsProvider</code> also exposes <code>enhanceCost</code> / <code>consumeEnhance</code> for<br>
   the AI-Enhance charge (SONG-04). Balance still resets to 390 on reload 🔒 (<code>TBD-GL-04</code>); real ledger<br>
   is <code>TBD-CR-04</code>.</li>
-<li><strong><code>SubscribeModal</code></strong> (<code>SubscribeModal.tsx</code>): title "Muse Pro"; header <strong>"{credits} {cadence} Credits"</strong><br>
-  that tracks the selected plan (e.g. "1,000 Weekly Credits"); the <code>MUSE_PRO_FEATURES</code> list + a<br>
-  per-plan <strong>"Credits Expire {cadence}"</strong> line. Three <code>SUBSCRIPTION_PLANS</code> cards — <strong>Weekly</strong> $19.99 /<br>
-  200 cr <strong>MOST POPULAR</strong> · <strong>Weekly Pro</strong> $29.99 / 1,000 cr <strong>BEST VALUE</strong> · <strong>Yearly</strong> $59.99 /<br>
-  2,000 cr; each card shows "{credits} credits · expire {cadence}". Default selected <strong>weekly_pro</strong><br>
-  (<code>DEFAULT_PLAN_ID</code>). <strong>Subscribe</strong> → <code>subscribe(plan)</code> + <code>addCredits(plan.credits)</code> + <code>onSubscribed</code><br>
-  toast + close. <strong>Restore Purchases</strong> action ("No previous purchases found"); when already subscribed<br>
-  the modal shows the <strong>"You're already on Muse Pro"</strong> state (with the subscribed plan's credit count)<br>
-  instead of the picker (CR-05). Disclaimer: "Demo only — no real payment. Subscription credits expire<br>
-  each cycle. Cancel anytime."</li>
+<li><strong><code>SubscribeModal</code></strong> (<code>SubscribeModal.tsx</code>, DP's <code>UpgradeDialog</code> since 3f): title <strong>"Upgrade Your<br>
+  Plan"</strong>. Three self-contained <code>SUBSCRIPTION_PLANS</code> cards, <strong>each with its own Subscribe button and<br>
+  no shared selection</strong> — <strong>Weekly Pro</strong> $29.99 / week, 1,000 cr, <strong>BEST VALUE</strong>, <code>--featured</code> ·<br>
+<strong>Weekly</strong> $19.99 / week, 200 cr, <strong>MOST POPULAR</strong> · <strong>Yearly</strong> $59.99 / year, 2,000 cr. Each card<br>
+  carries a one-line <code>description</code>, its own CTA treatment (<code>cta: default | gradient | white</code>), a<br>
+  "{credits} {cadence} Credits" row, the <code>MUSE_PRO_FEATURES</code> list (+ <code>YEARLY_EXTRA_FEATURES</code> on the<br>
+  yearly card), and a <strong>"Credits Expire {cadence}"</strong> line derived from <code>cadence</code>, not hardcoded per<br>
+  card. A card's <strong>Subscribe</strong> → <code>subscribe(plan)</code> + <code>addCredits(plan.credits)</code> + <code>onSubscribed</code><br>
+  toast + close. Footer: <strong>Restore Purchases</strong> ("No previous purchases found on this account.") and<br>
+  the short disclaimer <strong>"Demo only — no real payment"</strong> — DP's own footer is two dead <code>#</code> links and<br>
+  Restore takes that slot. When already subscribed the dialog shows the <strong>"You're already on Muse<br>
+  Pro"</strong> card with the subscribed plan's credit count and a <strong>Done</strong> button instead of the cards<br>
+  (CR-05) — DP has no such state, and without it a subscriber could buy a second subscription.</li>
 <li><strong><code>BuyCreditsModal</code></strong> (<code>BuyCreditsModal.tsx</code>): <strong>subscriber-gated (CR-06)</strong> — for a non-subscriber it<br>
   renders <code>SubscribeModal</code> directly (no Buy-Credits UI is ever shown to a free user); for a subscriber<br>
   it shows the balance + six <code>CREDIT_PACKS</code> (<strong>8,000</strong> $239.99 · <strong>5,000</strong> $148.99 · <strong>2,000</strong> $59.99<br>
 <strong>BEST VALUE</strong> · <strong>1,000</strong> $39.99 <strong>POPULAR</strong> · <strong>600</strong> $23.99 · <strong>300</strong> $14.99), default selected<br>
 <strong>2,000</strong> (<code>DEFAULT_CREDIT_PACK_ID</code>, BEST VALUE), and the <code>TBD-CR-07</code> discount sample when<br>
 <code>CREDIT_SALE_PCT &gt; 0</code> (struck list price + "N% OFF" badge + sale price on the CTA). <strong>Buy Now</strong> →<br>
-<code>addCredits(pack.credits)</code> + <code>onPurchased</code> toast + close. Copy (CR-03): "Purchased credits are valid<br>
-  for 2 years. Non-refundable. Prices may vary by region." + "Subscriber-only · No commitment".</li>
-<li><strong><code>CreditsDetailModal</code></strong> (<code>CreditsDetailModal.tsx</code>): balance card + <strong>Buy Credits</strong> CTA + a<br>
+<code>addCredits(pack.credits)</code> + <code>onPurchased</code> toast + close. Copy (CR-03): <strong>"Purchased credits are<br>
+  valid for 2 years. Non-refundable and lost upon account deletion. Prices may vary by region."</strong> —<br>
+  DP's own copy says purchased credits "never expire", which contradicts the Business Model, so WA's<br>
+  wording wins for the same reason its prices do.</li>
+<li><strong><code>CreditsDetailModal</code></strong> (<code>CreditsDetailModal.tsx</code>): balance card + a purchase CTA + a<br>
 <strong>Transaction History</strong> list rendered from the static 7-entry <code>CREDIT_TRANSACTIONS</code> seed<br>
-  (<code>lib/user.ts</code>) — 🔒 <strong>not live</strong>; it does not reflect <code>addCredits</code> calls.</li>
+  (<code>lib/user.ts</code>) — 🔒 <strong>not live</strong>; it does not reflect <code>addCredits</code> calls. CR-06 applies to its CTA<br>
+  too: <strong>"Buy More"</strong> for a subscriber, <strong>"Get Muse Pro"</strong> for a free user (DP has one unconditional<br>
+  "Buy More").</li>
 <li>🔒 All credit state and the ledger are in-memory/static; nothing persists across reload; no store integration.</li>
 </ul>
 <hr>
@@ -2471,14 +2617,14 @@ grid/list/popup layout <em>proposals</em> from the Business Model are <strong>no
 <p>Screens to capture later: SubscribeModal, BuyCreditsModal, CreditsDetailModal.</p>
 <h3 id="cr-p1-buy-credits-subscriber-only">CR-P1 — Buy credits (subscriber-only)</h3>
 <ul>
-<li><strong>CR-P1-S0</strong> (non-subscriber) Open <code>BuyCreditsModal</code> → "Credit packs are a Muse Pro perk" gate → <strong>See Muse Pro Plans</strong> swaps in <code>SubscribeModal</code> (CR-06).</li>
+<li><strong>CR-P1-S0</strong> (non-subscriber) Open <code>BuyCreditsModal</code> → it <strong>renders <code>SubscribeModal</code> directly</strong>, with no intermediate "Credit packs are a Muse Pro perk" gate screen and no "See Muse Pro Plans" step (CR-06). ⚠️ The gate screen this step used to describe no longer exists.</li>
 <li><strong>CR-P1-S1</strong> (subscriber) Open <code>BuyCreditsModal</code> (header badge / account menu / profile). <strong>System:</strong> shows balance + 6 packs (2,000 BEST VALUE preselected).</li>
 <li><strong>CR-P1-S2</strong> Pick a pack → <strong>Buy Now</strong> → <code>addCredits(pack.credits)</code>, toast "Added N credits", close. Balance updates in the shell (in-memory).</li>
 </ul>
 <h3 id="cr-p2-subscribe-muse-pro">CR-P2 — Subscribe (Muse Pro)</h3>
 <ul>
-<li><strong>CR-P2-S1</strong> Open <code>SubscribeModal</code> (profile Muse Pro row). <strong>System:</strong> 3 plans (<strong>Weekly Pro</strong> preselected); header shows the selected plan's credit count + expiry cadence.</li>
-<li><strong>CR-P2-S2</strong> Pick a plan → <strong>Subscribe</strong> → <code>subscribe(plan)</code> (account → subscriber) + <code>addCredits(plan.credits)</code> + toast, close. Avatar gains the gold ring / PRO badge (areas 01/06).</li>
+<li><strong>CR-P2-S1</strong> Open <code>SubscribeModal</code> (profile Muse Pro row). <strong>System:</strong> the "Upgrade Your Plan" dialog with 3 plan cards, Weekly Pro <code>--featured</code>. <strong>There is no preselection</strong> — each card carries its own credit count, expiry line and Subscribe button (3f).</li>
+<li><strong>CR-P2-S2</strong> Press a card's <strong>Subscribe</strong> → <code>subscribe(plan)</code> (account → subscriber) + <code>addCredits(plan.credits)</code> + toast, close. Avatar gains the gold ring / PRO badge (areas 01/06).</li>
 </ul>
 <h3 id="cr-p3-credits-detail">CR-P3 — Credits detail</h3>
 <ul>
@@ -2528,9 +2674,9 @@ grid/list/popup layout <em>proposals</em> from the Business Model are <strong>no
 <li><strong>AC-CR-01</strong> — WHEN a credit pack is purchased, THE SYSTEM SHALL add the pack's credits to the balance, toast, and close — with no real payment step.</li>
 <li><strong>AC-CR-02</strong> — WHEN a plan is subscribed, THE SYSTEM SHALL set the account to subscriber, add the plan's credits, and reflect PRO status in the shell/profile.</li>
 <li><strong>AC-CR-03</strong> — WHEN <code>CreditsDetailModal</code> opens, THE SYSTEM SHALL show the current balance, the static transaction ledger, and a Buy Credits CTA.</li>
-<li><strong>AC-CR-04</strong> — THE SYSTEM SHALL show <code>SubscribeModal</code>'s "Demo only — no real payment. Subscription credits expire each cycle. Cancel anytime." disclaimer; <code>BuyCreditsModal</code>'s "Purchased credits are valid for 2 years. Non-refundable. Prices may vary by region." + "Subscriber-only · No commitment"; and no disclaimer on <code>CreditsDetailModal</code>. <em>(as-built per-modal copy)</em></li>
-<li><strong>AC-CR-05</strong> — THE SYSTEM SHALL render the three modals at 390/768/1024/1440px with no overflow. <em>(visual)</em></li>
-<li><strong>AC-CR-06</strong> — WHILE already subscribed, WHEN <code>SubscribeModal</code> opens, THE SYSTEM SHALL show the "You're already on Muse Pro" state (no plan picker) and expose a Restore Purchases action.</li>
+<li><strong>AC-CR-04</strong> — THE SYSTEM SHALL show <code>SubscribeModal</code>'s footer disclaimer "Demo only — no real payment"; <code>BuyCreditsModal</code>'s "Purchased credits are valid for 2 years. Non-refundable and lost upon account deletion. Prices may vary by region."; and no disclaimer on <code>CreditsDetailModal</code>. <em>(as-built per-dialog copy — the longer "Subscription credits expire each cycle. Cancel anytime." string was replaced in 3f by the per-plan "Credits Expire {cadence}" line inside each card, and the pack cards carry their own "Subscriber-only · No commitment" framing no longer.)</em></li>
+<li><strong>AC-CR-05</strong> — THE SYSTEM SHALL render the three dialogs at 320/375/768/1024/1440/1920px with no overflow. <em>(visual — six widths since plan D2, not the old four)</em></li>
+<li><strong>AC-CR-06</strong> — WHILE already subscribed, WHEN <code>SubscribeModal</code> opens, THE SYSTEM SHALL show the "You're already on Muse Pro" state (no plan cards) with a <strong>Done</strong> action. ⚠️ <strong>Restore Purchases is NOT reachable from that state</strong> — the subscribed branch returns before the footer. This is <strong>pre-existing, not a migration regression</strong> (<code>5296f1a</code> behaved identically); the AC has been wrong since CR-05 landed. Decide whether Restore belongs in the subscribed state (arguably where a user would look for it) → <code>TBD-CR-08</code>.</li>
 <li><strong>AC-CR-07</strong> — WHEN a generation is started with <code>credits &lt; cost</code>, THE SYSTEM SHALL open the buy-credits IAP instead of generating (GL-01).</li>
 <li><strong>AC-CR-08</strong> — WHILE NOT subscribed, THE SYSTEM SHALL never present a Buy-Credits affordance: entry points (header, account menu, Credits-detail CTA) SHALL show <strong>Subscribe</strong>, and <code>BuyCreditsModal</code> SHALL render <code>SubscribeModal</code> (credits are subscriber-only — Business Model Final Decision).</li>
 <li><strong>AC-CR-09</strong> — WHEN a Muse Pro plan is selected in <code>SubscribeModal</code>, THE SYSTEM SHALL update the header credit count and expiry cadence to that plan (200 Weekly / 1,000 Weekly / 2,000 Yearly); default selection SHALL be <strong>Weekly Pro</strong>.</li>
@@ -2543,10 +2689,10 @@ grid/list/popup layout <em>proposals</em> from the Business Model are <strong>no
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
 <ul>
 <li>[ ] <strong>CR-P1</strong>: non-subscriber sees <strong>Subscribe</strong> everywhere, never Buy Credits (AC-08); subscriber sees 6 packs with <strong>2,000 BEST VALUE</strong> preselected + the discount sample (struck price + N% OFF, AC-10); Buy adds pack credits + toast; balance updates (AC-01).</li>
-<li>[ ] <strong>CR-P2</strong>: <strong>Weekly Pro</strong> preselected; header credit count/cadence follows the selected plan (AC-09); Subscribe → subscriber + credits + PRO badge (AC-02).</li>
-<li>[ ] <strong>CR-P3</strong>: detail shows balance + 7-entry ledger + Buy Credits → BuyCreditsModal (AC-03).</li>
-<li>[ ] <strong>CR-E1</strong>: reload resets balance/subscription. <strong>CR-E2</strong>: ledger static. <strong>CR-E3</strong>: already-Pro state shown. <strong>CR-E5</strong>: non-subscriber Buy Credits → Muse Pro gate.</li>
-<li>[ ] <strong>AC-04/05</strong>: SubscribeModal shows the demo disclaimer, BuyCredits the expiry/refund copy, CreditsDetail none; modals clean at 4 widths <em>(visual)</em>.</li>
+<li>[ ] <strong>CR-P2</strong>: three plan cards, Weekly Pro featured, <strong>no preselection</strong>; each card's credits/cadence/price come from <code>SUBSCRIPTION_PLANS</code> and Yearly reads <strong>"/ year"</strong>, not "/ week" (AC-09); a card's Subscribe → subscriber + credits + PRO badge (AC-02).</li>
+<li>[ ] <strong>CR-P3</strong>: detail shows balance + 7-entry ledger + a purchase CTA that reads <strong>Buy More</strong> for a subscriber and <strong>Get Muse Pro</strong> for a free user (AC-03).</li>
+<li>[ ] <strong>CR-E1</strong>: reload resets balance/subscription. <strong>CR-E2</strong>: ledger static. <strong>CR-E3</strong>: already-Pro state shown. <strong>CR-E5</strong>: non-subscriber Buy Credits → <code>SubscribeModal</code> directly (no gate screen).</li>
+<li>[ ] <strong>AC-04/05</strong>: SubscribeModal shows the short demo disclaimer, BuyCredits the expiry/refund copy, CreditsDetail none; dialogs clean at <strong>six</strong> widths <em>(visual)</em>.</li>
 </ul>
 <hr>
 <h2 id="8-open-items-for-rd">8. Open items for RD</h2>
@@ -2574,6 +2720,14 @@ grid/list/popup layout <em>proposals</em> from the Business Model are <strong>no
 <td><strong>TBD-CR-07</strong></td>
 <td>⏳ <strong>IAP presentation</strong> — <code>BuyCreditsModal</code> demonstrates the discount UI (struck price + "N% OFF" badge, <code>CREDIT_SALE_PCT</code>) as a <strong>sample only</strong>. Still open: the real promotion values, the "% off vs 300 credits" value framing, the "View all plans" expand, and the final grid/list/popup layout choice.</td>
 </tr>
+<tr>
+<td><strong>TBD-CR-08</strong></td>
+<td>⏳ <strong>Product (raised 2026-08-06)</strong> — <strong>Restore Purchases is unreachable while subscribed</strong> (the already-Pro branch returns before the footer). Pre-existing, not caused by the migration. Decide whether it belongs there; AC-CR-06 is annotated until then.</td>
+</tr>
+<tr>
+<td><strong>TBD-CR-09</strong></td>
+<td>🎨 <strong>Designer (from 3f)</strong> — DP's <code>UpgradeDialog</code> disagrees with the approved Business Model in three places: Weekly at <strong>$9.99</strong> (approved: $19.99), a hardcoded <strong>"/ week"</strong> on the Yearly card, and "credits <strong>never expire</strong>" against the approved 2-year validity. WA follows the Business Model (S20). Please correct the comp so the next drop does not re-introduce them.</td>
+</tr>
 </tbody>
 </table>
 <p>See also global: <code>TBD-GL-01</code> (credit charging/spending), <code>TBD-GL-04</code> (persistence).</p>
@@ -2585,7 +2739,7 @@ grid/list/popup layout <em>proposals</em> from the Business Model are <strong>no
   ProfileCredits[&quot;Profile Credits tile&quot;] --&gt; Detail[&quot;CreditsDetailModal (balance + ledger)&quot;]
   Detail --&gt; Buy
   Buy --&gt;|subscriber?| Q{&quot;subscribed&quot;}
-  Q --&gt;|no| Gate[&quot;Muse Pro gate → See Plans&quot;] --&gt; Sub
+  Q --&gt;|no| Sub
   Q --&gt;|yes| Packs[&quot;Pack picker (6 packs)&quot;]
   Packs --&gt;|Buy Now| Add[&quot;addCredits(pack) — in-memory&quot;]
   Sub --&gt;|Subscribe| Grant[&quot;subscribe(plan) + addCredits(plan) — in-memory&quot;]
@@ -2702,7 +2856,8 @@ entries is kept as a backstop.</p>
   the four gated routes (dismiss → Home) as a backstop; Home hero create CTAs / song-card create<br>
   (<code>HomeView</code>, area 04); and — new — <strong>Create MV / Create Song / Like</strong> on community surfaces<br>
   (<code>CommunityMvPlayer</code>, <code>CommunityMvDialog</code>, <code>CommunitySongPlayer</code>, <code>SongExplore</code>) and <strong>publish</strong> on<br>
-  an MV result (<code>MvDetail</code>) all call <code>requireLogin</code> at the click. This resolves the former<br>
+  an MV result (<code>MvResult</code>; <code>MvDetail</code> keeps the same gate for History's <code>CreationDialog</code>) all call<br>
+<code>requireLogin</code> at the click. This resolves the former<br>
   "community like/share ungated" divergence (synced to App F22).</li>
 </ul>
 <hr>

@@ -24,7 +24,9 @@ it replaced `community/SongExplore` and `community/CommunitySongPlayer`, both de
 `community/TrendingMvsPanel` (rendered inside `/mv/room` — area 02), and the shared
 `community/ui.tsx` primitives.
 **Out of scope (cross-referenced):** the shell (area 01); the actual create flows the CTAs lead into
-(areas 02/03); sign-in (area 09); `ShareDialog` (area 10). `LyricsPanel` is shared with area 03.
+(areas 02/03); sign-in (area 09); `ShareDialog` (area 10). ⚠️ **`LyricsPanel` is no longer shared
+with area 03** — `/song/result` moved to the shared `ui/LyricsSheet` in slice 3j, so `LyricsPanel`'s
+only remaining consumer is History's `CreationDialog` (area 05).
 
 **Key divergences from the app:** rails are **static seed**, not ranked (Curation PRD) ⚠️; `/watch`
 has **no 9:16↔3:4 toggle and no swipe-up feed** (App F10) ⚠️ (`TBD-EXP-03`); `/song/play` is still a

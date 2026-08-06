@@ -6,6 +6,13 @@
 > (code is the source of truth, per `AGENTS.md`), then flags divergences from the mobile
 > **App Spec v3.0** and open questions for the product owner to resolve.
 > **Not a parity contract.** The web build is a deliberate desktop-native redesign, not a 1:1 port.
+>
+> **Designer-UI migration status (2026-08-06): complete, 16 of 16 routes.** Every screen described
+> here now renders the designer prototype's markup and stylesheets, except `/mv/creating` and
+> `/share`, which were deliberately left on the old UI. Where a UI slice deliberately diverged from
+> a criterion below, the criterion is **annotated in place rather than rewritten away** — look for
+> ⚠️ in areas 02, 03 and 07. Change log for RD: `../docs/CHANGELOG-RD.md`; the migration's own
+> record: `../docs/redesign-migration-plan.md`.
 
 ---
 
@@ -130,10 +137,10 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 | F06   | Storyboard Generation                     | **Ported** 🔒 mock timing                                                                                                                                                                                                                               | 02     |
 | F07   | Edit Storyboard                           | **Adapted** (visual style + scenes editable; story/lyrics read-only)                                                                                                                                                                                    | 02     |
 | F08   | MV Generation + Result                    | **Adapted** (result = square stage + docked info panel)                                                                                                                                                                                                 | 02     |
-| F09   | Edit MV                                   | **Adapted → sync App** (`TBD-MV-08`): regenerate overwrites directly, take/cover picker removed, no Save                                                                                                                                                | 02     |
+| F09   | Edit MV                                   | **Adapted → sync App** (`TBD-MV-08`): regenerate overwrites directly, take/cover picker removed, no Save. The `LEGACY_TAKE_TRAY_UI` flag that hid the old trays was deleted in the migration — see area 02 MV-P5                                        | 02     |
 | F10   | MV Video Player                           | **Adapted** 🔒 seed                                                                                                                                                                                                                                     | 04     |
-| F11   | AI Song Feature Room                      | **Adapted → sync App** — Custom adds BPM slider + Key selector; Lyrics/Idea is a free-form textarea (SONG-01)                                                                                                                                           | 03     |
-| F12   | Song Result & Lyrics                      | **Adapted → sync App** — **30s free-preview gate**, Pro unlocks full (SONG-02); synced Lyrics sheet                                                                                                                                                     | 03     |
+| F11   | AI Song Feature Room                      | **Adapted** — Lyrics/Idea is a free-form textarea (SONG-01). ⚠️ The BPM slider + Key selector were **removed** by the designer-UI migration (plan S4, 2026-08-06); the `bpm`/`key` fields remain on the contract — area 03 §1                           | 03     |
+| F12   | Song Result & Lyrics                      | **Adapted** — synced Lyrics sheet; player over a **My Creations** playlist. ⚠️ The **30s free-preview gate is cancelled** (S3), so SONG-02 no longer describes either player screen — area 03 §1                                                        | 03     |
 | F13   | Song Player                               | **Adapted** 🔒 seed — real `<audio>`, **no 30s gate** (S3 landed 2026-08-05). ⚠️ shuffle/repeat **removed** by the designer-UI migration, still an open divergence from AC-EXP-05 — `DESIGNER-TODO.md` A7 / plan S21                                    | 04     |
 | F14   | Community See-All                         | **Adapted** 🔒 seed                                                                                                                                                                                                                                     | 04     |
 | F15   | History (My Creations)                    | **Adapted** 🔒 in-memory                                                                                                                                                                                                                                | 05     |

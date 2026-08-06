@@ -29,12 +29,12 @@ entries is kept as a backstop.
 
 ## 2. Route / component / state / API map (RD)
 
-| Component | Owns UI | Reads/writes state | `MuseApi` |
-|---|---|---|---|
+| Component                | Owns UI                                   | Reads/writes state                                                                         | `MuseApi`            |
+| ------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------- |
 | `providers/AuthProvider` | mounts `SignInModal`; exposes `useAuth()` | `authStore` (loggedIn), `hydratedStore`, in-memory `subscribed`/`subscribedPlan`/`profile` | **none** (mock only) |
-| `auth/AuthGuard` | route-entry gate for signed-in-only pages | `useAuth().{loggedIn,hydrated,requireLogin}` | — |
-| `auth/SignInModal` | Apple/Google buttons + success animation | local `signingIn` timer | — |
-| `lib/authStore` | external store for the logged-in boolean | `localStorage["muse_auth"]` via `useSyncExternalStore` | — |
+| `auth/AuthGuard`         | route-entry gate for signed-in-only pages | `useAuth().{loggedIn,hydrated,requireLogin}`                                               | —                    |
+| `auth/SignInModal`       | Apple/Google buttons + success animation  | local `signingIn` timer                                                                    | —                    |
+| `lib/authStore`          | external store for the logged-in boolean  | `localStorage["muse_auth"]` via `useSyncExternalStore`                                     | —                    |
 
 `useAuth()` surface: `loggedIn`, `hydrated`, `status` (`guest|free|subscriber`), `subscribed`,
 `subscribedPlan`, `profile`, `requireLogin(onSuccess?, onCancel?)`, `openSignIn()`, `signOut()`,
@@ -68,7 +68,8 @@ entries is kept as a backstop.
   the four gated routes (dismiss → Home) as a backstop; Home hero create CTAs / song-card create
   (`HomeView`, area 04); and — new — **Create MV / Create Song / Like** on community surfaces
   (`CommunityMvPlayer`, `CommunityMvDialog`, `CommunitySongPlayer`, `SongExplore`) and **publish** on
-  an MV result (`MvDetail`) all call `requireLogin` at the click. This resolves the former
+  an MV result (`MvResult`; `MvDetail` keeps the same gate for History's `CreationDialog`) all call
+  `requireLogin` at the click. This resolves the former
   "community like/share ungated" divergence (synced to App F22).
 
 ---
@@ -78,29 +79,33 @@ entries is kept as a backstop.
 Screens to capture later: `SignInModal` (idle + success states) over a gated route.
 
 ### AUTH-P1 — Sign in from the header (no queued action)
+
 - **AUTH-P1-S1** Logged-out user clicks **Sign In** (top bar) → `openSignIn()` opens the modal.
 - **AUTH-P1-S2** Pick Apple/Google → 1.5s success animation → `authStore.set(true)`; header swaps to logged-in chrome. No navigation.
 
 ### AUTH-P2 — Gated route entry (queued action)
+
 - **AUTH-P2-S1** Logged-out user navigates to `/mv/room` (or `/song/create` `/history` `/profile`). `AuthGuard` renders nothing and opens the modal via `requireLogin`.
 - **AUTH-P2-S2** Sign in → guard re-renders the page (now `loggedIn`). **Dismiss without signing in → `router.replace(home)`.**
 
 ### AUTH-P3 — Gated create entry (queued push)
+
 - **AUTH-P3-S1** Logged-out user clicks a gated **sidebar** item, or a **Home hero "Create MV"/"Create Song" CTA**, or a **Home song-card "create"** (`HomeView`, area 04) → `requireLogin(() => push(target))`. Sign in → navigates to target (song-card create also pre-fills the song compose); dismiss → stays on the current page.
 
 ### AUTH-P4 — Sign out
+
 - **AUTH-P4-S1** **Sign Out** — from the header account menu (area 01) or from **Settings** (area 06; PROF-03 moved it off the profile screen 2026-07-23) → `signOut()`: clears `muse_auth`, resets subscription + profile to guest defaults. Settings' Sign Out routes Home; on a guarded page, `AuthGuard` re-opens the sign-in gate, dismissing it → Home (see AUTH-E3).
 
 ---
 
 ## 5. Error & edge states
 
-| ID | Trigger | Behaviour |
-|---|---|---|
-| **AUTH-E1** | Reload while signed in | `loggedIn` persists (localStorage); subscription/profile do **not** — user is `free` again until they re-subscribe (🔒, → `TBD-GL-04`). |
-| **AUTH-E2** | Pre-hydration paint | Guarded pages render `null` (not the sign-in modal) until `hydrated`; the shell header briefly shows logged-out (area 01 SHELL-E1). |
-| **AUTH-E3** | Dismiss modal on a guarded route | `router.replace(home)` (AuthGuard `onCancel`). On a nav-triggered gate, dismiss just stays put (no `onCancel`). |
-| **AUTH-E4** | `storage` event (sign-in/out in another tab) | `authStore.subscribe` listens to `window "storage"`, so auth state syncs across tabs. |
+| ID          | Trigger                                      | Behaviour                                                                                                                               |
+| ----------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **AUTH-E1** | Reload while signed in                       | `loggedIn` persists (localStorage); subscription/profile do **not** — user is `free` again until they re-subscribe (🔒, → `TBD-GL-04`). |
+| **AUTH-E2** | Pre-hydration paint                          | Guarded pages render `null` (not the sign-in modal) until `hydrated`; the shell header briefly shows logged-out (area 01 SHELL-E1).     |
+| **AUTH-E3** | Dismiss modal on a guarded route             | `router.replace(home)` (AuthGuard `onCancel`). On a nav-triggered gate, dismiss just stays put (no `onCancel`).                         |
+| **AUTH-E4** | `storage` event (sign-in/out in another tab) | `authStore.subscribe` listens to `window "storage"`, so auth state syncs across tabs.                                                   |
 
 ---
 
@@ -111,8 +116,8 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 - **AC-AUTH-03** — WHEN the user dismisses the modal opened by `AuthGuard`, THE SYSTEM SHALL navigate Home; WHEN dismissed after a gated-nav click, THE SYSTEM SHALL leave the current page unchanged.
 - **AC-AUTH-04** — WHILE the success animation is playing, THE SYSTEM SHALL block modal dismissal.
 - **AC-AUTH-05** — WHEN the user signs out, THE SYSTEM SHALL clear the logged-in flag and reset subscription and profile to guest defaults.
-- **AC-AUTH-06** — WHEN the logged-in flag is set/cleared, THE SYSTEM SHALL persist only that flag across reload (subscription/profile are not persisted). *(Locks in current behaviour pending `TBD-GL-04`.)*
-- **AC-AUTH-07** — THE SYSTEM SHALL render `SignInModal` correctly at 390/768/1024/1440px. *(visual)*
+- **AC-AUTH-06** — WHEN the logged-in flag is set/cleared, THE SYSTEM SHALL persist only that flag across reload (subscription/profile are not persisted). _(Locks in current behaviour pending `TBD-GL-04`.)_
+- **AC-AUTH-07** — THE SYSTEM SHALL render `SignInModal` correctly at 390/768/1024/1440px. _(visual)_
 
 ---
 
@@ -123,15 +128,15 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 - [ ] **AUTH-P3**: gated nav click → modal; sign in → target; dismiss → stay (AC-03).
 - [ ] **AUTH-P4/E1**: sign out resets to guest; reload keeps logged-in only, subscription lost (AC-05/06).
 - [ ] **AUTH-E4**: sign in/out in a second tab syncs.
-- [ ] **AC-04**: cannot dismiss during success animation. **AC-07**: modal clean at 4 widths *(visual)*.
+- [ ] **AC-04**: cannot dismiss during success animation. **AC-07**: modal clean at 4 widths _(visual)_.
 
 ---
 
 ## 8. Open items for RD
 
-| ID | Open item |
-|---|---|
-| **TBD-AUTH-01** | 🔧 **Backend (RD)** — real auth integration: provider(s), session/token model, and where it lives relative to `MuseApi`. Entirely undefined; do not infer from the mock. |
+| ID              | Open item                                                                                                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TBD-AUTH-01** | 🔧 **Backend (RD)** — real auth integration: provider(s), session/token model, and where it lives relative to `MuseApi`. Entirely undefined; do not infer from the mock.                                                        |
 | **TBD-AUTH-04** | ⏳ **Web-specific spec needed** — define the web guest-browsing / gating rules in detail (a web access matrix: which surfaces are usable logged-out — today Home/Explore/Watch/Player/Share/Settings). Not a straight App copy. |
 
 See also global: `TBD-GL-02` (auth granularity), `TBD-GL-03` (onboarding), `TBD-GL-04` (persistence).
