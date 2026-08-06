@@ -67,8 +67,8 @@ entries is kept as a backstop.
   **gated nav** click while logged out (`Sidebar` → `requireLogin(→push)`, area 01); **AuthGuard** on
   the four gated routes (dismiss → Home) as a backstop; Home hero create CTAs / song-card create
   (`HomeView`, area 04); and — new — **Create MV / Create Song / Like** on community surfaces
-  (`CommunityMvPlayer`, `CommunityMvDialog`, `CommunitySongPlayer`, `SongExplore`) and **publish** on
-  an MV result (`MvResult`; `MvDetail` keeps the same gate for History's `CreationDialog`) all call
+  (`CommunityMvPlayer`, `CommunitySongPlayer`, `SongExplore`) and **publish** on
+  an MV result (`MvResult`) all call
   `requireLogin` at the click. This resolves the former
   "community like/share ungated" divergence (synced to App F22).
 

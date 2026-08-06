@@ -175,7 +175,7 @@ to move the current page under the new locale prefix.
 `useT()`. Everything else (Home, MV, Song, Community, History, Auth, Credits modals, …) is
 hardcoded English JSX. Similarly, only 5 files build paths with `localePath()`
 (`AuthGuard.tsx`, `LocaleProvider.tsx`, `Sidebar.tsx`, `ProfileView.tsx`, `AccountMenu.tsx`); most
-in-app `router.push()` calls use raw unprefixed paths (e.g. `HomeView.tsx`, `CreationDialog.tsx`,
+in-app `router.push()` calls use raw unprefixed paths (e.g. `HomeView.tsx`,
 `MvResult.tsx`). Raw pushes still resolve to the correct locale because the `NEXT_LOCALE` cookie
 set by `setLocale()` is picked up by `middleware.ts` on the next request — but as a redirect, not
 an in-place navigation. `localePath()` is the preferred pattern going forward.

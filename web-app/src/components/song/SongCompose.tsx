@@ -19,7 +19,7 @@ import { creationHref, useOpenCreation } from "@/components/history/useOpenCreat
 import { MOCK_USER } from "@/lib/user";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
-import { GENRES, MOODS, VOCALS, SONG_IDEAS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
+import { GENRES, MOODS, VOCALS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
 import { TOP_PICKS_SONGS } from "@/lib/mv/community";
 import { COST_SONG, DESCRIPTION_MAX, isSongReady, type SongMode } from "@/lib/mv/types";
 
@@ -59,6 +59,14 @@ const pick = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.lengt
  *   DP-skinned via `bem="song-create"`, including the two-direction menu on the
  *   custom-lyrics box, which DP has no equivalent for.
  * · The disabled-CTA reason line. DP disables the button and says nothing.
+ *
+ * ── AND ONE THING WE DELIBERATELY DO NOT HAVE (2026-08-06) ──────────────────
+ *
+ * DP's "Idea" buttons — one on the describe box, one on the lyrics box — are
+ * REMOVED. V1 ships no canned-sample fillers (product owner). This is the rare
+ * case of diverging from DP by SUBTRACTION, so it will come back on every drop
+ * and has to be re-removed; `Lyrics` and `/mv/room`'s `Templates` are different
+ * controls and stay.
  *
  * ── ONE DP BEHAVIOUR THAT NEEDED A DECISION ─────────────────────────────────
  *
@@ -152,14 +160,17 @@ export function SongCompose() {
                   aria-label="Describe your song"
                 />
                 <div className="song-create__input-footer">
-                  <button
-                    type="button"
-                    className="song-create__idea-btn"
-                    onClick={() => patch({ describe: pick(SONG_IDEAS) })}
-                  >
-                    <DpIcon name="ic_lightbulb" className="song-create__idea-icon" />
-                    Idea
-                  </button>
+                  {/* The "Idea" button was REMOVED 2026-08-06 — V1 ships no
+                      canned-sample fillers (product owner). A deviation FROM
+                      DP, which has `.song-create__idea-btn` here
+                      (`SongCreatePage.tsx:598`), so the next drop brings it
+                      back and the removal must be re-applied.
+
+                      The empty left group is load-bearing, not leftover:
+                      `.song-create__input-footer` is `justify-content:
+                      space-between`, so with one child the Enhance/count group
+                      would slide to the LEFT edge. DP's own class, no override. */}
+                  <div className="song-create__input-actions" />
                   <div className="song-create__footer-right">
                     <EnhanceButton
                       value={s.describe}
@@ -229,15 +240,10 @@ export function SongCompose() {
                   aria-label={s.instrumental ? "Describe your instrumental" : "Lyrics"}
                 />
                 <div className="song-create__input-footer">
+                  {/* Same removal as the Simple box. `Lyrics` STAYS: it is a
+                      different control with a different label, and it shows the
+                      lyric FORMAT rather than filling in a prompt. */}
                   <div className="song-create__input-actions">
-                    <button
-                      type="button"
-                      className="song-create__idea-btn"
-                      onClick={() => patch({ lyrics: pick(SONG_IDEAS) })}
-                    >
-                      <DpIcon name="ic_lightbulb" className="song-create__idea-icon" />
-                      Idea
-                    </button>
                     {!s.instrumental && (
                       <button
                         type="button"

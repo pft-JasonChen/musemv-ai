@@ -25,7 +25,7 @@ import { MOCK_USER } from "@/lib/user";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
-import { MV_TYPES, SAMPLE_FACES, IDEAS, formatDuration } from "@/lib/mv/mock";
+import { MV_TYPES, SAMPLE_FACES, formatDuration } from "@/lib/mv/mock";
 import { NEW_MVS } from "@/lib/mv/community";
 import {
   COST_RENDER,
@@ -69,7 +69,8 @@ import {
  * · MV-02 import validation (format allow-list + 50MB ceiling).
  * · `EnhanceButton`, which goes through `api.enhancePrompt` (G5-d #10). DP
  *   picks a random string from a local `ENHANCED_SUGGESTIONS` array.
- * · The Ideas button. DP has Templates only.
+ * · (The Ideas button was here until 2026-08-06. It is GONE now — V1 ships no
+ *   canned-sample fillers — and that is a deviation FROM DP, which has one.)
  *
  * ── AND ONE THING DP HAS THAT WA DID NOT ────────────────────────────────────
  *
@@ -387,17 +388,14 @@ export function MvRoom() {
                     <DpIcon name="ic_video" className="mv-create__idea-icon" />
                     Templates
                   </button>
-                  {/* WA-only, and kept: DP has no Ideas button. */}
-                  <button
-                    type="button"
-                    className="mv-create__idea-btn"
-                    onClick={() =>
-                      patchCompose({ description: IDEAS[Math.floor(Math.random() * IDEAS.length)] })
-                    }
-                  >
-                    <DpIcon name="ic_edit_ai" className="mv-create__idea-icon" />
-                    Ideas
-                  </button>
+                  {/* The "Ideas" button was REMOVED 2026-08-06 — V1 ships no
+                      canned-sample fillers (product owner). Note this is a
+                      deliberate deviation FROM DP, not a fidelity fix: DP has
+                      `.mv-create__idea-btn` on this box too
+                      (`MVCreatePage.tsx:1182`), so the next drop will bring it
+                      back and the removal has to be re-applied. Templates
+                      stays — it opens `TemplateSheet`, a real feature, not a
+                      mock-data filler. */}
                 </div>
                 <div className="mv-create__footer-right">
                   {/* G5-d #10: this goes through `api.enhancePrompt`. DP's

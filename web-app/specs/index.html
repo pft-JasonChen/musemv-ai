@@ -1077,7 +1077,7 @@ document says "modal" about one of these six, read "sheet". <code>/mv/creating</
 this area <strong>not</strong> migrated, deliberately (it is the shared <code>GenerationView</code>).<br>
 <strong>Out of scope (other areas):</strong> community MV player <code>/watch</code> (04); the app-shell chrome (01); the<br>
 credits/IAP modals (07); sign-in (09).<br>
-<strong>External entry points into this flow (see area 05 / <code>CreationDialog</code>):</strong> History/Community rows can<br>
+<strong>External entry points into this flow (see area 05):</strong> History/Community rows can<br>
 enter <code>/mv/edit</code>, <code>/mv/room</code> with <strong>synthesized</strong> MvFlow state — documented in MV-P6 below.</p>
 </blockquote>
 <p><strong>Key divergences from the app</strong> (details inline): no MV-type intro-carousel screen; every song (incl.<br>
@@ -1101,8 +1101,8 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <tr>
 <td><code>/mv/room</code></td>
 <td><code>mv/MvRoom</code></td>
-<td>type picker, Choose Song, Describe, photos, Settings, CTA, Templates sheet</td>
-<td><code>useMvFlow().compose</code>, <code>patchCompose</code>, <code>resetForNewMv</code></td>
+<td>type picker, Choose Song, Describe, photos, Settings, CTA, Templates sheet, <strong>two-mode side rail</strong> (no Ideas button — removed for V1)</td>
+<td><code>useMvFlow().compose</code>, <code>patchCompose</code>, <code>resetForNewMv</code>; <code>useAuth().loggedIn</code>, <code>useHistory().history</code> (rail)</td>
 <td><code>enhancePrompt</code> (Describe)</td>
 </tr>
 <tr>
@@ -1129,7 +1129,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <tr>
 <td><code>/mv/result</code></td>
 <td><code>MvResult</code> (self-contained since 3i)</td>
-<td>video stage, like/dislike, share, download, publish toggle, Recreate, Edit MV</td>
+<td><strong>Back (→ History)</strong>, video stage, like/dislike, share, download, publish toggle, Recreate, Edit MV</td>
 <td><code>resultUrl</code>, <code>compose</code>, <code>storyboard</code>, <code>useHistory</code></td>
 <td>—</td>
 </tr>
@@ -1179,6 +1179,12 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 </thead>
 <tbody>
 <tr>
+<td><strong>MV-P1-S0</strong></td>
+<td>Arrive at <code>/mv/room</code> — desktop <strong>side rail</strong> (2026-08-06)</td>
+<td>Two modes, following DP: <strong>"Trending MVs"</strong> over <code>NEW_MVS</code> with a "See all" → <code>/explore/mvs</code>, or <strong>"My Creations"</strong> over the user's own finished MVs from <code>useHistory()</code>, with <strong>no</strong> "See all" (DP renders none in that branch) and each row opening <code>/mv/result?id=</code> via the shared seed-then-navigate.</td>
+<td>The My Creations branch needs <code>loggedIn</code> <strong>and</strong> ≥1 completed MV — DP keys on sign-in alone because its fixture is never empty; WA's list is real and starts empty. 🔒 History is in-memory, so a reload puts the rail back to Trending.</td>
+</tr>
+<tr>
 <td><strong>MV-P1-S1</strong></td>
 <td>Arrive at <code>/mv/room</code> (auth-gated)</td>
 <td>Renders form; <code>mvType=singing</code>; CTA <strong>disabled</strong></td>
@@ -1200,7 +1206,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <td><strong>MV-P1-S4</strong></td>
 <td>Type / paste a description</td>
 <td>Updates <code>n/2500</code> counter; blocks keyboard/paste past 2500</td>
-<td>⚠️ Hard 2500 cap is web-new. Shortcuts: <strong>Templates</strong>, <strong>Ideas</strong> (fills a random idea), <strong>Enhance</strong> (<code>enhancePrompt</code>, 🔒 mock). Note: shortcut-fills are not length-capped (see AC-MV-03).</td>
+<td>⚠️ Hard 2500 cap is web-new. Shortcuts: <strong>Templates</strong>, <strong>Enhance</strong> (<code>enhancePrompt</code>, 🔒 mock). <strong>The "Ideas" button was removed 2026-08-06</strong> — V1 ships no canned-sample fillers; a deliberate subtraction from DP, which still has one. Note: shortcut-fills are not length-capped (see AC-MV-03).</td>
 </tr>
 <tr>
 <td><strong>MV-P1-S5</strong></td>
@@ -1237,7 +1243,12 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 </ul>
 <h3 id="mv-p4-result-actions-mvresult-self-contained-since-slice-3i">MV-P4 — Result &amp; actions (<code>/mv/result</code>, self-contained since slice 3i)</h3>
 <ul>
-<li><strong>MV-P4-S1</strong> Video autoplays <strong>muted + looped</strong> with native controls on a square stage. ⚠️ App autoplays speaker-on; muted is a web/browser choice.</li>
+<li>
+<p><strong>MV-P4-S0 (2026-08-06)</strong> The screen is reachable two ways: at the end of a generation, and from a done MV row in <code>/history</code> (area 05, <code>?id=</code> carries the row). <strong>Back</strong> goes <code>router.back()</code> with <code>/history</code> as the fallback.</p>
+</li>
+<li>
+<p><strong>MV-P4-S1</strong> Video autoplays <strong>muted + looped</strong> with native controls on a square stage. ⚠️ App autoplays speaker-on; muted is a web/browser choice.</p>
+</li>
 <li><strong>MV-P4-S2</strong> Like / Dislike (mutually exclusive, local state) · <strong>Share</strong> (<code>ShareDialog</code>, link) · <strong>Download</strong> (<code>resultUrl</code>) · <strong>Publish to community</strong> toggle. <strong>DECIDED (<code>TBD-MV-12</code>, sync App):</strong> toggling Publish <strong>on</strong> opens a <strong>"Ready to Go Public?" confirm dialog</strong> (the same one History uses, area 05); on confirm → <strong>Published · pending review</strong>; toggling off <strong>unpublishes</strong>. On publish the client sends a <strong>language/locale code</strong> so the backend can rank the community feed locale-primary (backend/Curation — see area 04 §3; code format TBD <code>TBD-EXP-10</code>). (Feed pipeline/destination → <code>TBD-MV-06</code>, spec-only.) 🔒 On this fresh-generation screen, publish state is <strong>local to <code>MvResult</code></strong> (there is no History row to share it with yet); opening the <em>same</em> creation later from History uses the controlled path described in area 05 §3, where the row's <code>⋯</code> menu and its detail dialog share one state.</li>
 <li><strong>MV-P4-S3</strong> Info panel: type/character tags, title (settings title or song title), author (settings or <code>MOCK_USER.name</code>), Music row, Generation Detail (character, author, style, ratio, quality, scenes, subtitle).</li>
 <li><strong>MV-P4-S4</strong> <strong>Recreate</strong> → <code>/mv/room</code> (keeps compose). <strong>Edit MV</strong> → <code>/mv/edit</code> (direct-mode renders, which have no storyboard, get a <code>mockStoryboard()</code> first). <strong>DECIDED rule (<code>TBD-MV-13</code>):</strong> a <strong>published</strong> (or in-review) MV must be <strong>unpublished before editing</strong> — while published, the Edit MV button renders <strong>neutral (white bg / black text)</strong> labeled <strong>"Unpublish to edit"</strong>; tapping it unpublishes, after which it returns to the accent <strong>"Edit MV"</strong> and opens the editor. No per-screen back arrow on Result — the shell handles back.</li>
@@ -1273,7 +1284,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>MV-P6-D FacePickerModal:</strong> manual crop square + size slider (256×256 JPEG). Detected-face suggestions are supported by the component but <strong>not passed</strong> from <code>/mv/room</code> (manual-crop only as-built). ⚠️ App auto-detects up to 6 faces (→ <code>TBD-MV-03</code>).</li>
 <li><strong>MV-P6-E SettingsModal:</strong> Aspect Ratio 9:16/16:9 · Quality <strong>Standard/High</strong> (SD/HD icons). <strong>MV-04 (2026-07-23):</strong> on the free plan <strong>"High" is greyed with a crown</strong>; tapping it opens <code>SubscribeModal</code> (IAP) instead of selecting. Subscribers select it normally. · Title/Author toggles+inputs · Show Subtitle · Show Watermark.</li>
 <li><strong>MV-P6-F TemplateSheet</strong> (its own component since 3g-2 — it used to be an inline <code>&lt;Modal&gt;</code> in <code>MvRoom</code>): grid of <code>TEMPLATES</code>; selecting fills <code>description</code> with the template prompt. ⚠️ Does <strong>not</strong> auto-select/lock a song (the old web spec claimed it did → <code>TBD-MV-05</code>).</li>
-<li><strong>External entries (<code>CreationDialog</code>, area 05):</strong> from History/Community — <strong>Recreate</strong> → <code>/mv/room</code> (MV synthesizes compose with the row title); <strong>Edit MV</strong> → <code>/mv/edit</code> (fabricates a <code>mockStoryboard()</code> + a synthetic song with <code>durationSec:0</code>); <strong>Use in MV</strong> → <code>/mv/room</code> with a synthesized <code>library</code> song (<code>durationSec:0</code>). RD/QA: these enter the flow with placeholder state, not a real compose.</li>
+<li><strong>External entries (area 05's <code>useOpenCreation</code> / <code>useSeedMvFlow</code>):</strong> from History — <strong>Create MV</strong> → <code>/mv/room</code>, <strong>Edit MV</strong> → <code>/mv/edit</code>, and opening a done row → <code>/mv/result</code>. All three fabricate flow state from the row (a <code>mockStoryboard()</code> plus a synthetic song with <code>durationSec:145</code>). RD/QA: these enter the flow with placeholder state, not a real compose. <em>(Until 2026-08-06 this went through <code>CreationDialog</code>, now deleted.)</em></li>
 </ul>
 <hr>
 <h2 id="5-error-edge-states">5. Error &amp; edge states</h2>
@@ -1329,13 +1340,14 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <ul>
 <li><strong>AC-MV-01</strong> — WHEN <code>/mv/room</code> loads, THE SYSTEM SHALL default <code>mvType=singing</code> and keep <strong>Create</strong> disabled until <code>song != null</code> AND <code>description.trim() !== ""</code>.</li>
 <li><strong>AC-MV-02</strong> — WHEN a song is selected from any source (My Songs, Sample Songs, or Import), THE SYSTEM SHALL route it through Trim, and on confirm show the song card (art/title/effective duration) and re-evaluate CTA-ready.</li>
-<li><strong>AC-MV-03</strong> — WHEN the description is typed or pasted beyond 2500 chars, THE SYSTEM SHALL reject input past 2500 and show <code>2500/2500</code>. (Programmatic fills — Ideas/Templates/Enhance — are not length-capped; fixtures stay under the cap.)</li>
+<li><strong>AC-MV-03</strong> — WHEN the description is typed or pasted beyond 2500 chars, THE SYSTEM SHALL reject input past 2500 and show <code>2500/2500</code>. (Programmatic fills — Templates/Enhance — are not length-capped; fixtures stay under the cap.)</li>
 <li><strong>AC-MV-04</strong> — WHEN <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>resetForNewMv()</code> and open <code>ModeModal</code> preserving compose state.</li>
 <li><strong>AC-MV-05</strong> — WHEN <strong>Storyboard First</strong> is chosen, THE SYSTEM SHALL navigate to <code>/mv/thinking</code> and start a storyboard job; WHEN <strong>Directly</strong>, navigate to <code>/mv/creating</code> and start a render job.</li>
 <li><strong>AC-MV-06</strong> — WHEN a generation job starts, THE SYSTEM SHALL insert a Generating row in History; and WHILE <code>processing</code>, SHALL show 0–100% progress, a step label, an estimate, and a <strong>View Later</strong> control that navigates to <code>/history</code>.</li>
 <li><strong>AC-MV-07</strong> — WHEN a storyboard job is <code>done</code>, THE SYSTEM SHALL navigate to <code>/mv/storyboard</code> populated with character image, song, visual style, story, timed scenes, and lyrics.</li>
 <li><strong>AC-MV-08</strong> — WHEN Visual Style or a Scene text is edited in <code>/mv/storyboard</code>, THE SYSTEM SHALL update the in-memory storyboard (no Save button; edits are ephemeral) and carry the change into the next <strong>Generate MV</strong>. The MV Song section SHALL be <strong>play-only</strong> (no editing).</li>
 <li><strong>AC-MV-09</strong> — WHEN <strong>Generate MV</strong> is tapped, THE SYSTEM SHALL render using the (possibly edited) storyboard and land on <code>/mv/result</code>.</li>
+<li><strong>AC-MV-18</strong> — WHEN <code>/mv/result</code> is reached from a <code>/history</code> row, THE SYSTEM SHALL show that row's creation (flow state is seeded by <code>useOpenCreation</code>, area 05) and carry the row id in <code>?id=</code> so Share builds that row's link; and <strong>Back</strong> SHALL return to <code>/history</code>. <em>(Back is <code>router.back()</code> per Q6; <code>/history</code> is also the fallback. The generation screens <code>replace</code> rather than <code>push</code>, so Back off a freshly rendered MV reaches <code>/mv/room</code>, not the creating screen.)</em></li>
 <li><strong>AC-MV-10</strong> — WHEN <code>/mv/result</code> loads, THE SYSTEM SHALL loop the video muted and expose Like/Dislike (mutually exclusive), Share, Download, a <strong>Publish toggle that opens a "Ready to Go Public?" confirm on turn-on</strong>, Recreate, and <strong>Edit MV</strong> — where, while the MV is published/in-review, Edit MV is replaced by a neutral <strong>"Unpublish to edit"</strong> action.</li>
 <li><strong>AC-MV-11</strong> — IF a job <code>failed</code>, THEN THE SYSTEM SHALL show the error state with <strong>Back</strong> and <strong>Retry</strong> and mark the History row Failed. (Retry with an unchanged <code>[fail]</code> description re-fails.)</li>
 <li><strong>AC-MV-12</strong> — WHEN Regenerate scene or Recreate cover is invoked in Edit MV, THE SYSTEM SHALL <strong>overwrite</strong> that scene/cover in place (no take/cover picker, no undo) and decrement the balance (−20 / −10).</li>
@@ -1424,13 +1436,14 @@ trims before use.</p>
 <p>The end-to-end flow to create an AI song: compose (Simple or Custom) → watch generation → view the<br>
 result (disc player + synced Lyrics sheet) → use the song in an MV or recreate.</p>
 <p><strong>In scope:</strong> <code>/song/create</code> (<code>SongCompose</code>), <code>/song/creating</code> (<code>SongGenerationScreen</code>),<br>
-<code>/song/result</code> (<code>SongResultView</code> → <code>SongDetail</code> + <code>LyricsPanel</code>).<br>
+<code>/song/result</code> (<code>SongResultView</code>, self-contained since slice 3j).<br>
 <strong>Out of scope (cross-referenced):</strong> the community song player <code>/song/play</code> (area 04 —<br>
-<code>CommunitySongPlayer</code>); <code>SongDetail</code> is <strong>shared</strong> with History's <code>CreationDialog</code> (area 05);<br>
+<code>CommunitySongPlayer</code>);<br>
 <code>ShareDialog</code> (area 10); Use-in-MV lands in <code>/mv/room</code> (area 02).</p>
 <p><strong>As-built vs App F11–F13 (SONG-01…05 landed 2026-07-23; amended 2026-08-06 by the designer-UI<br>
-migration, slice 3j):</strong> Custom mode has Genre / Mood / Vocal chips + Title; the <strong>Lyrics / Idea</strong><br>
-input is a free-form textarea (app-style — Ideas / Lyrics samples + Enhance), matching the app<br>
+migration, slice 3j):</strong> Custom mode has Genre / Mood / Vocal chips + Title; the <strong>Lyrics</strong><br>
+input is a free-form textarea (app-style — Lyrics sample + Enhance; the Idea fills were removed<br>
+for V1 on 2026-08-06), matching the app<br>
 prototype; <strong>Recreate charges <code>COST_SONG_RECREATE</code> (50) and keeps the prior song in History</strong><br>
 (SONG-03); <strong>AI Enhance is free the first time per session, then 1 credit</strong> (SONG-04); the compose<br>
 credit pill shows the <strong>live balance</strong> (SONG-05). Generation itself charges <code>COST_SONG</code> (10) on<br>
@@ -1445,9 +1458,9 @@ start (GL-01, insufficient → IAP).</p>
 <code>e2e/behaviour-regressions.spec.ts</code> → <code>3j / S4</code>.</li>
 <li>⚠️ <strong>SONG-02's 30s free-preview gate is CANCELLED</strong> (plan §1.4, S3) and <code>/song/result</code> no longer<br>
   enforces it. <code>/song/play</code> dropped it in slice 3b; <code>/song/result</code> dropped it in 3j when it stopped<br>
-  rendering <code>SongDetail</code>. <code>FREE_PREVIEW_SEC</code> still exists inside <code>SongDetail.tsx</code> for its one<br>
-  remaining unmigrated consumer, History's <code>CreationDialog</code> — so the cap is alive in History and<br>
-  dead on both player screens. That inconsistency is deliberate and ends when <code>CreationDialog</code> is<br>
+  rendering <code>SongDetail</code>. <strong><code>SongDetail.tsx</code> and its <code>FREE_PREVIEW_SEC</code> were DELETED 2026-08-06</strong><br>
+  along with <code>CreationDialog</code>, so the cancelled cap no longer exists anywhere in the code. The<br>
+  inconsistency that entry described is gone; the entry stays so nobody re-derives why the cap was<br>
   migrated.</li>
 </ul>
 <hr>
@@ -1466,8 +1479,8 @@ start (GL-01, insufficient → IAP).</p>
 <tr>
 <td><code>/song/create</code></td>
 <td><code>song/SongCompose</code> (🔒 <strong>Auth</strong>)</td>
-<td>Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, Ideas/Lyrics/Enhance, <strong>Create Song</strong> CTA</td>
-<td><code>useSongFlow().{songCompose,patchSongCompose,resetForNewSong}</code></td>
+<td>Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, Lyrics sample + Enhance (no Idea buttons — removed for V1), <strong>Create Song</strong> CTA, <strong>two-mode side rail</strong></td>
+<td><code>useSongFlow().{songCompose,patchSongCompose,resetForNewSong}</code>; <code>useAuth().loggedIn</code>, <code>useHistory().history</code> (rail)</td>
 <td><code>enhancePrompt</code> (song/lyrics)</td>
 </tr>
 <tr>
@@ -1480,7 +1493,7 @@ start (GL-01, insufficient → IAP).</p>
 <tr>
 <td><code>/song/result</code></td>
 <td><code>song/SongResultView</code> (self-contained)</td>
-<td>player + progress/seek, prev/next transport, volume/mute, Like, Share, Download, Lyrics sheet, Publish toggle, Use-in-MV, Recreate, <strong>My Creations</strong> playlist</td>
+<td><strong>Back (→ History)</strong>, player + progress/seek, prev/next transport, volume/mute, Like, Share, Download, Lyrics sheet, Publish toggle, Use-in-MV, Recreate, <strong>My Creations</strong> playlist</td>
 <td><code>songResult</code>, <code>useHistory</code> (earlier songs + share id), <code>useMvFlow().patchCompose</code> (Use-in-MV), <code>useCredits</code> (Recreate)</td>
 <td>—</td>
 </tr>
@@ -1489,8 +1502,8 @@ start (GL-01, insufficient → IAP).</p>
 <p><strong>Provider:</strong> <code>SongFlowProvider</code> (<code>useSongFlow</code>) — compose form, job polling, result; feeds<br>
 <code>HistoryProvider</code> on start/complete/fail. 🔒 mock generation (<code>GenerationView</code> shared with MV).</p>
 <p>⚠️ <strong><code>/song/result</code> no longer renders <code>SongDetail</code></strong> (slice 3j). It is DP's own markup, and its<br>
-lyrics sheet is the shared <code>ui/LyricsSheet</code>, not <code>LyricsPanel</code>. <code>SongDetail</code> + <code>LyricsPanel</code> are<br>
-still live — but only under History's <code>CreationDialog</code> (area 05), which is not migrated. Anything<br>
+lyrics sheet is the shared <code>ui/LyricsSheet</code>, not <code>LyricsPanel</code>. <code>SongDetail</code> and <code>LyricsPanel</code><br>
+were <strong>deleted on 2026-08-06</strong> when their last consumer (<code>CreationDialog</code>) went. Anything<br>
 this area used to say about <code>/song/result</code> "sharing <code>SongDetail</code> with History" now describes<br>
 History alone.</p>
 <hr>
@@ -1504,7 +1517,7 @@ History alone.</p>
 <li><code>genre</code> (default "Pop"), <code>mood</code> (default "Uplifting"), <code>vocal</code> (nullable, optional), <code>title</code> (optional).</li>
 <li><strong>CTA-ready</strong> (<code>isSongReady</code>): <strong>Custom → always ready</strong>; <strong>Simple → <code>describe.trim() !== ""</code></strong>.</li>
 <li>Cost: <code>COST_SONG = 10</code> shown on the <strong>Create Song</strong> CTA (label matches the app prototype, 2026-07-23).</li>
-<li>Custom-mode <strong>Lyrics / Idea</strong> field: a <strong>free-form textarea</strong> (<code>s.lyrics</code>, max 2500) with Idea /<br>
+<li>Custom-mode <strong>Lyrics</strong> field: a <strong>free-form textarea</strong> (<code>s.lyrics</code>, max 2500) with<br>
   Lyrics sample fills + Enhance — matching the app prototype (an earlier per-line editor was<br>
   reverted 2026-07-23).</li>
 <li>⚠️ <strong>No BPM slider and no Key selector</strong> (S4 / 3j — see §1). <code>bpm</code> (<code>BPM_MIN 60</code>–<code>BPM_MAX 200</code>)<br>
@@ -1513,7 +1526,9 @@ History alone.</p>
   exported from <code>src/lib/mv/types.ts</code> for the same reason.</li>
 <li>DP's <strong>Song Length</strong> slider is not ported: DP ships it behind <code>SHOW_SONG_LENGTH = false</code>, and<br>
   whether that is a temporary hide or a removal is open question U1 for the designer.</li>
-<li>Compose helpers: <strong>Ideas</strong> (Simple: random <code>SONG_IDEAS</code>; Custom: Idea + Lyrics sample fills),<br>
+<li>Compose helpers (<strong>2026-08-06: the "Idea" buttons are REMOVED — V1 ships no canned-sample<br>
+  fillers. Custom mode keeps </strong>Lyrics<strong>, a sample fill with a different purpose. This is a<br>
+  deliberate subtraction from DP, which still ships both Idea buttons</strong>):<br>
 <strong>Enhance</strong> (<code>enhancePrompt</code>; Custom lyrics offers Refine Idea vs Refine Lyrics; <strong>first free/session<br>
   then 1 cr</strong> via <code>useCredits().{enhanceCost,consumeEnhance}</code> — SONG-04), a supported-languages info<br>
   popover (Custom). The inline <strong><code>CreditPill</code> shows the live balance</strong> (SONG-05).</li>
@@ -1549,9 +1564,10 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
 <p>Screens to capture later: <code>/song/create</code> (Simple + Custom), <code>/song/creating</code>, <code>/song/result</code>, Lyrics sheet.</p>
 <h3 id="song-p1-compose">SONG-P1 — Compose</h3>
 <ul>
+<li><strong>SONG-P1-S0 (side rail, 2026-08-06)</strong> Same two-mode aside as <code>/mv/room</code> (area 02 MV-P1-S0): <strong>"Trending Songs"</strong> over <code>TOP_PICKS_SONGS</code> with a "See all" → <code>/explore/songs</code>, or <strong>"My Creations"</strong> over the user's own finished songs from <code>useHistory()</code>, no "See all", each row opening <code>/song/result?id=</code>. Requires <code>loggedIn</code> <strong>and</strong> at least one completed song.</li>
 <li><strong>SONG-P1-S1</strong> Arrive <code>/song/create</code> (auth-gated); <strong>Simple</strong> tab default; <strong>Create Song</strong> disabled until <code>describe</code> non-empty. Hint "Describe your song to continue."</li>
-<li><strong>SONG-P1-S2</strong> Toggle <strong>Instrumental</strong> (both modes). Simple: describe + Ideas + Enhance.</li>
-<li><strong>SONG-P1-S3</strong> Switch to <strong>Custom</strong>: free-form <strong>Lyrics / Idea</strong> textarea (or "No lyrics needed" when Instrumental) + Ideas/Lyrics/Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. <em>(No BPM/Key row since 3j — §1.)</em></li>
+<li><strong>SONG-P1-S2</strong> Toggle <strong>Instrumental</strong> (both modes). Simple: describe + Enhance.</li>
+<li><strong>SONG-P1-S3</strong> Switch to <strong>Custom</strong>: free-form <strong>Lyrics</strong> textarea (or "No lyrics needed" when Instrumental) + Lyrics sample/Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. <em>(No BPM/Key row since 3j — §1.)</em></li>
 <li><strong>SONG-P1-S4</strong> Tap <strong>Create Song</strong> (<code>10</code>) → <code>resetForNewSong()</code> → <code>/song/creating</code>.</li>
 </ul>
 <h3 id="song-p2-generation">SONG-P2 — Generation</h3>
@@ -1604,9 +1620,10 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
 <ul>
 <li><strong>AC-SONG-01</strong> — WHEN <code>/song/create</code> loads, THE SYSTEM SHALL default to <strong>Simple</strong> and keep <strong>Create Song</strong> disabled until <code>describe.trim() !== ""</code>; in <strong>Custom</strong>, it SHALL be enabled by default.</li>
 <li><strong>AC-SONG-02</strong> — WHEN Instrumental is ON in Custom, THE SYSTEM SHALL hide the lyrics editor and typically generate without lyrics (no Lyrics sheet). <em>(Note: toggling does not clear previously-typed lyrics — see SONG-E4 / <code>TBD-SONG-01</code>.)</em></li>
-<li><strong>AC-SONG-03</strong> — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Ideas/Enhance fills are not capped.)</li>
+<li><strong>AC-SONG-03</strong> — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Enhance and the Lyrics sample fill are not capped.)</li>
 <li><strong>AC-SONG-04</strong> — WHEN <strong>Create Song</strong> is tapped, THE SYSTEM SHALL <code>resetForNewSong()</code>, insert a Generating History row, and navigate to <code>/song/creating</code>.</li>
 <li><strong>AC-SONG-05</strong> — WHILE the song job is <code>processing</code>, THE SYSTEM SHALL show progress, step, an estimate, and View Later → <code>/history</code>; on <code>done</code> navigate to <code>/song/result</code>.</li>
+<li><strong>AC-SONG-11</strong> — WHEN <code>/song/result</code> is reached from a <code>/history</code> row, THE SYSTEM SHALL show that row's song (flow state is seeded by <code>useOpenCreation</code>, area 05) and carry the row id in <code>?id=</code> so Share builds that row's link. THE SYSTEM SHALL expose a <strong>Back</strong> control on this stage — DP switches it from <code>RoomNavbar</code> to <code>DetailNavbar backHref="/history"</code> — going <code>router.back()</code> with <code>/history</code> as the fallback. <em>(An earlier song has no stored genre/mood, so the genre · mood line is omitted rather than invented.)</em></li>
 <li><strong>AC-SONG-06</strong> — WHEN <code>/song/result</code> loads, THE SYSTEM SHALL expose drag-to-seek, prev/next across My Creations, Share, Download, a Lyrics sheet (when lyrics exist), a Publish toggle, Use in Music Video, and Recreate. Playback SHALL NOT be capped for any account.</li>
 <li>⚠️ <strong>Two clauses of the original AC-SONG-06 are now knowingly untrue and are NOT rewritten away.</strong> <em>(a)</em> "<strong>±15s</strong>" — removed in 3j; DP's transport uses those slots for prev/next. <em>(b)</em> "<strong>and no Like</strong>" — DP's player has a Like and it was ported (local state only). <em>(c)</em> the 30s cap it required is cancelled by S3 (§1). (a) and (b) need a product/designer decision; (c) is already decided.</li>
 <li><strong>AC-SONG-11</strong> — ⚠️ <strong>SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.</strong> It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and <code>songCompose.{bpm,key}</code> persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident.</li>
@@ -1673,7 +1690,7 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
 <hr>
 <p><strong>Decisions (as-built, 2026-08-06):</strong> Simple default; Custom is Genre/Mood/Vocal chips + Title +<br>
 a free-form Lyrics/Idea textarea, <strong>no BPM/Key controls</strong> (S4 — the fields stay); <strong>no free-preview<br>
-cap on either player screen</strong> (S3), the cap surviving only inside <code>SongDetail</code> for History;<br>
+cap on either player screen</strong> (S3), and since 2026-08-06 it survives nowhere at all;<br>
 <code>/song/result</code> is DP's player over a <strong>My Creations</strong> playlist with a Publish toggle; Recreate costs<br>
 50cr and keeps the prior song; generation is mock and display-only on credits (except the real<br>
 <code>COST_SONG</code> charge). <strong>Open, deliberately unresolved:</strong> the ported Like on an own creation, and the<br>
@@ -1698,13 +1715,11 @@ video player, the community song player, and the creator profile.</p>
 <p><strong>In scope:</strong> <code>home/HomeView</code> (<code>/</code>), <code>community/MvExplore</code> (<code>/explore/mvs</code>),<br>
 <code>song/SongDetailView</code> (<strong>both</strong> <code>/explore/songs</code> and <code>/song/play</code> — merged 2026-08-05, Slice 3b;<br>
 it replaced <code>community/SongExplore</code> and <code>community/CommunitySongPlayer</code>, both deleted),<br>
-<code>community/CommunityMvPlayer</code> (<code>/watch</code>), <code>community/CreatorProfile</code> (<code>/creator</code>), <code>community/CommunityMvDialog</code> (modal player),<br>
-<code>community/TrendingMvsPanel</code> (rendered inside <code>/mv/room</code> — area 02), and the shared<br>
+<code>community/CommunityMvPlayer</code> (<code>/watch</code>), <code>community/CreatorProfile</code> (<code>/creator</code>),<br>
+and the shared<br>
 <code>community/ui.tsx</code> primitives.<br>
 <strong>Out of scope (cross-referenced):</strong> the shell (area 01); the actual create flows the CTAs lead into<br>
-(areas 02/03); sign-in (area 09); <code>ShareDialog</code> (area 10). ⚠️ <strong><code>LyricsPanel</code> is no longer shared<br>
-with area 03</strong> — <code>/song/result</code> moved to the shared <code>ui/LyricsSheet</code> in slice 3j, so <code>LyricsPanel</code>'s<br>
-only remaining consumer is History's <code>CreationDialog</code> (area 05).</p>
+(areas 02/03); sign-in (area 09); <code>ShareDialog</code> (area 10).</p>
 <p><strong>Key divergences from the app:</strong> rails are <strong>static seed</strong>, not ranked (Curation PRD) ⚠️; <code>/watch</code><br>
 has <strong>no 9:16↔3:4 toggle and no swipe-up feed</strong> (App F10) ⚠️ (<code>TBD-EXP-03</code>); <code>/song/play</code> is still a<br>
 <strong>simulated timer with no real audio</strong>, but now has <strong>shuffle + repeat and the 30s free-preview gate</strong><br>
@@ -1732,8 +1747,8 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 </tr>
 <tr>
 <td><code>/explore/mvs</code> → <code>community/MvExplore</code></td>
-<td>grid of all MVs → <code>CommunityMvDialog</code></td>
-<td>local <code>playId</code></td>
+<td>grid of all MVs → <code>/watch?id=</code></td>
+<td>—</td>
 <td><strong>none</strong></td>
 </tr>
 <tr>
@@ -1760,18 +1775,6 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <td><code>useSearchParams().{self,tab}</code></td>
 <td><strong>none</strong></td>
 </tr>
-<tr>
-<td><code>community/CommunityMvDialog</code></td>
-<td>modal 1:1 MV player + Create MV</td>
-<td><code>useMvFlow().setCompose</code></td>
-<td><strong>none</strong></td>
-</tr>
-<tr>
-<td><code>community/TrendingMvsPanel</code></td>
-<td>Trending list aside in <code>/mv/room</code> (area 02)</td>
-<td>—</td>
-<td><strong>none</strong></td>
-</tr>
 </tbody>
 </table>
 <p>Data: <code>lib/mv/community.ts</code> — <code>TRENDING_MVS</code>, <code>NEW_MVS</code>, <code>TOP_PICKS_SONGS</code>, <code>NEW_SONGS</code>,<br>
@@ -1792,16 +1795,17 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 </ul>
 <h3 id="32-explore-pages">3.2 Explore pages</h3>
 <ul>
-<li><strong><code>/explore/mvs</code></strong> (<code>MvExplore</code>): <strong>two sections</strong> (Top Picks ← <code>TRENDING_MVS</code>, Newly Released ← <code>NEW_MVS</code>), each a <strong>justified-row gallery</strong> at ≥1024px and a wrapping grid below; card → <strong><code>CommunityMvDialog</code></strong> (modal player); Back → <code>DetailNavbar</code>'s <code>router.back()</code> with a fallback to <code>/</code>. Every card's creator avatar is <code>DEFAULT_CREATOR.avatar</code> ⚠️. (<code>MvExplore</code> also accepts an <code>initialPlayId</code> deep-link prop, but the route never passes it — currently dead.)<blockquote>
+<li><strong><code>/explore/mvs</code></strong> (<code>MvExplore</code>): <strong>two sections</strong> (Top Picks ← <code>TRENDING_MVS</code>, Newly Released ← <code>NEW_MVS</code>), each a <strong>justified-row gallery</strong> at ≥1024px and a wrapping grid below; card → <strong>navigates to <code>/watch?id=</code></strong> (2026-08-06 — it used to open <code>CommunityMvDialog</code> in place; DP's grid links at <code>/mv-detail?id=</code>, which is this app's <code>/watch</code>, so the dialog was a second rendering of a screen that already existed); Back → <code>DetailNavbar</code>'s <code>router.back()</code> with a fallback to <code>/</code>. Every card's creator avatar is <code>DEFAULT_CREATOR.avatar</code> ⚠️.<blockquote>
 <p><strong>Corrected 2026-08-05.</strong> Was described as a "responsive grid (2/3/4 cols) of <code>[...TRENDING_MVS, ...NEW_MVS]</code>" with "Back → <code>/</code>". Slice <strong>3a</strong> replaced that with the designer's justified gallery and two real sections and did not update this line; caught while fixing the equivalent drift for <code>/explore/songs</code>.</p>
 </blockquote>
 </li>
 <li><strong><code>/explore/songs</code></strong> (<code>song/SongDetailView</code> — <strong>the same component as <code>/song/play</code></strong>, merged in Slice 3b): tabbed list (All / Top Picks / New Releases) beside a Now Playing column, 1:1 at ≥1024px; row → selects in Now Playing at ≥768px, opens the full-screen player at <code>/song/play?id</code> below that; creator → <code>/creator</code>; <strong>Create</strong> → <code>requireLogin</code> → <code>patchSongCompose</code> + <code>/song/create</code> (gated at the click, consistent with Home — GL-02/EXP-02); Back → <code>DetailNavbar</code>'s <code>router.back()</code> with a fallback to <code>/explore/songs</code>.</li>
 </ul>
-<h3 id="33-mv-player-watch-communitymvdialog">3.3 MV player — <code>/watch</code> + <code>CommunityMvDialog</code></h3>
+<h3 id="33-mv-player-watch">3.3 MV player — <code>/watch</code></h3>
 <ul>
 <li><code>/watch</code> reads <code>?id</code> → <code>getCommunityMv(id) ?? NEW_MVS[0]</code>; <strong>3:4 portrait</strong> stage, autoplay <strong>muted</strong> loop, tap play/pause, mute toggle; <code># Music Video</code> tag, title, meta; creator → <code>/creator</code>; <strong>Like</strong> (local), <strong>Share</strong> (<code>ShareDialog</code>), <code>Stats</code>, prompt; <strong>Create Music Video</strong> → <code>setCompose</code> (mvType + prompt + <code>matchedSong</code> + title) → <code>/mv/room</code> (area 02).</li>
-<li><code>CommunityMvDialog</code> is the same experience as a <strong>modal</strong> (1:1 <code>object-contain</code> stage), used from <code>/explore/mvs</code>.</li>
+<li><strong><code>CommunityMvDialog</code> was DELETED on 2026-08-06</strong>, along with <code>TrendingMvsPanel</code> (dead since<br>
+  slice 3g). <code>/watch</code> is the only MV player.</li>
 <li>⚠️ App F10 offers a 9:16↔3:4 aspect toggle and a swipe-up "next MV" community feed; web has neither (<code>TBD-EXP-03</code>).</li>
 </ul>
 <h3 id="34-song-player-songplay-songsongdetailview-shared-with-exploresongs">3.4 Song player — <code>/song/play</code> (<code>song/SongDetailView</code>, shared with <code>/explore/songs</code>)</h3>
@@ -1846,7 +1850,7 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 </ul>
 <hr>
 <h2 id="4-journeys">4. Journeys</h2>
-<p>Screens to capture later: <code>/</code>, <code>/explore/mvs</code> (+ dialog), <code>/explore/songs</code>, <code>/watch</code>, <code>/song/play</code>, <code>/creator</code> (self + other, both tabs).</p>
+<p>Screens to capture later: <code>/</code>, <code>/explore/mvs</code>, <code>/explore/songs</code>, <code>/watch</code>, <code>/song/play</code>, <code>/creator</code> (self + other, both tabs).</p>
 <h3 id="exp-p1-home-feed">EXP-P1 — Home feed</h3>
 <ul>
 <li><strong>EXP-P1-S1</strong> Open <code>/</code> (public). <strong>System:</strong> hero CTAs + four seed rails render.</li>
@@ -1856,8 +1860,8 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 </ul>
 <h3 id="exp-p2-explore-mvs">EXP-P2 — Explore MVs</h3>
 <ul>
-<li><strong>EXP-P2-S1</strong> <code>/explore/mvs</code>: grid of all MVs. Tap a card → <code>CommunityMvDialog</code> (modal player). Back → <code>/</code>.</li>
-<li><strong>EXP-P2-S2</strong> In the dialog: play/pause, mute, creator → <code>/creator</code>, Like/Share, <strong>Create Music Video</strong> → <code>/mv/room</code>.</li>
+<li><strong>EXP-P2-S1</strong> <code>/explore/mvs</code>: grid of all MVs. Tap a card → <strong><code>/watch?id=</code></strong> (EXP-P4). Back → <code>/</code>.</li>
+<li><strong>EXP-P2-S2</strong> Every card is a real <code>next/link</code> with a locale-prefixed href, so plain click, middle-click and copy-link all reach the same screen.</li>
 </ul>
 <h3 id="exp-p3-explore-songs">EXP-P3 — Explore Songs</h3>
 <ul>
@@ -1934,7 +1938,7 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <ul>
 <li><strong>AC-EXP-01</strong> — WHEN <code>/</code> loads, THE SYSTEM SHALL render the hero CTAs and the four seed rails (Trending MV marquee, New MVs, Top Picks Songs, New Songs) in seed order.</li>
 <li><strong>AC-EXP-02</strong> — WHEN a hero CTA or a New-Songs <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>requireLogin</code> and, on success, navigate to the create flow (pre-filling the song for Create-from-song).</li>
-<li><strong>AC-EXP-03</strong> — WHEN an MV card is tapped, THE SYSTEM SHALL open <code>/watch?id</code> (Home) or <code>CommunityMvDialog</code> (Explore). WHEN a song card is tapped <strong>from Home</strong>, THE SYSTEM SHALL navigate to <code>/song/play?id</code>. WHEN a song row is tapped <strong>on <code>/explore/songs</code></strong>, THE SYSTEM SHALL, below 768px, open the full-screen player at <code>/song/play?id</code>; and at 768px and above, select that song in the Now Playing column <strong>without navigating</strong>.<blockquote>
+<li><strong>AC-EXP-03</strong> — WHEN an MV card is tapped <strong>anywhere</strong> (Home rails or <code>/explore/mvs</code>), THE SYSTEM SHALL navigate to <code>/watch?id</code>. WHEN a song card is tapped <strong>from Home</strong>, THE SYSTEM SHALL navigate to <code>/song/play?id</code>. WHEN a song row is tapped <strong>on <code>/explore/songs</code></strong>, THE SYSTEM SHALL, below 768px, open the full-screen player at <code>/song/play?id</code>; and at 768px and above, select that song in the Now Playing column <strong>without navigating</strong>.<blockquote>
 <p><strong>Corrected 2026-08-05 (Slice 3b).</strong> This criterion previously said a song card always routes to <code>/song/play?id</code>, which the merge of <code>/explore/songs</code> and <code>/song/play</code> made false on desktop — the two are now one screen, so a desktop row click swaps the right-hand column and deliberately leaves the URL alone (asserted by <code>e2e/behaviour-regressions.spec.ts</code>, "3b desktop: clicking a song swaps the right column without navigating"). Home is NOT migrated and still navigates, which is why the criterion is now split by entry point. <strong>Found by the Gate G7 reviewer:</strong> the same change rewrote <code>AC-EXP-05</code> with a full rationale and left this sibling — and <code>EXP-P3-S1</code> — asserting the old behaviour.</p>
 </blockquote>
 </li>
@@ -1962,7 +1966,7 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
 <ul>
 <li>[ ] <strong>EXP-P1</strong>: rails render in seed order; hero + New-Songs Create gate via sign-in; cards route correctly (AC-01/02/03).</li>
-<li>[ ] <strong>EXP-P2</strong>: grid → dialog player → Create MV → /mv/room (AC-03/04).</li>
+<li>[ ] <strong>EXP-P2</strong>: grid → <code>/watch?id</code> → Create MV → /mv/room (AC-03/04).</li>
 <li>[ ] <strong>EXP-P3</strong>: song lists → player; Create → /song/create pre-filled (AC-03).</li>
 <li>[ ] <strong>EXP-P4</strong>: /watch autoplay muted 3:4; play/mute/like/share; Create MV pre-fills (AC-04); bad id → NEW_MVS[0] (AC-07, E1).</li>
 <li>[ ] <strong>EXP-P5</strong>: simulated progress; Prev/Next cycle; Lyrics when present; Create AI Song pre-fills (AC-05, E3).</li>
@@ -2014,12 +2018,12 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
   Home --&gt;|MV card| Watch[&quot;/watch?id (3:4 player)&quot;]
   Home --&gt;|song card| Play[&quot;/song/play?id (disc, simulated)&quot;]
   Home --&gt;|See all| Explore[&quot;/explore/mvs · /explore/songs&quot;]
-  Explore --&gt;|MV| Dialog[&quot;CommunityMvDialog (modal)&quot;]
+  Explore --&gt;|MV| Watch2[&quot;/watch?id&quot;]
   Explore --&gt;|song| Play
   Watch --&gt;|creator| Creator[&quot;/creator (F16 self / F17 other)&quot;]
   Play --&gt;|creator| Creator
   Watch --&gt;|Create MV| Room[&quot;/mv/room (area 02, prefilled)&quot;]
-  Dialog --&gt;|Create MV| Room
+  Watch2 --&gt;|Create MV| Room
   Play --&gt;|Create AI Song| Song[&quot;/song/create (area 03, prefilled)&quot;]
   Creator --&gt;|row| Watch
   Creator --&gt;|row| Play
@@ -2040,13 +2044,18 @@ click but not persisted. All curation/feed logic deferred to the backend track (
 <p>The signed-in user's <strong>"My Creations"</strong> list (<code>/history</code>, auth-gated). It merges <strong>live in-memory jobs</strong><br>
 (from the MV/Song flow providers) with a <strong>static seed</strong> of sample creations, shown as filterable<br>
 cards with a per-row <code>⋯</code> options menu (like/share/download/delete/publish + Edit MV / Create MV).<br>
-Opening a row routes to the right destination (detail dialog, storyboard editor, or community<br>
-player).</p>
+Opening a row routes to the right destination: <strong>its own result screen</strong> (<code>/mv/result</code> or<br>
+<code>/song/result</code>), the storyboard editor, or the community player.</p>
 <p><strong>In scope:</strong> <code>history/HistoryView</code> (<code>/history</code>), its cards + <code>⋯</code> menu, the delete/publish confirm<br>
 modals.<br>
-<strong>Out of scope (cross-referenced):</strong> <code>CreationDialog</code> detail content (areas 02 MV / 03 song);<br>
-<code>ShareDialog</code> (area 10); the seed flow into <code>/mv/edit</code>/<code>/mv/storyboard</code>/<code>/mv/room</code> (area 02); the<br>
-community player <code>/song/play</code> (area 04).</p>
+<strong>Out of scope (cross-referenced):</strong> the result screens themselves (<code>/mv/result</code> area 02,<br>
+<code>/song/result</code> area 03); <code>ShareDialog</code> (area 10); the seed flow into<br>
+<code>/mv/edit</code>/<code>/mv/storyboard</code>/<code>/mv/room</code> (area 02); the community player <code>/song/play</code> (area 04).</p>
+<p><strong>2026-08-06 — the row dialog is gone.</strong> A done MV/song row used to open <code>CreationDialog</code>, a<br>
+pre-migration modal. DP has no such dialog: its History rows link straight at <code>/mv-result</code> and<br>
+<code>/song-create?stage=result</code>. Rows now navigate there, seeding the flow first via<br>
+<code>useOpenCreation</code> (both result screens guard on flow state). <code>CreationDialog</code>, <code>MvDetail</code>,<br>
+<code>SongDetail</code> and <code>LyricsPanel</code> lost their last consumer and were <strong>deleted the same day</strong>.</p>
 <p><strong>As-built vs App F15 (HIST-02/03/05/06 + MV-13 landed 2026-07-23, now synced to app):</strong> retention is<br>
 <strong>permanent</strong> (no 14-day copy); the <strong>Liked</strong> tab shows <strong>only community-liked content</strong>; Storyboard<br>
 rows show a <strong>"Create MV" pill on the card</strong> (in addition to the <code>⋯</code> menu); <strong>failed rows are<br>
@@ -2069,13 +2078,13 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <tr>
 <td><code>/history</code> → <code>history/HistoryView</code></td>
 <td>title + retention note, filter chips, card grid, <code>⋯</code> menu (portal), delete + publish-confirm modals, toasts</td>
-<td><code>useHistory().history</code>, local <code>removed</code>/<code>ov</code>(overrides)/<code>selected</code>/<code>openMenu</code>/<code>share</code>/<code>del</code>/<code>pubConfirm</code>; <code>useMvFlow().{setStoryboard,saveStoryboard,setCompose}</code> (seedFlow)</td>
+<td><code>useHistory().history</code>, local <code>removed</code>/<code>ov</code>(overrides)/<code>openMenu</code>/<code>share</code>/<code>del</code>/<code>pubConfirm</code>; <code>useOpenCreation()</code> / <code>useSeedMvFlow()</code></td>
 <td><strong>none</strong></td>
 </tr>
 <tr>
-<td><code>mv/CreationDialog</code></td>
-<td>detail view for a tapped MV/Song row</td>
-<td>see areas 02/03</td>
+<td><code>history/useOpenCreation</code></td>
+<td>— (hook)</td>
+<td>seeds <code>useMvFlow().{setCompose,setStoryboard,saveStoryboard,setResultUrl}</code> or <code>useSongFlow().setSongResult</code>, then routes to the result screen</td>
 <td>—</td>
 </tr>
 <tr>
@@ -2105,7 +2114,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
   hover-play (MV only), <strong>status pill</strong> (Generating…=gold / Failed=red / Done=green; community=none),<br>
 <strong>kind badge</strong> (MV / SONG / STORYBOARD icon), title, stats (plays/likes/shares for done mv/song) or<br>
 <code>meta</code>, date.</li>
-<li><strong>Open row</strong> (<code>HistoryView.tsx:110-115</code>): <code>processing</code> → not clickable; community song → <code>router.push(/song/play?id=…)</code> (id = <code>communitySongId</code>, area 04); <code>storyboard</code> → <code>seedFlow</code> + <code>/mv/storyboard?id=…</code> (area 02); else open <code>CreationDialog</code>.</li>
+<li><strong>Open row</strong> (<code>HistoryView.openRow</code>): <code>processing</code> → not clickable; community song → <code>/song/play?id=…</code> (id = <code>communitySongId</code>, area 04); <code>storyboard</code> → seed + <code>/mv/storyboard?id=…</code> (area 02); <strong>done MV → seed + <code>/mv/result?id=…</code>; done song → seed + <code>/song/result?id=…</code></strong> (2026-08-06). Every card href is locale-prefixed (R-9) and matches where the click goes, so middle-click and copy-link agree with it.</li>
 <li><strong>Storyboard "Create" pill (HIST-05, 2026-07-23):</strong> done storyboard cards render a <strong>"Create MV"<br>
   pill</strong> in the card footer (calls <code>createMv(r)</code>), in addition to the menu CTA.</li>
 <li><strong><code>⋯</code> menu</strong> (<code>Menu</code>, portal) — contents depend on row type:</li>
@@ -2114,10 +2123,10 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <li><strong>Publish (toggle) / Download / normal Delete</strong>: non-community, non-failed, mv|song only. <strong>Delete is hidden</strong> when an MV is published/reviewing or a song is published.</li>
 <li><strong>Standalone Delete</strong>: also shown for <strong>failed</strong> and <strong>storyboard</strong> rows (<code>:355</code>).</li>
 <li><strong>Net per type (as-built 2026-07-24):</strong> MV = Edit MV (or "Unpublish to edit" when published) + Like/Share/Publish/Download/Delete · Song = Create MV + Like/Share/Publish/Download/Delete · <strong>Storyboard = Create MV (pill + menu) + Delete</strong> · <strong>Community = Like + Share only</strong> · <strong>Failed = Delete only</strong>.</li>
-<li><strong>Publish</strong> (<code>HistoryView.tsx:125-137</code>): <strong>MV</strong> → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. <strong>Song</strong> → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ <code>TBD-MV-06</code>, area 04). <strong>The <code>⋯</code> menu and a row's own <code>CreationDialog</code> share this same <code>published</code>/<code>reviewing</code> state</strong> (2026-07-24) — publishing from either surface updates both, so a row opened via its detail dialog and its "..." menu never disagree.</li>
-<li><strong>Delete</strong> (<code>HistoryView.tsx:194-200</code>): confirm modal → adds id to <code>removed</code> (list-local; not a server delete). <code>CreationDialog</code> delete does the same.</li>
+<li><strong>Publish</strong> (<code>HistoryView.tsx:125-137</code>): <strong>MV</strong> → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. <strong>Song</strong> → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ <code>TBD-MV-06</code>, area 04). <strong>2026-08-06: the row's <code>published</code>/<code>reviewing</code> override is now the <code>⋯</code> menu's alone</strong> — the dialog that used to share it is gone, and the result screens hold their own publish state (they are a different surface with their own MV-12 confirm).</li>
+<li><strong>Delete</strong> (<code>HistoryView</code>): confirm modal → adds id to <code>removed</code> (list-local; not a server delete).</li>
 <li><strong>Download</strong> (<code>HistoryView.tsx:118-122</code>): song → <code>SAMPLE_AUDIO</code> as <code>{title}.mp3</code>; else <code>SAMPLE_RESULT_VIDEO</code> as <code>{title}.mp4</code> (fixture media, not the row's own render). 🔒</li>
-<li><strong><code>seedFlow</code></strong> (<code>HistoryView.tsx:78-89</code>): builds a <code>mockStoryboard</code> from the row title/thumb and sets compose, so Edit/Create/Storyboard entries render for that row (synthesized state — cross-ref area 02 MV-P6 external entries).</li>
+<li><strong>Seeding</strong> (<code>history/useOpenCreation</code>): builds a <code>mockStoryboard</code> from the row title/thumb and sets compose, so Edit/Create/Storyboard entries render for that row (synthesized state — cross-ref area 02 MV-P6 external entries). <code>useOpenCreation</code> additionally sets <code>resultUrl</code> / <code>songResult</code> and navigates. 🔒 A seed row has no rendered artifact, so it falls back to <code>SAMPLE_RESULT_VIDEO</code> / <code>SAMPLE_AUDIO</code>.</li>
 <li>🔒 <strong>All in-memory:</strong> live rows vanish on reload (seed samples remain, being static); like/publish/delete are local overrides.</li>
 </ul>
 <hr>
@@ -2130,7 +2139,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 </ul>
 <h3 id="hist-p2-open-a-creation">HIST-P2 — Open a creation</h3>
 <ul>
-<li><strong>HIST-P2-S1</strong> Tap a <strong>done MV/song</strong> card → <code>CreationDialog</code> (detail; areas 02/03).</li>
+<li><strong>HIST-P2-S1</strong> Tap a <strong>done MV</strong> card → seed → <code>/mv/result?id=…</code> (area 02); a <strong>done song</strong> card → seed → <code>/song/result?id=…</code> (area 03).</li>
 <li><strong>HIST-P2-S2</strong> Tap a <strong>storyboard</strong> card → <code>seedFlow</code> → <code>/mv/storyboard?id=…</code> (area 02).</li>
 <li><strong>HIST-P2-S3</strong> Tap a <strong>community</strong> row → <code>/song/play?id=…</code> (area 04). <strong>Processing</strong> rows are inert.</li>
 </ul>
@@ -2206,7 +2215,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <li><strong>AC-HIST-01</strong> — WHEN <code>/history</code> loads for a signed-in user, THE SYSTEM SHALL show live jobs prepended to the seed samples, under the <strong>All</strong> filter (community rows excluded).</li>
 <li><strong>AC-HIST-02</strong> — WHEN a filter chip is selected, THE SYSTEM SHALL show only rows matching it (All=own, Music Videos=mv/storyboard, Songs=song, <strong>Liked=community-liked only</strong>).</li>
 <li><strong>AC-HIST-03</strong> — WHILE a row is <code>processing</code>, THE SYSTEM SHALL show a Generating pill and disable open + the <code>⋯</code> menu; WHEN <code>failed</code>, show a Failed pill and a <strong>Delete-only</strong> menu; storyboard rows SHALL show a <strong>Create MV pill</strong> plus a <strong>Create MV + Delete</strong> menu.</li>
-<li><strong>AC-HIST-04</strong> — WHEN a done MV/song card is tapped, THE SYSTEM SHALL open <code>CreationDialog</code>; a storyboard → <code>/mv/storyboard</code>; a community row → <code>/song/play</code>.</li>
+<li><strong>AC-HIST-04</strong> — WHEN a done MV card is tapped, THE SYSTEM SHALL seed the MV flow and route to <code>/mv/result?id=…</code>; a done song → <code>/song/result?id=…</code>; a storyboard → <code>/mv/storyboard</code>; a community row → <code>/song/play</code>. No detail dialog is opened.</li>
 <li><strong>AC-HIST-05</strong> — WHEN <strong>Publish</strong> is invoked on an MV, THE SYSTEM SHALL show the "Ready to Go Public?" confirm and, on confirm, mark it reviewing/published with a "Submitted for review" toast; a song publishes immediately without a confirm.</li>
 <li><strong>AC-HIST-06</strong> — WHEN <strong>Delete</strong> is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.</li>
 <li><strong>AC-HIST-07</strong> — WHEN <strong>Edit MV / Create MV</strong> is chosen, THE SYSTEM SHALL seed flow state and route to <code>/mv/edit</code> / <code>/mv/storyboard</code>|<code>/mv/room</code> respectively.</li>
@@ -2217,7 +2226,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
 <ul>
 <li>[ ] <strong>HIST-P1</strong>: All excludes community; <strong>Liked shows community-liked only</strong>; empty filter → empty state (AC-01/02, E5).</li>
-<li>[ ] <strong>HIST-P2</strong>: done mv/song → dialog; storyboard → editor; community → player; processing inert (AC-03/04).</li>
+<li>[ ] <strong>HIST-P2</strong>: done mv → <code>/mv/result?id=</code>; done song → <code>/song/result?id=</code>; storyboard → editor; community → player; processing inert (AC-03/04).</li>
 <li>[ ] <strong>HIST-P3</strong>: like toggles + count; Share dialog w/ correct url; Download toast (AC-08).</li>
 <li>[ ] <strong>HIST-P4</strong>: MV publish → confirm → review toast; song publish → immediate (AC-05).</li>
 <li>[ ] <strong>HIST-P5</strong>: delete confirm removes row; hidden for published/reviewing (AC-06).</li>
@@ -2251,7 +2260,8 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <pre><code class="language-mermaid">flowchart TD
   H[&quot;/history (My Creations)&quot;] --&gt; Filter[&quot;Filter: All · MV · Songs · Liked&quot;]
   H --&gt; Row{Tap row}
-  Row --&gt;|done mv/song| Dialog[&quot;CreationDialog (areas 02/03)&quot;]
+  Row --&gt;|done mv| MvR[&quot;/mv/result?id= (area 02)&quot;]
+  Row --&gt;|done song| SongR[&quot;/song/result?id= (area 03)&quot;]
   Row --&gt;|storyboard| SB[&quot;/mv/storyboard (area 02)&quot;]
   Row --&gt;|community| Play[&quot;/song/play (area 04)&quot;]
   Row --&gt;|processing| Inert[&quot;(inert)&quot;]
@@ -2855,8 +2865,8 @@ entries is kept as a backstop.</p>
 <strong>gated nav</strong> click while logged out (<code>Sidebar</code> → <code>requireLogin(→push)</code>, area 01); <strong>AuthGuard</strong> on<br>
   the four gated routes (dismiss → Home) as a backstop; Home hero create CTAs / song-card create<br>
   (<code>HomeView</code>, area 04); and — new — <strong>Create MV / Create Song / Like</strong> on community surfaces<br>
-  (<code>CommunityMvPlayer</code>, <code>CommunityMvDialog</code>, <code>CommunitySongPlayer</code>, <code>SongExplore</code>) and <strong>publish</strong> on<br>
-  an MV result (<code>MvResult</code>; <code>MvDetail</code> keeps the same gate for History's <code>CreationDialog</code>) all call<br>
+  (<code>CommunityMvPlayer</code>, <code>CommunitySongPlayer</code>, <code>SongExplore</code>) and <strong>publish</strong> on<br>
+  an MV result (<code>MvResult</code>) all call<br>
 <code>requireLogin</code> at the click. This resolves the former<br>
   "community like/share ungated" divergence (synced to App F22).</li>
 </ul>

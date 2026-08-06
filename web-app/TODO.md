@@ -11,13 +11,18 @@ The community surface (home feed sections, `/explore/mvs`, `/explore/songs`,
 seed data** in `src/lib/mv/community.ts`. There is no product definition behind
 it yet.
 
-**Strategy proposal (2026-07-11):** `docs/community-strategy-proposal.html` — a
-manager-facing proposal covering the four locked decisions (official-first feed
-with locale-secondary; IP-based locale; HN-gravity time-decayed ranking;
-auto-prescreen + human-review-of-gray-zone moderation), the Phase 1/2/3
-algorithm roadmap, the Phase 1 ranking formula, the moderation pipeline + data
-model, and open decisions still needing sign-off. Turn its conclusions into a
-`specs/` spec + API contract once approved.
+**DEFINITIVE SOURCE (2026-08-06, product owner):**
+`ycmuse-app-skill/YouCam_Muse_Explore_Curation_PRD  -  V2.pdf` — at the REPO ROOT, one level
+above `web-app/`.
+
+- **Page 03's homepage UI is superseded by DP.** Where that page and the designer prototype
+  disagree about the home screen, DP wins. Everything else in the PRD stands.
+- **It has NOT been read.** Scanning it is deliberately deferred to the next phase — it is the
+  input to the community spec + API contract, not to any UI work now in flight. Do not skim it
+  and summarise; when its phase starts, read it properly.
+- `docs/community-strategy-proposal.html` (the 2026-07-11 manager-facing proposal) was **deleted**
+  on 2026-08-06 and is superseded by the PRD. Its four "locked decisions" are NOT carried
+  forward — treat the PRD as the only source.
 
 What "defined" means (all currently missing):
 
@@ -185,13 +190,37 @@ one. **Sequencing matters:** adding the mobile pass turns A9's contrast failure 
 immediate gate failure, so either A9's colour decision lands first, or the mobile pass ships
 with A9 in the exclusion list and a comment pointing at it — the same pattern A1 already uses.
 
-## 7. Affordance findings from the Phase 3 acceptance review that need a decision (found 2026-08-06)
+## 7. Affordance findings from the Phase 3 acceptance review (found 2026-08-06)
+
+> **SCOPE RULE, set by the product owner 2026-08-06.** This phase's job is that **the code
+> architecture is sound enough for RD to wire the backend**. A finding that is *purely UI* and
+> does not touch the contract, the providers, or a product rule is **deliberately left unfixed**
+> until the designer ships the next DP drop. That covers most of 7a–7h below and most of
+> `DESIGNER-TODO`. It is a decision, not a backlog that slipped.
 
 The G7 affordance review diffed every migrated component against `5296f1a` control-by-control.
 Five findings were plain losses and were fixed with guards (see `docs/PHASE-3-ACCEPTANCE.md`).
 These are the rest — each needs a designer or product answer first, so none was patched around.
 
-**7a. `/song/result` lost ±15s, which leaves no keyboard way to seek.** DP's transport spends
+**7a. ANSWERED, AND DEFERRED IN FULL.** Decision (product owner, 2026-08-06): **±15s comes back
+and coexists with prev/next** — it is not either/or. Implementation waits for the DP drop, and
+so does the keyboard-seek half, which was offered separately and deferred with it.
+
+Two things the next session must not have to re-derive:
+
+- **±15s is blocked on artwork, not on effort.** Neither DP's 90 icons nor WA's 90 contain a
+  ±15s glyph, and the drop measured on 2026-08-06 (`2670ed2`) adds no icons at all. The
+  pre-migration control used a hand-drawn inline `<svg>`. DP's `.song-result__transport` is also
+  drawn for three slots. So this needs a designer answer for both the icon and a five-control
+  transport — put it in front of the designer with the next drop.
+- **The keyboard half is cheap and ready when it is unblocked.** `SeekBar`
+  (`src/components/ui/SeekBar.tsx`) already exists, is keyboard-operable, takes its BEM class
+  names as props, and is in production on `/watch`. Swapping the four bare
+  `<div onPointerDown>` tracks onto it is a mechanical change with zero pixel movement.
+
+The original finding, for context:
+
+**`/song/result` lost ±15s, which leaves no keyboard way to seek.** DP's transport spends
 those two slots on prev/next through the playlist. `useAudioPlayer.nudge` still exists and is
 now unused on this screen, and `.song-result__progress` is a bare `<div onPointerDown>`. This is
 **item #5 above happening on a second screen** — and it now also applies to `.mv-result__progress`
@@ -213,19 +242,23 @@ clickable.
 (`SongCreatePage.css:1089`). Both are new controls, so nothing was lost — but the result
 autoplays and phone users get no volume control at all. Designer question.
 
-**7e. Dead code: `src/components/community/TrendingMvsPanel.tsx` has had zero consumers since
-slice 3g.** Delete it, or say why it stays.
+**7e. CLOSED 2026-08-06 — deleted, and it was six files, not one.** `TrendingMvsPanel` went, and
+so did the five that `/history`'s move to the result screens orphaned: `CreationDialog` (the
+root), `MvDetail`, `SongDetail`, `LyricsPanel` (SongDetail was its last consumer) and
+`CommunityMvDialog`. Each had a live DP replacement — `/watch`, `/mv/result`, `/song/result`,
+`ui/LyricsSheet`. The only logic that went with them is `FREE_PREVIEW_SEC`, already cancelled by
+S3.
 
-**7f. Out-of-scope R-9 leaks.** `HistoryView.tsx` builds unprefixed `rowHref`s (clicks are
-intercepted, so only middle-click / copy-link lose the locale prefix) and `SettingsView.tsx:170`
-does `router.push("/")`. Neither is migrated code, but both are the same shape R-9 exists to
-prevent, and both are invisible when testing in English.
+**7f. HALF CLOSED 2026-08-06.** `HistoryView.tsx`'s `rowHref` is now locale-prefixed and guarded
+(`e2e` → "item 3: the row href matches where the click actually goes"). Still open:
+`SettingsView.tsx:170` does `router.push("/")`. Same shape R-9 exists to prevent, invisible when
+testing in English.
 
-**7g. The rails on `/mv/room` and `/song/create` show community fixtures.** The migration's
-"My Creations" title was corrected to "Trending MVs" / "Trending Songs" so the label matches the
-data. Whether those rails should instead show the user's OWN history (which `useHistory()`
-already has) is a product decision, not a rename — the guard test asserts the pairing, so
-either answer stays honest.
+**7g. CLOSED 2026-08-06 — answered "show both, by state".** The rails now follow DP: **Trending**
+when logged out or when the user has made nothing, **My Creations** over `useHistory()` once
+they have. Title, rows and "See all" switch together. The extra "and has made something"
+condition is WA-specific: DP can key on sign-in alone because its `MY_CREATIONS` fixture is never
+empty. Guarded in `e2e` (three tests, including the signed-in-but-empty case).
 
 **7h. `/mv/room`'s disabled CTA lost its reason line** ("Add a song and a description to
 continue."). Not a DP-fidelity constraint — `/song/create` KEPT its equivalent inside migrated

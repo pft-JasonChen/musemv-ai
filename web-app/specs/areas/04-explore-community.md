@@ -21,13 +21,10 @@ video player, the community song player, and the creator profile.
 `song/SongDetailView` (**both** `/explore/songs` and `/song/play` — merged 2026-08-05, Slice 3b;
 it replaced `community/SongExplore` and `community/CommunitySongPlayer`, both deleted),
 `community/CommunityMvPlayer` (`/watch`), `community/CreatorProfile` (`/creator`),
-`community/TrendingMvsPanel` (rendered inside `/mv/room` — area 02), and the shared
+and the shared
 `community/ui.tsx` primitives.
 **Out of scope (cross-referenced):** the shell (area 01); the actual create flows the CTAs lead into
-(areas 02/03); sign-in (area 09); `ShareDialog` (area 10). ⚠️ **`LyricsPanel` is no longer shared
-with area 03** — `/song/result` moved to the shared `ui/LyricsSheet` in slice 3j, so `LyricsPanel`'s
-only remaining consumer was History's `CreationDialog`, which itself lost its last consumer on
-2026-08-06 (area 05) — both are dead code pending removal.
+(areas 02/03); sign-in (area 09); `ShareDialog` (area 10).
 
 **Key divergences from the app:** rails are **static seed**, not ranked (Curation PRD) ⚠️; `/watch`
 has **no 9:16↔3:4 toggle and no swipe-up feed** (App F10) ⚠️ (`TBD-EXP-03`); `/song/play` is still a
@@ -49,7 +46,6 @@ still local, non-persistent (real counters → `TBD-EXP-08`).
 | `/watch` → `community/CommunityMvPlayer`       | 3:4 video player, like/share, Create MV                                               | `useSearchParams().id`, `useMvFlow().setCompose`, local play/mute/like       | **none**        |
 | `/song/play` → `community/CommunitySongPlayer` | disc player (**simulated**), prev/next, like/share, Lyrics, Create AI Song            | `useSearchParams().id`, `useSongFlow().patchSongCompose`, local idx/progress | **none**        |
 | `/creator` → `community/CreatorProfile`        | header + stats + MV/Songs tabs + rows                                                 | `useSearchParams().{self,tab}`                                               | **none**        |
-| `community/TrendingMvsPanel`                   | Trending list aside in `/mv/room` (area 02)                                           | —                                                                            | **none**        |
 
 Data: `lib/mv/community.ts` — `TRENDING_MVS`, `NEW_MVS`, `TOP_PICKS_SONGS`, `NEW_SONGS`,
 `ALL_COMMUNITY_SONGS`, `CREATOR_MVS`, `CREATOR_SONGS`, `DEFAULT_CREATOR`, `getCommunityMv/Song`,
@@ -80,7 +76,8 @@ Data: `lib/mv/community.ts` — `TRENDING_MVS`, `NEW_MVS`, `TOP_PICKS_SONGS`, `N
 ### 3.3 MV player — `/watch`
 
 - `/watch` reads `?id` → `getCommunityMv(id) ?? NEW_MVS[0]`; **3:4 portrait** stage, autoplay **muted** loop, tap play/pause, mute toggle; `# Music Video` tag, title, meta; creator → `/creator`; **Like** (local), **Share** (`ShareDialog`), `Stats`, prompt; **Create Music Video** → `setCompose` (mvType + prompt + `matchedSong` + title) → `/mv/room` (area 02).
-- **`CommunityMvDialog` has no consumer since 2026-08-06** and is dead code pending removal.
+- **`CommunityMvDialog` was DELETED on 2026-08-06**, along with `TrendingMvsPanel` (dead since
+  slice 3g). `/watch` is the only MV player.
 - ⚠️ App F10 offers a 9:16↔3:4 aspect toggle and a swipe-up "next MV" community feed; web has neither (`TBD-EXP-03`).
 
 ### 3.4 Song player — `/song/play` (`song/SongDetailView`, shared with `/explore/songs`)

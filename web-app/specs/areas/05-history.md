@@ -22,8 +22,8 @@ modals.
 **2026-08-06 — the row dialog is gone.** A done MV/song row used to open `CreationDialog`, a
 pre-migration modal. DP has no such dialog: its History rows link straight at `/mv-result` and
 `/song-create?stage=result`. Rows now navigate there, seeding the flow first via
-`useOpenCreation` (both result screens guard on flow state). `CreationDialog`, `MvDetail` and
-`SongDetail` therefore have no consumer left.
+`useOpenCreation` (both result screens guard on flow state). `CreationDialog`, `MvDetail`,
+`SongDetail` and `LyricsPanel` lost their last consumer and were **deleted the same day**.
 
 **As-built vs App F15 (HIST-02/03/05/06 + MV-13 landed 2026-07-23, now synced to app):** retention is
 **permanent** (no 14-day copy); the **Liked** tab shows **only community-liked content**; Storyboard

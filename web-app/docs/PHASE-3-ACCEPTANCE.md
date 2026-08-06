@@ -257,7 +257,9 @@ Share from an opened row carries that row's id; the rail's two modes including t
 signed-in-but-empty case; `/explore/mvs` and the landing page reach the same `/watch`.
 164/164 e2e, 115/115 visual, 84/84 vitest, G4-b/G4-g/designer-css all green.
 
-**Left undone, deliberately:** `CommunityMvDialog`, `CreationDialog`, `MvDetail`, `SongDetail` and
-the already-dead `TrendingMvsPanel` now have **zero consumers**. Deleting five components is a
-separate decision under the ASK FIRST rule and is proposed, not done — same treatment
-`TrendingMvsPanel` got in §3.
+**The dead components are gone (approved later the same day).** It was **six** files, not five:
+`CreationDialog` is the root, and killing it killed `MvDetail` and `SongDetail`, and `SongDetail`
+was `LyricsPanel`'s last consumer. Plus `CommunityMvDialog` and the already-dead
+`TrendingMvsPanel`. Every one has a live DP replacement (`/watch`, `/mv/result`, `/song/result`,
+`ui/LyricsSheet`). The only logic lost with them is `FREE_PREVIEW_SEC`, the 30-second preview
+gate — cancelled by S3 in the plan's §1.4, so it was already unreachable.

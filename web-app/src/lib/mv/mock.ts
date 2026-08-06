@@ -169,12 +169,10 @@ export const TEMPLATES: TemplateOption[] = [
   },
 ];
 
-export const IDEAS: string[] = [
-  "A radiant artist performing in a softly lit studio, dreamy and devoted.",
-  "Cinematic story of a midnight journey through glowing city streets.",
-  "An intimate acoustic moment by a window as golden light pours in.",
-  "Bold stage performance with dynamic lighting and confident energy.",
-];
+// `IDEAS` and `SONG_IDEAS` lived here until 2026-08-06. They fed the "Idea" /
+// "Ideas" buttons on /mv/room and /song/create, which V1 does not ship — see
+// the note in `SongCompose.tsx`. Deleted rather than left dangling, because a
+// fixture with no consumer reads as a feature someone forgot to wire up.
 
 export const SAMPLE_RESULT_VIDEO =
   "/assets/videos/mv-preview/feature_intro_ai_mv_singing_480x640.mp4";
@@ -446,13 +444,6 @@ export const GENRES = [
 ];
 export const MOODS = ["Uplifting", "Melancholic", "Romantic", "Energetic", "Calm", "Dark"];
 export const VOCALS = ["Male", "Female"];
-
-export const SONG_IDEAS = [
-  "A bittersweet love song about leaving a city you called home, melancholic yet hopeful.",
-  "An upbeat summer anthem about chasing dreams with friends.",
-  "A calm lo-fi track for late-night studying, warm and nostalgic.",
-  "An energetic pop song about starting over and feeling unstoppable.",
-];
 
 export const SAMPLE_AUDIO = "/assets/songs/Party%20Dance.mp3";
 

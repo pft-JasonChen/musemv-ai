@@ -2,6 +2,23 @@
 
 ## In flight — read before starting
 
+> ## → START WITH `docs/NEXT-SESSION.md`
+>
+> Written 2026-08-06 so a fresh session does not have to re-derive anything. It carries the
+> measured DP drop-to-drop diff (`568e64c` → `2670ed2`: **`tokens.css` unchanged**, no icon
+> changes, **13 of 33 gated stylesheets moved**, and the landing page is a 17th route migration
+> rather than a re-sync), the recommended order of the remaining work, and the standing scope
+> rule. **Read it before this file.**
+
+**SCOPE RULE (product owner, 2026-08-06).** This phase's deliverable is "the code architecture is
+sound enough for RD to wire the backend". A finding that is **purely UI** and touches neither the
+contract, the providers, nor a product rule is **deliberately left unfixed** until the next DP
+drop. That is why most of `TODO.md` #7 and nearly all of `DESIGNER-TODO.md` are open — they are
+decisions, not slipped work. The uncomfortable case to know: **all of 7a is deferred, including
+the keyboard-seek half**, so four playback seek bars stay pointer-only (WCAG 2.1.1 Serious), and
+on `/mv/result` that is a regression against the pre-migration `<video controls>`. Offered
+separately, deferred anyway, accepted knowingly.
+
 **The designer-UI migration is live.** The package landed 2026-08-04 and is vendored at
 `../designer-prototype/` (DP). Read in this order:
 
@@ -52,9 +69,20 @@ lessons are worth carrying into the next slice rather than re-deriving:
   ENTIRE navbar changed zero pixels and the gate stayed 115/115. Third instance of the same class
   as the `fullPage` and `maxDiffPixelRatio` blind spots.
 
-**What that work left behind, on purpose:** `CommunityMvDialog`, `CreationDialog`, `MvDetail`,
-`SongDetail` (+ the already-dead `TrendingMvsPanel`) have **zero consumers**. Deleting five
-components is ASK FIRST — proposed, not done.
+**The dead components are gone, and it was SIX files, not five.** `CreationDialog` was the root;
+killing it killed `MvDetail` and `SongDetail`, and `SongDetail` was `LyricsPanel`'s last consumer
+— plus `CommunityMvDialog` and the long-dead `TrendingMvsPanel`. Each had a live DP replacement
+(`/watch`, `/mv/result`, `/song/result`, `ui/LyricsSheet`). The only logic that went with them is
+`FREE_PREVIEW_SEC`, already cancelled by S3. **There is no dead component left in `src/`.**
+
+**The `Idea` / `Ideas` buttons are removed, and this is the one deviation that DECAYS.** V1 ships
+no canned-sample fillers, so three buttons went: `/mv/room`'s Ideas and both of `/song/create`'s
+Idea. DP **has** all three (`MVCreatePage.tsx:1182`, `SongCreatePage.tsx:598/703`), so this is a
+subtraction FROM DP, and **every future drop will bring them back** — re-remove them each time.
+`Templates` (`/mv/room`) and `Lyrics` (Custom mode) are different controls and stay. One layout
+detail that looks like leftover but is not: the Simple describe box now renders an EMPTY
+`.song-create__input-actions` div, because `.song-create__input-footer` is
+`justify-content: space-between` and with one child the Enhance/count group slides left.
 
 **ACCEPTANCE IS PART-DONE. The full record is `docs/PHASE-3-ACCEPTANCE.md` — read it before
 re-running anything.** Two of the three reviews are complete and their verdicts are in that file:
