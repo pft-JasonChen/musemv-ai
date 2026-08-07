@@ -19,9 +19,28 @@ the keyboard-seek half**, so four playback seek bars stay pointer-only (WCAG 2.1
 on `/mv/result` that is a regression against the pre-migration `<video controls>`. Offered
 separately, deferred anyway, accepted knowingly.
 
-**DROP 2 IS VENDORED (`2670ed2`, 2026-08-06).** `designer-prototype/` is no longer `568e64c`.
-`tokens.css` and every icon are byte-identical to drop 1; 13 of 33 gated stylesheets moved and are
-re-copied. The one lesson worth carrying, because it is the fourth instance of the same shape:
+**DROP 2 IS VENDORED AND ITS RE-SYNC IS COMPLETE (`2670ed2`; vendored 2026-08-06, finished
+2026-08-07).** `designer-prototype/` is no longer `568e64c`. `tokens.css` and every icon are
+byte-identical to drop 1; 13 of 33 gated stylesheets moved and are re-copied, and `SongPlayBar.css`
+joined the set (**34/34 verbatim**). Two of those 13 assumed DOM WA did not have and broke a screen
+each — `/explore/mvs` blank on phones, `/song/play`'s desktop player unstyled. **Both are fixed;
+`docs/NEXT-SESSION.md` §2.0 is the record.** Three things from it are worth carrying:
+
+- **The desktop song row now NAVIGATES**, reversing slice 3b one day after it shipped.
+  `AC-EXP-03` and its e2e assertion moved together — a passing test had pinned the old decision.
+  DP split the row's two affordances: TITLE opens `/song/result`, ALBUM ART starts `SongPlayBar`
+  (a desktop preview bar) in place. `/song/result` gained a cold-resolve branch so a community
+  `?id=` works with no flow state; the seeding half already existed in `useOpenCreation.ts`.
+- **An earlier pass got this drop confidently wrong by reading a CSS diff instead of the markup**,
+  concluding `SongPlayBar` had replaced the player and would delete four of `AC-EXP-05`'s five
+  requirements. The product owner caught it by running the prototype. Nothing was lost.
+- **`/explore/mvs` on phones now shows 3 of the catalog's 14 MVs** (DP hides every non-`--primary`
+  section; WA's two sections are different catalogs, 3 + 11). Decided as "follow DP" on the
+  framing "a secondary catalog is hidden"; the 3/14 ratio was counted afterwards. `DESIGNER-TODO`
+  **A19**, and asserted in `e2e` so it is not silently "fixed".
+
+The one lesson worth carrying from the vendoring itself, because it is the fourth instance of the
+same shape:
 **a re-sync can BREAK a screen through an override that used to be correct.** WA's A4 override hid
 `.detail-navbar__top`; the drop put the new mobile back control inside `__top` and, separately,
 hid `.detail-navbar__tabs` on phones on purpose. Both halves cancelled and `/explore/songs`
@@ -323,3 +342,13 @@ a detail screen:**
 - 2026-08-06: seven DP mismatches were reported against merged Phase 3 work. Four came from slices
   that recorded a user-visible scope decision in a comment or a passing test instead of asking. When
   a slice is about to keep WA behaviour that DP does differently, that is a question, not a note.
+- 2026-08-06: a session read drop 2's CSS diff (`.now-playing__*` deleted, a new `.song-bar` file)
+  and concluded `SongPlayBar` had replaced the song player, pricing the adoption as "deletes four
+  of AC-EXP-05's five requirements". The product owner corrected it by running the prototype — the
+  bar is a preview bar and replaces nothing. **Reasoning about a product from a stylesheet diff is
+  not measurement; open the markup.**
+- 2026-08-07: a scope question was put to the product owner as "DP's mobile rule hides the second
+  section, so phones lose `NEW_MVS`" — accurate, but the fixture counts (3 vs 11) were only
+  measured afterwards, and they made it "phones reach 3 of 14". **Count the thing before asking
+  about it; a decision taken on a qualitative framing is not the decision they would have made on
+  the number.**

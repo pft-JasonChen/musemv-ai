@@ -28,7 +28,8 @@ Playwright browser: `CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/c
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | Phase 3 migration              | **DONE, 16/16 routes.**                                                                                                     |
 | Seven post-merge DP mismatches | **FIXED** — `PHASE-3-ACCEPTANCE.md` §8 has the table and the root causes.                                                   |
-| Gates                          | typecheck / lint / vitest 84 / build / `e2e` 164 / `e2e:visual` 115 / G4-b / G4-g / designer-css — **all green**.           |
+| DP drop 2 (`2670ed2`) re-sync  | **DONE 2026-08-07.** Both blocked stylesheets resolved — see §2.0. Landing page still outstanding.                          |
+| Gates                          | typecheck / lint / vitest 84 / build / `e2e` **170** / `e2e:visual` 115 / G4-b / G4-g / designer-css **34/34** — all green. |
 | RD contract C1–C8              | Frozen and documented. One additive C4 change on 2026-08-06 (`setResultUrl`, `setSongResult`), logged in `CHANGELOG-RD.md`. |
 | Dead code                      | **None.** Six orphaned components deleted 2026-08-06.                                                                       |
 
@@ -50,113 +51,95 @@ gap, not an oversight.
 
 ---
 
-## 2. The DP re-sync — ⛔ **STARTED, THEN BLOCKED. Do not treat it as done. Read §2.0 first.**
+## 2. The DP re-sync — ✅ **UNBLOCKED AND LANDED (2026-08-07).** §2.0 is kept as the record.
 
-### 2.0 The blocker, and why "13 stylesheets changed" understated the job
+### 2.0 The blocker, and how it was resolved
 
-**Two of the 13 gated stylesheets assume DOM that WA does not have.** Re-copying them verbatim —
-which is exactly what gate G2-b demands — therefore deletes working screens. This was NOT visible
-in the file-level diff, in `check-designer-css.mjs`, or in typecheck/lint/vitest/build/guard-greps,
-all of which went green. It was found by `e2e`, and only after a first e2e run had to be thrown
-away for measuring a poisoned environment (see the note at the end of this section).
+Two of the 13 gated stylesheets assumed DOM that WA did not have, so re-copying them verbatim —
+which gate G2-b demands — deleted working screens. Neither the file-level diff,
+`check-designer-css.mjs`, typecheck, lint, vitest, build nor `guard-greps.sh` saw it: **six green
+gates and two deleted screens.** It was found by `e2e`.
 
-| Stylesheet           | What the drop did                                                                                         | What it does to WA today                                                                                       |
-| -------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `SongDetailPage.css` | **Deleted the entire `.now-playing__*` block** — 54 rules down to 2                                       | `/song/play`'s desktop player is WA's slice-3b markup with no stylesheet behind it                             |
-| `MVDetailPage.css`   | Below 768px hides **every** `.mv-detail__grid-section` and expects `.mv-detail__mobile-grid` to take over | `/explore/mvs` renders **blank on phones** — the grid is `hidden` and WA has no mobile grid to replace it with |
+| Stylesheet           | What the drop did                                                         | Decision (product owner, 2026-08-07)                              |
+| -------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `MVDetailPage.css`   | Hid every `.mv-detail__grid-section` below 768px, expecting a mobile grid | **Port DP's `.mv-detail__mobile-grid`** — two-column masonry      |
+| `SongDetailPage.css` | Deleted the entire `.now-playing__*` block — 54 rules down to 2           | **Adopt DP fully** — desktop navigates to the result-stage player |
 
-> ### ⚠️ CORRECTION (same day, before anyone acts on the paragraph below)
->
-> **"DP replaced the player with `SongPlayBar`" is WRONG, and the product owner caught it.**
-> The claim was inferred from the CSS diff — `.now-playing__*` gone, a new `.song-bar` file —
-> without reading where DP moved the BEHAVIOUR. `SongPlayBar`'s own header says what it is: a
-> desktop **preview** bar started from a row's album-art play icon, "so browsing can continue
-> while a preview keeps playing". It is not the main player and it deletes nothing.
->
-> What drop 2 actually did to `/song-detail`, from `SongDetailPage.tsx`'s own comment:
->
-> > Desktop no longer has its own Now Playing column — clicking a row navigates straight to
-> > SongCreatePage's result-stage player instead, the same template/route History-origin results
-> > already reuse.
->
-> | surface                | drop 2                                                                                    |
-> | ---------------------- | ----------------------------------------------------------------------------------------- |
-> | desktop `/song-detail` | **list only**; a row click navigates to `/song-create?stage=result&id=…&from=song-detail` |
-> | desktop preview        | cover play icon → `SongPlayBar`, without leaving the list                                 |
-> | phone                  | `MobileNowPlaying` + `LyricsSheet`, **unchanged**                                         |
->
-> So **AC-EXP-05 loses nothing** — its disc player, Like, Lyrics and Create CTA all still exist,
-> on the result screen (desktop) and in the full-screen player (phone). The earlier claim that
-> adopting the bar deletes four of its five requirements was the same mistake twice in one
-> session: reading a CSS diff and reasoning about the product instead of reading the markup.
->
-> **The real cost is elsewhere, and it is bigger than the bar.**
->
-> 1. **It reverses a decision WA took the day before.** Slice 3b made a desktop row click swap
->    the right-hand column and deliberately leave the URL alone, rewrote `AC-EXP-03` to say so,
->    and pinned it with `e2e`'s "3b desktop: clicking a song swaps the right column without
->    navigating". Drop 2 says navigate. Whichever way it goes, that assertion and that criterion
->    move together — this is the error log's "a test can hold a decision in place after the
->    decision is wrong", arriving on schedule.
-> 2. **WA has no shared result template to navigate TO.** DP's phrase "the same template
->    History-origin results already reuse" is true of DP and false here:
->    `SongResultView.tsx:130` is `if (!songResult) router.replace("/song/create")`, so
->    `/song/result` is bound to SongFlow state and a community id bounces straight back out. It
->    resolves an `?id=` for history rows (line 229) but never for a community song. **Adopting
->    DP's routing therefore means turning `/song/result` into a shared player that resolves
->    creation results, history items AND community songs** — a real change to a migrated screen
->    with SONG-03 guards on it, not a one-line `router.push`.
->
-> **Groundwork already on the branch:** `SongPlayBar.css` is copied into `src/styles/designer/`
-> and imported (the gated set is **34** files now, not 33). Nothing consumes `.song-bar` yet, so
-> it is inert — deliberately left in place so the next session starts from a synced stylesheet
-> rather than re-deriving this.
->
-> **Do not port DP's `useSongPlayer` wholesale.** `SongDetailView` already owns equivalent state,
-> already resolves audio through `songAudioUrl()`, and already `.catch()`es `audio.play()` —
-> which DP's hook does NOT, and an uncaught `NotAllowedError` is a console error that the R-2
-> specs fail on.
+**Both are done. `e2e` is 170/170, `e2e:visual` 115/115, and all six other gates are green.**
 
-**The `.now-playing__*` deletion is not a tidy-up: DP replaced that player with `SongPlayBar`.**
-`SongDetailPage.tsx` now does `{player.isOpen && <SongPlayBar player={player} />}`, and so does
-`HomePage/NewSongsSection.tsx`. So the component this file listed under "not yet assessed —
-nobody has decided whether it is in scope" is **load-bearing for the re-sync**, not optional:
-`SongPlayBar.tsx` (147) + `SongPlayBar.css` (261) + `hooks/useSongPlayer.ts` (146).
+#### What "adopt DP fully" actually cost, now that it has been paid
 
-**That is a product decision and it has not been made.** WA's `/song/play` is a full-screen Now
-Playing surface; DP's replacement is a persistent bottom bar that also appears on the landing
-page and hides itself below 768px. Adopting it changes what `/song/play` IS, which is exactly the
-class of change the error log says to ask about rather than encode.
+Less than §2.0 originally priced it, and for one specific reason: **the seeding pattern already
+existed.** The fear was that adopting DP's routing meant "turning `/song/result` into a shared
+player resolving creation results, history items AND community songs". But `/history` rows already
+open `/song/result` by writing flow state before navigating (`useOpenCreation.ts`), because the
+result screens read SongFlow and self-guard when it is empty. A community song is the same shape:
+seed on click, plus a cold-resolve branch so a community `?id=` deep link works with no flow state
+at all. That branch is ~8 lines, not a rewrite.
 
-**Three ways out, for whoever picks this up — the product owner picks, not the session:**
+What DID have to move, exactly as predicted: `AC-EXP-03` and its e2e assertion, together. 3b had
+pinned "a desktop row click does not navigate" in a passing test one day before the drop reversed
+it — the error log's _"a test can hold a decision in place after the decision is wrong"_, arriving
+on schedule. The assertion was rewritten to the new decision, not argued with.
 
-1. **Adopt `SongPlayBar`** (and port `.mv-detail__mobile-grid` + DP's two mobile headers). This is
-   the faithful drop-2 result, and it makes the landing page slice easier because
-   `NewSongsSection` needs the same bar. Biggest, and it is a real UX change to `/song/play`.
-2. **Hold `SongDetailPage.css` and `MVDetailPage.css` at drop 1** and take the other 11. Cheap and
-   green today, but it breaks G2-b's "33 files byte-identical" on purpose, so it has to be a
-   recorded exception with an expiry, not a silent skip — and it forfeits file-level re-sync for
-   the two biggest stylesheets, which is the whole reason D1 copies them verbatim.
-3. **Revert the re-sync**, keep this document, and do it as its own properly-budgeted slice
-   alongside the landing page (which needs `SongPlayBar` anyway).
+#### The correction that had to be made first, and why it matters more than the fix
 
-**State of the branch as committed:** the drop is vendored, all 13 stylesheets are re-copied, the
-A5 work below is complete and correct, and **`e2e` is red on 7 tests** — 2 of them the blocker
-above, 4 the A5 selector change (fixed, unverified), 1 the deliberate mobile-tabs removal whose
-guard still asserts the old decision. `typecheck` / `lint` / `vitest` / `build` / `guard-greps` /
-`check-designer-css` are all green, which is precisely the point: **six green gates and two
-deleted screens.**
+An earlier pass concluded from the CSS diff — `.now-playing__*` gone, a new `.song-bar` file —
+that `SongPlayBar` had **replaced** the player, and that adopting it would delete four of
+`AC-EXP-05`'s five requirements. **That was wrong, and the product owner caught it by running the
+prototype.** `SongPlayBar` is a desktop _preview_ bar started from a row's album-art icon; it
+replaces nothing. Drop 2 split the row's two affordances instead:
 
-**And a warning about how you measure this.** The first full `e2e` reported **26** failures. Run
-again alone on a quiet machine it reported **7**. The 19 that evaporated were the Stop hook firing
-a second concurrent `e2e` against the same port and build — the documented poisoning, third
-occurrence. Before believing any red list here: one run, one machine, and prove the 238 KB
-stylesheet is 200 first.
+| surface                | drop 2                                               |
+| ---------------------- | ---------------------------------------------------- |
+| desktop, row **title** | navigates to the result-stage player                 |
+| desktop, row **art**   | starts `SongPlayBar` in place, so browsing continues |
+| phone                  | `MobileNowPlaying` + `LyricsSheet`, **unchanged**    |
+
+So `AC-EXP-05` lost nothing — its disc player, Like, Lyrics and Create CTA all still exist, on
+`/song/result` for desktop and in the full-screen player on phones. **Reading a CSS diff and
+reasoning about the product is not measurement.** Same shape as the poisoned-environment a11y
+audit: a cheap measurement that agreed with a wrong answer.
+
+#### The two product decisions taken on the way, and what they cost
+
+Neither was in the original three-options framing; both surfaced while reading DP's markup, and
+both change what the user sees — so both were asked rather than encoded.
+
+1. **`/explore/mvs` on phones shows Top Picks only.** DP hides every non-`--primary` section.
+   Lossless for DP (its second section is its first reversed), **not** for WA. Decision: follow DP.
+   ⚠️ **Measured after the decision: `TRENDING_MVS` is 3 items and `NEW_MVS` is 11, so a phone
+   reaches 3 of 14.** The decision was taken on "a secondary catalog is hidden"; the ratio makes it
+   heavier than that sounded. Recorded as `DESIGNER-TODO` **A19** and asserted in `e2e` so nobody
+   "fixes" it by accident. If it is not acceptable, the answer is a designer mobile two-section
+   design, not an override.
+2. **A community song on `/song/result` gets no Recreate and no Publish.** DP varies nothing but
+   the bottom rail here ("Newly Released Songs" instead of "My Creations"), and following it
+   exactly would have offered a paid `COST_SONG_RECREATE` re-roll of a stranger's track into the
+   user's own History, plus a publish toggle on something they do not own. Download and "Use in
+   Music Video" deliberately stay.
+
+#### Still not adopted from this drop
+
+`RoomNavbar`'s `mobileBackHref`; DP's page-specific `.mv-detail__mobile-header` /
+`.mv-player__mobile-header` (which is why `/watch` keeps `DetailNavbar`'s bar rather than passing
+`hideMobileBar`). Both are `TODO.md` **7i** — unused affordances, not regressions.
+
+#### And the warning about how this was measured, kept because it is the record
+
+The first full `e2e` reported **26** failures. Re-run alone on a quiet machine it reported **7**.
+The 19 that evaporated were the Stop hook firing a second concurrent `e2e` against the same port
+and build — the documented poisoning, third occurrence. The 2026-08-07 session then measured
+**3**, not 7: four of the seven were the A5 selector change that the previous session had fixed
+but never verified. **Before believing any red list: one run, one machine, and prove the 238 KB
+stylesheet is 200 first.**
 
 ### 2.1 The measurements — all verified, all held
 
-> **Status: the drop is vendored and the 13 stylesheets are re-copied.**
-> `PROVENANCE.md` now names `2670ed2`; `check-designer-css.mjs` is back to 33/33 verbatim.
+> **Status: the drop is vendored, the 13 stylesheets are re-copied, and the two screens they
+> broke are fixed (2026-08-07 — see §2.0).**
+> `PROVENANCE.md` now names `2670ed2`; `check-designer-css.mjs` is back to 34/34 verbatim
+> (`SongPlayBar.css` joined the gated set, and is now consumed rather than inert).
 > Every number in this section was re-verified against the real upstream clone before acting on
 > it, and every one was right: `src/styles/` byte-identical, `src/assets/icons/` byte-identical,
 > exactly 13 of 33 gated stylesheets changed and 0 removed, upstream HEAD still `2670ed2`.
@@ -266,7 +249,7 @@ Then the §12 five steps: classify each change (visual / flow / new screen) → 
 
 | #     | Work                                                                  | Why here                                                                                                                                                                                                                                                                                                                           | Blocked on |
 | ----- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| **1** | **DP re-sync + landing page**                                         | Must precede any a11y run: 13 stylesheets and a whole new route change what there is to measure. Doing a11y first throws the result away — which has already happened once to this project (`PHASE-3-ACCEPTANCE` §6).                                                                                                              | —          |
+| **1** | ~~DP re-sync~~ **DONE**; **the landing page remains** | The re-sync landed 2026-08-07 (see §2.0) — both blocked stylesheets resolved, `e2e` 170/170. What is left of this row is the landing page, which is a **17th route migration**, not a re-sync: WA's `/` is still the original Tailwind `HomeView.tsx`. It still must precede the a11y run — a whole new route changes what there is to measure, and doing a11y first throws the result away, which has already happened once (`PHASE-3-ACCEPTANCE` §6). `SongPlayBar` is now ported and consumed, so `NewSongsSection` has its bar waiting. | — |
 | **2** | **The deferred UI backlog** (`TODO.md` 7a–7h, `DESIGNER-TODO` A1–A18) | The drop is the moment those get answers. Re-put 7a's ±15s icon and A1/A9/A13's contrast in front of the designer _with_ the drop.                                                                                                                                                                                                 | designer   |
 | **3** | **a11y A1–A5, re-run**                                                | `PHASE-3-ACCEPTANCE` §7.1. The one verification that ran and was **thrown away**. Also widen `a11y.spec.ts` to a mobile viewport (`TODO.md` #6) — but sequence it: that turns A9's 3.74:1 into an immediate gate failure, so either A9's colour lands first or the mobile pass ships with A9 excluded and a comment.               | #1, #2     |
 | **4** | **Community spec + API contract** (`TODO.md` #1)                      | **The actual RD blocker.** `MuseApi` has no community endpoints at all, so half the product has nothing for RD to implement. Source is now `ycmuse-app-skill/YouCam_Muse_Explore_Curation_PRD  -  V2.pdf` (repo root, one level up). **It has not been read** — page 03's homepage UI is superseded by DP, everything else stands. | product    |

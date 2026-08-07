@@ -260,6 +260,14 @@ they have. Title, rows and "See all" switch together. The extra "and has made so
 condition is WA-specific: DP can key on sign-in alone because its `MY_CREATIONS` fixture is never
 empty. Guarded in `e2e` (three tests, including the signed-in-but-empty case).
 
+**7j. CLOSED 2026-08-07 — drop 2's two blocked stylesheets are resolved.** `/explore/mvs` has
+DP's `.mv-detail__mobile-grid` on phones (it was rendering blank), and `/song/play`'s desktop
+column is gone in favour of DP's model: the row title navigates to `/song/result`, the album art
+starts the new `SongPlayBar`. `AC-EXP-03` / `AC-EXP-05` / `EXP-P3-S1` were rewritten with the code,
+and the 3b assertion that pinned the old decision was replaced rather than argued with. Two product
+decisions came with it — `DESIGNER-TODO` **A19** (phones reach 3 of 14 MVs) and "a community song
+gets no Recreate/Publish". Full record: `docs/NEXT-SESSION.md` §2.0.
+
 **7i. Two capabilities drop 2 (`2670ed2`) shipped and WA has not adopted.** Neither costs
 anything today — the current behaviour is unchanged and nothing is lost — but both are the
 designer's answer to A5 and WA is only using half of it.

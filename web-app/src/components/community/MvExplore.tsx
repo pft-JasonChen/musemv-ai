@@ -9,7 +9,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Card } from "@/components/ui/Card";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
-import { useMediaQuery } from "@/lib/ssr";
+import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
 import {
   computeJustifiedRows,
   aspectRatioOf,
@@ -41,6 +41,23 @@ import {
  * the second by REVERSING the same catalog — it has no second list. WA has two
  * genuinely different ones, so they map straight onto the designer's layout:
  * Top Picks ← TRENDING_MVS, Newly Released ← NEW_MVS.
+ *
+ * ── AND THAT IS EXACTLY WHY THE PHONE LAYOUT COSTS SOMETHING (drop 2) ────────
+ * DP's mobile rule hides every `.mv-detail__grid-section` and re-shows only
+ * `--primary`. For DP that is lossless: its second section is the first one
+ * reversed, so nothing is unreachable. For WA it means **NEW_MVS is not
+ * reachable at all below 768px** — Newly Released is desktop-only.
+ *
+ * Product owner decided 2026-08-07: FOLLOW DP, and record the cost here rather
+ * than hide it. This is the same call, and the same shape, as the `/explore/songs`
+ * phone tab-pills decision the day before (`designer-overrides.css`, A4). If it
+ * turns out to matter it is a designer request for a mobile two-section design,
+ * not something to patch around with an override.
+ *
+ * The alternative that was rejected — putting `--primary` on BOTH sections — was
+ * one class and would have kept both catalogs. It was turned down because it is
+ * a deviation that DECAYS: every future drop reverts it, exactly like the `Idea`
+ * buttons.
  *
  * The old "← Home" text button is gone because `DetailNavbar` now carries back
  * navigation; this screen is where Q6's `router.back()`-with-fallback lands.
@@ -77,6 +94,7 @@ function MvGrid({ items }: { items: readonly GridItem[] }) {
    * ending up with two sources for it. `useMediaQuery` carries the reasoning.
    */
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const isPhone = useMediaQuery(PHONE_QUERY);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -111,6 +129,46 @@ function MvGrid({ items }: { items: readonly GridItem[] }) {
         badge={mv.badge ?? undefined}
         coverImage={mv.thumb}
       />
+    );
+  }
+
+  /**
+   * ── PHONES GET DP'S TWO-COLUMN MASONRY (drop 2, `2670ed2`) ─────────────────
+   *
+   * Not a nicety — without it this screen is BLANK below 768px. That drop's
+   * `MVDetailPage.css` hides `.mv-detail__grid-section` outright on phones and
+   * expects `.mv-detail__mobile-grid` to take over; re-copying the stylesheet
+   * verbatim (which G2-b requires) therefore deleted the screen until this
+   * branch existed. Measured 2026-08-06: `.mv-detail__grid` present in the DOM,
+   * `display: none`, nothing else painted.
+   *
+   * The split is greedy-by-estimated-height, and a plain `index % 2` is the
+   * wrong answer for the same reason it was upstream: `mvCoverRatio` alternates
+   * 3:4 / 4:3 by index, so an even-by-COUNT split puts every tall cover in one
+   * column and every short one in the other. Both columns share a width, so
+   * `1 / aspectRatio` is a valid proportional height to balance on.
+   */
+  if (isPhone) {
+    const columns: GridItem[][] = [[], []];
+    const heights = [0, 0];
+    items.forEach((mv) => {
+      const shorter = heights[0] <= heights[1] ? 0 : 1;
+      columns[shorter].push(mv);
+      heights[shorter] += 1 / aspectRatioOf(mv.ratio);
+    });
+
+    return (
+      <div className="mv-detail__mobile-grid" ref={containerRef}>
+        {columns.map((column, columnIndex) => (
+          <div className="mv-detail__mobile-column" key={columnIndex}>
+            {column.map((mv) => (
+              <Link key={mv.id} {...link(mv)} className="mv-detail__grid-item">
+                {card(mv)}
+              </Link>
+            ))}
+          </div>
+        ))}
+      </div>
     );
   }
 
@@ -182,7 +240,11 @@ export function MvExplore() {
           <CommunityEmpty variant="empty" />
         ) : (
           <>
-            <section className="mv-detail__grid-section">
+            {/* `--primary` is what survives on phones. DP's mobile rule hides
+                every `.mv-detail__grid-section` and re-shows only this one, with
+                its SectionHeader suppressed — see the header note above for the
+                catalog that costs us. */}
+            <section className="mv-detail__grid-section mv-detail__grid-section--primary">
               {/* This page is already the "See all" destination, so neither
                   section links anywhere further. */}
               <SectionHeader title="Top Picks Music Videos" mobileTitle="Top Picks" />

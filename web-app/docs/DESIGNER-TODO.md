@@ -512,6 +512,25 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 - **需要設計判斷:** 手機上這一列要留 Share 嗎?若要,放哪裡(列上?長按?底部 sheet?)。
 - WA 這邊同樣**沒有 override**,先記在這裡等裁示。
 
+### A19. `/explore/mvs` 手機版只看得到 **14 支裡的 3 支** —— 已依 DP 拍板,但數字請設計師確認
+
+**發現於:** 2026-08-07,drop 2(`2670ed2`)的 re-sync。
+
+`MVDetailPage.css` 在 `max-width: 767px` 把所有 `.mv-detail__grid-section` `display: none`,
+再單獨把 `--primary` 那一段放回來(`.mv-detail__mobile-grid`,兩欄 masonry)。
+
+- **對 DP 無損:** DP 的第二段是第一段 reverse 的同一份 catalog,藏掉不會少任何東西。
+- **對 WA 有損:** 我們兩段是**兩份不同的 catalog**。`TRENDING_MVS` = **3 支**,
+  `NEW_MVS` = **11 支** —— 所以手機使用者只摸得到 **3 / 14**,其餘 11 支在手機上沒有任何入口。
+- **產品拍板 2026-08-07:跟 DP 走**,理由是「在兩個 section 都掛 `--primary`」雖然只差一個 class,
+  卻是**每次交稿都會被還原**的偏離(和 `Idea` 按鈕同一類)。
+- ⚠️ **拍板當下的說法是「次要 catalog 被藏起來」,3 / 14 這個比例是事後量出來的。**
+  記在這裡是因為它把取捨的份量整個換掉了:這不是藏掉一個補充區塊,是手機版
+  Explore MV 只剩兩成內容。若設計師認為不可接受,需要的是**手機版雙 section 的設計**,
+  不是我們加 override。
+- 已用 `e2e/behaviour-regressions.spec.ts`(「/explore/mvs still has a grid on a phone」)
+  把這個損失**寫成斷言**,免得下一個 session 當成 bug 順手「修好」。
+
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 
 | 畫面                           | 狀況                                                                                                                                                        | 影響                                              |

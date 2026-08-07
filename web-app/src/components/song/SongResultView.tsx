@@ -21,6 +21,12 @@ import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { COST_SONG_RECREATE } from "@/lib/mv/types";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
+import {
+  NEW_SONGS,
+  getCommunitySong,
+  songAudioUrl,
+  songResultFromCommunity,
+} from "@/lib/mv/community";
 
 const FALLBACK_LYRICS = ["♪ No lyrics available for this one yet ♪"];
 
@@ -74,6 +80,23 @@ function formatTime(seconds: number): string {
  * when there is only the new song, transport is disabled at both ends rather
  * than hidden, which is DP's own treatment.
  *
+ * ── COMMUNITY ORIGIN (`?from=song-detail`, drop 2 `2670ed2`) ────────────────
+ *
+ * Drop 2 made a desktop row click on `/explore/songs` navigate HERE instead of
+ * swapping an in-page column, so this screen now renders songs the signed-in
+ * user did not create. Three consequences, none of them cosmetic:
+ *
+ * 1. **It resolves a community id with no flow state**, seeding SongFlow from
+ *    the seed catalog rather than `router.replace`ing to `/song/create`. That
+ *    is what makes the link real on a cold load; a History row still cannot do
+ *    this, because its id names an in-memory job and nothing can resurrect it.
+ * 2. **The rail becomes "Newly Released Songs"** over `NEW_SONGS`, which is
+ *    DP's own `fromSongDetail` behaviour — the one thing DP does vary by origin.
+ * 3. **Recreate and Publish are dropped**, which DP does NOT do. Following DP
+ *    exactly would have offered a paid `COST_SONG_RECREATE` re-roll and a
+ *    publish toggle on someone else's track. Product owner decided 2026-08-07;
+ *    Download and "Use in Music Video" stay.
+ *
  * Every icon on this screen is a mask (`.song-result__icon`,
  * `__play-icon`, `__transport-icon`, `__publish-icon`, `__cta-primary-icon` all
  * set `background-color: currentColor`), so they are all `DpIcon`. The one
@@ -82,9 +105,15 @@ function formatTime(seconds: number): string {
  */
 export function SongResultView() {
   const router = useRouter();
-  const idParam = useSearchParams().get("id");
+  const params = useSearchParams();
+  const idParam = params.get("id");
+  /**
+   * DP's own param, and it carries two decisions rather than one piece of
+   * styling. See the "COMMUNITY ORIGIN" block in this file's header.
+   */
+  const fromSongDetail = params.get("from") === "song-detail";
   const { locale } = useLocale();
-  const { songResult, resetForRecreate } = useSongFlow();
+  const { songResult, setSongResult, resetForRecreate } = useSongFlow();
   const { patchCompose } = useMvFlow();
   const { history } = useHistory();
   const { credits } = useCredits();
@@ -105,30 +134,62 @@ export function SongResultView() {
   const [published, setPublished] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // The generated song first, then the user's earlier ones from History.
+  /**
+   * A community song resolves from the seed catalog with NO flow state at all,
+   * which is what makes `/song/result?id=…` a real deep link for one — unlike a
+   * History row, whose id names an in-memory job that a reload genuinely
+   * destroys. Resolved on the id alone rather than on `from=song-detail`, so a
+   * link that loses the param still lands on the song instead of bouncing out.
+   */
+  const communitySong = getCommunitySong(idParam);
+  const communityOrigin = fromSongDetail || communitySong != null;
+
+  // The song first, then the rail behind it: the user's earlier creations
+  // normally, or DP's "Newly Released" catalog when the origin is community —
+  // showing a stranger's song above the signed-in user's own work reads as if
+  // they made it.
   const playlist = useMemo(() => {
     if (!songResult) return [];
+    const head = {
+      id: songResult.id,
+      title: songResult.title,
+      cover: songResult.cover,
+      audioUrl: songResult.audioUrl,
+    };
+    if (communityOrigin) {
+      return [
+        head,
+        ...NEW_SONGS.filter((s) => s.id !== songResult.id).map((s) => ({
+          id: s.id,
+          title: s.title,
+          cover: s.cover,
+          audioUrl: songAudioUrl(s.id),
+        })),
+      ];
+    }
     const earlier = history
       .filter(
         (h) => h.kind === "song" && h.status === "completed" && h.resultUrl !== songResult.audioUrl,
       )
       .map((h) => ({ id: h.id, title: h.title, cover: h.thumb, audioUrl: h.resultUrl }));
-    return [
-      {
-        id: songResult.id,
-        title: songResult.title,
-        cover: songResult.cover,
-        audioUrl: songResult.audioUrl,
-      },
-      ...earlier,
-    ];
-  }, [songResult, history]);
+    return [head, ...earlier];
+  }, [songResult, history, communityOrigin]);
 
   const active = playlist[activeIndex] ?? playlist[0];
 
+  /**
+   * The self-guard, with the community escape hatch in front of it. Without the
+   * first branch a community id bounces straight back to `/song/create`, which
+   * is exactly what made "adopt DP's routing" look bigger than it is.
+   */
   useEffect(() => {
-    if (!songResult) router.replace(localePath(locale, "/song/create"));
-  }, [songResult, router, locale]);
+    if (songResult) return;
+    if (communitySong) {
+      setSongResult(songResultFromCommunity(communitySong));
+      return;
+    }
+    router.replace(localePath(locale, "/song/create"));
+  }, [songResult, communitySong, setSongResult, router, locale]);
 
   // Load and start whichever track is active. The play() rejection has to be
   // caught: with no user activation it rejects with NotAllowedError, and an
@@ -427,33 +488,51 @@ export function SongResultView() {
                       Use in Music Video
                       <DpIcon name="ic_arrow_right" className="song-result__cta-primary-icon" />
                     </button>
-                    <button type="button" className="song-result__cta-secondary" onClick={recreate}>
-                      Recreate · {COST_SONG_RECREATE} Credits
-                    </button>
+                    {/* OWNER-ONLY, so absent on a community song. DP varies
+                        nothing but the rail here, and following it exactly would
+                        have offered a paid SONG-03 re-roll of a track the user
+                        does not own — charging COST_SONG_RECREATE to fork a
+                        stranger's song into their History. Product owner decided
+                        2026-08-07 to drop the two rather than port them. Download
+                        and "Use in Music Video" deliberately STAY: both are what
+                        a community song is for. */}
+                    {!communityOrigin && (
+                      <button
+                        type="button"
+                        className="song-result__cta-secondary"
+                        onClick={recreate}
+                      >
+                        Recreate · {COST_SONG_RECREATE} Credits
+                      </button>
+                    )}
                   </div>
 
-                  <div className="song-result__publish">
-                    <DpIcon name="ic_publish" className="song-result__publish-icon" />
-                    <div className="song-result__publish-text">
-                      <p className="song-result__publish-title">Publish</p>
-                      <p className="song-result__publish-state">{published ? "On" : "Off"}</p>
+                  {!communityOrigin && (
+                    <div className="song-result__publish">
+                      <DpIcon name="ic_publish" className="song-result__publish-icon" />
+                      <div className="song-result__publish-text">
+                        <p className="song-result__publish-title">Publish</p>
+                        <p className="song-result__publish-state">{published ? "On" : "Off"}</p>
+                      </div>
+                      {/* GL-02: publishing to the community is gated at the action.
+                          Unlike MV, Song does NOT confirm first — DP's own split. */}
+                      <ToggleSwitch
+                        checked={published}
+                        ariaLabel="Publish to community"
+                        onChange={(next) =>
+                          next ? requireLogin(() => setPublished(true)) : setPublished(false)
+                        }
+                      />
                     </div>
-                    {/* GL-02: publishing to the community is gated at the action.
-                        Unlike MV, Song does NOT confirm first — DP's own split. */}
-                    <ToggleSwitch
-                      checked={published}
-                      ariaLabel="Publish to community"
-                      onChange={(next) =>
-                        next ? requireLogin(() => setPublished(true)) : setPublished(false)
-                      }
-                    />
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="song-result__creations">
-              <p className="song-result__creations-title">My Creations</p>
+              <p className="song-result__creations-title">
+                {communityOrigin ? "Newly Released Songs" : "My Creations"}
+              </p>
               <div className="song-result__creations-grid">
                 {playlist.map((item, i) => (
                   <button
