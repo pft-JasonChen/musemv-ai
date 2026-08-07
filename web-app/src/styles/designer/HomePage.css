@@ -1,0 +1,29 @@
+.home-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 24px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 16px 20px;
+}
+
+@media (max-width: 767px) {
+  .app-layout--mobile-app .home-page > .hero-banner-mobile + .tool-selector {
+    margin-top: -14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .home-page {
+    gap: 40px;
+    padding: 0 32px 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-page {
+    padding: 0 60px 80px;
+  }
+}

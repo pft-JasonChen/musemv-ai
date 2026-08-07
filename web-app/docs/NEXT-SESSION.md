@@ -1,9 +1,12 @@
-# NEXT-SESSION.md — start here (rewritten 2026-08-07)
+# NEXT-SESSION.md — start here (rewritten 2026-08-07, second time that day)
 
 **Read this file, then `CLAUDE.md`'s "In flight" block. Nothing else, until you have picked a
 task below.** Every number here was measured, not estimated; where something was not measured, it
-says so. **The next slice is §2, the landing page, and its four product decisions are already
-taken — you can start writing code after §0.**
+says so.
+
+**§2 — the landing page — is DONE.** It was the last unmigrated route, so **the designer-UI
+migration is complete: 17 of 17.** What is left is verification and backlog, not porting. §2 is
+kept as the record of what was decided and what it cost; **the next task is §3 item 2 or 3.**
 
 ---
 
@@ -12,14 +15,14 @@ taken — you can start writing code after §0.**
 1. **Start the session from `web-app/`, not the repo root.** The four review subagents
    (`a11y-checker`, `design-reviewer`, `code-reviewer`, `component-architect`) and
    `/design-review` are discovered from the session's own project root. A root session cannot see
-   them, so it cannot satisfy gates G3-c / G5-e / G7. The 2026-08-06 and 2026-08-07 sessions both
-   ran from the root and had to hand-roll their verification.
+   them, so it cannot satisfy gates G3-c / G5-e / G7. The 2026-08-06 and both 2026-08-07 sessions
+   all ran from the root and had to hand-roll their verification.
 2. **`npm ci` first.** `node_modules/` is not in the container image; `tsc` fails with 200 lines
    of "cannot find module @playwright/test" and it looks like a code problem. It is not.
-3. **The landing page needs an asset drop before any of it renders.** See §2.1 — this is the one
-   step that cannot be worked around, and skipping it produces a white screen with no error.
+3. **`designer-prototype/src/assets/hero/` is now VENDORED and every future drop must re-copy it,
+   into two places.** See §2.1 — miss it and DP's home page goes white with no error.
 
-Playwright browser: `CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome npm run e2e`
+Playwright browser: `CHROMIUM_PATH=$(find /opt/pw-browsers -name chrome -type f | head -1) npm run e2e`
 (do **not** run `npx playwright install`).
 
 ---
@@ -28,11 +31,11 @@ Playwright browser: `CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/c
 
 |                               |                                                                                                                             |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Phase 3 migration             | **DONE, 16/16 routes.** The landing page is a **17th**, not part of it.                                                     |
-| DP drop 2 (`2670ed2`) re-sync | **DONE 2026-08-07.** Both blocked stylesheets resolved — Appendix A is the record.                                          |
-| Gates                         | typecheck / lint / vitest 84 / build / `e2e` **170** / `e2e:visual` 115 / designer-css **34/34** / guard-greps — all green. |
-| RD contract C1–C8             | Frozen. One additive C4 change on 2026-08-06 (`setResultUrl`, `setSongResult`), logged in `CHANGELOG-RD.md`.                |
-| Dead code                     | **None.** Six orphaned components deleted 2026-08-06.                                                                       |
+| Designer-UI migration         | **DONE, 17/17 routes.** The landing page landed 2026-08-07 and was the last one.                                            |
+| DP drop 2 (`2670ed2`) re-sync | **DONE 2026-08-07.** Appendix A is the record.                                                                              |
+| Gates                         | typecheck / lint / vitest 84 / build / `e2e` **176** / `e2e:visual` 115 / designer-css **42/42** / guard-greps — all green. |
+| RD contract C1–C8             | Frozen. One additive C4 change on 2026-08-06 (`setResultUrl`, `setSongResult`), logged in `CHANGELOG-RD.md`. Nothing since. |
+| Dead code                     | **None.** Six orphaned components deleted 2026-08-06; five now-unused `community/ui` exports deleted with the landing page. |
 
 ### The scope rule still in force (product owner, 2026-08-06)
 
@@ -51,141 +54,147 @@ separable, pixel-neutral fix and deferred anyway. Known and accepted, not an ove
 
 ---
 
-## 2. THE NEXT SLICE — the landing page (`/`), a 17th route migration
+## 2. THE LANDING PAGE — DONE 2026-08-07. Kept as the record.
 
-**WA's `/` is `src/components/home/HomeView.tsx` (181 lines) and has never been migrated.** It is
-still the original Tailwind screen. So this is not a re-sync of migrated markup; it is a fresh
-screen migration, and it should get its own slice, its own six-width check and new visual
-baselines for `/`.
+**Nothing in this section is outstanding work.** Read it if you need to know why something on `/`
+is the way it is, or before the next drop touches `HomePage/`.
 
-### 2.0 What you are porting, measured
+WA's `/` was `src/components/home/HomeView.tsx`, 181 lines of Tailwind, and had never been
+migrated. So this was not a re-sync of migrated markup; it was a fresh screen migration, and it
+got its own slice, its own six-width check and new visual baselines.
 
-DP's `src/pages/HomePage/` is **8 components, ~996 lines of tsx and ~1426 lines of CSS**, and
-**none of its 8 stylesheets are vendored yet** — the gated set goes **34 → 42**.
+### 2.0 What was ported
 
-| DP file                 | tsx | css | Notes                                                    |
-| ----------------------- | --: | --: | -------------------------------------------------------- |
-| `HeroBannerSection`     | 400 | 484 | mobile hero. **Imports the 10 hero assets by name.**     |
-| `HeroBannerSectionV3`   | 160 | 191 | desktop hero. Re-imports `HERO_ITEMS` from the above.    |
-| `ToolSelectorSection`   |  61 | 283 | mobile tool selector                                     |
-| `ToolSelectorSectionV3` |  52 | 198 | desktop tool selector                                    |
-| `NewMVsSection`         |  88 | 103 | manual scroll row + prev/next arrows                     |
-| `TopPicksSection`       |  96 | 102 |                                                          |
-| `NewSongsSection`       |  84 |  36 | **needs `SongPlayBar`, which is already ported**         |
-| `HomePage`              |  55 |  29 | the `isMobile` branch that picks which hero pair renders |
+DP's `src/pages/HomePage/` — **8 components, ~996 lines of tsx and ~1426 lines of CSS**. None of
+its 8 stylesheets were vendored; the gated set went **34 → 42**, and `npm run designer:check`
+passes at 42/42 verbatim.
 
-`HomePage.tsx` renders **mobile → `HeroBannerSection` + `ToolSelectorSection`; desktop →
-the V3 pair.** Both sets ship; this is not an A/B leftover. (`HomePageReviewB`,
-`ToolSelectorSectionAlt` and the `/home-review-b` route were removed upstream.)
+| DP file                 | WA file                          | Notes                                                     |
+| ----------------------- | -------------------------------- | --------------------------------------------------------- |
+| `HomePage`              | `home/HomeView.tsx`              | the `isPhone` branch that picks which pair renders        |
+| `HeroBannerSection`     | `home/HeroBannerSection.tsx`     | phone hero (+ the desktop `.hero-banner` DP keeps in it)  |
+| `HeroBannerSectionV3`   | `home/HeroBannerSectionV3.tsx`   | desktop hero, a scroll-snap filmstrip                     |
+| `ToolSelectorSection`   | `home/ToolSelectorSection.tsx`   | phone tool tiles                                          |
+| `ToolSelectorSectionV3` | `home/ToolSelectorSectionV3.tsx` | desktop tool cards                                        |
+| `NewMVsSection`         | `home/NewMVsSection.tsx`         | ← `NEW_MVS`                                               |
+| `TopPicksSection`       | `home/TopPicksSection.tsx`       | ← `TOP_PICKS_SONGS`, real audio preview                   |
+| `NewSongsSection`       | `home/NewSongsSection.tsx`       | ← `NEW_SONGS.slice(0,6)`, **consumes `SongPlayBar`**      |
+| —                       | `home/heroItems.ts`              | DP's `HERO_ITEMS`, re-expressed as `public/` path strings |
 
-### 2.1 ⛔ THE BLOCKER YOU MUST CLEAR FIRST — the hero assets
+`ui/ListItem.tsx` also grew DP's **`community` variant** (username + plays/likes/shares + the
+like/share/Create actions row); `NewSongsSection` is its first caller. The `song` variant's markup
+was left byte-for-byte alone so `/mv/room`, `/song/create` and `/song/result` baselines did not
+move — the component grew, it did not change.
 
-`HeroBannerSection.tsx` lines 7–16 import **5 mp4s and 5 poster images by name** from
-`src/assets/hero/`, and `PROVENANCE.md` **deliberately excludes that directory** (13 MB of demo
-media). `HeroBannerSectionV3` imports `HERO_ITEMS` from `HeroBannerSection`, so **"just do the
-desktop one" does not escape it.**
+### 2.1 ⛔ THE HERO ASSETS ARE VENDORED, AND EVERY DROP MUST RE-COPY THEM
 
-**This fails silently and catastrophically.** `DESIGNER-TODO` A12 is the proof: one unresolved
-import took DP's entire module graph down and **every** route rendered white — for four handoffs
-that was misdiagnosed as "DP's `/mv-edit` page does not render".
+`HeroBannerSection.tsx` imports **8 mp4s and 8 posters BY NAME**, and `HeroBannerSectionV3`
+re-imports `HERO_ITEMS` from it — so "just do the desktop one" never escaped it. `PROVENANCE.md`
+used to exclude `src/assets/hero/` along with `covers/` and `storyboard-clips/`.
 
-> #### ✅ DECIDED 2026-08-07 (product owner): **vendor the 13 MB.**
->
-> Break the exclusion rule for `src/assets/hero/` specifically. The reasoning on record: 13 MB is
-> a different order of magnitude from `covers/`'s 257 MB, and it is the only option that renders
-> the hero as designed.
->
-> **What that obliges you to do, and it is more than copying files:**
->
-> 1. **Amend `PROVENANCE.md`'s exclusion table** — remove the `src/assets/hero/` row and add a
->    line saying why this one is vendored while `covers/` and `storyboard-clips/` are not.
->    An exclusion list that no longer matches reality is how the next re-sync goes wrong.
-> 2. **Every future drop must re-copy it.** Add it to the §7 re-sync procedure, or drop 3 silently
->    reverts to a white home page.
-> 3. **WA serves from `public/`, not Vite's `src/assets/`.** DP's `import x from '…?url'` has no
->    Next equivalent here — the existing convention is `public/assets/…` referenced by path (see
->    how `songAudioUrl` and `public/assets/icons/ui/` already work). Put them under
->    `public/assets/hero/` and reference by string; do **not** try to make the `?url` imports work.
-> 4. **Check the filenames.** Four of the ten contain **spaces** (`hero_01_Vintage Car.png`).
->    `DESIGNER-TODO` notes the remaining space-in-filename cases are all in `covers/` — that is
->    now wrong, and a raw space in a URL path will 404. URL-encode at the reference site, the way
->    `community.ts`'s `AUDIO` array already does (`Party%20Dance.mp3`).
+**Product owner decided 2026-08-07: vendor the 13 MB.** 13 MB is a different order of magnitude
+from `covers/`'s 257 MB, and it is the only option that renders the hero as designed. What that
+obliged, and what was done:
 
-### 2.2 The other three decisions, already taken (2026-08-07)
+1. **`PROVENANCE.md`'s exclusion table is amended** — `src/assets/hero/` has its own section
+   explaining why this one is vendored while the other two are not. The reason is not size alone:
+   the other two are read through `import.meta.glob`, which yields `[]` instead of throwing, so a
+   missing file costs missing media. `hero/` is name-imported, so ONE missing file takes DP's whole
+   module graph down and **every** route renders white — that is `DESIGNER-TODO` A12, which four
+   handoffs misread as "DP's `/mv-edit` page does not render".
+2. **The re-sync procedure in `PROVENANCE.md` now copies it into BOTH places** —
+   `designer-prototype/src/assets/hero/` (so DP runs) and `web-app/public/assets/hero/` (so WA
+   serves it). Miss either and something goes silently blank. There is a sparse-checkout recipe
+   there if the full clone is too big.
+3. **WA references by path string, not `?url`.** Next serves `public/`; DP's Vite import has no
+   equivalent. `home/heroItems.ts` owns that mapping.
+4. **Four of the sixteen filenames contain a SPACE** (`hero_01_Vintage Car.png`). Vite hashed them
+   away; Next does not. `encodeURIComponent` on the filename is what makes them load — verified
+   both ways on 2026-08-07 (encoded → 200, raw space → the request never forms).
 
-| #   | Decision                                    | What it means when you write the code                                                                                                          |
-| --- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Port BOTH hero/tool-selector treatments** | All four components, the `isMobile` branch included. Do not collapse them — the whole point is that the next drop can re-sync each file whole. |
-| 2   | **Follow DP: DELETE the Trending marquee**  | WA's 45s infinite marquee has no DP equivalent. See §2.3 — it has a consequence you must record, and an e2e test that must go with it.         |
-| 3   | **A19 stands: keep following DP**           | `/explore/mvs` on phones still shows 3 of 14 MVs. Do not "fix" it; `e2e` asserts the loss on purpose.                                          |
+### 2.2 The four decisions, all taken and all applied
 
-### 2.3 ⚠️ The one consequence of decision 2 that nobody has ruled on yet
+| #   | Decision                                    | How it landed                                                                                                                             |
+| --- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Port BOTH hero/tool-selector treatments** | All four components ship; `HomeView` branches on `useMediaQuery(PHONE_QUERY)`. Not collapsed — each file re-syncs whole on the next drop. |
+| 2   | **Follow DP: DELETE the Trending marquee**  | Gone, along with its `globals.css` keyframes and three class names. See §2.3.                                                             |
+| 3   | **A19 stands: keep following DP**           | `/explore/mvs` on phones still shows 3 of 14 MVs. Untouched.                                                                              |
+| 4   | **Vendor the 13 MB of hero assets**         | §2.1.                                                                                                                                     |
 
-Deleting the marquee **removes `TRENDING_MVS`'s only entry point on the home page**, and DP's
-three rails do not put it back: they map to `NEW_MVS`, `TOP_PICKS_SONGS` and `NEW_SONGS`. After
-this slice, **`TRENDING_MVS` (3 items) is reachable only from `/explore/mvs`.**
+### 2.3 Decision 2's consequence — now ruled on
 
-That is survivable — it is still the `--primary` section there, so it is the one catalog a phone
-_can_ see (A19) — but it was not part of what was decided. **State it in the slice's commit and in
-`DESIGNER-TODO`; do not quietly let it happen.** If the product owner wants a Trending rail on
-home, that is a designer request for a rail DP has not drawn.
+Deleting the marquee removed `TRENDING_MVS`'s only entry point on the home page, and DP's three
+rails do not put it back (they map to `NEW_MVS`, `TOP_PICKS_SONGS` and `NEW_SONGS`). The previous
+handoff flagged that nobody had ruled on it.
 
-Two things must move with the deletion:
+**The product owner ruled on it, in the same breath as the slice: "TRENDING_MVS 不用首頁 (Match
+DP)".** So it is decided, not inherited. `TRENDING_MVS` (3 items) is reachable from
+`/explore/mvs` alone, where it is the `--primary` section — which under A19 is also the only MV
+catalog a phone can reach there. `DESIGNER-TODO` **A20** carries both halves of that picture,
+because together they are heavier than either alone, and the designer question ("should home have
+a Trending rail?") is still open.
 
-- `e2e/behaviour-regressions.spec.ts` → **"landing page: clicking a Trending MV lands on the same
-  /watch screen"** (line ~682) drives `.marquee-animate button`. It is guarding a real rule —
-  home and `/explore/mvs` must not drift into two behaviours — so **re-point it at whichever DP
-  rail still reaches `/watch`**, do not delete it.
-- The `addStyleTag` that freezes the marquee animation becomes dead; remove it with the selector.
+Two things moved with the deletion, as the previous handoff required:
 
-### 2.4 What WA has that DP does not — check these BEFORE you delete anything
+- `e2e`'s **"landing page: clicking a Trending MV lands on the same /watch screen"** was
+  **re-pointed at `.new-mvs__item`**, not deleted — it guards a real rule (home and `/explore/mvs`
+  must not drift into two behaviours) and that rule outlived the rail.
+- The `addStyleTag` that froze the marquee animation went with the selector.
 
-This is the trap that has bitten **five** times (A4's tabs row, A7's shuffle/repeat, `/settings`'
-Back, the Muse Pro pill, `/mv/result`'s unmute). DP's HomePage has **no auth at all** — its
-`AuthProvider` was never ported — so every gate below exists only in WA:
+A new test, **"the Trending marquee is gone and stays gone"**, asserts the loss on purpose — same
+technique A19 uses, so a future drop or a well-meaning fix cannot quietly restore WA's own rail.
 
-- **`requireLogin` on both hero CTAs** (`AC-EXP-02` / GL-02). DP's tool selector just navigates.
-- **`requireLogin` on New Songs' `Create`** (`AC-EXP-02`). Same.
-- **`SectionHead href` → "See all"**, which `e2e`'s Q6 back test navigates through
-  (`getByRole("link", { name: /See all/i })`, line ~592). Keep a real `next/link` with a
-  `localePath()` href (R-9), not DP's `<a href="/mv-detail">`.
+### 2.4 What WA has that DP does not — all three kept
 
-`AC-EXP-01` requires "the hero CTAs and the four seed rails in seed order" — re-read it against
-what you ship, because decision 2 changes the rail count.
+DP's HomePage has **no auth at all** (its `AuthProvider` was never ported), so every gate below
+exists only in WA and every one is now covered by its own e2e:
 
-### 2.5 The standing rules this slice will hit
+- **`requireLogin` on both hero CTAs and both tool-selector cards** (`AC-EXP-02` / GL-02) —
+  checked on BOTH branches, because they are two components with two handlers.
+- **`requireLogin` on New Songs' `Create`**, plus the `patchSongCompose` seeding the
+  pre-migration home already did.
+- **`SectionHeader href` → "See all"** as a real `next/link` + `localePath()` (R-9), which Q6's
+  back test navigates through.
 
-- **R-9:** every link through `next/link` + `localePath()`. DP navigates with `<a href="/home">`
-  and reads `window.location.pathname`. `guard-greps.sh` catches a literal `<a href="/`; DP's
-  `href={variable}` links are yours to hold.
-- **R-2:** `HomePage.tsx`'s `isMobile` is DP's SSR-unsafe
-  `useState(() => typeof window !== 'undefined' && matchMedia(...).matches)` shape. Use
-  `useMediaQuery(PHONE_QUERY)` from `src/lib/ssr.ts`. **This is the third instance**; the previous
-  sweep found "exactly two files in the drop" and that count is now stale.
-- **Icons (D4):** decide `<img>` vs `DpIcon` vs `DpIcon as="i"` from DP's CSS, not habit, and
-  **add `/` to the mask-icon sweep** in `e2e/behaviour-regressions.spec.ts`.
-- **The `Idea` / `Ideas` buttons** are a deliberate subtraction from DP and **come back on every
-  drop**. Check whether HomePage has any before you copy.
-- **Style purity (G3-d):** no Tailwind utilities inside the migrated subtree. `HomeView.tsx` is
-  100% Tailwind today, so this is a rewrite, not an edit.
+### 2.5 Two things this slice learned that are not obvious
 
-### 2.6 Definition of done for this slice
+- **Playwright's Chromium has no H.264 decoder, so an mp4 is a black box in every screenshot.**
+  `MediaError 4 DEMUXER_ERROR_NO_SUPPORTED_STREAMS`, no throw, no console output, and
+  `canPlayType` still says `"maybe"`. Two consequences, both now in `AGENTS.md`: a video region of
+  a visual baseline proves nothing, and `poster` is worth adding to any `<video>` whose first frame
+  is the design. That poster is the ONE attribute the two hero components add to DP's markup.
+- **The 3f mask sweep runs at 1440 and physically cannot see this screen's phone half.**
+  `HomeView` branches in JS, so `.tool-selector__icon` and the whole phone hero are simply not in
+  the DOM at desktop width. A second sweep at 375 was added. Any future screen that JS-branches on
+  a breakpoint has the same hole.
 
-`npm run typecheck && npm run lint && npm run test:run && npm run build` all exit 0; `designer:check`
-passes at **42/42**; `e2e` green with the marquee test re-pointed and `/` added to the mask sweep;
-new `/` baselines recorded at all six widths with `--update-snapshots=all --grep "@visual home @"`.
+### 2.6 What DP has on this screen that WA still does not
+
+Neither is a loss introduced by this slice, and neither is this slice's to add — but do not
+mistake them for oversights:
+
+- **The rotating colorflow background** (`AppLayout showBackground`) and **the marketing Footer**
+  (`showFooter`). Both are SHELL, not page: CH3/CH4 put the marketing Navbar and Footer out of
+  scope, and `AppShell` has never rendered `.app-layout__background` on any route.
+- **The AI Storybooks card** in the desktop tool selector. DP's stylesheet still carries its
+  `--story` rules and its tsx still carries the commented-out card; the product owner asked for it
+  to stay hidden until the feature ships. Adding it later is markup, since the CSS is vendored
+  whole.
+- `/` is the one route NOT in `AppShell`'s `OWN_CHROME`, so it still gets the legacy `TopBar`.
+  That is deliberate and it is the same CH3/CH4 boundary — and note that `"/"` could not go in
+  that list anyway: the check is `path.startsWith(r)`, which `"/"` matches for every route.
 
 ---
 
 ## 3. Everything still outstanding, in the order it should be done
 
-| #     | Work                                                                  | Blocked on | Notes                                                                                                                                                                                                                                                                                                                                                                            |
-| ----- | --------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1** | **The landing page** (§2)                                             | —          | Decisions taken. Clear §2.1's asset blocker first.                                                                                                                                                                                                                                                                                                                               |
-| **2** | **The deferred UI backlog** — `TODO.md` 7a–7h, `DESIGNER-TODO` A1–A19 | designer   | The next drop is when these get answers. Put 7a's ±15s glyph and A1/A9/A13's contrast in front of the designer **with** the drop, plus the two new ones this week added (A19, and 7j's record).                                                                                                                                                                                  |
-| **3** | **a11y A1–A5, re-run**                                                | #1, #2     | `PHASE-3-ACCEPTANCE` §7.1. **The one verification that ran and was thrown away.** Also widen `a11y.spec.ts` to a mobile viewport (`TODO.md` #6) — but sequence it: that turns A9's 3.74:1 into an immediate gate failure, so either A9's colour lands first or the mobile pass ships with A9 excluded and a comment.                                                             |
-| **4** | **Community spec + API contract** (`TODO.md` #1)                      | product    | **The actual RD blocker.** `MuseApi` has no community endpoints at all, so half the product has nothing for RD to implement. Source: `ycmuse-app-skill/YouCam_Muse_Explore_Curation_PRD  -  V2.pdf` at the REPO ROOT. **Still not read** — page 03's homepage UI is superseded by DP, everything else stands. Read it properly when its phase starts; do not skim and summarise. |
-| **5** | **RD hand-off doc consolidation**                                     | #1–#4      | Fold README / DEVELOPER-HANDOVER / PHASE-3-ACCEPTANCE §7 / TODO / DESIGNER-TODO into one RD entry point. Best done last so it describes the finished state.                                                                                                                                                                                                                      |
+| #     | Work                                                                  | Blocked on | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----- | --------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ~~1~~ | ~~**The landing page** (§2)~~                                         | —          | **DONE 2026-08-07.** §2 is the record. The migration is now 17/17.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **2** | **The deferred UI backlog** — `TODO.md` 7a–7h, `DESIGNER-TODO` A1–A20 | designer   | The next drop is when these get answers. Put 7a's ±15s glyph and A1/A9/A13's contrast in front of the designer **with** the drop, plus the three new ones this week added (A19, **A20**, and 7j's record).                                                                                                                                                                                                                                                                                                                                                         |
+| **3** | **a11y A1–A5, re-run**                                                | #2         | `PHASE-3-ACCEPTANCE` §7.1. **The one verification that ran and was thrown away**, and now the whole app is migrated it is the biggest single hole. Also widen `a11y.spec.ts` to a mobile viewport (`TODO.md` #6) — but sequence it: that turns A9's 3.74:1 into an immediate gate failure, so either A9's colour lands first or the mobile pass ships with A9 excluded and a comment. **`/` is newly in scope for it and is the only route with a JS-branched layout**, so it needs auditing at BOTH a phone and a desktop width — one sweep sees half the screen. |
+| **4** | **Community spec + API contract** (`TODO.md` #1)                      | product    | **The actual RD blocker.** `MuseApi` has no community endpoints at all, so half the product has nothing for RD to implement. Source: `ycmuse-app-skill/YouCam_Muse_Explore_Curation_PRD  -  V2.pdf` at the REPO ROOT. **Still not read** — page 03's homepage UI is superseded by DP, everything else stands. Read it properly when its phase starts; do not skim and summarise.                                                                                                                                                                                   |
+| **5** | **RD hand-off doc consolidation**                                     | #2–#4      | Fold README / DEVELOPER-HANDOVER / PHASE-3-ACCEPTANCE §7 / TODO / DESIGNER-TODO into one RD entry point. Best done last so it describes the finished state.                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ### Open items by owner, so nobody re-derives who is waiting on what
 
@@ -193,17 +202,18 @@ new `/` baselines recorded at all six widths with `--update-snapshots=all --grep
 (neither DP's 90 icons nor WA's contain a ±15s glyph, and drop 2 added no icons at all — this is
 blocked on artwork, not effort); 7b (Face Picker Cancel); 7c ("Change song" affordance); 7d
 (`/song/result`'s phone volume); 7h (`/mv/room`'s disabled-CTA hint class); A16; A17; A18;
-**A19 (new)** — a phone-friendly two-section design for `/explore/mvs`; and a mobile tabs design
-for `/explore/songs` if the three-catalog loss turns out to matter.
+**A19** — a phone-friendly two-section design for `/explore/mvs`; **A20 (new)** — whether home
+deserves a Trending rail now that the marquee is gone, which would be a block DP has not drawn;
+and a mobile tabs design for `/explore/songs` if the three-catalog loss turns out to matter.
 
-**The product owner owes:** the community scope (#4 above); whether `TRENDING_MVS` deserves a home
-rail after §2.3 removes its only one; and whether to delete `token-aliases.css`'s **85 dead names**
-(of 110, only 25 are consumed — a design-system change under the ASK FIRST rule, so it must be
-proposed, not done as a side quest).
+**The product owner owes:** the community scope (#4 above); and whether to delete
+`token-aliases.css`'s **85 dead names** (of 110, only 25 are consumed — a design-system change
+under the ASK FIRST rule, so it must be proposed, not done as a side quest).
 
-**Already answered, do not re-ask:** `SongPlayBar` is **in** and is ported (2026-08-07); 7g (rails
-show both by state); 7e (six dead components deleted); A5 (closed by drop 2); S2's 30s floor; S20's
-prices.
+**Already answered, do not re-ask:** `SongPlayBar` is **in** and is ported (2026-08-07); the
+landing page's four decisions incl. **`TRENDING_MVS` is not wanted on home, match DP** (§2.3);
+7g (rails show both by state); 7e (six dead components deleted); A5 (closed by drop 2); S2's 30s
+floor; S20's prices.
 
 ### Known gaps that are accepted, not forgotten
 
@@ -212,9 +222,15 @@ prices.
   names as props and is in production on `/watch`. Swapping the four bare tracks onto it is
   mechanical and pixel-neutral **whenever it is unblocked**.
 - **`e2e/a11y.spec.ts` has three blind spots**: no auth seeding (four guarded routes show only the
-  sign-in modal to axe), desktop viewport only, unprefixed English routes only.
+  sign-in modal to axe), desktop viewport only, unprefixed English routes only. The second one now
+  costs more than it used to: `/` mounts a **different hero and tool selector** below 768px, so a
+  desktop-only sweep does not merely miss the mobile chrome, it misses half of one route's content.
 - **`/explore/songs` phones show one of three catalogs**; **`/explore/mvs` phones show 3 of 14
-  MVs** (A19). Both are asserted in `e2e` as deliberate.
+  MVs** (A19); **`TRENDING_MVS` has no home entry point** (A20). All three are asserted in `e2e`
+  as deliberate.
+- **A visual baseline can say nothing about a video.** Playwright's Chromium has no H.264 decoder,
+  so every mp4 region is a stable black rectangle — the hero, `/watch`'s stage, `/mv/result`'s
+  player. `poster` mitigates it where the poster is the design; it does not fix the gate.
 
 ---
 

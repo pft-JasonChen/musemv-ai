@@ -350,10 +350,18 @@ WA 這邊有**兩份真的**清單(`TOP_PICKS_SONGS`、`NEW_SONGS`),所以 Slice
 `.mp4` 用任一支影片充當)之後,**`/mv-edit?from=history` 六個寬度全部正常 render**,
 slice 3k 就是照著它搬的。
 
-- **請設計師把這兩個資料夾補進 drop。** WA 這邊不需要動作了,但下一次 re-drop 如果又漏,
-  同樣的白畫面會再來一次,而且一樣會被誤判成某一頁的問題。
-- 重跑方式:把 `designer-prototype/` 複製到 repo 外,補齊這兩批素材,再跑 `vite`。
-  **不要在 `designer-prototype/` 裡面補檔**,那是唯讀參考。
+- **✅ 第 1 批(`hero/`)2026-08-07 已由我們自己補上,而且是**收進 repo**的。**
+  landing page 移轉需要它,產品拍板 vendor 這 13 MB(對比 `covers/` 的 257 MB),
+  `PROVENANCE.md` 的排除表已改,re-sync 程序也已經加上「hero 要 copy 到兩個地方」
+  (`designer-prototype/src/assets/hero/` 與 `web-app/public/assets/hero/`)。
+  所以 `designer-prototype/` 現在**跑得起來,除了 `covers/` 與 `storyboard-clips/` 的媒體**。
+  ⚠️ 這一條同時推翻了本文件下面「檔名含空白只剩 covers/」那句話 —— hero 裡有 4 個檔名有空白,
+  WA 用 `encodeURIComponent` 在引用點處理(`home/heroItems.ts`)。
+- **仍請設計師把 `storyboard-clips/` 補進 drop**(`hero/` 現在我們自己接住了,但由 upstream
+  出貨仍然比較乾淨)。下一次 re-drop 如果 `hero/` 又漏而我們忘了 copy,同樣的白畫面會再來一次,
+  而且一樣會被誤判成某一頁的問題。
+- 重跑方式:把 `designer-prototype/` 複製到 repo 外,補齊剩下那批素材,再跑 `vite`。
+  **除了 `hero/` 這個已拍板的例外之外,不要在 `designer-prototype/` 裡面補檔**,那是唯讀參考。
 - `/song-detail` 的 `reading 'id'` 是同一個成因的另一個受害者;那條 route 已經移轉完(3b),
   **WA 那份現在才是可量的基準**,不影響。
 
@@ -533,22 +541,31 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 
 ### A20. 首頁刪掉跑馬燈之後,`TRENDING_MVS` 在首頁**沒有任何入口**
 
-**發現於:** 2026-08-07,規劃 landing page 移轉時。**尚未實作** —— 寫在這裡是為了讓下個 session
-不必自己撞到。
+**發現於:** 2026-08-07,規劃 landing page 移轉時。
+**✅ 已實作 2026-08-07**(landing page 移轉那一刀),連帶後果也已由產品負責人**當面確認**:
+「TRENDING_MVS 不用首頁(Match DP)」。所以下面第二點的 ⚠️ 不再是「拍板時沒一起裁示」,
+是**已經裁示過的**;但下一段那個「兩件事疊起來」的圖仍然成立,設計師該回答的問題沒有變。
 
 WA 首頁目前有一條「Trending MV」45 秒無限跑馬燈(`TRENDING_MVS` 複製兩份);
 DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
 `NEW_MVS` / `TOP_PICKS_SONGS` / `NEW_SONGS`。
 
-- **產品拍板 2026-08-07:跟 DP 走,刪掉跑馬燈。**
-- ⚠️ **連帶後果(拍板時沒有一起裁示):** 刪掉之後 `TRENDING_MVS`(3 支)
+- **產品拍板 2026-08-07:跟 DP 走,刪掉跑馬燈。已刪。** `globals.css` 的 `@keyframes marquee`
+  與 `.marquee-wrap` / `.marquee-animate` / `.marquee-clone` 三個 class 也一起刪掉了 ——
+  唯一的使用者跟著走了,留著就只是三個到不了的 class 名。
+- ⚠️ **連帶後果(已由產品負責人確認接受):** 刪掉之後 `TRENDING_MVS`(3 支)
   **在首頁再也沒有入口**,唯一入口變成 `/explore/mvs`。
 - 這件事本身還過得去 —— 它在 `/explore/mvs` 正是 `--primary` 那一段,
   也就是 A19 之下手機唯一看得到的 catalog。但**兩件事疊起來**才是完整的圖:
   首頁看不到 Trending,手機的 Explore 又只看得到 Trending。
 - **需要設計判斷:** 首頁要不要一條 Trending rail?若要,那是 DP 還沒畫過的區塊。
 - e2e 的「landing page: clicking a Trending MV lands on the same /watch screen」是在守
-  「首頁與 `/explore/mvs` 不可以走岔」這條真規則,**要改指到還在的 rail,不要直接刪掉**。
+  「首頁與 `/explore/mvs` 不可以走岔」這條真規則。**已改指到 `.new-mvs__item`**
+  (「Trending Music Videos」那條,是還在的、會走到 `/watch` 的 rail),沒有刪掉;
+  凍結跑馬燈動畫的 `addStyleTag` 跟著那條 rail 一起移除了。
+- 另外新增了「landing page: the Trending marquee is gone and stays gone」——
+  把**這個損失本身寫成斷言**(和 A19 同一手法),免得下次交稿或下個 session
+  順手把 WA 自己的 rail 加回來。
 
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 
@@ -594,7 +611,11 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
 
 - **90 個 icon 檔名**與我們原有的 84 個完全同源,已全數收進 `public/assets/icons/ui/`,
   並改用 DP 的 `mask-image` + `currentColor` 做法。
-- **檔名含空白**:這一版只剩 8 個,全部在 `covers/`(demo 媒體,我們沒有收進 repo)。
-  原本計畫裡的 slugify script 不需要了。
+- **檔名含空白**:~~這一版只剩 8 個,全部在 `covers/`(demo 媒體,我們沒有收進 repo)。~~
+  **2026-08-07 更正:`hero/` 收進 repo 之後,有 4 個含空白的檔名進到 `web-app/public/`**
+  (`hero_01_Vintage Car.png` 等)。原始碼裡一律用 `encodeURIComponent`
+  (`home/heroItems.ts`),和 `community.ts` 的 `AUDIO` 陣列同一套做法 ——
+  raw space 的路徑根本組不成合法請求,而且**失敗是靜默的**(video/img 不會丟錯,只會空著)。
+  slugify script 仍然不需要,但「只剩 covers/」這句話已經不對了。
 - **`sessionStorage` 登入**:我們維持 `localStorage`,DP 的 `AuthProvider` 整支不搬。
 - **`<a href>` 整頁導航**:我們一律改成 `next/link` + locale 前綴,否則非英文語系會壞。

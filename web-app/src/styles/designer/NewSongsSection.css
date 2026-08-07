@@ -1,0 +1,36 @@
+.new-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Figma (node 1330:21011): each row is its own individually-bordered
+   rounded card, with a consistent 12px gap between every card — both
+   between the 2 columns and between rows within a column. */
+.new-songs__layout {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.new-songs__column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.new-songs__item {
+  display: block;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .new-songs__layout {
+    flex-direction: column;
+  }
+}

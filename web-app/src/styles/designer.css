@@ -74,3 +74,16 @@
 @import "./designer/Chip.css";
 @import "./designer/SongCreatePage.css";
 @import "./designer/MVEditPage.css";
+/* The landing page (`/`), the 17th route migration and the last screen to move.
+   Eight files, not one: DP ships BOTH a mobile and a desktop treatment for the
+   hero and the tool selector and picks between them in JS (see `HomeView.tsx`),
+   so each half is its own stylesheet and each has to be re-syncable on its own.
+   42 gated files now, not 34. */
+@import "./designer/HomePage.css";
+@import "./designer/HeroBannerSection.css";
+@import "./designer/HeroBannerSectionV3.css";
+@import "./designer/ToolSelectorSection.css";
+@import "./designer/ToolSelectorSectionV3.css";
+@import "./designer/NewMVsSection.css";
+@import "./designer/TopPicksSection.css";
+@import "./designer/NewSongsSection.css";

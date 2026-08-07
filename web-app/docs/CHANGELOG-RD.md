@@ -23,6 +23,40 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-07 — the landing page migrated. **No contract change.**
+
+**Surface: none.** The gate flagged this change because it touches `src/app/globals.css`, which is
+watched as part of C7's neighbourhood. **It is a deletion of dead CSS, not a contract change**, and
+this entry is the explicit statement the gate asks for rather than paperwork.
+
+**What actually moved in that file:** the `@keyframes marquee` block and the three class names it
+drove (`.marquee-wrap`, `.marquee-animate`, `.marquee-clone`). They existed for Home's 45s infinite
+Trending MV rail, which DP does not have and which the product owner decided to delete with the
+landing-page migration. Their only consumer went with them.
+
+**What RD must do: nothing.** No endpoint, no wire format, no cost constant, no hook key, no URL.
+
+**Checked rather than assumed, since this slice rewrote a whole route:**
+
+| Surface | Path                                    | Diff                                                                                                                       |
+| ------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| C1      | `src/lib/api/contract.ts`               | untouched                                                                                                                  |
+| C2      | `src/lib/api/schemas.ts`                | untouched                                                                                                                  |
+| C3      | `src/lib/api/index.ts`                  | untouched                                                                                                                  |
+| C4      | the five providers                      | untouched — the new screen only CONSUMES `requireLogin` and `patchSongCompose`, both long-standing keys                     |
+| C5      | `src/lib/authStore.ts`                  | untouched                                                                                                                  |
+| C6      | `config.ts` / `middleware.ts`           | untouched                                                                                                                  |
+| C7      | `src/app/**/page.tsx`                   | untouched — `/`'s `page.tsx` still returns `<HomeView />`; the rewrite is entirely inside `src/components/home/`            |
+| C8      | `src/lib/mv/types.ts`                   | untouched                                                                                                                  |
+
+**One thing RD should know even though it is not a contract change:** `web-app/public/assets/hero/`
+is new and is 13 MB of vendored demo media (8 mp4 + 8 posters), referenced by path string from
+`src/components/home/heroItems.ts`. Four of those filenames contain a space and are
+`encodeURIComponent`-ed at the reference site. When real hero content is served, that module is the
+single place to change.
+
+---
+
 ## 2026-08-06 — C4 gains two setters, additively. Everything else: unchanged.
 
 **Surface:** **C4** (`useMvFlow`, `useSongFlow` return keys). **Additive only — nothing renamed,

@@ -250,8 +250,20 @@ House style in one line:
   to be thrown away. **A broken environment does not report an error, it reports findings.** So:
   rebuild and restart together, and before trusting contrast, geometry or computed style, fetch
   the page, pull out every `_next/static/chunks/*.css` it references and confirm each one is 200
-  with a real body (one is ~238 KB). One cheap live assertion does the same job:
-  `.mv-song-picker__use` must compute to `opacity: 0` on a row that is neither hovered nor active.
+  with a real body (one is ~255 KB since the landing page added 8 files). One cheap live assertion
+  does the same job: `.mv-song-picker__use` must compute to `opacity: 0` on a row that is neither
+  hovered nor active.
+- **Playwright's Chromium cannot decode H.264, so every mp4 in a screenshot is a BLACK BOX.**
+  Measured 2026-08-07 on the landing page's hero:
+  `MediaError 4 DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams`. It does
+  not throw, does not log to the console, and `canPlayType("video/mp4")` still answers `"maybe"` —
+  the only way to see it is to read `video.error` off the element. Two consequences. **A video
+  region of a visual baseline proves nothing** — it is a stable black rectangle in every run, so a
+  regression inside it can never fail the gate. And **`poster` is worth adding to any `<video>`
+  whose first frame is the design**, using the image DP already ships for that item: in a browser
+  that CAN decode, the poster is replaced by frame one and nothing changes; in this one, the
+  baseline shows the design instead of a hole. That is the ONE attribute the two hero components
+  add to DP's markup, and the reason is written above each.
 - **Mutation-test a new guard test in both directions before believing it.** Break the thing it
   guards and watch it go red, then restore and watch it go green. `e2e/backdrop-filter.spec.ts`'s
   first CSS sweep read the CSSOM and passed in BOTH states, because Chrome discards

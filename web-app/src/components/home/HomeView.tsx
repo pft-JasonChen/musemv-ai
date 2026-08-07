@@ -1,181 +1,97 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSongFlow } from "@/components/providers/SongFlowProvider";
-import { useAuth } from "@/components/providers/AuthProvider";
-import { ShareDialog } from "@/components/ui/ShareDialog";
-import { buildShareUrl } from "@/lib/share";
-import { MV_TYPES } from "@/lib/mv/mock";
-import { NEW_MVS, TOP_PICKS_SONGS, NEW_SONGS, TRENDING_MVS, formatCount } from "@/lib/mv/community";
-import { BadgePill, Play, Headphones, Heart, Share, SectionHead } from "@/components/community/ui";
+import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
+import { HeroBannerSection } from "./HeroBannerSection";
+import { HeroBannerSectionV3 } from "./HeroBannerSectionV3";
+import { ToolSelectorSection } from "./ToolSelectorSection";
+import { ToolSelectorSectionV3 } from "./ToolSelectorSectionV3";
+import { NewMVsSection } from "./NewMVsSection";
+import { TopPicksSection } from "./TopPicksSection";
+import { NewSongsSection } from "./NewSongsSection";
 
-function Star({ size = 11 }: { size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>;
-}
-
+/**
+ * ── MIGRATED TO THE DESIGNER UI — the landing page, and the 17th route ──────
+ *
+ * Port of DP's `pages/HomePage/HomePage.tsx`; classes from
+ * `src/styles/designer/HomePage.css`, verbatim. This was the last screen still
+ * on the original Tailwind build, so it is a rewrite rather than an edit, and
+ * nothing of the old file survives (G3-d: no Tailwind in this subtree).
+ *
+ * ── WHY THIS BRANCHES IN JS RATHER THAN IN CSS ─────────────────────────────
+ *
+ * DP ships TWO treatments of the hero and TWO of the tool selector, and picks
+ * between them with a media-query read rather than by hiding one in CSS. That
+ * is DP's own decision and it is kept: the desktop pair is the product owner's
+ * chosen "review-c" design, the phone pair was finalised separately and never
+ * had a review round, and the two are structurally different components rather
+ * than one component with a breakpoint. Collapsing them would forfeit exactly
+ * what the vendored-stylesheet strategy buys — each file re-syncs whole on the
+ * next drop.
+ *
+ * Note the ORDER inverts with the branch, and that is DP's too: on phones the
+ * hero comes first and the tool tiles sit under it; on desktop the heading and
+ * the three-card row lead, and the filmstrip hero follows.
+ *
+ * ── R-2, THE THIRD INSTANCE ────────────────────────────────────────────────
+ *
+ * DP writes the query as
+ *   useState(() => typeof window !== 'undefined' && matchMedia(q).matches)
+ * which slice 2a MEASURED throwing React error 418 (hydration failed). The
+ * `typeof window` guard is what makes it look safe while guaranteeing that
+ * server and first client render disagree whenever the query matches.
+ * `useMediaQuery` is the fixed shape. A sweep during 3b concluded the drop
+ * contained "exactly two files" with this pattern — that count was taken before
+ * the landing page was in scope, and this is the third.
+ *
+ * The consequence to know, and it is why the desktop pair is the false branch:
+ * `useMediaQuery` returns `false` for one frame on every load, phones included.
+ * So a phone paints the desktop hero for a frame. `.hero-banner` is
+ * `display: none` below 768px anyway, so what actually paints in that frame is
+ * nothing — not a wrong layout.
+ *
+ * ── WHAT THIS SCREEN DELIBERATELY NO LONGER HAS ────────────────────────────
+ *
+ * The **Trending MV marquee is gone**. It was WA's own 45s infinite auto-scroll
+ * rail and DP has no equivalent; the product owner decided 2026-08-07 to follow
+ * DP. The consequence, stated because it was not part of what was decided until
+ * it was raised and confirmed: `TRENDING_MVS` (3 items) now has **no entry point
+ * on home at all** — DP's three rails map to `NEW_MVS`, `TOP_PICKS_SONGS` and
+ * `NEW_SONGS`. It remains reachable from `/explore/mvs`, where it is the
+ * `--primary` section and therefore the one MV catalog a phone can see (A19).
+ * Confirmed by the product owner in the same breath as the decision itself:
+ * "TRENDING_MVS 不用首頁 (Match DP)". `DESIGNER-TODO` A20 records it, and the
+ * e2e that used to drive `.marquee-animate button` was re-pointed at the
+ * Trending Music Videos rail rather than deleted — it guards a real rule (home
+ * and `/explore/mvs` must not drift into two behaviours), and that rule outlived
+ * the marquee.
+ *
+ * ── WHAT DP HAS THAT THIS DOES NOT ─────────────────────────────────────────
+ *
+ * DP wraps HomePage in `AppLayout showBackground showFooter`, i.e. the rotating
+ * colorflow background and the marketing Footer. Both belong to the SHELL, not
+ * to this screen: CH3/CH4 put the marketing Navbar and Footer out of scope, and
+ * `AppShell` has never rendered `.app-layout__background` on any route. Neither
+ * is a loss introduced here, and neither is this slice's to add.
+ */
 export function HomeView() {
-  const router = useRouter();
-  const { patchSongCompose } = useSongFlow();
-  const { requireLogin } = useAuth();
-  const [likedSongs, setLikedSongs] = useState<Record<string, boolean>>({});
-  const [share, setShare] = useState<{ title: string; url: string } | null>(null);
-
-  function openMv(id: string) { router.push(`/watch?id=${id}`); }
-  function openSong(id: string) { router.push(`/song/play?id=${id}`); }
-  function createFromSong(genre: string, mood: string, title: string, lyrics?: string) {
-    requireLogin(() => {
-      patchSongCompose({ genre, mood, title, lyrics: lyrics ?? "" });
-      router.push("/song/create");
-    });
-  }
+  const isPhone = useMediaQuery(PHONE_QUERY);
 
   return (
-    <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6">
-      {/* Hero CTAs */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <button onClick={() => requireLogin(() => router.push("/mv/room"))} className="hover-lift relative h-[180px] overflow-hidden rounded-2xl text-left">
-          <video src={MV_TYPES[0].video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(120deg, rgba(168,85,247,.85), rgba(67,56,202,.5) 60%, transparent)" }} />
-          <div className="absolute inset-0 flex flex-col justify-center p-6">
-            <div className="text-[22px] font-extrabold text-white">AI Music Video Studio</div>
-            <div className="mt-1 max-w-[80%] text-[13px] text-white/85">Turn your songs into cinematic visuals.</div>
-            <span className="mt-3 inline-flex w-fit items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[13px] font-bold text-white">Create MV →</span>
-          </div>
-        </button>
-        <button onClick={() => requireLogin(() => router.push("/song/create"))} className="hover-lift relative h-[180px] overflow-hidden rounded-2xl text-left" style={{ background: "var(--card)" }}>
-          <img src="/assets/images/album-art/album_02.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(120deg, rgba(255,78,80,.85), rgba(214,58,249,.5) 60%, transparent)" }} />
-          <div className="absolute inset-0 flex flex-col justify-center p-6">
-            <div className="text-[22px] font-extrabold text-white">AI Audio Lab</div>
-            <div className="mt-1 max-w-[80%] text-[13px] text-white/85">Turn your ideas into original songs.</div>
-            <span className="mt-3 inline-flex w-fit items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[13px] font-bold text-white">Create Song →</span>
-          </div>
-        </button>
-      </div>
-
-      {/* Trending MV — auto-scrolling infinite carousel (two cloned copies) */}
-      <div className="mt-10">
-        <SectionHead title="Trending MV" />
-        <div className="marquee-wrap no-scrollbar pb-2">
-          <div className="marquee-animate flex w-max">
-            {[...TRENDING_MVS, ...TRENDING_MVS].map((m, i) => {
-              const clone = i >= TRENDING_MVS.length;
-              return (
-                <button
-                  key={`${m.id}-${i}`}
-                  onClick={() => openMv(m.id)}
-                  aria-hidden={clone}
-                  tabIndex={clone ? -1 : 0}
-                  className={`hover-lift relative mr-3 aspect-video w-[272px] shrink-0 overflow-hidden rounded-2xl text-left${clone ? " marquee-clone" : ""}`}
-                >
-                  <img src={m.thumb} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,.05) 30%, rgba(0,0,0,.7))" }} />
-                  <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: "rgba(255,255,255,.18)", backdropFilter: "blur(6px)" }}>
-                    <Star /> Trending MV
-                  </span>
-                  <div className="absolute inset-x-3 bottom-3 flex items-end justify-between gap-2">
-                    <div>
-                      <div className="text-[16px] font-extrabold text-white">{m.title}</div>
-                      <div className="text-[11px] text-white/75">{m.meta}</div>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-black">Create MV</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* New MVs */}
-      <div className="mt-10">
-        <SectionHead title="New MVs" href="/explore/mvs" />
-        <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-          {NEW_MVS.slice(0, 8).map((m) => (
-            <button key={m.id} onClick={() => openMv(m.id)} className="hover-lift w-[180px] shrink-0 overflow-hidden rounded-xl text-left" style={{ background: "var(--card)" }}>
-              <div className="relative aspect-[3/4]">
-                <img src={m.thumb} alt="" className="h-full w-full object-cover" />
-                <BadgePill badge={m.badge} />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,.75), transparent 50%)" }} />
-                <div className="absolute bottom-2 left-3 right-3">
-                  <div className="truncate text-[13px] font-bold text-white">{m.title}</div>
-                  <div className="text-[11px] text-white/70">{m.meta}</div>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Top Picks Songs */}
-      <div className="mt-10">
-        <SectionHead title="Top Picks Songs" href="/explore/songs" />
-        <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-          {TOP_PICKS_SONGS.map((s) => (
-            <button key={s.id} onClick={() => openSong(s.id)} className="hover-lift w-[150px] shrink-0 text-left">
-              <div className="relative aspect-square overflow-hidden rounded-xl" style={{ background: "var(--card)" }}>
-                <img src={s.cover} alt="" className="h-full w-full object-cover" />
-                <BadgePill badge={s.badge} />
-                <span className="absolute bottom-2 right-2 grid h-8 w-8 place-items-center rounded-full text-white" style={{ background: "rgba(0,0,0,.55)" }}><Play /></span>
-              </div>
-              <div className="mt-2 truncate text-[13px] font-semibold">{s.title}</div>
-              <div className="truncate text-[11px]" style={{ color: "var(--text-2)" }}>{s.tags}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* New Songs */}
-      <div className="mt-10">
-        <SectionHead title="New Songs" href="/explore/songs" />
-        <div className="grid gap-2 sm:grid-cols-2">
-          {NEW_SONGS.slice(0, 6).map((s) => {
-            const liked = likedSongs[s.id] ?? false;
-            return (
-              <div key={s.id} onClick={() => openSong(s.id)} className="hover-lift flex cursor-pointer items-center gap-3 rounded-xl p-2.5" style={{ background: "var(--card)" }}>
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
-                  <img src={s.cover} alt="" className="h-full w-full object-cover" />
-                  <span className="absolute inset-0 grid place-items-center text-white opacity-0 transition-opacity hover:opacity-100" style={{ background: "rgba(0,0,0,.4)" }}><Play /></span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13px] font-semibold">{s.title}</div>
-                  <button onClick={(e) => { e.stopPropagation(); router.push("/creator"); }} className="truncate text-[11px] hover:underline" style={{ color: "var(--text-2)" }}>{s.creator}</button>
-                  <div className="mt-1 flex items-center gap-3 text-[11px]" style={{ color: "var(--text-2)" }}>
-                    <span className="inline-flex items-center gap-1"><Headphones /> {formatCount(s.plays)}</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setLikedSongs((m) => ({ ...m, [s.id]: !liked })); }}
-                      className="inline-flex items-center gap-1 transition-colors hover:brightness-125"
-                      style={{ color: liked ? "var(--accent)" : "var(--text-2)" }}
-                      aria-label={liked ? "Unlike" : "Like"}
-                    >
-                      <Heart filled={liked} /> {formatCount(s.likes + (liked ? 1 : 0))}
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setShare({ title: s.title, url: buildShareUrl(s.id) }); }}
-                      className="inline-flex items-center gap-1 transition-colors hover:brightness-125"
-                      style={{ color: "var(--text-2)" }}
-                      aria-label="Share"
-                    >
-                      <Share /> {formatCount(s.shares)}
-                    </button>
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); createFromSong(s.genre, s.mood, s.title, s.lyrics); }}
-                  className="shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-bold text-white transition-all hover:brightness-110 active:scale-95"
-                  style={{ background: "var(--accent)" }}
-                >
-                  Create
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <ShareDialog open={share != null} onClose={() => setShare(null)} title={share?.title ?? ""} url={share?.url ?? ""} />
+    <div className="home-page">
+      {isPhone ? (
+        <>
+          <HeroBannerSection />
+          <ToolSelectorSection />
+        </>
+      ) : (
+        <>
+          <ToolSelectorSectionV3 />
+          <HeroBannerSectionV3 />
+        </>
+      )}
+      <NewMVsSection />
+      <TopPicksSection />
+      <NewSongsSection />
     </div>
   );
 }

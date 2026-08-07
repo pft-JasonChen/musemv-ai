@@ -680,13 +680,19 @@ test("/explore/mvs: clicking a card NAVIGATES to /watch, it does not open a dial
 test("landing page: clicking a Trending MV lands on the same /watch screen", async ({ page }) => {
   // Item 7 of the same report. This route already navigated; the test exists so
   // that stays true — it and /explore/mvs must not drift into two behaviours.
+  //
+  // ── RE-POINTED WITH THE LANDING-PAGE MIGRATION (2026-08-07) ───────────────
+  //
+  // It used to drive `.marquee-animate button`, WA's own 45s infinite Trending
+  // marquee — a rail DP does not have, deleted here on the product owner's
+  // decision to follow DP. The RULE it guards outlived the rail, so the test was
+  // re-pointed at `.new-mvs__item` (the "Trending Music Videos" row, which is
+  // the surviving DP rail that reaches `/watch`) rather than deleted. The
+  // `addStyleTag` that used to freeze the marquee animation went with the rail;
+  // this row is a plain scroll container with nothing animating.
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
-  // The Trending rail is a 45s infinite marquee, so the card is never "stable"
-  // and Playwright will retry the click until it times out. Stop the animation
-  // rather than force-clicking a moving target.
-  await page.addStyleTag({ content: ".marquee-animate { animation: none !important; }" });
-  await page.locator(".marquee-animate button").first().click();
+  await page.locator(".new-mvs__item").first().click();
   await page.waitForURL(/\/watch\?id=/);
   await expect(page.locator(".mv-player__stage")).toBeVisible();
 });
@@ -1607,6 +1613,7 @@ test("3f: every mask icon on a migrated screen has something to clip", async ({ 
     "/history",
     "/explore/mvs",
     "/mv/room", // slice 3g
+    "/", // the landing page, migrated 2026-08-07
   ]) {
     await page.goto(route);
     await page.waitForLoadState("networkidle");
@@ -2758,4 +2765,117 @@ test("item 3: Share from an opened history row carries that row's id", async ({ 
   await page.locator(".mv-result__action").filter({ hasText: "Share" }).click();
   const field = page.getByRole("dialog").locator("input");
   await expect(field).toHaveValue(new RegExp(`/share\\?id=${id}$`));
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// THE LANDING PAGE — the 17th route migration (2026-08-07)
+//
+// `/` was the last screen still on the original Tailwind build. Three things
+// about it need behaviour tests rather than a screenshot, and each one is a
+// lesson this project has already paid for once:
+//
+//  · IT BRANCHES IN JS. `HomeView` mounts a DIFFERENT hero and a DIFFERENT tool
+//    selector below 768px, so the phone components are not in the DOM at 1440
+//    and the desktop ones are not in the DOM at 375. The 3f mask sweep cold-
+//    `goto`s at 1440 and therefore cannot see half of this screen — which is
+//    exactly the shape of the `/watch` arrow and credit-pill bugs it exists to
+//    catch. Hence a second sweep at 375.
+//  · THE HERO CTAs ARE GATED. `requireLogin` on both is WA's, not DP's (DP has
+//    no auth at all). Five migrated screens have now lost a control DP does not
+//    draw; a screenshot would not notice.
+//  · THE TRENDING MARQUEE IS GONE ON PURPOSE. Asserting its absence is what
+//    stops a future drop, or a well-meaning "fix", quietly putting WA's own rail
+//    back — the same reason A19's loss is asserted rather than left implicit.
+// ════════════════════════════════════════════════════════════════════════════
+
+test("landing page: each width mounts its own hero and tool selector", async ({ page }) => {
+  // Both treatments ship and the JS branch picks. If the branch inverted, the
+  // page would still render something plausible at both widths — DP's phone hero
+  // is `display:none` above 768px and its desktop hero below it, so an inverted
+  // branch is a BLANK hero, not a wrong one. Assert presence at both ends.
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await expect(page.locator(".hero-banner-v3")).toBeVisible();
+  await expect(page.locator(".tool-selector-v3")).toBeVisible();
+  await expect(page.locator(".hero-banner-mobile")).toHaveCount(0);
+
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/");
+  await expect(page.locator(".hero-banner-mobile")).toBeVisible();
+  await expect(page.locator(".tool-selector")).toBeVisible();
+  await expect(page.locator(".hero-banner-v3")).toHaveCount(0);
+});
+
+test("landing page: every mask icon has something to clip on a phone too", async ({ page }) => {
+  // The 3f sweep runs at 1440 and never sees `.tool-selector__icon` or anything
+  // else inside the phone branch. `.tool-selector__icon` is `background-color`
+  // + `mask-*` (a DpIcon); rendering it as an `<img>` — or under a tag DP's CSS
+  // does not select — is invisible and silent.
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  expect(await invisibleMaskIcons(page), "invisible mask icons on / at 375px").toEqual([]);
+});
+
+test("landing page: both hero CTAs require login", async ({ page }) => {
+  // AC-EXP-02 / GL-02. DP navigates straight to its create page; WA must not.
+  // Checked on BOTH branches, because they are two different components with two
+  // separate handlers — fixing one and not the other is exactly the kind of miss
+  // a single-width test lets through.
+  for (const [width, cta] of [
+    [1440, ".tool-selector-v3__card"],
+    [375, ".tool-selector__card"],
+  ] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await page.locator(cta).first().click();
+    await expect(page.getByRole("dialog", { name: /sign in/i })).toBeVisible();
+    await expect(page).not.toHaveURL(/\/mv\/room/);
+  }
+});
+
+test("landing page: the Trending marquee is gone and stays gone", async ({ page }) => {
+  // Product owner, 2026-08-07: follow DP, which has no such rail. The classes
+  // and the keyframes were deleted with it, so this asserts the DOM as well as
+  // the decision. `TRENDING_MVS` therefore has NO home entry point — it is
+  // reachable from /explore/mvs only. DESIGNER-TODO A20.
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await expect(page.locator(".marquee-animate")).toHaveCount(0);
+  await expect(page.locator(".marquee-wrap")).toHaveCount(0);
+
+  // The three rails that DP does draw are all present, in DP's order.
+  await expect(page.locator(".new-mvs")).toBeVisible();
+  await expect(page.locator(".top-picks")).toBeVisible();
+  await expect(page.locator(".new-songs")).toBeVisible();
+});
+
+test("landing page: a New Songs row splits title-navigates from art-previews", async ({ page }) => {
+  // Drop 2's two-way split, which `/explore/songs` already implements. Home and
+  // that screen must not drift into two behaviours — the same rule the Trending
+  // MV test above guards for the MV side.
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+
+  // Album art: previews in place, does NOT navigate.
+  await page.locator(".new-songs__item .list-item__album-art").first().click();
+  await expect(page.locator(".song-bar")).toBeVisible();
+  await expect(page).toHaveURL(/\/(enu)?\/?$/);
+
+  // Title: navigates.
+  await page.locator(".new-songs__item .list-item__title--button").first().click();
+  await page.waitForURL(/\/song\/play\?id=/);
+});
+
+test("landing page: New Songs' Create requires login", async ({ page }) => {
+  // AC-EXP-02 again, on the third gate DP does not have. The pre-migration home
+  // had it; a port that dropped it would look identical.
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await page
+    .locator(".new-songs__item")
+    .first()
+    .getByRole("button", { name: "Create" })
+    .click();
+  await expect(page.getByRole("dialog", { name: /sign in/i })).toBeVisible();
 });

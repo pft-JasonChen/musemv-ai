@@ -1,0 +1,484 @@
+/*
+  Hero Banner Section — Figma "Hero Banner Section" (node 1330:21934)
+  Static mock content, auto-rotates every 3s; thumbnails are also clickable.
+*/
+
+.hero-banner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 20px;
+  width: 100%;
+  min-height: 420px;
+  /* No horizontal padding here at all — .hero-banner__top and
+     .hero-banner__thumbnails each carry their own left/right padding
+     instead (see below). For .hero-banner__thumbnails specifically, that
+     padding has to live on the scrollable element itself: padding on this
+     outer box would just permanently offset the whole scroll viewport, so
+     the inset would never go away no matter how far you scroll. Padding on
+     the child means it's part of the scrollable content — visible at each
+     resting extreme (scrolled all the way left or all the way right), but
+     scrolled out of view once you move past the first/last thumbnail. */
+  padding: 20px 0;
+  box-sizing: border-box;
+  border: 1px solid var(--white-15);
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--neutral-dark-14);
+}
+
+@media (min-width: 768px) {
+  .hero-banner {
+    gap: 24px;
+    min-height: 460px;
+    padding: 28px 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-banner {
+    gap: var(--spacing-28);
+    height: 500px;
+    min-height: unset;
+    padding: var(--spacing-40) 0;
+  }
+}
+
+.hero-banner__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.hero-banner__bg--fading {
+  opacity: 0;
+}
+
+.hero-banner__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(9, 9, 11, 0.9) 0%,
+    rgba(9, 9, 11, 0.3) 65%,
+    rgba(9, 9, 11, 0.9) 100%
+  );
+}
+
+.hero-banner__top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+@media (min-width: 768px) {
+  .hero-banner__top {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-banner__top {
+    padding-left: var(--spacing-40);
+    padding-right: var(--spacing-40);
+  }
+}
+
+.hero-banner__text-cta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-20);
+  flex: 1;
+  min-height: 0;
+  justify-content: flex-end;
+}
+
+.hero-banner__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.hero-banner__title-group--fading {
+  opacity: 0;
+}
+
+.hero-banner__title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 24px;
+  letter-spacing: -0.2px;
+}
+
+.hero-banner__subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body-m);
+  letter-spacing: -0.14px;
+}
+
+/* Fixed rotating headline (Figma "Text + CTA", node 1819:32304) — cycles
+   between 2 lines every 5s, sliding up like a odometer/flip-clock: the mask
+   clips to one line's height, and the track (holding a leading + trailing
+   clone so it can always slide the same direction) translates by 100% per
+   step — see HeroHeadline in HeroBannerSection.tsx. */
+.hero-banner__headline-mask {
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  height: 56px;
+}
+
+.hero-banner__headline-track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+/* Each headline is 2 lines — the plain lead-in on its own line, the
+   gradient-accent phrase ("Cinematic Video" / "Music Video") always on the
+   line below it. Single-line nowrap was cutting the accent phrase off
+   mid-word since it never fit next to the lead-in inside the mask width. */
+.hero-banner__headline {
+  display: flex;
+  flex-direction: column;
+  height: 56px;
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-weight: var(--font-weight-extrabold);
+}
+
+.hero-banner__headline-line {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.3px;
+}
+
+.hero-banner__headline-accent {
+  background: linear-gradient(90deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (min-width: 768px) {
+  .hero-banner__headline-mask,
+  .hero-banner__headline {
+    height: 68px;
+  }
+
+  .hero-banner__headline-line {
+    font-size: 28px;
+    line-height: 34px;
+    letter-spacing: -0.35px;
+  }
+}
+
+/* Only the 1024px+ frame exists in Figma (fixed 480px width, 42px/50px per
+   line) — the mobile/tablet sizes above scale it down proportionally as a
+   reasonable default, not a confirmed design. */
+@media (min-width: 1024px) {
+  .hero-banner__headline-mask {
+    max-width: 480px;
+  }
+
+  .hero-banner__headline-mask,
+  .hero-banner__headline {
+    height: 100px;
+  }
+
+  .hero-banner__headline-line {
+    font-size: 42px;
+    line-height: 50px;
+    letter-spacing: -0.42px;
+  }
+}
+
+.hero-banner__action-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.hero-banner__arrows {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .hero-banner__action-row {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+}
+
+.hero-banner__thumbnails {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  /* Matching left/right padding — see the note on .hero-banner above. This
+     is real padding on the scrollable element itself, so each side reads as
+     an inset only at its own resting extreme (scrolled all the way to that
+     side) — mid-scroll, thumbnails pass edge-to-edge with no gap. Without
+     the right side matching, the last thumbnail would sit flush against
+     the container's rounded corner and get visually clipped by it. */
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.hero-banner__thumbnails::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hero-banner__thumbnails {
+    gap: 20px;
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-banner__thumbnails {
+    padding-left: var(--spacing-40);
+    padding-right: var(--spacing-40);
+  }
+}
+
+.hero-banner__thumb {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  width: 130px;
+  height: 73px;
+  padding: 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  background: var(--neutral-dark-24);
+  box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .hero-banner__thumb {
+    width: 150px;
+    height: 84px;
+    padding: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-banner__thumb {
+    width: 180px;
+    height: 101px;
+  }
+}
+
+.hero-banner__thumb--active {
+  border: 3px solid var(--neutral-dark-100);
+}
+
+.hero-banner__thumb-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-banner__thumb-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 100%);
+}
+
+.hero-banner__thumb-title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  text-align: left;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-label-m);
+  letter-spacing: -0.13px;
+}
+
+/*
+  App-mobile variant (see src/config/layoutMode.ts) — Figma "Top Hero
+  Banner" (node 369:7479), matched against the reference build's infinite
+  draggable carousel (scottwu630/ycmuse-prototype muse-prototype-v1.html):
+  auto-rotating, swipeable, looping infinitely — see HeroBannerMobile in
+  HeroBannerSection.tsx for the drag/loop logic.
+
+  Card size is NOT a fixed px size: Figma's 272×153 is specified against its
+  320px mobile frame, i.e. the card is 85% of screen width at a fixed 16:9
+  ratio (272/320 = 0.85; 272:153 simplifies exactly to 16:9) — so it's
+  expressed here as 85vw + aspect-ratio, scaling up on wider phones instead
+  of staying pinned at 272px. HeroBannerSection.tsx measures the actual
+  rendered card width at runtime for its drag/translateX math instead of
+  assuming a constant, since the width is no longer fixed.
+
+  Note: Figma tints each card's scrim with a hue matched to its own photo.
+  Our 8 items don't have per-item hues defined, so this uses one consistent
+  black gradient scrim (same as Card/ListItem elsewhere) instead of
+  inventing arbitrary colors — flagged as a simplification, not a guess.
+*/
+.hero-banner-mobile {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .app-layout--mobile-app .hero-banner {
+    display: none;
+  }
+
+  .app-layout--mobile-app .hero-banner-mobile {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+}
+
+.hero-banner-mobile__track {
+  display: flex;
+  gap: 8px;
+  padding-inline: max(0px, calc((100% - 85vw) / 2));
+  will-change: transform;
+}
+
+.hero-banner-mobile__card {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  /* Was space-between, which relied on the now-removed "Trending MV" badge
+     as a second flex child to anchor .hero-banner-mobile__bottom to the
+     card's bottom edge — with the badge gone, space-between on the single
+     remaining child pushed the title/subtitle text to the top instead. */
+  justify-content: flex-end;
+  width: 85vw;
+  aspect-ratio: 16 / 9;
+  box-sizing: border-box;
+  padding: 8px;
+  /* Hardcoded to match Figma exactly — no token is 14px. */
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--neutral-dark-14);
+}
+
+.hero-banner-mobile__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-banner-mobile__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, var(--black-40) 100%);
+}
+
+/* Only the centered/active card reveals its title, subtitle, and CTA —
+   matches Figma's flanking (peeking) cards, which have this row at
+   opacity 0. Badge + photo stay visible on every card regardless. */
+.hero-banner-mobile__bottom {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.hero-banner-mobile__bottom--active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hero-banner-mobile__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hero-banner-mobile__title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  letter-spacing: -0.13px;
+}
+
+.hero-banner-mobile__subtitle {
+  margin: 0;
+  color: var(--neutral-dark-89);
+  font-family: var(--font-family-primary);
+  font-size: 9px;
+  font-weight: var(--font-weight-medium);
+  line-height: 11px;
+  letter-spacing: -0.09px;
+}
+
+.hero-banner-mobile__cta {
+  flex-shrink: 0;
+  padding: 6px 8px;
+}
+
+.hero-banner-mobile__cta .button__label {
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  line-height: 12px;
+}

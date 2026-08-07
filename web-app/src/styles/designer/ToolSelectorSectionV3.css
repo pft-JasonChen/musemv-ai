@@ -1,0 +1,198 @@
+/*
+  Real Home desktop Tool Selector — Figma "Tool Selector Section" (node
+  1875:34099), 3 cards instead of 2, with a big heading above the row.
+  Hover is glow + icon-size only (no CTA reveal, confirmed with the product
+  owner) — a radial-gradient ::before faded in by opacity.
+
+  Figma's own "Active" (hover) component variants show the card growing
+  taller/wider on hover (e.g. Music Video: 346.67x100 -> 530x152). Confirmed
+  with the product owner this isn't the intended behavior — the row should
+  stay a constant height regardless of which card is hovered, so the cards
+  here keep a fixed footprint. AI Storybooks has no Figma hover variant at
+  all (only Music Video and AI Song do) — mirrored the same treatment for
+  consistency across all 3.
+*/
+
+.tool-selector-v3 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  padding-top: 10px;
+  box-sizing: border-box;
+  /* HomePage.css's shared gap between sections is cancelled down to this
+     section's own tighter gap before the Hero Banner below it. */
+  margin-bottom: -12px;
+}
+
+@media (min-width: 768px) {
+  .tool-selector-v3 {
+    margin-bottom: -20px;
+  }
+}
+
+.tool-selector-v3__heading {
+  margin: 0;
+  max-width: 580px;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-display);
+  font-weight: var(--font-weight-extrabold);
+  line-height: var(--line-height-display);
+  letter-spacing: -0.42px;
+  text-align: center;
+}
+
+.tool-selector-v3__row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .tool-selector-v3__row {
+    flex-direction: row;
+    justify-content: center;
+    gap: 20px;
+  }
+}
+
+.tool-selector-v3__card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+  max-width: 380px;
+  box-sizing: border-box;
+  padding: 16px 24px;
+  border-radius: 24px;
+  border: 1px solid var(--white-15);
+  background: rgba(9, 9, 11, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 240ms ease;
+}
+
+.tool-selector-v3__card::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  content: '';
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+.tool-selector-v3__card--mv::before {
+  background: radial-gradient(53.76% 100% at 50% 100%, rgba(79, 4, 155, 0.65) 0%, rgba(79, 4, 155, 0) 100%);
+}
+
+.tool-selector-v3__card--song::before {
+  background: radial-gradient(53.76% 100% at 50% 100%, rgba(142, 25, 27, 0.65) 0%, rgba(142, 25, 27, 0) 100%);
+}
+
+.tool-selector-v3__card--story::before {
+  background: radial-gradient(53.76% 100% at 50% 100%, rgba(4, 106, 155, 0.65) 0%, rgba(4, 106, 155, 0) 100%);
+}
+
+.tool-selector-v3__card:hover {
+  border-color: #505050;
+}
+
+.tool-selector-v3__card:hover::before {
+  opacity: 1;
+}
+
+.tool-selector-v3__icon-badge {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  transition: padding 240ms ease;
+}
+
+.tool-selector-v3__card:hover .tool-selector-v3__icon-badge {
+  padding: 16px;
+}
+
+.tool-selector-v3__icon-badge--mv {
+  background: linear-gradient(135deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+}
+
+.tool-selector-v3__icon-badge--song {
+  background: linear-gradient(135deg, #ffb347 0.3%, #ff4e50 50.3%, #d63af9 100.3%);
+}
+
+.tool-selector-v3__icon-badge--story {
+  background: linear-gradient(135deg, #3af9b9 0%, #4e8fff 50%, #391ed1 100%);
+}
+
+.tool-selector-v3__icon {
+  width: 28px;
+  height: 28px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  transition:
+    width 240ms ease,
+    height 240ms ease;
+}
+
+.tool-selector-v3__card:hover .tool-selector-v3__icon {
+  width: 32px;
+  height: 32px;
+}
+
+.tool-selector-v3__text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tool-selector-v3__title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 24px;
+  letter-spacing: -0.2px;
+}
+
+.tool-selector-v3__description {
+  margin: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  color: var(--white-60);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body-m);
+  letter-spacing: -0.14px;
+  transition: color 240ms ease;
+}
+
+.tool-selector-v3__card:hover .tool-selector-v3__description {
+  color: var(--white-80);
+}

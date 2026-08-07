@@ -4,11 +4,34 @@
 
 > ## → START WITH `docs/NEXT-SESSION.md`
 >
-> Written 2026-08-06 so a fresh session does not have to re-derive anything. It carries the
-> measured DP drop-to-drop diff (`568e64c` → `2670ed2`: **`tokens.css` unchanged**, no icon
-> changes, **13 of 33 gated stylesheets moved**, and the landing page is a 17th route migration
-> rather than a re-sync), the recommended order of the remaining work, and the standing scope
-> rule. **Read it before this file.**
+> Rewritten 2026-08-07 so a fresh session does not have to re-derive anything. It carries the
+> state of play, the standing scope rule, the recommended order of the remaining work, and — in
+> §2 — the full record of the landing-page slice. **Read it before this file.**
+
+**THE DESIGNER-UI MIGRATION IS COMPLETE: 17 OF 17 ROUTES (2026-08-07).** The landing page (`/`)
+was the last screen still on the original Tailwind build; DP's eight `HomePage/` stylesheets took
+the gated set from **34 to 42**, all verbatim. What remains is verification and the deferred
+backlog, not porting. Four things from that slice are worth carrying:
+
+- **`designer-prototype/src/assets/hero/` is now VENDORED, and every future drop must re-copy it
+  into TWO places** (`designer-prototype/…` and `web-app/public/assets/hero/`). The exclusion was
+  lifted by the product owner — 13 MB against `covers/`'s 257 MB — and it is not optional the way
+  the other two excluded directories are: DP name-imports all sixteen files, so ONE missing file
+  takes DP's whole module graph down and every route renders white (that is A12, misread for four
+  handoffs). `PROVENANCE.md` carries the procedure.
+- **`TRENDING_MVS` no longer has ANY entry point on home**, because WA's 45s marquee was deleted
+  to follow DP. The product owner confirmed it explicitly ("TRENDING_MVS 不用首頁 (Match DP)"), so
+  this is decided, not inherited — `DESIGNER-TODO` **A20**, asserted in `e2e` so it cannot be
+  quietly restored. Its only entry point is `/explore/mvs`, which under A19 is also the only MV
+  catalog a phone can reach there; the two together are heavier than either alone.
+- **`/` branches its layout in JS, and that punches a hole in two gates.** `HomeView` mounts a
+  different hero AND a different tool selector below 768px, so a sweep at one width sees half the
+  screen. The 3f mask sweep grew a second pass at 375; `a11y.spec.ts`, which is desktop-only, has
+  not been widened yet and needs both widths when it is re-run.
+- **Playwright's Chromium cannot decode H.264**, so every mp4 in a visual baseline is a stable
+  black rectangle that no regression can change. `MediaError 4`, no throw, no console output. The
+  two hero components add `poster` — the one attribute they add to DP's markup — so the baseline
+  photographs the design rather than a hole. Full note in `AGENTS.md`.
 
 **SCOPE RULE (product owner, 2026-08-06).** This phase's deliverable is "the code architecture is
 sound enough for RD to wire the backend". A finding that is **purely UI** and touches neither the
@@ -61,12 +84,16 @@ A5 is closed by this drop and WA's `phoneBack` workaround is deleted; details in
 3. `docs/redesign-migration-plan-2026-08-01.md` — background and derivation only. Its §9
    (RD contract C1–C8) and §10 (gates G1–G7) remain in force; its judgements do not.
 
-**Where it is up to (2026-08-06, fifth handoff).** Phases 0 / 1 / 1.5 / 2a / 2b are done and
+**Where it is up to (2026-08-07, seventh handoff).** Phases 0 / 1 / 1.5 / 2a / 2b are done and
 **Phase 3's migration work is COMPLETE — 16 of 16 routes**, per `OWN_CHROME` in
 `src/components/shell/AppShell.tsx`. Landed: `/explore/mvs` (3a), `/explore/songs` + `/song/play`
 (3b), `/profile` + `/settings` (3c), `/watch` (3d), `/creator` (3e), the three Credits IAP modals
 (3f), the `/mv/room` page body (3g) and its six overlays (3g-2), `/mv/thinking` +
 `/mv/storyboard` (3h), `/mv/result` (3i), the three `/song/*` stages (3j), and `/mv/edit` (3k).
+**Plus the landing page (`/`), the 17th and last, on 2026-08-07.** It is NOT in `OWN_CHROME` and
+that is deliberate: it keeps the legacy `TopBar` because DP's marketing Navbar and Footer are
+CH3/CH4, still out of scope. (`"/"` could not be added to that list anyway — the check is
+`path.startsWith(r)`, which `"/"` matches for every route in the app.)
 
 **A12 is closed, and the four handoffs that recorded it were describing the wrong thing.** It was
 never "DP's `/mv-edit` page does not render". Run DP outside the repo and it is TWO batches of

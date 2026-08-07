@@ -1741,7 +1741,7 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <tbody>
 <tr>
 <td><code>/</code> → <code>home/HomeView</code></td>
-<td>hero CTAs, Trending marquee, New MVs, Top Picks, New Songs, per-row like/share/create</td>
+<td>hero + tool selector (a phone pair and a desktop pair), Trending MVs, Top Picks, New Songs, per-row like/share/create</td>
 <td><code>useAuth().requireLogin</code>, <code>useSongFlow().patchSongCompose</code>, local like map</td>
 <td><strong>none</strong> (seed)</td>
 </tr>
@@ -1782,14 +1782,24 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <code>formatCount</code>. All routes are <strong>public</strong> (no <code>AuthGuard</code>).</p>
 <hr>
 <h2 id="3-state-model-rules">3. State model &amp; rules</h2>
-<h3 id="31-the-four-rails-home-seed-not-ranked">3.1 The four rails (Home) — 🔒 seed, not ranked</h3>
-<p><code>HomeView</code> renders four sections mirroring the Curation PRD rails, but each is a <strong>fixed seed array</strong>:</p>
+<h3 id="31-the-three-rails-home-seed-not-ranked">3.1 The three rails (Home) — 🔒 seed, not ranked</h3>
+<blockquote>
+<p><strong>Rewritten 2026-08-07 — the landing page migrated to the designer UI (the 17th and last route).</strong> It described the pre-migration Tailwind screen: FOUR rails led by a Trending MV marquee, and two gradient hero CTA tiles. Both are gone. What follows is the migrated screen.</p>
+</blockquote>
+<p><code>HomeView</code> renders a hero, a tool selector and <strong>three</strong> rails. Each rail is still a <strong>fixed seed array</strong> — nothing here is ranked or served.</p>
+<p><strong>Hero + tool selector — two treatments, chosen in JS, not CSS.</strong> <code>HomeView</code> reads <code>useMediaQuery(PHONE_QUERY)</code> and mounts a structurally different pair on each side of 768px, which is DP's own arrangement:</p>
 <ul>
-<li><strong>Trending MV</strong> — auto-scrolling infinite <strong>marquee</strong> (<code>TRENDING_MVS</code> cloned ×2); card → <code>/watch?id</code>.</li>
-<li><strong>New MVs</strong> — horizontal scroll, <code>NEW_MVS.slice(0,8)</code>, portrait 3:4 cards; "See all" → <code>/explore/mvs</code>.</li>
-<li><strong>Top Picks Songs</strong> — horizontal scroll, <code>TOP_PICKS_SONGS</code>, square cards; card → <code>/song/play?id</code>; "See all" → <code>/explore/songs</code>.</li>
-<li><strong>New Songs</strong> — 2-col grid, <code>NEW_SONGS.slice(0,6)</code>; row → <code>/song/play?id</code>; per-row Like (local), Share (<code>ShareDialog</code>), <strong>Create</strong> → <code>createFromSong</code> (<code>requireLogin</code> → <code>patchSongCompose</code> → <code>/song/create</code>).</li>
-<li><strong>Hero CTAs</strong>: "AI Music Video Studio" → <code>requireLogin(→ /mv/room)</code>; "AI Audio Lab" → <code>requireLogin(→ /song/create)</code> (auth triggers — area 09).</li>
+<li><strong>≥768px:</strong> <code>ToolSelectorSectionV3</code> (a display heading over two cards) ABOVE <code>HeroBannerSectionV3</code> (a scroll-snap filmstrip of 8 hero items; only the centred card plays its video, the rest show posters).</li>
+<li><strong>&lt;768px:</strong> <code>HeroBannerSection</code> (a draggable, auto-advancing infinite carousel) ABOVE <code>ToolSelectorSection</code> (two compact full-gradient tiles).</li>
+<li>Both tool-selector cards are <code>requireLogin</code> gated: <strong>AI Music Video</strong> → <code>/mv/room</code>, <strong>AI Song</strong> → <code>/song/create</code> (auth triggers — area 09; GL-02 / <code>AC-EXP-02</code>). Both hero "Create MV" CTAs are the same gate to <code>/mv/room</code>. DP has no auth at all, so every one of these gates is WA's.</li>
+<li>Hero media is <code>public/assets/hero/</code> — 8 mp4 + poster pairs vendored from the DP drop (<code>designer-prototype/PROVENANCE.md</code> explains why that one directory is not excluded).</li>
+</ul>
+<p>The rails:</p>
+<ul>
+<li><strong>Trending Music Videos</strong> — horizontal scroll of the whole of <code>NEW_MVS</code>, prev/next arrows that appear only when the row can scroll that way; card → <code>/watch?id</code>; "See all" → <code>/explore/mvs</code>.</li>
+<li><strong>Top Picks Songs</strong> — horizontal scroll, <code>TOP_PICKS_SONGS</code>, square cards; the card navigates to <code>/song/play?id</code>, the cover's play button previews the real audio in place; "See all" → <code>/explore/songs</code>.</li>
+<li><strong>Newly Released Songs</strong> — <code>NEW_SONGS.slice(0,6)</code> in 2 columns (1 column below 768px); per row a <strong>title</strong> that navigates to <code>/song/play?id</code>, <strong>album art</strong> that starts <code>SongPlayBar</code> (the desktop preview bar; on a phone it falls back to navigating, because the bar is <code>display:none</code> there), Like (local), Share (<code>ShareDialog</code>), and <strong>Create</strong> → <code>requireLogin</code> → <code>patchSongCompose</code> → <code>/song/create</code>.</li>
+<li>⚠️ <strong>The Trending MV marquee is GONE, and with it <code>TRENDING_MVS</code>'s only home entry point.</strong> It was WA's own 45s infinite rail; DP has no equivalent, and the product owner decided 2026-08-07 to follow DP ("TRENDING_MVS 不用首頁 (Match DP)"). <code>TRENDING_MVS</code> is now reachable from <code>/explore/mvs</code> alone, where it is the <code>--primary</code> section — which is also the only MV catalog a phone can reach there (A19). <code>DESIGNER-TODO</code> <strong>A20</strong>; asserted in <code>e2e</code> so it is not quietly restored.</li>
 <li>⚠️ <strong>No ranking, refresh, eligibility, or dedup</strong> from the Curation PRD — ordering is array order (<code>TBD-EXP-01</code>).</li>
 <li>📄 <strong>Publish→feed locale contract (backend; spec-only).</strong> When a creation is published (area 02/05) it carries a <strong>language/locale code</strong>. The backend returns each feed <strong>already ranked locale-primary</strong> (viewer's locale first, then engagement signals per the Curation PRD). The <strong>frontend just requests and displays</strong> the server-sorted data — no client-side ranking; "we only ask, the backend sorts." The <strong>code format (2-char ISO <code>en</code> vs 3-char product <code>enu</code>, etc.) is RD-TBD</strong> → <code>TBD-EXP-10</code> (relates to i18n <code>TBD-GL-06</code>). No prototype change now (mock feed stays seed).</li>
 </ul>
@@ -1936,8 +1946,10 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <hr>
 <h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
 <ul>
-<li><strong>AC-EXP-01</strong> — WHEN <code>/</code> loads, THE SYSTEM SHALL render the hero CTAs and the four seed rails (Trending MV marquee, New MVs, Top Picks Songs, New Songs) in seed order.</li>
-<li><strong>AC-EXP-02</strong> — WHEN a hero CTA or a New-Songs <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>requireLogin</code> and, on success, navigate to the create flow (pre-filling the song for Create-from-song).</li>
+<li><strong>AC-EXP-01</strong> — WHEN <code>/</code> loads, THE SYSTEM SHALL render the hero, the tool selector, and the three seed rails (Trending Music Videos, Top Picks Songs, Newly Released Songs) in seed order — and SHALL mount the phone treatment of the hero and tool selector below 768px and the desktop treatment at or above it.<blockquote>
+<p><strong>Rewritten 2026-08-07 with the landing-page migration.</strong> It said "the hero CTAs and the four seed rails (Trending MV marquee, …)". The marquee rail was deleted to follow DP (A20), so the count is three; and the hero/tool-selector branch is new, load-bearing and invisible to a screenshot taken at one width, so it is stated here rather than left as an implementation detail.</p>
+</blockquote></li>
+<li><strong>AC-EXP-02</strong> — WHEN a hero CTA, a tool-selector card, or a New-Songs <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>requireLogin</code> and, on success, navigate to the create flow (pre-filling the song for Create-from-song).</li>
 <li><strong>AC-EXP-03</strong> — WHEN an MV card is tapped <strong>anywhere</strong> (Home rails or <code>/explore/mvs</code>), THE SYSTEM SHALL navigate to <code>/watch?id</code>. WHEN a song card is tapped <strong>from Home</strong>, THE SYSTEM SHALL navigate to <code>/song/play?id</code>. WHEN a song row is tapped <strong>on <code>/explore/songs</code></strong>, THE SYSTEM SHALL, below 768px, open the full-screen player at <code>/song/play?id</code>; and at 768px and above, select that song in the Now Playing column <strong>without navigating</strong>.<blockquote>
 <p><strong>Corrected 2026-08-05 (Slice 3b).</strong> This criterion previously said a song card always routes to <code>/song/play?id</code>, which the merge of <code>/explore/songs</code> and <code>/song/play</code> made false on desktop — the two are now one screen, so a desktop row click swaps the right-hand column and deliberately leaves the URL alone (asserted by <code>e2e/behaviour-regressions.spec.ts</code>, "3b desktop: clicking a song swaps the right column without navigating"). Home is NOT migrated and still navigates, which is why the criterion is now split by entry point. <strong>Found by the Gate G7 reviewer:</strong> the same change rewrote <code>AC-EXP-05</code> with a full rationale and left this sibling — and <code>EXP-P3-S1</code> — asserting the old behaviour.</p>
 </blockquote>
