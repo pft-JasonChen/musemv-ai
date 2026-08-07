@@ -531,6 +531,25 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 - 已用 `e2e/behaviour-regressions.spec.ts`(「/explore/mvs still has a grid on a phone」)
   把這個損失**寫成斷言**,免得下一個 session 當成 bug 順手「修好」。
 
+### A20. 首頁刪掉跑馬燈之後,`TRENDING_MVS` 在首頁**沒有任何入口**
+
+**發現於:** 2026-08-07,規劃 landing page 移轉時。**尚未實作** —— 寫在這裡是為了讓下個 session
+不必自己撞到。
+
+WA 首頁目前有一條「Trending MV」45 秒無限跑馬燈(`TRENDING_MVS` 複製兩份);
+DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
+`NEW_MVS` / `TOP_PICKS_SONGS` / `NEW_SONGS`。
+
+- **產品拍板 2026-08-07:跟 DP 走,刪掉跑馬燈。**
+- ⚠️ **連帶後果(拍板時沒有一起裁示):** 刪掉之後 `TRENDING_MVS`(3 支)
+  **在首頁再也沒有入口**,唯一入口變成 `/explore/mvs`。
+- 這件事本身還過得去 —— 它在 `/explore/mvs` 正是 `--primary` 那一段,
+  也就是 A19 之下手機唯一看得到的 catalog。但**兩件事疊起來**才是完整的圖:
+  首頁看不到 Trending,手機的 Explore 又只看得到 Trending。
+- **需要設計判斷:** 首頁要不要一條 Trending rail?若要,那是 DP 還沒畫過的區塊。
+- e2e 的「landing page: clicking a Trending MV lands on the same /watch screen」是在守
+  「首頁與 `/explore/mvs` 不可以走岔」這條真規則,**要改指到還在的 rail,不要直接刪掉**。
+
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 
 | 畫面                           | 狀況                                                                                                                                                        | 影響                                              |
