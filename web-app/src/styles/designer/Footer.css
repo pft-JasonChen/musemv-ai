@@ -1,0 +1,117 @@
+/*
+  Footer — Figma "Website Footer" (node 1330:22087)
+  Not confirmed as a Figma component instance (plain frame in the file), but
+  treated as shared/global content per product decision.
+*/
+
+.footer {
+  position: relative;
+  z-index: 1;
+  background: var(--neutral-dark-04);
+  /* white @ 7% — no exact tokens.css match yet, kept as a one-off value */
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Same max-width + breakpoint padding scale as .home-page, so footer
+   content lines up with Main's edges at every width instead of just
+   assuming the widest (60px) padding everywhere. */
+.footer__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  width: 100%;
+  max-width: 1440px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 80px 20px 40px;
+}
+
+@media (min-width: 768px) {
+  .footer__inner {
+    padding: 80px 32px 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .footer__inner {
+    padding: 80px 60px 40px;
+  }
+}
+
+.footer__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.footer__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 320px;
+  max-width: 100%;
+}
+
+.footer__logo {
+  display: block;
+  height: 40px;
+  width: auto;
+}
+
+.footer__tagline {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+}
+
+.footer__sitemap {
+  display: flex;
+  gap: 64px;
+  flex-wrap: wrap;
+}
+
+.footer__column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.footer__column-title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-xs);
+}
+
+.footer__link {
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.footer__bottom {
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.footer__copyright {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-caption-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-caption-m);
+  letter-spacing: -0.11px;
+}

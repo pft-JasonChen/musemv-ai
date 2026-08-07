@@ -80,7 +80,7 @@ export function CreditsDetailModal({ open, onClose, onBuy }: Props) {
             className="button button--small button--primary-payg"
             onClick={onBuy}
           >
-            {subscribed ? "Buy More" : "Get Muse Pro"}
+            <span className="button__label">{subscribed ? "Buy More" : "Get Muse Pro"}</span>
           </button>
         </div>
 

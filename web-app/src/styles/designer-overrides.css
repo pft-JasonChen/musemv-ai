@@ -128,3 +128,215 @@
 .account-page__stats button:hover {
   background: var(--neutral-dark-09);
 }
+
+/* Designer decision, 2026-08-07 — user-row click targets shouldn't span the
+   full row width. DP's `.list-item__user-row` / `.top-song__user-row` are
+   flex items of a `flex-direction: column` parent (`.list-item__info`,
+   `.top-song__heading`) with no `align-self`, so they stretch to the
+   parent's full width by default — the clickable box measures the whole
+   row (e.g. 207.8x20) even though the visible avatar+name content is a
+   fraction of that. `.card__user-link` is the same shape with an explicit
+   `flex: 1 1 0` instead of the stretch default. All three make it too easy
+   to misclick into the creator profile. This is not a bug DP introduced by
+   accident — the flex-column stretch default is DP's own layout choice,
+   verified against `designer-prototype/` — it's a deliberate WA divergence.
+   DELETE THIS if a future drop ships these rows sized to their content. */
+.list-item__user-row,
+.top-song__user-row {
+  align-self: flex-start;
+}
+
+.card__user-link {
+  flex: 0 1 auto;
+}
+
+/* Follow-up, 2026-08-07 — the rule above had a side effect on `.card__likes`.
+   DP pushes likes to the row's far right by giving `.card__user-link` (the
+   sibling before it) `flex: 1 1 0`; removing that grow to fix the click
+   target above also removed the only thing separating "UrbanExplorer" from
+   its like count, so they rendered touching with no gap. `margin-left: auto`
+   on `.card__likes` itself restores DP's "pinned to the row's right edge"
+   position without giving the click target back its grown width.
+   DELETE THIS alongside the rule above, together. */
+.card__likes {
+  margin-left: auto;
+}
+
+/* DESIGNER-TODO A2 — four token references DP never defines in tokens.css.
+   Each is CSS's silent-failure mode: no error, no warning, the declaration is
+   just dropped (inherited properties fall back to inherited; non-inherited
+   ones fall back to their initial value) and the element quietly looks
+   wrong. Designer decided 2026-08-07:
+     - `--neutral-dark-48` is a typo for `--neutral-dark-44` — the ramp only
+       has 44/54 around it, there is no real "48" step.
+     - `.history-card__menu > button:hover` references `--neutral-dark-15`,
+       which isn't a ramp step either (only 14/24 exist) — but unlike -48,
+       the intent here was never grayscale; the hover fill is meant to be
+       `--white-15` (rgba(255,255,255,.15)), a different token family, not a
+       missing step. Handled as its own rule below, not folded into -48's fix.
+     - `--line-height-body-s` is Figma's "Auto" line-height for the Body/S
+       type scale (12/Auto) — unlike M/L/XS, which do have a fixed number.
+       `normal` is the correct CSS value for "Auto", not a missing ramp step.
+     - `--font-weight-regular` is 400 — the family's regular weight; the ramp
+       only names medium/semibold/bold/extrabold, regular was never added.
+   DELETE all of this when a drop ships tokens.css with these four defined
+   (and HistoryPage.css referencing --white-15 directly for the hover). */
+:root {
+  --neutral-dark-48: var(--neutral-dark-44);
+  --line-height-body-s: normal;
+  --font-weight-regular: 400;
+}
+
+.history-card__menu > button:hover {
+  background: var(--white-15);
+}
+
+/* DESIGNER-TODO A8 — TopSongListItem.css has no media queries at all.
+   Drawn once for the 1440/1920 Figma frames; `.top-song__actions` (like +
+   share + Create) is `flex-shrink: 0`, so at 320-375px all the squeeze lands
+   on the title column — titles truncate to 1-2 characters at 320px, the
+   agreed minimum supported width. This is Explore's top-level destination on
+   phones (reachable from the bottom tab bar), not a secondary screen.
+   Designer decided 2026-08-07 (mobile spec, Figma node 187:1898): same
+   layout, everything just scales down —
+     title       17px/22  -> 13px/18
+     avatar      18px     -> 12px
+     username    14px/20  -> 9px/11
+     stat text   (--font-body-s) -> 9px/11
+     stat icon   14px     -> 10px
+     like/share icon 24px -> 16px
+   DELETE THIS when a drop ships TopSongListItem.css with its own
+   `@media (max-width: 767px)` block. */
+@media (max-width: 767px) {
+  .top-song__title {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .top-song__avatar {
+    width: 12px;
+    height: 12px;
+  }
+
+  .top-song__username {
+    font-size: 9px;
+    line-height: 11px;
+  }
+
+  .top-song__stat {
+    font-size: 9px;
+    line-height: 11px;
+  }
+
+  .top-song__stat-icon {
+    width: 10px;
+    height: 10px;
+  }
+
+  .top-song__like-icon,
+  .top-song__share-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* DESIGNER-TODO A9 — MobileTabBar unselected label/icon contrast.
+   DP dims the whole unselected `.mobile-tabbar__item` with `opacity: .4`,
+   which composites --neutral-dark-100 (white) down to ~3.74:1 on the bar's
+   near-black background — under the 4.5:1 WCAG AA wants for small text, and
+   it drags the icon (a currentColor mask) down with it, since opacity dims
+   the whole box at once, not a single colour.
+   Designer decided 2026-08-07: don't dim with opacity, give the unselected
+   state an explicit colour instead — `--neutral-dark-54`, which measures
+   ~5.14:1 on this background.
+   `:not(.mobile-tabbar__item--active)` is load-bearing, the same way it is in
+   A1's Tabs.css override above: `.mobile-tabbar__item--active` only sets
+   `opacity: 1` and relies on the base rule's white `color` to show through.
+   A bare `.mobile-tabbar__item` override here would win that specificity tie
+   (this file loads after designer.css) and silently dim the ACTIVE tab too.
+   DELETE THIS when a drop ships MobileTabBar.css with a passing colour
+   instead of `opacity: .4`. */
+.mobile-tabbar__item:not(.mobile-tabbar__item--active) {
+  opacity: 1;
+  color: var(--neutral-dark-54);
+}
+
+/* DESIGNER-TODO A10 — six controls under the 24x24 WCAG 2.5.8 AA minimum on
+   phones (2.5.8 is 24x24, not 44x44 — that's 2.5.5 AAA; an earlier pass
+   measured against 44 and false-failed .mobile-header__subscribe (30x30) and
+   .mobile-header__account (28x28), which are both fine and untouched here).
+   Designer decided 2026-08-07: expand the HIT AREA, don't resize the visual
+   control — an invisible `::after` covering the shortfall, doesn't touch
+   layout or the pixel-perfect visual — for five of the six controls, all
+   inside verbatim stylesheets:
+     .toggle-switch__track       36x20 -> +4px height (both routes that use it)
+     .song-create__idea-btn      51x20 -> +4px height
+     .mv-create__idea-btn        79x20 -> +4px height
+     .mv-result__control-btn     20x20 -> +4px both axes
+     .history-card__copy > a     wx18  -> +6px height
+   The sixth (AccountPage's edit-profile icon-button, 20x20) is NOT here — it
+   is a JSX size prop (`size="XSmall"`), already fixed by switching it to
+   `size="small"` (28x28) directly in the component, see AccountPage.tsx.
+   DELETE each rule below when a drop ships that file at >=24x24 natively. */
+.song-create__idea-btn,
+.mv-create__idea-btn,
+.mv-result__control-btn,
+.history-card__copy > a {
+  position: relative;
+}
+
+.toggle-switch__track::after,
+.song-create__idea-btn::after,
+.mv-create__idea-btn::after {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
+}
+
+.mv-result__control-btn::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+}
+
+.history-card__copy > a::after {
+  content: '';
+  position: absolute;
+  inset: -3px 0;
+}
+
+/* DESIGNER-TODO A13 — caption-level text at --neutral-dark-44 is under AA.
+   Not one stylesheet's mistake — `--neutral-dark-44` measures ~3.3-3.8:1
+   (3.59:1 exactly, worked out against this bar's #09090b background)
+   wherever it is used for small "caption"-role text: stat labels, dates,
+   ETA/status strings, "(optional)" suffixes, sublabels. Every route that
+   reuses this token for that role reproduces the same failure — it is a step
+   in the ramp, not a per-file typo, so it has to be fixed at that role, not
+   file by file (see the escalation note in DESIGNER-TODO.md A13).
+   Designer decided 2026-08-07: every caption-role use of `--neutral-dark-44`
+   moves to `--neutral-dark-54` (~5.14:1, passes AA). Explicitly NOT included:
+   `:disabled` button text (WCAG 1.4.3 exempts inactive controls) and
+   `::placeholder` text (a hint, not content) — both still reference -44 on
+   purpose.
+   `.history-card__copy > time` is listed here rather than folded into A2's
+   -48 fix above, because it needs to land on -54 directly — resolving it to
+   -44 first would just be an extra silent step to the same wrong answer.
+   DELETE THIS when a drop ships each of these files with -54 (or a dedicated
+   caption-role token) in DP's own CSS. */
+.account-page__stats span,
+.community-profile__stats span,
+.community-profile__copy time,
+.history-card__copy > time,
+.mv-result__date,
+.mv-result__detail-key,
+.mv-create__label-optional,
+.mv-create__photo-add-optional,
+.mv-create__sample-label,
+.mv-edit__sublabel,
+.mv-storyboard__lyrics-time,
+.mv-storyboard-processing__eta-label,
+.toggle-switch__label,
+.song-create__chip-label-optional,
+.song-processing__status {
+  color: var(--neutral-dark-54);
+}

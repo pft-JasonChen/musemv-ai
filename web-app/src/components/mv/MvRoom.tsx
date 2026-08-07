@@ -88,15 +88,19 @@ import {
 export function MvRoom() {
   const router = useRouter();
   const { compose, setCompose, patchCompose, resetForNewMv } = useMvFlow();
-  const { loggedIn } = useAuth();
+  const { loggedIn, requireLogin } = useAuth();
   const { history } = useHistory();
   const openCreation = useOpenCreation();
   const { credits } = useCredits();
   const { locale } = useLocale();
 
-  // Items 4/5 (2026-08-06): the side rail becomes "My Creations" only once the
-  // signed-in user actually has a finished MV. See the rail's own note below.
   const myMvs = history.filter((h) => h.kind === "mv" && h.status === "completed");
+  // Designer decision, 2026-08-07 (revised same day): back to items 4/5's
+  // original `loggedIn && myMvs.length > 0` — a freshly signed-in guest with
+  // zero finished MVs sees Trending, same as before signing in. The brief
+  // `loggedIn` alone + empty-state attempt (matching DP's `isSignedIn`
+  // exactly) was tried and reverted: seeing "My Creations" over a blank card
+  // right after signing in read as broken, not empty.
   const showMine = loggedIn && myMvs.length > 0;
   const [songOpen, setSongOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -260,7 +264,10 @@ export function MvRoom() {
                 <button
                   type="button"
                   className="mv-create__song-option"
-                  onClick={() => setSongOpen(true)}
+                  // Designer decision, 2026-08-07: gate this like "Create Music
+                  // Video" — "My Songs" is a signed-in user's real library, so a
+                  // guest has to sign in before it means anything.
+                  onClick={() => requireLogin(() => setSongOpen(true))}
                 >
                   <img
                     src="/assets/icons/ui/ic_song_list.svg"
@@ -290,7 +297,7 @@ export function MvRoom() {
                     className="mv-create__song-added-label"
                     onClick={() => {
                       songPlayer.pause();
-                      setSongOpen(true);
+                      requireLogin(() => setSongOpen(true));
                     }}
                   >
                     {compose.song.source === "import" ? "Imported Audio" : "Song Library"}
@@ -552,7 +559,11 @@ export function MvRoom() {
               type="button"
               className={`mv-create__cta${ready ? " mv-create__cta--active" : ""}`}
               disabled={!ready}
-              onClick={() => setModeOpen(true)}
+              // `/mv/room` itself has no `AuthGuard` (2026-08-07, designer
+              // request) so "Start for Free" can land a guest here to
+              // compose — but generating still costs credits, so the gate
+              // moves to the one action that actually starts a job.
+              onClick={() => requireLogin(() => setModeOpen(true))}
             >
               <span>Create Music Video</span>
               <DpIcon name="ic_arrow_right" className="mv-create__cta-icon" />
@@ -577,7 +588,9 @@ export function MvRoom() {
           can say `isSignedIn` alone because its `MY_CREATIONS` is a fixture that
           is never empty; WA's comes from the real (session-local) History, so a
           user who has just signed in has none. Falling back to Trending there
-          beats a "My Creations" heading over nothing.
+          beats a "My Creations" heading over nothing — tried the empty-state
+          card instead (designer request, 2026-08-07) and reverted the same day:
+          seeing it right after signing in read as broken, not empty.
         */}
         <div className="mv-create__side">
           <div className="mv-create__side-header">

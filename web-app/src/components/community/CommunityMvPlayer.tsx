@@ -14,13 +14,18 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
-import { getCommunityMv, NEW_MVS } from "@/lib/mv/community";
+import { getCommunityMv, mvCoverRatio, NEW_MVS } from "@/lib/mv/community";
 import { CommunityEmpty } from "@/components/community/EmptyState";
+import { MvGridSections } from "@/components/community/MvGridSections";
 
 /**
  * Slice 3d — `/watch`, migrated to DP's `MVDetailPage` UPPER half (`.mv-player*`).
- * The lower half (the justified grid) is `/explore/mvs` and was migrated in 3a;
- * `MVDetailPage.css` was copied verbatim then and already carries these rules.
+ * The lower half (the justified grid) is ALSO rendered here (designer request,
+ * 2026-08-07) via `MvGridSections`, shared with `/explore/mvs`'s `MvExplore` —
+ * `MVDetailPage.css` was copied verbatim in 3a and already carries these rules.
+ * DP's own file keeps the same two sections mounted below the player in its
+ * "selected" state; WA had split them into a separate route entirely, which
+ * this restores. See `MvGridSections` for the extraction reasoning.
  *
  * ── This is the screen A5 blocked ───────────────────────────────────────────
  * `MVDetailPage` is where A5 was first found: DP hides every navbar below 767px
@@ -60,6 +65,12 @@ export function CommunityMvPlayer() {
   const found = getCommunityMv(id);
   // AC-EXP-07: a missing/invalid id falls back to a default item rather than crashing.
   const mv = found ?? NEW_MVS[0];
+  // Designer fix, 2026-08-07: this was hardcoded to `--portrait` regardless of
+  // the video's own cover ratio. DP picks the stage shape from `item.ratio`
+  // (`isPortrait = item.ratio === '3:4'`); `mvCoverRatio` is the same per-id
+  // ratio `MvGridSections`/`MvExplore` already use, so a video's stage shape
+  // now matches the cover it was clicked from.
+  const isPortrait = mvCoverRatio(mv.id) === "3:4";
 
   const { setCompose } = useMvFlow();
   const { requireLogin } = useAuth();
@@ -158,133 +169,154 @@ export function CommunityMvPlayer() {
     <>
       <DetailNavbar fallbackPath="/explore/mvs" />
 
-      <div className="mv-player" ref={playerRef}>
-        <video
-          className="mv-player__backdrop"
-          src={mv.video}
-          muted
-          loop
-          autoPlay
-          playsInline
-          aria-hidden="true"
-        />
-        <div className="mv-player__backdrop-scrim" aria-hidden="true" />
-
-        <div className="mv-player__stage mv-player__stage--portrait">
+      {/* `mv-detail--selected` matters, not just naming symmetry: MVDetailPage.css's
+          phone media query hides `.mv-detail__grid-section` (including `--primary`)
+          specifically UNDER `.mv-detail--selected` — so without this wrapper the
+          grid below would show on phones too, unlike DP's own detail state. */}
+      <div className="mv-detail mv-detail--selected">
+        <div className="mv-player" ref={playerRef}>
           <video
-            key={mv.id}
-            ref={videoRef}
-            className="mv-player__video"
+            className="mv-player__backdrop"
             src={mv.video}
-            autoPlay
+            muted
             loop
-            muted={muted}
+            autoPlay
             playsInline
-            onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
-            onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
-            onClick={togglePlay}
+            aria-hidden="true"
           />
-        </div>
+          <div className="mv-player__backdrop-scrim" aria-hidden="true" />
 
-        <div className="mv-player__floating">
-          <div className="mv-player__meta-row">
-            <div className="mv-player__meta">
-              <p className="mv-player__title">{mv.title}</p>
-              {/* R-9: next/link + localePath. DP assigns window.location.href here,
+          <div className={`mv-player__stage${isPortrait ? " mv-player__stage--portrait" : ""}`}>
+            <video
+              key={mv.id}
+              ref={videoRef}
+              className="mv-player__video"
+              src={mv.video}
+              autoPlay
+              loop
+              muted={muted}
+              playsInline
+              onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
+              onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onClick={togglePlay}
+            />
+          </div>
+
+          <div className="mv-player__floating">
+            <div className="mv-player__meta-row">
+              <div className="mv-player__meta">
+                <p className="mv-player__title">{mv.title}</p>
+                {/* R-9: next/link + localePath. DP assigns window.location.href here,
                   which is a full page load AND loses the locale prefix. */}
-              <Link href={localePath(locale, "/creator")} className="mv-player__user">
-                <span className="mv-player__avatar">
-                  <DpIcon name="ic_account" className="mv-player__avatar-icon" />
-                </span>
-                <span className="mv-player__username">{mv.creator}</span>
-              </Link>
-            </div>
-
-            <div className="mv-player__actions">
-              <div className="mv-player__like-share">
-                <button
-                  type="button"
-                  onClick={toggleLike}
-                  aria-label={liked ? "Unlike" : "Like"}
-                  aria-pressed={liked}
-                  className={`icon-button icon-button--medium icon-button--ghost mv-player__action-icon${
-                    liked ? " mv-player__action-icon--active" : ""
-                  }`}
-                >
-                  <DpIcon
-                    name={liked ? "ic_favorite_on" : "ic_favorite_off"}
-                    className="icon-button__icon"
-                  />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShareOpen(true)}
-                  aria-label="Share"
-                  className="icon-button icon-button--medium icon-button--ghost mv-player__action-icon"
-                >
-                  <DpIcon name="ic_share" className="icon-button__icon" />
-                </button>
+                <Link href={localePath(locale, "/creator")} className="mv-player__user">
+                  <span className="mv-player__avatar">
+                    <DpIcon name="ic_account" className="mv-player__avatar-icon" />
+                  </span>
+                  <span className="mv-player__username">{mv.creator}</span>
+                </Link>
               </div>
-              <Button className="mv-player__cta" onClick={createMv}>
-                Create MV
-                {/* `--mask` is what PAINTS it: `.button__icon` only sets 16×16,
+
+              <div className="mv-player__actions">
+                <div className="mv-player__like-share">
+                  <button
+                    type="button"
+                    onClick={toggleLike}
+                    aria-label={liked ? "Unlike" : "Like"}
+                    aria-pressed={liked}
+                    className={`icon-button icon-button--medium icon-button--ghost mv-player__action-icon${
+                      liked ? " mv-player__action-icon--active" : ""
+                    }`}
+                  >
+                    <DpIcon
+                      name={liked ? "ic_favorite_on" : "ic_favorite_off"}
+                      className="icon-button__icon"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShareOpen(true)}
+                    aria-label="Share"
+                    className="icon-button icon-button--medium icon-button--ghost mv-player__action-icon"
+                  >
+                    <DpIcon name="ic_share" className="icon-button__icon" />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="button button--medium button--primary mv-player__cta"
+                  onClick={createMv}
+                >
+                  {/* Designer fix, 2026-08-07: this was WA's pre-migration
+                      Tailwind `Button` (`rounded-xl`, `var(--mv-grad)`, 15px
+                      bold) — not pill-shaped and not DP's Button at all. DP's
+                      own markup is `size="Medium" variant="Primary"
+                      trailingIcon={icArrowRight}`, i.e. the shared `.button`
+                      BEM classes with the icon AFTER the label. */}
+                  <span className="button__label">Create MV</span>
+                  {/* `--mask` is what PAINTS it: `.button__icon` only sets 16×16,
                     and DP's own Button splits the two (`__icon` alone is for its
                     <img> form). Without the modifier this arrow was a 16×16 hole
                     — found by `.iconcheck.mjs`, not by any screenshot. */}
-                <DpIcon name="ic_arrow_right" className="button__icon button__icon--mask" />
-              </Button>
+                  <DpIcon name="ic_arrow_right" className="button__icon button__icon--mask" />
+                </button>
+              </div>
+            </div>
+
+            <div className="mv-player__controls">
+              <button
+                type="button"
+                className="mv-player__control-btn"
+                onClick={togglePlay}
+                aria-label={playing ? "Pause" : "Play"}
+              >
+                <DpIcon
+                  name={playing ? "ic_pause" : "ic_play"}
+                  className="mv-player__control-icon"
+                />
+              </button>
+
+              <span className="mv-player__time">{formatTime(currentTime)}</span>
+
+              <SeekBar
+                value={currentTime}
+                max={duration}
+                onSeek={seek}
+                label="Seek"
+                className="mv-player__progress"
+                trackClassName="mv-player__progress-track"
+                fillClassName="mv-player__progress-fill"
+                thumbClassName="mv-player__progress-thumb"
+              />
+
+              <span className="mv-player__time">{formatTime(duration)}</span>
+
+              <button
+                type="button"
+                className="mv-player__control-btn"
+                onClick={toggleMute}
+                aria-label={muted ? "Unmute" : "Mute"}
+              >
+                <DpIcon
+                  name={muted ? "ic_speaker_off" : "ic_speaker_on"}
+                  className="mv-player__control-icon"
+                />
+              </button>
+
+              <button
+                type="button"
+                className="mv-player__control-btn"
+                onClick={toggleFullscreen}
+                aria-label="Fullscreen"
+              >
+                <DpIcon name="ic_expand" className="mv-player__control-icon" />
+              </button>
             </div>
           </div>
-
-          <div className="mv-player__controls">
-            <button
-              type="button"
-              className="mv-player__control-btn"
-              onClick={togglePlay}
-              aria-label={playing ? "Pause" : "Play"}
-            >
-              <DpIcon name={playing ? "ic_pause" : "ic_play"} className="mv-player__control-icon" />
-            </button>
-
-            <span className="mv-player__time">{formatTime(currentTime)}</span>
-
-            <SeekBar
-              value={currentTime}
-              max={duration}
-              onSeek={seek}
-              label="Seek"
-              className="mv-player__progress"
-              trackClassName="mv-player__progress-track"
-              fillClassName="mv-player__progress-fill"
-              thumbClassName="mv-player__progress-thumb"
-            />
-
-            <span className="mv-player__time">{formatTime(duration)}</span>
-
-            <button
-              type="button"
-              className="mv-player__control-btn"
-              onClick={toggleMute}
-              aria-label={muted ? "Unmute" : "Mute"}
-            >
-              <DpIcon
-                name={muted ? "ic_speaker_off" : "ic_speaker_on"}
-                className="mv-player__control-icon"
-              />
-            </button>
-
-            <button
-              type="button"
-              className="mv-player__control-btn"
-              onClick={toggleFullscreen}
-              aria-label="Fullscreen"
-            >
-              <DpIcon name="ic_expand" className="mv-player__control-icon" />
-            </button>
-          </div>
         </div>
+
+        <MvGridSections />
       </div>
 
       <ShareDialog

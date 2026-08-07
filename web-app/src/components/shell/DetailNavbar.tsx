@@ -195,7 +195,7 @@ export function DetailNavbar({
               className="button button--medium button--tertiary detail-navbar__login"
               onClick={() => openSignIn()}
             >
-              Login
+              <span className="button__label">Login</span>
             </button>
           )}
         </div>

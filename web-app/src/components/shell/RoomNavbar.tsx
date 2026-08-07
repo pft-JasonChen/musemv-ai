@@ -79,7 +79,7 @@ export function RoomNavbar({ title, tabsSlot }: { title: string; tabsSlot?: Reac
             className="button button--medium button--tertiary room-navbar__login"
             onClick={() => openSignIn()}
           >
-            Login
+            <span className="button__label">Login</span>
           </button>
         )}
       </div>

@@ -1,21 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { NEW_MVS, TRENDING_MVS, mvCoverRatio, type CommunityMv } from "@/lib/mv/community";
+import { NEW_MVS, TRENDING_MVS } from "@/lib/mv/community";
 import { CommunityEmpty, useOnline } from "@/components/community/EmptyState";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Card } from "@/components/ui/Card";
-import { useLocale } from "@/components/providers/LocaleProvider";
-import { localePath } from "@/lib/i18n/config";
-import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
-import {
-  computeJustifiedRows,
-  aspectRatioOf,
-  DESKTOP_QUERY,
-  type MvRatio,
-} from "@/lib/mv/justifiedRows";
+import { MvGridSections } from "@/components/community/MvGridSections";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, first screen after /history) ──
@@ -61,164 +49,16 @@ import {
  *
  * The old "← Home" text button is gone because `DetailNavbar` now carries back
  * navigation; this screen is where Q6's `router.back()`-with-fallback lands.
+ *
+ * The grid itself (both sections, the justified/masonry/wrap layout math) now
+ * lives in `MvGridSections` — extracted 2026-08-07 on its second consumer,
+ * `CommunityMvPlayer` (`/watch`), which needed the exact same two sections
+ * below the player to match DP. See that file for the full reasoning.
  */
-
-const TOP_PICKS = TRENDING_MVS;
-const NEWLY_RELEASED = NEW_MVS;
-
-type GridItem = CommunityMv & { ratio: MvRatio };
-
-const withRatio = (items: readonly CommunityMv[]): GridItem[] =>
-  items.map((m) => ({ ...m, ratio: mvCoverRatio(m.id) }));
-
-function MvGrid({ items }: { items: readonly GridItem[] }) {
-  const { locale } = useLocale();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-
-  /**
-   * ── THE R-2 PATTERN, SECOND INSTANCE ──────────────────────────────────────
-   *
-   * DP writes this as
-   *   useState(() => typeof window !== 'undefined' ? matchMedia(q).matches : false)
-   * — the same shape as the Sidebar's, which slice 2a measured throwing React
-   * error 418, `hydration failed`, at 1000px. The `typeof window` guard stops it
-   * CRASHING under SSR, which is exactly what makes it look safe; what it
-   * actually guarantees is that server and first client render disagree.
-   *
-   * A sweep of the whole drop found this pattern in exactly two files. Both are
-   * fixed; there is no third.
-   *
-   * The fix itself moved OUT of here in slice 3b: `/song/play` needs the same
-   * question asked of the phone cutover, and the pre-flight is explicit about not
-   * ending up with two sources for it. `useMediaQuery` carries the reasoning.
-   */
-  const isDesktop = useMediaQuery(DESKTOP_QUERY);
-  const isPhone = useMediaQuery(PHONE_QUERY);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver((entries) =>
-      setContainerWidth(entries[0].contentRect.width),
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  /**
-   * The href is WA's own route for playing a community MV (D3 — DP's
-   * `/mv-detail?id=&from=` scheme is not adopted, and Q6 rejects `?from=`
-   * outright, so the id travels but the origin does not). No intercepted click
-   * any more: this is a plain `next/link` navigation, so middle-click, copy-link
-   * and a normal click all reach the same place.
-   */
-  function link(mv: GridItem) {
-    return { href: localePath(locale, `/watch?id=${mv.id}`) };
-  }
-
-  function card(mv: GridItem) {
-    return (
-      <Card
-        type="Video"
-        ratio={mv.ratio}
-        community
-        title={mv.title}
-        username={mv.creator}
-        likes={mv.likes}
-        badge={mv.badge ?? undefined}
-        coverImage={mv.thumb}
-      />
-    );
-  }
-
-  /**
-   * ── PHONES GET DP'S TWO-COLUMN MASONRY (drop 2, `2670ed2`) ─────────────────
-   *
-   * Not a nicety — without it this screen is BLANK below 768px. That drop's
-   * `MVDetailPage.css` hides `.mv-detail__grid-section` outright on phones and
-   * expects `.mv-detail__mobile-grid` to take over; re-copying the stylesheet
-   * verbatim (which G2-b requires) therefore deleted the screen until this
-   * branch existed. Measured 2026-08-06: `.mv-detail__grid` present in the DOM,
-   * `display: none`, nothing else painted.
-   *
-   * The split is greedy-by-estimated-height, and a plain `index % 2` is the
-   * wrong answer for the same reason it was upstream: `mvCoverRatio` alternates
-   * 3:4 / 4:3 by index, so an even-by-COUNT split puts every tall cover in one
-   * column and every short one in the other. Both columns share a width, so
-   * `1 / aspectRatio` is a valid proportional height to balance on.
-   */
-  if (isPhone) {
-    const columns: GridItem[][] = [[], []];
-    const heights = [0, 0];
-    items.forEach((mv) => {
-      const shorter = heights[0] <= heights[1] ? 0 : 1;
-      columns[shorter].push(mv);
-      heights[shorter] += 1 / aspectRatioOf(mv.ratio);
-    });
-
-    return (
-      <div className="mv-detail__mobile-grid" ref={containerRef}>
-        {columns.map((column, columnIndex) => (
-          <div className="mv-detail__mobile-column" key={columnIndex}>
-            {column.map((mv) => (
-              <Link key={mv.id} {...link(mv)} className="mv-detail__grid-item">
-                {card(mv)}
-              </Link>
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // Below Laptop width the justified-row maths (built around the 1440 desktop
-  // frame Figma provides) has no room to work — fall back to the simpler
-  // fixed-width wrapping grid.
-  if (!isDesktop) {
-    return (
-      <div className="mv-detail__grid mv-detail__grid--wrap" ref={containerRef}>
-        {items.map((mv) => (
-          <Link
-            key={mv.id}
-            {...link(mv)}
-            className={`mv-detail__grid-item mv-detail__grid-item--${mv.ratio.replace(":", "-")}`}
-          >
-            {card(mv)}
-          </Link>
-        ))}
-      </div>
-    );
-  }
-
-  const rows = computeJustifiedRows(items, containerWidth);
-
-  return (
-    <div className="mv-detail__grid" ref={containerRef}>
-      {rows.map((row, rowIndex) => (
-        <div className="mv-detail__grid-row" key={rowIndex}>
-          {row.items.map((mv) => (
-            <Link
-              key={mv.id}
-              {...link(mv)}
-              className="mv-detail__grid-item"
-              style={{ width: row.coverHeight * aspectRatioOf(mv.ratio) }}
-            >
-              {card(mv)}
-            </Link>
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export function MvExplore() {
   const online = useOnline();
-
-  const topPicks = withRatio(TOP_PICKS);
-  const newlyReleased = withRatio(NEWLY_RELEASED);
-  const isEmpty = topPicks.length === 0 && newlyReleased.length === 0;
+  const isEmpty = TRENDING_MVS.length === 0 && NEW_MVS.length === 0;
 
   return (
     <>
@@ -239,23 +79,7 @@ export function MvExplore() {
         ) : isEmpty ? (
           <CommunityEmpty variant="empty" />
         ) : (
-          <>
-            {/* `--primary` is what survives on phones. DP's mobile rule hides
-                every `.mv-detail__grid-section` and re-shows only this one, with
-                its SectionHeader suppressed — see the header note above for the
-                catalog that costs us. */}
-            <section className="mv-detail__grid-section mv-detail__grid-section--primary">
-              {/* This page is already the "See all" destination, so neither
-                  section links anywhere further. */}
-              <SectionHeader title="Top Picks Music Videos" mobileTitle="Top Picks" />
-              <MvGrid items={topPicks} />
-            </section>
-
-            <section className="mv-detail__grid-section">
-              <SectionHeader title="Newly Released Music Videos" mobileTitle="New MVs" />
-              <MvGrid items={newlyReleased} />
-            </section>
-          </>
+          <MvGridSections />
         )}
       </div>
     </>

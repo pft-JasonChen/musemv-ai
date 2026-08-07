@@ -114,7 +114,7 @@ export function SongGenerationScreen() {
                   className="button button--medium button--primary"
                   onClick={startSong}
                 >
-                  Retry
+                  <span className="button__label">Retry</span>
                 </button>
               </div>
             ) : (

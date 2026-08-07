@@ -126,7 +126,7 @@ export function ChooseSongModal({ open, onClose, onPick }: Props) {
               router.push(localePath(locale, "/song/create"));
             }}
           >
-            Create Song
+            <span className="button__label">Create Song</span>
           </button>
         </div>
       ) : (

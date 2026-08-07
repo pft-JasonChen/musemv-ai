@@ -190,7 +190,11 @@ export function Sidebar() {
               href={localePath(locale, "/profile")}
               className="button button--medium button--tertiary sidebar__upgrade-button"
             >
-              {t("nav.upgrade")}
+              {/* Designer fix, 2026-08-07: missing the `button__label` wrap —
+                  `.button--medium .button__label` is what carries Label/S
+                  (12px/15px); without it this text used the ambient/inherited
+                  size instead, which read as visibly oversized. */}
+              <span className="button__label">{t("nav.upgrade")}</span>
             </Link>
           )}
         </div>

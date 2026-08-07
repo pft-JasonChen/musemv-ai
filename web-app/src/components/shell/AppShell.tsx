@@ -5,6 +5,9 @@ import { stripLocalePrefix } from "@/lib/i18n/config";
 import { useTrackInAppNavigation } from "@/lib/navHistory";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { Navbar } from "@/components/home/Navbar";
+import { HomeBackground } from "@/components/home/HomeBackground";
+import { Footer } from "@/components/home/Footer";
 import { MobileHeader } from "./MobileHeader";
 import { MobileTabBar } from "./MobileTabBar";
 
@@ -25,10 +28,15 @@ import { MobileTabBar } from "./MobileTabBar";
  *   · Profile is no longer a bottom-bar tab — it is reached from MobileHeader's
  *     account button, or the Sidebar profile footer on desktop
  *
- * `TopBar` survives as the DEFAULT for routes not yet migrated (CH2) — in practice
- * only Home, until its design lands. DP's per-page RoomNavbar / DetailNavbar
- * replace it route by route in slice 2b. The marketing Navbar and Footer are out
- * of scope entirely (CH3/CH4): both appear only on Home and Blog, both deferred.
+ * `TopBar` survives as the DEFAULT for routes not yet migrated (CH2) — in
+ * practice only `/mv/creating` now (DP has no MV-render progress screen at
+ * all, so that route can't move — see `docs/DESIGNER-TODO.md` §B).
+ *
+ * Home (`/`) is no longer one of those: it now gets DP's own marketing
+ * `Navbar` (`src/components/home/Navbar.tsx`), ported from designer feedback
+ * that the legacy `TopBar` on the landing page didn't match the design at
+ * all. `/` can never appear in `OWN_CHROME` (see the comment below), so it
+ * has to be special-cased here rather than added to that list.
  */
 /**
  * Routes whose view renders its own DP navbar (RoomNavbar / DetailNavbar) and so
@@ -73,14 +81,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (path.startsWith("/share")) return <>{children}</>;
 
   const ownChrome = OWN_CHROME.some((r) => path === r || path.startsWith(`${r}/`));
+  const isHome = path === "/";
 
   return (
     <div className="app-layout app-layout--mobile-app">
       <Sidebar />
       <div className="app-layout__main">
-        {!ownChrome && <TopBar />}
+        {isHome && <HomeBackground />}
+        {!ownChrome && (isHome ? <Navbar /> : <TopBar />)}
         <MobileHeader />
         <main className="app-layout__content">{children}</main>
+        {isHome && <Footer />}
         <MobileTabBar />
       </div>
     </div>

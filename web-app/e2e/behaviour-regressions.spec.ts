@@ -187,7 +187,11 @@ test("G5-d#2 insufficient balance routes to IAP instead of generating", async ({
 // ════════════════════════════════════════════════════════════════════════════
 // G5-d #3 — AuthGuard on every signed-in-only route
 // ════════════════════════════════════════════════════════════════════════════
-const GUARDED_ROUTES = ["/settings", "/song/create", "/profile", "/mv/room", "/history"];
+// `/mv/room` is NOT in this list (2026-08-07, designer request) — it dropped
+// its `AuthGuard` on purpose so the marketing Navbar's "Start for Free" can
+// land a guest here to compose. See the "/mv/room is guest-reachable" block
+// below for where its gate actually is now.
+const GUARDED_ROUTES = ["/settings", "/song/create", "/profile", "/history"];
 
 for (const route of GUARDED_ROUTES) {
   test(`G5-d#3 AuthGuard: ${route} is closed to guests`, async ({ page }) => {
@@ -197,6 +201,22 @@ for (const route of GUARDED_ROUTES) {
     await expect(page.getByRole("dialog", { name: /Sign in/i })).toBeVisible();
   });
 }
+
+test("G5-d#3 /mv/room is guest-reachable, unlike the routes above", async ({ page }) => {
+  // No login() — arrive as a guest. If `/mv/room` were still behind AuthGuard
+  // this would render nothing and pop the sign-in dialog, same as the loop above.
+  await page.goto("/mv/room");
+  await expect(page.getByRole("dialog", { name: /Sign in/i })).not.toBeVisible();
+  await expect(page.locator(".mv-create__panel")).toBeVisible();
+});
+
+test("G5-d#3 /mv/room's gate moved to Create Music Video", async ({ page }) => {
+  // Still a guest — compose is allowed, generating is not.
+  await page.goto("/mv/room");
+  await composeMv(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  await expect(page.getByRole("dialog", { name: /Sign in/i })).toBeVisible();
+});
 
 test("G5-d#3 requireLogin: dismissing the sign-in modal returns Home", async ({ page }) => {
   await page.goto("/profile");

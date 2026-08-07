@@ -87,3 +87,17 @@
 @import "./designer/NewMVsSection.css";
 @import "./designer/TopPicksSection.css";
 @import "./designer/NewSongsSection.css";
+/* The landing page's marketing header (Figma "Navbar", node 1330:22661).
+   Not part of the eight files above — DP's own component, not a HomePage
+   sub-section — added when `/`'s header was swapped from the legacy `TopBar`
+   onto this. 43 gated files now. */
+@import "./designer/Navbar.css";
+/* The landing page's marketing footer (Figma "Website Footer", node
+   1330:22087). DP also shows this on its Blog page, but Blog isn't ported to
+   WA, so this only ever renders on "/" here. 44 gated files now. */
+@import "./designer/Footer.css";
+/* The sign-in dialog (Figma "Popup/Dialog - Sign In", node 1724:43347 +
+   "Sign In — Successful", node 310:4720). Site-wide (AuthProvider), not
+   Home-only like the three files above — mounted once at the app root. 45
+   gated files now. */
+@import "./designer/LoginModal.css";

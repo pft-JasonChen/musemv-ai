@@ -114,7 +114,7 @@ export function StoryboardGenerationScreen() {
                 className="button button--medium button--primary"
                 onClick={startStoryboard}
               >
-                Retry
+                <span className="button__label">Retry</span>
               </button>
               <Link
                 href={localePath(locale, "/mv/room")}
