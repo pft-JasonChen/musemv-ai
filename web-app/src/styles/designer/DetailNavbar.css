@@ -65,6 +65,13 @@
   letter-spacing: -0.26px;
 }
 
+/* Only exists to feed the mobile bar's title (see DetailNavbarProps.mobileTitle)
+   on pages whose desktop layout keeps the plain "‹ Back" text link — hidden
+   here, shown by the mobile override below. */
+.detail-navbar__title--mobile-only {
+  display: none;
+}
+
 .detail-navbar__back-button {
   display: flex;
   align-items: center;
@@ -91,4 +98,67 @@
 
 .detail-navbar__login {
   margin-left: auto;
+}
+
+/* App-mobile back(left)+title(centered) bar — same H50/flat-fill/bottom-
+   border treatment already confirmed against Figma for MVDetailPage's own
+   mobile header (see MVDetailPage.css's .mv-detail__mobile-header), now
+   generalized here so every other DetailNavbar-based page gets it for
+   free instead of being hidden entirely (the previous behavior, still the
+   fallback for pages that opt out via hideMobileBar because they render
+   their own richer mobile header, e.g. MVDetailPage itself). */
+@media (max-width: 767px) {
+  .detail-navbar {
+    height: 50px;
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .detail-navbar--hide-mobile-bar {
+    display: none;
+  }
+
+  .detail-navbar__top {
+    display: grid;
+    grid-template-columns: 28px 1fr 28px;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    padding: 10px 16px 0;
+  }
+
+  .detail-navbar__back {
+    gap: 0;
+  }
+
+  .detail-navbar__back-label {
+    display: none;
+  }
+
+  .detail-navbar__back-button {
+    padding: 4px;
+  }
+
+  .detail-navbar__title {
+    text-align: center;
+    font-size: var(--font-title-s);
+    line-height: var(--line-height-title-s);
+    letter-spacing: -0.01em;
+  }
+
+  .detail-navbar__title--mobile-only {
+    display: block;
+  }
+
+  .detail-navbar__actions,
+  .detail-navbar__login {
+    display: none;
+  }
+
+  /* SongDetailPage's only current tabsSlot consumer — hidden on mobile for
+     now per product owner request (not designed for mobile yet). */
+  .detail-navbar__tabs {
+    display: none;
+    padding: 0 16px 16px;
+  }
 }

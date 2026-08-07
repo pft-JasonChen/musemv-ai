@@ -17,11 +17,15 @@ import { ModeModal } from "./ModeModal";
 import { TemplateSheet } from "./TemplateSheet";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { creationHref, useOpenCreation } from "@/components/history/useOpenCreation";
+import { MOCK_USER } from "@/lib/user";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
-import { MV_TYPES, SAMPLE_FACES, IDEAS, formatDuration } from "@/lib/mv/mock";
+import { MV_TYPES, SAMPLE_FACES, formatDuration } from "@/lib/mv/mock";
 import { NEW_MVS } from "@/lib/mv/community";
 import {
   COST_RENDER,
@@ -65,7 +69,8 @@ import {
  * · MV-02 import validation (format allow-list + 50MB ceiling).
  * · `EnhanceButton`, which goes through `api.enhancePrompt` (G5-d #10). DP
  *   picks a random string from a local `ENHANCED_SUGGESTIONS` array.
- * · The Ideas button. DP has Templates only.
+ * · (The Ideas button was here until 2026-08-06. It is GONE now — V1 ships no
+ *   canned-sample fillers — and that is a deviation FROM DP, which has one.)
  *
  * ── AND ONE THING DP HAS THAT WA DID NOT ────────────────────────────────────
  *
@@ -83,8 +88,16 @@ import {
 export function MvRoom() {
   const router = useRouter();
   const { compose, setCompose, patchCompose, resetForNewMv } = useMvFlow();
+  const { loggedIn } = useAuth();
+  const { history } = useHistory();
+  const openCreation = useOpenCreation();
   const { credits } = useCredits();
   const { locale } = useLocale();
+
+  // Items 4/5 (2026-08-06): the side rail becomes "My Creations" only once the
+  // signed-in user actually has a finished MV. See the rail's own note below.
+  const myMvs = history.filter((h) => h.kind === "mv" && h.status === "completed");
+  const showMine = loggedIn && myMvs.length > 0;
   const [songOpen, setSongOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -375,17 +388,14 @@ export function MvRoom() {
                     <DpIcon name="ic_video" className="mv-create__idea-icon" />
                     Templates
                   </button>
-                  {/* WA-only, and kept: DP has no Ideas button. */}
-                  <button
-                    type="button"
-                    className="mv-create__idea-btn"
-                    onClick={() =>
-                      patchCompose({ description: IDEAS[Math.floor(Math.random() * IDEAS.length)] })
-                    }
-                  >
-                    <DpIcon name="ic_edit_ai" className="mv-create__idea-icon" />
-                    Ideas
-                  </button>
+                  {/* The "Ideas" button was REMOVED 2026-08-06 — V1 ships no
+                      canned-sample fillers (product owner). Note this is a
+                      deliberate deviation FROM DP, not a fidelity fix: DP has
+                      `.mv-create__idea-btn` on this box too
+                      (`MVCreatePage.tsx:1182`), so the next drop will bring it
+                      back and the removal has to be re-applied. Templates
+                      stays — it opens `TemplateSheet`, a real feature, not a
+                      mock-data filler. */}
                 </div>
                 <div className="mv-create__footer-right">
                   {/* G5-d #10: this goes through `api.enhancePrompt`. DP's
@@ -550,29 +560,69 @@ export function MvRoom() {
           </FloatingCTA>
         </div>
 
+        {/*
+          ── THE SIDE RAIL HAS TWO MODES, AND THE DATA SWITCHES WITH THE TITLE ──
+
+          DP: `{isSignedIn ? 'My Creations' : 'Trending MVs'}`, with "See all"
+          rendered only in the signed-out branch.
+
+          G7 finding 3g-3 was that WA had the title switching and the DATA not:
+          it said "My Creations" over `NEW_MVS`, community fixtures with other
+          creators' names. That was fixed by pinning the title to "Trending MVs",
+          which was honest but lost DP's signed-in state entirely. This restores
+          it properly — the title, the rows and the "See all" all switch
+          together (product owner, 2026-08-06).
+
+          **The condition is `loggedIn` AND "has actually made something".** DP
+          can say `isSignedIn` alone because its `MY_CREATIONS` is a fixture that
+          is never empty; WA's comes from the real (session-local) History, so a
+          user who has just signed in has none. Falling back to Trending there
+          beats a "My Creations" heading over nothing.
+        */}
         <div className="mv-create__side">
           <div className="mv-create__side-header">
-            {/* G7 finding 3g-3: this said "My Creations" when logged in, over
-                `NEW_MVS` — community fixtures, with other people's names as the
-                subtitle. `/mv/room` is auth-guarded, so the lying branch was the
-                one nearly every user saw. The title now matches the data; the
-                real history rail is a product decision, not a rename. */}
-            <p className="mv-create__side-title">Trending MVs</p>
-            <Link href={localePath(locale, "/explore/mvs")} className="mv-create__side-see-all">
-              See all
-              <DpIcon name="ic_chevron-right" className="mv-create__side-see-all-icon" />
-            </Link>
+            <p className="mv-create__side-title">{showMine ? "My Creations" : "Trending MVs"}</p>
+            {!showMine && (
+              <Link href={localePath(locale, "/explore/mvs")} className="mv-create__side-see-all">
+                See all
+                <DpIcon name="ic_chevron-right" className="mv-create__side-see-all-icon" />
+              </Link>
+            )}
           </div>
           <div className="mv-create__side-list">
-            {NEW_MVS.slice(0, 7).map((mv) => (
-              <Link
-                key={mv.id}
-                href={localePath(locale, `/watch?id=${mv.id}`)}
-                className="mv-create__side-item"
-              >
-                <ListItem title={mv.title} coverImage={mv.thumb} subtitle={mv.creator} />
-              </Link>
-            ))}
+            {showMine
+              ? myMvs.slice(0, 7).map((mv) => (
+                  <Link
+                    key={mv.id}
+                    href={localePath(locale, creationHref({ id: mv.id, kind: "mv" }))}
+                    className="mv-create__side-item"
+                    onClick={(e) => {
+                      // Seed-then-navigate, exactly as /history does — the
+                      // result screen guards on flow state. Consequence, and it
+                      // is the same one /history's "Edit MV" has always had:
+                      // this replaces the compose draft being edited above.
+                      e.preventDefault();
+                      openCreation({
+                        id: mv.id,
+                        kind: "mv",
+                        title: mv.title,
+                        thumb: mv.thumb,
+                        resultUrl: mv.resultUrl,
+                      });
+                    }}
+                  >
+                    <ListItem title={mv.title} coverImage={mv.thumb} subtitle={MOCK_USER.name} />
+                  </Link>
+                ))
+              : NEW_MVS.slice(0, 7).map((mv) => (
+                  <Link
+                    key={mv.id}
+                    href={localePath(locale, `/watch?id=${mv.id}`)}
+                    className="mv-create__side-item"
+                  >
+                    <ListItem title={mv.title} coverImage={mv.thumb} subtitle={mv.creator} />
+                  </Link>
+                ))}
           </div>
         </div>
       </div>

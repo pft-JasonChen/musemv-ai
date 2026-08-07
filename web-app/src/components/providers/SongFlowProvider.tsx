@@ -5,7 +5,13 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { api, pollJob } from "@/lib/api";
-import { COST_SONG, COST_SONG_RECREATE, DEFAULT_SONG_COMPOSE, type SongCompose, type SongResult } from "@/lib/mv/types";
+import {
+  COST_SONG,
+  COST_SONG_RECREATE,
+  DEFAULT_SONG_COMPOSE,
+  type SongCompose,
+  type SongResult,
+} from "@/lib/mv/types";
 import { useHistory } from "./HistoryProvider";
 import { useCredits } from "./CreditsProvider";
 import { IDLE_GEN, toGen, type Gen } from "./progress";
@@ -15,6 +21,15 @@ interface SongFlowValue {
   patchSongCompose: (p: Partial<SongCompose>) => void;
   gen: Gen;
   songResult: SongResult | null;
+  /**
+   * Hydrate the flow with an ALREADY-FINISHED song, so `/song/result` can be
+   * opened for something the user made earlier instead of only for the take
+   * this session just generated. `/history` uses it to route a done song row at
+   * its own result screen; nothing else should.
+   *
+   * C4 addition, not a rename — see `docs/CHANGELOG-RD.md` 2026-08-06.
+   */
+  setSongResult: React.Dispatch<React.SetStateAction<SongResult | null>>;
   startSong: () => void;
   /** Discard the prior song result before composing a brand-new song. */
   resetForNewSong: () => void;
@@ -71,7 +86,10 @@ export function SongFlowProvider({ children }: { children: React.ReactNode }) {
           },
         });
       })
-      .catch(() => { refund(); setGen((g) => ({ ...g, status: "failed" })); });
+      .catch(() => {
+        refund();
+        setGen((g) => ({ ...g, status: "failed" }));
+      });
   }, [songCompose, upsertGenerating, markCompleted, markFailed, addCredits]);
 
   // A brand-new song must discard the previous result, otherwise the song
@@ -92,7 +110,16 @@ export function SongFlowProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <Ctx.Provider
-      value={{ songCompose, patchSongCompose, gen, songResult, startSong, resetForNewSong, resetForRecreate }}
+      value={{
+        songCompose,
+        patchSongCompose,
+        gen,
+        songResult,
+        setSongResult,
+        startSong,
+        resetForNewSong,
+        resetForRecreate,
+      }}
     >
       {children}
     </Ctx.Provider>

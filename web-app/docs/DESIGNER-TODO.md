@@ -109,7 +109,50 @@ DOM 在、`display:none`、使用者完全無法篩選。其中 **Liked 是有 s
   `DetailNavbar`)維持 DP 原樣隱藏。已補 7 支 e2e 鎖住這個行為。
 - **需要的決定:** 下次交稿請讓 tabs 列在 <767px 保持顯示。屆時我們刪掉 override。
 
-### A5. 手機上 detail 畫面**沒有任何返回途徑** —— 需要設計判斷
+### A5. 手機上 detail 畫面**沒有任何返回途徑** —— ✅ **2026-08-06 設計師已在 drop `2670ed2` 回答,WA 已接上**
+
+> **結論先寫在最前面,因為下面整段是「當時還沒答案」的記錄,現在有了。**
+>
+> 設計師在 `2670ed2` 這個 drop 直接改掉成因,而不是給一個 case-by-case 的答覆:
+>
+> - `AppLayout.css` 的手機隱藏清單**把 `.detail-navbar` 整條拿掉了**,`.room-navbar` 則改成
+>   `:not(.room-navbar--mobile-back)` —— 也就是預設仍然隱藏,但頁面可以用新的
+>   `mobileBackHref` prop 選擇加入。
+> - `DetailNavbar.css` 在 `<767px` 給了一條 **50px 高的 compact bar**,用 `__top` 排成
+>   `28px 1fr 28px` 的 grid:左邊返回鍵、中間標題、右邊留白。新增 `mobileTitle`(桌機保留
+>   「‹ Back」文字連結、手機才顯示標題)與 `hideMobileBar`(頁面自己畫了 mobile header 時抑制)。
+> - `RoomNavbar.css` 用 `--mobile-back` modifier 做同一套處理。
+>
+> **WA 這一側已經接上(2026-08-06,DP re-sync slice):** `DetailNavbar.tsx` 加了
+> `mobileTitle` / `hideMobileBar`,並**刪掉了 WA 自己那套 Tailwind 權宜控制項**(原本的
+> `phoneBack` prop)—— 兩個返回鍵疊在同一個手機畫面上本身就是缺陷。`phoneBack={false}` 的兩個
+> caller(`/explore/mvs`、`/explore/songs`)改成 `hideMobileBar`,行為與 drop 前完全相同。
+>
+> 375px 實測(production build,已先證明 238KB stylesheet 是 200):
+>
+> | route                             | `.detail-navbar`        | 可用返回控制項             |
+> | --------------------------------- | ----------------------- | -------------------------- |
+> | `/explore/songs`、`/explore/mvs`  | `none`(`hideMobileBar`) | 0 —— tab bar 可達,刻意如此 |
+> | `/watch`、`/creator`、`/settings` | **375×50**              | **1**                      |
+>
+> **兩個沒有一起解決的,記在這裡免得被當成已完成:**
+>
+> 1. **DP 自己更進一步,WA 沒有跟。** DP 的 `MVDetailPage` 傳 `hideMobileBar`,改用自己的
+>    `.mv-detail__mobile-header` / `.mv-player__mobile-header`(返回鍵 + 標題 + 副標)。那兩個
+>    header **還沒移轉**,所以 WA 的 `/watch` 目前用 `DetailNavbar` 的 bar —— 同樣的能力,
+>    先不拆。要拆的話必須先蓋好再拆,A5 第一次發生就是反過來做的。
+> 2. **`RoomNavbar` 的 `mobileBackHref` 還沒接進 WA。** DP 用在 AccountPage 與 SongCreatePage。
+>    不接不會少任何東西(現況本來就是隱藏),但這是這個 drop 帶來、尚未採用的能力。
+>
+> **A4 的 override 因此砍掉一半。** 見 `designer-overrides.css`:`.detail-navbar` 那一半必須刪,
+> 因為它藏的 `__top` 正是設計師剛把返回鍵放進去的地方 —— 而同一個 drop 又刻意藏掉
+> `.detail-navbar__tabs`(「not designed for mobile yet」),兩者相加讓 `/explore/songs` 在 375px
+> 變成一條 **375×50、既沒 tabs 也沒返回鍵的空 bar**,而且不會有任何測試變紅。
+> `.room-navbar` 那一半**保留** —— DP 的註解明講 History 沒傳 `mobileBackHref`,仍然整條隱藏,
+> HIST-03 的篩選 tabs 還是靠這個 override 活著。
+
+<details>
+<summary>以下是 2026-08-05 之前的原始記錄(當時還沒有答案),保留備查</summary>
 
 承 A4:`.detail-navbar` 在 <767px 也是 `display: none`,而 **`MobileHeader` 沒有 back 控制項**
 (DP 與 WA 兩邊都沒有)。也就是說 **DP 的手機設計在 detail 畫面上完全沒有返回鍵**,
@@ -162,6 +205,12 @@ DOM 在、`display:none`、使用者完全無法篩選。其中 **Liked 是有 s
 > 底欄可達的畫面(`/explore/mvs`、`/explore/songs` 清單半邊)明確傳 `phoneBack={false}`。
 > **一個檔案、一個刪除點。** 設計師給稿後,把這段拿掉即可,不需要逐頁清。
 > 已有 e2e 守住三件事:該有的有、該沒有的沒有、桌機不重複。
+>
+> **上面這段描述的 `phoneBack` 已於 2026-08-06 刪除** —— 「設計師給稿後把這段拿掉」就是這次做的事。
+> 那三個 e2e 斷言一個字都沒改,因為它們寫的是「375px 有沒有可用的返回控制項」,不是「有沒有那顆
+> Tailwind 按鈕」;實作被換掉而測試照樣通過,這正是當初寫成行為測試而非標記測試的理由。
+
+</details>
 
 ### A6. `SongDetailPage` 的 `Trending` tab 沒有對應資料 —— 不擋開發
 
@@ -301,10 +350,18 @@ WA 這邊有**兩份真的**清單(`TOP_PICKS_SONGS`、`NEW_SONGS`),所以 Slice
 `.mp4` 用任一支影片充當)之後,**`/mv-edit?from=history` 六個寬度全部正常 render**,
 slice 3k 就是照著它搬的。
 
-- **請設計師把這兩個資料夾補進 drop。** WA 這邊不需要動作了,但下一次 re-drop 如果又漏,
-  同樣的白畫面會再來一次,而且一樣會被誤判成某一頁的問題。
-- 重跑方式:把 `designer-prototype/` 複製到 repo 外,補齊這兩批素材,再跑 `vite`。
-  **不要在 `designer-prototype/` 裡面補檔**,那是唯讀參考。
+- **✅ 第 1 批(`hero/`)2026-08-07 已由我們自己補上,而且是**收進 repo**的。**
+  landing page 移轉需要它,產品拍板 vendor 這 13 MB(對比 `covers/` 的 257 MB),
+  `PROVENANCE.md` 的排除表已改,re-sync 程序也已經加上「hero 要 copy 到兩個地方」
+  (`designer-prototype/src/assets/hero/` 與 `web-app/public/assets/hero/`)。
+  所以 `designer-prototype/` 現在**跑得起來,除了 `covers/` 與 `storyboard-clips/` 的媒體**。
+  ⚠️ 這一條同時推翻了本文件下面「檔名含空白只剩 covers/」那句話 —— hero 裡有 4 個檔名有空白,
+  WA 用 `encodeURIComponent` 在引用點處理(`home/heroItems.ts`)。
+- **仍請設計師把 `storyboard-clips/` 補進 drop**(`hero/` 現在我們自己接住了,但由 upstream
+  出貨仍然比較乾淨)。下一次 re-drop 如果 `hero/` 又漏而我們忘了 copy,同樣的白畫面會再來一次,
+  而且一樣會被誤判成某一頁的問題。
+- 重跑方式:把 `designer-prototype/` 複製到 repo 外,補齊剩下那批素材,再跑 `vite`。
+  **除了 `hero/` 這個已拍板的例外之外,不要在 `designer-prototype/` 裡面補檔**,那是唯讀參考。
 - `/song-detail` 的 `reading 'id'` 是同一個成因的另一個受害者;那條 route 已經移轉完(3b),
   **WA 那份現在才是可量的基準**,不影響。
 
@@ -463,6 +520,53 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 - **需要設計判斷:** 手機上這一列要留 Share 嗎?若要,放哪裡(列上?長按?底部 sheet?)。
 - WA 這邊同樣**沒有 override**,先記在這裡等裁示。
 
+### A19. `/explore/mvs` 手機版只看得到 **14 支裡的 3 支** —— 已依 DP 拍板,但數字請設計師確認
+
+**發現於:** 2026-08-07,drop 2(`2670ed2`)的 re-sync。
+
+`MVDetailPage.css` 在 `max-width: 767px` 把所有 `.mv-detail__grid-section` `display: none`,
+再單獨把 `--primary` 那一段放回來(`.mv-detail__mobile-grid`,兩欄 masonry)。
+
+- **對 DP 無損:** DP 的第二段是第一段 reverse 的同一份 catalog,藏掉不會少任何東西。
+- **對 WA 有損:** 我們兩段是**兩份不同的 catalog**。`TRENDING_MVS` = **3 支**,
+  `NEW_MVS` = **11 支** —— 所以手機使用者只摸得到 **3 / 14**,其餘 11 支在手機上沒有任何入口。
+- **產品拍板 2026-08-07:跟 DP 走**,理由是「在兩個 section 都掛 `--primary`」雖然只差一個 class,
+  卻是**每次交稿都會被還原**的偏離(和 `Idea` 按鈕同一類)。
+- ⚠️ **拍板當下的說法是「次要 catalog 被藏起來」,3 / 14 這個比例是事後量出來的。**
+  記在這裡是因為它把取捨的份量整個換掉了:這不是藏掉一個補充區塊,是手機版
+  Explore MV 只剩兩成內容。若設計師認為不可接受,需要的是**手機版雙 section 的設計**,
+  不是我們加 override。
+- 已用 `e2e/behaviour-regressions.spec.ts`(「/explore/mvs still has a grid on a phone」)
+  把這個損失**寫成斷言**,免得下一個 session 當成 bug 順手「修好」。
+
+### A20. 首頁刪掉跑馬燈之後,`TRENDING_MVS` 在首頁**沒有任何入口**
+
+**發現於:** 2026-08-07,規劃 landing page 移轉時。
+**✅ 已實作 2026-08-07**(landing page 移轉那一刀),連帶後果也已由產品負責人**當面確認**:
+「TRENDING_MVS 不用首頁(Match DP)」。所以下面第二點的 ⚠️ 不再是「拍板時沒一起裁示」,
+是**已經裁示過的**;但下一段那個「兩件事疊起來」的圖仍然成立,設計師該回答的問題沒有變。
+
+WA 首頁目前有一條「Trending MV」45 秒無限跑馬燈(`TRENDING_MVS` 複製兩份);
+DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
+`NEW_MVS` / `TOP_PICKS_SONGS` / `NEW_SONGS`。
+
+- **產品拍板 2026-08-07:跟 DP 走,刪掉跑馬燈。已刪。** `globals.css` 的 `@keyframes marquee`
+  與 `.marquee-wrap` / `.marquee-animate` / `.marquee-clone` 三個 class 也一起刪掉了 ——
+  唯一的使用者跟著走了,留著就只是三個到不了的 class 名。
+- ⚠️ **連帶後果(已由產品負責人確認接受):** 刪掉之後 `TRENDING_MVS`(3 支)
+  **在首頁再也沒有入口**,唯一入口變成 `/explore/mvs`。
+- 這件事本身還過得去 —— 它在 `/explore/mvs` 正是 `--primary` 那一段,
+  也就是 A19 之下手機唯一看得到的 catalog。但**兩件事疊起來**才是完整的圖:
+  首頁看不到 Trending,手機的 Explore 又只看得到 Trending。
+- **需要設計判斷:** 首頁要不要一條 Trending rail?若要,那是 DP 還沒畫過的區塊。
+- e2e 的「landing page: clicking a Trending MV lands on the same /watch screen」是在守
+  「首頁與 `/explore/mvs` 不可以走岔」這條真規則。**已改指到 `.new-mvs__item`**
+  (「Trending Music Videos」那條,是還在的、會走到 `/watch` 的 rail),沒有刪掉;
+  凍結跑馬燈動畫的 `addStyleTag` 跟著那條 rail 一起移除了。
+- 另外新增了「landing page: the Trending marquee is gone and stays gone」——
+  把**這個損失本身寫成斷言**(和 A19 同一手法),免得下次交稿或下個 session
+  順手把 WA 自己的 rail 加回來。
+
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 
 | 畫面                           | 狀況                                                                                                                                                        | 影響                                              |
@@ -507,7 +611,11 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 
 - **90 個 icon 檔名**與我們原有的 84 個完全同源,已全數收進 `public/assets/icons/ui/`,
   並改用 DP 的 `mask-image` + `currentColor` 做法。
-- **檔名含空白**:這一版只剩 8 個,全部在 `covers/`(demo 媒體,我們沒有收進 repo)。
-  原本計畫裡的 slugify script 不需要了。
+- **檔名含空白**:~~這一版只剩 8 個,全部在 `covers/`(demo 媒體,我們沒有收進 repo)。~~
+  **2026-08-07 更正:`hero/` 收進 repo 之後,有 4 個含空白的檔名進到 `web-app/public/`**
+  (`hero_01_Vintage Car.png` 等)。原始碼裡一律用 `encodeURIComponent`
+  (`home/heroItems.ts`),和 `community.ts` 的 `AUDIO` 陣列同一套做法 ——
+  raw space 的路徑根本組不成合法請求,而且**失敗是靜默的**(video/img 不會丟錯,只會空著)。
+  slugify script 仍然不需要,但「只剩 covers/」這句話已經不對了。
 - **`sessionStorage` 登入**:我們維持 `localStorage`,DP 的 `AuthProvider` 整支不搬。
 - **`<a href>` 整頁導航**:我們一律改成 `next/link` + locale 前綴,否則非英文語系會壞。

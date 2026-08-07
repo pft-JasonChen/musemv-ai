@@ -4,9 +4,10 @@
 import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useHistory } from "@/components/providers/HistoryProvider";
-import { CreationDialog, type CreationLike } from "@/components/mv/CreationDialog";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath, type Locale } from "@/lib/i18n/config";
+import { creationHref, useOpenCreation, useSeedMvFlow } from "@/components/history/useOpenCreation";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { buildShareUrl } from "@/lib/share";
 import { Modal } from "@/components/ui/Modal";
@@ -16,10 +17,8 @@ import {
   HISTORY_SAMPLES,
   SAMPLE_RESULT_VIDEO,
   SAMPLE_AUDIO,
-  mockStoryboard,
   type HistorySample,
 } from "@/lib/mv/mock";
-import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 import { formatCount } from "@/lib/mv/community";
 // Heart/Share are still WA's inline-SVG icons because the ⋯ menu is NOT migrated
 // in this spike — D4 says convert only the screen you are migrating, and the menu
@@ -54,12 +53,19 @@ interface Override {
  *
  * These are WA's own routes — D3 keeps WA's route model, so DP's `?from=` scheme
  * is not adopted. Mid-flow targets still self-guard when opened without flow state.
+ *
+ * R-9: locale-prefixed, because copy-link and middle-click are exactly the two
+ * paths the `NEXT_LOCALE` cookie redirect does NOT rescue. (Recorded as an open
+ * R-9 shape in `PHASE-3-ACCEPTANCE.md` §3 "Also noted"; closed here.)
  */
-function rowHref(r: HistorySample): string {
-  if (r.source === "community" && r.communitySongId) return `/song/play?id=${r.communitySongId}`;
-  if (r.kind === "storyboard") return `/mv/storyboard?id=${r.id}`;
-  if (r.kind === "song") return `/song/play?id=${r.id}`;
-  return `/mv/result?id=${r.id}`;
+function rowHref(locale: Locale, r: HistorySample): string {
+  const path =
+    r.source === "community" && r.communitySongId
+      ? `/song/play?id=${r.communitySongId}`
+      : r.kind === "storyboard"
+        ? `/mv/storyboard?id=${r.id}`
+        : creationHref({ id: r.id, kind: r.kind });
+  return localePath(locale, path);
 }
 
 function I({ d, size = 18 }: { d: string; size?: number }) {
@@ -108,11 +114,12 @@ function Toggle({ on }: { on: boolean }) {
 export function HistoryView() {
   const router = useRouter();
   const { history } = useHistory();
-  const { setStoryboard, saveStoryboard, setCompose } = useMvFlow();
+  const { locale } = useLocale();
+  const openCreation = useOpenCreation();
+  const seedMvFlow = useSeedMvFlow();
   const [filter, setFilter] = useState<Filter>("all");
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [ov, setOv] = useState<Record<string, Override>>({});
-  const [selected, setSelected] = useState<CreationLike | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [share, setShare] = useState<{ title: string; url: string } | null>(null);
   const [del, setDel] = useState<HistorySample | null>(null);
@@ -128,26 +135,6 @@ export function HistoryView() {
   const published = (r: HistorySample) => ov[r.id]?.published ?? r.published ?? false;
   const reviewing = (r: HistorySample) => ov[r.id]?.reviewing ?? false;
 
-  /**
-   * Seed flow state so the storyboard/MV editors render for THIS sample item.
-   * The storyboard's cover/character art is taken from the row thumbnail so each
-   * history entry opens its own result rather than a shared generic storyboard.
-   */
-  function seedFlow(r: HistorySample) {
-    const base = mockStoryboard({ description: r.title, title: r.title });
-    const sb = r.thumb ? { ...base, coverImage: r.thumb, characterImage: r.thumb } : base;
-    setStoryboard(sb);
-    saveStoryboard(sb);
-    setCompose({
-      ...DEFAULT_COMPOSE,
-      description: r.title,
-      song: r.thumb
-        ? { id: `h-${r.id}`, source: "sample", title: r.title, durationSec: 145, art: r.thumb }
-        : null,
-      settings: { ...DEFAULT_COMPOSE.settings, title: { on: true, text: r.title } },
-    });
-  }
-
   const rows: HistorySample[] = useMemo(() => {
     const live: HistorySample[] = history.map((h) => ({
       id: h.id,
@@ -161,14 +148,10 @@ export function HistoryView() {
       likes: 0,
       shares: 0,
       liked: false,
+      resultUrl: h.resultUrl,
     }));
     return [...live, ...HISTORY_SAMPLES].filter((r) => !removed.has(r.id));
   }, [history, removed]);
-
-  // Live row backing the open CreationDialog (if any) — used to keep its
-  // published/reviewing state (and the toggle) in sync with this same row's
-  // "..." menu, since `selected` is a point-in-time snapshot taken at open time.
-  const selectedRow = selected ? rows.find((r) => r.id === selected.id) : undefined;
 
   const shown = rows.filter((r) => {
     const community = r.source === "community";
@@ -182,24 +165,25 @@ export function HistoryView() {
   function openRow(r: HistorySample) {
     if (r.status !== "done") return;
     if (r.source === "community" && r.communitySongId) {
-      router.push(`/song/play?id=${r.communitySongId}`);
+      router.push(localePath(locale, `/song/play?id=${r.communitySongId}`));
       return;
     }
     if (r.kind === "storyboard") {
-      seedFlow(r);
-      router.push(`/mv/storyboard?id=${r.id}`);
+      seedMvFlow(r);
+      router.push(localePath(locale, `/mv/storyboard?id=${r.id}`));
       return;
     }
-    setSelected({
+    // A done MV/song row opens ITS OWN result screen (2026-08-06). It used to
+    // open `CreationDialog`, a pre-migration Tailwind modal DP has no
+    // equivalent of — DP links these rows straight at `/mv-result` and
+    // `/song-create?stage=result`. `useOpenCreation` seeds the flow first,
+    // because both result screens guard on it.
+    openCreation({
       id: r.id,
       kind: r.kind,
       title: r.title,
-      thumb: r.thumb ?? "",
-      date: r.date,
-      plays: r.plays,
-      likes: r.likes,
-      shares: r.shares,
-      liked: liked(r),
+      thumb: r.thumb,
+      resultUrl: r.resultUrl,
     });
   }
 
@@ -213,12 +197,14 @@ export function HistoryView() {
     showToast("Download started");
   }
   function editMv(r: HistorySample) {
-    seedFlow(r);
-    router.push(`/mv/edit?id=${r.id}`);
+    seedMvFlow(r);
+    router.push(localePath(locale, `/mv/edit?id=${r.id}`));
   }
   function createMv(r: HistorySample) {
-    seedFlow(r);
-    router.push(r.kind === "storyboard" ? `/mv/storyboard?id=${r.id}` : "/mv/room");
+    seedMvFlow(r);
+    router.push(
+      localePath(locale, r.kind === "storyboard" ? `/mv/storyboard?id=${r.id}` : "/mv/room"),
+    );
   }
   function togglePublishSong(r: HistorySample) {
     const next = !published(r);
@@ -285,7 +271,7 @@ export function HistoryView() {
                   r={r}
                   liked={liked(r)}
                   onOpen={() => openRow(r)}
-                  href={rowHref(r)}
+                  href={rowHref(locale, r)}
                   cta={
                     // HIST-05: storyboards surface Create outside the ⋯ menu. DP places
                     // it on the cover itself (.history-card__create) rather than as a
@@ -336,20 +322,6 @@ export function HistoryView() {
           </ul>
         )}
 
-        <CreationDialog
-          key={selected?.id ?? "none"}
-          open={selected != null}
-          creation={selected}
-          published={selectedRow ? published(selectedRow) : false}
-          reviewing={selectedRow ? reviewing(selectedRow) : false}
-          onClose={() => setSelected(null)}
-          onDelete={(id) => setRemoved((s) => new Set(s).add(id))}
-          onTogglePublish={() => {
-            if (!selectedRow) return;
-            if (selectedRow.kind === "mv") togglePublishMv(selectedRow);
-            else togglePublishSong(selectedRow);
-          }}
-        />
         <ShareDialog
           open={share != null}
           onClose={() => setShare(null)}

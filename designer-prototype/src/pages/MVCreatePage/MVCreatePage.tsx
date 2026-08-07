@@ -1046,7 +1046,10 @@ function MVCreatePage() {
   }
 
   return (
-    <AppLayout navbar={<RoomNavbar title="AI Music Video" credits={390} />}>
+    <AppLayout
+      navbar={<RoomNavbar title="AI Music Video" credits={390} mobileBackHref="/home" />}
+      showMobileHeader={false}
+    >
       <div className="mv-create">
         <div className="mv-create__panel">
           <div className="mv-create__section">

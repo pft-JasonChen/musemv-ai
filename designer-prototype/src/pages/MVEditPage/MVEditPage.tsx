@@ -400,7 +400,10 @@ function MVEditPage() {
   }, [currentSceneVersions.length, selectedVersion])
 
   return (
-    <AppLayout navbar={<DetailNavbar title="Edit Music Video" credits={390} backHref={backHref} />}>
+    <AppLayout
+      navbar={<DetailNavbar title="Edit Music Video" credits={390} backHref={backHref} />}
+      showMobileHeader={false}
+    >
       <div className="mv-edit">
         <div className="mv-edit__panel">
           <div className="mv-edit__section mv-edit__section--storyboard">

@@ -7,6 +7,8 @@ import Tabs from '../../components/Tabs/Tabs'
 import TopSongListItem from '../../components/TopSongListItem/TopSongListItem'
 import ShareDialog, { shareOrOpenDialog } from '../../components/ShareDialog/ShareDialog'
 import LyricsSheet from '../../components/LyricsSheet/LyricsSheet'
+import SongPlayBar from '../../components/SongPlayBar/SongPlayBar'
+import { useSongPlayer } from '../../hooks/useSongPlayer'
 import { SONGS } from '../../data/songs'
 import { communityProfileHref } from '../../data/profile'
 import icAccount from '../../assets/icons/ic_account.svg'
@@ -55,214 +57,12 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-function NowPlaying({
-  song,
-  onPrev,
-  onNext,
-  playing,
-  currentTime,
-  duration,
-  audioRef,
-}: {
-  song: (typeof SONGS)[number]
-  onPrev: () => void
-  onNext: () => void
-  playing: boolean
-  currentTime: number
-  duration: number
-  audioRef: RefObject<HTMLAudioElement | null>
-}) {
-  const progressRef = useRef<HTMLDivElement>(null)
-  const activeLineRef = useRef<HTMLParagraphElement>(null)
-  const [liked, setLiked] = useState(false)
-  const [showLyrics, setShowLyrics] = useState(false)
-  const [shareOpen, setShareOpen] = useState(false)
-
-  const lyricLines = song.lyricLines.length ? song.lyricLines : FALLBACK_LYRICS
-  // No per-line timestamps exist for generated lyrics, so this estimates
-  // which line is "current" from how far through the song playback is —
-  // close enough for the highlight to visibly track along as it plays.
-  const activeLineIndex = Math.min(
-    lyricLines.length - 1,
-    Math.floor((duration ? currentTime / duration : 0) * lyricLines.length),
-  )
-
-  useEffect(() => {
-    if (showLyrics) activeLineRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  }, [activeLineIndex, showLyrics])
-
-  function togglePlay() {
-    const audio = audioRef.current
-    if (!audio) return
-    if (audio.paused) {
-      audio.play()
-    } else {
-      audio.pause()
-    }
-  }
-
-  function seekFromClientX(clientX: number) {
-    const track = progressRef.current
-    const audio = audioRef.current
-    if (!track || !audio || !audio.duration) return
-    const rect = track.getBoundingClientRect()
-    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
-    audio.currentTime = ratio * audio.duration
-  }
-
-  function handleProgressPointerDown(event: ReactPointerEvent) {
-    seekFromClientX(event.clientX)
-    function handleMove(moveEvent: PointerEvent) {
-      seekFromClientX(moveEvent.clientX)
-    }
-    function handleUp() {
-      window.removeEventListener('pointermove', handleMove)
-      window.removeEventListener('pointerup', handleUp)
-    }
-    window.addEventListener('pointermove', handleMove)
-    window.addEventListener('pointerup', handleUp)
-  }
-
-  const progressRatio = duration ? currentTime / duration : 0
-
-  return (
-    <section className="now-playing">
-      <div className={`now-playing__art${showLyrics ? ' now-playing__art--lyrics-open' : ''}`}>
-        {/* Both the cover and the lyrics overlay stay mounted at all times
-            now (rather than one being conditionally unmounted) so the
-            show/hide crossfade can actually transition instead of snapping —
-            see the "always mount, toggle a modifier class" convention in
-            AGENTS.md. Visibility is purely opacity/pointer-events driven. */}
-        <img
-          src={song.cover}
-          alt=""
-          className={`now-playing__art-image${playing ? ' now-playing__art-image--spinning' : ''}${showLyrics ? ' now-playing__art-image--hidden' : ''}`}
-        />
-
-        {/* Desktop (>=768px): replaces the cover directly, not constrained to
-            the circle. Mobile (<768px): a popup instead, over a dimmed
-            backdrop — position:fixed doesn't care about this nesting, it's
-            relative to the viewport either way. No background fill on the
-            panel itself — just the lyric lines, current one highlighted
-            white, the rest dimmed. See SongDetailPage.css. */}
-        <div className={`now-playing__lyrics-overlay${showLyrics ? ' now-playing__lyrics-overlay--open' : ''}`}>
-          <div className="now-playing__lyrics-backdrop" onClick={() => setShowLyrics(false)} aria-hidden="true" />
-          <div className="now-playing__lyrics-panel">
-            <button
-              type="button"
-              className="now-playing__lyrics-close"
-              onClick={() => setShowLyrics(false)}
-              aria-label="Close lyrics"
-            >
-              <span className="now-playing__lyrics-close-icon" aria-hidden="true">
-                ×
-              </span>
-            </button>
-            <div className="now-playing__lyrics-lines">
-              {lyricLines.map((line, index) => (
-                <p
-                  key={index}
-                  ref={index === activeLineIndex ? activeLineRef : undefined}
-                  className={`now-playing__lyrics-line${index === activeLineIndex ? ' now-playing__lyrics-line--active' : ''}`}
-                >
-                  {line}
-                </p>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="now-playing__controller">
-        <div className="now-playing__meta-row">
-          <div className="now-playing__meta">
-            <p className="now-playing__title">{song.title}</p>
-            {/* This is a community "See All Songs" list — every song here
-                belongs to someone else, never the signed-in user, so this
-                always links to that song's own creator (see Song.username
-                in src/data/songs.ts), never "ScottWu". */}
-            <button
-              type="button"
-              className="now-playing__user"
-              onClick={() => (window.location.href = communityProfileHref(song.username))}
-            >
-              <span className="now-playing__avatar">
-                <span className="now-playing__avatar-icon" style={maskStyle(icAccount)} aria-hidden="true" />
-              </span>
-              <span className="now-playing__username">{song.username}</span>
-            </button>
-          </div>
-
-          <div className="now-playing__meta-actions">
-            <button
-              type="button"
-              className={`now-playing__icon-btn${liked ? ' now-playing__icon-btn--active' : ''}`}
-              onClick={() => setLiked((current) => !current)}
-              aria-label={liked ? 'Unlike' : 'Like'}
-            >
-              <span className="now-playing__icon" style={maskStyle(liked ? icFavoriteOn : icFavoriteOff)} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="now-playing__icon-btn"
-              onClick={() => shareOrOpenDialog(song.title, () => setShareOpen(true))}
-              aria-label="Share"
-            >
-              <span className="now-playing__icon" style={maskStyle(icShare)} aria-hidden="true" />
-            </button>
-            <ShareDialog title={song.title} isOpen={shareOpen} onClose={() => setShareOpen(false)} />
-            <button
-              type="button"
-              className={`now-playing__icon-btn${showLyrics ? ' now-playing__icon-btn--active' : ''}`}
-              onClick={() => setShowLyrics((current) => !current)}
-              aria-label={showLyrics ? 'Show cover art' : 'Show lyrics'}
-            >
-              <span className="now-playing__icon" style={maskStyle(icSingingMic)} aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-
-        <div className="now-playing__progress" ref={progressRef} onPointerDown={handleProgressPointerDown}>
-          <div className="now-playing__progress-track" />
-          <div className="now-playing__progress-fill" style={{ width: `${progressRatio * 100}%` }} />
-          <div className="now-playing__progress-thumb" style={{ left: `${progressRatio * 100}%` }} />
-        </div>
-        <div className="now-playing__time">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
-        </div>
-
-        <div className="now-playing__transport">
-          <button type="button" className="now-playing__transport-btn" onClick={onPrev} aria-label="Previous">
-            <span className="now-playing__transport-icon" style={maskStyle(icSkipBack)} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="now-playing__play"
-            onClick={togglePlay}
-            aria-label={playing ? 'Pause' : 'Play'}
-          >
-            <span className="now-playing__play-icon" style={maskStyle(playing ? icPause : icPlay)} aria-hidden="true" />
-          </button>
-          <button type="button" className="now-playing__transport-btn" onClick={onNext} aria-label="Next">
-            <span className="now-playing__transport-icon" style={maskStyle(icSkipForward)} aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-
-      <button type="button" className="now-playing__cta">
-        Create AI Song
-        <span className="now-playing__cta-icon" style={maskStyle(icArrowRight)} aria-hidden="true" />
-      </button>
-    </section>
-  )
-}
-
 // Figma "Song Player — Community" (node 120:1023, mobile-only) — below the
 // app-mobile breakpoint, tapping a song in the list takes over the whole
-// screen with this dedicated player instead of the desktop side-by-side
-// Now Playing panel (see the .song-detail-mobile-player CSS for the
-// takeover mechanics). Only one Figma frame was given, sized around a
+// screen with this dedicated player. Desktop no longer has an inline Now
+// Playing panel of its own — clicking a row there navigates straight to
+// SongCreatePage's result-stage player instead (see selectSong below).
+// Only one Figma frame was given for this mobile player, sized around a
 // 320–375 phone — the upper end of this app's mobile range (up to 767px)
 // scales the same layout proportionally rather than guessing a second
 // breakpoint.
@@ -489,30 +289,29 @@ function SongDetailPage() {
           ? '/community-profile?tab=songs'
           : '/home'
 
-  const audioRef = useRef<HTMLAudioElement>(null)
   const [activeTab, setActiveTab] = useState(initialTab)
-  const [activeId, setActiveId] = useState(initialId)
-  const [playing, setPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
   // Mobile-only (<768px) — an explicit ?id= deep link opens straight into
   // the full-screen player (see MobileNowPlaying); otherwise mobile starts
   // on the list, same as desktop always shows both.
   const [mobilePlayerOpen, setMobilePlayerOpen] = useState(() => Boolean(requestedId))
 
   const displayedSongs = useMemo(() => sortForTab(activeTab), [activeTab])
-  const activeIndex = displayedSongs.findIndex((song) => song.id === activeId)
-  const activeSong = displayedSongs[activeIndex]
-
-  // Loads + autoplays whenever the selected song changes (clicking a row,
-  // or Prev/Next) — matches every other real <audio>/<video> element in
-  // this project (e.g. HeroBannerSection), which all autoplay on change.
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || !activeSong) return
-    audio.src = activeSong.audio
-    audio.play()
-  }, [activeSong])
+  // Only seed the shared player with the deep-linked song when mobile is
+  // about to show the full-screen player for it — `mobilePlayerOpen` above
+  // starts true from a deep link on ANY device (it just has no visible
+  // effect on desktop, since MobileNowPlaying only renders below 768px),
+  // so it alone isn't a safe gate here: desktop's narrow bottom bar (see
+  // SongPlayBar) needs its own real device check, or a plain ?id= link
+  // from Home would pop the bar open on desktop too.
+  const player = useSongPlayer(
+    displayedSongs,
+    requestedId && window.matchMedia('(max-width: 767px)').matches ? initialId : undefined,
+  )
+  // MobileNowPlaying stays permanently mounted (toggled by CSS, not
+  // conditional JSX, so it can transition in/out) and needs a real song
+  // even before one's been picked — falls back to the first song in the
+  // list purely for that display purpose; doesn't touch the player itself.
+  const activeSong = player.activeSong ?? displayedSongs[0]
 
   // The mobile player is reached by pushing a history entry (see
   // selectSong below) so the phone's native back gesture/button returns to
@@ -526,10 +325,16 @@ function SongDetailPage() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
-  // Only takes over the screen on mobile — desktop keeps clicking a row
-  // scoped to just updating the active song, no navigation/history change.
+  // Mobile keeps taking over the screen in place (see MobileNowPlaying).
+  // Desktop no longer has its own Now Playing column — clicking a row
+  // navigates straight to SongCreatePage's result-stage player instead,
+  // the same template/route History-origin results already reuse.
   function selectSong(songId: string) {
-    setActiveId(songId)
+    if (!window.matchMedia('(max-width: 767px)').matches) {
+      window.location.href = `/song-create?stage=result&id=${songId}&from=song-detail`
+      return
+    }
+    player.play(songId)
     if (window.matchMedia('(max-width: 767px)').matches) {
       setMobilePlayerOpen(true)
       const query = source === 'home' ? `id=${songId}` : `id=${songId}&from=${source}`
@@ -541,16 +346,15 @@ function SongDetailPage() {
     window.history.back()
   }
 
-  function goPrev() {
-    const index = displayedSongs.findIndex((song) => song.id === activeId)
-    const prevSong = displayedSongs[(index - 1 + displayedSongs.length) % displayedSongs.length]
-    setActiveId(prevSong.id)
-  }
-
-  function goNext() {
-    const index = displayedSongs.findIndex((song) => song.id === activeId)
-    const nextSong = displayedSongs[(index + 1) % displayedSongs.length]
-    setActiveId(nextSong.id)
+  // Album-art play icon (as opposed to the title, which still navigates via
+  // selectSong) — mobile keeps its existing full-screen takeover; desktop
+  // starts/toggles the narrow bottom playbar in place instead.
+  function handleRowPlay(songId: string) {
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      selectSong(songId)
+      return
+    }
+    player.play(songId)
   }
 
   return (
@@ -559,57 +363,49 @@ function SongDetailPage() {
         <DetailNavbar
           credits={390}
           backHref={backHref}
+          mobileTitle="Top Picks Songs"
           tabsSlot={<Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />}
         />
       }
+      showMobileHeader={false}
     >
-      <audio
-        ref={audioRef}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-        onEnded={goNext}
-      />
+      <audio {...player.audioProps} />
 
-      <div className={`song-detail${mobilePlayerOpen ? ' song-detail--mobile-player-open' : ''}`}>
-        <div className="song-detail__lists">
-          <div className="song-detail__list">
-            {displayedSongs.map((song) => (
-              <TopSongListItem
-                key={song.id}
-                title={song.title}
-                username={song.username}
-                plays={0}
-                likes={0}
-                shares={0}
-                coverImage={song.cover}
-                isPlaying={song.id === activeId && playing}
-                onSelect={() => selectSong(song.id)}
-              />
-            ))}
-          </div>
+      <div
+        className={`song-detail${mobilePlayerOpen ? ' song-detail--mobile-player-open' : ''}`}
+        // Keeps the last row(s) from sitting behind the fixed bottom
+        // playbar once it's open — the bar's own height plus a little
+        // breathing room, not just its bare content height.
+        style={player.isOpen ? { paddingBottom: 96 } : undefined}
+      >
+        <div className="song-detail__list">
+          {displayedSongs.map((song) => (
+            <TopSongListItem
+              key={song.id}
+              title={song.title}
+              username={song.username}
+              plays={0}
+              likes={0}
+              shares={0}
+              coverImage={song.cover}
+              isPlaying={song.id === player.activeSong?.id && player.playing}
+              onSelect={() => selectSong(song.id)}
+              onPlay={() => handleRowPlay(song.id)}
+            />
+          ))}
         </div>
-
-        <NowPlaying
-          song={activeSong}
-          onPrev={goPrev}
-          onNext={goNext}
-          playing={playing}
-          currentTime={currentTime}
-          duration={duration}
-          audioRef={audioRef}
-        />
       </div>
+
+      {player.isOpen && <SongPlayBar player={player} />}
 
       <MobileNowPlaying
         song={activeSong}
-        onPrev={goPrev}
-        onNext={goNext}
-        playing={playing}
-        currentTime={currentTime}
-        duration={duration}
-        audioRef={audioRef}
+        onPrev={player.goPrev}
+        onNext={player.goNext}
+        playing={player.playing}
+        currentTime={player.currentTime}
+        duration={player.duration}
+        audioRef={player.audioRef}
         isOpen={mobilePlayerOpen}
         onClose={closeMobilePlayer}
       />

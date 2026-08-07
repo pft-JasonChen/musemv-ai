@@ -41,6 +41,20 @@
     line-height: 22px;
     letter-spacing: -0.17px;
   }
+
+  /* Figma: Caption/M (11/16), not the desktop-sized --font-title-s (17/22)
+     the "See all" link uses everywhere else. Icon shrinks to match (Figma's
+     mobile chevron is 14px, not the desktop 24px) — left as-is, the smaller
+     text would otherwise sit next to a visibly oversized icon. */
+  .app-layout--mobile-app .section-header__see-all {
+    font-size: var(--font-caption-m);
+    line-height: var(--line-height-caption-m);
+  }
+
+  .app-layout--mobile-app .section-header__see-all-icon {
+    width: 14px;
+    height: 14px;
+  }
 }
 
 .section-header__see-all {

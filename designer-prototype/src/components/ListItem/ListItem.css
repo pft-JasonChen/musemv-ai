@@ -12,7 +12,7 @@
 .list-item {
   container-type: inline-size;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   min-width: 0;
   gap: 8px;
@@ -25,10 +25,6 @@
 
 .list-item:hover {
   background-color: var(--white-15);
-}
-
-.list-item--song {
-  flex-wrap: nowrap;
 }
 
 .list-item__subtitle {
@@ -57,8 +53,9 @@
   -webkit-mask-size: contain;
 }
 
-/* Album art + info stay together; Actions drops to its own line (right-
-   aligned) once the row is too narrow to fit both — see ListItem.tsx. */
+/* Album art + info + Actions always stay on one row — text in
+   .list-item__community-body/.list-item__info ellipsizes instead of ever
+   letting Actions wrap to its own line below. */
 .list-item__main {
   display: flex;
   align-items: center;
@@ -79,9 +76,12 @@
   flex-shrink: 0;
   width: 52px;
   height: 52px;
+  border: none;
+  padding: 0;
   border-radius: 13.182px;
   overflow: hidden;
   background: var(--neutral-dark-24);
+  cursor: pointer;
 }
 
 @media (min-width: 480px) {
@@ -147,15 +147,9 @@
 /* =========================================================
  * Community variant's title/user/stats layout
  *
- * Figma gives Community a genuinely different arrangement depending on how
- * much room it has (its own Mobile vs Desktop variants) — not just smaller
- * text. Narrow: title, then username, then stats, all stacked in one
- * column. Wide: title+username stay a 2-line block, but stats break out
- * into their own side-by-side column next to it instead of stacking under
- * the username. Driven by this component's own rendered width (container
- * query), not viewport width — the same ListItem appears in a roomy
- * 2-column list (Home's New Songs) and a narrow 432px sidebar (My
- * Creations) at the same viewport size.
+ * Title, then username, then stats — always stacked in one column
+ * regardless of the row's own rendered width, with only the like/share/
+ * Create actions group sitting to the right (see .list-item__actions).
  * ======================================================= */
 
 .list-item__community-body {
@@ -173,19 +167,8 @@
   min-width: 0;
 }
 
-@container (min-width: 560px) {
-  .list-item__community-body {
-    flex-direction: row;
-    align-items: center;
-    gap: 24px;
-  }
-
-  .list-item__community-heading {
-    flex: 1;
-  }
-}
-
 .list-item__title {
+  width: 100%;
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -195,6 +178,15 @@
   font-size: var(--font-title-s);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-title-s);
+}
+
+.list-item__title--button {
+  display: block;
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
 }
 
 .list-item__user-row {
@@ -338,15 +330,13 @@
   border: none;
   background: none;
   cursor: pointer;
-  color: var(--neutral-dark-64);
+  color: var(--neutral-dark-100);
+  opacity: 0.4;
 }
 
 .list-item__like--active {
   color: var(--color-accent-purple);
-}
-
-.list-item__share {
-  opacity: 0.4;
+  opacity: 1;
 }
 
 .list-item__like-icon,

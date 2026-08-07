@@ -1,0 +1,191 @@
+/*
+  Real Home desktop Hero Banner — Figma "Hero Banner Section" (node
+  1871:33666): unlike HeroBannerSection (one active card + a separate row of
+  plain thumbnails below it, still used on mobile), every card here shows
+  its own title/subtitle/CTA at all times. Auto-rotates with the active card
+  centered and its neighbors peeking on each side, but — unlike
+  HeroBannerMobile's JS-transform carousel — this is a REAL native
+  scroll container (overflow-x + scroll-snap), so the user can freely
+  wheel/trackpad/drag-scroll it too; mandatory snap + scroll-snap-stop
+  guarantees one scroll gesture always lands exactly one card over, never
+  skipping or landing mid-card. See HeroBannerSectionV3.tsx for the
+  auto-advance (scrollBy) and the clone-boundary snap-back that makes the
+  scroll loop infinitely in both directions.
+
+  Card width is NOT a fixed px — Figma's 713px/164px-peek is against its
+  1440px desktop reference (713/1440 = 49.51vw), expressed as vw so it
+  scales with the viewport instead of staying pinned (same reasoning as the
+  Hero mobile card's 85vw and the New MVs/Top Picks mobile mini-cards' vw
+  sizing this session). Capped (at 880px, raised from Figma's own 713px per
+  product-owner request — bigger than the Figma reference on purpose) because
+  .home-page itself caps at max-width:1440px — past that, this row's real
+  available width stops growing too, so letting the card keep growing via vw
+  would overflow it.
+
+  The peek/padding is NOT a separate vw guess — it's derived directly from
+  the row's own real rendered width via calc(), specifically so it stays
+  symmetric no matter how wide that row actually ends up being (it isn't a
+  flat 1080px like the Figma reference: Sidebar's collapsed/expanded state
+  and .home-page's own max-width interact, so the row can render anywhere
+  from ~1080px up to ~1320px depending on viewport — a fixed vw peek value
+  went out of sync with the card's own width cap in that range and the row
+  read as lopsided instead of centered). Its cap must stay in sync with the
+  card's own (880px) — see .hero-banner-v3__card below.
+
+  Figma blends adjacent cards' edges with a shared SVG gradient mask
+  (mask-position offset per card) so the row reads as one continuous
+  filmstrip. Reproducing that exact per-card mask asset wasn't worth it for
+  a review proposal, but the overall row DOES get the requested edge-fade
+  mask below (fades the leftmost/rightmost ~10% to transparent) — simplified
+  to plain rounded-24 cards with a normal bottom gradient scrim instead of
+  per-card hues (same simplification already made for HeroBannerMobile's
+  per-item hues, see that file's own comment) — flagged as a simplification,
+  not a guess.
+*/
+
+.hero-banner-v3 {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Same prev/next affordance as NewMVsSection/TopPicksSection (hover-reveal,
+   vertically centered) — this row loops infinitely (see PADDED_ITEMS), so
+   unlike those finite rows there's no scroll-boundary state to gate on;
+   the buttons are always available whenever the row is hovered. */
+.hero-banner-v3__previous,
+.hero-banner-v3__next {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.hero-banner-v3__previous {
+  left: 20px;
+}
+
+.hero-banner-v3__next {
+  right: 20px;
+}
+
+.hero-banner-v3:hover .hero-banner-v3__previous,
+.hero-banner-v3:hover .hero-banner-v3__next {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hero-banner-v3__track {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  /* Fades the row's left/right edges to transparent so the peeking
+     neighbor cards blend out instead of ending in a hard clip — scoped to
+     the track itself (not the outer .hero-banner-v3) so the prev/next
+     arrow buttons layered on top of it stay at full opacity. */
+  -webkit-mask-image: linear-gradient(270deg, rgba(0, 0, 0, 0) 0%, #000 10%, #000 90%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(270deg, rgba(0, 0, 0, 0) 0%, #000 10%, #000 90%, rgba(0, 0, 0, 0) 100%);
+  /* With scroll-snap-align:center on the cards, the browser centers
+     whichever card is active purely from its own geometry — the visible
+     peek on each side is simply (row width - card width) / 2, regardless
+     of this padding value. This padding's only job is making that centered
+     scroll position actually *reachable* for the first/last real cards
+     (without it, scrollLeft can't go negative, so the very first card
+     could never be scrolled to a centered position) — derived via calc()
+     from the row's own width (not a flat vw guess like the card's own) so
+     it stays correct regardless of how wide the row itself ends up being. */
+  padding-inline: max(0px, calc((100% - min(49.51vw, 880px)) / 2));
+}
+
+.hero-banner-v3__track::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-banner-v3__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  width: min(49.51vw, 880px);
+  /* Figma's 713x320 is a fixed ratio (locked in the inspector), not an
+     independent width/height — aspect-ratio keeps height scaling together
+     with the vw-based width instead of staying pinned at 320px on wide
+     screens. */
+  aspect-ratio: 713 / 320;
+  box-sizing: border-box;
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid var(--white-15);
+  overflow: hidden;
+  transition: border-color 240ms ease;
+}
+
+.hero-banner-v3__card:hover {
+  border-color: #505050;
+}
+
+.hero-banner-v3__card:hover .hero-banner-v3__bg {
+  transform: scale(1.05);
+}
+
+.hero-banner-v3__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.hero-banner-v3__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(9, 9, 11, 0.8) 0%, rgba(9, 9, 11, 0) 55%);
+}
+
+.hero-banner-v3__bottom {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 13px;
+  width: 100%;
+}
+
+.hero-banner-v3__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.hero-banner-v3__title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: Roboto, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 36px;
+}
+
+.hero-banner-v3__subtitle {
+  margin: 0;
+  color: var(--neutral-dark-89);
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.hero-banner-v3__cta {
+  flex-shrink: 0;
+}

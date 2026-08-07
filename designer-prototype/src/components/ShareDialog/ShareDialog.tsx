@@ -42,6 +42,8 @@ function ShareDialog({ title, isOpen, onClose }: ShareDialogProps) {
     <div className={`share-dialog-overlay${visible ? ' share-dialog-overlay--visible' : ''}`}>
       <div className="share-dialog-backdrop" onClick={onClose} aria-hidden="true" />
       <div className="share-dialog" role="dialog" aria-label="Share">
+        <div className="share-dialog__handle" aria-hidden="true" />
+
         <div className="share-dialog__header">
           <span className="share-dialog__spacer" aria-hidden="true" />
           <p className="share-dialog__title">Share</p>

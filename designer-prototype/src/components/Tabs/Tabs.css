@@ -9,7 +9,8 @@
    gives the exact 34px tab height; several pages had been overriding this
    default (wrong padding/radius/weight) to hit that spec locally instead —
    see CommunityProfilePage/CreditsPage/HistoryPage, now cleaned up since
-   the default itself matches. */
+   the default itself matches. Inactive text is white-60 (was a hardcoded
+   0.4 one-off value — updated to match Figma exactly and use the token). */
 .tabs__tab {
   display: inline-flex;
   align-items: center;
@@ -19,7 +20,7 @@
   border: none;
   border-radius: var(--radius-pill);
   background: var(--neutral-dark-14);
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--white-60);
   cursor: pointer;
   font-family: var(--font-family-primary);
   font-size: var(--font-label-m);
@@ -32,4 +33,19 @@
 .tabs__tab--active {
   background: var(--color-accent-purple);
   color: var(--neutral-dark-100);
+}
+
+/* App-mobile variant (see src/config/layoutMode.ts) — Figma "Bar/Tabs"
+   (node 283:6506): 5px 10px padding + Caption/M (11px Medium, not
+   desktop's 13px Bold) gives the exact 26px tab height. Colors are the
+   same tokens as desktop (white-60 inactive / white active on purple),
+   so no color override is needed here. */
+@media (max-width: 767px) {
+  .app-layout--mobile-app .tabs__tab {
+    padding: 5px 10px;
+    font-size: var(--font-caption-m);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-caption-m);
+    letter-spacing: -0.11px;
+  }
 }

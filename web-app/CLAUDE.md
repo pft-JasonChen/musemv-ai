@@ -2,6 +2,77 @@
 
 ## In flight — read before starting
 
+> ## → START WITH `docs/NEXT-SESSION.md`
+>
+> Rewritten 2026-08-07 so a fresh session does not have to re-derive anything. It carries the
+> state of play, the standing scope rule, the recommended order of the remaining work, and — in
+> §2 — the full record of the landing-page slice. **Read it before this file.**
+
+**THE DESIGNER-UI MIGRATION IS COMPLETE: 17 OF 17 ROUTES (2026-08-07).** The landing page (`/`)
+was the last screen still on the original Tailwind build; DP's eight `HomePage/` stylesheets took
+the gated set from **34 to 42**, all verbatim. What remains is verification and the deferred
+backlog, not porting. Four things from that slice are worth carrying:
+
+- **`designer-prototype/src/assets/hero/` is now VENDORED, and every future drop must re-copy it
+  into TWO places** (`designer-prototype/…` and `web-app/public/assets/hero/`). The exclusion was
+  lifted by the product owner — 13 MB against `covers/`'s 257 MB — and it is not optional the way
+  the other two excluded directories are: DP name-imports all sixteen files, so ONE missing file
+  takes DP's whole module graph down and every route renders white (that is A12, misread for four
+  handoffs). `PROVENANCE.md` carries the procedure.
+- **`TRENDING_MVS` no longer has ANY entry point on home**, because WA's 45s marquee was deleted
+  to follow DP. The product owner confirmed it explicitly ("TRENDING_MVS 不用首頁 (Match DP)"), so
+  this is decided, not inherited — `DESIGNER-TODO` **A20**, asserted in `e2e` so it cannot be
+  quietly restored. Its only entry point is `/explore/mvs`, which under A19 is also the only MV
+  catalog a phone can reach there; the two together are heavier than either alone.
+- **`/` branches its layout in JS, and that punches a hole in two gates.** `HomeView` mounts a
+  different hero AND a different tool selector below 768px, so a sweep at one width sees half the
+  screen. The 3f mask sweep grew a second pass at 375; `a11y.spec.ts`, which is desktop-only, has
+  not been widened yet and needs both widths when it is re-run.
+- **Playwright's Chromium cannot decode H.264**, so every mp4 in a visual baseline is a stable
+  black rectangle that no regression can change. `MediaError 4`, no throw, no console output. The
+  two hero components add `poster` — the one attribute they add to DP's markup — so the baseline
+  photographs the design rather than a hole. Full note in `AGENTS.md`.
+
+**SCOPE RULE (product owner, 2026-08-06).** This phase's deliverable is "the code architecture is
+sound enough for RD to wire the backend". A finding that is **purely UI** and touches neither the
+contract, the providers, nor a product rule is **deliberately left unfixed** until the next DP
+drop. That is why most of `TODO.md` #7 and nearly all of `DESIGNER-TODO.md` are open — they are
+decisions, not slipped work. The uncomfortable case to know: **all of 7a is deferred, including
+the keyboard-seek half**, so four playback seek bars stay pointer-only (WCAG 2.1.1 Serious), and
+on `/mv/result` that is a regression against the pre-migration `<video controls>`. Offered
+separately, deferred anyway, accepted knowingly.
+
+**DROP 2 IS VENDORED AND ITS RE-SYNC IS COMPLETE (`2670ed2`; vendored 2026-08-06, finished
+2026-08-07).** `designer-prototype/` is no longer `568e64c`. `tokens.css` and every icon are
+byte-identical to drop 1; 13 of 33 gated stylesheets moved and are re-copied, and `SongPlayBar.css`
+joined the set (**34/34 verbatim**). Two of those 13 assumed DOM WA did not have and broke a screen
+each — `/explore/mvs` blank on phones, `/song/play`'s desktop player unstyled. **Both are fixed;
+`docs/NEXT-SESSION.md` §2.0 is the record.** Three things from it are worth carrying:
+
+- **The desktop song row now NAVIGATES**, reversing slice 3b one day after it shipped.
+  `AC-EXP-03` and its e2e assertion moved together — a passing test had pinned the old decision.
+  DP split the row's two affordances: TITLE opens `/song/result`, ALBUM ART starts `SongPlayBar`
+  (a desktop preview bar) in place. `/song/result` gained a cold-resolve branch so a community
+  `?id=` works with no flow state; the seeding half already existed in `useOpenCreation.ts`.
+- **An earlier pass got this drop confidently wrong by reading a CSS diff instead of the markup**,
+  concluding `SongPlayBar` had replaced the player and would delete four of `AC-EXP-05`'s five
+  requirements. The product owner caught it by running the prototype. Nothing was lost.
+- **`/explore/mvs` on phones now shows 3 of the catalog's 14 MVs** (DP hides every non-`--primary`
+  section; WA's two sections are different catalogs, 3 + 11). Decided as "follow DP" on the
+  framing "a secondary catalog is hidden"; the 3/14 ratio was counted afterwards. `DESIGNER-TODO`
+  **A19**, and asserted in `e2e` so it is not silently "fixed".
+
+The one lesson worth carrying from the vendoring itself, because it is the fourth instance of the
+same shape:
+**a re-sync can BREAK a screen through an override that used to be correct.** WA's A4 override hid
+`.detail-navbar__top`; the drop put the new mobile back control inside `__top` and, separately,
+hid `.detail-navbar__tabs` on phones on purpose. Both halves cancelled and `/explore/songs`
+measured a 375×50 bar with neither tabs nor a way back — typecheck, lint, vitest, build,
+guard-greps and designer-css were all green through it. **When a drop lands, re-read every entry
+in `designer-overrides.css` against the new CSS, not just the diff of the copied files.**
+A5 is closed by this drop and WA's `phoneBack` workaround is deleted; details in
+`docs/DESIGNER-TODO.md` A5 and `docs/NEXT-SESSION.md` §2.
+
 **The designer-UI migration is live.** The package landed 2026-08-04 and is vendored at
 `../designer-prototype/` (DP). Read in this order:
 
@@ -13,12 +84,16 @@
 3. `docs/redesign-migration-plan-2026-08-01.md` — background and derivation only. Its §9
    (RD contract C1–C8) and §10 (gates G1–G7) remain in force; its judgements do not.
 
-**Where it is up to (2026-08-06, fifth handoff).** Phases 0 / 1 / 1.5 / 2a / 2b are done and
+**Where it is up to (2026-08-07, seventh handoff).** Phases 0 / 1 / 1.5 / 2a / 2b are done and
 **Phase 3's migration work is COMPLETE — 16 of 16 routes**, per `OWN_CHROME` in
 `src/components/shell/AppShell.tsx`. Landed: `/explore/mvs` (3a), `/explore/songs` + `/song/play`
 (3b), `/profile` + `/settings` (3c), `/watch` (3d), `/creator` (3e), the three Credits IAP modals
 (3f), the `/mv/room` page body (3g) and its six overlays (3g-2), `/mv/thinking` +
 `/mv/storyboard` (3h), `/mv/result` (3i), the three `/song/*` stages (3j), and `/mv/edit` (3k).
+**Plus the landing page (`/`), the 17th and last, on 2026-08-07.** It is NOT in `OWN_CHROME` and
+that is deliberate: it keeps the legacy `TopBar` because DP's marketing Navbar and Footer are
+CH3/CH4, still out of scope. (`"/"` could not be added to that list anyway — the check is
+`path.startsWith(r)`, which `"/"` matches for every route in the app.)
 
 **A12 is closed, and the four handoffs that recorded it were describing the wrong thing.** It was
 never "DP's `/mv-edit` page does not render". Run DP outside the repo and it is TWO batches of
@@ -28,6 +103,44 @@ was white; and `src/assets/storyboard-clips/` is absent and `storyboardClips.ts`
 eager glob — **a glob that matches nothing does not throw, it yields `[]`**, so
 `STORYBOARD_CLIPS[0]` was `undefined` and the page died on `.video` one layer away from the cause.
 Supply both and all six widths render. The upstream fix is to ship the assets (DESIGNER-TODO A12).
+
+**SEVEN DP MISMATCHES CAME BACK FROM THE PRODUCT OWNER AFTER PHASE 3 MERGED (2026-08-06), AND
+ALL SEVEN WERE INVISIBLE TO EVERY GATE.** The full table is `docs/PHASE-3-ACCEPTANCE.md` §8. Three
+lessons are worth carrying into the next slice rather than re-deriving:
+
+- **A scope decision that changes what the user sees is a product decision.** Four of the seven
+  were places a slice decided something defensible — "keep WA's behaviour" (`/explore/mvs` kept its
+  dialog), "the title now matches the data" (the rails were pinned to "Trending", deleting DP's
+  signed-in branch), "that needs its own slice" — and recorded it in a comment or, worse, in a
+  PASSING TEST. `e2e` literally asserted "clicking a card still opens the dialog, not a
+  navigation". A test can hold a decision in place long after the decision is wrong; if the
+  decision is about what the user sees, ask instead of encoding it.
+- **The reported symptom was not the defect.** "Back on `/mv/result` doesn't reach History" reads
+  like a wrong `fallbackPath`. It was a two-screen LOOP: `GenerationView` forwards itself when
+  `alreadyDone`, and it was `push`ing, so Back landed on `/mv/creating` which pushed the result
+  back 350ms later. Both generation screens `replace` now. And `fallbackPath` on those screens is
+  nearly unreachable anyway (`hasInAppHistory()` is true on every route that can reach them with
+  flow state) — changing it alone would have shipped a fix that fixed nothing.
+- **`visual-baseline.spec.ts` never photographs `/mv/result` or `/song/result`.** It cold-`goto`s
+  each route with auth but no flow state, and both screens `router.replace()` out — so those two
+  baselines are pictures of `/mv/room` and `/song/create`. Measured: replacing `/song/result`'s
+  ENTIRE navbar changed zero pixels and the gate stayed 115/115. Third instance of the same class
+  as the `fullPage` and `maxDiffPixelRatio` blind spots.
+
+**The dead components are gone, and it was SIX files, not five.** `CreationDialog` was the root;
+killing it killed `MvDetail` and `SongDetail`, and `SongDetail` was `LyricsPanel`'s last consumer
+— plus `CommunityMvDialog` and the long-dead `TrendingMvsPanel`. Each had a live DP replacement
+(`/watch`, `/mv/result`, `/song/result`, `ui/LyricsSheet`). The only logic that went with them is
+`FREE_PREVIEW_SEC`, already cancelled by S3. **There is no dead component left in `src/`.**
+
+**The `Idea` / `Ideas` buttons are removed, and this is the one deviation that DECAYS.** V1 ships
+no canned-sample fillers, so three buttons went: `/mv/room`'s Ideas and both of `/song/create`'s
+Idea. DP **has** all three (`MVCreatePage.tsx:1182`, `SongCreatePage.tsx:598/703`), so this is a
+subtraction FROM DP, and **every future drop will bring them back** — re-remove them each time.
+`Templates` (`/mv/room`) and `Lyrics` (Custom mode) are different controls and stay. One layout
+detail that looks like leftover but is not: the Simple describe box now renders an EMPTY
+`.song-create__input-actions` div, because `.song-create__input-footer` is
+`justify-content: space-between` and with one child the Enhance/count group slides left.
 
 **ACCEPTANCE IS PART-DONE. The full record is `docs/PHASE-3-ACCEPTANCE.md` — read it before
 re-running anything.** Two of the three reviews are complete and their verdicts are in that file:
@@ -253,3 +366,16 @@ a detail screen:**
   staging and committing per slice anyway (the repo's own "one slice at a time" rule pointed the
   other way). The user's instruction wins over an inferred convention — when the two conflict,
   say so and follow the instruction rather than resolving it silently.
+- 2026-08-06: seven DP mismatches were reported against merged Phase 3 work. Four came from slices
+  that recorded a user-visible scope decision in a comment or a passing test instead of asking. When
+  a slice is about to keep WA behaviour that DP does differently, that is a question, not a note.
+- 2026-08-06: a session read drop 2's CSS diff (`.now-playing__*` deleted, a new `.song-bar` file)
+  and concluded `SongPlayBar` had replaced the song player, pricing the adoption as "deletes four
+  of AC-EXP-05's five requirements". The product owner corrected it by running the prototype — the
+  bar is a preview bar and replaces nothing. **Reasoning about a product from a stylesheet diff is
+  not measurement; open the markup.**
+- 2026-08-07: a scope question was put to the product owner as "DP's mobile rule hides the second
+  section, so phones lose `NEW_MVS`" — accurate, but the fixture counts (3 vs 11) were only
+  measured afterwards, and they made it "phones reach 3 of 14". **Count the thing before asking
+  about it; a decision taken on a qualitative framing is not the decision they would have made on
+  the number.**

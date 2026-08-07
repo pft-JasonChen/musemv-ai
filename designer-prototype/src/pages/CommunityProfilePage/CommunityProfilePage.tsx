@@ -148,14 +148,14 @@ function CommunityProfilePage() {
 
   if (isOwnProfile && !isSignedIn) {
     return (
-      <AppLayout navbar={<DetailNavbar credits={0} backHref="/account" />}>
+      <AppLayout navbar={<DetailNavbar credits={0} backHref="/account" mobileTitle="Profile" />} showMobileHeader={false}>
         <section className="community-profile" />
       </AppLayout>
     )
   }
 
   return (
-    <AppLayout navbar={<DetailNavbar credits={390} backHref={backHref} />}>
+    <AppLayout navbar={<DetailNavbar credits={390} backHref={backHref} mobileTitle={displayName} />} showMobileHeader={false}>
       <section className="community-profile">
         <aside className="community-profile__summary">
           <div className="community-profile__identity">

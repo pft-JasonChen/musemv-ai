@@ -5,7 +5,6 @@ import DetailNavbar from '../../components/DetailNavbar/DetailNavbar'
 import Tabs from '../../components/Tabs/Tabs'
 import Button from '../../components/Button/Button'
 import CreditsDialog from '../../components/CreditsDialog/CreditsDialog'
-import icArrowLeft from '../../assets/icons/ic_arrow_left.svg'
 import icCredit from '../../assets/icons/ic_credit.svg'
 import icVideoAi from '../../assets/icons/ic_video_ai.svg'
 import icSongAi from '../../assets/icons/ic_song_ai.svg'
@@ -50,14 +49,11 @@ function CreditsPage() {
   })
 
   return (
-    <AppLayout navbar={<DetailNavbar credits={390} backHref="/account" title="Credits Detail" />}>
+    <AppLayout
+      navbar={<DetailNavbar credits={390} backHref="/account" title="Credits Detail" />}
+      showMobileHeader={false}
+    >
       <section className="credits-page">
-        <header className="credits-page__mobile-header">
-          <a href="/account" aria-label="Back"><span style={maskStyle(icArrowLeft)} /></a>
-          <h1>Credits Detail</h1>
-          <span />
-        </header>
-
         <div className="credits-page__content">
           <div className="credits-page__balance">
             <div>

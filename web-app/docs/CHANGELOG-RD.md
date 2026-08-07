@@ -23,6 +23,79 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-07 — the landing page migrated. **No contract change.**
+
+**Surface: none.** The gate flagged this change because it touches `src/app/globals.css`, which is
+watched as part of C7's neighbourhood. **It is a deletion of dead CSS, not a contract change**, and
+this entry is the explicit statement the gate asks for rather than paperwork.
+
+**What actually moved in that file:** the `@keyframes marquee` block and the three class names it
+drove (`.marquee-wrap`, `.marquee-animate`, `.marquee-clone`). They existed for Home's 45s infinite
+Trending MV rail, which DP does not have and which the product owner decided to delete with the
+landing-page migration. Their only consumer went with them.
+
+**What RD must do: nothing.** No endpoint, no wire format, no cost constant, no hook key, no URL.
+
+**Checked rather than assumed, since this slice rewrote a whole route:**
+
+| Surface | Path                                    | Diff                                                                                                                       |
+| ------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| C1      | `src/lib/api/contract.ts`               | untouched                                                                                                                  |
+| C2      | `src/lib/api/schemas.ts`                | untouched                                                                                                                  |
+| C3      | `src/lib/api/index.ts`                  | untouched                                                                                                                  |
+| C4      | the five providers                      | untouched — the new screen only CONSUMES `requireLogin` and `patchSongCompose`, both long-standing keys                     |
+| C5      | `src/lib/authStore.ts`                  | untouched                                                                                                                  |
+| C6      | `config.ts` / `middleware.ts`           | untouched                                                                                                                  |
+| C7      | `src/app/**/page.tsx`                   | untouched — `/`'s `page.tsx` still returns `<HomeView />`; the rewrite is entirely inside `src/components/home/`            |
+| C8      | `src/lib/mv/types.ts`                   | untouched                                                                                                                  |
+
+**One thing RD should know even though it is not a contract change:** `web-app/public/assets/hero/`
+is new and is 13 MB of vendored demo media (8 mp4 + 8 posters), referenced by path string from
+`src/components/home/heroItems.ts`. Four of those filenames contain a space and are
+`encodeURIComponent`-ed at the reference site. When real hero content is served, that module is the
+single place to change.
+
+---
+
+## 2026-08-06 — C4 gains two setters, additively. Everything else: unchanged.
+
+**Surface:** **C4** (`useMvFlow`, `useSongFlow` return keys). **Additive only — nothing renamed,
+nothing removed.**
+
+| Hook          | New key         | Type                                           |
+| ------------- | --------------- | ---------------------------------------------- |
+| `useMvFlow`   | `setResultUrl`  | `Dispatch<SetStateAction<string \| null>>`     |
+| `useSongFlow` | `setSongResult` | `Dispatch<SetStateAction<SongResult \| null>>` |
+
+**Why.** `/history`'s done MV/song rows used to open a modal; they now navigate to `/mv/result` /
+`/song/result`, which is what DP does. Both result screens render from the live MV/Song flow and
+guard back to their flow entry when it is empty, so a row has to write its artifact into the flow
+before navigating — the same seed-then-navigate the storyboard rows already used. These two
+setters are that write. `setCompose` / `setStoryboard` were already exposed for exactly this
+reason; these complete the pair.
+
+**What RD must do: nothing.** No wire format, no endpoint, no cost constant changed. When the real
+history endpoint lands (`TBD-GL-04`), the seeding in `src/components/history/useOpenCreation.ts` is
+the one place that fabricates a result from a history row, and it is where a real fetch belongs.
+
+**Everything else is unchanged, and that was checked rather than assumed:**
+
+| Surface | Path                                          | Diff                                                                                                                                                                               |
+| ------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1      | `src/lib/api/contract.ts`                     | none                                                                                                                                                                               |
+| C2      | `src/lib/api/schemas.ts`                      | none                                                                                                                                                                               |
+| C3      | `src/lib/api/index.ts`                        | none                                                                                                                                                                               |
+| C4      | `src/components/providers/**`                 | **+2 keys, additive** (above)                                                                                                                                                      |
+| C5      | `src/lib/authStore.ts`                        | none                                                                                                                                                                               |
+| C6      | `src/lib/i18n/config.ts`, `src/middleware.ts` | none                                                                                                                                                                               |
+| C7      | every `src/app/**/page.tsx`                   | **URL shapes unchanged**; two pages gained a `<Suspense>` wrapper because their view now reads `?id=`. `?id=` is optional on both — omitted, the screens behave exactly as before. |
+| C8      | `src/lib/mv/types.ts`                         | none                                                                                                                                                                               |
+
+`providers.surface.test.ts` (G4-b) is green: the add-only baseline test passes untouched, and the
+shape snapshot was re-recorded with the two additions.
+
+---
+
 ## 2026-08-06 — Phase 3 finished (16 of 16 routes). **C1–C8 diff for RD purposes: ZERO.**
 
 **Surface:** none. This entry exists because the migration was large enough that "no contract
@@ -34,16 +107,16 @@ added (`MvSheet`, `TemplateSheet`, `useDialogTransition`, `DpIcon`'s `as` prop).
 
 **Verified, not asserted.** `git diff 5296f1a..HEAD` is EMPTY for every gated surface:
 
-| Surface | Path                                                              | Diff |
-| ------- | ----------------------------------------------------------------- | ---- |
-| C1      | `src/lib/api/contract.ts`                                         | none |
-| C2      | `src/lib/api/schemas.ts`                                          | none |
-| C3      | `src/lib/api/index.ts`                                            | none |
-| C4      | `src/components/providers/**` (hook return keys)                  | none |
-| C5      | `src/lib/authStore.ts`                                            | none |
-| C6      | `src/lib/i18n/config.ts`, `src/middleware.ts`                     | none |
-| C7      | every `src/app/**/page.tsx` (URL shapes)                          | none |
-| C8      | `src/lib/mv/types.ts` (`COST_*`, `DEFAULT_SETTINGS`, predicates)  | none |
+| Surface | Path                                                             | Diff |
+| ------- | ---------------------------------------------------------------- | ---- |
+| C1      | `src/lib/api/contract.ts`                                        | none |
+| C2      | `src/lib/api/schemas.ts`                                         | none |
+| C3      | `src/lib/api/index.ts`                                           | none |
+| C4      | `src/components/providers/**` (hook return keys)                 | none |
+| C5      | `src/lib/authStore.ts`                                           | none |
+| C6      | `src/lib/i18n/config.ts`, `src/middleware.ts`                    | none |
+| C7      | every `src/app/**/page.tsx` (URL shapes)                         | none |
+| C8      | `src/lib/mv/types.ts` (`COST_*`, `DEFAULT_SETTINGS`, predicates) | none |
 
 Reproduce it yourself:
 

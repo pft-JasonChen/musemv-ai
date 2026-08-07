@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
@@ -78,6 +78,7 @@ function formatTime(seconds: number): string {
  */
 export function MvResult() {
   const router = useRouter();
+  const idParam = useSearchParams().get("id");
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
   const { resultUrl, compose, storyboard, setStoryboard, saveStoryboard } = useMvFlow();
@@ -101,7 +102,11 @@ export function MvResult() {
   const [pubConfirm, setPubConfirm] = useState(false);
 
   const entry = history.find((h) => h.kind === "mv" && h.resultUrl === resultUrl);
-  const shareId = entry?.id ?? "";
+  // Opened from a `/history` row the id is in the URL and there is no live
+  // History job to match on (seed rows are fixtures, not jobs) — without it
+  // Share would build `/share?id=`, which resolves to the expired state.
+  // `resolveShare` handles both live jobs and seed ids.
+  const shareId = idParam ?? entry?.id ?? "";
   // DP has a separate `resultVideo.cover`; WA's equivalent is the job thumb that
   // the History entry already carries. It matters twice: as the video POSTER
   // (the frame shown before the first decoded frame) and as the blurred backdrop
@@ -174,7 +179,22 @@ export function MvResult() {
 
   return (
     <>
-      <DetailNavbar title="Result" fallbackPath="/mv/room" />
+      {/*
+        Back's FALLBACK is `/history`, not `/mv/room` (2026-08-06, product
+        owner). `/history` is now a real entry point to this screen, and a
+        finished MV is in History whichever way you got here — so the "nowhere to
+        go back to" case should land on the list of creations, not on the empty
+        compose form.
+
+        **Be clear about how little this fallback does.** Q6's `router.back()`
+        wins whenever `hasInAppHistory()` is true, and this screen is only
+        reachable with flow state, which only exists after an in-app navigation
+        — so the fallback is very nearly unreachable and the change is closer to
+        documentation than to behaviour. What actually fixed "Back does nothing
+        here" is `GenerationView` switching its forward from `push` to `replace`;
+        read that note before assuming this line is doing the work.
+      */}
+      <DetailNavbar title="Result" fallbackPath="/history" />
 
       <div className="mv-result">
         <div className="mv-result__panel">

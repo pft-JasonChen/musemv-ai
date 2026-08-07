@@ -29,8 +29,11 @@ interface TopSongListItemProps {
   likes: number
   shares: number
   defaultLiked?: boolean
-  /** Selects this song as Now Playing and starts real playback. */
+  /** Title click — navigates to this song's full result/detail view. */
   onSelect?: () => void
+  /** Album-art play icon click — starts/toggles in-place playback without
+   *  navigating anywhere. Falls back to onSelect if omitted. */
+  onPlay?: () => void
   /** Swaps the album-art play icon for a pause icon. */
   isPlaying?: boolean
 }
@@ -49,6 +52,7 @@ function TopSongListItem({
   shares,
   defaultLiked = false,
   onSelect,
+  onPlay,
   isPlaying = false,
 }: TopSongListItemProps) {
   const [liked, setLiked] = useState(defaultLiked)
@@ -73,7 +77,12 @@ function TopSongListItem({
 
   return (
     <div className="top-song">
-      <button type="button" className="top-song__album-art" onClick={onSelect} aria-label={isPlaying ? 'Pause' : 'Play'}>
+      <button
+        type="button"
+        className="top-song__album-art"
+        onClick={onPlay ?? onSelect}
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+      >
         {coverImage && <img src={coverImage} alt="" className="top-song__album-image" />}
         <div className="top-song__album-scrim" aria-hidden="true" />
         <span className="top-song__play-icon" style={maskStyle(isPlaying ? icPause : icPlay)} aria-hidden="true" />

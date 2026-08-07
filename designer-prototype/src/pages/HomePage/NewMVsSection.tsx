@@ -51,7 +51,7 @@ function NewMVsSection() {
 
   return (
     <section className="new-mvs">
-      <SectionHeader title="New Music Videos" mobileTitle="New MVs" seeAllHref="/mv-detail?from=home" />
+      <SectionHeader title="Trending Music Videos" mobileTitle="Trending MVs" seeAllHref="/mv-detail?from=home" />
 
       <div className="new-mvs__row-wrapper">
         <div className="new-mvs__row" ref={rowRef} onScroll={updateScrollState}>

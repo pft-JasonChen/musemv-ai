@@ -199,9 +199,67 @@ as a finished audit. Ordered by what would change a decision soonest.
 | 10  | `maxDiffPixelRatio` is a share of PAGE AREA, so a fixed-size control can vanish on wide viewports without failing. Measured: a 64×22 pill failed at 320/375 and passed at 768–1920. | `AGENTS.md`  |
 | 11  | The `-darwin` baselines are unmaintained on purpose and will fail on a Mac.                                                                                                         | `README.md`  |
 
+### 7.3b A visual-gate blind spot found while fixing the 2026-08-06 report
+
+`visual-baseline.spec.ts` does a cold `page.goto(route)` with auth seeded but **no flow state**.
+`/mv/result` and `/song/result` both guard on flow state and `router.replace()` out, so those two
+baselines are photographs of `/mv/room` and `/song/create` — **not of the result screens at all**.
+
+Measured: swapping `/song/result`'s entire navbar (`RoomNavbar` → `DetailNavbar`, adding a back
+control the screen never had) changed **zero** baseline pixels, and `e2e:visual` stayed 115/115.
+Same class as #9 and #10 — the gate is real, its coverage is narrower than the file list suggests.
+Any future change to either result screen has to be checked by driving the flow, which is what
+`behaviour-regressions.spec.ts`'s new `item 1/2/3` block does.
+
 ### 7.4 Behaviour that has no test at all
 
 | #   | Owed                                                                                                                                                                                                                                                                                    |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 12  | The five affordance findings left open (`TODO.md` #7a–7h) have no guard, by construction — a guard would assert behaviour nobody has decided on yet. When each is answered, it needs a behaviour test, because A4's lesson is that re-recording a screenshot absorbs the loss silently. |
 | 13  | `/mv/creating` and `/share` are deliberately old UI and are not covered by any migration guard. If either is migrated later, they need adding to the mask-icon sweep in `e2e/behaviour-regressions.spec.ts`.                                                                            |
+
+---
+
+## 8. Post-acceptance: seven DP mismatches reported by the product owner (2026-08-06)
+
+Reported after Phase 3 merged, against the running app. **All seven were invisible to every gate
+in §5** — six of them because the gates check contracts, rules and pixels, and the seventh
+(`/explore/mvs`) because an e2e test was actively asserting the wrong behaviour, having been
+written when that behaviour was the decision.
+
+| # | Reported                                                       | Root cause                                                                                                                    | Fix                                                                                     |
+| - | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1 | `/mv/result` Back does not reach History                       | The generation screens forward with `push` and forward themselves on `alreadyDone` — so Back landed on `/mv/creating`, which pushed the result back 350ms later. A **no-op loop**, not a wrong destination. | `GenerationView` / `SongGenerationScreen` forward with `replace`; fallback → `/history`. |
+| 2 | `/song/result` has no Back at all                              | It rendered `RoomNavbar`. DP switches this one stage of `SongCreatePage` to `DetailNavbar backHref="/history"`.                | `DetailNavbar title="AI Song" fallbackPath="/history"`.                                  |
+| 3 | `/history` rows open the old popup                             | Slice 1.5 migrated the CARD and left `CreationDialog` behind it. DP links its rows at `/mv-result` and `/song-create?stage=result`. | Rows seed the flow (`useOpenCreation`) and navigate. C4 gained two setters.               |
+| 4 | `/song/create` rail never says "My Creations"                  | G7 finding 3g-3 was fixed by pinning the title to "Trending Songs" — honest, but it deleted DP's signed-in branch instead of giving it real data. | Two-mode rail; title, rows and "See all" switch together.                                 |
+| 5 | `/mv/room` rail, same                                          | Same fix, same file pair.                                                                                                     | Same.                                                                                     |
+| 6 | `/explore/mvs` opens a dialog                                  | Slice 3a decided dialog-vs-navigate was out of scope and **wrote a test asserting the dialog**. The destination (`/watch`) already existed — it is the same DP file's upper half, migrated in 3d. | Plain `next/link` navigation; the test is inverted, with its own history in the comment. |
+| 7 | Landing page MV click                                          | **Already correct** — `HomeView.openMv` has always pushed `/watch?id=`. No code change; a guard was added so it and `/explore/mvs` cannot drift apart again. | test only.                                                                                |
+
+**The pattern worth keeping.** Four of the seven (1, 3, 4, 6) were places where a slice made a
+defensible scope decision — "keep WA's behaviour", "the title now matches the data", "that needs
+its own slice" — and the decision was recorded in a comment or a test rather than surfaced as a
+question. Each read as done. None was. **A scope decision that changes what the user sees is a
+product decision, and it needs an answer, not a comment.**
+
+**Item 1 is the one to read twice.** The reported symptom was "Back goes to the wrong place". The
+actual defect was a two-screen navigation loop that made Back do *nothing*, and the fallback path
+everyone would reach for first (`fallbackPath`) is very nearly unreachable on that screen —
+`hasInAppHistory()` is true on every route that can get you there with flow state. Changing it
+alone would have shipped a fix that fixed nothing. The `replace` change is the fix; its guard was
+mutation-tested in both directions (red with `push`, green with `replace`).
+
+**Guards added** (`e2e/behaviour-regressions.spec.ts`): rows navigate for both kinds; the row href
+matches where the click goes and carries the locale prefix; Back returns to `/history` from both
+result screens; `/song/result` has a back control at all; Back after a fresh render is not a loop;
+Share from an opened row carries that row's id; the rail's two modes including the
+signed-in-but-empty case; `/explore/mvs` and the landing page reach the same `/watch`.
+164/164 e2e, 115/115 visual, 84/84 vitest, G4-b/G4-g/designer-css all green.
+
+**The dead components are gone (approved later the same day).** It was **six** files, not five:
+`CreationDialog` is the root, and killing it killed `MvDetail` and `SongDetail`, and `SongDetail`
+was `LyricsPanel`'s last consumer. Plus `CommunityMvDialog` and the already-dead
+`TrendingMvsPanel`. Every one has a live DP replacement (`/watch`, `/mv/result`, `/song/result`,
+`ui/LyricsSheet`). The only logic lost with them is `FREE_PREVIEW_SEC`, the 30-second preview
+gate — cancelled by S3 in the plan's §1.4, so it was already unreachable.

@@ -4,7 +4,7 @@
 
 // Entity types live as Zod schemas in @/lib/api/schemas; re-exported here so
 // existing imports keep working.
-import type { CommunityCreator, CommunityMv, CommunitySong } from "@/lib/api/schemas";
+import type { CommunityCreator, CommunityMv, CommunitySong, SongResult } from "@/lib/api/schemas";
 
 export type { Badge, CommunityCreator, CommunityMv, CommunitySong } from "@/lib/api/schemas";
 
@@ -840,6 +840,35 @@ const AUDIO_BY_ID = new Map<string, string>(
 /** Playable audio URL for a community song. Unknown ids fall back to the first track. */
 export function songAudioUrl(id: string): string {
   return AUDIO_BY_ID.get(id) ?? AUDIO[0];
+}
+
+/**
+ * A community song, shaped as the `SongResult` that `/song/result` renders.
+ *
+ * Drop 2 (`2670ed2`) makes a desktop row click on `/explore/songs` navigate to
+ * the result-stage player instead of swapping an in-page column, so that screen
+ * now has to be able to show a song the user did not create. Seeding the flow
+ * with this is the SAME mechanism `/history` rows already use
+ * (`useOpenCreation.ts`) — the result screens read flow state, so a non-flow
+ * origin writes it before navigating.
+ *
+ * `durationSec: 0` is honest rather than lazy: the catalog does not carry a
+ * duration, and the screen reads the real one off `<audio>`'s metadata anyway.
+ * Inventing a number here would put a specific claim on screen that nothing
+ * backs — the same call `useOpenCreation` makes for genre/mood on History rows.
+ */
+export function songResultFromCommunity(song: CommunitySong): SongResult {
+  return {
+    id: song.id,
+    title: song.title,
+    cover: song.cover,
+    genre: song.genre,
+    mood: song.mood,
+    durationSec: 0,
+    audioUrl: songAudioUrl(song.id),
+    instrumental: false,
+    lyrics: song.lyrics,
+  };
 }
 
 export function formatCount(n: number): string {

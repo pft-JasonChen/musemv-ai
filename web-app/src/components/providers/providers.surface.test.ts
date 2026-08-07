@@ -74,12 +74,12 @@ const BASELINE: Record<string, string[]> = {
   useHistory: ["history", "markCompleted", "markFailed", "upsertGenerating"],
   useMvFlow: [
     "compose", "gen", "patchCompose", "resetForNewMv", "resetForRerender",
-    "resultUrl", "saveStoryboard", "setCompose", "setStoryboard", "startRender",
-    "startStoryboard", "storyboard", "storyboardDirty",
+    "resultUrl", "saveStoryboard", "setCompose", "setResultUrl", "setStoryboard",
+    "startRender", "startStoryboard", "storyboard", "storyboardDirty",
   ],
   useSongFlow: [
     "gen", "patchSongCompose", "resetForNewSong", "resetForRecreate",
-    "songCompose", "songResult", "startSong",
+    "setSongResult", "songCompose", "songResult", "startSong",
   ],
 };
 

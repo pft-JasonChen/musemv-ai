@@ -102,6 +102,17 @@ refactors so the project typechecks after each individual edit (add the new befo
   re-sync on the next drop.)
 - **Style purity.** A migrated component's classes come from `src/styles/designer/`. Don't mix
   Tailwind utilities into it (Gate G3-d).
+- **On a new drop, re-read every entry in `designer-overrides.css` against the NEW CSS.** An
+  override is a claim about a defect, and a drop can fix the defect, move it, or invert it — at
+  which point the override becomes the bug. Measured on drop 2 (`2670ed2`, 2026-08-06): the A4
+  override hid `.detail-navbar__top` to rescue a tabs row, the drop put the new mobile back
+  control **inside** `__top`, and the same drop deliberately hid `.detail-navbar__tabs` on
+  phones — so both halves cancelled and `/explore/songs` rendered a 375×50 bar with neither tabs
+  nor a way back. typecheck, lint, vitest, build, `guard-greps.sh` and `check-designer-css.mjs`
+  were **all green** through it, because a verbatim-copy gate cannot see a rule two files away.
+  Diffing the copied stylesheets is not enough; the override file is the other half of the diff.
+  Same reason a drop can close a `DESIGNER-TODO` item without saying so — check them all against
+  the new CSS and record which ones the drop did NOT touch, so nobody re-checks them.
 - **Icons (D4).** Migrated screens use DP's `mask-image` + `currentColor`. All 84 of WA's
   `ic_*.svg` filenames already exist in DP's 90, so this is a rename, not a redraw. Convert
   **only the screen you are migrating** — the inline-`<svg>` backlog is not yours to mass-refactor.
@@ -239,8 +250,20 @@ House style in one line:
   to be thrown away. **A broken environment does not report an error, it reports findings.** So:
   rebuild and restart together, and before trusting contrast, geometry or computed style, fetch
   the page, pull out every `_next/static/chunks/*.css` it references and confirm each one is 200
-  with a real body (one is ~238 KB). One cheap live assertion does the same job:
-  `.mv-song-picker__use` must compute to `opacity: 0` on a row that is neither hovered nor active.
+  with a real body (one is ~255 KB since the landing page added 8 files). One cheap live assertion
+  does the same job: `.mv-song-picker__use` must compute to `opacity: 0` on a row that is neither
+  hovered nor active.
+- **Playwright's Chromium cannot decode H.264, so every mp4 in a screenshot is a BLACK BOX.**
+  Measured 2026-08-07 on the landing page's hero:
+  `MediaError 4 DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams`. It does
+  not throw, does not log to the console, and `canPlayType("video/mp4")` still answers `"maybe"` —
+  the only way to see it is to read `video.error` off the element. Two consequences. **A video
+  region of a visual baseline proves nothing** — it is a stable black rectangle in every run, so a
+  regression inside it can never fail the gate. And **`poster` is worth adding to any `<video>`
+  whose first frame is the design**, using the image DP already ships for that item: in a browser
+  that CAN decode, the poster is replaced by frame one and nothing changes; in this one, the
+  baseline shows the design instead of a hole. That is the ONE attribute the two hero components
+  add to DP's markup, and the reason is written above each.
 - **Mutation-test a new guard test in both directions before believing it.** Break the thing it
   guards and watch it go red, then restore and watch it go green. `e2e/backdrop-filter.spec.ts`'s
   first CSS sweep read the CSSOM and passed in BOTH states, because Chrome discards

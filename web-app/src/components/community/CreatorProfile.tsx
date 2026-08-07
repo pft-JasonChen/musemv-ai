@@ -70,7 +70,8 @@ import { MOCK_USER } from "@/lib/user";
  *    would change the C7 route map (G4). Logged out, the owner menu simply is
  *    not rendered.
  *
- * A5 needs nothing here: `DetailNavbar` defaults `phoneBack` to true.
+ * A5 needs nothing here: since the 2026-08-06 drop `DetailNavbar` renders DP's
+ * own compact mobile bar unless a caller passes `hideMobileBar`.
  */
 
 type ProfileTab = "mv" | "songs";
@@ -224,7 +225,11 @@ export function CreatorProfile() {
 
   return (
     <>
-      <DetailNavbar fallbackPath={self ? "/profile" : "/explore/mvs"} />
+      {/* `mobileTitle`, not `title`: DP's CommunityProfilePage passes the creator's
+          name for the compact phone bar while keeping the desktop "‹ Back" text
+          link. Passing `title` instead would switch the DESKTOP layout to
+          icon-only-plus-centred-heading, which is a different screen. */}
+      <DetailNavbar fallbackPath={self ? "/profile" : "/explore/mvs"} mobileTitle={name} />
 
       <section className="community-profile">
         <aside className="community-profile__summary">

@@ -170,34 +170,10 @@ body {
   }
 }
 
-/* Infinite auto-scrolling carousel (trending rail). The track holds two copies
-   of the items; translating -50% loops seamlessly. Pauses on hover; reduced
-   motion falls back to a normal manually-scrollable rail. */
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-.marquee-wrap {
-  overflow: hidden;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .marquee-animate {
-    animation: marquee 45s linear infinite;
-  }
-  .marquee-wrap:hover .marquee-animate {
-    animation-play-state: paused;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .marquee-wrap {
-    overflow-x: auto;
-  }
-  /* No auto-scroll → drop the duplicate copy so each card shows once. */
-  .marquee-clone {
-    display: none;
-  }
-}
+/* The `marquee` keyframes and `.marquee-wrap` / `.marquee-animate` /
+   `.marquee-clone` rules that used to live here drove Home's 45s infinite
+   Trending MV rail. That rail was WA's own — DP has no equivalent — and the
+   product owner decided 2026-08-07 to follow DP and remove it with the landing
+   page migration. Its only consumer went with it, so the CSS goes too rather
+   than lingering as three unreachable class names. The consequence for
+   `TRENDING_MVS` is written up in `HomeView.tsx` and `DESIGNER-TODO` A20. */

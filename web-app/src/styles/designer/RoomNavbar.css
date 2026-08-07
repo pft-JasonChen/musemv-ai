@@ -57,4 +57,64 @@
   .room-navbar__tabs {
     padding: 0 16px 16px;
   }
+
+  /* Compact back(left)+title(centered) bar for Feature Room pages that
+     opted in via mobileBackHref — same H50/flat-fill/bottom-border
+     treatment as DetailNavbar's own mobile bar (see DetailNavbar.css),
+     generalized here since RoomNavbar has no back button at all by
+     default. Pages that don't pass mobileBackHref (History) stay hidden
+     on mobile via AppLayout.css's :not(.room-navbar--mobile-back) rule. */
+  .room-navbar--mobile-back {
+    height: 50px;
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .room-navbar--mobile-back .room-navbar__top {
+    display: grid;
+    grid-template-columns: 28px 1fr 28px;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    padding: 10px 16px 0;
+  }
+
+  .room-navbar--mobile-back .room-navbar__title {
+    grid-column: 2;
+    text-align: center;
+    font-size: var(--font-title-s);
+    line-height: var(--line-height-title-s);
+    letter-spacing: -0.01em;
+  }
+
+  .room-navbar--mobile-back .room-navbar__actions,
+  .room-navbar--mobile-back .room-navbar__login {
+    display: none;
+  }
+
+  .room-navbar__mobile-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-pill);
+    border: 0.6px solid var(--white-15);
+    background: var(--white-15);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    color: var(--neutral-dark-100);
+  }
+
+  .room-navbar__mobile-back-icon {
+    width: 20px;
+    height: 20px;
+    background-color: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+  }
 }

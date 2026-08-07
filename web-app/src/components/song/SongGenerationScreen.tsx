@@ -54,7 +54,10 @@ export function SongGenerationScreen() {
   useEffect(() => {
     if (!valid) return;
     if (alreadyDone || gen.status === "done") {
-      const t = setTimeout(() => router.push(localePath(locale, "/song/result")), 350);
+      // `replace`, not `push` — see the same change in `GenerationView`: this
+      // screen forwards itself on `alreadyDone`, so keeping it on the stack
+      // turns Back from `/song/result` into a no-op loop.
+      const t = setTimeout(() => router.replace(localePath(locale, "/song/result")), 350);
       return () => clearTimeout(t);
     }
   }, [valid, alreadyDone, gen.status, router, locale]);

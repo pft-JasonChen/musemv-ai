@@ -18,15 +18,20 @@
   Absolute (not fixed) on purpose: position:fixed proved unreliable at narrow
   viewport widths (the containing block it resolved against didn't match the
   real viewport, causing horizontal overflow). Absolute relative to
-  .app-layout covers the same full-page area and scrolls with the page,
-  which is fine for a purely decorative background.
+  .app-layout__main (not .app-layout) so it only spans the main content
+  area's own width, not behind Sidebar — and covers the same full-height
+  scrollable area, which is fine for a purely decorative background.
+  z-index: -1 (not 0) because it's now a sibling of Navbar/content/Footer
+  inside .app-layout__main's own stacking context, and non-positioned
+  in-flow siblings paint before z-index:0/auto positioned ones — negative
+  is what actually keeps it behind them.
 */
 .app-layout__background {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 0;
+  z-index: -1;
   width: 100%;
   /* 80% of the viewport, NOT of .app-layout's own height — .app-layout is
      as tall as the whole scrollable page, so a % height here would stretch
@@ -44,25 +49,34 @@
   opacity: 0;
 }
 
-/* Figma's 70% black fill for most of the video, fading the rest of the way
-   to the solid page background color so the video doesn't just cut off at
-   80vh with a visible seam. These stops are in vh to match
-   .app-layout__background's own 80vh height — this element is inset:0
-   (spanning the whole scrollable page), so a %-based gradient here would
-   fade out relative to the page's total height instead of where the video
-   actually ends, leaving a hard line right at the 80vh mark on any page
-   taller than one screen. */
+/* Figma (node 1862:37795 + the video rectangle's own fill stack): 3 layers
+   over the video —
+   1. Top blend: solid page-bg fading to transparent over the first ~19vh,
+      so the video blends into whatever sits above it instead of starting
+      with a hard edge at y=0.
+   2. Bottom blend: transparent fading to solid page-bg, ending exactly at
+      the video's own bottom edge (80vh) — not past it.
+   3. A flat 70% black tint across the whole video (Figma's own fill stack:
+      "000000" @ 70%), so the video reads as ambient/decorative rather than
+      overpowering the page — this stays constant between the two blends.
+   Stops are in vh (matching .app-layout__background's own 80vh height)
+   rather than %, because this element is inset:0 (spanning the whole
+   scrollable page) — a %-based gradient here would fade out relative to the
+   page's total height instead of where the video actually ends, leaving a
+   hard line at the 80vh mark on any page taller than one screen. */
 .app-layout__background-scrim {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.7) 0,
-    rgba(0, 0, 0, 0.7) 55vh,
-    var(--color-bg-primary) 85vh,
-    var(--color-bg-primary) 100%
-  );
+  z-index: -1;
+  background:
+    linear-gradient(to bottom, var(--color-bg-primary) 0, rgba(9, 9, 11, 0) 19vh),
+    linear-gradient(
+      to bottom,
+      rgba(9, 9, 11, 0) 41vh,
+      var(--color-bg-primary) 80vh,
+      var(--color-bg-primary) 100%
+    ),
+    rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
 
@@ -82,8 +96,11 @@
 @media (max-width: 767px) {
   .app-layout--mobile-app .sidebar,
   .app-layout--mobile-app .navbar,
-  .app-layout--mobile-app .detail-navbar,
-  .app-layout--mobile-app .room-navbar,
+  /* DetailNavbar now shows its own compact back+title bar on mobile
+     instead of being hidden (see DetailNavbar.css) — RoomNavbar still
+     defaults to hidden unless it's opted into the same treatment via its
+     mobileBackHref prop (see RoomNavbar.css's --mobile-back modifier). */
+  .app-layout--mobile-app .room-navbar:not(.room-navbar--mobile-back),
   .app-layout--mobile-app .footer {
     display: none;
   }

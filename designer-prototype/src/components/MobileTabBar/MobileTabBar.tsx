@@ -22,14 +22,15 @@ function maskStyle(src: string): CSSProperties {
 
 function MobileTabBar() {
   const [createOpen, setCreateOpen] = useState(false)
+  const isHistory = window.location.pathname.startsWith('/history')
 
   return (
     <>
       <nav className="mobile-tabbar">
-        <button type="button" className="mobile-tabbar__item mobile-tabbar__item--active">
+        <a href="/home" className={`mobile-tabbar__item${!isHistory ? ' mobile-tabbar__item--active' : ''}`}>
           <span className="mobile-tabbar__icon" style={maskStyle(icCompass)} aria-hidden="true" />
           <span className="mobile-tabbar__label">Explore</span>
-        </button>
+        </a>
 
         <button
           type="button"
@@ -40,10 +41,10 @@ function MobileTabBar() {
           <span className="mobile-tabbar__create-icon" style={maskStyle(icAdd)} aria-hidden="true" />
         </button>
 
-        <button type="button" className="mobile-tabbar__item">
+        <a href="/history" className={`mobile-tabbar__item${isHistory ? ' mobile-tabbar__item--active' : ''}`}>
           <span className="mobile-tabbar__icon" style={maskStyle(icHistory)} aria-hidden="true" />
           <span className="mobile-tabbar__label">History</span>
-        </button>
+        </a>
       </nav>
 
       {/* Figma "Explore — Create Sheet" (node 172:1878) — tapping the "+"

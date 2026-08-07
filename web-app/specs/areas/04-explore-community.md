@@ -20,13 +20,11 @@ video player, the community song player, and the creator profile.
 **In scope:** `home/HomeView` (`/`), `community/MvExplore` (`/explore/mvs`),
 `song/SongDetailView` (**both** `/explore/songs` and `/song/play` — merged 2026-08-05, Slice 3b;
 it replaced `community/SongExplore` and `community/CommunitySongPlayer`, both deleted),
-`community/CommunityMvPlayer` (`/watch`), `community/CreatorProfile` (`/creator`), `community/CommunityMvDialog` (modal player),
-`community/TrendingMvsPanel` (rendered inside `/mv/room` — area 02), and the shared
+`community/CommunityMvPlayer` (`/watch`), `community/CreatorProfile` (`/creator`),
+and the shared
 `community/ui.tsx` primitives.
 **Out of scope (cross-referenced):** the shell (area 01); the actual create flows the CTAs lead into
-(areas 02/03); sign-in (area 09); `ShareDialog` (area 10). ⚠️ **`LyricsPanel` is no longer shared
-with area 03** — `/song/result` moved to the shared `ui/LyricsSheet` in slice 3j, so `LyricsPanel`'s
-only remaining consumer is History's `CreationDialog` (area 05).
+(areas 02/03); sign-in (area 09); `ShareDialog` (area 10).
 
 **Key divergences from the app:** rails are **static seed**, not ranked (Curation PRD) ⚠️; `/watch`
 has **no 9:16↔3:4 toggle and no swipe-up feed** (App F10) ⚠️ (`TBD-EXP-03`); `/song/play` is still a
@@ -40,16 +38,14 @@ still local, non-persistent (real counters → `TBD-EXP-08`).
 
 ## 2. Route / component / state / API map (RD)
 
-| Route / Component                              | Owns UI                                                                               | Reads/writes state                                                           | `MuseApi`       |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------- |
-| `/` → `home/HomeView`                          | hero CTAs, Trending marquee, New MVs, Top Picks, New Songs, per-row like/share/create | `useAuth().requireLogin`, `useSongFlow().patchSongCompose`, local like map   | **none** (seed) |
-| `/explore/mvs` → `community/MvExplore`         | grid of all MVs → `CommunityMvDialog`                                                 | local `playId`                                                               | **none**        |
-| `/explore/songs` → `community/SongExplore`     | Top Picks + New Songs lists → player; Create                                          | `useSongFlow().patchSongCompose`                                             | **none**        |
-| `/watch` → `community/CommunityMvPlayer`       | 3:4 video player, like/share, Create MV                                               | `useSearchParams().id`, `useMvFlow().setCompose`, local play/mute/like       | **none**        |
-| `/song/play` → `community/CommunitySongPlayer` | disc player (**simulated**), prev/next, like/share, Lyrics, Create AI Song            | `useSearchParams().id`, `useSongFlow().patchSongCompose`, local idx/progress | **none**        |
-| `/creator` → `community/CreatorProfile`        | header + stats + MV/Songs tabs + rows                                                 | `useSearchParams().{self,tab}`                                               | **none**        |
-| `community/CommunityMvDialog`                  | modal 1:1 MV player + Create MV                                                       | `useMvFlow().setCompose`                                                     | **none**        |
-| `community/TrendingMvsPanel`                   | Trending list aside in `/mv/room` (area 02)                                           | —                                                                            | **none**        |
+| Route / Component                              | Owns UI                                                                                                               | Reads/writes state                                                           | `MuseApi`       |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------- |
+| `/` → `home/HomeView`                          | hero + tool selector (a phone pair and a desktop pair), Trending MVs, Top Picks, New Songs, per-row like/share/create | `useAuth().requireLogin`, `useSongFlow().patchSongCompose`, local like map   | **none** (seed) |
+| `/explore/mvs` → `community/MvExplore`         | grid of all MVs → `/watch?id=`                                                                                        | —                                                                            | **none**        |
+| `/explore/songs` → `community/SongExplore`     | Top Picks + New Songs lists → player; Create                                                                          | `useSongFlow().patchSongCompose`                                             | **none**        |
+| `/watch` → `community/CommunityMvPlayer`       | 3:4 video player, like/share, Create MV                                                                               | `useSearchParams().id`, `useMvFlow().setCompose`, local play/mute/like       | **none**        |
+| `/song/play` → `community/CommunitySongPlayer` | disc player (**simulated**), prev/next, like/share, Lyrics, Create AI Song                                            | `useSearchParams().id`, `useSongFlow().patchSongCompose`, local idx/progress | **none**        |
+| `/creator` → `community/CreatorProfile`        | header + stats + MV/Songs tabs + rows                                                                                 | `useSearchParams().{self,tab}`                                               | **none**        |
 
 Data: `lib/mv/community.ts` — `TRENDING_MVS`, `NEW_MVS`, `TOP_PICKS_SONGS`, `NEW_SONGS`,
 `ALL_COMMUNITY_SONGS`, `CREATOR_MVS`, `CREATOR_SONGS`, `DEFAULT_CREATOR`, `getCommunityMv/Song`,
@@ -59,28 +55,63 @@ Data: `lib/mv/community.ts` — `TRENDING_MVS`, `NEW_MVS`, `TOP_PICKS_SONGS`, `N
 
 ## 3. State model & rules
 
-### 3.1 The four rails (Home) — 🔒 seed, not ranked
+### 3.1 The three rails (Home) — 🔒 seed, not ranked
 
-`HomeView` renders four sections mirroring the Curation PRD rails, but each is a **fixed seed array**:
+> **Rewritten 2026-08-07 — the landing page migrated to the designer UI (the 17th and last
+> route).** It described the pre-migration Tailwind screen: FOUR rails led by a Trending MV
+> marquee, and two gradient hero CTA tiles. Both are gone. What follows is the migrated screen.
 
-- **Trending MV** — auto-scrolling infinite **marquee** (`TRENDING_MVS` cloned ×2); card → `/watch?id`.
-- **New MVs** — horizontal scroll, `NEW_MVS.slice(0,8)`, portrait 3:4 cards; "See all" → `/explore/mvs`.
-- **Top Picks Songs** — horizontal scroll, `TOP_PICKS_SONGS`, square cards; card → `/song/play?id`; "See all" → `/explore/songs`.
-- **New Songs** — 2-col grid, `NEW_SONGS.slice(0,6)`; row → `/song/play?id`; per-row Like (local), Share (`ShareDialog`), **Create** → `createFromSong` (`requireLogin` → `patchSongCompose` → `/song/create`).
-- **Hero CTAs**: "AI Music Video Studio" → `requireLogin(→ /mv/room)`; "AI Audio Lab" → `requireLogin(→ /song/create)` (auth triggers — area 09).
+`HomeView` renders a hero, a tool selector and **three** rails. Each rail is still a **fixed seed
+array** — nothing here is ranked or served.
+
+**Hero + tool selector — two treatments, chosen in JS, not CSS.** `HomeView` reads
+`useMediaQuery(PHONE_QUERY)` and mounts a structurally different pair on each side of 768px, which
+is DP's own arrangement:
+
+- **≥768px:** `ToolSelectorSectionV3` (a display heading over two cards) ABOVE
+  `HeroBannerSectionV3` (a scroll-snap filmstrip of 8 hero items; only the centred card plays its
+  video, the rest show posters).
+- **<768px:** `HeroBannerSection` (a draggable, auto-advancing infinite carousel) ABOVE
+  `ToolSelectorSection` (two compact full-gradient tiles).
+- Both tool-selector cards are `requireLogin` gated: **AI Music Video** → `/mv/room`,
+  **AI Song** → `/song/create` (auth triggers — area 09; GL-02 / `AC-EXP-02`). Both hero
+  "Create MV" CTAs are the same gate to `/mv/room`. DP has no auth at all, so every one of these
+  gates is WA's.
+- Hero media is `public/assets/hero/` — 8 mp4 + poster pairs vendored from the DP drop
+  (`designer-prototype/PROVENANCE.md` explains why that one directory is not excluded).
+
+The rails:
+
+- **Trending Music Videos** — horizontal scroll of the whole of `NEW_MVS`, prev/next arrows that
+  appear only when the row can scroll that way; card → `/watch?id`; "See all" → `/explore/mvs`.
+- **Top Picks Songs** — horizontal scroll, `TOP_PICKS_SONGS`, square cards; the card navigates to
+  `/song/play?id`, the cover's play button previews the real audio in place; "See all" →
+  `/explore/songs`.
+- **Newly Released Songs** — `NEW_SONGS.slice(0,6)` in 2 columns (1 column below 768px); per row a
+  **title** that navigates to `/song/play?id`, **album art** that starts `SongPlayBar` (the desktop
+  preview bar; on a phone it falls back to navigating, because the bar is `display:none` there),
+  Like (local), Share (`ShareDialog`), and **Create** → `requireLogin` → `patchSongCompose` →
+  `/song/create`.
+- ⚠️ **The Trending MV marquee is GONE, and with it `TRENDING_MVS`'s only home entry point.**
+  It was WA's own 45s infinite rail; DP has no equivalent, and the product owner decided
+  2026-08-07 to follow DP ("TRENDING_MVS 不用首頁 (Match DP)"). `TRENDING_MVS` is now reachable
+  from `/explore/mvs` alone, where it is the `--primary` section — which is also the only MV
+  catalog a phone can reach there (A19). `DESIGNER-TODO` **A20**; asserted in `e2e` so it is not
+  quietly restored.
 - ⚠️ **No ranking, refresh, eligibility, or dedup** from the Curation PRD — ordering is array order (`TBD-EXP-01`).
 - 📄 **Publish→feed locale contract (backend; spec-only).** When a creation is published (area 02/05) it carries a **language/locale code**. The backend returns each feed **already ranked locale-primary** (viewer's locale first, then engagement signals per the Curation PRD). The **frontend just requests and displays** the server-sorted data — no client-side ranking; "we only ask, the backend sorts." The **code format (2-char ISO `en` vs 3-char product `enu`, etc.) is RD-TBD** → `TBD-EXP-10` (relates to i18n `TBD-GL-06`). No prototype change now (mock feed stays seed).
 
 ### 3.2 Explore pages
 
-- **`/explore/mvs`** (`MvExplore`): **two sections** (Top Picks ← `TRENDING_MVS`, Newly Released ← `NEW_MVS`), each a **justified-row gallery** at ≥1024px and a wrapping grid below; card → **`CommunityMvDialog`** (modal player); Back → `DetailNavbar`'s `router.back()` with a fallback to `/`. Every card's creator avatar is `DEFAULT_CREATOR.avatar` ⚠️. (`MvExplore` also accepts an `initialPlayId` deep-link prop, but the route never passes it — currently dead.)
+- **`/explore/mvs`** (`MvExplore`): **two sections** (Top Picks ← `TRENDING_MVS`, Newly Released ← `NEW_MVS`), each a **justified-row gallery** at ≥1024px and a wrapping grid below; card → **navigates to `/watch?id=`** (2026-08-06 — it used to open `CommunityMvDialog` in place; DP's grid links at `/mv-detail?id=`, which is this app's `/watch`, so the dialog was a second rendering of a screen that already existed); Back → `DetailNavbar`'s `router.back()` with a fallback to `/`. Every card's creator avatar is `DEFAULT_CREATOR.avatar` ⚠️.
   > **Corrected 2026-08-05.** Was described as a "responsive grid (2/3/4 cols) of `[...TRENDING_MVS, ...NEW_MVS]`" with "Back → `/`". Slice **3a** replaced that with the designer's justified gallery and two real sections and did not update this line; caught while fixing the equivalent drift for `/explore/songs`.
 - **`/explore/songs`** (`song/SongDetailView` — **the same component as `/song/play`**, merged in Slice 3b): tabbed list (All / Top Picks / New Releases) beside a Now Playing column, 1:1 at ≥1024px; row → selects in Now Playing at ≥768px, opens the full-screen player at `/song/play?id` below that; creator → `/creator`; **Create** → `requireLogin` → `patchSongCompose` + `/song/create` (gated at the click, consistent with Home — GL-02/EXP-02); Back → `DetailNavbar`'s `router.back()` with a fallback to `/explore/songs`.
 
-### 3.3 MV player — `/watch` + `CommunityMvDialog`
+### 3.3 MV player — `/watch`
 
 - `/watch` reads `?id` → `getCommunityMv(id) ?? NEW_MVS[0]`; **3:4 portrait** stage, autoplay **muted** loop, tap play/pause, mute toggle; `# Music Video` tag, title, meta; creator → `/creator`; **Like** (local), **Share** (`ShareDialog`), `Stats`, prompt; **Create Music Video** → `setCompose` (mvType + prompt + `matchedSong` + title) → `/mv/room` (area 02).
-- `CommunityMvDialog` is the same experience as a **modal** (1:1 `object-contain` stage), used from `/explore/mvs`.
+- **`CommunityMvDialog` was DELETED on 2026-08-06**, along with `TrendingMvsPanel` (dead since
+  slice 3g). `/watch` is the only MV player.
 - ⚠️ App F10 offers a 9:16↔3:4 aspect toggle and a swipe-up "next MV" community feed; web has neither (`TBD-EXP-03`).
 
 ### 3.4 Song player — `/song/play` (`song/SongDetailView`, shared with `/explore/songs`)
@@ -126,7 +157,7 @@ Data: `lib/mv/community.ts` — `TRENDING_MVS`, `NEW_MVS`, `TOP_PICKS_SONGS`, `N
 
 ## 4. Journeys
 
-Screens to capture later: `/`, `/explore/mvs` (+ dialog), `/explore/songs`, `/watch`, `/song/play`, `/creator` (self + other, both tabs).
+Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/song/play`, `/creator` (self + other, both tabs).
 
 ### EXP-P1 — Home feed
 
@@ -137,12 +168,13 @@ Screens to capture later: `/`, `/explore/mvs` (+ dialog), `/explore/songs`, `/wa
 
 ### EXP-P2 — Explore MVs
 
-- **EXP-P2-S1** `/explore/mvs`: grid of all MVs. Tap a card → `CommunityMvDialog` (modal player). Back → `/`.
-- **EXP-P2-S2** In the dialog: play/pause, mute, creator → `/creator`, Like/Share, **Create Music Video** → `/mv/room`.
+- **EXP-P2-S1** `/explore/mvs`: grid of all MVs. Tap a card → **`/watch?id=`** (EXP-P4). Back → `/`.
+- **EXP-P2-S2** Every card is a real `next/link` with a locale-prefixed href, so plain click, middle-click and copy-link all reach the same screen.
 
 ### EXP-P3 — Explore Songs
 
-- **EXP-P3-S1** `/explore/songs`: one tabbed list — **All** / **Top Picks** / **New Releases** — beside a Now Playing column (the same screen as `/song/play`; see §3.2). Row → selects that song in Now Playing at ≥768px, or opens the full-screen player at `/song/play?id` below 768px; creator → `/creator`; **Create** → `/song/create` (pre-filled). Switching a tab changes the list only and must NOT change what is playing.
+- **EXP-P3-S1** `/explore/songs`: one tabbed list — **All** / **Top Picks** / **New Releases** — occupying the full width, two columns at ≥1024px (the same screen as `/song/play`; see §3.2). Row title → `/song/result?id&from=song-detail` at ≥768px, or the full-screen player at `/song/play?id` below 768px; row album art → a preview in the bottom `SongPlayBar` at ≥768px, the full-screen player below it; creator → `/creator`; **Create** → `/song/create` (pre-filled). Switching a tab changes the list only and must NOT change what is playing.
+  > **Updated 2026-08-07 with `AC-EXP-03`.** The Now Playing column this line used to describe was deleted by DP drop `2670ed2`; the tab pills are also hidden below 768px as of that drop (`designer-overrides.css`, A4), so a phone sees the **All** catalog only.
   > **Rewritten 2026-08-05 (Slice 3b), flagged by the G7 reviewer.** Was: "Top Picks + New Songs lists. Row → `/song/play?id`". Two things changed: the two stacked lists became three tabs (`Trending` deliberately not built — `DESIGNER-TODO.md` A6), and the row click stopped navigating on desktop. **The "must NOT change what is playing" clause is also a G7 finding** — the default was derived live from the visible list, so changing a browse filter restarted playback; now guarded by an e2e.
 
 ### EXP-P4 — Watch (MV player)
@@ -178,12 +210,28 @@ Screens to capture later: `/`, `/explore/mvs` (+ dialog), `/explore/songs`, `/wa
 
 ## 6. Acceptance criteria (EARS)
 
-- **AC-EXP-01** — WHEN `/` loads, THE SYSTEM SHALL render the hero CTAs and the four seed rails (Trending MV marquee, New MVs, Top Picks Songs, New Songs) in seed order.
-- **AC-EXP-02** — WHEN a hero CTA or a New-Songs **Create** is tapped, THE SYSTEM SHALL run `requireLogin` and, on success, navigate to the create flow (pre-filling the song for Create-from-song).
-- **AC-EXP-03** — WHEN an MV card is tapped, THE SYSTEM SHALL open `/watch?id` (Home) or `CommunityMvDialog` (Explore). WHEN a song card is tapped **from Home**, THE SYSTEM SHALL navigate to `/song/play?id`. WHEN a song row is tapped **on `/explore/songs`**, THE SYSTEM SHALL, below 768px, open the full-screen player at `/song/play?id`; and at 768px and above, select that song in the Now Playing column **without navigating**.
-  > **Corrected 2026-08-05 (Slice 3b).** This criterion previously said a song card always routes to `/song/play?id`, which the merge of `/explore/songs` and `/song/play` made false on desktop — the two are now one screen, so a desktop row click swaps the right-hand column and deliberately leaves the URL alone (asserted by `e2e/behaviour-regressions.spec.ts`, "3b desktop: clicking a song swaps the right column without navigating"). Home is NOT migrated and still navigates, which is why the criterion is now split by entry point. **Found by the Gate G7 reviewer:** the same change rewrote `AC-EXP-05` with a full rationale and left this sibling — and `EXP-P3-S1` — asserting the old behaviour.
+- **AC-EXP-01** — WHEN `/` loads, THE SYSTEM SHALL render the hero, the tool selector, and the three seed rails (Trending Music Videos, Top Picks Songs, Newly Released Songs) in seed order — and SHALL mount the phone treatment of the hero and tool selector below 768px and the desktop treatment at or above it.
+  > **Rewritten 2026-08-07 with the landing-page migration.** It said "the hero CTAs and the four
+  > seed rails (Trending MV marquee, …)". The marquee rail was deleted to follow DP (A20), so the
+  > count is three; and the hero/tool-selector branch is new, load-bearing and invisible to a
+  > screenshot taken at one width, so it is stated here rather than left as an implementation
+  > detail.
+- **AC-EXP-02** — WHEN a hero CTA, a tool-selector card, or a New-Songs **Create** is tapped, THE SYSTEM SHALL run `requireLogin` and, on success, navigate to the create flow (pre-filling the song for Create-from-song).
+- **AC-EXP-03** — WHEN an MV card is tapped **anywhere** (Home rails or `/explore/mvs`), THE SYSTEM SHALL navigate to `/watch?id`. WHEN a song card is tapped **from Home**, THE SYSTEM SHALL navigate to `/song/play?id`. WHEN a song row is tapped **on `/explore/songs`**, THE SYSTEM SHALL, below 768px, open the full-screen player at `/song/play?id`; and at 768px and above, navigate to `/song/result?id&from=song-detail`. WHEN a row's **album art** is tapped at 768px and above, THE SYSTEM SHALL start a preview in the persistent bottom bar **without navigating**.
+  > **Rewritten 2026-08-07 (DP drop `2670ed2`), and this REVERSES the 2026-08-05 wording below.** Drop 2 deleted DP's desktop Now Playing column — all 54 `.now-playing__*` rules — and made the list a full-width two-column grid. There is no right-hand column left to swap, so the previous criterion described markup that no stylesheet dresses. The product owner chose to adopt DP (2026-08-07): a desktop row click now navigates to the result-stage player, seeding SongFlow first the way `/history` rows already do.
+  >
+  > **The two affordances split, and that is the part worth reading.** DP did not simply replace "swap" with "navigate": the row's TITLE navigates, while the row's ALBUM ART starts `SongPlayBar`, a desktop-only preview bar, so browsing continues while a preview plays. An earlier reading of this drop concluded the bar had REPLACED the player and that adopting it would delete four of `AC-EXP-05`'s five requirements. That was wrong — inferred from a CSS diff instead of read from the markup — and nothing is lost: the disc player, Like, Lyrics and the Create CTA all still exist, on `/song/result` for desktop and in `MobileNowPlaying` on phones.
+  >
+  > Asserted by `e2e/behaviour-regressions.spec.ts`, "drop 2 desktop: clicking a song navigates to its result screen" and "drop 2 desktop: the album art previews in place without navigating". Home is NOT migrated and still navigates, which is why the criterion stays split by entry point.
+  >
+  > <details><summary>Superseded 2026-08-05 wording (Slice 3b)</summary>
+  >
+  > _"…and at 768px and above, select that song in the Now Playing column **without navigating**."_ — correct for one day. This is the error log's "a test can hold a decision in place after the decision is wrong": 3b pinned the swap with an e2e assertion, and when drop 2 reversed the decision the assertion had to move with the criterion rather than argue against it.
+  >
+  > </details>
 - **AC-EXP-04** — WHEN `/watch` loads, THE SYSTEM SHALL play the MV muted in 3:4 with play/pause + mute, and expose Like, Share, and **Create Music Video** → `/mv/room` pre-filled.
-- **AC-EXP-05** — WHEN `/song/play` loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community), show the disc player with **real `<audio>` progress**, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist, and **Create AI Song** → `/song/create` pre-filled. Playback SHALL NOT be capped for free accounts.
+- **AC-EXP-05** — WHEN `/song/play` loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community) and present the disc player with **real `<audio>` progress**, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist, and **Create AI Song** → `/song/create` pre-filled — below 768px in the full-screen `MobileNowPlaying`, and at 768px and above on `/song/result`, which the row click navigates to. Playback SHALL NOT be capped for free accounts.
+  > **Amended 2026-08-07 (DP drop `2670ed2`) — the requirements are unchanged, only WHERE desktop satisfies them.** Drop 2 deleted the desktop Now Playing column, so this screen no longer carries the disc player at ≥768px; `/song/result` does, and `AC-EXP-03`'s row click is what reaches it. Every one of the five requirements above still holds at every width. This was very nearly recorded as "adopting drop 2 deletes four of AC-EXP-05's five requirements" — a conclusion reached by reading a CSS diff rather than DP's markup, and caught by the product owner running the prototype.
   > **Rewritten 2026-08-05 by the designer-UI migration (Slice 3b). Three changes, all deliberate:**
   >
   > 1. **The 30s cap is gone** — plan §1.4 decided S1/S3 cancel the Pro playback gate; 3b is where it actually landed. `e2e/behaviour-regressions.spec.ts` asserts the inverse ("S3 / G5-d#7 inverted"), so it cannot creep back.
@@ -204,7 +252,7 @@ Screens to capture later: `/`, `/explore/mvs` (+ dialog), `/explore/songs`, `/wa
 ## 7. Per-path QA checklist
 
 - [ ] **EXP-P1**: rails render in seed order; hero + New-Songs Create gate via sign-in; cards route correctly (AC-01/02/03).
-- [ ] **EXP-P2**: grid → dialog player → Create MV → /mv/room (AC-03/04).
+- [ ] **EXP-P2**: grid → `/watch?id` → Create MV → /mv/room (AC-03/04).
 - [ ] **EXP-P3**: song lists → player; Create → /song/create pre-filled (AC-03).
 - [ ] **EXP-P4**: /watch autoplay muted 3:4; play/mute/like/share; Create MV pre-fills (AC-04); bad id → NEW_MVS[0] (AC-07, E1).
 - [ ] **EXP-P5**: simulated progress; Prev/Next cycle; Lyrics when present; Create AI Song pre-fills (AC-05, E3).
@@ -238,12 +286,12 @@ flowchart TD
   Home -->|MV card| Watch["/watch?id (3:4 player)"]
   Home -->|song card| Play["/song/play?id (disc, simulated)"]
   Home -->|See all| Explore["/explore/mvs · /explore/songs"]
-  Explore -->|MV| Dialog["CommunityMvDialog (modal)"]
+  Explore -->|MV| Watch2["/watch?id"]
   Explore -->|song| Play
   Watch -->|creator| Creator["/creator (F16 self / F17 other)"]
   Play -->|creator| Creator
   Watch -->|Create MV| Room["/mv/room (area 02, prefilled)"]
-  Dialog -->|Create MV| Room
+  Watch2 -->|Create MV| Room
   Play -->|Create AI Song| Song["/song/create (area 03, prefilled)"]
   Creator -->|row| Watch
   Creator -->|row| Play

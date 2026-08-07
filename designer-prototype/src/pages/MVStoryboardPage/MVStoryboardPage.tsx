@@ -139,7 +139,10 @@ function MVStoryboardPage() {
   const resultHref = fromHistory ? '/mv-result?from=history' : '/mv-result'
 
   return (
-    <AppLayout navbar={<DetailNavbar title="Edit Storyboard" credits={390} backHref={backHref} />}>
+    <AppLayout
+      navbar={<DetailNavbar title="Edit Storyboard" credits={390} backHref={backHref} />}
+      showMobileHeader={false}
+    >
       <div className={`mv-storyboard${stage === 'processing' ? ' mv-storyboard--processing' : ''}`}>
         {stage === 'processing' ? (
           <MVStoryboardProcessing onComplete={() => setStage('edit')} />

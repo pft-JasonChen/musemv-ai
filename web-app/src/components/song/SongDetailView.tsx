@@ -27,30 +27,49 @@ import {
   CREATOR_SONGS,
   getCommunitySong,
   songAudioUrl,
+  songResultFromCommunity,
   type CommunitySong,
 } from "@/lib/mv/community";
+import { SongPlayBar } from "@/components/song/SongPlayBar";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3b) ─────────────────────
  *
  * ONE VIEW, TWO ROUTES. `/explore/songs` and `/song/play` both render this.
- * Plan §2.1 originally had them as separate slices — take DP's list block for
- * one, DP's player for the other — and that plan does not survive contact with
- * the CSS: at >=1024px `.song-detail__lists` is `flex: 0 0 calc(50% - 20px)` and
- * `.now-playing` is its SIBLING at the same width (Figma 1409:34847 / 1778:28997,
- * "two equal 516px columns, a true 1:1"). They share one `activeId`, one
- * `playing`, one `<audio>`. Porting only the left half leaves 1440px with an
- * empty right half. Decision 2026-08-05 (product owner): both URLs render the
- * whole screen and differ only in `?id=` / `?tab=`.
+ * Decision 2026-08-05 (product owner): both URLs render the whole screen and
+ * differ only in `?id=` / `?tab=`.
  *
  * Keeping BOTH `page.tsx` files is the point — C7 stays at zero diff, G4-c still
  * passes, and every existing link into either URL keeps working. Merging them
  * into one route would have broken all of that for no visual gain.
  *
+ * ── DROP 2 (`2670ed2`) DELETED THE DESKTOP NOW PLAYING COLUMN ───────────────
+ *
+ * 3b built this screen as two equal columns — a list and a `.now-playing` panel
+ * sharing one `activeId`, one `playing` and one `<audio>`. Drop 2 removed all
+ * 54 `.now-playing__*` rules and made `.song-detail__list` a full-width
+ * two-column grid at >=1024px. Re-copying that stylesheet verbatim (which G2-b
+ * requires) left WA's panel as markup with no CSS behind it, which is how this
+ * came back onto the table at all.
+ *
+ * Product owner decided 2026-08-07: ADOPT DP. The panel is deleted here, and
+ * with it 3b's "clicking a song does not navigate" — see `selectSong`. What DP
+ * puts in its place is TWO things, not one, and conflating them is what made an
+ * earlier reading of this drop wrong:
+ *
+ *   · the row's TITLE navigates to the result-stage player (`/song/result`)
+ *   · the row's ALBUM ART starts `SongPlayBar`, a desktop preview bar, so
+ *     browsing continues while a preview plays
+ *
+ * Nothing is lost. The disc player, Like, Lyrics and the Create CTA all still
+ * exist — on `/song/result` for desktop, in `MobileNowPlaying` on phones — so
+ * `AC-EXP-05` keeps every one of its requirements.
+ *
  * ── WHAT CHANGED BEHAVIOURALLY (each has its own e2e — A4's lesson) ──────────
  *
- *  · DESKTOP CLICKING A SONG NO LONGER NAVIGATES. It swaps the right column.
- *    WA used to `router.push("/song/play?id=")` from the list.
+ *  · DESKTOP CLICKING A SONG NAVIGATES to `/song/result?id=…&from=song-detail`,
+ *    seeding SongFlow first the way `/history` rows do. This INVERTS 3b, and
+ *    `AC-EXP-03` was rewritten with it rather than left to contradict the code.
  *  · MOBILE CLICKING A SONG opens the full-screen player, via `router.push` and
  *    Q6's `navHistory`, NOT DP's `history.pushState`/`popstate` pair. "Is the
  *    full-screen player open" is derived from `?id=` — which is DP's own stated
@@ -108,8 +127,10 @@ const linesOf = (song: CommunitySong): string[] => {
 };
 
 /**
- * Shared by both players. DP duplicates this whole handler in each; the two
- * copies were identical, so it comes across once.
+ * `MobileNowPlaying`'s seek. It was shared with the desktop `NowPlaying` panel
+ * until drop 2 deleted that panel; kept as a hook rather than inlined because
+ * `SongPlayBar` has the same handler and the two would drift if merged onto one
+ * component's internals.
  *
  * The `pointermove`/`pointerup` listeners are added inside the handler, not in a
  * render-time effect — benign, and the pre-flight's SSR sweep cleared them.
@@ -156,196 +177,6 @@ interface PlayerProps {
   onPrev: () => void;
   onNext: () => void;
   onCreate: () => void;
-}
-
-/** Desktop right column (>=1024px 1:1 with the list; hidden below 768px). */
-function NowPlaying({
-  song,
-  playing,
-  currentTime,
-  duration,
-  audioRef,
-  liked,
-  onToggleLike,
-  onTogglePlay,
-  onPrev,
-  onNext,
-  onCreate,
-}: PlayerProps) {
-  const activeLineRef = useRef<HTMLParagraphElement>(null);
-  const [showLyrics, setShowLyrics] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
-  const { locale } = useLocale();
-  const { trackRef, onPointerDown } = useSeek(audioRef);
-
-  const lyricLines = linesOf(song);
-  // No per-line timestamps exist for generated lyrics, so the "current" line is
-  // estimated from playback position — enough for the highlight to track along.
-  const activeLineIndex = Math.min(
-    lyricLines.length - 1,
-    Math.floor((duration ? currentTime / duration : 0) * lyricLines.length),
-  );
-
-  useEffect(() => {
-    if (showLyrics) activeLineRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [activeLineIndex, showLyrics]);
-
-  const progressRatio = duration ? currentTime / duration : 0;
-
-  return (
-    <section className="now-playing">
-      <div className={`now-playing__art${showLyrics ? " now-playing__art--lyrics-open" : ""}`}>
-        {/* Cover and lyrics overlay both stay mounted so the crossfade can
-            transition instead of snapping — DP's "always mount, toggle a
-            modifier" convention. Visibility is opacity/pointer-events only. */}
-        <img
-          src={song.cover}
-          alt=""
-          className={`now-playing__art-image${playing ? " now-playing__art-image--spinning" : ""}${showLyrics ? " now-playing__art-image--hidden" : ""}`}
-        />
-
-        {/* `inert` for the same reason LyricsSheet has it, and it was MISSED here on
-            the first pass: DP's closed state is `opacity: 0; pointer-events: none`,
-            which hides this from the eye and the mouse but leaves "Close lyrics" in
-            the tab order on every desktop load. Caught by G7's independent review
-            and then measured — a DOM sweep for focusable-but-invisible elements at
-            1440px returned exactly this one node. Two overlays on this screen share
-            that CSS pattern; both now need the attribute. */}
-        <div
-          className={`now-playing__lyrics-overlay${showLyrics ? " now-playing__lyrics-overlay--open" : ""}`}
-          inert={!showLyrics}
-        >
-          <div
-            className="now-playing__lyrics-backdrop"
-            onClick={() => setShowLyrics(false)}
-            aria-hidden="true"
-          />
-          <div className="now-playing__lyrics-panel">
-            <button
-              type="button"
-              className="now-playing__lyrics-close"
-              onClick={() => setShowLyrics(false)}
-              aria-label="Close lyrics"
-            >
-              <span className="now-playing__lyrics-close-icon" aria-hidden="true">
-                ×
-              </span>
-            </button>
-            <div className="now-playing__lyrics-lines">
-              {lyricLines.map((line, index) => (
-                <p
-                  key={index}
-                  ref={index === activeLineIndex ? activeLineRef : undefined}
-                  className={`now-playing__lyrics-line${index === activeLineIndex ? " now-playing__lyrics-line--active" : ""}`}
-                >
-                  {line}
-                </p>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="now-playing__controller">
-        <div className="now-playing__meta-row">
-          <div className="now-playing__meta">
-            <p className="now-playing__title">{song.title}</p>
-            <Link href={localePath(locale, "/creator")} className="now-playing__user">
-              <span className="now-playing__avatar">
-                <DpIcon name="ic_account" className="now-playing__avatar-icon" />
-              </span>
-              <span className="now-playing__username">{song.creator}</span>
-            </Link>
-          </div>
-
-          <div className="now-playing__meta-actions">
-            <button
-              type="button"
-              className={`now-playing__icon-btn${liked ? " now-playing__icon-btn--active" : ""}`}
-              onClick={onToggleLike}
-              aria-label={liked ? "Unlike" : "Like"}
-            >
-              <DpIcon
-                name={liked ? "ic_favorite_on" : "ic_favorite_off"}
-                className="now-playing__icon"
-              />
-            </button>
-            <button
-              type="button"
-              className="now-playing__icon-btn"
-              onClick={() => setShareOpen(true)}
-              aria-label="Share"
-            >
-              <DpIcon name="ic_share" className="now-playing__icon" />
-            </button>
-            <button
-              type="button"
-              className={`now-playing__icon-btn${showLyrics ? " now-playing__icon-btn--active" : ""}`}
-              onClick={() => setShowLyrics((current) => !current)}
-              aria-label={showLyrics ? "Show cover art" : "Show lyrics"}
-            >
-              <DpIcon name="ic_singing_mic" className="now-playing__icon" />
-            </button>
-          </div>
-        </div>
-
-        <div className="now-playing__progress" ref={trackRef} onPointerDown={onPointerDown}>
-          <div className="now-playing__progress-track" />
-          <div
-            className="now-playing__progress-fill"
-            style={{ width: `${progressRatio * 100}%` }}
-          />
-          <div
-            className="now-playing__progress-thumb"
-            style={{ left: `${progressRatio * 100}%` }}
-          />
-        </div>
-        <div className="now-playing__time">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
-        </div>
-
-        <div className="now-playing__transport">
-          <button
-            type="button"
-            className="now-playing__transport-btn"
-            onClick={onPrev}
-            aria-label="Previous"
-          >
-            <DpIcon name="ic_skip_back" className="now-playing__transport-icon" />
-          </button>
-          <button
-            type="button"
-            className="now-playing__play"
-            onClick={onTogglePlay}
-            aria-label={playing ? "Pause" : "Play"}
-          >
-            <DpIcon name={playing ? "ic_pause" : "ic_play"} className="now-playing__play-icon" />
-          </button>
-          <button
-            type="button"
-            className="now-playing__transport-btn"
-            onClick={onNext}
-            aria-label="Next"
-          >
-            <DpIcon name="ic_skip_forward" className="now-playing__transport-icon" />
-          </button>
-        </div>
-      </div>
-
-      <button type="button" className="now-playing__cta" onClick={onCreate}>
-        Create AI Song
-        <DpIcon name="ic_arrow_right" className="now-playing__cta-icon" />
-      </button>
-
-      <ShareDialog
-        open={shareOpen}
-        onClose={() => setShareOpen(false)}
-        title={song.title}
-        url={buildShareUrl(song.id)}
-      />
-    </section>
-  );
 }
 
 /**
@@ -563,7 +394,7 @@ export function SongDetailView() {
   const router = useRouter();
   const params = useSearchParams();
   const { locale } = useLocale();
-  const { patchSongCompose } = useSongFlow();
+  const { patchSongCompose, setSongResult } = useSongFlow();
   const { requireLogin } = useAuth();
   const online = useOnline();
   const isPhone = useMediaQuery(PHONE_QUERY);
@@ -590,6 +421,8 @@ export function SongDetailView() {
    * `requireLogin` gate, which stays.
    */
   const [likedIds, setLikedIds] = useState<ReadonlySet<string>>(() => new Set());
+  /** Desktop preview bar. Never true on a phone — see `previewSong`. */
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const requestedSong = getCommunitySong(idParam);
 
@@ -687,6 +520,23 @@ export function SongDetailView() {
     else audio.pause();
   }
 
+  /**
+   * ── DESKTOP NOW NAVIGATES. THIS REVERSES SLICE 3b, DELIBERATELY ────────────
+   *
+   * 3b made a desktop row click swap an in-page column and leave the URL alone,
+   * wrote that into `AC-EXP-03`, and pinned it with an e2e assertion. Drop 2
+   * says navigate: DP deleted its desktop Now Playing column outright and its
+   * `selectSong` sends the row to the result-stage player. Product owner chose
+   * to adopt it (2026-08-07), so the criterion and the assertion moved WITH the
+   * code rather than holding it in place — the error log's "a test can hold a
+   * decision in place after the decision is wrong".
+   *
+   * `/song/result` reads SongFlow state and self-guards back to `/song/create`
+   * when it is empty, so the song is seeded BEFORE navigating. That is not a new
+   * pattern: it is exactly what `/history` rows do (`useOpenCreation.ts`). The
+   * `from=song-detail` param is DP's, and it is what swaps that screen's bottom
+   * rail to "Newly Released Songs" and drops the two owner-only controls.
+   */
   function selectSong(songId: string) {
     if (isPhone) {
       // Q6's router, not DP's `history.pushState` — a real route change, carrying
@@ -696,7 +546,30 @@ export function SongDetailView() {
       router.push(localePath(locale, `/song/play?id=${songId}`));
       return;
     }
+    const song = getCommunitySong(songId);
+    if (!song) return;
+    setSongResult(songResultFromCommunity(song));
+    router.push(localePath(locale, `/song/result?id=${songId}&from=song-detail`));
+  }
+
+  /**
+   * The ALBUM ART, as opposed to the title. Drop 2 splits the row's two
+   * affordances: art previews in place, title opens the song. On a phone there
+   * is no bar (`.song-bar` is `display: none` below 768px), so the art keeps
+   * doing what it always did — open the full-screen player.
+   */
+  function previewSong(songId: string) {
+    if (isPhone) {
+      selectSong(songId);
+      return;
+    }
     setSelectedId(songId);
+    setPreviewOpen(true);
+  }
+
+  function closePreview() {
+    audioRef.current?.pause();
+    setPreviewOpen(false);
   }
 
   function step(delta: number) {
@@ -766,7 +639,7 @@ export function SongDetailView() {
           entry, and it is what the mobile player's back control uses too. */}
       {/* A5: no phone back — the list half is an Explore tab-bar destination. The
           full-screen mobile player has its own back (that is why 3b was safe). */}
-      <DetailNavbar fallbackPath="/explore/songs" tabsSlot={tabsSlot} phoneBack={false} />
+      <DetailNavbar fallbackPath="/explore/songs" tabsSlot={tabsSlot} hideMobileBar />
 
       {!online ? (
         <CommunityEmpty variant="offline" />
@@ -781,47 +654,53 @@ export function SongDetailView() {
             onEnded={() => step(1)}
           />
 
+          {/* `.song-detail__lists` is GONE, not tidied away: drop 2 deleted the
+              rule, so the wrapper now matches nothing and would only add a
+              stray block box between `.song-detail` and its grid. The list is
+              `.song-detail`'s direct child, which is what makes the ≥1024px
+              two-column grid resolve. */}
           <div
             className={`song-detail${mobilePlayerOpen ? " song-detail--mobile-player-open" : ""}`}
+            /* Keeps the last rows clear of the fixed preview bar. DP's own
+               inline style — its height plus breathing room, not its bare
+               content height. */
+            style={previewOpen ? { paddingBottom: 96 } : undefined}
           >
-            <div className="song-detail__lists">
-              <div className="song-detail__list">
-                {displayedSongs.map((song) => (
-                  <TopSongListItem
-                    key={song.id}
-                    songId={song.id}
-                    title={song.title}
-                    username={song.creator}
-                    plays={song.plays}
-                    likes={song.likes + (likedIds.has(song.id) ? 1 : 0)}
-                    shares={song.shares}
-                    coverImage={song.cover}
-                    isPlaying={song.id === activeId && playing}
-                    onSelect={() => selectSong(song.id)}
-                    onCreate={() => createFromSong(song)}
-                    onToggleLike={() => toggleLike(song.id)}
-                    liked={likedIds.has(song.id)}
-                  />
-                ))}
-              </div>
+            <div className="song-detail__list">
+              {displayedSongs.map((song) => (
+                <TopSongListItem
+                  key={song.id}
+                  songId={song.id}
+                  title={song.title}
+                  username={song.creator}
+                  plays={song.plays}
+                  likes={song.likes + (likedIds.has(song.id) ? 1 : 0)}
+                  shares={song.shares}
+                  coverImage={song.cover}
+                  isPlaying={song.id === activeId && playing}
+                  onSelect={() => selectSong(song.id)}
+                  onPlay={() => previewSong(song.id)}
+                  onCreate={() => createFromSong(song)}
+                  onToggleLike={() => toggleLike(song.id)}
+                  liked={likedIds.has(song.id)}
+                />
+              ))}
             </div>
-
-            {activeSong && (
-              <NowPlaying
-                song={activeSong}
-                playing={playing}
-                currentTime={currentTime}
-                duration={duration}
-                audioRef={audioRef}
-                liked={likedIds.has(activeSong.id)}
-                onToggleLike={() => toggleLike(activeSong.id)}
-                onTogglePlay={togglePlay}
-                onPrev={() => step(-1)}
-                onNext={() => step(1)}
-                onCreate={() => createFromSong(activeSong)}
-              />
-            )}
           </div>
+
+          {previewOpen && activeSong && (
+            <SongPlayBar
+              song={activeSong}
+              playing={playing}
+              currentTime={currentTime}
+              duration={duration}
+              audioRef={audioRef}
+              onTogglePlay={togglePlay}
+              onPrev={() => step(-1)}
+              onNext={() => step(1)}
+              onClose={closePreview}
+            />
+          )}
 
           {activeSong && (
             <MobileNowPlaying

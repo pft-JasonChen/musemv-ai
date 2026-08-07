@@ -27,7 +27,9 @@ import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
  * It was first fixed with a bespoke in-page control here; once the sweep found
  * FIVE affected screens, the fix moved into `DetailNavbar` itself so there is
  * one definition and one place to delete when a drop ships a mobile back
- * affordance. Nothing screen-specific is needed here any more.
+ * affordance. The 2026-08-06 drop shipped exactly that, so that one place has
+ * now been deleted and this screen rides DP's own compact mobile bar. Nothing
+ * screen-specific is needed here.
  */
 
 type Dialog = null | "unsubscribe" | "delete";

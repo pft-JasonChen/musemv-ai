@@ -1,6 +1,6 @@
 {
   "generatedBy": "scripts/build-token-map.mjs",
-  "generated": "2026-08-05",
+  "generated": "2026-08-06",
   "sources": {
     "wa": "web-app/src/styles/token-aliases.css",
     "dp": "designer-prototype/src/styles/tokens.css"

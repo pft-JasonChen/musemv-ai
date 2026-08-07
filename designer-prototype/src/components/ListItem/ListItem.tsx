@@ -54,6 +54,19 @@ interface ListItemProps {
   /** song variant only — e.g. "AI Song" (no real genre/mood data exists per song yet). */
   subtitle?: string
   isPlaying?: boolean
+  /** Where the "Create" pill (`cta`) navigates — should carry a `from=`
+   *  source query value (e.g. "/song-create?from=home") so SongCreatePage's
+   *  back button can return to whichever list rendered this row, rather
+   *  than a single hardcoded destination. */
+  createHref?: string
+  /** Title click — navigates to this item's own detail page. Deliberately
+   *  scoped to just the title text, not the whole row: the row also holds
+   *  its own like/share/user/Create targets, so a row-wide click area makes
+   *  those easy to trigger by accident. */
+  onSelect?: () => void
+  /** Album-art play icon click — starts/toggles in-place playback without
+   *  navigating anywhere. Falls back to onSelect if omitted. */
+  onPlay?: () => void
 }
 
 function maskStyle(src: string): CSSProperties {
@@ -73,29 +86,45 @@ function ListItem({
   defaultLiked = false,
   subtitle,
   isPlaying = false,
+  createHref,
+  onSelect,
+  onPlay,
 }: ListItemProps) {
   const [liked, setLiked] = useState(defaultLiked)
   const [shareOpen, setShareOpen] = useState(false)
   const isSong = variant === 'song'
 
+  const titleEl = onSelect ? (
+    <button type="button" className="list-item__title list-item__title--button" onClick={onSelect}>
+      {title}
+    </button>
+  ) : (
+    <p className="list-item__title">{title}</p>
+  )
+
   return (
     <div className={`list-item${isSong ? ' list-item--song' : ''}`}>
       <div className="list-item__main">
-        <div className={`list-item__album-art${isSong ? ' list-item__album-art--song' : ''}`}>
+        <button
+          type="button"
+          className={`list-item__album-art${isSong ? ' list-item__album-art--song' : ''}`}
+          onClick={onPlay ?? onSelect}
+          aria-label={isPlaying ? 'Pause' : 'Play'}
+        >
           {coverImage && <img src={coverImage} alt="" className="list-item__album-image" />}
           <div className="list-item__album-scrim" aria-hidden="true" />
           <span className="list-item__play-icon" style={maskStyle(isPlaying ? icPause : icPlay)} aria-hidden="true" />
-        </div>
+        </button>
 
         {isSong ? (
           <div className="list-item__info">
-            <p className="list-item__title">{title}</p>
+            {titleEl}
             {subtitle && <p className="list-item__subtitle">{subtitle}</p>}
           </div>
         ) : (
           <div className="list-item__community-body">
             <div className="list-item__community-heading">
-              <p className="list-item__title">{title}</p>
+              {titleEl}
               {username && (
                 // ListItem is often wrapped in a link to the item's own detail
                 // page (e.g. My Creations) — preventDefault (blocks that
@@ -144,7 +173,13 @@ function ListItem({
 
       {isSong ? (
         cta ? (
-          <Button size="Small" variant="Tertiary">
+          <Button
+            size="Small"
+            variant="Tertiary"
+            onClick={() => {
+              if (createHref) window.location.href = createHref
+            }}
+          >
             Create
           </Button>
         ) : (
@@ -183,7 +218,13 @@ function ListItem({
               >
                 <span className="list-item__share-icon" style={maskStyle(icShare)} aria-hidden="true" />
               </button>
-              <Button size="Small" variant="Tertiary">
+              <Button
+                size="Small"
+                variant="Tertiary"
+                onClick={() => {
+                  if (createHref) window.location.href = createHref
+                }}
+              >
                 Create
               </Button>
             </div>

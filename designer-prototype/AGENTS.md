@@ -46,7 +46,10 @@ src/
                      via `showFooter`/`showMobileTabBar` props (both default `false`) —
                      they used to render unconditionally on every page. Only Home and
                      History currently pass them; a new page needs one of these only if
-                     its Figma frame actually shows that chrome.
+                     its Figma frame actually shows that chrome. `showMobileHeader`
+                     (default `true`) lets a page opt OUT of the shared app-mobile
+                     `MobileHeader` when it renders its own Figma-specific mobile header
+                     instead — MVDetailPage does this for its immersive MV index/player.
   data/               Mock data assembled from real asset files via import.meta.glob
                      (songs.ts, musicVideos.ts). No manual re-registration needed when new
                      asset folders are added that match the existing naming pattern.
@@ -78,11 +81,13 @@ src/
   index.css           Global reset + body defaults, sourced from tokens.css.
 ```
 
-Routing today (`src/App.tsx`): `/home-review-b*` → `HomePageReviewB` (**temporary A/B
-review page** — an alternate Tool Selector treatment for the product owner to compare
-against the real Home; delete this route + `HomePageReviewB.tsx` +
-`ToolSelectorSectionAlt.tsx/.css` once a version is picked and folded into the real
-`HomePage`/`ToolSelectorSection`), `/` or `/home*` → HomePage, `/mv-detail*` → MVDetailPage,
+Routing today (`src/App.tsx`): `/` or `/home*` → HomePage (desktop renders the review-c
+Tool Selector/Hero treatment the product owner picked — `ToolSelectorSectionV3`/
+`HeroBannerSectionV3` — while mobile keeps the original `ToolSelectorSection`/
+`HeroBannerSection`, chosen independently of the desktop A/B result; see `HomePage.tsx`'s
+`isMobile` branch. The `/home-review-b` and `/home-review-c` temporary A/B routes and the
+losing `HomePageReviewB`/`HomePageReviewC`/`ToolSelectorSectionAlt` files have been removed
+now that the pick is made), `/mv-detail*` → MVDetailPage,
 `/song-detail*` → SongDetailPage, `/song-create*` → SongCreatePage, `/mv-create*` →
 MVCreatePage, `/mv-storyboard*` → MVStoryboardPage, `/mv-result*` → MVResultPage,
 `/mv-edit*` → MVEditPage, `/history*` → HistoryPage, `/blog*` → BlogPage concept 1,
@@ -185,7 +190,7 @@ prototype-only signed-in state and global LoginModal.
 | SectionHeader | Section title row — optional "See all" link, separate mobile-abbreviated title text |
 | ShareDialog | Share dialog + `shareOrOpenDialog()` helper (prefers native Web Share API when available, falls back to the dialog) |
 | Sidebar | Left nav rail — collapses to icon-only below 1024px. Its bottom "Upgrade" button and the header's `UpgradeButton` each own an independent `UpgradeDialog` instance |
-| Tabs | Pill tab-bar switcher — controlled via `active`/`onChange`. Default styling (34px height, pill radius, bold) matches Figma "Bar/Tabs" — don't re-override this per page, it's already the shared default |
+| Tabs | Pill tab-bar switcher — controlled via `active`/`onChange`. Default styling (34px height, pill radius, bold, `--white-60` inactive text) matches Figma "Bar/Tabs" — don't re-override this per page, it's already the shared default. App-mobile (`.app-layout--mobile-app`, below 767px) gets its own smaller variant (26px height, Caption/M Medium) baked into `Tabs.css`, no per-page override needed there either |
 | ToggleSwitch | On/off switch (e.g. the Instrumental toggle on Song Create) |
 | Toast | Shared simple pill status message (e.g. "Published success") — auto-dismisses, used wherever a popup confirmation isn't warranted |
 | TopSongListItem | Song row specific to Song Detail's Top Songs list — larger type scale, own stats layout at ≥1920px |

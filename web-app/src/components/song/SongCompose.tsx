@@ -12,10 +12,14 @@ import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { creationHref, useOpenCreation } from "@/components/history/useOpenCreation";
+import { MOCK_USER } from "@/lib/user";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
-import { GENRES, MOODS, VOCALS, SONG_IDEAS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
+import { GENRES, MOODS, VOCALS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
 import { TOP_PICKS_SONGS } from "@/lib/mv/community";
 import { COST_SONG, DESCRIPTION_MAX, isSongReady, type SongMode } from "@/lib/mv/types";
 
@@ -56,6 +60,14 @@ const pick = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.lengt
  *   custom-lyrics box, which DP has no equivalent for.
  * · The disabled-CTA reason line. DP disables the button and says nothing.
  *
+ * ── AND ONE THING WE DELIBERATELY DO NOT HAVE (2026-08-06) ──────────────────
+ *
+ * DP's "Idea" buttons — one on the describe box, one on the lyrics box — are
+ * REMOVED. V1 ships no canned-sample fillers (product owner). This is the rare
+ * case of diverging from DP by SUBTRACTION, so it will come back on every drop
+ * and has to be re-removed; `Lyrics` and `/mv/room`'s `Templates` are different
+ * controls and stay.
+ *
  * ── ONE DP BEHAVIOUR THAT NEEDED A DECISION ─────────────────────────────────
  *
  * DP keeps the instrumental description in a THIRD text field
@@ -68,7 +80,14 @@ export function SongCompose() {
   const router = useRouter();
   const { locale } = useLocale();
   const { songCompose: s, patchSongCompose: patch, resetForNewSong } = useSongFlow();
+  const { loggedIn } = useAuth();
+  const { history } = useHistory();
+  const openCreation = useOpenCreation();
   const { credits } = useCredits();
+
+  // Items 4/5 (2026-08-06) — see the rail's note in `MvRoom.tsx`.
+  const mySongs = history.filter((h) => h.kind === "song" && h.status === "completed");
+  const showMine = loggedIn && mySongs.length > 0;
   const [buyOpen, setBuyOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const ready = isSongReady(s);
@@ -141,14 +160,17 @@ export function SongCompose() {
                   aria-label="Describe your song"
                 />
                 <div className="song-create__input-footer">
-                  <button
-                    type="button"
-                    className="song-create__idea-btn"
-                    onClick={() => patch({ describe: pick(SONG_IDEAS) })}
-                  >
-                    <DpIcon name="ic_lightbulb" className="song-create__idea-icon" />
-                    Idea
-                  </button>
+                  {/* The "Idea" button was REMOVED 2026-08-06 — V1 ships no
+                      canned-sample fillers (product owner). A deviation FROM
+                      DP, which has `.song-create__idea-btn` here
+                      (`SongCreatePage.tsx:598`), so the next drop brings it
+                      back and the removal must be re-applied.
+
+                      The empty left group is load-bearing, not leftover:
+                      `.song-create__input-footer` is `justify-content:
+                      space-between`, so with one child the Enhance/count group
+                      would slide to the LEFT edge. DP's own class, no override. */}
+                  <div className="song-create__input-actions" />
                   <div className="song-create__footer-right">
                     <EnhanceButton
                       value={s.describe}
@@ -218,15 +240,10 @@ export function SongCompose() {
                   aria-label={s.instrumental ? "Describe your instrumental" : "Lyrics"}
                 />
                 <div className="song-create__input-footer">
+                  {/* Same removal as the Simple box. `Lyrics` STAYS: it is a
+                      different control with a different label, and it shows the
+                      lyric FORMAT rather than filling in a prompt. */}
                   <div className="song-create__input-actions">
-                    <button
-                      type="button"
-                      className="song-create__idea-btn"
-                      onClick={() => patch({ lyrics: pick(SONG_IDEAS) })}
-                    >
-                      <DpIcon name="ic_lightbulb" className="song-create__idea-icon" />
-                      Idea
-                    </button>
                     {!s.instrumental && (
                       <button
                         type="button"
@@ -360,27 +377,58 @@ export function SongCompose() {
           {!ready && <p className="song-create__title-hint">Describe your song to continue.</p>}
         </div>
 
+        {/* Same two-mode rail as `/mv/room` — the reasoning is written up once,
+            in `MvRoom.tsx`. DP: `{isSignedIn ? 'My Creations' : 'Trending Songs'}`
+            with "See all" in the signed-out branch only. */}
         <div className="song-create__side">
           <div className="song-create__side-header">
-            {/* G7 finding 3g-3, the same defect as `/mv/room`'s rail: the
-                logged-in title claimed "My Creations" over `TOP_PICKS_SONGS`,
-                which are other creators' songs. Title now matches the data. */}
-            <p className="song-create__side-title">Trending Songs</p>
-            <Link href={localePath(locale, "/explore/songs")} className="song-create__side-see-all">
-              See all
-              <DpIcon name="ic_chevron-right" className="song-create__side-see-all-icon" />
-            </Link>
+            <p className="song-create__side-title">
+              {showMine ? "My Creations" : "Trending Songs"}
+            </p>
+            {!showMine && (
+              <Link
+                href={localePath(locale, "/explore/songs")}
+                className="song-create__side-see-all"
+              >
+                See all
+                <DpIcon name="ic_chevron-right" className="song-create__side-see-all-icon" />
+              </Link>
+            )}
           </div>
           <div className="song-create__side-list">
-            {TOP_PICKS_SONGS.slice(0, 7).map((song) => (
-              <Link
-                key={song.id}
-                href={localePath(locale, `/song/play?id=${song.id}`)}
-                className="song-create__side-item"
-              >
-                <ListItem title={song.title} coverImage={song.cover} subtitle={song.creator} />
-              </Link>
-            ))}
+            {showMine
+              ? mySongs.slice(0, 7).map((song) => (
+                  <Link
+                    key={song.id}
+                    href={localePath(locale, creationHref({ id: song.id, kind: "song" }))}
+                    className="song-create__side-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openCreation({
+                        id: song.id,
+                        kind: "song",
+                        title: song.title,
+                        thumb: song.thumb,
+                        resultUrl: song.resultUrl,
+                      });
+                    }}
+                  >
+                    <ListItem
+                      title={song.title}
+                      coverImage={song.thumb}
+                      subtitle={MOCK_USER.name}
+                    />
+                  </Link>
+                ))
+              : TOP_PICKS_SONGS.slice(0, 7).map((song) => (
+                  <Link
+                    key={song.id}
+                    href={localePath(locale, `/song/play?id=${song.id}`)}
+                    className="song-create__side-item"
+                  >
+                    <ListItem title={song.title} coverImage={song.cover} subtitle={song.creator} />
+                  </Link>
+                ))}
           </div>
         </div>
       </div>

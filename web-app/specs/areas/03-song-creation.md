@@ -11,14 +11,15 @@ The end-to-end flow to create an AI song: compose (Simple or Custom) → watch g
 result (disc player + synced Lyrics sheet) → use the song in an MV or recreate.
 
 **In scope:** `/song/create` (`SongCompose`), `/song/creating` (`SongGenerationScreen`),
-`/song/result` (`SongResultView` → `SongDetail` + `LyricsPanel`).
+`/song/result` (`SongResultView`, self-contained since slice 3j).
 **Out of scope (cross-referenced):** the community song player `/song/play` (area 04 —
-`CommunitySongPlayer`); `SongDetail` is **shared** with History's `CreationDialog` (area 05);
+`CommunitySongPlayer`);
 `ShareDialog` (area 10); Use-in-MV lands in `/mv/room` (area 02).
 
 **As-built vs App F11–F13 (SONG-01…05 landed 2026-07-23; amended 2026-08-06 by the designer-UI
-migration, slice 3j):** Custom mode has Genre / Mood / Vocal chips + Title; the **Lyrics / Idea**
-input is a free-form textarea (app-style — Ideas / Lyrics samples + Enhance), matching the app
+migration, slice 3j):** Custom mode has Genre / Mood / Vocal chips + Title; the **Lyrics**
+input is a free-form textarea (app-style — Lyrics sample + Enhance; the Idea fills were removed
+for V1 on 2026-08-06), matching the app
 prototype; **Recreate charges `COST_SONG_RECREATE` (50) and keeps the prior song in History**
 (SONG-03); **AI Enhance is free the first time per session, then 1 credit** (SONG-04); the compose
 credit pill shows the **live balance** (SONG-05). Generation itself charges `COST_SONG` (10) on
@@ -34,9 +35,9 @@ start (GL-01, insufficient → IAP).
   `e2e/behaviour-regressions.spec.ts` → `3j / S4`.
 - ⚠️ **SONG-02's 30s free-preview gate is CANCELLED** (plan §1.4, S3) and `/song/result` no longer
   enforces it. `/song/play` dropped it in slice 3b; `/song/result` dropped it in 3j when it stopped
-  rendering `SongDetail`. `FREE_PREVIEW_SEC` still exists inside `SongDetail.tsx` for its one
-  remaining unmigrated consumer, History's `CreationDialog` — so the cap is alive in History and
-  dead on both player screens. That inconsistency is deliberate and ends when `CreationDialog` is
+  rendering `SongDetail`. **`SongDetail.tsx` and its `FREE_PREVIEW_SEC` were DELETED 2026-08-06**
+  along with `CreationDialog`, so the cancelled cap no longer exists anywhere in the code. The
+  inconsistency that entry described is gone; the entry stays so nobody re-derives why the cap was
   migrated.
 
 ---
@@ -45,16 +46,16 @@ start (GL-01, insufficient → IAP).
 
 | Route            | View                                           | Owns UI                                                                                                                                                       | Reads/writes state                                                                                                     | `MuseApi`                            |
 | ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `/song/create`   | `song/SongCompose` (🔒 **Auth**)               | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, Ideas/Lyrics/Enhance, **Create Song** CTA                                   | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}`                                                         | `enhancePrompt` (song/lyrics)        |
+| `/song/create`   | `song/SongCompose` (🔒 **Auth**)               | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, Lyrics sample + Enhance (no Idea buttons — removed for V1), **Create Song** CTA, **two-mode side rail**                                   | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}`; `useAuth().loggedIn`, `useHistory().history` (rail)     | `enhancePrompt` (song/lyrics)        |
 | `/song/creating` | `song/SongGenerationScreen` → `GenerationView` | progress ring/step, View Later                                                                                                                                | `startSong`, `gen`, `songResult`                                                                                       | `createSongJob`, `getSongJob` (poll) |
-| `/song/result`   | `song/SongResultView` (self-contained)         | player + progress/seek, prev/next transport, volume/mute, Like, Share, Download, Lyrics sheet, Publish toggle, Use-in-MV, Recreate, **My Creations** playlist | `songResult`, `useHistory` (earlier songs + share id), `useMvFlow().patchCompose` (Use-in-MV), `useCredits` (Recreate) | —                                    |
+| `/song/result`   | `song/SongResultView` (self-contained)         | **Back (→ History)**, player + progress/seek, prev/next transport, volume/mute, Like, Share, Download, Lyrics sheet, Publish toggle, Use-in-MV, Recreate, **My Creations** playlist | `songResult`, `useHistory` (earlier songs + share id), `useMvFlow().patchCompose` (Use-in-MV), `useCredits` (Recreate) | —                                    |
 
 **Provider:** `SongFlowProvider` (`useSongFlow`) — compose form, job polling, result; feeds
 `HistoryProvider` on start/complete/fail. 🔒 mock generation (`GenerationView` shared with MV).
 
 ⚠️ **`/song/result` no longer renders `SongDetail`** (slice 3j). It is DP's own markup, and its
-lyrics sheet is the shared `ui/LyricsSheet`, not `LyricsPanel`. `SongDetail` + `LyricsPanel` are
-still live — but only under History's `CreationDialog` (area 05), which is not migrated. Anything
+lyrics sheet is the shared `ui/LyricsSheet`, not `LyricsPanel`. `SongDetail` and `LyricsPanel`
+were **deleted on 2026-08-06** when their last consumer (`CreationDialog`) went. Anything
 this area used to say about `/song/result` "sharing `SongDetail` with History" now describes
 History alone.
 
@@ -71,7 +72,7 @@ History alone.
 - `genre` (default "Pop"), `mood` (default "Uplifting"), `vocal` (nullable, optional), `title` (optional).
 - **CTA-ready** (`isSongReady`): **Custom → always ready**; **Simple → `describe.trim() !== ""`**.
 - Cost: `COST_SONG = 10` shown on the **Create Song** CTA (label matches the app prototype, 2026-07-23).
-- Custom-mode **Lyrics / Idea** field: a **free-form textarea** (`s.lyrics`, max 2500) with Idea /
+- Custom-mode **Lyrics** field: a **free-form textarea** (`s.lyrics`, max 2500) with
   Lyrics sample fills + Enhance — matching the app prototype (an earlier per-line editor was
   reverted 2026-07-23).
 - ⚠️ **No BPM slider and no Key selector** (S4 / 3j — see §1). `bpm` (`BPM_MIN 60`–`BPM_MAX 200`)
@@ -80,7 +81,9 @@ History alone.
   exported from `src/lib/mv/types.ts` for the same reason.
 - DP's **Song Length** slider is not ported: DP ships it behind `SHOW_SONG_LENGTH = false`, and
   whether that is a temporary hide or a removal is open question U1 for the designer.
-- Compose helpers: **Ideas** (Simple: random `SONG_IDEAS`; Custom: Idea + Lyrics sample fills),
+- Compose helpers (**2026-08-06: the "Idea" buttons are REMOVED — V1 ships no canned-sample
+  fillers. Custom mode keeps **Lyrics**, a sample fill with a different purpose. This is a
+  deliberate subtraction from DP, which still ships both Idea buttons**):
   **Enhance** (`enhancePrompt`; Custom lyrics offers Refine Idea vs Refine Lyrics; **first free/session
   then 1 cr** via `useCredits().{enhanceCost,consumeEnhance}` — SONG-04), a supported-languages info
   popover (Custom). The inline **`CreditPill` shows the live balance** (SONG-05).
@@ -118,9 +121,10 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 ### SONG-P1 — Compose
 
+- **SONG-P1-S0 (side rail, 2026-08-06)** Same two-mode aside as `/mv/room` (area 02 MV-P1-S0): **"Trending Songs"** over `TOP_PICKS_SONGS` with a "See all" → `/explore/songs`, or **"My Creations"** over the user's own finished songs from `useHistory()`, no "See all", each row opening `/song/result?id=`. Requires `loggedIn` **and** at least one completed song.
 - **SONG-P1-S1** Arrive `/song/create` (auth-gated); **Simple** tab default; **Create Song** disabled until `describe` non-empty. Hint "Describe your song to continue."
-- **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + Ideas + Enhance.
-- **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics / Idea** textarea (or "No lyrics needed" when Instrumental) + Ideas/Lyrics/Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
+- **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + Enhance.
+- **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics** textarea (or "No lyrics needed" when Instrumental) + Lyrics sample/Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
 - **SONG-P1-S4** Tap **Create Song** (`10`) → `resetForNewSong()` → `/song/creating`.
 
 ### SONG-P2 — Generation
@@ -152,9 +156,10 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 - **AC-SONG-01** — WHEN `/song/create` loads, THE SYSTEM SHALL default to **Simple** and keep **Create Song** disabled until `describe.trim() !== ""`; in **Custom**, it SHALL be enabled by default.
 - **AC-SONG-02** — WHEN Instrumental is ON in Custom, THE SYSTEM SHALL hide the lyrics editor and typically generate without lyrics (no Lyrics sheet). _(Note: toggling does not clear previously-typed lyrics — see SONG-E4 / `TBD-SONG-01`.)_
-- **AC-SONG-03** — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Ideas/Enhance fills are not capped.)
+- **AC-SONG-03** — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Enhance and the Lyrics sample fill are not capped.)
 - **AC-SONG-04** — WHEN **Create Song** is tapped, THE SYSTEM SHALL `resetForNewSong()`, insert a Generating History row, and navigate to `/song/creating`.
 - **AC-SONG-05** — WHILE the song job is `processing`, THE SYSTEM SHALL show progress, step, an estimate, and View Later → `/history`; on `done` navigate to `/song/result`.
+- **AC-SONG-11** — WHEN `/song/result` is reached from a `/history` row, THE SYSTEM SHALL show that row's song (flow state is seeded by `useOpenCreation`, area 05) and carry the row id in `?id=` so Share builds that row's link. THE SYSTEM SHALL expose a **Back** control on this stage — DP switches it from `RoomNavbar` to `DetailNavbar backHref="/history"` — going `router.back()` with `/history` as the fallback. *(An earlier song has no stored genre/mood, so the genre · mood line is omitted rather than invented.)*
 - **AC-SONG-06** — WHEN `/song/result` loads, THE SYSTEM SHALL expose drag-to-seek, prev/next across My Creations, Share, Download, a Lyrics sheet (when lyrics exist), a Publish toggle, Use in Music Video, and Recreate. Playback SHALL NOT be capped for any account.
   - ⚠️ **Two clauses of the original AC-SONG-06 are now knowingly untrue and are NOT rewritten away.** _(a)_ "**±15s**" — removed in 3j; DP's transport uses those slots for prev/next. _(b)_ "**and no Like**" — DP's player has a Like and it was ported (local state only). _(c)_ the 30s cap it required is cancelled by S3 (§1). (a) and (b) need a product/designer decision; (c) is already decided.
 - **AC-SONG-11** — ⚠️ **SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.** It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and `songCompose.{bpm,key}` persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident.
@@ -208,7 +213,7 @@ flowchart TD
 
 **Decisions (as-built, 2026-08-06):** Simple default; Custom is Genre/Mood/Vocal chips + Title +
 a free-form Lyrics/Idea textarea, **no BPM/Key controls** (S4 — the fields stay); **no free-preview
-cap on either player screen** (S3), the cap surviving only inside `SongDetail` for History;
+cap on either player screen** (S3), and since 2026-08-06 it survives nowhere at all;
 `/song/result` is DP's player over a **My Creations** playlist with a Publish toggle; Recreate costs
 50cr and keeps the prior song; generation is mock and display-only on credits (except the real
 `COST_SONG` charge). **Open, deliberately unresolved:** the ported Like on an own creation, and the

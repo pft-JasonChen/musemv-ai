@@ -55,6 +55,7 @@ export function TopSongListItem({
   shares,
   isPlaying = false,
   onSelect,
+  onPlay,
   onCreate,
   onToggleLike,
   liked,
@@ -68,8 +69,15 @@ export function TopSongListItem({
   shares: number;
   /** Swaps the album-art play icon for a pause icon. */
   isPlaying?: boolean;
-  /** Selects this song as Now Playing and starts real playback. */
+  /** Opens this song — on desktop that is a navigation to its result screen. */
   onSelect: () => void;
+  /**
+   * Drop 2 splits the row's two affordances apart: the ALBUM ART previews in
+   * place (desktop starts `SongPlayBar`, phones open the full-screen player)
+   * while the TITLE still opens the song. Falls back to `onSelect` when a caller
+   * has no separate preview, which is DP's own default.
+   */
+  onPlay?: () => void;
   /** GL-02/EXP-02: gated at the action by the caller. */
   onCreate: () => void;
   onToggleLike: () => void;
@@ -103,7 +111,7 @@ export function TopSongListItem({
       <button
         type="button"
         className="top-song__album-art"
-        onClick={onSelect}
+        onClick={onPlay ?? onSelect}
         aria-label={isPlaying ? `Pause ${title}` : `Play ${title}`}
       >
         {coverImage && <img src={coverImage} alt="" className="top-song__album-image" />}

@@ -8,7 +8,7 @@ import MobileTabBar from '../../components/MobileTabBar/MobileTabBar'
 import { MOBILE_LAYOUT } from '../../config/layoutMode'
 import bgAnimation01 from '../../assets/backgrounds/colorflow-animation-tmp.mp4?url'
 import bgAnimation02 from '../../assets/backgrounds/colorflow-animation-01-tmp.mp4?url'
-import bgAnimation03 from '../../assets/backgrounds/colorflow-animation-02.mov?url'
+import bgAnimation03 from '../../assets/backgrounds/colorflow-animation-02_converted.mp4?url'
 import bgAnimation04 from '../../assets/backgrounds/colorflow-animation-03-tmp.mp4?url'
 import bgAnimation05 from '../../assets/backgrounds/colorflow-animation-04-tmp.mp4?url'
 import './AppLayout.css'
@@ -33,6 +33,9 @@ interface AppLayoutProps {
    *  other page relies on its own top-of-page back button instead (see
    *  DetailNavbar/RoomNavbar's back arrow). */
   showMobileTabBar?: boolean
+  /** Set false when a page supplies its own Figma-specific mobile header
+   *  inside the page (for example the immersive MV index/player). */
+  showMobileHeader?: boolean
 }
 
 function AppLayout({
@@ -41,6 +44,7 @@ function AppLayout({
   showBackground = false,
   showFooter = false,
   showMobileTabBar = false,
+  showMobileHeader = true,
 }: AppLayoutProps) {
   const isMobileApp = MOBILE_LAYOUT === 'app'
 
@@ -73,38 +77,38 @@ function AppLayout({
 
   return (
     <div className={`app-layout${isMobileApp ? ' app-layout--mobile-app' : ''}`}>
-      {/* Navbar sits transparently on top of this decorative looping background,
-          which spans the full page width (including behind Sidebar's glass
-          panel), but only the top ~80% of the height — the scrim below
-          fades it into the page background instead of a hard cutoff.
-          Hidden below the app-mobile breakpoint — see AppLayout.css.
-          Home-only (showBackground) — every other page stays plain dark. */}
-      {showBackground && (
-        <>
-          <video
-            key={BACKGROUND_VIDEOS[displayedIndex]}
-            className={`app-layout__background${isFading ? ' app-layout__background--fading' : ''}`}
-            src={BACKGROUND_VIDEOS[displayedIndex]}
-            autoPlay
-            loop
-            muted
-            playsInline
-            aria-hidden="true"
-          />
-          {/* Figma: 70% black fill over the video so it doesn't overpower the page;
-              fades to the solid page background color further down. */}
-          <div className="app-layout__background-scrim" aria-hidden="true" />
-        </>
-      )}
-
       {/* Sidebar/Navbar stay mounted as the desktop-sync mobile fallback —
           MOBILE_LAYOUT in layoutMode.ts decides which set of chrome is
           visible below the app-mobile breakpoint. */}
       <Sidebar />
 
       <div className="app-layout__main">
+        {/* Navbar sits transparently on top of this decorative looping
+            background, which spans only .app-layout__main's own width (not
+            behind Sidebar) and the top ~80% of the height — the scrim below
+            fades it into the page background instead of a hard cutoff.
+            Hidden below the app-mobile breakpoint — see AppLayout.css.
+            Home-only (showBackground) — every other page stays plain dark. */}
+        {showBackground && (
+          <>
+            <video
+              key={BACKGROUND_VIDEOS[displayedIndex]}
+              className={`app-layout__background${isFading ? ' app-layout__background--fading' : ''}`}
+              src={BACKGROUND_VIDEOS[displayedIndex]}
+              autoPlay
+              loop
+              muted
+              playsInline
+              aria-hidden="true"
+            />
+            {/* Figma: flat 70% black tint over the whole video, plus a blend
+                at the very top and another at its own bottom edge — see
+                .app-layout__background-scrim for the exact stops. */}
+            <div className="app-layout__background-scrim" aria-hidden="true" />
+          </>
+        )}
         {navbar ?? <Navbar />}
-        {isMobileApp && <MobileHeader />}
+        {isMobileApp && showMobileHeader && <MobileHeader />}
         <main className="app-layout__content">{children}</main>
         {showFooter && <Footer />}
         {isMobileApp && showMobileTabBar && <MobileTabBar />}
