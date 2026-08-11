@@ -69,7 +69,13 @@ export function TopSongListItem({
   shares: number;
   /** Swaps the album-art play icon for a pause icon. */
   isPlaying?: boolean;
-  /** Opens this song — on desktop that is a navigation to its result screen. */
+  /** Opens this song — on desktop that is a navigation to its result screen.
+   *  Fires on a click ANYWHERE in the row except the creator link and the
+   *  like/share/Create actions (designer request, 2026-08-11 — same rule
+   *  applied to `ListItem`: those three already stop their own clicks from
+   *  bubbling, so a row-wide zone was never actually at risk of triggering
+   *  them by accident). Album art keeps its own dedicated "preview in
+   *  place" behaviour (`onPlay`) rather than also navigating. */
   onSelect: () => void;
   /**
    * Drop 2 splits the row's two affordances apart: the ALBUM ART previews in
@@ -107,11 +113,17 @@ export function TopSongListItem({
   );
 
   return (
-    <div className="top-song">
+    <div className="top-song top-song--clickable" onClick={onSelect}>
       <button
         type="button"
         className="top-song__album-art"
-        onClick={onPlay ?? onSelect}
+        // Album art keeps its own "preview in place" behaviour — stop the
+        // click here so it doesn't ALSO bubble up and trigger the row's
+        // onSelect navigation.
+        onClick={(e) => {
+          e.stopPropagation();
+          (onPlay ?? onSelect)();
+        }}
         aria-label={isPlaying ? `Pause ${title}` : `Play ${title}`}
       >
         {coverImage && <img src={coverImage} alt="" className="top-song__album-image" />}
@@ -121,11 +133,13 @@ export function TopSongListItem({
 
       <div className="top-song__info">
         <div className="top-song__heading">
-          <button type="button" className="top-song__title" onClick={onSelect}>
-            {title}
-          </button>
+          <p className="top-song__title">{title}</p>
           {username && (
-            <Link href={localePath(locale, "/creator")} className="top-song__user-row">
+            <Link
+              href={localePath(locale, "/creator")}
+              className="top-song__user-row"
+              onClick={(e) => e.stopPropagation()}
+            >
               <span className="top-song__avatar">
                 <DpIcon name="ic_account" className="top-song__avatar-icon" />
               </span>
@@ -139,7 +153,7 @@ export function TopSongListItem({
 
       <div className="top-song__social top-song__social--inline">{stats}</div>
 
-      <div className="top-song__actions">
+      <div className="top-song__actions" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"
           className={`top-song__like${liked ? " top-song__like--active" : ""}`}

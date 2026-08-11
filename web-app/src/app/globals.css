@@ -11,6 +11,11 @@
 @import "../styles/designer.css";
 /* Patches on DP's verbatim CSS, pending upstream fixes. Must load last. */
 @import "../styles/designer-overrides.css";
+/* WA-authored screens with no DP source use Tailwind inline; this one gets a
+   real stylesheet because it reuses DpIcon's mask-icon convention (a
+   `mask-*` + `background-color` pair per icon), same reasoning as `designer/`
+   just without a DP file to stay verbatim with — see the file's own header. */
+@import "../styles/community-profile-mv-preview.css";
 
 /* Map design tokens -> Tailwind v4 theme so utilities resolve to our tokens. */
 @theme inline {
@@ -168,6 +173,41 @@ body {
   .disc-spinning {
     animation: disc-spin 60s linear infinite;
   }
+}
+
+/* WA structural fix, 2026-08-11 (designer-reported: the Footer covers the
+   SongPlayBar) — NOT a DP CSS defect, so this doesn't belong in
+   designer-overrides.css (that file is only for patching a bug IN a
+   verbatim DP stylesheet; this is a WA composition issue DP has no
+   equivalent structure for).
+
+   `AppShell.tsx` renders Footer as a sibling AFTER `<main
+   className="app-layout__content">` on Home, not nested inside DP's own
+   content wrapper the way DP's AppLayout does it. Both `.footer` and
+   `.app-layout__content` carry DP's own verbatim `z-index: 1` — equal
+   values fall back to DOM order, so Footer (later in the DOM) paints over
+   the ENTIRE content subtree, including any `position: fixed` element
+   inside it (SongPlayBar), no matter how much higher that element's OWN
+   z-index (120) is — a descendant's z-index only competes against other
+   descendants of the SAME stacking context, it can't reach out to a
+   sibling context. Fixed by raising content's stacking level above
+   Footer's, not lowering Footer's — Footer's z-index: 1 is load-bearing
+   for staying above `.app-layout__background`'s z-index: -1 (see that
+   file's own history), and 2 vs -1 keeps that relationship intact. */
+.app-layout__content {
+  z-index: 2;
+}
+
+/* Designer follow-up, 2026-08-11: the z-index reorder above still leaves
+   Footer's own content faintly visible THROUGH SongPlayBar's glass
+   background while it's open, which reads as visual clutter rather than a
+   fix — simpler to just not render Footer at all while the bar covers the
+   bottom of the screen. `:has()` (same technique already used in
+   FloatingCTA.css/HistoryPage.css) keeps this CSS-only: no state needs to
+   be lifted from `NewSongsSection` (the only page combining Footer +
+   SongPlayBar) up to `AppShell`. */
+body:has(.song-bar) footer.footer {
+  display: none;
 }
 
 /* The `marquee` keyframes and `.marquee-wrap` / `.marquee-animate` /

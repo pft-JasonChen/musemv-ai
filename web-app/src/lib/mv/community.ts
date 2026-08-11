@@ -255,31 +255,36 @@ export const TRENDING_MVS: CommunityMv[] = [
 ];
 
 // ── Community songs (master list: Top Picks + New Songs + Songs-all) ────────
+// Designer request, 2026-08-11: every entry was a single 4-line verse, which
+// left `.song-result__lyrics-inline`'s 426px panel mostly empty — "doesn't
+// look like lyrics". Extended each to verse/chorus/verse/chorus (~16 lines),
+// same original mock style/theme as the existing 4 lines, not real lyrics
+// from any actual song.
 const LYRICS: Record<string, string> = {
   "Down the Memory Lane":
-    "Walking down the memory lane\nEvery step brings back the rain\nFaded photographs and old love songs\nReminding me of where I belong",
+    "Walking down the memory lane\nEvery step brings back the rain\nFaded photographs and old love songs\nReminding me of where I belong\n\nOh, take me back, take me back again\nTo simpler days before the pain\nEvery memory's a melody\nPlaying soft inside of me\n\nSunlit rooms and open doors\nLaughter echoing on wooden floors\nOld cassette tapes on the shelf\nSongs that remind me of myself\n\nOh, take me back, take me back again\nTo simpler days before the pain\nEvery memory's a melody\nPlaying soft inside of me",
   "Midnight Drive":
-    "Speeding through the neon lights at night\nCity blurs and everything feels right\nWindows down, the music hits so hard\nLosing myself somewhere in the dark",
+    "Speeding through the neon lights at night\nCity blurs and everything feels right\nWindows down, the music hits so hard\nLosing myself somewhere in the dark\n\nKeep on driving through the night\nChasing every neon light\nNothing's gonna slow us down\nThis is our favorite part of town\n\nRadio playing something new\nEvery mile brings me closer to you\nStreetlights flashing one by one\nWe're just getting started, we're not done\n\nKeep on driving through the night\nChasing every neon light\nNothing's gonna slow us down\nThis is our favorite part of town",
   "Forest Morning":
-    "Waking up to birds and morning dew\nSunlight filtering through the green\nEvery breath feels like something new\nNature painting the most peaceful scene",
+    "Waking up to birds and morning dew\nSunlight filtering through the green\nEvery breath feels like something new\nNature painting the most peaceful scene\n\nOh, this forest morning light\nEverything feels warm and right\nBirdsong calling from the trees\nDancing softly in the breeze\n\nDew drops resting on the leaves\nQuiet moments, gentle ease\nEvery step upon the trail\nTells a soft and peaceful tale\n\nOh, this forest morning light\nEverything feels warm and right\nBirdsong calling from the trees\nDancing softly in the breeze",
   "Neon Pulse":
-    "Electric pulse running through my veins\nCity lights and synthesizer refrains\nLost inside the rhythm of the night\nNeon signs ignite the city bright",
+    "Electric pulse running through my veins\nCity lights and synthesizer refrains\nLost inside the rhythm of the night\nNeon signs ignite the city bright\n\nFeel the pulse, feel it rise\nNeon colors fill the skies\nWe are electric, we are free\nLiving loud in symphony\n\nBassline pounding through the crowd\nEvery heartbeat feels so loud\nCity never sleeps tonight\nEverything is burning bright\n\nFeel the pulse, feel it rise\nNeon colors fill the skies\nWe are electric, we are free\nLiving loud in symphony",
   "Golden Hour":
-    "Golden light is fading slow\nEverything is warm and soft and low\nThis moment passing like a dream\nNothing is quite as it seems",
+    "Golden light is fading slow\nEverything is warm and soft and low\nThis moment passing like a dream\nNothing is quite as it seems\n\nHold this golden hour tight\nBefore it fades into the night\nEvery color, every ray\nWish that we could make it stay\n\nShadows stretching on the ground\nSoftest colors all around\nTime is slipping through our hands\nStanding here on golden sand\n\nHold this golden hour tight\nBefore it fades into the night\nEvery color, every ray\nWish that we could make it stay",
   "Ocean Dreams":
-    "Drifting on the ocean blue\nWaves are singing something true\nSalty air and endless sky\nWatching all the clouds drift by",
+    "Drifting on the ocean blue\nWaves are singing something true\nSalty air and endless sky\nWatching all the clouds drift by\n\nTake me where the ocean dreams\nNothing's ever what it seems\nFloating on this endless blue\nEvery wave brings me to you\n\nSeagulls calling out today\nSalty breeze along the bay\nSunlight dancing on the tide\nNowhere else I'd rather hide\n\nTake me where the ocean dreams\nNothing's ever what it seems\nFloating on this endless blue\nEvery wave brings me to you",
   "Last September":
-    "Last September when we said goodbye\nLeaves were falling underneath the sky\nI still hear your voice in the autumn wind\nWondering if we'll ever meet again",
+    "Last September when we said goodbye\nLeaves were falling underneath the sky\nI still hear your voice in the autumn wind\nWondering if we'll ever meet again\n\nLast September, I still remember\nEvery ember, every tender word\nEven now the feeling lingers\nLike a song I've always heard\n\nPhotographs left in a drawer\nMemories I can't ignore\nEvery season brings it back\nThat September, on repeat, on track\n\nLast September, I still remember\nEvery ember, every tender word\nEven now the feeling lingers\nLike a song I've always heard",
   "City Lights":
-    "City lights below, they shine for us\nJazz on the rooftop, life is glorious\nEvery note a story to be told\nEverything in blue and bronze and gold",
+    "City lights below, they shine for us\nJazz on the rooftop, life is glorious\nEvery note a story to be told\nEverything in blue and bronze and gold\n\nCity lights, they never fade\nEvery corner, serenade\nLiving in this golden hour\nFeeling every note's power\n\nSaxophones along the street\nEvery rhythm, every beat\nRooftop skyline, drinks in hand\nThis is our favorite band\n\nCity lights, they never fade\nEvery corner, serenade\nLiving in this golden hour\nFeeling every note's power",
   "Winter Song":
-    "First snow falling soft and white\nWrapped in warmth on a cold winter night\nFire crackling and your hand in mine\nEverything will turn out fine",
+    "First snow falling soft and white\nWrapped in warmth on a cold winter night\nFire crackling and your hand in mine\nEverything will turn out fine\n\nOh, let it snow, let it stay\nWrapped up close, we'll be okay\nEvery winter night with you\nFeels like something warm and true\n\nFrosted windows, candlelight\nHolding on through the quiet night\nSteam rising from our cups of tea\nThis is exactly where I want to be\n\nOh, let it snow, let it stay\nWrapped up close, we'll be okay\nEvery winter night with you\nFeels like something warm and true",
   "Pop Anthem":
-    "Turn it up, we're living for tonight\nEvery sound and every beat feels right\nRaise your hands up to the sky\nThis is our moment, you and I",
+    "Turn it up, we're living for tonight\nEvery sound and every beat feels right\nRaise your hands up to the sky\nThis is our moment, you and I\n\nThis is our anthem, sing it loud\nHands up high, we own this crowd\nTonight we're living without fear\nThis is the moment, this is here\n\nLights flashing, bass so strong\nEverybody sing along\nNothing's gonna bring us down\nWe're the loudest in this town\n\nThis is our anthem, sing it loud\nHands up high, we own this crowd\nTonight we're living without fear\nThis is the moment, this is here",
   "Chill R&B":
-    "Late night, dim lights, just you and me\nSmooth sounds, slow vibes, feeling free\nYour heartbeat matching mine so right\nWe can stay like this all night",
+    "Late night, dim lights, just you and me\nSmooth sounds, slow vibes, feeling free\nYour heartbeat matching mine so right\nWe can stay like this all night\n\nStay with me a little while\nLost inside your easy smile\nNothing's rushed, we take it slow\nThis is all we need to know\n\nCity hums outside the glass\nEvery worry starts to pass\nJust your voice and gentle sound\nBest place that I've ever found\n\nStay with me a little while\nLost inside your easy smile\nNothing's rushed, we take it slow\nThis is all we need to know",
   "Acoustic Folk":
-    "Picking up my guitar by the fire\nSinging songs that lift me higher\nSimple words and honest chords\nThis is all I need, no more",
+    "Picking up my guitar by the fire\nSinging songs that lift me higher\nSimple words and honest chords\nThis is all I need, no more\n\nEvery chord I strum for you\nSimple, honest, always true\nNothing fancy, nothing grand\nJust this music, just this hand\n\nWooden porch and evening air\nSongs I've carried everywhere\nEvery story that I hold\nTurns to music, turns to gold\n\nEvery chord I strum for you\nSimple, honest, always true\nNothing fancy, nothing grand\nJust this music, just this hand",
 };
 const lyr = (t: string) => LYRICS[t];
 
@@ -343,6 +348,125 @@ export const TOP_PICKS_SONGS: CommunitySong[] = [
     date: "2026-06-04",
     badge: null,
     lyrics: lyr("Acoustic Folk"),
+  },
+  // Designer request, 2026-08-11: the row only had 4 cards, not enough to
+  // overflow the row and actually demonstrate the horizontal-scroll
+  // affordance (prev/next arrows, drag-scroll) at any real viewport width.
+  // No more real catalog entries exist for this section, so these reuse the
+  // existing album art (already an established pattern in this same file —
+  // e.g. art(1)/art(3) each appear 3+ times across TOP_PICKS_SONGS/NEW_SONGS/
+  // CREATOR_SONGS) rather than inventing new asset files.
+  {
+    id: "sp-synth-wave",
+    title: "Synth Wave",
+    cover: art(6),
+    tags: "Synth · Retro",
+    genre: "Electronic",
+    mood: "Energetic",
+    creator: "NightDrive",
+    plays: 3800,
+    likes: 860,
+    shares: 140,
+    date: "2026-06-03",
+    badge: null,
+  },
+  {
+    id: "sp-indie-vibes",
+    title: "Indie Vibes",
+    cover: art(7),
+    tags: "Indie · Dreamy",
+    genre: "Indie",
+    mood: "Uplifting",
+    creator: "PaperPlanes",
+    plays: 2900,
+    likes: 610,
+    shares: 95,
+    date: "2026-06-02",
+    badge: null,
+  },
+  {
+    id: "sp-jazz-nights",
+    title: "Jazz Nights",
+    cover: art(9),
+    tags: "Jazz · Smooth",
+    genre: "Jazz",
+    mood: "Romantic",
+    creator: "BlueNoteKid",
+    plays: 2100,
+    likes: 480,
+    shares: 70,
+    date: "2026-06-01",
+    badge: null,
+  },
+  {
+    id: "sp-chill-beats",
+    title: "Chill Beats",
+    cover: art(10),
+    tags: "Lo-fi · Chill",
+    genre: "Lo-fi",
+    mood: "Calm",
+    creator: "StudyBuddy",
+    plays: 4600,
+    likes: 990,
+    shares: 130,
+    date: "2026-05-31",
+    badge: "HOT",
+  },
+  {
+    id: "sp-retro-funk",
+    title: "Retro Funk",
+    cover: art(11),
+    tags: "Funk · Groovy",
+    genre: "Funk",
+    mood: "Energetic",
+    creator: "GrooveMachine",
+    plays: 1800,
+    likes: 390,
+    shares: 55,
+    date: "2026-05-30",
+    badge: null,
+  },
+  {
+    id: "sp-dream-pop",
+    title: "Dream Pop",
+    cover: art(12),
+    tags: "Pop · Dreamy",
+    genre: "Pop",
+    mood: "Melancholic",
+    creator: "CloudNine",
+    plays: 2600,
+    likes: 570,
+    shares: 80,
+    date: "2026-05-29",
+    badge: null,
+  },
+  {
+    id: "sp-lofi-study",
+    title: "Lo-Fi Study",
+    cover: art(13),
+    tags: "Lo-fi · Focus",
+    genre: "Lo-fi",
+    mood: "Calm",
+    creator: "StudyBuddy",
+    plays: 3300,
+    likes: 700,
+    shares: 90,
+    date: "2026-05-28",
+    badge: null,
+  },
+  {
+    id: "sp-summer-breeze",
+    title: "Summer Breeze",
+    cover: art(14),
+    tags: "Acoustic · Warm",
+    genre: "Acoustic",
+    mood: "Uplifting",
+    creator: "QuietPines",
+    plays: 1950,
+    likes: 420,
+    shares: 62,
+    date: "2026-05-27",
+    badge: null,
   },
 ];
 

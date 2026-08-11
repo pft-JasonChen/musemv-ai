@@ -113,7 +113,7 @@ export function SongResultView() {
    */
   const fromSongDetail = params.get("from") === "song-detail";
   const { locale } = useLocale();
-  const { songResult, setSongResult, resetForRecreate } = useSongFlow();
+  const { songResult, setSongResult, resetForRecreate, patchSongCompose } = useSongFlow();
   const { patchCompose } = useMvFlow();
   const { history } = useHistory();
   const { credits } = useCredits();
@@ -534,18 +534,71 @@ export function SongResultView() {
                 {communityOrigin ? "Newly Released Songs" : "My Creations"}
               </p>
               <div className="song-result__creations-grid">
-                {playlist.map((item, i) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`song-result__creations-item${
-                      i === activeIndex ? " song-result__creations-item--active" : ""
-                    }`}
-                    onClick={() => setActiveIndex(i)}
-                  >
-                    <ListItem title={item.title} coverImage={item.cover} />
-                  </button>
-                ))}
+                {playlist.map((item, i) => {
+                  // Designer request, 2026-08-11: this rail should look like
+                  // Home's "Newly Released Songs" (avatar/username/stats/
+                  // like-share-Create), not the bare title+thumbnail row it
+                  // had before. `playlist` itself only carries
+                  // {id,title,cover,audioUrl} (it also covers the "My
+                  // Creations" case, which has no creator/stats to show), so
+                  // the real community data is looked up by id here rather
+                  // than widening that shape — items with no catalog match
+                  // (the user's own history entries) naturally fall back to
+                  // the plain variant instead of showing fabricated stats.
+                  const meta = getCommunitySong(item.id);
+                  const isActive = i === activeIndex;
+                  const select = () => setActiveIndex(i);
+                  return (
+                    // Designer follow-up, 2026-08-11: "same list component as
+                    // Home's Newly Released Songs" means the BORDERED version
+                    // — `.new-songs__item` (Figma node 1330:21011) is the
+                    // per-row bordered-card wrapper Home uses there, reused
+                    // verbatim here rather than leaving these rows borderless.
+                    //
+                    // `.song-result__creations-item` carries DP's own button
+                    // reset (border/background/padding/cursor) — only
+                    // meaningful on the fallback's real `<button>` below, but
+                    // harmless as a no-op on this wrapping `<div>` too, so it
+                    // stays on whichever element is actually rendered rather
+                    // than duplicating those declarations under a new class.
+                    <div
+                      key={item.id}
+                      className={`new-songs__item${isActive ? " song-result__creations-item--active" : ""}`}
+                    >
+                      {meta ? (
+                        <ListItem
+                          variant="community"
+                          title={item.title}
+                          coverImage={item.cover}
+                          username={meta.creator}
+                          plays={meta.plays}
+                          likes={meta.likes}
+                          shares={meta.shares}
+                          shareUrl={buildShareUrl(item.id)}
+                          cta
+                          isPlaying={isActive && playing}
+                          onSelect={select}
+                          onPlay={select}
+                          onCreate={() =>
+                            requireLogin(() => {
+                              patchSongCompose({
+                                genre: meta.genre,
+                                mood: meta.mood,
+                                title: meta.title,
+                                lyrics: meta.lyrics ?? "",
+                              });
+                              router.push(localePath(locale, "/song/create"));
+                            })
+                          }
+                        />
+                      ) : (
+                        <button type="button" className="song-result__creations-item" onClick={select}>
+                          <ListItem title={item.title} coverImage={item.cover} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

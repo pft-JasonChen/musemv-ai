@@ -11,8 +11,6 @@ import { DpIcon } from "@/components/ui/DpIcon";
 import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
-import { CreditsDetailModal } from "@/components/credits/CreditsDetailModal";
 import { SubscribeModal } from "@/components/credits/SubscribeModal";
 import { SAMPLE_CREATIONS } from "@/lib/mv/mock";
 import { AVATAR_SAMPLES, SUBSCRIPTION_PLANS } from "@/lib/user";
@@ -116,8 +114,6 @@ export function ProfileView() {
   const [nameDraft, setNameDraft] = useState(profile.name);
   const [avatarDraft, setAvatarDraft] = useState<string | null>(profile.avatar);
   const [notif, setNotif] = useState(true);
-  const [creditsOpen, setCreditsOpen] = useState(false);
-  const [creditsDetailOpen, setCreditsDetailOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [fbOpen, setFbOpen] = useState(false);
@@ -188,8 +184,12 @@ export function ProfileView() {
             </div>
 
             <div className="account-page__stats">
-              {/* Credits opens the balance breakdown; it is not a route in WA. */}
-              <button type="button" onClick={() => setCreditsDetailOpen(true)}>
+              {/* Credits opens the balance breakdown — a real route since
+                  2026-08-11 (designer request), matching DP's /account/credits. */}
+              <button
+                type="button"
+                onClick={() => router.push(localePath(locale, "/profile/credits"))}
+              >
                 <strong>
                   {credits}
                   {/* DP renders this one as a real <img>, not a currentColor mask —
@@ -239,7 +239,9 @@ export function ProfileView() {
                   {subscribed ? t("profile.manage") : t("profile.subscribe")}
                 </span>
               }
-              onClick={() => (subscribed ? setCreditsDetailOpen(true) : setSubOpen(true))}
+              onClick={() =>
+                subscribed ? router.push(localePath(locale, "/profile/credits")) : setSubOpen(true)
+              }
             />
             <div className="account-page__divider" />
             <AccountRow
@@ -279,20 +281,6 @@ export function ProfileView() {
           </div>
         </div>
       </section>
-
-      <BuyCreditsModal
-        open={creditsOpen}
-        onClose={() => setCreditsOpen(false)}
-        onPurchased={(n) => flash(`Added ${n} credits`)}
-      />
-      <CreditsDetailModal
-        open={creditsDetailOpen}
-        onClose={() => setCreditsDetailOpen(false)}
-        onBuy={() => {
-          setCreditsDetailOpen(false);
-          setCreditsOpen(true);
-        }}
-      />
 
       <Modal
         open={langOpen}

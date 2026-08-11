@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { ShareDialog } from "@/components/ui/ShareDialog";
@@ -39,6 +39,11 @@ import type { CommunitySong } from "@/lib/mv/community";
  * mask-icon test.
  */
 
+// `useLayoutEffect` warns during SSR; fall back to `useEffect` there. Not
+// imported from `src/lib/ssr.ts` — that module keeps this helper private to
+// itself, same as `Sidebar.tsx`'s own local copy.
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 export interface SongPlayBarProps {
   song: CommunitySong;
   playing: boolean;
@@ -75,11 +80,27 @@ export function SongPlayBar({
    * `.app-layout__main` instead is not an option: a transformed ancestor turns
    * `position: fixed` into "scrolls away with the content".
    */
+  // `useState(0)` is the SSR-safe answer — the server (and the first client
+  // render, before they've had a chance to disagree) both render with no
+  // sidebar measured yet. Reading `document` inside the initializer itself
+  // (`useState(() => document.querySelector(...))`) is the exact pattern
+  // `src/lib/ssr.ts` documents as MEASURED to throw React error 418 on
+  // hydration — this needs the same fix as `useMediaQuery`: a safe constant
+  // here, corrected in a LAYOUT effect below (before paint, not after).
   const [sidebarWidth, setSidebarWidth] = useState(0);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const sidebar = document.querySelector(".sidebar");
     if (!sidebar) return;
+    // Read the current width SYNCHRONOUSLY here too, not just once the
+    // observer's own first callback fires — that callback is async (fires
+    // shortly after `observe()`, not immediately), so without this the bar
+    // still rendered flush against the viewport edge for one frame, then
+    // visibly snapped sideways once the real width arrived
+    // (designer-reported, 2026-08-11). A layout effect runs before paint,
+    // so this correction is invisible; the observer then only has to
+    // handle actual LATER resizes (collapse/expand toggle).
+    setSidebarWidth(sidebar.getBoundingClientRect().width);
     // getBoundingClientRect, not contentRect: Sidebar has padding and a border,
     // and a `left` offset needs the border-box width.
     const observer = new ResizeObserver((entries) =>

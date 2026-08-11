@@ -140,7 +140,7 @@ export function SongCompose() {
           </div>
 
           {s.mode === "simple" ? (
-            <div className="song-create__section">
+            <div className="song-create__section song-create__section--grow">
               <div className="song-create__row-header">
                 <p className="song-create__label">DESCRIBE YOUR SONG</p>
                 <ToggleSwitch
@@ -374,7 +374,6 @@ export function SongCompose() {
           {/* DP docks the CTA only in Custom mode — Simple's form is short
               enough that a fixed bar would sit over empty space. */}
           {s.mode === "simple" ? cta : <FloatingCTA alignToParent>{cta}</FloatingCTA>}
-          {!ready && <p className="song-create__title-hint">Describe your song to continue.</p>}
         </div>
 
         {/* Same two-mode rail as `/mv/room` — the reasoning is written up once,

@@ -59,6 +59,30 @@
     width: 100%;
     max-width: none;
   }
+
+  /* Figma "AI Song — Feature Room" (node 1762:41589): Simple mode's
+     "DESCRIBE YOUR SONG" box isn't a fixed height — it's the ONE thing in
+     the panel that flex-grows to fill whatever vertical room the row has
+     (the row's height comes from `.song-create__side`'s 599px list, via
+     `.song-create`'s default `align-items: stretch`). Desktop-only and
+     scoped to this specific section (not a blanket `.song-create__section`
+     rule): Custom mode's section has a STYLE/chip block below its own input
+     box that needs to keep its own natural height, not get squeezed by a
+     growing textarea above it. */
+  .song-create__section--grow {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .song-create__section--grow .song-create__input-box {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .song-create__section--grow .song-create__textarea {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 .song-create__section {

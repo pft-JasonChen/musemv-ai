@@ -23,6 +23,41 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-11 — Credits Detail moves from a modal to a route. **C7 changed — this is the declared PR.**
+
+**Surface: C7.** `src/app/[locale]/profile/credits/page.tsx` added. `the URL shapes RD
+deep-links against are unchanged` snapshot updated: `/[locale]/profile/credits` inserted
+(alphabetical, between `/[locale]/profile` and `/[locale]/settings`).
+
+**Why:** plan §2.1 scoped Credits IAP (`CreditsPage` + `CreditsDialog` + `UpgradeDialog`) as
+"modal, not route" specifically to avoid a C7 change, since DP's version is a route
+(`/account/credits`) but WA opens it from the credit pill anywhere in the app. The designer
+asked for DP's actual full-page treatment instead (2026-08-11) — overriding that scoping
+decision, not an oversight. `CreditsDetailModal` is deleted; its content moved into
+`CreditsView`, rendered by the new route with `DetailNavbar` (fallback `/profile`, same
+pattern as the existing `/settings` sub-route) instead of `Modal`.
+
+**What did NOT move:** Buy Credits (`BuyCreditsModal`) and Upgrade (`SubscribeModal`) stay
+modals — DP has no route for either of those, so nothing about them is a C7 concern. Both are
+opened from the new page exactly as they were opened from the old modal.
+
+**What RD must do:** nothing breaks — no existing URL changed or was removed, this is a pure
+addition. If RD wants to deep-link straight to a user's credit balance, `/profile/credits` now
+exists for that.
+
+| Surface | Path                                     | Diff                                                                 |
+| ------- | ----------------------------------------- | --------------------------------------------------------------------- |
+| C1      | `src/lib/api/contract.ts`                 | untouched                                                              |
+| C2      | `src/lib/api/schemas.ts`                  | untouched                                                              |
+| C3      | `src/lib/api/index.ts`                    | untouched                                                              |
+| C4      | the five providers                        | untouched — `CreditsView` only CONSUMES `useCredits`/`useAuth`, both long-standing keys |
+| C5      | `src/lib/authStore.ts`                    | untouched                                                              |
+| C6      | `config.ts` / `middleware.ts`             | untouched                                                              |
+| C7      | `src/app/**/page.tsx`                     | **one route added**: `/[locale]/profile/credits`                      |
+| C8      | `src/lib/mv/types.ts`                     | untouched                                                              |
+
+---
+
 ## 2026-08-07 — the landing page migrated. **No contract change.**
 
 **Surface: none.** The gate flagged this change because it touches `src/app/globals.css`, which is

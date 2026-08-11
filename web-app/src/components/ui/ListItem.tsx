@@ -89,9 +89,14 @@ export function ListItem({
   /** The Create pill. Callers wrap this in `requireLogin` themselves — the gate
    *  belongs to the screen's product rule, not to a presentational row. */
   onCreate?: () => void;
-  /** Title click — opens this item's own detail page. Deliberately scoped to the
-   *  title, not the whole row: the row also holds user/like/share/Create
-   *  targets, and a row-wide click area makes those easy to trigger by accident. */
+  /** Opens this item's own detail page. Fires on a click ANYWHERE in the row
+   *  (designer request, 2026-08-11 — was title-only before, on the reasoning
+   *  that a row-wide zone makes the user/like/share/Create targets easy to
+   *  trigger by accident; overridden because those targets already
+   *  `stopPropagation()` their own clicks, so they were never actually at
+   *  risk). Album art keeps its own dedicated "preview in place" behavior
+   *  (`onPlay`) rather than also navigating — that is a deliberately
+   *  separate interaction, not one of the two exceptions asked for. */
   onSelect?: () => void;
   /** Album-art click — starts playback in place without navigating. Falls back
    *  to `onSelect`. Omit both and the art stays a non-interactive `<div>`. */
@@ -115,22 +120,25 @@ export function ListItem({
 
   const artClass = `list-item__album-art${isSong ? " list-item__album-art--song" : ""}`;
 
-  const titleEl = onSelect ? (
-    <button type="button" className="list-item__title list-item__title--button" onClick={onSelect}>
-      {title}
-    </button>
-  ) : (
-    <p className="list-item__title">{title}</p>
-  );
+  const titleEl = <p className="list-item__title">{title}</p>;
 
   return (
-    <div className={`list-item${isSong ? " list-item--song" : ""}`}>
+    <div
+      className={`list-item${isSong ? " list-item--song" : ""}${onSelect ? " list-item--clickable" : ""}`}
+      onClick={onSelect}
+    >
       <div className="list-item__main">
         {artAction ? (
           <button
             type="button"
             className={artClass}
-            onClick={artAction}
+            // Album art keeps its own "preview in place" behaviour — stop the
+            // click here so it doesn't ALSO bubble up and trigger the row's
+            // onSelect navigation (see onSelect's own doc comment above).
+            onClick={(e) => {
+              e.stopPropagation();
+              artAction();
+            }}
             aria-label={isPlaying ? `Pause ${title}` : `Play ${title}`}
           >
             {artContent}

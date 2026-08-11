@@ -505,10 +505,19 @@ export function SongDetailView() {
    * `NotAllowedError`, and an unhandled rejection is a console error — which the
    * R-2 hydration specs assert is empty. The first attempt on a cold load is
    * always blocked; once the user has clicked anything, later ones play.
+   *
+   * currentTime/duration reset HERE too, not just once the new audio's own
+   * onTimeUpdate/onLoadedMetadata fire — otherwise the bar/progress UI renders
+   * at least one frame with the PREVIOUS song's leftover numbers, which
+   * visibly snaps the progress thumb/fill sideways once the real values
+   * arrive (designer-reported, 2026-08-10). Resetting synchronously with the
+   * track change means it always starts clean at 0.
    */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !activeSong) return;
+    setCurrentTime(0);
+    setDuration(0);
     audio.src = songAudioUrl(activeSong.id);
     void audio.play().catch(() => {});
   }, [activeSong]);
@@ -668,22 +677,23 @@ export function SongDetailView() {
           >
             <div className="song-detail__list">
               {displayedSongs.map((song) => (
-                <TopSongListItem
-                  key={song.id}
-                  songId={song.id}
-                  title={song.title}
-                  username={song.creator}
-                  plays={song.plays}
-                  likes={song.likes + (likedIds.has(song.id) ? 1 : 0)}
-                  shares={song.shares}
-                  coverImage={song.cover}
-                  isPlaying={song.id === activeId && playing}
-                  onSelect={() => selectSong(song.id)}
-                  onPlay={() => previewSong(song.id)}
-                  onCreate={() => createFromSong(song)}
-                  onToggleLike={() => toggleLike(song.id)}
-                  liked={likedIds.has(song.id)}
-                />
+                <div key={song.id} className="song-detail__list-item">
+                  <TopSongListItem
+                    songId={song.id}
+                    title={song.title}
+                    username={song.creator}
+                    plays={song.plays}
+                    likes={song.likes + (likedIds.has(song.id) ? 1 : 0)}
+                    shares={song.shares}
+                    coverImage={song.cover}
+                    isPlaying={song.id === activeId && playing}
+                    onSelect={() => selectSong(song.id)}
+                    onPlay={() => previewSong(song.id)}
+                    onCreate={() => createFromSong(song)}
+                    onToggleLike={() => toggleLike(song.id)}
+                    liked={likedIds.has(song.id)}
+                  />
+                </div>
               ))}
             </div>
           </div>

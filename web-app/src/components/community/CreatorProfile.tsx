@@ -22,10 +22,12 @@ import {
   CREATOR_SONGS,
   DEFAULT_CREATOR,
   formatCount,
+  mvCoverRatio,
   type CommunityMv,
   type CommunitySong,
 } from "@/lib/mv/community";
 import { MOCK_USER } from "@/lib/user";
+import { MvPreviewCard } from "@/components/community/MvPreviewCard";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3e) ────────────────────
@@ -94,6 +96,9 @@ interface ProfileItem {
   /** What Download saves. MVs carry a real clip; songs share the demo track. */
   downloadUrl: string;
   downloadName: string;
+  /** MVs only — the real clip the new preview card plays (2026-08-07). Empty
+   *  for songs, which keep the small `.community-profile__item` row. */
+  video: string;
 }
 
 function toggle(set: ReadonlySet<string>, id: string): Set<string> {
@@ -148,6 +153,7 @@ export function CreatorProfile() {
             href: `/watch?id=${m.id}`,
             downloadUrl: m.video,
             downloadName: `${m.title}.mp4`,
+            video: m.video,
           }))
         : CREATOR_SONGS.map((s: CommunitySong) => ({
             id: s.id,
@@ -161,6 +167,7 @@ export function CreatorProfile() {
             href: `/song/play?id=${s.id}`,
             downloadUrl: SAMPLE_AUDIO,
             downloadName: `${s.title}.mp3`,
+            video: "",
           }));
     return rows.filter((r) => !removed.has(r.id));
   }, [tab, removed]);
@@ -270,6 +277,125 @@ export function CreatorProfile() {
               const isLiked = liked.has(item.id);
               const isPublished = published.has(item.id);
               const menuOpen = openMenu === item.id;
+
+              // The six-action owner menu (Edit/Like/Share/Publish/Download/
+              // Delete) — unchanged from before the MV preview redesign, just
+              // extracted so both the new `MvPreviewCard` (mv tab) and the
+              // still-small song row (songs tab) render the SAME menu rather
+              // than each carrying its own copy. See the class-level docs
+              // above for why the item inside is an `<a>`, not a `<button>`.
+              const actions = (
+                <>
+                  <IconButton
+                    size="small"
+                    variant="ghost"
+                    icon={isLiked ? "ic_favorite_on" : "ic_favorite_off"}
+                    label={isLiked ? "Unlike" : "Like"}
+                    onClick={() => setLiked((s) => toggle(s, item.id))}
+                  />
+                  <IconButton
+                    size="small"
+                    variant="ghost"
+                    icon="ic_share"
+                    label="Share"
+                    onClick={() => setShare(item)}
+                  />
+                  {ownerMenu && (
+                    <div className="community-profile__menu-shell">
+                      <IconButton
+                        size="xsmall"
+                        variant="tertiary"
+                        icon="ic_more"
+                        label="More"
+                        onClick={() => setOpenMenu((c) => (c === item.id ? null : item.id))}
+                      />
+                      {menuOpen && (
+                        <div className="community-profile__menu" role="menu">
+                          <a
+                            role="menuitem"
+                            className="community-profile__menu-primary"
+                            href={localePath(
+                              locale,
+                              item.kind === "mv" ? "/mv/edit" : "/song/create",
+                            )}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              doEdit(item);
+                            }}
+                          >
+                            <DpIcon name="ic_edit" />
+                            {item.kind === "mv" ? "Edit MV" : "Edit Song"}
+                          </a>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => setLiked((s) => toggle(s, item.id))}
+                          >
+                            <DpIcon name={isLiked ? "ic_favorite_on" : "ic_favorite_off"} />
+                            {isLiked ? "Unlike" : "Like"}
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setOpenMenu(null);
+                              setShare(item);
+                            }}
+                          >
+                            <DpIcon name="ic_share" />
+                            Share
+                          </button>
+                          <div className="community-profile__menu-publish">
+                            <span>
+                              <DpIcon as="i" name="ic_publish" />
+                              Publish
+                            </span>
+                            <ToggleSwitch
+                              checked={isPublished}
+                              onChange={(next) => doPublish(item, next)}
+                              ariaLabel={`Publish ${item.title}`}
+                            />
+                          </div>
+                          <button type="button" role="menuitem" onClick={() => doDownload(item)}>
+                            <DpIcon name="ic_download" />
+                            Download
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="community-profile__menu-delete"
+                            onClick={() => {
+                              setOpenMenu(null);
+                              setDel(item);
+                            }}
+                          >
+                            <DpIcon name="ic_delete" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+
+              if (item.kind === "mv") {
+                return (
+                  <MvPreviewCard
+                    key={item.id}
+                    title={item.title}
+                    video={item.video}
+                    cover={item.cover}
+                    ratio={mvCoverRatio(item.id)}
+                    plays={item.plays}
+                    likes={item.likes + (isLiked ? 1 : 0)}
+                    shares={item.shares}
+                    onOpen={() => open(item)}
+                    actions={actions}
+                  />
+                );
+              }
+
               return (
                 <article className="community-profile__item" key={item.id}>
                   {/* An anchor with a real destination, click-intercepted so it
@@ -285,7 +411,7 @@ export function CreatorProfile() {
                   >
                     <span className="community-profile__cover">
                       <img src={item.cover} alt="" />
-                      <DpIcon name={item.kind === "mv" ? "ic_video" : "ic_song"} />
+                      <DpIcon name="ic_song" />
                     </span>
                     <span className="community-profile__copy">
                       <strong>{item.title}</strong>
@@ -312,112 +438,7 @@ export function CreatorProfile() {
                   {/* Order is load-bearing: the phone rule hides
                       `.community-profile__actions > .icon-button:nth-child(2)`,
                       i.e. Share. Reordering these silently hides the wrong one. */}
-                  <div className="community-profile__actions">
-                    <IconButton
-                      size="small"
-                      variant="ghost"
-                      icon={isLiked ? "ic_favorite_on" : "ic_favorite_off"}
-                      label={isLiked ? "Unlike" : "Like"}
-                      onClick={() => setLiked((s) => toggle(s, item.id))}
-                    />
-                    <IconButton
-                      size="small"
-                      variant="ghost"
-                      icon="ic_share"
-                      label="Share"
-                      onClick={() => setShare(item)}
-                    />
-                    {ownerMenu && (
-                      <div className="community-profile__menu-shell">
-                        <IconButton
-                          size="xsmall"
-                          variant="tertiary"
-                          icon="ic_more"
-                          label="More"
-                          onClick={() => setOpenMenu((c) => (c === item.id ? null : item.id))}
-                        />
-                        {menuOpen && (
-                          <div className="community-profile__menu" role="menu">
-                            {/* An `<a>` on purpose, and NOT interchangeable with a
-                                `<button>`. The stylesheet's shared rule matches
-                                `.community-profile__menu > button` — specificity
-                                (0,1,1) — while the white-pill rule is
-                                `.community-profile__menu-primary`, (0,1,0). As a
-                                button this element loses padding, background and
-                                alignment to the more specific rule and renders as
-                                a plain transparent list item. DP is an anchor, so
-                                the pill wins there; the click is intercepted so
-                                navigation still goes through the router (R-9). */}
-                            <a
-                              role="menuitem"
-                              className="community-profile__menu-primary"
-                              href={localePath(
-                                locale,
-                                item.kind === "mv" ? "/mv/edit" : "/song/create",
-                              )}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                doEdit(item);
-                              }}
-                            >
-                              <DpIcon name="ic_edit" />
-                              {item.kind === "mv" ? "Edit MV" : "Edit Song"}
-                            </a>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              onClick={() => setLiked((s) => toggle(s, item.id))}
-                            >
-                              <DpIcon name={isLiked ? "ic_favorite_on" : "ic_favorite_off"} />
-                              {isLiked ? "Unlike" : "Like"}
-                            </button>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              onClick={() => {
-                                setOpenMenu(null);
-                                setShare(item);
-                              }}
-                            >
-                              <DpIcon name="ic_share" />
-                              Share
-                            </button>
-                            {/* Not a menuitem: the row's action lives in the
-                                switch, and a `role="menuitem"` wrapper around a
-                                `role="switch"` would nest two widget roles. */}
-                            <div className="community-profile__menu-publish">
-                              <span>
-                                {/* `<i>` again — `.community-profile__menu-publish i`. */}
-                                <DpIcon as="i" name="ic_publish" />
-                                Publish
-                              </span>
-                              <ToggleSwitch
-                                checked={isPublished}
-                                onChange={(next) => doPublish(item, next)}
-                                ariaLabel={`Publish ${item.title}`}
-                              />
-                            </div>
-                            <button type="button" role="menuitem" onClick={() => doDownload(item)}>
-                              <DpIcon name="ic_download" />
-                              Download
-                            </button>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              className="community-profile__menu-delete"
-                              onClick={() => {
-                                setOpenMenu(null);
-                                setDel(item);
-                              }}
-                            >
-                              <DpIcon name="ic_delete" />
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  <div className="community-profile__actions">{actions}</div>
                 </article>
               );
             })}

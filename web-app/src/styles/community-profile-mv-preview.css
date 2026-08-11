@@ -1,0 +1,257 @@
+/* ============================================================================
+   community-profile-mv-preview.css — the "Music Videos" tab's big preview
+   card on `/creator` (Figma "Community User Profile — MV", nodes 1961:40612
+   "other people's" / 1961:41878 "own", 2026-08-07 designer request).
+
+   WHY THIS ISN'T IN `src/styles/designer/`
+     Every file there is byte-identical to a DP source file (D1) — this design
+     has no DP counterpart at all (DP's CommunityProfilePage still ships the
+     small `.community-profile__item` row this replaces on the MV tab only;
+     Songs keeps that row). So this is WA-authored CSS, same as the rest of
+     the pre-migration screens, just given real classes instead of inline
+     Tailwind because it reuses `DpIcon`'s mask-icon convention (a `mask-*` +
+     `background-color` pair needs a class, not a pile of arbitrary Tailwind
+     properties repeated per icon).
+
+   Colours/radii/spacing still come from DP's own tokens (`tokens.css`) so
+   this reads as part of the same system, not a second visual language.
+   ========================================================================== */
+
+/* DP's `.community-profile__list` (CommunityProfilePage.css, verbatim) has
+   no gap of its own — the old flush `.community-profile__item` rows didn't
+   need one. These bigger cards do (designer request, 2026-08-11); scoped to
+   `:has(.mv-preview)` so the Songs tab's original row list is untouched. */
+.community-profile__list:has(.mv-preview) {
+  gap: 24px;
+}
+
+.mv-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+/* The stage is ALWAYS 16:9 (designer correction, 2026-08-07) — a portrait
+   clip does NOT get its own tall/cropped box. Same technique `/watch`'s
+   player already uses (`.mv-player__stage`/`--portrait`): the outer box
+   stays landscape-shaped, a blurred copy of the same video fills it edge to
+   edge, and the real `<video>` sits centred at its OWN aspect ratio on top —
+   full height, pillarboxed, never cropped — so the empty sides show blur
+   instead of a zoomed-in crop. */
+.mv-preview__stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-lg);
+  background: var(--neutral-dark-09);
+}
+
+.mv-preview__backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(20px);
+  transform: scale(1.1);
+}
+
+.mv-preview__backdrop-scrim {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(9, 9, 11, 0.3) 0%, var(--neutral-dark-04) 100%);
+}
+
+.mv-preview__video {
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+}
+
+/* Landscape (the default): fill the stage, cropping is fine — it's already
+   the same shape. */
+.mv-preview__stage:not(.mv-preview__stage--portrait) .mv-preview__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Portrait: full height, width from its OWN ratio — this is what pillarboxes
+   it instead of stretching/cropping to fill the wide stage. */
+.mv-preview__stage--portrait .mv-preview__video {
+  width: auto;
+  height: 100%;
+}
+
+.mv-preview__controller {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px 12px;
+  background: linear-gradient(0deg, rgba(7, 7, 7, 0.6) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.mv-preview__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 20px;
+}
+
+.mv-preview__control-btn {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+}
+
+.mv-preview__control-icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-preview__time {
+  flex-shrink: 0;
+  color: var(--white-40);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.mv-preview__seek {
+  position: relative;
+  flex: 1 1 0;
+  height: 20px;
+  cursor: pointer;
+}
+
+.mv-preview__seek-track {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+}
+
+.mv-preview__seek-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+}
+
+.mv-preview__seek-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+}
+
+.mv-preview__info {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+}
+
+.mv-preview__copy {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mv-preview__title {
+  overflow: hidden;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  line-height: 22px;
+}
+
+.mv-preview__social {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.mv-preview__stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mv-preview__stat-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mv-preview__actions {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 16px;
+}

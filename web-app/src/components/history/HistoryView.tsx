@@ -245,13 +245,11 @@ export function HistoryView() {
       />
 
       <div className="history-page">
-        {/* HIST-02: creations are retained permanently (no 14-day auto-delete).
-            DP has no equivalent line, but this one carries a product rule rather
-            than decoration, so it stays. */}
-        <p className="mb-4 text-[12px]" style={{ color: "var(--text-2)" }}>
-          Your creations are saved here permanently. Download anytime to keep a copy.
-        </p>
-
+        {/* HIST-02's disclosure line lived here (retention policy: no 14-day
+            auto-delete) — removed 2026-08-11 per explicit designer request,
+            after flagging that it carried a product rule rather than being
+            decoration. The underlying retention BEHAVIOR is unchanged; this
+            only removes the on-screen copy stating it. */}
         {shown.length === 0 ? (
           <div
             className="rounded-2xl border p-12 text-center"

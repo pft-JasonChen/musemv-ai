@@ -330,6 +330,7 @@ exports[`C7 — route map (src/app/**/page.tsx) > the URL shapes RD deep-links a
   "/[locale]/mv/storyboard",
   "/[locale]/mv/thinking",
   "/[locale]/profile",
+  "/[locale]/profile/credits",
   "/[locale]/settings",
   "/[locale]/share",
   "/[locale]/share/mv/[id]",

@@ -340,3 +340,80 @@
 .song-processing__status {
   color: var(--neutral-dark-54);
 }
+
+/* Designer request, 2026-08-11 — SongPlayBar.css's `background: rgba(9, 9,
+   11, 0.75)` relies on its `backdrop-filter: blur(16px)` to actually darken
+   whatever is scrolled underneath; 0.75 opacity alone reads as "content
+   showing clearly through a dark tint", not "blurred and separated". This
+   is worse than it looks in `next build` — `next dev` (Turbopack) drops
+   `backdrop-filter` entirely (documented dev/prod gap: the
+   postcss-restore-backdrop-filter plugin only runs in production builds),
+   so in dev this bar currently has ZERO blur, just the 0.75 tint. Raising
+   opacity to 0.94 keeps the bar readable/separated from what's behind it in
+   BOTH dev (no blur) and prod (blur still applies on top of this darker
+   base) instead of depending on backdrop-filter alone. DELETE THIS if a
+   future drop raises DP's own opacity or the postcss gap gets closed for
+   dev too. */
+.song-bar {
+  background: rgba(9, 9, 11, 0.94);
+}
+
+/* Designer request, 2026-08-11 — ListItem.tsx's `onSelect` now fires on a
+   click anywhere in the row (was title-only); this is just the row-level
+   affordance DP's own CSS never needed for a plain-text/non-interactive
+   card. `.list-item__title--button`'s DP-verbatim `cursor: pointer` is now
+   dead (the title is unconditionally a `<p>`), which is fine — unused
+   verbatim CSS elsewhere in this file is normal. DELETE THIS if a future
+   drop ships the whole row as an interactive element in DP's own CSS. */
+.list-item--clickable {
+  cursor: pointer;
+}
+
+/* Designer request, 2026-08-11 — same row-wide click rule as ListItem, now
+   also on TopSongListItem (`/explore/songs`, `/song/play`): `.top-song__title`
+   DP-verbatim `cursor: pointer` is now dead (title is unconditionally a
+   `<p>`), same as ListItem's title — harmless, unused verbatim CSS. */
+.top-song--clickable {
+  cursor: pointer;
+}
+
+/* Designer request, 2026-08-11 — Song Result's transport row (prev/play/next)
+   used `justify-content: space-between` with no explicit gap, so the space
+   between the three buttons scaled with the container's width instead of
+   staying fixed. Fixed 70px gap, centered instead of edge-hugging. */
+.song-result__transport {
+  justify-content: center;
+  gap: 70px;
+}
+
+/* Designer request, 2026-08-11 — "Primary Large Button" rule: 16px
+   horizontal padding, 230px minimum width, sized to its own content on
+   desktop rather than stretching to fill its parent (DP's own `width: 100%`
+   here). Mobile is untouched — Song Result's own layout stacks this CTA
+   full-width below ~1024px, same breakpoint `.song-result__lyrics-inline`
+   already uses for its own desktop-only behavior.
+
+   `width: auto` alone was not enough: at this same breakpoint DP's own CSS
+   also gives `.song-result__cta-primary` a sibling `flex: 1` (so it and
+   `.song-result__cta-secondary` split `.song-result__ctas`'s row evenly) —
+   `flex`'s basis wins over `width` in the flex sizing algorithm, so the
+   button kept stretching until `flex` itself was reset here too.
+   `.song-result__cta-secondary` (Download) is untouched — the "Primary
+   Large Button" rule was only asked for the primary CTA.
+
+   `.song-result__ctas` itself has no `justify-content` — fine when its
+   child/children filled the row via `flex: 1`, but once the primary CTA
+   stopped growing it just sat at the row's flex-start (left) instead of
+   centered, per follow-up designer feedback. */
+@media (min-width: 1024px) {
+  .song-result__ctas {
+    justify-content: center;
+  }
+
+  .song-result__cta-primary {
+    flex: none;
+    width: auto;
+    min-width: 230px;
+    padding: 0 16px;
+  }
+}

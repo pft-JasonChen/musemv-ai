@@ -380,18 +380,19 @@ function SongDetailPage() {
       >
         <div className="song-detail__list">
           {displayedSongs.map((song) => (
-            <TopSongListItem
-              key={song.id}
-              title={song.title}
-              username={song.username}
-              plays={0}
-              likes={0}
-              shares={0}
-              coverImage={song.cover}
-              isPlaying={song.id === player.activeSong?.id && player.playing}
-              onSelect={() => selectSong(song.id)}
-              onPlay={() => handleRowPlay(song.id)}
-            />
+            <div key={song.id} className="song-detail__list-item">
+              <TopSongListItem
+                title={song.title}
+                username={song.username}
+                plays={0}
+                likes={0}
+                shares={0}
+                coverImage={song.cover}
+                isPlaying={song.id === player.activeSong?.id && player.playing}
+                onSelect={() => selectSong(song.id)}
+                onPlay={() => handleRowPlay(song.id)}
+              />
+            </div>
           ))}
         </div>
       </div>

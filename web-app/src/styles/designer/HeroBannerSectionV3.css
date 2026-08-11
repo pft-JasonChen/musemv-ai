@@ -99,7 +99,10 @@
      could never be scrolled to a centered position) — derived via calc()
      from the row's own width (not a flat vw guess like the card's own) so
      it stays correct regardless of how wide the row itself ends up being. */
-  padding-inline: max(0px, calc((100% - min(49.51vw, 880px)) / 2));
+  /* Designer decision, 2026-08-11: cards shrunk to 90% (44.56vw/792px, was
+     49.51vw/880px) — kept in sync with .hero-banner-v3__card's own width
+     below, per this file's own note that the two must match. */
+  padding-inline: max(0px, calc((100% - min(44.56vw, 792px)) / 2));
 }
 
 .hero-banner-v3__track::-webkit-scrollbar {
@@ -114,7 +117,9 @@
   flex-shrink: 0;
   scroll-snap-align: center;
   scroll-snap-stop: always;
-  width: min(49.51vw, 880px);
+  /* Designer decision, 2026-08-11: shrunk to 90% of the previous
+     product-owner-raised size (was min(49.51vw, 880px)). */
+  width: min(44.56vw, 792px);
   /* Figma's 713x320 is a fixed ratio (locked in the inspector), not an
      independent width/height — aspect-ratio keeps height scaling together
      with the vw-based width instead of staying pinned at 320px on wide

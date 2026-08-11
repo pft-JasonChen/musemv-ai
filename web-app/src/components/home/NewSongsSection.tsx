@@ -79,10 +79,16 @@ export function NewSongsSection() {
    * caught — an autoplay attempt the browser declines rejects with
    * `NotAllowedError`, and an unhandled rejection is a console error that the
    * R-2 specs assert is absent.
+   *
+   * currentTime/duration reset HERE too — see SongDetailView's identical fix
+   * (designer-reported, 2026-08-10): without it the bar briefly shows the
+   * PREVIOUS song's leftover progress before snapping to the real value.
    */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !previewSong) return;
+    setCurrentTime(0);
+    setDuration(0);
     audio.src = songAudioUrl(previewSong.id);
     void audio.play().catch(() => {});
   }, [previewSong]);
