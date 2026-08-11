@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { useLocale, useT } from "@/components/providers/LocaleProvider";
 import { localePath, LOCALES, LOCALE_NAMES } from "@/lib/i18n/config";
@@ -89,6 +89,7 @@ export function Navbar() {
   const { locale } = useLocale();
   const t = useT();
   const { loggedIn, subscribed, openSignIn } = useAuth();
+  const { openSubscribe, openBuyCredits } = useSubscribe();
   const { credits } = useCredits();
 
   function startForFree() {
@@ -100,18 +101,28 @@ export function Navbar() {
       <div className="navbar__actions">
         {loggedIn ? (
           <>
-            <Link href={localePath(locale, "/profile")} className="credit-balance" aria-label={t("profile.credits")}>
+            {/* Designer fix, 2026-08-11: was `<Link href="/profile">` — same
+                no-op-on-/profile bug as RoomNavbar/DetailNavbar's identical
+                cluster (this is the fourth copy of it, on the one route
+                those two don't cover). Opens the shared dialogs directly
+                now, via SubscribeProvider — see its comment. */}
+            <button
+              type="button"
+              className="credit-balance"
+              aria-label={t("profile.credits")}
+              onClick={() => openBuyCredits()}
+            >
               {/* `.credit-balance img` — an element selector, no mask. See DetailNavbar's note. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/assets/icons/ui/ic_credit.svg" alt="" />
               <span data-testid="credit-balance">{credits}</span>
               <DpIcon name="ic_add" className="credit-balance__add" />
-            </Link>
+            </button>
             {!subscribed && (
-              <Link href={localePath(locale, "/profile")} className="upgrade-button">
+              <button type="button" className="upgrade-button" onClick={() => openSubscribe()}>
                 <DpIcon name="ic_crown" className="upgrade-button__icon" />
                 {t("nav.upgrade")}
-              </Link>
+              </button>
             )}
           </>
         ) : (
