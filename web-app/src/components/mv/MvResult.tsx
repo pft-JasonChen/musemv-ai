@@ -8,8 +8,7 @@ import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { ShareDialog } from "@/components/ui/ShareDialog";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import { PublishConfirmDialog } from "@/components/ui/PublishConfirmDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useHistory } from "@/components/providers/HistoryProvider";
@@ -416,31 +415,14 @@ export function MvResult() {
       />
 
       {/* MV-12: the same "Ready to Go Public?" confirm History and /creator use. */}
-      <Modal
+      <PublishConfirmDialog
         open={pubConfirm}
-        onClose={() => setPubConfirm(false)}
-        title="Ready to Go Public?"
-        maxWidth={420}
-      >
-        <p className="mb-5 text-[14px]" style={{ color: "var(--text-2)" }}>
-          Once published, your creation is visible to the community and may be shared on our social
-          channels.
-        </p>
-        <div className="flex gap-2">
-          <Button variant="secondary" className="flex-1" onClick={() => setPubConfirm(false)}>
-            Cancel
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={() => {
-              setPublished(true);
-              setPubConfirm(false);
-            }}
-          >
-            Confirm
-          </Button>
-        </div>
-      </Modal>
+        onCancel={() => setPubConfirm(false)}
+        onConfirm={() => {
+          setPublished(true);
+          setPubConfirm(false);
+        }}
+      />
     </>
   );
 }

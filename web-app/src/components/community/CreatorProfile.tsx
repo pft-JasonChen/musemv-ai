@@ -13,6 +13,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { PublishConfirmDialog } from "@/components/ui/PublishConfirmDialog";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
@@ -302,8 +303,17 @@ export function CreatorProfile() {
                   />
                   {ownerMenu && (
                     <div className="community-profile__menu-shell">
+                      {/* Designer fix, 2026-08-11: `size="small"` (28px), not
+                          `xsmall` (20px) — CommunityProfilePage.css has no
+                          dedicated "more" trigger class of its own (unlike
+                          History's `.history-card__more`), so this leans on
+                          IconButton's generic tertiary variant, which is
+                          already the right white-15 pill fill; it just needs
+                          the size History's own "more" button uses (28px) so
+                          the two read the same size, not one visibly smaller
+                          than the other. */}
                       <IconButton
-                        size="xsmall"
+                        size="small"
                         variant="tertiary"
                         icon="ic_more"
                         label="More"
@@ -453,25 +463,11 @@ export function CreatorProfile() {
         url={share ? buildShareUrl(share.id) : ""}
       />
 
-      <Modal
+      <PublishConfirmDialog
         open={pubConfirm != null}
-        onClose={() => setPubConfirm(null)}
-        title="Ready to Go Public?"
-        maxWidth={420}
-      >
-        <p className="mb-4 text-[14px]" style={{ color: "var(--text-2)" }}>
-          Once published, your creation is visible to the community and may be shared on our
-          channels. It goes through a short review first.
-        </p>
-        <div className="flex gap-2">
-          <Button variant="ghost" className="flex-1" onClick={() => setPubConfirm(null)}>
-            Cancel
-          </Button>
-          <Button className="flex-1" onClick={confirmPublish}>
-            Publish
-          </Button>
-        </div>
-      </Modal>
+        onCancel={() => setPubConfirm(null)}
+        onConfirm={confirmPublish}
+      />
 
       <Modal open={del != null} onClose={() => setDel(null)} title="Delete" maxWidth={380}>
         <p className="mb-4 text-[14px]" style={{ color: "var(--text-2)" }}>

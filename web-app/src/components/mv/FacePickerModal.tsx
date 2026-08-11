@@ -79,7 +79,9 @@ async function cropToDataUrl(src: string, r: FaceRegion): Promise<string> {
  */
 export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onConfirm }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [crop, setCrop] = useState<FaceRegion>({ x: 30, y: 25, size: 40 });
+  // Designer request, 2026-08-11: the Size slider should open centered in
+  // its 20–80 range (50), not offset toward one end.
+  const [crop, setCrop] = useState<FaceRegion>({ x: 30, y: 25, size: 50 });
   const drag = useRef<null | "move">(null);
   const [busy, setBusy] = useState(false);
   const { mounted, visible } = useDialogTransition(open);
@@ -209,9 +211,14 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
           </div>
 
           <div className="mv-settings__row">
-            <div className="mv-settings__row-text">
-              <p className="mv-settings__row-title">Size</p>
-            </div>
+            {/* Designer fix, 2026-08-11: NOT `.mv-settings__row-text` — that
+                class carries `flex: 1` (correct for its real usage: a
+                label+description column that fills the row next to a small
+                fixed-width toggle). Reusing it here made the bare "Size"
+                label ALSO stretch to an even 50/50 split against the
+                slider's own `flex: 1`, leaving a huge gap between the two.
+                The label just needs to hug its own text. */}
+            <p className="mv-settings__row-title">Size</p>
             <input
               type="range"
               min={20}

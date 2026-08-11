@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { useLocale, useT } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
@@ -89,11 +89,11 @@ export function DetailNavbar({
   hideMobileBar?: boolean;
 }) {
   const { loggedIn, subscribed, openSignIn } = useAuth();
+  const { openSubscribe, openBuyCredits } = useSubscribe();
   const { credits } = useCredits();
   const { locale } = useLocale();
   const t = useT();
   const goBack = useBackNavigation(fallbackPath);
-  const profilePath = localePath(locale, "/profile");
 
   return (
     <>
@@ -174,19 +174,31 @@ export function DetailNavbar({
 
           {loggedIn ? (
             <div className="detail-navbar__actions">
-              <Link href={profilePath} className="credit-balance" aria-label={t("profile.credits")}>
+              {/* Designer fix, 2026-08-11: was `<Link href="/profile">` — a
+                  no-op on /profile itself. Figma (node 1783:41659) shows
+                  this pill opening "Buy Credits" directly; see
+                  RoomNavbar's identical fix and SubscribeProvider's
+                  comment. */}
+              <button
+                type="button"
+                className="credit-balance"
+                aria-label={t("profile.credits")}
+                onClick={() => openBuyCredits()}
+              >
                 {/* `.credit-balance img` — an element selector, and no mask.
                     See the note in RoomNavbar: the class form renders nothing. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/assets/icons/ui/ic_credit.svg" alt="" />
                 <span data-testid="credit-balance">{credits}</span>
                 <DpIcon name="ic_add" className="credit-balance__add" />
-              </Link>
+              </button>
               {!subscribed && (
-                <Link href={profilePath} className="upgrade-button">
+                // Designer fix, 2026-08-11: was `<Link href="/profile">` —
+                // same no-op bug, same fix as RoomNavbar's Upgrade pill.
+                <button type="button" className="upgrade-button" onClick={() => openSubscribe()}>
                   <DpIcon name="ic_crown" className="upgrade-button__icon" />
                   {t("nav.upgrade")}
-                </Link>
+                </button>
               )}
             </div>
           ) : (

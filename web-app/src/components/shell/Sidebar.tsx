@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useLocale, useT } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { SUBSCRIPTION_PLANS } from "@/lib/user";
@@ -64,6 +65,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { loggedIn, requireLogin, profile, subscribed, subscribedPlan } = useAuth();
+  const { openSubscribe } = useSubscribe();
   const { locale } = useLocale();
   const t = useT();
 
@@ -182,20 +184,22 @@ export function Sidebar() {
               aria-hidden="true"
             />
           </Link>
-          {/* DP opens its own UpgradeDialog here. WA's subscribe flow already lives
-              on /profile (SubscribeModal), so this routes there rather than porting
-              a second IAP surface inside a shell slice. */}
+          {/* DP opens its own UpgradeDialog here. WA's subscribe flow already
+              lives in SubscribeModal — opened directly via SubscribeProvider
+              (2026-08-11 designer fix) instead of `<Link href="/profile">`,
+              which was a no-op when already on /profile. */}
           {!subscribed && (
-            <Link
-              href={localePath(locale, "/profile")}
+            <button
+              type="button"
               className="button button--medium button--tertiary sidebar__upgrade-button"
+              onClick={() => openSubscribe()}
             >
               {/* Designer fix, 2026-08-07: missing the `button__label` wrap —
                   `.button--medium .button__label` is what carries Label/S
                   (12px/15px); without it this text used the ambient/inherited
                   size instead, which read as visibly oversized. */}
               <span className="button__label">{t("nav.upgrade")}</span>
-            </Link>
+            </button>
           )}
         </div>
       )}

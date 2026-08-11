@@ -171,7 +171,9 @@ export function SettingsView() {
               flash("Account deleted (demo)");
               setTimeout(() => router.push("/"), 700);
             }}
-            className="flex-1 rounded-xl py-2.5 text-[14px] font-bold text-white transition-all hover:brightness-110"
+            /* Designer request, 2026-08-11: pill, not rounded-xl — same
+               filled-button rule as `Button.tsx`. */
+            className="flex-1 rounded-full py-2.5 text-[14px] font-bold text-white transition-all hover:brightness-110"
             style={{ background: "var(--color-action-danger)" }}
           >
             Delete

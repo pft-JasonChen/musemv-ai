@@ -23,6 +23,27 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-11 (b) — `globals.css` touched under `src/app/`; no contract change
+
+**Surface:** none of C1–C8 — this is a styling-only edit to `src/app/globals.css`, which the
+gate watches by prefix (`src/app/`) because that directory also holds `page.tsx` route files,
+not because every file under it is a contract surface.
+
+**Change:** three rules, none of them C7 (no route/URL shape touched):
+- `.app-layout__content { z-index: 2; }` — raises page content above the footer's own
+  `z-index: 1` so the fixed `SongPlayBar` isn't painted over by a later-in-DOM footer.
+- `body:has(.song-bar) footer.footer { display: none; }` — hides the footer entirely while
+  the song player bar is open.
+- `textarea:focus-visible, input:focus-visible { outline: none; }` — drops the global purple
+  focus ring specifically on text inputs (kept on buttons/links for accessibility).
+
+**Why:** designer requests, 2026-08-11 (song player bar layering/footer overlap, and the
+default focus-ring color reading as an error state on text fields).
+
+**RD action required:** none — no route, schema, provider, or domain-constant surface moved.
+
+**Notified:** N/A — recorded here per G4-g; no RD action follows.
+
 ## 2026-08-11 — Credits Detail moves from a modal to a route. **C7 changed — this is the declared PR.**
 
 **Surface: C7.** `src/app/[locale]/profile/credits/page.tsx` added. `the URL shapes RD

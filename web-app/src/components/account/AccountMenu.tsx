@@ -80,24 +80,30 @@ export function AccountMenu({ open, onClose, onBuyCredits, onSubscribe }: Props)
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden><circle cx="12" cy="12" r="9" opacity="0.25" /><circle cx="12" cy="12" r="6" /></svg>
           {credits}
         </span>
-        {/* CR-06: Buy Credits is subscriber-only; free users get Subscribe. */}
-        {subscribed ? (
+        {/* Designer decision, 2026-08-11: CR-06 reversed — Buy Credits is no
+            longer gated behind a subscription (see `BuyCreditsModal`'s own
+            note), so it's always offered here now. Subscribe is a separate
+            action, kept alongside it only for a non-subscriber. */}
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => { onClose(); onBuyCredits(); }}
-            className="rounded-lg px-2.5 py-1 text-[12px] font-bold text-white"
+            /* Designer request, 2026-08-11: pill, not rounded-lg — same
+               filled-button rule as `Button.tsx`. */
+            className="rounded-full px-2.5 py-1 text-[12px] font-bold text-white"
             style={{ background: "var(--accent)" }}
           >
             Buy Credits
           </button>
-        ) : (
-          <button
-            onClick={() => { onClose(); onSubscribe(); }}
-            className="rounded-lg px-2.5 py-1 text-[12px] font-bold text-white"
-            style={{ background: "var(--mv-grad)" }}
-          >
-            Subscribe
-          </button>
-        )}
+          {!subscribed && (
+            <button
+              onClick={() => { onClose(); onSubscribe(); }}
+              className="rounded-full px-2.5 py-1 text-[12px] font-bold text-white"
+              style={{ background: "var(--mv-grad)" }}
+            >
+              Subscribe
+            </button>
+          )}
+        </div>
       </div>
 
       <nav className="p-2">

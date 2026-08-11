@@ -235,13 +235,21 @@ export function ListItem({
                 <DpIcon name="ic_share" className="list-item__share-icon" />
               </button>
             )}
-            <button
-              type="button"
-              className="button button--small button--tertiary"
-              onClick={onCreate}
-            >
-              <span className="button__label">Create</span>
-            </button>
+            {/* Designer fix, 2026-08-11: gated on `onCreate` being passed —
+                a "Create" pill with nothing to do (Song Result's "My
+                Creations" rail has no remix action for the user's OWN
+                song) is a dead control, not a smaller feature. Every
+                existing caller already passes `onCreate` whenever it sets
+                `cta`, so this changes nothing for them. */}
+            {onCreate && (
+              <button
+                type="button"
+                className="button button--small button--tertiary"
+                onClick={onCreate}
+              >
+                <span className="button__label">Create</span>
+              </button>
+            )}
           </div>
 
           {shareUrl && (

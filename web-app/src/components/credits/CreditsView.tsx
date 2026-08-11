@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
@@ -45,7 +44,6 @@ const CREDIT_TABS = [
 
 export function CreditsView() {
   const { credits } = useCredits();
-  const { subscribed } = useAuth();
   const { locale } = useLocale();
   const [tab, setTab] = useState<CreditTab>("all");
   const [buyOpen, setBuyOpen] = useState(false);
@@ -78,16 +76,17 @@ export function CreditsView() {
                 {credits} <span>Credits</span>
               </strong>
             </div>
-            {/* CR-06: Buy Credits is subscriber-only; a free user gets Subscribe.
-                DP has one unconditional "Buy More" — porting that verbatim would
-                walk a non-subscriber into a purchase flow the Business Model
-                closes to them. */}
+            {/* Designer fix, 2026-08-11: DP's own unconditional "Buy More"
+                (Figma node 1783:39034), no per-subscriber label swap —
+                Buy Credits is a standalone purchase now (CR-06 reversed,
+                see `BuyCreditsModal`'s own note), so there's no longer a
+                reason for this button to say anything else. */}
             <button
               type="button"
               className="button button--small button--primary-payg"
               onClick={() => setBuyOpen(true)}
             >
-              <span className="button__label">{subscribed ? "Buy More" : "Get Muse Pro"}</span>
+              <span className="button__label">Buy More</span>
             </button>
           </div>
 

@@ -107,6 +107,17 @@ body {
   outline-offset: 2px;
   border-radius: 4px;
 }
+/* Designer request, 2026-08-11 — no focus ring on text inputs (the AI Song
+   textarea specifically, but the same generic `:focus-visible` rule above
+   hits every native `<textarea>`/`<input>` in the app). Scoped to just
+   those two tags, not buttons/links/[role=button] — those still need a
+   visible keyboard-focus indicator (WCAG 2.4.7); a focused text field
+   already shows a blinking caret, so removing its outline isn't the same
+   accessibility loss. */
+textarea:focus-visible,
+input:focus-visible {
+  outline: none;
+}
 
 @keyframes mv-fade {
   from {

@@ -12,6 +12,7 @@ import { ShareDialog } from "@/components/ui/ShareDialog";
 import { buildShareUrl } from "@/lib/share";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { PublishConfirmDialog } from "@/components/ui/PublishConfirmDialog";
 import { downloadFile } from "@/lib/download";
 import {
   HISTORY_SAMPLES,
@@ -140,8 +141,23 @@ export function HistoryView() {
       id: h.id,
       kind: h.kind,
       title: h.title,
-      thumb: h.status === "failed" ? undefined : h.thumb,
-      meta: h.status === "failed" ? (h.kind === "song" ? "AI Song" : "AI MV") : undefined,
+      // Designer request, 2026-08-11: a still-generating card must not show
+      // its source/preview photo — only the gradient + hourglass DP draws
+      // for `.history-card--generating`. Previously only "failed" cleared
+      // the thumb, so a live job's own seed photo leaked through while it
+      // was still rendering.
+      thumb: h.status === "failed" || h.status === "generating" ? undefined : h.thumb,
+      // Same request: without a stats row, a generating card was one text
+      // line shorter than a done card (title+time vs. title+stats+time),
+      // which is what made the grid row heights uneven. Giving it the same
+      // kind-label meta line failed rows already use keeps every card's
+      // info block at 3 lines.
+      meta:
+        h.status === "failed" || h.status === "generating"
+          ? h.kind === "song"
+            ? "AI Song"
+            : "AI MV"
+          : undefined,
       status: h.status === "generating" ? "processing" : h.status === "failed" ? "failed" : "done",
       date: "Just now",
       plays: 0,
@@ -347,25 +363,11 @@ export function HistoryView() {
           </div>
         </Modal>
 
-        <Modal
+        <PublishConfirmDialog
           open={pubConfirm != null}
-          onClose={() => setPubConfirm(null)}
-          title="Ready to Go Public?"
-          maxWidth={420}
-        >
-          <p className="mb-5 text-[14px]" style={{ color: "var(--text-2)" }}>
-            Once published, your creation is visible to the community and may be shared on our
-            social channels.
-          </p>
-          <div className="flex gap-2">
-            <Button variant="secondary" className="flex-1" onClick={() => setPubConfirm(null)}>
-              Cancel
-            </Button>
-            <Button className="flex-1" onClick={confirmPublishMv}>
-              Confirm
-            </Button>
-          </div>
-        </Modal>
+          onCancel={() => setPubConfirm(null)}
+          onConfirm={confirmPublishMv}
+        />
 
         {toast && (
           <div
@@ -548,14 +550,18 @@ function Menu(p: MenuProps) {
 
   return (
     <div className="shrink-0">
+      {/* Designer fix, 2026-08-11: this was a generic Tailwind circle (36px,
+          --card-2 fill, an inline-SVG dot icon) — not DP's actual
+          `.history-card__more` (28px, white-15 fill + border, its own
+          `ic_more` mask icon). Swapped to the real class + DpIcon so this
+          matches DP's design instead of an approximation of it. */}
       <button
         ref={btnRef}
         aria-label="Options"
         onClick={toggle}
-        className="grid h-9 w-9 place-items-center rounded-full transition-colors hover:brightness-125"
-        style={{ background: "var(--card-2)", color: "var(--text-2)" }}
+        className="history-card__more"
       >
-        <I d={ICON.more} />
+        <DpIcon name="ic_more" />
       </button>
 
       {p.open &&
@@ -669,7 +675,10 @@ function CtaBtn({
   return (
     <button
       onClick={onClick}
-      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-[12px] font-bold transition-all hover:brightness-110 active:scale-[0.97]"
+      // Designer request, 2026-08-11: pill, not rounded-xl — same filled
+      // button rule as `Button.tsx`. Matches DP's own analogous filled
+      // action row, `.community-profile__menu-primary` (`--radius-pill`).
+      className="flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[12px] font-bold transition-all hover:brightness-110 active:scale-[0.97]"
       style={
         primary
           ? { background: "var(--accent)", color: "#fff" }

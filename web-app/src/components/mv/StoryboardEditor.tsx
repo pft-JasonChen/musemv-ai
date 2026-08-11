@@ -207,9 +207,22 @@ export function StoryboardEditor() {
           <FloatingCTA alignToParent>
             <button type="button" className="mv-storyboard__cta" onClick={generateMv}>
               <span>Create MV</span>
-              {/* Plain text, no class: DP's CTA has no price slot, and a class no
-                  stylesheet defines paints nothing without erroring. */}
-              <span>· {COST_RENDER} Credits</span>
+              {/* Designer fix, 2026-08-11: this was plain "· 200 Credits" text —
+                  MVStoryboardPage.css genuinely has no credit-badge classes of
+                  its own, but Figma's CTA (node checked against the reference
+                  screenshot) uses the same coin-icon + bare-number badge as
+                  `.song-create__cta-credits` on Song's identical CTA. Reusing
+                  those classes here instead of inventing new ones — the badge
+                  is layout-only (flex/gap/icon size), no colour, so it works
+                  unmodified on this button's own gradient background. */}
+              <span className="song-create__cta-credits">
+                <img
+                  src="/assets/icons/ui/ic_credit.svg"
+                  alt=""
+                  className="song-create__cta-credit-icon"
+                />
+                {COST_RENDER}
+              </span>
               <DpIcon name="ic_arrow_right" className="mv-storyboard__cta-icon" />
             </button>
           </FloatingCTA>

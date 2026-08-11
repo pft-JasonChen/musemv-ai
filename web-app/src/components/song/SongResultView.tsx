@@ -28,7 +28,30 @@ import {
   songResultFromCommunity,
 } from "@/lib/mv/community";
 
-const FALLBACK_LYRICS = ["♪ No lyrics available for this one yet ♪"];
+// Designer request, 2026-08-11 — same reasoning as community.ts's LYRICS
+// expansion: a single placeholder line left `.song-result__lyrics-inline`'s
+// 426px panel mostly empty for any freshly-created song with no catalog
+// match (e.g. a custom title like "Afterglow"). A generic verse/chorus,
+// not tied to any specific title, so it reads as plausible filler rather
+// than a "missing data" message.
+const FALLBACK_LYRICS = [
+  "Close my eyes and let the moment glow",
+  "Everything is soft and letting go",
+  "Colors fading into gold and blue",
+  "This whole feeling starts and ends with you",
+  "Hold this afterglow, don't let it fade",
+  "Every heartbeat, every promise made",
+  "Nothing else could ever feel this true",
+  "This whole feeling starts and ends with you",
+  "Quiet moments, nowhere left to be",
+  "Just this warmth, just you and me",
+  "Time stands still, the night is ours to keep",
+  "Holding on to something soft and deep",
+  "Hold this afterglow, don't let it fade",
+  "Every heartbeat, every promise made",
+  "Nothing else could ever feel this true",
+  "This whole feeling starts and ends with you",
+];
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds)) return "0:00";
@@ -117,7 +140,7 @@ export function SongResultView() {
   const { patchCompose } = useMvFlow();
   const { history } = useHistory();
   const { credits } = useCredits();
-  const { requireLogin } = useAuth();
+  const { requireLogin, profile } = useAuth();
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -502,7 +525,8 @@ export function SongResultView() {
                         className="song-result__cta-secondary"
                         onClick={recreate}
                       >
-                        Recreate · {COST_SONG_RECREATE} Credits
+                        <DpIcon name="ic_song_ai" className="song-result__cta-secondary-icon" />
+                        Recreate
                       </button>
                     )}
                   </div>
@@ -539,12 +563,20 @@ export function SongResultView() {
                   // Home's "Newly Released Songs" (avatar/username/stats/
                   // like-share-Create), not the bare title+thumbnail row it
                   // had before. `playlist` itself only carries
-                  // {id,title,cover,audioUrl} (it also covers the "My
-                  // Creations" case, which has no creator/stats to show), so
-                  // the real community data is looked up by id here rather
-                  // than widening that shape — items with no catalog match
-                  // (the user's own history entries) naturally fall back to
-                  // the plain variant instead of showing fabricated stats.
+                  // {id,title,cover,audioUrl}, so the real community data is
+                  // looked up by id here rather than widening that shape.
+                  //
+                  // Follow-up, same day: "bare title+thumbnail" for a "My
+                  // Creations" row (no catalog match — it's the user's OWN
+                  // song) was still true even after the fix above, since
+                  // `meta` is naturally null for those. Given the same
+                  // treatment instead of a second, different-looking
+                  // fallback: the signed-in user IS this row's "creator", so
+                  // `profile` stands in for `meta`. Plays/likes/shares are
+                  // honestly 0 (not fabricated — these rows have never been
+                  // published), and there's no "Create" pill (omitting
+                  // `onCreate` hides it — see ListItem's own note) because
+                  // there is no remix action for your own song.
                   const meta = getCommunitySong(item.id);
                   const isActive = i === activeIndex;
                   const select = () => setActiveIndex(i);
@@ -561,10 +593,13 @@ export function SongResultView() {
                     // harmless as a no-op on this wrapping `<div>` too, so it
                     // stays on whichever element is actually rendered rather
                     // than duplicating those declarations under a new class.
-                    <div
-                      key={item.id}
-                      className={`new-songs__item${isActive ? " song-result__creations-item--active" : ""}`}
-                    >
+                    //
+                    // No `--active` background highlight (designer request,
+                    // 2026-08-11: remove the currently-playing row tint here
+                    // and everywhere this list style is used, for
+                    // consistency with Home's own Newly Released Songs,
+                    // which never had one).
+                    <div key={item.id} className="new-songs__item">
                       {meta ? (
                         <ListItem
                           variant="community"
@@ -592,9 +627,21 @@ export function SongResultView() {
                           }
                         />
                       ) : (
-                        <button type="button" className="song-result__creations-item" onClick={select}>
-                          <ListItem title={item.title} coverImage={item.cover} />
-                        </button>
+                        <ListItem
+                          variant="community"
+                          title={item.title}
+                          coverImage={item.cover}
+                          username={profile.name}
+                          avatarUrl={profile.avatar ?? undefined}
+                          plays={0}
+                          likes={0}
+                          shares={0}
+                          shareUrl={buildShareUrl(item.id)}
+                          cta
+                          isPlaying={isActive && playing}
+                          onSelect={select}
+                          onPlay={select}
+                        />
                       )}
                     </div>
                   );

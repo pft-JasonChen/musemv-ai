@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { useLocale, useT } from "@/components/providers/LocaleProvider";
-import { localePath } from "@/lib/i18n/config";
+import { useT } from "@/components/providers/LocaleProvider";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 2, Slice 2b / CH2) ──────────────
@@ -28,10 +27,9 @@ import { localePath } from "@/lib/i18n/config";
  */
 export function RoomNavbar({ title, tabsSlot }: { title: string; tabsSlot?: React.ReactNode }) {
   const { loggedIn, subscribed, openSignIn } = useAuth();
+  const { openSubscribe, openBuyCredits } = useSubscribe();
   const { credits } = useCredits();
-  const { locale } = useLocale();
   const t = useT();
-  const profilePath = localePath(locale, "/profile");
 
   return (
     <header className="room-navbar">
@@ -39,7 +37,17 @@ export function RoomNavbar({ title, tabsSlot }: { title: string; tabsSlot?: Reac
         <p className="room-navbar__title">{title}</p>
         {loggedIn ? (
           <div className="room-navbar__actions">
-            <Link href={profilePath} className="credit-balance" aria-label={t("profile.credits")}>
+            {/* Designer fix, 2026-08-11: was `<Link href="/profile">`, then
+                briefly `/profile/credits` — both still just navigation.
+                Figma (node 1783:41659) shows this pill opening "Buy
+                Credits" directly, in place, the same way Upgrade opens
+                Subscribe — so it's a button now, not a link. */}
+            <button
+              type="button"
+              className="credit-balance"
+              aria-label={t("profile.credits")}
+              onClick={() => openBuyCredits()}
+            >
               {/* A REAL <img>. `CreditBalance.css` sizes this one with
                   `.credit-balance img` — an ELEMENT selector — and gives it no
                   mask treatment, because DP lets the coin keep its own gold.
@@ -58,9 +66,17 @@ export function RoomNavbar({ title, tabsSlot }: { title: string; tabsSlot?: Reac
                 }}
                 aria-hidden="true"
               />
-            </Link>
+            </button>
             {!subscribed && (
-              <Link href={profilePath} className="upgrade-button">
+              // Designer fix, 2026-08-11: was `<Link href="/profile">` — a
+              // no-op on /profile itself, where WA's SubscribeModal lives.
+              // Opens the same dialog directly now, from every page,
+              // through the shared SubscribeProvider (see its comment).
+              <button
+                type="button"
+                className="upgrade-button"
+                onClick={() => openSubscribe()}
+              >
                 <span
                   className="upgrade-button__icon"
                   style={{
@@ -70,7 +86,7 @@ export function RoomNavbar({ title, tabsSlot }: { title: string; tabsSlot?: Reac
                   aria-hidden="true"
                 />
                 {t("nav.upgrade")}
-              </Link>
+              </button>
             )}
           </div>
         ) : (

@@ -138,6 +138,17 @@ export function MvEditor() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
 
+  // Designer request, 2026-08-11: the per-scene Recreate button should start
+  // disabled and only enable once the user has actually edited THIS scene's
+  // prompt — recreating an untouched scene spends COST_REGEN credits for a
+  // result that (per MV-08 below) is random anyway, not driven by the edit.
+  // State, not a ref: `react-hooks/refs` (this repo's lint config) forbids
+  // reading/writing `.current` during render, only in effects/handlers — so
+  // this uses React's own "adjust state during render" pattern instead (the
+  // same one `SignInModal`'s `prevOpen` comparison already uses), setting
+  // state directly in the render body, guarded so it only fires once per id.
+  const [originalSceneText, setOriginalSceneText] = useState<Record<string, string>>({});
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -169,6 +180,11 @@ export function MvEditor() {
   const activeVideo = sceneVideo[scene.id] ?? defaultPreview;
   const activeCover = coverImage ?? storyboard.coverImage;
   const versions = sceneVersions[scene.id] ?? [];
+  if (originalSceneText[scene.id] === undefined) {
+    setOriginalSceneText((m) => ({ ...m, [scene.id]: scene.text }));
+  }
+  const sceneTextEdited =
+    originalSceneText[scene.id] !== undefined && scene.text !== originalSceneText[scene.id];
 
   // MV-08: Merge is enabled by ANY pending edit — a regenerated scene, a
   // recreated cover, an output-settings change, or an edited scene/cover prompt
@@ -337,7 +353,7 @@ export function MvEditor() {
             type="button"
             className="button button--large button--primary-payg mv-edit__recreate-scene"
             onClick={recreateScene}
-            disabled={regenBusy}
+            disabled={regenBusy || !sceneTextEdited}
           >
             <span className="button__label">{regenBusy ? "Recreating…" : "Recreate"}</span>
             <span className="button__credits">

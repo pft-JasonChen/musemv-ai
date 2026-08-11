@@ -103,7 +103,9 @@ export function ShareLinkView() {
         {downloadUrl && (
           <button
             onClick={() => downloadFile(downloadUrl, downloadName)}
-            className="mt-6 inline-flex h-[50px] items-center gap-2 rounded-xl px-7 text-[16px] font-bold text-white"
+            /* Designer request, 2026-08-11: pill, not rounded-xl — same
+               filled-button rule as `Button.tsx`. */
+            className="mt-6 inline-flex h-[50px] items-center gap-2 rounded-full px-7 text-[16px] font-bold text-white"
             style={{ background: "var(--accent)" }}
           >
             <Icon d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />

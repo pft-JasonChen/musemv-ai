@@ -2,7 +2,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useState } from "react";
-import { useAuth } from "@/components/providers/AuthProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { DpDialog } from "@/components/ui/DpDialog";
@@ -13,7 +12,6 @@ import {
   displayDiscountPct,
   salePrice,
 } from "@/lib/user";
-import { SubscribeModal } from "@/components/credits/SubscribeModal";
 
 interface Props {
   open: boolean;
@@ -47,13 +45,28 @@ interface Props {
  *   credits-side restore behaviour in WA to wire this to. `SubscribeModal` owns
  *   Restore, where it is real. Shipping it here would be a dead control, so it
  *   stays out until there is something behind it.
- * · DP's footer `Terms of Use` / `Privacy Policy` are `href="#"`. Same reason:
- *   no such routes exist yet, and a link that goes nowhere is worse than none.
  * · DP's `useMountTransition` — see `DpDialog` for the reasoning.
+ *
+ * DP's footer `Terms of Use` / `Privacy Policy` WAS left out here for the
+ * same "no route, no dead link" reason as Recover — reversed by designer
+ * request, 2026-08-11: ported as `href="#"`, same as DP, since the visual
+ * presence of the footer was asked for explicitly and `guard-greps.sh`'s
+ * R-9 rule only bans a literal internal (`/…`) href, not `#`.
+ *
+ * ── CR-06 REVERSED (designer decision, 2026-08-11) ──────────────────────────
+ *
+ * This used to gate the whole dialog behind `subscribed`, returning
+ * `SubscribeModal` in its place for anyone not on Muse Pro ("credits are
+ * sold to Muse Pro subscribers only" — the prior Business Model's Final
+ * Decision, predating this migration). The designer overrode that directly:
+ * credits are a standalone purchase, not conditional on a subscription.
+ * Every caller (`RoomNavbar`/`DetailNavbar`'s credit pill, `CreditsView`'s
+ * "Buy More", `HeaderActions`, `AccountMenu`) now reaches the real pack list
+ * unconditionally — none of them needed to change, since they all just
+ * open this same dialog and it decides its own content.
  */
 export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
   const { credits, addCredits } = useCredits();
-  const { subscribed } = useAuth();
   const [selected, setSelected] = useState(DEFAULT_CREDIT_PACK_ID);
   const pack = CREDIT_PACKS.find((p) => p.id === selected)!;
   const sale = CREDIT_SALE_PCT > 0;
@@ -62,14 +75,6 @@ export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
     addCredits(pack.credits);
     onPurchased?.(pack.credits);
     onClose();
-  }
-
-  // CR-06 (Business Model, Final Decision): credits are sold to Muse Pro
-  // subscribers only. Buy Credits is never shown to a non-subscriber — every
-  // entry point routes them to Subscribe, and this is the safety net for the
-  // in-flow "insufficient balance" path. Predates the migration; kept exactly.
-  if (!subscribed) {
-    return <SubscribeModal open={open} onClose={onClose} />;
   }
 
   return (
@@ -156,9 +161,19 @@ export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
         </p>
       </div>
 
+      {/* Designer fix, 2026-08-11: "Buy Now" only — the trailing "— $price"
+          was never DP's copy (Figma node 1783:42502 just says "Buy Now"),
+          and the price is already shown on the selected pack's own row
+          above. */}
       <button type="button" className="credits-dialog__cta" onClick={buy}>
-        Buy Now — {sale ? salePrice(pack.price) : pack.price}
+        Buy Now
       </button>
+
+      <div className="credits-dialog__footer">
+        <a href="#">Terms of Use</a>
+        <span>|</span>
+        <a href="#">Privacy Policy</a>
+      </div>
     </DpDialog>
   );
 }

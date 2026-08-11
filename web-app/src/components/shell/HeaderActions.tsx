@@ -42,10 +42,13 @@ export function HeaderActions() {
 
   return (
     <div className="flex items-center gap-3">
-      {/* CR-06: credits are subscriber-only. Subscribers get the Buy-Credits
-          badge (balance + "+"); free users get a Subscribe entry instead — the
-          balance stays visible but the only IAP action is Subscribe. */}
-      {subscribed ? (
+      {/* Designer decision, 2026-08-11: CR-06 reversed — credits are a
+          standalone purchase now, not gated behind a subscription (see
+          `BuyCreditsModal`'s own note). The balance badge is always the
+          Buy-Credits trigger; Subscribe is now its own separate action,
+          shown alongside it only for a non-subscriber — same split
+          RoomNavbar's credit pill / Upgrade button use. */}
+      <div className="flex items-center gap-2">
         <button
           onClick={() => setCreditsOpen(true)}
           aria-label="Buy credits"
@@ -58,17 +61,7 @@ export function HeaderActions() {
           {credits}
           <span className="ml-0.5 text-[14px] leading-none">+</span>
         </button>
-      ) : (
-        <div className="flex items-center gap-2">
-          <span
-            // e2e/behaviour-regressions.spec.ts reads the balance from here (G5-d #1/#2).
-            data-testid="credit-balance"
-            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-bold"
-            style={{ background: "rgba(245,158,11,.18)", color: "var(--gold)" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden><circle cx="12" cy="12" r="9" opacity="0.25" /><circle cx="12" cy="12" r="6" /></svg>
-            {credits}
-          </span>
+        {!subscribed && (
           <button
             onClick={() => setSubOpen(true)}
             aria-label="Subscribe to Muse Pro"
@@ -78,8 +71,8 @@ export function HeaderActions() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>
             Subscribe
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="relative">
         <button

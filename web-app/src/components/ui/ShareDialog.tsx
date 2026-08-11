@@ -24,7 +24,9 @@ export function ShareDialog({ open, onClose, title, url }: Props) {
       <p className="mb-3 text-[14px]" style={{ color: "var(--text-2)" }}>Shareable public link to “{title}”</p>
       <div className="flex items-center gap-2 rounded-xl border p-1.5" style={{ borderColor: "var(--border-2)", background: "var(--card-2)" }}>
         <input readOnly value={url} className="min-w-0 flex-1 bg-transparent px-2 text-[13px] outline-none" style={{ color: "var(--text-2)" }} aria-label="Share link" />
-        <button onClick={copy} className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-bold text-white" style={{ background: "var(--accent)" }}>
+        {/* Designer request, 2026-08-11: pill, not rounded-lg — same
+            filled-button-must-be-pill rule as `Button.tsx`. */}
+        <button onClick={copy} className="shrink-0 rounded-full px-3 py-1.5 text-[13px] font-bold text-white" style={{ background: "var(--accent)" }}>
           {copied ? "Copied!" : "Copy"}
         </button>
       </div>

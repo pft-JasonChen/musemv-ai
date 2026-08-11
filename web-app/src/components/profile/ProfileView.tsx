@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useLocale, useT } from "@/components/providers/LocaleProvider";
 import { LOCALE_NAMES, LOCALES, localePath } from "@/lib/i18n/config";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { SubscribeModal } from "@/components/credits/SubscribeModal";
 import { SAMPLE_CREATIONS } from "@/lib/mv/mock";
 import { AVATAR_SAMPLES, SUBSCRIPTION_PLANS } from "@/lib/user";
 
@@ -107,6 +107,10 @@ export function ProfileView() {
   const router = useRouter();
   const { credits } = useCredits();
   const { profile, subscribed, subscribedPlan, updateProfile } = useAuth();
+  // Shared with RoomNavbar's header pill and Sidebar's Upgrade button
+  // (2026-08-11 designer fix) — one dialog instance, opened from anywhere,
+  // instead of this page owning its own private copy.
+  const { openSubscribe } = useSubscribe();
   const planName = SUBSCRIPTION_PLANS.find((p) => p.id === subscribedPlan)?.name;
   const { locale, setLocale } = useLocale();
   const t = useT();
@@ -114,7 +118,6 @@ export function ProfileView() {
   const [nameDraft, setNameDraft] = useState(profile.name);
   const [avatarDraft, setAvatarDraft] = useState<string | null>(profile.avatar);
   const [notif, setNotif] = useState(true);
-  const [subOpen, setSubOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [fbOpen, setFbOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -240,7 +243,9 @@ export function ProfileView() {
                 </span>
               }
               onClick={() =>
-                subscribed ? router.push(localePath(locale, "/profile/credits")) : setSubOpen(true)
+                subscribed
+                  ? router.push(localePath(locale, "/profile/credits"))
+                  : openSubscribe(() => flash(t("profile.toast.subscribed")))
               }
             />
             <div className="account-page__divider" />
@@ -370,12 +375,6 @@ export function ProfileView() {
           {t("profile.save")}
         </Button>
       </Modal>
-
-      <SubscribeModal
-        open={subOpen}
-        onClose={() => setSubOpen(false)}
-        onSubscribed={() => flash(t("profile.toast.subscribed"))}
-      />
 
       <Modal
         open={fbOpen}

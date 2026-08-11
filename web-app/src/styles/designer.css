@@ -101,3 +101,10 @@
    Home-only like the three files above — mounted once at the app root. 45
    gated files now. */
 @import "./designer/LoginModal.css";
+/* Shared "Ready to Go Public?" MV publish confirmation (Figma, DP's own
+   `PublishDialog`) — used by History, MV Result, and Community Profile's MV
+   tab. Never migrated off WA's generic Tailwind `Modal` before now (2026-08-11
+   designer request: it didn't match DP's actual dialog chrome — no close
+   button, a solid-white Confirm rather than a gradient, 28px card radius). 46
+   gated files now. */
+@import "./designer/PublishDialog.css";
