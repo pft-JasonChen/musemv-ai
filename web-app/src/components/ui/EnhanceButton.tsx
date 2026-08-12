@@ -3,7 +3,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
-import { useCredits } from "@/components/providers/CreditsProvider";
 import type { EnhanceKind } from "@/lib/api/contract";
 
 export interface EnhanceDirection {
@@ -43,7 +42,6 @@ interface Props {
  * Refine Lyrics), matching the mobile prototype.
  */
 export function EnhanceButton({ value, kind, onEnhanced, directions, className, bem }: Props) {
-  const { enhanceCost, consumeEnhance } = useCredits();
   const [busy, setBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -61,9 +59,12 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
 
   async function run(k: EnhanceKind) {
     setMenuOpen(false);
-    // SONG-04: first Enhance per session is free, then 1 credit each. Skip when
-    // the (rare) charge can't be covered.
-    if (!consumeEnhance()) return;
+    // AI Enhance is FREE — it costs no credits (spec area 11 §5.5, product decision
+    // 2026-08-12, closing TBD-CC-03). This used to charge 1 credit after the first
+    // use per session (the old SONG-04 wording) via `useCredits().consumeEnhance`;
+    // that call, its `enhanceCost` badge, and both provider keys are gone. There is
+    // no cloud-config action for Enhance, so charging for it was never in the
+    // approved credit model in the first place.
     setBusy(true);
     try {
       onEnhanced(await api.enhancePrompt({ text: value, kind: k }));
@@ -128,18 +129,6 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
           <img src="/assets/icons/ui/ic_edit_ai.svg" width={14} height={14} alt="" />
         )}
         {busy ? "Enhancing…" : "Enhance"}
-        {!busy && enhanceCost > 0 && (
-          <span
-            className="ml-0.5 inline-flex items-center gap-0.5 rounded-full px-1.5 text-[10px] font-bold"
-            style={{ background: "rgba(0,0,0,.08)" }}
-          >
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <circle cx="12" cy="12" r="9" opacity="0.3" />
-              <circle cx="12" cy="12" r="6" />
-            </svg>
-            {enhanceCost}
-          </span>
-        )}
       </button>
 
       {menuOpen && directions && (

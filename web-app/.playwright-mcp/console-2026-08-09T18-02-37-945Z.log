@@ -1,0 +1,92 @@
+[     765ms] [INFO] [chatbot:event] cms_content_requested {retry: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[     818ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8010/favicon.ico:0
+[    2398ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   14934ms] [INFO] [chatbot:event] chat_opened {topics_consumed_prev: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   24176ms] [INFO] [chatbot:event] topic_clicked {topic: refund} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   24889ms] [INFO] [chatbot:event] agent_replied {mode: canned, topic: refund} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   25083ms] [INFO] [chatbot:event] followup_clicked {topic: refund, label: Can't find my Order ID, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   25740ms] [INFO] [chatbot:event] agent_replied {mode: canned_followup, topic: refund, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   26285ms] [INFO] [chatbot:event] topic_clicked {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   26286ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: refund} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   26993ms] [INFO] [chatbot:event] agent_replied {mode: canned, topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   41577ms] [INFO] [chatbot:event] none_of_above {from: home} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   41593ms] [INFO] [chatbot:event] llm_unlocked {reason: none_of_above} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   42020ms] [INFO] [chatbot:event] free_text_sent {length: 31, images: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   43334ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   78367ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   78592ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   78695ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   97751ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   97757ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   97884ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   97906ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   97975ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   98001ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   98068ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   98091ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   98155ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   98177ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   98244ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   98349ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 2} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99072ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99207ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99302ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99392ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99478ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99558ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99650ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99653ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99742ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[   99830ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  100002ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  114869ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 9, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  114872ms] [INFO] [chatbot:event] cms_content_requested {retry: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  115474ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  115776ms] [INFO] [chatbot:event] none_of_above {from: home} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  115776ms] [INFO] [chatbot:event] llm_unlocked {reason: none_of_above} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  116270ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  117582ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  118244ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  118244ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  119548ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  120211ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  120211ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  121514ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  122187ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  122188ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  123490ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  124154ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  124155ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  125457ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  126132ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  126132ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  127434ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  128097ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  128098ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  129400ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  130068ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  130069ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  131372ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  132044ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  132045ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  133348ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  134019ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  134020ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  135322ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  135927ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  136104ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  136111ms] [INFO] [chatbot:event] free_text_sent {length: 0, images: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  137417ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  138015ms] [INFO] [chatbot:event] upload_rejected {surface: chat} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  149550ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 11, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  149554ms] [INFO] [chatbot:event] cms_content_requested {retry: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  150155ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  150458ms] [INFO] [chatbot:event] none_of_above {from: home} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  150458ms] [INFO] [chatbot:event] llm_unlocked {reason: none_of_above} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  166899ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 0, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  166915ms] [INFO] [chatbot:event] cms_content_requested {retry: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  167519ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  168223ms] [INFO] [chatbot:event] path2_user_requested_agent_demo {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  168673ms] [INFO] [chatbot:event] ticket_cta_shown {reason: user_request, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  169323ms] [INFO] [chatbot:event] ticket_form_opened {from: user_request, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262
+[  169986ms] [INFO] [chatbot:event] upload_rejected {surface: ticket} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2262

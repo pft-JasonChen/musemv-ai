@@ -2,7 +2,9 @@ import { test, expect } from "@playwright/test";
 
 // Walks the MV creation flow end-to-end (mock backend). Maps to spec ACs 1,2,5,6,8,10,11,14,15.
 test("MV creation: compose -> storyboard -> render -> result", async ({ page }) => {
-  // /mv/room is behind AuthGuard; seed the mock auth flag before any page script
+  // /mv/room is open to guests since 2026-08-07, but this spec drives the FULL
+  // create flow, whose Song Library and Create Music Video steps are gated —
+  // so seed the mock auth flag before any page script
   // runs so the guard sees a logged-in user instead of opening the sign-in modal.
   await page.addInitScript(() => window.localStorage.setItem("muse_auth", "1"));
   await page.goto("/mv/room");

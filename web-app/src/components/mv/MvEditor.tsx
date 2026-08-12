@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { SeekBar } from "@/components/ui/SeekBar";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
@@ -19,11 +19,8 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import { downloadFile } from "@/lib/download";
-import { COST_RENDER, DESCRIPTION_MAX, type Scene } from "@/lib/mv/types";
+import { COST_COVER, COST_REGEN, COST_RENDER, DESCRIPTION_MAX, type Scene } from "@/lib/mv/types";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
-
-const COST_REGEN = 20;
-const COST_COVER = 10;
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds)) return "0:00";
@@ -151,7 +148,6 @@ export function MvEditor() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
@@ -269,26 +265,16 @@ export function MvEditor() {
     else v.pause();
   }
 
-  function seekFromClientX(clientX: number) {
-    const track = progressRef.current;
-    const v = videoRef.current;
-    if (!track || !v || !v.duration) return;
-    const rect = track.getBoundingClientRect();
-    v.currentTime = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) * v.duration;
+  // TODO.md #5 / 7a: seeking goes through `ui/SeekBar`, which is keyboard-
+  // operable. DP draws this bar as a bare div with only `onPointerDown`; that
+  // is a Serious WCAG 2.1.1 failure, and `SeekBar` was built for `/watch` to
+  // avoid copying it. Adopted here 2026-08-12 — pixel-neutral, same markup.
+  function seek(next: number) {
+    const media = videoRef.current;
+    if (!media || !media.duration) return;
+    media.currentTime = Math.min(media.duration, Math.max(0, next));
   }
 
-  function onProgressPointerDown(event: ReactPointerEvent) {
-    seekFromClientX(event.clientX);
-    const onMove = (e: PointerEvent) => seekFromClientX(e.clientX);
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-  }
-
-  const progressRatio = duration ? currentTime / duration : 0;
 
   const sceneEditor = (
     <>
@@ -441,21 +427,16 @@ export function MvEditor() {
                   />
                 </button>
                 <span className="mv-edit__time">{formatTime(currentTime)}</span>
-                <div
+                <SeekBar
+                  value={currentTime}
+                  max={duration}
+                  onSeek={seek}
+                  label="Seek within the preview"
                   className="mv-edit__progress"
-                  ref={progressRef}
-                  onPointerDown={onProgressPointerDown}
-                >
-                  <div className="mv-edit__progress-track" />
-                  <div
-                    className="mv-edit__progress-fill"
-                    style={{ width: `${progressRatio * 100}%` }}
-                  />
-                  <div
-                    className="mv-edit__progress-thumb"
-                    style={{ left: `${progressRatio * 100}%` }}
-                  />
-                </div>
+                  trackClassName="mv-edit__progress-track"
+                  fillClassName="mv-edit__progress-fill"
+                  thumbClassName="mv-edit__progress-thumb"
+                />
                 <span className="mv-edit__time">{formatTime(duration)}</span>
                 <button
                   type="button"

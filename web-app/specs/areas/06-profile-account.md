@@ -15,7 +15,7 @@ links + Sign Out + subscription cancel + account delete.
 **In scope:** `profile/ProfileView` (`/profile`, 🔒 **Auth**), `profile/SettingsView` (`/settings`),
 the Edit-Profile / Language / Feedback modals.
 **Out of scope (cross-referenced):** the account dropdown (area 01 `AccountMenu`); the credits/IAP
-modals opened from here (area 07 — `BuyCreditsModal`, `CreditsDetailModal`, `SubscribeModal`); the
+the Credits Detail route + modals reached from here (area 07 — `/profile/credits`, `BuyCreditsModal`, `SubscribeModal`); the
 **community profile content grid** at `/creator?self=1` that the stat tiles link to (area 04);
 sign-in (area 09).
 
@@ -47,9 +47,9 @@ localized surfaces (nav + Profile). `/settings` copy is hardcoded English.
 
 **Profile header** (`ProfileView.tsx`): avatar (image or name-initial), name, **PRO** pill when
 `subscribed`, email; edit-pencil → Edit-Profile modal.
-**Stat tiles** (`:116-127`): **Credits** → `CreditsDetailModal` (area 07; its **Buy More** opens `BuyCreditsModal`, also mounted here); **MVs** → `/creator?self=1&tab=mv`; **Songs** → `/creator?self=1&tab=songs` (area 04). Counts derive from the **static** `SAMPLE_CREATIONS` (not the user's real creations) ⚠️.
+**Stat tiles** (`:116-127`): **Credits** → `router.push('/profile/credits')` (area 07; its **Buy More** opens `BuyCreditsModal`, now mounted on that route); **MVs** → `/creator?self=1&tab=mv`; **Songs** → `/creator?self=1&tab=songs` (area 04). Counts derive from the **static** `SAMPLE_CREATIONS` (not the user's real creations) ⚠️.
 **Rows** (`:129-146`):
-- **Muse Pro** — not subscribed → **Subscribe** → `SubscribeModal` (area 07); subscribed → shows plan name + hardcoded "validity 2026-08-10" + **Manage** → `CreditsDetailModal`.
+- **Muse Pro** — not subscribed → **Subscribe** → `SubscribeModal` (area 07); subscribed → shows plan name + hardcoded "validity 2026-08-10" + **Manage** → `/profile/credits`.
 - **Notifications** — local `useState(true)` toggle; **no effect** 🔒 (→ `TBD-PROF-01`).
 - **Language** — opens a 9-locale picker → `setLocale(code)` (i18n, area-wide).
 - **Send Feedback** — opens a textarea modal; submit → toast, **content discarded** 🔒 (→ `TBD-PROF-02`).
@@ -73,7 +73,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 
 ### PROF-P1 — View profile hub
 - **PROF-P1-S1** Open `/profile` (auth-gated). **System:** header + stat tiles + rows; PRO pill if subscribed.
-- **PROF-P1-S2** Tap **Credits** tile → `CreditsDetailModal`; **MVs**/**Songs** tile → `/creator?self=1&tab=…` (area 04).
+- **PROF-P1-S2** Tap **Credits** tile → navigates to `/profile/credits`; **MVs**/**Songs** tile → `/creator?self=1&tab=…` (area 04).
 
 ### PROF-P2 — Edit profile
 - **PROF-P2-S1** Tap edit pencil → Edit-Profile modal (draft seeded from live profile).
@@ -103,7 +103,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 ## 6. Acceptance criteria (EARS)
 
 - **AC-PROF-01** — WHEN `/profile` loads for a signed-in user, THE SYSTEM SHALL show avatar/name/email, a PRO pill iff subscribed, the Credits/MVs/Songs tiles, and the row list.
-- **AC-PROF-02** — WHEN a stat tile is tapped, THE SYSTEM SHALL open `CreditsDetailModal` (Credits) or navigate to `/creator?self=1&tab=mv|songs` (MVs/Songs).
+- **AC-PROF-02** — WHEN a stat tile is tapped, THE SYSTEM SHALL navigate to `/profile/credits` (Credits) or to `/creator?self=1&tab=mv|songs` (MVs/Songs). _(rewritten 2026-08-12: Credits Detail became a route on 2026-08-11)_
 - **AC-PROF-03** — WHEN Edit-Profile is saved, THE SYSTEM SHALL commit name/avatar via `updateProfile` and reflect them in the shell (in-memory).
 - **AC-PROF-04** — WHEN the Muse Pro row is tapped, THE SYSTEM SHALL open the Subscribe modal (not subscribed) or the Credits detail (subscribed).
 - **AC-PROF-05** — WHEN Language is changed, THE SYSTEM SHALL switch locale via `setLocale` and reflect it in localized surfaces.

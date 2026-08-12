@@ -1,0 +1,2259 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - navigation [ref=f1e3]:
+      - generic [ref=f1e4]: YCO Spec
+      - searchbox "Jump to ID (P1-S3, T1, D-12)" [ref=f1e7]
+      - generic [ref=f1e8]: Overview
+      - link "Overview" [ref=f1e9] [cursor=pointer]:
+        - /url: "#overview"
+      - link "Flow Diagram" [ref=f1e10] [cursor=pointer]:
+        - /url: "#flow-diagram"
+      - link "All Paths" [ref=f1e11] [cursor=pointer]:
+        - /url: "#paths"
+      - generic [ref=f1e12]: User Paths
+      - group [ref=f1e13]:
+        - generic "▸ P1Popular Question" [ref=f1e14] [cursor=pointer]
+        - link "P1-S1Opens the profile menu and selects “Support”." [ref=f1e15] [cursor=pointer]:
+          - /url: "#P1-S1"
+        - link "P1-S2On the FAQ page, taps the support icon." [ref=f1e16] [cursor=pointer]:
+          - /url: "#P1-S2"
+        - link "P1-S9Waits while the CMS content loads." [ref=f1e17] [cursor=pointer]:
+          - /url: "#P1-S9"
+        - link "P1-S3Reads the greeting and the Popular questions." [ref=f1e18] [cursor=pointer]:
+          - /url: "#P1-S3"
+        - link "P1-E1The CMS content fails to load." [ref=f1e19] [cursor=pointer]:
+          - /url: "#P1-E1"
+        - link "P1-E2Retry fails too." [ref=f1e20] [cursor=pointer]:
+          - /url: "#P1-E2"
+        - link "P1-S4Taps a topic — e.g. “Request Refund”." [ref=f1e21] [cursor=pointer]:
+          - /url: "#P1-S4"
+        - link "P1-S5Scans the follow-up options under the reply." [ref=f1e22] [cursor=pointer]:
+          - /url: "#P1-S5"
+        - link "P1-S6Scrolls up and taps a different Popular question." [ref=f1e23] [cursor=pointer]:
+          - /url: "#P1-S6"
+        - link "P1-S7Taps a follow-up option." [ref=f1e24] [cursor=pointer]:
+          - /url: "#P1-S7"
+        - link "P1-S10Moves on without answering the chip." [ref=f1e25] [cursor=pointer]:
+          - /url: "#P1-S10"
+        - link "P1-S8Taps “Yes”." [ref=f1e26] [cursor=pointer]:
+          - /url: "#P1-S8"
+      - group [ref=f1e27]:
+        - generic "▸ P2Escalate to ticket" [ref=f1e28] [cursor=pointer]
+        - link "P2-S1Taps “None of above”, or “No” on a follow-up answer’s feedback chip." [ref=f1e29] [cursor=pointer]:
+          - /url: "#P2-S1"
+        - link "P2-S2Types a question (optionally attaching images) and sends." [ref=f1e30] [cursor=pointer]:
+          - /url: "#P2-S2"
+        - link "P2-E1Attaches an image over the limit." [ref=f1e31] [cursor=pointer]:
+          - /url: "#P2-E1"
+        - link "P2-S3Taps “No, still stuck” on the AI reply’s feedback chip (or opened the “letters and numbers” refund follow-up)." [ref=f1e32] [cursor=pointer]:
+          - /url: "#P2-S3"
+        - link "P2-S4Taps “Send a support ticket →”." [ref=f1e33] [cursor=pointer]:
+          - /url: "#P2-S4"
+        - link "P2-E2Ticket attachments cross 10 MB." [ref=f1e34] [cursor=pointer]:
+          - /url: "#P2-E2"
+        - link "P2-S5Completes the required fields and submits." [ref=f1e35] [cursor=pointer]:
+          - /url: "#P2-S5"
+      - group [ref=f1e36]:
+        - generic "▸ P3Session controls" [ref=f1e37] [cursor=pointer]
+        - link "P3-S1Taps New chat." [ref=f1e38] [cursor=pointer]:
+          - /url: "#P3-S1"
+        - link "P3-S2With an active conversation, taps Close." [ref=f1e39] [cursor=pointer]:
+          - /url: "#P3-S2"
+      - group [ref=f1e40]:
+        - generic "▸ P4FAQ tab" [ref=f1e41] [cursor=pointer]
+        - link "P4-S1Taps the FAQ side of the Chat / FAQ control." [ref=f1e42] [cursor=pointer]:
+          - /url: "#P4-S1"
+      - generic [ref=f1e43]: Reference
+      - link "Data Contract" [ref=f1e44] [cursor=pointer]:
+        - /url: "#data-contract"
+      - link "State Inventory" [ref=f1e45] [cursor=pointer]:
+        - /url: "#states"
+      - link "Open Questions" [ref=f1e46] [cursor=pointer]:
+        - /url: "#open-questions"
+      - link "QA Coverage" [ref=f1e47] [cursor=pointer]:
+        - /url: "#qa-coverage"
+      - link "Error States" [ref=f1e48] [cursor=pointer]:
+        - /url: "#errors"
+      - link "Prototype Simplifications" [ref=f1e49] [cursor=pointer]:
+        - /url: "#prototype"
+      - link "Design Decisions" [ref=f1e50] [cursor=pointer]:
+        - /url: "#decisions"
+      - link "References" [ref=f1e51] [cursor=pointer]:
+        - /url: "#references"
+      - link "Changelog" [ref=f1e52] [cursor=pointer]:
+        - /url: "#changelog"
+    - main [ref=f1e53]:
+      - generic [ref=f1e54]: You are at the top
+      - generic [ref=f1e55]:
+        - generic [ref=f1e56]: YCO Online Service → Support Chatbot
+        - heading "Support Chatbot — Behavior Spec" [level=1] [ref=f1e57]
+        - generic [ref=f1e58]:
+          - generic [ref=f1e59]: Review
+          - generic [ref=f1e60]: ·
+          - generic [ref=f1e61]:
+            - strong [ref=f1e62]: "Version:"
+            - text: v2
+          - generic [ref=f1e63]: ·
+          - generic [ref=f1e64]:
+            - strong [ref=f1e65]: "Author:"
+            - text: Jason Chen
+          - generic [ref=f1e66]: ·
+          - generic [ref=f1e67]:
+            - strong [ref=f1e68]: "Date:"
+            - text: 2026-08-10
+          - generic [ref=f1e69]: ·
+          - generic [ref=f1e70]:
+            - strong [ref=f1e71]: "Prototype:"
+            - link "Open ↗" [ref=f1e72] [cursor=pointer]:
+              - /url: https://yco-prototypes.vercel.app/prototypes/support-chatbot/v4/
+          - generic [ref=f1e73]: ·
+          - generic [ref=f1e74]:
+            - strong [ref=f1e75]: "Guideline:"
+            - link "Open ↗" [ref=f1e76] [cursor=pointer]:
+              - /url: https://www.figma.com/design/4tTw9FtEyjCnB91I6MefF6/YCO_System-Pages?node-id=19389-121038&t=dubX8CTYWh06xX3m-1
+      - generic [ref=f1e77]:
+        - paragraph [ref=f1e78]: An in-product Support Chatbot that answers common YouCam Online Editor questions from a curated two-layer content set, and escalates to a support ticket when needed. It opens as a Chat / FAQ panel from either the profile dropdown “Support” item (site-wide) or a support icon on the FAQ page.
+        - generic [ref=f1e79]:
+          - generic [ref=f1e80]: Background
+          - generic [ref=f1e81]:
+            - text: "Cost-guard model: the home state offers canned buttons only and the free-text input is hidden, so the paid LLM is called only after the user exhausts self-serve help."
+            - strong [ref=f1e82]: "Scope of authority:"
+            - text: the paths, states, on-screen text, and limits below are
+            - strong [ref=f1e83]: normative — they describe the v4 behaviour RD builds and QA tests today
+            - text: . The agent→frontend tag contract (how production drives escalation) is not yet ratified; where it differs from what is built it is captured as a forward-note in
+            - emphasis [ref=f1e84]: Prototype Simplifications
+            - text: ", not as settled behaviour."
+        - generic [ref=f1e85]:
+          - generic [ref=f1e86]: Goal
+          - generic [ref=f1e87]: Deflect common questions cheaply with canned answers; open the LLM only on demand; hand off cleanly to a human ticket.
+      - generic [ref=f1e88]:
+        - strong [ref=f1e89]: Reading this spec.
+        - text: This is a behavior specification for the front-end RD, not production code — the prototype source cannot be reused. Each step card shows the
+        - strong [ref=f1e90]: screenshot first
+        - text: ", then what the"
+        - strong [ref=f1e91]: user does
+        - text: (bold) and what the
+        - strong [ref=f1e92]: WEB UI
+        - text: shows, with on-screen text, rules & limits, and input/output below. On a screenshot, a
+        - strong [ref=f1e93]: solid red
+        - text: frame marks the click that advances the flow; a
+        - strong [ref=f1e94]: dashed amber
+        - text: frame marks a key point to note (hover a frame for its label). Steps carry a stable ID (e.g.
+        - strong [ref=f1e95]:
+          - link "P1-S2" [ref=f1e96] [cursor=pointer]:
+            - /url: "#P1-S2"
+        - text: ).
+      - table [ref=f1e98]:
+        - rowgroup [ref=f1e99]:
+          - row [ref=f1e100]:
+            - cell "Platform" [ref=f1e101]
+            - cell "YCO Web — desktop 1440" [ref=f1e102]
+          - row [ref=f1e103]:
+            - cell "Entry point" [ref=f1e104]
+            - cell "Profile dropdown → “Support” (site-wide), or a support icon on the FAQ page — both open the same panel" [ref=f1e105]
+          - row [ref=f1e106]:
+            - cell "Cost guard" [ref=f1e107]
+            - cell "Home = canned only, input hidden; LLM opens only via “None of above” or a “No” on the feedback chip" [ref=f1e108]
+          - row [ref=f1e109]:
+            - cell "Content source" [ref=f1e110]
+            - cell [ref=f1e111]:
+              - text: Greeting, topics, answers and follow-ups are CMS content read at runtime — see
+              - link "T2" [ref=f1e112] [cursor=pointer]:
+                - /url: "#T2"
+          - row [ref=f1e113]:
+            - cell "Audience" [ref=f1e114]
+            - cell "Frontend RD / QA" [ref=f1e115]
+          - row [ref=f1e116]:
+            - cell "Canned copy" [ref=f1e117]
+            - cell [ref=f1e118]:
+              - link "Open canned strings ↗" [ref=f1e119] [cursor=pointer]:
+                - /url: canned-strings.html
+              - text: — the current copy, to be loaded into the CMS
+      - group [ref=f1e121]:
+        - generic "▶ ↓ Flow Diagram — full user journey (click to expand)" [ref=f1e122] [cursor=pointer]:
+          - text: ▶
+          - generic [ref=f1e123]: ↓
+          - text: Flow Diagram — full user journey (click to expand)
+      - generic [ref=f1e124]:
+        - generic [ref=f1e125]:
+          - generic [ref=f1e126]: →
+          - text: All User Paths
+        - table [ref=f1e128]:
+          - rowgroup [ref=f1e129]:
+            - row [ref=f1e130]:
+              - columnheader "ID" [ref=f1e131]
+              - columnheader "Path" [ref=f1e132]
+              - columnheader "Entry point" [ref=f1e133]
+              - columnheader "Steps" [ref=f1e134]
+              - columnheader "Outcome" [ref=f1e135]
+          - rowgroup [ref=f1e136]:
+            - row [ref=f1e137]:
+              - cell "P1" [ref=f1e138]
+              - cell [ref=f1e140]:
+                - link "Get help from a Popular Question" [ref=f1e141] [cursor=pointer]:
+                  - /url: "#P1"
+              - cell "Profile dropdown → Support, or FAQ page support icon" [ref=f1e142]
+              - cell "12 steps" [ref=f1e143]
+              - cell "“Glad I could help” resolved message" [ref=f1e144]
+            - row [ref=f1e145]:
+              - cell "P2" [ref=f1e146]
+              - cell [ref=f1e148]:
+                - link "Escalate to a support ticket" [ref=f1e149] [cursor=pointer]:
+                  - /url: "#P2"
+              - cell "“None of above” or a “No” on the feedback chip" [ref=f1e150]
+              - cell "7 steps" [ref=f1e151]
+              - cell "Ticket reference YCO-2026-XXXXXX" [ref=f1e152]
+            - row [ref=f1e153]:
+              - cell "P3" [ref=f1e154]
+              - cell [ref=f1e156]:
+                - link "Manage the session" [ref=f1e157] [cursor=pointer]:
+                  - /url: "#P3"
+              - cell "Open chat panel" [ref=f1e158]
+              - cell "2 steps" [ref=f1e159]
+              - cell "Chat reset, or panel closed / kept open" [ref=f1e160]
+            - row [ref=f1e161]:
+              - cell "P4" [ref=f1e162]
+              - cell [ref=f1e164]:
+                - link "Browse the FAQ tab" [ref=f1e165] [cursor=pointer]:
+                  - /url: "#P4"
+              - cell "Open chat panel" [ref=f1e166]
+              - cell "1 steps" [ref=f1e167]
+              - cell "Searchable FAQ list" [ref=f1e168]
+      - generic [ref=f1e169]:
+        - generic [ref=f1e170]:
+          - generic [ref=f1e171]: P1
+          - generic [ref=f1e172]: Get help from a Popular Question
+        - paragraph [ref=f1e173]: Home is canned-only and its content is loaded from the CMS. User picks a topic, reads the default, explores follow-ups, and resolves.
+        - list [ref=f1e174]:
+          - listitem [ref=f1e175]:
+            - link "P1-S1" [ref=f1e177] [cursor=pointer]:
+              - /url: "#P1-S1"
+            - text: Opens the profile menu and selects “Support”.
+          - listitem [ref=f1e178]:
+            - link "P1-S2" [ref=f1e180] [cursor=pointer]:
+              - /url: "#P1-S2"
+            - text: On the FAQ page, taps the support icon.
+          - listitem [ref=f1e181]:
+            - link "P1-S9" [ref=f1e183] [cursor=pointer]:
+              - /url: "#P1-S9"
+            - text: Waits while the CMS content loads.
+          - listitem [ref=f1e184]:
+            - link "P1-S3" [ref=f1e186] [cursor=pointer]:
+              - /url: "#P1-S3"
+            - text: Reads the greeting and the Popular questions.
+          - listitem [ref=f1e187]:
+            - link "P1-E1" [ref=f1e189] [cursor=pointer]:
+              - /url: "#P1-E1"
+            - text: The CMS content fails to load.
+          - listitem [ref=f1e190]:
+            - link "P1-E2" [ref=f1e192] [cursor=pointer]:
+              - /url: "#P1-E2"
+            - text: Retry fails too.
+          - listitem [ref=f1e193]:
+            - link "P1-S4" [ref=f1e195] [cursor=pointer]:
+              - /url: "#P1-S4"
+            - text: Taps a topic — e.g. “Request Refund”.
+          - listitem [ref=f1e196]:
+            - link "P1-S5" [ref=f1e198] [cursor=pointer]:
+              - /url: "#P1-S5"
+            - text: Scans the follow-up options under the reply.
+          - listitem [ref=f1e199]:
+            - link "P1-S6" [ref=f1e201] [cursor=pointer]:
+              - /url: "#P1-S6"
+            - text: Scrolls up and taps a different Popular question.
+          - listitem [ref=f1e202]:
+            - link "P1-S7" [ref=f1e204] [cursor=pointer]:
+              - /url: "#P1-S7"
+            - text: Taps a follow-up option.
+          - listitem [ref=f1e205]:
+            - link "P1-S10" [ref=f1e207] [cursor=pointer]:
+              - /url: "#P1-S10"
+            - text: Moves on without answering the chip.
+          - listitem [ref=f1e208]:
+            - link "P1-S8" [ref=f1e210] [cursor=pointer]:
+              - /url: "#P1-S8"
+            - text: Taps “Yes”.
+        - generic [ref=f1e211]:
+          - generic [ref=f1e212]:
+            - generic [ref=f1e213]: P1-S1
+            - generic [ref=f1e214]:
+              - generic "Comments" [ref=f1e215] [cursor=pointer]
+              - button "Comment on P1-S1" [ref=f1e216] [cursor=pointer]: + Comment
+          - img "P1-S1" [ref=f1e219]
+          - generic [ref=f1e220]:
+            - generic [ref=f1e221]:
+              - generic [ref=f1e222]: TRIGGER
+              - generic [ref=f1e223]: Opens the profile menu and selects “Support”.
+            - generic [ref=f1e224]:
+              - generic [ref=f1e225]: WEB UI
+              - generic [ref=f1e226]: The Support chat panel opens, Chat tab active.
+            - generic [ref=f1e227]:
+              - generic [ref=f1e228]: Strings
+              - list [ref=f1e230]:
+                - listitem [ref=f1e231]: "Menu item: “Support”"
+            - generic [ref=f1e232]:
+              - generic [ref=f1e233]: Rules
+              - list [ref=f1e235]:
+                - listitem [ref=f1e236]: Support is available in all YCO pages and /account page, excluding the API page.
+        - generic [ref=f1e237]:
+          - generic [ref=f1e238]:
+            - generic [ref=f1e239]: P1-S2
+            - generic [ref=f1e240]:
+              - generic "Comments" [ref=f1e241] [cursor=pointer]
+              - button "Comment on P1-S2" [ref=f1e242] [cursor=pointer]: + Comment
+          - img "P1-S2" [ref=f1e245]
+          - generic [ref=f1e246]:
+            - generic [ref=f1e247]:
+              - generic [ref=f1e248]: TRIGGER
+              - generic [ref=f1e249]: On the FAQ page, taps the support icon.
+            - generic [ref=f1e250]:
+              - generic [ref=f1e251]: WEB UI
+              - generic [ref=f1e252]: The Support chat panel opens, Chat tab active — same panel as the dropdown entry.
+            - generic [ref=f1e253]:
+              - generic [ref=f1e254]: Strings
+              - list [ref=f1e256]:
+                - listitem [ref=f1e257]: "Support icon: FAQ page only"
+            - generic [ref=f1e258]:
+              - generic [ref=f1e259]: Rules
+              - list [ref=f1e261]:
+                - listitem [ref=f1e262]: This icon appears only on the FAQ page; every other page opens Support via the profile dropdown
+        - generic [ref=f1e263]:
+          - generic [ref=f1e264]:
+            - generic [ref=f1e265]: P1-S9
+            - generic [ref=f1e266]: NEW · v2
+            - generic [ref=f1e267]:
+              - generic "Comments" [ref=f1e268] [cursor=pointer]
+              - button "Comment on P1-S9" [ref=f1e269] [cursor=pointer]: + Comment
+          - img "P1-S9" [ref=f1e272]
+          - generic [ref=f1e273]:
+            - generic [ref=f1e274]:
+              - generic [ref=f1e275]: TRIGGER
+              - generic [ref=f1e276]: Opens the panel and waits for the topics.
+            - generic [ref=f1e277]:
+              - generic [ref=f1e278]: WEB UI
+              - generic [ref=f1e279]: The message area shows six skeleton rows while the CMS content is requested. Nothing else renders yet.
+            - generic [ref=f1e280]:
+              - generic [ref=f1e281]: Rules
+              - list [ref=f1e283]:
+                - listitem [ref=f1e284]:
+                  - text: The greeting and topics render together once the payload resolves (see
+                  - link "T2" [ref=f1e285] [cursor=pointer]:
+                    - /url: "#T2"
+                  - text: )
+                - listitem [ref=f1e286]: The panel is usable immediately; the skeleton occupies the topic list only
+        - generic [ref=f1e287]:
+          - generic [ref=f1e288]:
+            - generic [ref=f1e289]: P1-S3
+            - generic [ref=f1e290]:
+              - generic "Comments" [ref=f1e291] [cursor=pointer]
+              - button "Comment on P1-S3" [ref=f1e292] [cursor=pointer]: + Comment
+          - generic [ref=f1e293]:
+            - generic:
+              - img "P1-S3"
+              - generic [ref=f1e294]: "1"
+            - list [ref=f1e296]:
+              - listitem [ref=f1e297]:
+                - generic [ref=f1e298]: "1"
+                - generic [ref=f1e299]: Popular questions (input hidden)
+          - generic [ref=f1e300]:
+            - generic [ref=f1e301]:
+              - generic [ref=f1e302]: TRIGGER
+              - generic [ref=f1e303]: Reads the greeting and the Popular questions.
+            - generic [ref=f1e304]:
+              - generic [ref=f1e305]: WEB UI
+              - generic [ref=f1e306]: Greeting + six topic buttons and a “None of above” button render. The free-text input is HIDDEN (cost guard).
+            - generic [ref=f1e307]:
+              - generic [ref=f1e308]: Strings
+              - list [ref=f1e310]:
+                - listitem [ref=f1e311]: “Hi, I’m YouCam Support Agent”
+                - listitem [ref=f1e312]: “How can I help today? Pick a topic below to get started.”
+                - listitem [ref=f1e313]: "Topics: Request Refund · Cancel Subscription · Missing Credits · Delete Account · Pricing & Plan · Unable to Generate Image/Video"
+                - listitem [ref=f1e314]: A “None of above” button sits after the six topics
+            - generic [ref=f1e315]:
+              - generic [ref=f1e316]: Rules
+              - list [ref=f1e318]:
+                - listitem [ref=f1e319]:
+                  - text: No message input in the home state — canned buttons only (see
+                  - link "D-02" [ref=f1e320] [cursor=pointer]:
+                    - /url: "#D-02"
+                  - text: )
+                - listitem [ref=f1e321]:
+                  - text: “None of above” is offered at Layer 1 too, opening the free-text input (see
+                  - link "D-03" [ref=f1e322] [cursor=pointer]:
+                    - /url: "#D-03"
+                  - text: )
+                - listitem [ref=f1e323]:
+                  - text: Every string above is CMS content, not client code (see
+                  - link "D-13" [ref=f1e324] [cursor=pointer]:
+                    - /url: "#D-13"
+                  - text: )
+                - listitem [ref=f1e325]: The strings quoted here are today’s CMS values, not fixed copy
+            - generic [ref=f1e326]:
+              - link "D-02" [ref=f1e327] [cursor=pointer]:
+                - /url: "#D-02"
+              - generic [ref=f1e328]:
+                - generic [ref=f1e329]: How is LLM cost controlled?
+                - text: Home shows canned buttons only with the free-text input hidden, so the paid LLM is not called until the user opts in.
+            - generic [ref=f1e330]:
+              - link "D-03" [ref=f1e331] [cursor=pointer]:
+                - /url: "#D-03"
+              - generic [ref=f1e332]:
+                - generic [ref=f1e333]: Where does “None of above” appear?
+                - text: At Layer 1 (after the six Popular questions) and after each topic’s follow-ups. There is no feedback chip at the default level.
+            - generic [ref=f1e334]:
+              - link "D-13" [ref=f1e335] [cursor=pointer]:
+                - /url: "#D-13"
+              - generic [ref=f1e336]:
+                - generic [ref=f1e337]: Where do the canned strings come from?
+                - text: The CMS. The greeting, the six topic labels, every default answer and every follow-up label and answer are CMS content read at runtime (
+                - link "T2" [ref=f1e338] [cursor=pointer]:
+                  - /url: "#T2"
+                - text: ). UI chrome — “None of above”, the feedback prompts, error copy and the ticket form labels — stays in the frontend string bundle. A question whose answer could not be edited alongside it would drift.
+            - generic [ref=f1e339]:
+              - strong [ref=f1e340]: "Input:"
+              - text: CMS canned content payload (
+              - link "T2" [ref=f1e341] [cursor=pointer]:
+                - /url: "#T2"
+              - text: )
+        - generic [ref=f1e342]:
+          - generic [ref=f1e343]:
+            - generic [ref=f1e344]: P1-E1
+            - generic [ref=f1e345]: NEW · v2
+            - generic [ref=f1e346]:
+              - generic "Comments" [ref=f1e347] [cursor=pointer]
+              - button "Comment on P1-E1" [ref=f1e348] [cursor=pointer]: + Comment
+          - generic [ref=f1e349]:
+            - generic:
+              - img "P1-E1"
+              - generic [ref=f1e350]: "1"
+            - list [ref=f1e352]:
+              - listitem [ref=f1e353]:
+                - generic [ref=f1e354]: "1"
+                - generic [ref=f1e355]: Retry
+          - generic [ref=f1e356]:
+            - generic [ref=f1e357]:
+              - generic [ref=f1e358]: ⚠ ERROR
+              - generic [ref=f1e359]: Opens the panel while the CMS is unreachable.
+            - generic [ref=f1e360]:
+              - generic [ref=f1e361]: WEB UI
+              - generic [ref=f1e362]: An inline error replaces the topic list, with a Retry button. No topics, no input.
+            - generic [ref=f1e363]:
+              - generic [ref=f1e364]: Strings
+              - list [ref=f1e366]:
+                - listitem [ref=f1e367]: “We couldn’t load the help topics. Try again.”
+                - listitem [ref=f1e368]: "Button: “Retry”"
+            - generic [ref=f1e369]:
+              - generic [ref=f1e370]: Rules
+              - list [ref=f1e372]:
+                - listitem [ref=f1e373]:
+                  - text: Retry re-requests the same payload and re-shows the skeleton (
+                  - link "P1-S9" [ref=f1e374] [cursor=pointer]:
+                    - /url: "#P1-S9"
+                  - text: )
+                - listitem [ref=f1e375]: The cost guard still holds — the input stays hidden on the first failure
+        - generic [ref=f1e376]:
+          - generic [ref=f1e377]:
+            - generic [ref=f1e378]: P1-E2
+            - generic [ref=f1e379]: NEW · v2
+            - generic [ref=f1e380]:
+              - generic "Comments" [ref=f1e381] [cursor=pointer]
+              - button "Comment on P1-E2" [ref=f1e382] [cursor=pointer]: + Comment
+          - generic [ref=f1e383]:
+            - generic:
+              - img "P1-E2"
+              - generic [ref=f1e384]: "1"
+            - list [ref=f1e386]:
+              - listitem [ref=f1e387]:
+                - generic [ref=f1e388]: "1"
+                - generic [ref=f1e389]: Free-text input revealed instead of a dead end
+          - generic [ref=f1e390]:
+            - generic [ref=f1e391]:
+              - generic [ref=f1e392]: ⚠ ERROR
+              - generic [ref=f1e393]: Taps Retry and it fails again.
+            - generic [ref=f1e394]:
+              - generic [ref=f1e395]: WEB UI
+              - generic [ref=f1e396]: The error text changes and the free-text input is revealed, so the user can still reach a human.
+            - generic [ref=f1e397]:
+              - generic [ref=f1e398]: Strings
+              - list [ref=f1e400]:
+                - listitem [ref=f1e401]: “We still can’t load the help topics. Tell us what you need below and we’ll take it from here.”
+            - generic [ref=f1e402]:
+              - generic [ref=f1e403]: Rules
+              - list [ref=f1e405]:
+                - listitem [ref=f1e406]:
+                  - text: A second failure yields the cost guard rather than stranding the user (see
+                  - link "D-14" [ref=f1e407] [cursor=pointer]:
+                    - /url: "#D-14"
+                  - text: )
+                - listitem [ref=f1e408]: No Retry button on the second failure — the input is the recovery
+            - generic [ref=f1e409]:
+              - link "D-14" [ref=f1e410] [cursor=pointer]:
+                - /url: "#D-14"
+              - generic [ref=f1e411]:
+                - generic [ref=f1e412]: What happens when the CMS content cannot be loaded?
+                - text: Skeleton rows while it loads; on failure an inline error with Retry (
+                - link "P1-E1" [ref=f1e413] [cursor=pointer]:
+                  - /url: "#P1-E1"
+                - text: ); if Retry fails too, the free-text input is revealed (
+                - link "P1-E2" [ref=f1e414] [cursor=pointer]:
+                  - /url: "#P1-E2"
+                - text: ). The cost guard yields rather than leaving the user with a panel that can do nothing.
+        - generic [ref=f1e415]:
+          - generic [ref=f1e416]:
+            - generic [ref=f1e417]: P1-S4
+            - generic [ref=f1e418]:
+              - generic "Comments" [ref=f1e419] [cursor=pointer]
+              - button "Comment on P1-S4" [ref=f1e420] [cursor=pointer]: + Comment
+          - generic [ref=f1e421]:
+            - generic:
+              - img "P1-S4"
+          - generic [ref=f1e422]:
+            - generic [ref=f1e423]:
+              - generic [ref=f1e424]: TRIGGER
+              - generic [ref=f1e425]: Taps a topic — e.g. “Request Refund”.
+            - generic [ref=f1e426]:
+              - generic [ref=f1e427]: WEB UI
+              - generic [ref=f1e428]: The tap is echoed; after a brief typing indicator the Layer-1 default reply renders.
+            - generic [ref=f1e429]:
+              - generic [ref=f1e430]: Strings
+              - list [ref=f1e432]:
+                - listitem [ref=f1e433]: “Refunds are available within 7 days of purchase…”
+                - listitem [ref=f1e434]: “one-time Credit packs are non-refundable.”
+            - generic [ref=f1e435]:
+              - generic [ref=f1e436]: Rules
+              - list [ref=f1e438]:
+                - listitem [ref=f1e439]: Refund window 7 days; Credit packs non-refundable
+                - listitem [ref=f1e440]:
+                  - text: The answer is Markdown from the CMS and renders per the table on
+                  - link "P2-S2" [ref=f1e441] [cursor=pointer]:
+                    - /url: "#P2-S2"
+            - generic [ref=f1e442]:
+              - strong [ref=f1e443]: "Output:"
+              - text: Default reply (Layer 1)
+        - generic [ref=f1e444]:
+          - generic [ref=f1e445]:
+            - generic [ref=f1e446]: P1-S5
+            - generic [ref=f1e447]:
+              - generic "Comments" [ref=f1e448] [cursor=pointer]
+              - button "Comment on P1-S5" [ref=f1e449] [cursor=pointer]: + Comment
+          - generic [ref=f1e450]:
+            - generic:
+              - img "P1-S5"
+              - generic [ref=f1e451]: "1"
+            - list [ref=f1e453]:
+              - listitem [ref=f1e454]:
+                - generic [ref=f1e455]: "1"
+                - generic [ref=f1e456]: None of above → free text
+          - generic [ref=f1e457]:
+            - generic [ref=f1e458]:
+              - generic [ref=f1e459]: TRIGGER
+              - generic [ref=f1e460]: Scans the follow-up options under the reply.
+            - generic [ref=f1e461]:
+              - generic [ref=f1e462]: WEB UI
+              - generic [ref=f1e463]: Layer-2 follow-up options render, ending with a second “None of above” option. No feedback chip at this level.
+            - generic [ref=f1e464]:
+              - generic [ref=f1e465]: Strings
+              - list [ref=f1e467]:
+                - listitem [ref=f1e468]: Follow-ups (per topic), then “None of above”
+            - generic [ref=f1e469]:
+              - generic [ref=f1e470]: Rules
+              - list [ref=f1e472]:
+                - listitem [ref=f1e473]:
+                  - text: “None of above” reveals the free-text LLM input (see
+                  - link "D-03" [ref=f1e474] [cursor=pointer]:
+                    - /url: "#D-03"
+                  - text: ","
+                  - link "D-05" [ref=f1e475] [cursor=pointer]:
+                    - /url: "#D-05"
+                  - text: )
+            - generic [ref=f1e476]:
+              - link "D-03" [ref=f1e477] [cursor=pointer]:
+                - /url: "#D-03"
+              - generic [ref=f1e478]:
+                - generic [ref=f1e479]: Where does “None of above” appear?
+                - text: At Layer 1 (after the six Popular questions) and after each topic’s follow-ups. There is no feedback chip at the default level.
+            - generic [ref=f1e480]:
+              - link "D-05" [ref=f1e481] [cursor=pointer]:
+                - /url: "#D-05"
+              - generic [ref=f1e482]:
+                - generic [ref=f1e483]: What opens the free-text LLM input, and how does the user know?
+                - text: "Only two triggers: tapping “None of above”, or “No” on a follow-up answer. The two feedback prompts differ so the outcome is legible: a canned answer shows “Does this solution meet your needs?” (No opens the input); an AI reply shows “Did this help?” (No, still stuck opens the ticket)."
+        - generic [ref=f1e484]:
+          - generic [ref=f1e485]:
+            - generic [ref=f1e486]: P1-S6
+            - generic [ref=f1e487]:
+              - generic "Comments" [ref=f1e488] [cursor=pointer]
+              - button "Comment on P1-S6" [ref=f1e489] [cursor=pointer]: + Comment
+          - generic [ref=f1e490]:
+            - generic:
+              - img "P1-S6"
+              - generic [ref=f1e491]: "1"
+            - list [ref=f1e493]:
+              - listitem [ref=f1e494]:
+                - generic [ref=f1e495]: "1"
+                - generic [ref=f1e496]: Used topic (greyed), others still clickable
+          - generic [ref=f1e497]:
+            - generic [ref=f1e498]:
+              - generic [ref=f1e499]: TRIGGER
+              - generic [ref=f1e500]: Scrolls up and taps a different Popular question.
+            - generic [ref=f1e501]:
+              - generic [ref=f1e502]: WEB UI
+              - generic [ref=f1e503]: The clicked option is marked used and disabled; the rest stay clickable and the new reply appends below.
+            - generic [ref=f1e504]:
+              - generic [ref=f1e505]: Rules
+              - list [ref=f1e507]:
+                - listitem [ref=f1e508]:
+                  - text: Buttons persist and stay clickable until an LLM/ticket locks them all (see
+                  - link "D-04" [ref=f1e509] [cursor=pointer]:
+                    - /url: "#D-04"
+                  - text: )
+            - generic [ref=f1e510]:
+              - link "D-04" [ref=f1e511] [cursor=pointer]:
+                - /url: "#D-04"
+              - generic [ref=f1e512]:
+                - generic [ref=f1e513]: Do canned buttons persist?
+                - text: Yes — a clicked button becomes disabled; others stay clickable and replies append. Invoking the LLM or a ticket disables all of them. New chat resets.
+        - generic [ref=f1e514]:
+          - generic [ref=f1e515]:
+            - generic [ref=f1e516]: P1-S7
+            - generic [ref=f1e517]:
+              - generic "Comments" [ref=f1e518] [cursor=pointer]
+              - button "Comment on P1-S7" [ref=f1e519] [cursor=pointer]: + Comment
+          - generic [ref=f1e520]:
+            - generic:
+              - img "P1-S7"
+              - generic [ref=f1e521]: "1"
+            - list [ref=f1e523]:
+              - listitem [ref=f1e524]:
+                - generic [ref=f1e525]: "1"
+                - generic [ref=f1e526]: Does this solution meet your needs?
+          - generic [ref=f1e527]:
+            - generic [ref=f1e528]:
+              - generic [ref=f1e529]: TRIGGER
+              - generic [ref=f1e530]: Taps a follow-up option.
+            - generic [ref=f1e531]:
+              - generic [ref=f1e532]: WEB UI
+              - generic [ref=f1e533]: The follow-up is echoed and its answer renders, followed by the feedback chip “Does this solution meet your needs?”.
+            - generic [ref=f1e534]:
+              - generic [ref=f1e535]: Strings
+              - list [ref=f1e537]:
+                - listitem [ref=f1e538]: “Does this solution meet your needs?” with “No” / “Yes”
+            - generic [ref=f1e539]:
+              - generic [ref=f1e540]: Rules
+              - list [ref=f1e542]:
+                - listitem [ref=f1e543]:
+                  - text: The two feedback prompts differ so the outcome is legible (see
+                  - link "D-05" [ref=f1e544] [cursor=pointer]:
+                    - /url: "#D-05"
+                  - text: )
+                - listitem [ref=f1e545]: A canned answer asks “Does this solution meet your needs?” and “No” opens the free-text input
+                - listitem [ref=f1e546]: An AI reply asks “Did this help?” and “No, still stuck” opens the ticket
+            - generic [ref=f1e547]:
+              - link "D-05" [ref=f1e548] [cursor=pointer]:
+                - /url: "#D-05"
+              - generic [ref=f1e549]:
+                - generic [ref=f1e550]: What opens the free-text LLM input, and how does the user know?
+                - text: "Only two triggers: tapping “None of above”, or “No” on a follow-up answer. The two feedback prompts differ so the outcome is legible: a canned answer shows “Does this solution meet your needs?” (No opens the input); an AI reply shows “Did this help?” (No, still stuck opens the ticket)."
+        - generic [ref=f1e551]:
+          - generic [ref=f1e552]:
+            - generic [ref=f1e553]: P1-S10
+            - generic [ref=f1e554]: NEW · v2
+            - generic [ref=f1e555]:
+              - generic "Comments" [ref=f1e556] [cursor=pointer]
+              - button "Comment on P1-S10" [ref=f1e557] [cursor=pointer]: + Comment
+          - generic [ref=f1e558]:
+            - generic:
+              - img "P1-S10"
+              - generic [ref=f1e559]: "1"
+            - list [ref=f1e561]:
+              - listitem [ref=f1e562]:
+                - generic [ref=f1e563]: "1"
+                - generic [ref=f1e564]: Only the newest feedback chip is on screen
+          - generic [ref=f1e565]:
+            - generic [ref=f1e566]:
+              - generic [ref=f1e567]: TRIGGER
+              - generic [ref=f1e568]: Taps another follow-up instead of answering the chip.
+            - generic [ref=f1e569]:
+              - generic [ref=f1e570]: WEB UI
+              - generic [ref=f1e571]: The pending chip is removed and a new one renders under the new answer. Only one chip is ever on screen.
+            - generic [ref=f1e572]:
+              - generic [ref=f1e573]: Rules
+              - list [ref=f1e575]:
+                - listitem [ref=f1e576]:
+                  - text: Any new user turn supersedes a pending chip — topic, follow-up, None of above, or a typed message (see
+                  - link "D-15" [ref=f1e577] [cursor=pointer]:
+                    - /url: "#D-15"
+                  - text: )
+                - listitem [ref=f1e578]: An answered chip is removed as before; a superseded one leaves no trace
+                - listitem [ref=f1e579]: The chip always belongs to the newest answer
+            - generic [ref=f1e580]:
+              - link "D-15" [ref=f1e581] [cursor=pointer]:
+                - /url: "#D-15"
+              - generic [ref=f1e582]:
+                - generic [ref=f1e583]: How many feedback chips can be on screen?
+                - text: Exactly one. Any new user turn — another topic, another follow-up, “None of above”, or a typed message — removes the pending chip, so the chip always refers to the newest answer. An answered chip is removed as before.
+        - generic [ref=f1e584]:
+          - generic [ref=f1e585]:
+            - generic [ref=f1e586]: P1-S8
+            - generic [ref=f1e587]:
+              - generic "Comments" [ref=f1e588] [cursor=pointer]
+              - button "Comment on P1-S8" [ref=f1e589] [cursor=pointer]: + Comment
+          - generic [ref=f1e590]:
+            - generic [ref=f1e591]:
+              - generic [ref=f1e592]: TRIGGER
+              - generic [ref=f1e593]: Taps “Yes”.
+            - generic [ref=f1e594]:
+              - generic [ref=f1e595]: WEB UI
+              - generic [ref=f1e596]:
+                - text: A resolved message ends the chat — no buttons, no “Anything else?” loop (see
+                - link "D-10" [ref=f1e597] [cursor=pointer]:
+                  - /url: "#D-10"
+                - text: ).
+            - generic [ref=f1e598]:
+              - generic [ref=f1e599]: Strings
+              - list [ref=f1e601]:
+                - listitem [ref=f1e602]: “Glad I could help. ✨”
+                - listitem [ref=f1e603]: “Feel free to ask if anything else comes up.”
+            - generic [ref=f1e604]:
+              - generic [ref=f1e605]: Rules
+              - list [ref=f1e607]:
+                - listitem [ref=f1e608]: The resolved message carries no action buttons; New chat (P3) is the only way to restart
+        - generic [ref=f1e609]:
+          - generic [ref=f1e610]: ↓
+          - generic [ref=f1e611]: If the user is still stuck (None of above, or a “No” on the feedback chip), the free-text LLM input opens — continue in Path 2.
+      - generic [ref=f1e612]:
+        - generic [ref=f1e613]:
+          - generic [ref=f1e614]: P2
+          - generic [ref=f1e615]: Escalate to a support ticket
+        - paragraph [ref=f1e616]: When canned help is exhausted the LLM input opens; if still unresolved, a support ticket is offered and filed.
+        - list [ref=f1e617]:
+          - listitem [ref=f1e618]:
+            - link "P2-S1" [ref=f1e620] [cursor=pointer]:
+              - /url: "#P2-S1"
+            - text: Taps “None of above”, or “No” on a follow-up answer’s feedback chip.
+          - listitem [ref=f1e621]:
+            - link "P2-S2" [ref=f1e623] [cursor=pointer]:
+              - /url: "#P2-S2"
+            - text: Types a question (optionally attaching images) and sends.
+          - listitem [ref=f1e624]:
+            - link "P2-E1" [ref=f1e626] [cursor=pointer]:
+              - /url: "#P2-E1"
+            - text: Attaches an image over the limit.
+          - listitem [ref=f1e627]:
+            - link "P2-S3" [ref=f1e629] [cursor=pointer]:
+              - /url: "#P2-S3"
+            - text: Taps “No, still stuck” on the AI reply’s feedback chip (or opened the “letters and numbers” refund follow-up).
+          - listitem [ref=f1e630]:
+            - link "P2-S4" [ref=f1e632] [cursor=pointer]:
+              - /url: "#P2-S4"
+            - text: Taps “Send a support ticket →”.
+          - listitem [ref=f1e633]:
+            - link "P2-E2" [ref=f1e635] [cursor=pointer]:
+              - /url: "#P2-E2"
+            - text: Ticket attachments cross 10 MB.
+          - listitem [ref=f1e636]:
+            - link "P2-S5" [ref=f1e638] [cursor=pointer]:
+              - /url: "#P2-S5"
+            - text: Completes the required fields and submits.
+        - generic [ref=f1e639]:
+          - generic [ref=f1e640]:
+            - generic [ref=f1e641]: P2-S1
+            - generic [ref=f1e642]:
+              - generic "Comments" [ref=f1e643] [cursor=pointer]
+              - button "Comment on P2-S1" [ref=f1e644] [cursor=pointer]: + Comment
+          - generic [ref=f1e645]:
+            - generic:
+              - img "P2-S1"
+              - generic [ref=f1e646]: "1"
+            - list [ref=f1e648]:
+              - listitem [ref=f1e649]:
+                - generic [ref=f1e650]: "1"
+                - generic [ref=f1e651]: Free-text input unlocked
+          - generic [ref=f1e652]:
+            - generic [ref=f1e653]:
+              - generic [ref=f1e654]: TRIGGER
+              - generic [ref=f1e655]: Taps “None of above”, or “No” on a follow-up answer’s feedback chip.
+            - generic [ref=f1e656]:
+              - generic [ref=f1e657]: WEB UI
+              - generic [ref=f1e658]: The free-text input appears (with an image attach control) and ALL canned buttons are disabled.
+            - generic [ref=f1e659]:
+              - generic [ref=f1e660]: Strings
+              - list [ref=f1e662]:
+                - listitem [ref=f1e663]: “Sure — tell me a bit more below… You can attach images too.”
+            - generic [ref=f1e664]:
+              - generic [ref=f1e665]: Rules
+              - list [ref=f1e667]:
+                - listitem [ref=f1e668]:
+                  - text: These are the only two triggers that open the LLM input (see
+                  - link "D-05" [ref=f1e669] [cursor=pointer]:
+                    - /url: "#D-05"
+                  - text: )
+                - listitem [ref=f1e670]:
+                  - text: Invoking the LLM disables every canned button (see
+                  - link "D-04" [ref=f1e671] [cursor=pointer]:
+                    - /url: "#D-04"
+                  - text: )
+            - generic [ref=f1e672]:
+              - link "D-05" [ref=f1e673] [cursor=pointer]:
+                - /url: "#D-05"
+              - generic [ref=f1e674]:
+                - generic [ref=f1e675]: What opens the free-text LLM input, and how does the user know?
+                - text: "Only two triggers: tapping “None of above”, or “No” on a follow-up answer. The two feedback prompts differ so the outcome is legible: a canned answer shows “Does this solution meet your needs?” (No opens the input); an AI reply shows “Did this help?” (No, still stuck opens the ticket)."
+            - generic [ref=f1e676]:
+              - link "D-04" [ref=f1e677] [cursor=pointer]:
+                - /url: "#D-04"
+              - generic [ref=f1e678]:
+                - generic [ref=f1e679]: Do canned buttons persist?
+                - text: Yes — a clicked button becomes disabled; others stay clickable and replies append. Invoking the LLM or a ticket disables all of them. New chat resets.
+        - generic [ref=f1e680]:
+          - generic [ref=f1e681]:
+            - generic [ref=f1e682]: P2-S2
+            - generic [ref=f1e683]:
+              - generic "Comments" [ref=f1e684] [cursor=pointer]
+              - button "Comment on P2-S2" [ref=f1e685] [cursor=pointer]: + Comment
+          - generic [ref=f1e686]:
+            - generic:
+              - img "P2-S2"
+          - generic [ref=f1e687]:
+            - generic [ref=f1e688]:
+              - generic [ref=f1e689]: TRIGGER
+              - generic [ref=f1e690]: Types a question (optionally attaching images) and sends.
+            - generic [ref=f1e691]:
+              - generic [ref=f1e692]: WEB UI
+              - generic [ref=f1e693]: The message is echoed, an “Analyzing” state shows, then the AI reply renders as formatted text. The feedback chip “Did this help?” follows it.
+            - generic [ref=f1e694]:
+              - generic [ref=f1e695]: Rules
+              - list [ref=f1e697]:
+                - listitem [ref=f1e698]:
+                  - text: The agent answers in Markdown; the chat renders it, never the raw string (see
+                  - link "D-16" [ref=f1e699] [cursor=pointer]:
+                    - /url: "#D-16"
+                  - text: )
+                - listitem [ref=f1e700]: Links open in a new tab; only http and https links are made clickable
+                - listitem [ref=f1e701]: Raw HTML in the payload is escaped, never executed
+                - listitem [ref=f1e702]:
+                  - text: "Images: 5 MB per message, 50 MB per chat, images only (see"
+                  - link "D-08" [ref=f1e703] [cursor=pointer]:
+                    - /url: "#D-08"
+                  - text: )
+            - generic [ref=f1e705]:
+              - generic [ref=f1e706]: Agent reply — raw payload string vs rendered output
+              - table [ref=f1e708]:
+                - rowgroup [ref=f1e709]:
+                  - row [ref=f1e710]:
+                    - columnheader "What the agent sends" [ref=f1e711]
+                    - columnheader "What the user sees" [ref=f1e712]
+                - rowgroup [ref=f1e713]:
+                  - row [ref=f1e714]:
+                    - cell [ref=f1e715]:
+                      - code [ref=f1e716]: "{ \"text\": \"Welcome! Here is your order summary:\\n\\n1. Shipping Status: In Transit\\n2. Delivery Date: Tomorrow\\n\\nFor details, visit our [Tracking Page](https://example.com/).\"}"
+                    - cell [ref=f1e717]:
+                      - paragraph [ref=f1e718]: "Welcome! Here is your order summary:"
+                      - list [ref=f1e719]:
+                        - listitem [ref=f1e720]: "Shipping Status: In Transit"
+                        - listitem [ref=f1e721]: "Delivery Date: Tomorrow"
+                      - paragraph [ref=f1e722]:
+                        - text: For details, visit our
+                        - link "Tracking Page" [ref=f1e723] [cursor=pointer]:
+                          - /url: https://example.com/
+                        - text: .
+            - generic [ref=f1e725]:
+              - generic [ref=f1e726]: Markdown the chat must render
+              - table [ref=f1e728]:
+                - rowgroup [ref=f1e729]:
+                  - row [ref=f1e730]:
+                    - columnheader "Markdown" [ref=f1e731]
+                    - columnheader "Renders as" [ref=f1e732]
+                    - columnheader "Note" [ref=f1e733]
+                - rowgroup [ref=f1e734]:
+                  - row [ref=f1e735]:
+                    - cell [ref=f1e736]:
+                      - code [ref=f1e737]: "**bold**"
+                    - cell [ref=f1e738]:
+                      - strong [ref=f1e739]: bold
+                    - cell "Inline emphasis" [ref=f1e740]
+                  - row [ref=f1e741]:
+                    - cell [ref=f1e742]:
+                      - code [ref=f1e743]: "*italic*"
+                      - text: or
+                      - code [ref=f1e744]: _italic_
+                    - cell [ref=f1e745]:
+                      - emphasis [ref=f1e746]: italic
+                    - cell "Inline emphasis" [ref=f1e747]
+                  - row [ref=f1e748]:
+                    - cell [ref=f1e749]:
+                      - code [ref=f1e750]: 1. item
+                    - cell "Numbered list" [ref=f1e751]
+                    - cell "Consecutive lines form one list" [ref=f1e752]
+                  - row [ref=f1e753]:
+                    - cell [ref=f1e754]:
+                      - code [ref=f1e755]: "* item"
+                      - text: or
+                      - code [ref=f1e756]: "- item"
+                    - cell "Bulleted list" [ref=f1e757]
+                    - cell "Consecutive lines form one list" [ref=f1e758]
+                  - row [ref=f1e759]:
+                    - cell [ref=f1e760]:
+                      - code [ref=f1e761]: "[label](https://…)"
+                    - cell [ref=f1e762]:
+                      - link "label" [ref=f1e763] [cursor=pointer]:
+                        - /url: https://example.com/
+                    - cell "Opens in a new tab; http and https only" [ref=f1e764]
+                  - row [ref=f1e765]:
+                    - cell [ref=f1e766]:
+                      - text: A bare
+                      - code [ref=f1e767]: https://…
+                      - text: URL
+                    - cell [ref=f1e768]:
+                      - link "https://…" [ref=f1e769] [cursor=pointer]:
+                        - /url: https://example.com/
+                    - cell "Auto-linked" [ref=f1e770]
+                  - row [ref=f1e771]:
+                    - cell "Blank line" [ref=f1e772]
+                    - cell "New paragraph" [ref=f1e773]
+                    - cell "—" [ref=f1e774]
+                  - row [ref=f1e775]:
+                    - cell "Anything else" [ref=f1e776]
+                    - cell "Literal text" [ref=f1e777]
+                    - cell "Headings, tables, images and raw HTML are NOT rendered" [ref=f1e778]
+            - generic [ref=f1e779]:
+              - link "D-16" [ref=f1e780] [cursor=pointer]:
+                - /url: "#D-16"
+              - generic [ref=f1e781]:
+                - generic [ref=f1e782]: What Markdown must the chat render?
+                - text: Bold, italic, ordered lists, unordered lists, links, paragraphs and two-space line breaks — from the CX Agent and from the CMS alike. Everything else renders as literal text. Raw HTML is escaped rather than executed, only http and https links are made clickable, and every link opens in a new tab. The supported set is tabulated on
+                - link "P2-S2" [ref=f1e783] [cursor=pointer]:
+                  - /url: "#P2-S2"
+                - text: .
+            - generic [ref=f1e784]:
+              - link "D-08" [ref=f1e785] [cursor=pointer]:
+                - /url: "#D-08"
+              - generic [ref=f1e786]:
+                - generic [ref=f1e787]: What are the upload limits?
+                - text: "Chat: images only (JPG/PNG/WebP/HEIC), 5 MB per message and 50 MB per chat. The 50 MB budget counts bytes actually sent and is reset by New chat. Ticket: any file type, any number of files, 10 MB across all of them. The two budgets are independent."
+            - generic [ref=f1e788]:
+              - strong [ref=f1e789]: "Input:"
+              - text: Free text + optional images ·
+              - strong [ref=f1e790]: "Output:"
+              - text: Agent reply payload (
+              - link "T1" [ref=f1e791] [cursor=pointer]:
+                - /url: "#T1"
+              - text: )
+        - generic [ref=f1e792]:
+          - generic [ref=f1e793]:
+            - generic [ref=f1e794]: P2-E1
+            - generic [ref=f1e795]: NEW · v2
+            - generic [ref=f1e796]:
+              - generic "Comments" [ref=f1e797] [cursor=pointer]
+              - button "Comment on P2-E1" [ref=f1e798] [cursor=pointer]: + Comment
+          - generic [ref=f1e799]:
+            - generic:
+              - img "P2-E1"
+              - generic [ref=f1e800]: "1"
+            - list [ref=f1e802]:
+              - listitem [ref=f1e803]:
+                - generic [ref=f1e804]: "1"
+                - generic [ref=f1e805]: Upload error inside the input field
+          - generic [ref=f1e806]:
+            - generic [ref=f1e807]:
+              - generic [ref=f1e808]: ⚠ ERROR
+              - generic [ref=f1e809]: Attaches an image that crosses a limit.
+            - generic [ref=f1e810]:
+              - generic [ref=f1e811]: WEB UI
+              - generic [ref=f1e812]: The file is not attached and the reason appears inside the input field, above the thumbnails. Accepted files in the same selection are still attached.
+            - generic [ref=f1e813]:
+              - generic [ref=f1e814]: Strings
+              - list [ref=f1e816]:
+                - listitem [ref=f1e817]: “Each message can carry up to 5 MB of images.”
+                - listitem [ref=f1e818]: “You’ve used all 50 MB of uploads for this chat. Start a new chat to attach more images.”
+                - listitem [ref=f1e819]: “Only [n] MB of your 50 MB upload limit is left for this chat.”
+                - listitem [ref=f1e820]: “Only images can be attached — JPG, PNG, WebP, or HEIC.”
+            - generic [ref=f1e821]:
+              - generic [ref=f1e822]: Rules
+              - list [ref=f1e824]:
+                - listitem [ref=f1e825]:
+                  - text: The message shows in the input field, never as a toast (see
+                  - link "D-17" [ref=f1e826] [cursor=pointer]:
+                    - /url: "#D-17"
+                  - text: )
+                - listitem [ref=f1e827]: The 50 MB budget counts bytes actually sent, not bytes attached
+                - listitem [ref=f1e828]: A pending attachment is measured against what is left, so nothing unsendable can be staged
+                - listitem [ref=f1e829]: The message clears on the next accepted attach, on send, or on its dismiss control
+                - listitem [ref=f1e830]:
+                  - text: New chat resets the 50 MB budget to zero (see
+                  - link "D-08" [ref=f1e831] [cursor=pointer]:
+                    - /url: "#D-08"
+                  - text: )
+            - generic [ref=f1e832]:
+              - link "D-17" [ref=f1e833] [cursor=pointer]:
+                - /url: "#D-17"
+              - generic [ref=f1e834]:
+                - generic [ref=f1e835]: Where do upload errors appear?
+                - text: "In place: chat upload errors render inside the input field above the thumbnails; ticket attachment errors render under the attachment field inside the form. No toasts — a message about a file belongs where the file was attached."
+            - generic [ref=f1e836]:
+              - link "D-08" [ref=f1e837] [cursor=pointer]:
+                - /url: "#D-08"
+              - generic [ref=f1e838]:
+                - generic [ref=f1e839]: What are the upload limits?
+                - text: "Chat: images only (JPG/PNG/WebP/HEIC), 5 MB per message and 50 MB per chat. The 50 MB budget counts bytes actually sent and is reset by New chat. Ticket: any file type, any number of files, 10 MB across all of them. The two budgets are independent."
+        - generic [ref=f1e840]:
+          - generic [ref=f1e841]:
+            - generic [ref=f1e842]: P2-S3
+            - generic [ref=f1e843]:
+              - generic "Comments" [ref=f1e844] [cursor=pointer]
+              - button "Comment on P2-S3" [ref=f1e845] [cursor=pointer]: + Comment
+          - generic [ref=f1e846]:
+            - generic:
+              - img "P2-S3"
+              - generic [ref=f1e847]: "1"
+            - list [ref=f1e849]:
+              - listitem [ref=f1e850]:
+                - generic [ref=f1e851]: "1"
+                - generic [ref=f1e852]: Send a support ticket
+          - generic [ref=f1e853]:
+            - generic [ref=f1e854]:
+              - generic [ref=f1e855]: TRIGGER
+              - generic [ref=f1e856]: Taps “No, still stuck” on the AI reply’s feedback chip (or opened the “letters and numbers” refund follow-up).
+            - generic [ref=f1e857]:
+              - generic [ref=f1e858]: WEB UI
+              - generic [ref=f1e859]: A single “Send a support ticket” CTA appears (no “Keep trying”).
+            - generic [ref=f1e860]:
+              - generic [ref=f1e861]: Strings
+              - list [ref=f1e863]:
+                - listitem [ref=f1e864]: "Title: “Sorry this didn’t help” (LLM path) / “Let’s get our team on it” (letters-and-numbers path)"
+                - listitem [ref=f1e865]: "Button: “Send a support ticket →”"
+                - listitem [ref=f1e866]: "Meta: “Goes to a human agent”"
+            - generic [ref=f1e867]:
+              - generic [ref=f1e868]: Rules
+              - list [ref=f1e870]:
+                - listitem [ref=f1e871]:
+                  - text: "Two entries: an AI reply’s “No”, or the Refund “letters and numbers” follow-up (see"
+                  - link "D-06" [ref=f1e872] [cursor=pointer]:
+                    - /url: "#D-06"
+                  - text: )
+            - generic [ref=f1e873]:
+              - link "D-06" [ref=f1e874] [cursor=pointer]:
+                - /url: "#D-06"
+              - generic [ref=f1e875]:
+                - generic [ref=f1e876]: How is a ticket offered?
+                - text: "Per BD chatbot_spec_v2: the only direct-ticket follow-up is Refund “My Order ID / Invoice has letters and numbers” (Stripe). Every other follow-up routes through the feedback chip to the LLM, and the AI reply’s “No” then opens the ticket. Single CTA, no “Keep trying”."
+        - generic [ref=f1e877]:
+          - generic [ref=f1e878]:
+            - generic [ref=f1e879]: P2-S4
+            - generic [ref=f1e880]:
+              - generic "Comments" [ref=f1e881] [cursor=pointer]
+              - button "Comment on P2-S4" [ref=f1e882] [cursor=pointer]: + Comment
+          - generic [ref=f1e883]:
+            - generic:
+              - img "P2-S4"
+          - generic [ref=f1e884]:
+            - generic [ref=f1e885]:
+              - generic [ref=f1e886]: TRIGGER
+              - generic [ref=f1e887]: Taps “Send a support ticket →”.
+            - generic [ref=f1e888]:
+              - generic [ref=f1e889]: WEB UI
+              - generic [ref=f1e890]: "A flat ticket form opens: Email, Type, Subject, Order ID / Invoice #, Description, Attachment. Subject, Description, Email and Order ID arrive pre-filled where known."
+            - generic [ref=f1e891]:
+              - generic [ref=f1e892]: Strings
+              - list [ref=f1e894]:
+                - listitem [ref=f1e895]: "Title: “Send us a ticket” · subhead “Fill in the details and our team will reply by email.”"
+                - listitem [ref=f1e896]: "Type placeholder: “Select an issue type”"
+                - listitem [ref=f1e897]: "Types: Purchase and Payment · Account · Feature Issue · Others"
+                - listitem [ref=f1e898]: "Order ID hint: “The order or invoice ID on your 2Checkout or Stripe receipt email — pre-filled with your most recent order.”"
+                - listitem [ref=f1e899]: "Attachment hint: “Any file type, any number of files · up to 10 MB in total.”"
+                - listitem [ref=f1e900]: "Actions: “Submit ticket →” · “Cancel”"
+            - generic [ref=f1e901]:
+              - generic [ref=f1e902]: Rules
+              - list [ref=f1e904]:
+                - listitem [ref=f1e905]:
+                  - text: "Required: Email (format-validated), Type, Subject, Description (see"
+                  - link "D-07" [ref=f1e906] [cursor=pointer]:
+                    - /url: "#D-07"
+                  - text: )
+                - listitem [ref=f1e907]: Order ID and Attachment are optional
+                - listitem [ref=f1e908]:
+                  - text: Order ID is the ID the payment provider printed on the user’s receipt (see
+                  - link "D-18" [ref=f1e909] [cursor=pointer]:
+                    - /url: "#D-18"
+                  - text: )
+                - listitem [ref=f1e910]:
+                  - text: Subject = short AI title; Description = full AI summary; both editable (see
+                  - link "D-09" [ref=f1e911] [cursor=pointer]:
+                    - /url: "#D-09"
+                  - text: )
+                - listitem [ref=f1e912]: There are no type-conditional fields and no minimum-length rule
+                - listitem [ref=f1e913]:
+                  - text: "Field-to-backend mapping: see"
+                  - link "T3" [ref=f1e914] [cursor=pointer]:
+                    - /url: "#T3"
+            - generic [ref=f1e915]:
+              - link "D-07" [ref=f1e916] [cursor=pointer]:
+                - /url: "#D-07"
+              - generic [ref=f1e917]:
+                - generic [ref=f1e918]: Ticket Type options and backend mapping?
+                - text: "Four types, each mapped to a CSB questionTypeId: Purchase and Payment (313) / Account (348) / Feature Issue (204) / Others (211). Placeholder “Select an issue type”, no pre-selection. The form is flat — no type-conditional fields."
+            - generic [ref=f1e919]:
+              - link "D-18" [ref=f1e920] [cursor=pointer]:
+                - /url: "#D-18"
+              - generic [ref=f1e921]:
+                - generic [ref=f1e922]: What is the Order ID field asking for?
+                - text: The order or invoice ID that 2Checkout or Stripe printed on the user’s receipt email, so the user can match it to their own purchase. The hint names both providers. Whether the frontend can pre-fill it is Q-03.
+            - generic [ref=f1e923]:
+              - link "D-09" [ref=f1e924] [cursor=pointer]:
+                - /url: "#D-09"
+              - generic [ref=f1e925]:
+                - generic [ref=f1e926]: How are Subject and Description pre-filled?
+                - text: "Both are agent-supplied on the LLM path: Subject = a short AI title, Description = the full AI summary; both editable. On a direct ticket with no LLM turn they open empty. There is no minimum-length rule."
+        - generic [ref=f1e927]:
+          - generic [ref=f1e928]:
+            - generic [ref=f1e929]: P2-E2
+            - generic [ref=f1e930]: NEW · v2
+            - generic [ref=f1e931]:
+              - generic "Comments" [ref=f1e932] [cursor=pointer]
+              - button "Comment on P2-E2" [ref=f1e933] [cursor=pointer]: + Comment
+          - generic [ref=f1e934]:
+            - generic:
+              - img "P2-E2"
+          - generic [ref=f1e935]:
+            - generic [ref=f1e936]:
+              - generic [ref=f1e937]: ⚠ ERROR
+              - generic [ref=f1e938]: Attaches ticket files that together cross 10 MB.
+            - generic [ref=f1e939]:
+              - generic [ref=f1e940]: WEB UI
+              - generic [ref=f1e941]: The oversized file is not added and the reason appears under the attachment field, inside the form. Files that fit stay in the list.
+            - generic [ref=f1e942]:
+              - generic [ref=f1e943]: Strings
+              - list [ref=f1e945]:
+                - listitem [ref=f1e946]: “Attachments can total up to 10 MB — only [n] MB is left.”
+                - listitem [ref=f1e947]: “Attachments can total up to 10 MB. Remove a file to add another.”
+            - generic [ref=f1e948]:
+              - generic [ref=f1e949]: Rules
+              - list [ref=f1e951]:
+                - listitem [ref=f1e952]:
+                  - text: No file-type restriction and no count restriction (see
+                  - link "D-08" [ref=f1e953] [cursor=pointer]:
+                    - /url: "#D-08"
+                  - text: )
+                - listitem [ref=f1e954]: 10 MB is the total across all attachments on the ticket, not per file
+                - listitem [ref=f1e955]:
+                  - text: The message shows in the form, never as a toast (see
+                  - link "D-17" [ref=f1e956] [cursor=pointer]:
+                    - /url: "#D-17"
+                  - text: )
+                - listitem [ref=f1e957]: Removing a file clears the message
+            - generic [ref=f1e958]:
+              - link "D-08" [ref=f1e959] [cursor=pointer]:
+                - /url: "#D-08"
+              - generic [ref=f1e960]:
+                - generic [ref=f1e961]: What are the upload limits?
+                - text: "Chat: images only (JPG/PNG/WebP/HEIC), 5 MB per message and 50 MB per chat. The 50 MB budget counts bytes actually sent and is reset by New chat. Ticket: any file type, any number of files, 10 MB across all of them. The two budgets are independent."
+            - generic [ref=f1e962]:
+              - link "D-17" [ref=f1e963] [cursor=pointer]:
+                - /url: "#D-17"
+              - generic [ref=f1e964]:
+                - generic [ref=f1e965]: Where do upload errors appear?
+                - text: "In place: chat upload errors render inside the input field above the thumbnails; ticket attachment errors render under the attachment field inside the form. No toasts — a message about a file belongs where the file was attached."
+        - generic [ref=f1e966]:
+          - generic [ref=f1e967]:
+            - generic [ref=f1e968]: P2-S5
+            - generic [ref=f1e969]:
+              - generic "Comments" [ref=f1e970] [cursor=pointer]
+              - button "Comment on P2-S5" [ref=f1e971] [cursor=pointer]: + Comment
+          - generic [ref=f1e972]:
+            - generic:
+              - img "P2-S5"
+          - generic [ref=f1e973]:
+            - generic [ref=f1e974]:
+              - generic [ref=f1e975]: TRIGGER
+              - generic [ref=f1e976]: Completes the required fields and submits.
+            - generic [ref=f1e977]:
+              - generic [ref=f1e978]: WEB UI
+              - generic [ref=f1e979]: A success state shows the reference and the reply expectation.
+            - generic [ref=f1e980]:
+              - generic [ref=f1e981]: Strings
+              - list [ref=f1e983]:
+                - listitem [ref=f1e984]: “Ticket sent”
+                - listitem [ref=f1e985]: "Reference: “YCO-2026-XXXXXX”"
+                - listitem [ref=f1e986]: “A human agent will reply to your account email.”
+            - generic [ref=f1e987]:
+              - generic [ref=f1e988]: Rules
+              - list [ref=f1e990]:
+                - listitem [ref=f1e991]:
+                  - text: Submitting also sends the same content by email to the CS inbox (see
+                  - link "D-19" [ref=f1e992] [cursor=pointer]:
+                    - /url: "#D-19"
+                  - text: )
+                - listitem [ref=f1e993]: The frontend makes one submission; the fan-out is the backend’s
+                - listitem [ref=f1e994]:
+                  - text: "Field-to-backend mapping: see"
+                  - link "T3" [ref=f1e995] [cursor=pointer]:
+                    - /url: "#T3"
+            - generic [ref=f1e996]:
+              - link "D-19" [ref=f1e997] [cursor=pointer]:
+                - /url: "#D-19"
+              - generic [ref=f1e998]:
+                - generic [ref=f1e999]: Who emails the CS inbox on submit?
+                - text: The backend. The frontend makes one submission to the CSB feedback endpoint (/prog/support/app/feedback.jsp), which already sends the notification mail to youcamenhance_web@perfectcorp.com with the same content when it creates the CS ticket. No frontend work; QA verifies the mail lands.
+            - generic [ref=f1e1000]:
+              - strong [ref=f1e1001]: "Output:"
+              - text: Reference YCO-2026-XXXXXX
+      - generic [ref=f1e1002]:
+        - generic [ref=f1e1003]:
+          - generic [ref=f1e1004]: P3
+          - generic [ref=f1e1005]: Manage the session
+        - paragraph [ref=f1e1006]: Reset with New chat (back to the canned-only home) or close with a confirm step.
+        - list [ref=f1e1007]:
+          - listitem [ref=f1e1008]:
+            - link "P3-S1" [ref=f1e1010] [cursor=pointer]:
+              - /url: "#P3-S1"
+            - text: Taps New chat.
+          - listitem [ref=f1e1011]:
+            - link "P3-S2" [ref=f1e1013] [cursor=pointer]:
+              - /url: "#P3-S2"
+            - text: With an active conversation, taps Close.
+        - generic [ref=f1e1014]:
+          - generic [ref=f1e1015]:
+            - generic [ref=f1e1016]: P3-S1
+            - generic [ref=f1e1017]:
+              - generic "Comments" [ref=f1e1018] [cursor=pointer]
+              - button "Comment on P3-S1" [ref=f1e1019] [cursor=pointer]: + Comment
+          - generic [ref=f1e1020]:
+            - generic:
+              - img "P3-S1"
+          - generic [ref=f1e1021]:
+            - generic [ref=f1e1022]:
+              - generic [ref=f1e1023]: TRIGGER
+              - generic [ref=f1e1024]: Taps New chat.
+            - generic [ref=f1e1025]:
+              - generic [ref=f1e1026]: WEB UI
+              - generic [ref=f1e1027]: The chat resets to the canned-only home (input hidden again); no confirmation. The CMS content is requested again.
+            - generic [ref=f1e1028]:
+              - generic [ref=f1e1029]: Rules
+              - list [ref=f1e1031]:
+                - listitem [ref=f1e1032]:
+                  - text: New chat also resets the 50 MB per-chat upload budget to zero (see
+                  - link "D-08" [ref=f1e1033] [cursor=pointer]:
+                    - /url: "#D-08"
+                  - text: )
+                - listitem [ref=f1e1034]: A pending feedback chip and any staged attachments are discarded
+            - generic [ref=f1e1035]:
+              - link "D-08" [ref=f1e1036] [cursor=pointer]:
+                - /url: "#D-08"
+              - generic [ref=f1e1037]:
+                - generic [ref=f1e1038]: What are the upload limits?
+                - text: "Chat: images only (JPG/PNG/WebP/HEIC), 5 MB per message and 50 MB per chat. The 50 MB budget counts bytes actually sent and is reset by New chat. Ticket: any file type, any number of files, 10 MB across all of them. The two budgets are independent."
+        - generic [ref=f1e1039]:
+          - generic [ref=f1e1040]:
+            - generic [ref=f1e1041]: P3-S2
+            - generic [ref=f1e1042]:
+              - generic "Comments" [ref=f1e1043] [cursor=pointer]
+              - button "Comment on P3-S2" [ref=f1e1044] [cursor=pointer]: + Comment
+          - generic [ref=f1e1045]:
+            - generic:
+              - img "P3-S2"
+          - generic [ref=f1e1046]:
+            - generic [ref=f1e1047]:
+              - generic [ref=f1e1048]: TRIGGER
+              - generic [ref=f1e1049]: With an active conversation, taps Close.
+            - generic [ref=f1e1050]:
+              - generic [ref=f1e1051]: WEB UI
+              - generic [ref=f1e1052]: A close-confirm step appears before the panel closes.
+            - generic [ref=f1e1053]:
+              - generic [ref=f1e1054]: Strings
+              - list [ref=f1e1056]:
+                - listitem [ref=f1e1057]: “Close this chat?”
+                - listitem [ref=f1e1058]: "Buttons: “Stay” / “Close anyway”"
+            - generic [ref=f1e1059]:
+              - generic [ref=f1e1060]: Rules
+              - list [ref=f1e1062]:
+                - listitem [ref=f1e1063]: Confirm appears only after at least one user message was exchanged
+      - generic [ref=f1e1064]:
+        - generic [ref=f1e1065]:
+          - generic [ref=f1e1066]: P4
+          - generic [ref=f1e1067]: Browse the FAQ tab
+        - paragraph [ref=f1e1068]: Switch from Chat to the FAQ view via the Chat / FAQ control.
+        - list [ref=f1e1069]:
+          - listitem [ref=f1e1070]:
+            - link "P4-S1" [ref=f1e1072] [cursor=pointer]:
+              - /url: "#P4-S1"
+            - text: Taps the FAQ side of the Chat / FAQ control.
+        - generic [ref=f1e1073]:
+          - generic [ref=f1e1074]:
+            - generic [ref=f1e1075]: P4-S1
+            - generic [ref=f1e1076]:
+              - generic "Comments" [ref=f1e1077] [cursor=pointer]
+              - button "Comment on P4-S1" [ref=f1e1078] [cursor=pointer]: + Comment
+          - generic [ref=f1e1079]:
+            - generic:
+              - img "P4-S1"
+              - generic [ref=f1e1080]: "1"
+            - list [ref=f1e1082]:
+              - listitem [ref=f1e1083]:
+                - generic [ref=f1e1084]: "1"
+                - generic [ref=f1e1085]: Chat / FAQ switcher
+          - generic [ref=f1e1086]:
+            - generic [ref=f1e1087]:
+              - generic [ref=f1e1088]: TRIGGER
+              - generic [ref=f1e1089]: Taps the FAQ side of the Chat / FAQ control.
+            - generic [ref=f1e1090]:
+              - generic [ref=f1e1091]: WEB UI
+              - generic [ref=f1e1092]: "The FAQ view replaces the chat body: search over categorized FAQ content; the input area is hidden."
+            - generic [ref=f1e1093]:
+              - generic [ref=f1e1094]: Strings
+              - list [ref=f1e1096]:
+                - listitem [ref=f1e1097]: "Control: “Chat” / “FAQ”"
+                - listitem [ref=f1e1098]: Searchable, categorized FAQ content
+            - generic [ref=f1e1099]:
+              - generic [ref=f1e1100]: Rules
+              - list [ref=f1e1102]:
+                - listitem [ref=f1e1103]: Where the FAQ tab content comes from is still open (see Q-04)
+      - generic [ref=f1e1104]:
+        - generic [ref=f1e1105]:
+          - generic [ref=f1e1106]: "{}"
+          - text: Data Contract
+        - paragraph [ref=f1e1107]:
+          - text: Two payloads the UI reads, and one it writes. The CMS field names in
+          - link "T2" [ref=f1e1108] [cursor=pointer]:
+            - /url: "#T2"
+          - text: are the contract this spec proposes; the CMS team confirms the final names (see Q-02). Every Markdown value renders per the table on
+          - link "P2-S2" [ref=f1e1109] [cursor=pointer]:
+            - /url: "#P2-S2"
+          - text: .
+        - generic [ref=f1e1110]: T1 · CX Agent reply payload
+        - table [ref=f1e1112]:
+          - rowgroup [ref=f1e1113]:
+            - row [ref=f1e1114]:
+              - columnheader "Key" [ref=f1e1115]
+              - columnheader "Allowed values" [ref=f1e1116]
+              - columnheader "Example" [ref=f1e1117]
+              - columnheader "Renders as" [ref=f1e1118]
+              - columnheader "Missing / null / unknown" [ref=f1e1119]
+          - rowgroup [ref=f1e1120]:
+            - row [ref=f1e1121]:
+              - cell "text" [ref=f1e1122]
+              - cell "Markdown string" [ref=f1e1123]
+              - cell "“Welcome! Here is your order summary:…”" [ref=f1e1124]
+              - cell [ref=f1e1125]:
+                - text: The agent bubble, rendered per
+                - link "P2-S2" [ref=f1e1126] [cursor=pointer]:
+                  - /url: "#P2-S2"
+                - text: — bold, italic, lists and links
+              - cell [ref=f1e1127]:
+                - text: "Empty or absent: no bubble renders; show the reply-failure line and the ticket CTA ("
+                - link "P2-S3" [ref=f1e1128] [cursor=pointer]:
+                  - /url: "#P2-S3"
+                - text: ). How the agent signals a failed turn is open (Q-01)
+        - generic [ref=f1e1129]: T2 · CMS canned content payload
+        - table [ref=f1e1131]:
+          - rowgroup [ref=f1e1132]:
+            - row [ref=f1e1133]:
+              - columnheader "Key" [ref=f1e1134]
+              - columnheader "Allowed values" [ref=f1e1135]
+              - columnheader "Example" [ref=f1e1136]
+              - columnheader "Renders as" [ref=f1e1137]
+              - columnheader "Missing / null / unknown" [ref=f1e1138]
+          - rowgroup [ref=f1e1139]:
+            - row [ref=f1e1140]:
+              - cell "greeting.title" [ref=f1e1141]
+              - cell "Markdown string" [ref=f1e1142]
+              - cell "“Hi, I’m **YouCam Support Agent**”" [ref=f1e1143]
+              - cell [ref=f1e1144]:
+                - text: The greeting heading; bold marks the agent name (
+                - link "P1-S3" [ref=f1e1145] [cursor=pointer]:
+                  - /url: "#P1-S3"
+                - text: )
+              - 'cell "Absent: the greeting block is omitted, the topic list still renders" [ref=f1e1146]'
+            - row [ref=f1e1147]:
+              - cell "greeting.body" [ref=f1e1148]
+              - cell "Markdown string" [ref=f1e1149]
+              - cell "“How can I help today?…”" [ref=f1e1150]
+              - cell [ref=f1e1151]:
+                - text: The line under the greeting heading (
+                - link "P1-S3" [ref=f1e1152] [cursor=pointer]:
+                  - /url: "#P1-S3"
+                - text: )
+              - 'cell "Absent: omitted" [ref=f1e1153]'
+            - row [ref=f1e1154]:
+              - cell "topics[].label" [ref=f1e1155]
+              - cell "Plain string" [ref=f1e1156]
+              - cell "“Request Refund”" [ref=f1e1157]
+              - cell [ref=f1e1158]:
+                - text: One Popular question button (
+                - link "P1-S3" [ref=f1e1159] [cursor=pointer]:
+                  - /url: "#P1-S3"
+                - text: )
+              - 'cell "Absent: that topic is skipped entirely" [ref=f1e1160]'
+            - row [ref=f1e1161]:
+              - cell "topics[].answer" [ref=f1e1162]
+              - cell "Markdown string" [ref=f1e1163]
+              - cell "“Refunds are available within **7 days**…”" [ref=f1e1164]
+              - cell [ref=f1e1165]:
+                - text: The default answer bubble (
+                - link "P1-S4" [ref=f1e1166] [cursor=pointer]:
+                  - /url: "#P1-S4"
+                - text: )
+              - 'cell "Absent: that topic is skipped entirely" [ref=f1e1167]'
+            - row [ref=f1e1168]:
+              - cell "topics[].followups[].label" [ref=f1e1169]
+              - cell "Plain string" [ref=f1e1170]
+              - cell "“Can’t find my Order ID”" [ref=f1e1171]
+              - cell [ref=f1e1172]:
+                - text: A Related-questions button (
+                - link "P1-S5" [ref=f1e1173] [cursor=pointer]:
+                  - /url: "#P1-S5"
+                - text: )
+              - 'cell "Absent: that follow-up is skipped" [ref=f1e1174]'
+            - row [ref=f1e1175]:
+              - cell "topics[].followups[].answer" [ref=f1e1176]
+              - cell "Markdown string" [ref=f1e1177]
+              - cell "“Please check your purchase confirmation email…”" [ref=f1e1178]
+              - cell [ref=f1e1179]:
+                - text: The follow-up answer bubble (
+                - link "P1-S7" [ref=f1e1180] [cursor=pointer]:
+                  - /url: "#P1-S7"
+                - text: )
+              - 'cell "Absent: that follow-up is skipped" [ref=f1e1181]'
+            - row [ref=f1e1182]:
+              - cell "topics[].followups[].ticket" [ref=f1e1183]
+              - cell "true / false" [ref=f1e1184]
+              - cell "false" [ref=f1e1185]
+              - cell [ref=f1e1186]:
+                - text: true routes straight to the ticket CTA (
+                - link "P2-S3" [ref=f1e1187] [cursor=pointer]:
+                  - /url: "#P2-S3"
+                - text: ); false shows the feedback chip (
+                - link "P1-S7" [ref=f1e1188] [cursor=pointer]:
+                  - /url: "#P1-S7"
+                - text: )
+              - 'cell "Absent: treated as false" [ref=f1e1189]'
+            - row [ref=f1e1190]:
+              - cell "The whole payload" [ref=f1e1191]
+              - cell "Object" [ref=f1e1192]
+              - cell "—" [ref=f1e1193]
+              - cell [ref=f1e1194]:
+                - text: Greeting + topic list (
+                - link "P1-S3" [ref=f1e1195] [cursor=pointer]:
+                  - /url: "#P1-S3"
+                - text: )
+              - cell [ref=f1e1196]:
+                - text: "Request fails: inline error and Retry ("
+                - link "P1-E1" [ref=f1e1197] [cursor=pointer]:
+                  - /url: "#P1-E1"
+                - text: ); a second failure reveals the input (
+                - link "P1-E2" [ref=f1e1198] [cursor=pointer]:
+                  - /url: "#P1-E2"
+                - text: )
+        - generic [ref=f1e1199]: "T3 · Support ticket → CSB backend mapping (source: CS Chatbot — Support ticket spec)"
+        - table [ref=f1e1201]:
+          - rowgroup [ref=f1e1202]:
+            - row [ref=f1e1203]:
+              - columnheader "Field" [ref=f1e1204]
+              - columnheader "Shown?" [ref=f1e1205]
+              - columnheader "Placeholder / prefill" [ref=f1e1206]
+              - columnheader "Required" [ref=f1e1207]
+              - columnheader "CSB param" [ref=f1e1208]
+          - rowgroup [ref=f1e1209]:
+            - row [ref=f1e1210]:
+              - cell "Product (YCO)" [ref=f1e1211]
+              - cell "No" [ref=f1e1212]
+              - cell "—" [ref=f1e1213]
+              - cell "—" [ref=f1e1214]
+              - cell "prodVerId = 504 (constant)" [ref=f1e1215]
+            - row [ref=f1e1216]:
+              - cell "Email" [ref=f1e1217]
+              - cell "Yes" [ref=f1e1218]
+              - cell "autofill from account, else “Enter your email”" [ref=f1e1219]
+              - cell "Yes" [ref=f1e1220]
+              - cell "email" [ref=f1e1221]
+            - row [ref=f1e1222]:
+              - cell "User ID" [ref=f1e1223]
+              - cell "No" [ref=f1e1224]
+              - cell "—" [ref=f1e1225]
+              - cell "—" [ref=f1e1226]
+              - cell "q (labelled “User ID”)" [ref=f1e1227]
+            - row [ref=f1e1228]:
+              - cell "Type" [ref=f1e1229]
+              - cell "Yes" [ref=f1e1230]
+              - cell "“Select an issue type”" [ref=f1e1231]
+              - cell "Yes" [ref=f1e1232]
+              - cell "questionTypeId — Purchase and Payment 313 · Account 348 · Feature Issue 204 · Others 211" [ref=f1e1233]
+            - row [ref=f1e1234]:
+              - cell "Subject" [ref=f1e1235]
+              - cell "Yes" [ref=f1e1236]
+              - cell "AI title (no placeholder)" [ref=f1e1237]
+              - cell "Yes" [ref=f1e1238]
+              - cell "title" [ref=f1e1239]
+            - row [ref=f1e1240]:
+              - 'cell "Order ID / Invoice #" [ref=f1e1241]'
+              - cell "Yes" [ref=f1e1242]
+              - cell "the 2Checkout or Stripe ID of the latest order" [ref=f1e1243]
+              - cell "No" [ref=f1e1244]
+              - cell "q (labelled “Order ID”)" [ref=f1e1245]
+            - row [ref=f1e1246]:
+              - cell "Description" [ref=f1e1247]
+              - cell "Yes" [ref=f1e1248]
+              - cell "AI summary (no placeholder)" [ref=f1e1249]
+              - cell "Yes" [ref=f1e1250]
+              - cell "q" [ref=f1e1251]
+            - row [ref=f1e1252]:
+              - cell "UI language" [ref=f1e1253]
+              - cell "No" [ref=f1e1254]
+              - cell "—" [ref=f1e1255]
+              - cell "—" [ref=f1e1256]
+              - cell "language" [ref=f1e1257]
+            - row [ref=f1e1258]:
+              - cell "Attachment (user)" [ref=f1e1259]
+              - cell "Yes" [ref=f1e1260]
+              - cell "any file type, 10 MB total" [ref=f1e1261]
+              - cell "No" [ref=f1e1262]
+              - cell "attachment" [ref=f1e1263]
+            - row [ref=f1e1264]:
+              - cell "Attachment (RD log)" [ref=f1e1265]
+              - cell "No" [ref=f1e1266]
+              - cell "—" [ref=f1e1267]
+              - cell "—" [ref=f1e1268]
+              - cell "TBD — see CS doc" [ref=f1e1269]
+            - row [ref=f1e1270]:
+              - cell "Chat history" [ref=f1e1271]
+              - cell "No" [ref=f1e1272]
+              - cell "—" [ref=f1e1273]
+              - cell "—" [ref=f1e1274]
+              - cell "TBD — see CS doc" [ref=f1e1275]
+        - paragraph [ref=f1e1276]:
+          - strong [ref=f1e1277]: Read from the payload, renders nothing.
+          - code [ref=f1e1278]: topics[].key
+          - text: (A stable topic slug used for telemetry and ticket Type pre-fill. Never displayed.)
+        - generic [ref=f1e1279]: R1 · On screen → source key
+        - table [ref=f1e1281]:
+          - rowgroup [ref=f1e1282]:
+            - row [ref=f1e1283]:
+              - columnheader "What the user sees" [ref=f1e1284]
+              - columnheader "Comes from" [ref=f1e1285]
+          - rowgroup [ref=f1e1286]:
+            - row [ref=f1e1287]:
+              - cell "Greeting heading" [ref=f1e1288]
+              - cell [ref=f1e1289]:
+                - code [ref=f1e1290]: greeting.title (T2)
+            - row [ref=f1e1291]:
+              - cell "Popular question button" [ref=f1e1292]
+              - cell [ref=f1e1293]:
+                - code [ref=f1e1294]: topics[].label (T2)
+            - row [ref=f1e1295]:
+              - cell "Default answer bubble" [ref=f1e1296]
+              - cell [ref=f1e1297]:
+                - code [ref=f1e1298]: topics[].answer (T2)
+            - row [ref=f1e1299]:
+              - cell "Related-questions button" [ref=f1e1300]
+              - cell [ref=f1e1301]:
+                - code [ref=f1e1302]: topics[].followups[].label (T2)
+            - row [ref=f1e1303]:
+              - cell "Follow-up answer bubble" [ref=f1e1304]
+              - cell [ref=f1e1305]:
+                - code [ref=f1e1306]: topics[].followups[].answer (T2)
+            - row [ref=f1e1307]:
+              - cell "Straight-to-ticket follow-up" [ref=f1e1308]
+              - cell [ref=f1e1309]:
+                - code [ref=f1e1310]: topics[].followups[].ticket (T2)
+            - row [ref=f1e1311]:
+              - cell "AI reply bubble" [ref=f1e1312]
+              - cell [ref=f1e1313]:
+                - code [ref=f1e1314]: text (T1)
+            - row [ref=f1e1315]:
+              - cell "Ticket reference" [ref=f1e1316]
+              - cell [ref=f1e1317]:
+                - code [ref=f1e1318]: generated by the CSB backend (T3)
+        - group [ref=f1e1319]:
+          - generic [ref=f1e1320] [cursor=pointer]:
+            - text: Sample payload —
+            - code [ref=f1e1321]: agent-reply.sample.json
+        - group [ref=f1e1322]:
+          - generic [ref=f1e1323] [cursor=pointer]:
+            - text: Sample payload —
+            - code [ref=f1e1324]: cms-canned-content.sample.json
+      - generic [ref=f1e1325]:
+        - generic [ref=f1e1326]:
+          - generic [ref=f1e1327]: ☷
+          - text: State Inventory
+        - paragraph [ref=f1e1328]: The contract of each screen state. The flow diagram shows the transitions; this shows what each state must render.
+        - table [ref=f1e1330]:
+          - rowgroup [ref=f1e1331]:
+            - row [ref=f1e1332]:
+              - columnheader "State" [ref=f1e1333]
+              - columnheader "Entry condition" [ref=f1e1334]
+              - columnheader "Visible / enabled" [ref=f1e1335]
+              - columnheader "Transitions" [ref=f1e1336]
+              - columnheader "Exit" [ref=f1e1337]
+          - rowgroup [ref=f1e1338]:
+            - row [ref=f1e1339]:
+              - cell "CONTENT_LOADING" [ref=f1e1340]
+              - cell "Panel opens / New chat" [ref=f1e1341]
+              - cell "Skeleton rows; no greeting, no topics, no input" [ref=f1e1342]
+              - cell "→ HOME on payload; → CONTENT_ERROR on failure" [ref=f1e1343]
+              - cell "On payload or failure" [ref=f1e1344]
+            - row [ref=f1e1345]:
+              - cell "CONTENT_ERROR" [ref=f1e1346]
+              - cell "CMS request failed" [ref=f1e1347]
+              - cell "Inline error + Retry (first failure) or error + revealed input (second)" [ref=f1e1348]
+              - cell "→ CONTENT_LOADING on Retry; → LLM_INPUT on second failure" [ref=f1e1349]
+              - cell "On Retry or reveal" [ref=f1e1350]
+            - row [ref=f1e1351]:
+              - cell "HOME" [ref=f1e1352]
+              - cell "CMS payload resolved" [ref=f1e1353]
+              - cell "Greeting + Popular questions; input HIDDEN" [ref=f1e1354]
+              - cell "→ TOPIC_REPLY on topic tap; → FAQ_VIEW on tab switch" [ref=f1e1355]
+              - cell "On topic tap / tab switch" [ref=f1e1356]
+            - row [ref=f1e1357]:
+              - cell "TOPIC_REPLY" [ref=f1e1358]
+              - cell "Topic tapped" [ref=f1e1359]
+              - cell "Default reply + follow-up options + “None of above”; buttons persist" [ref=f1e1360]
+              - cell "→ FOLLOWUP_ANSWER; → LLM_INPUT (None of above)" [ref=f1e1361]
+              - cell "On follow-up / None of above" [ref=f1e1362]
+            - row [ref=f1e1363]:
+              - cell "FOLLOWUP_ANSWER" [ref=f1e1364]
+              - cell "Follow-up tapped" [ref=f1e1365]
+              - cell "Answer + one feedback chip (or a direct ticket CTA for a ticket-flagged follow-up)" [ref=f1e1366]
+              - cell "→ RESOLVED (Yes); → LLM_INPUT (No); → TICKET_CTA (ticket-flagged)" [ref=f1e1367]
+              - cell "On choice, or on the next user turn" [ref=f1e1368]
+            - row [ref=f1e1369]:
+              - cell "RESOLVED" [ref=f1e1370]
+              - cell "“Yes” on a feedback chip" [ref=f1e1371]
+              - cell "Resolved message" [ref=f1e1372]
+              - cell "Terminal (New chat to restart)" [ref=f1e1373]
+              - cell "On New chat" [ref=f1e1374]
+            - row [ref=f1e1375]:
+              - cell "LLM_INPUT" [ref=f1e1376]
+              - cell "None of above / feedback chip No / CMS second failure" [ref=f1e1377]
+              - cell "Free-text input + image attach; ALL canned buttons disabled" [ref=f1e1378]
+              - cell "→ LLM_REPLY on send" [ref=f1e1379]
+              - cell "On send" [ref=f1e1380]
+            - row [ref=f1e1381]:
+              - cell "LLM_REPLY" [ref=f1e1382]
+              - cell "Message sent" [ref=f1e1383]
+              - cell "Analyzing → AI reply rendered from Markdown + feedback chip" [ref=f1e1384]
+              - cell "→ RESOLVED (Yes); → TICKET_CTA (No)" [ref=f1e1385]
+              - cell "On choice" [ref=f1e1386]
+            - row [ref=f1e1387]:
+              - cell "TICKET_CTA" [ref=f1e1388]
+              - cell "AI reply No / ticket-flagged follow-up" [ref=f1e1389]
+              - cell "Single “Send a support ticket” CTA" [ref=f1e1390]
+              - cell "→ TICKET_MODAL on tap" [ref=f1e1391]
+              - cell "On CTA tap" [ref=f1e1392]
+            - row [ref=f1e1393]:
+              - cell "TICKET_MODAL" [ref=f1e1394]
+              - cell "CTA tapped" [ref=f1e1395]
+              - 'cell "Flat form: Email, Type, Subject, Order ID, Description, Attachment" [ref=f1e1396]'
+              - cell "→ TICKET_SUCCESS on valid submit; → chat on Cancel/ESC" [ref=f1e1397]
+              - cell "On submit / cancel" [ref=f1e1398]
+            - row [ref=f1e1399]:
+              - cell "TICKET_SUCCESS" [ref=f1e1400]
+              - cell "Valid submit" [ref=f1e1401]
+              - cell "Reference YCO-2026-XXXXXX + Done" [ref=f1e1402]
+              - cell "Closes panel on Done" [ref=f1e1403]
+              - cell "On Done" [ref=f1e1404]
+            - row [ref=f1e1405]:
+              - cell "CLOSE_CONFIRM" [ref=f1e1406]
+              - cell "Close with active conversation" [ref=f1e1407]
+              - cell "Close-confirm step" [ref=f1e1408]
+              - cell "→ CLOSED (Close anyway); back to chat (Stay)" [ref=f1e1409]
+              - cell "On choice" [ref=f1e1410]
+            - row [ref=f1e1411]:
+              - cell "FAQ_VIEW" [ref=f1e1412]
+              - cell "FAQ tab selected" [ref=f1e1413]
+              - cell "Search + FAQ content; input area hidden" [ref=f1e1414]
+              - cell "→ HOME/chat on Chat tab" [ref=f1e1415]
+              - cell "On tab switch" [ref=f1e1416]
+      - generic [ref=f1e1417]:
+        - generic [ref=f1e1418]:
+          - generic [ref=f1e1419]: "?"
+          - text: Open Questions
+        - paragraph [ref=f1e1420]: Undecided, and blocking something. Everything settled lives beside the rule it governs, not here.
+        - table [ref=f1e1422]:
+          - rowgroup [ref=f1e1423]:
+            - row [ref=f1e1424]:
+              - columnheader "ID" [ref=f1e1425]
+              - columnheader "Question" [ref=f1e1426]
+              - columnheader "Blocks" [ref=f1e1427]
+              - columnheader "Owner" [ref=f1e1428]
+          - rowgroup [ref=f1e1429]:
+            - row [ref=f1e1430]:
+              - cell "Q-01" [ref=f1e1431]
+              - cell "How does the CX Agent signal a failed turn — an empty text value, or a separate field?" [ref=f1e1432]
+              - cell "The reply-failure copy and whether the ticket CTA is offered automatically" [ref=f1e1433]
+              - cell "BD / agent team" [ref=f1e1434]
+            - row [ref=f1e1435]:
+              - cell "Q-02" [ref=f1e1436]
+              - cell "What are the final Strapi field names and the endpoint for the canned content?" [ref=f1e1437]
+              - cell [ref=f1e1438]:
+                - text: RD wiring of the CMS read; the names in
+                - link "T2" [ref=f1e1439] [cursor=pointer]:
+                  - /url: "#T2"
+                - text: are this spec’s proposal
+              - cell "CMS / RD" [ref=f1e1440]
+            - row [ref=f1e1441]:
+              - cell "Q-03" [ref=f1e1442]
+              - cell "Can the frontend read the 2Checkout / Stripe invoice ID for the Order ID pre-fill?" [ref=f1e1443]
+              - cell [ref=f1e1444]:
+                - text: The Order ID pre-fill on
+                - link "P2-S4" [ref=f1e1445] [cursor=pointer]:
+                  - /url: "#P2-S4"
+                - text: ; the field still works typed in by hand
+              - cell "Backend / BD" [ref=f1e1446]
+            - row [ref=f1e1447]:
+              - cell "Q-04" [ref=f1e1448]
+              - cell "Which agent tags drive escalation, and where does the FAQ tab content come from?" [ref=f1e1449]
+              - cell "The agent-driven ticket CTA variants and the FAQ tab spec" [ref=f1e1450]
+              - cell "BD / CS" [ref=f1e1451]
+      - generic [ref=f1e1452]:
+        - generic [ref=f1e1453]:
+          - generic [ref=f1e1454]: ☑
+          - text: QA Coverage
+        - paragraph [ref=f1e1455]:
+          - text: Every acceptance criterion in
+          - code [ref=f1e1456]: plan.md
+          - text: and where this spec defines it — 27 of 27 map to a step. Write the test cases in your test tool; this table is the trace back to the spec.
+        - table [ref=f1e1458]:
+          - rowgroup [ref=f1e1459]:
+            - row [ref=f1e1460]:
+              - columnheader "Criterion" [ref=f1e1461]
+              - columnheader "What it asserts" [ref=f1e1462]
+              - columnheader "Specified in" [ref=f1e1463]
+          - rowgroup [ref=f1e1464]:
+            - row [ref=f1e1465]:
+              - cell "AC-01" [ref=f1e1466]
+              - cell "Support opens from the profile dropdown on every YCO page and /account, excluding the API page." [ref=f1e1467]
+              - cell [ref=f1e1468]:
+                - link "P1-S1" [ref=f1e1469] [cursor=pointer]:
+                  - /url: "#P1-S1"
+            - row [ref=f1e1470]:
+              - cell "AC-02" [ref=f1e1471]
+              - cell "The FAQ page support icon opens the same panel as the dropdown." [ref=f1e1472]
+              - cell [ref=f1e1473]:
+                - link "P1-S2" [ref=f1e1474] [cursor=pointer]:
+                  - /url: "#P1-S2"
+            - row [ref=f1e1475]:
+              - cell "AC-03" [ref=f1e1476]
+              - cell "The home state offers canned topics plus “None of above” and shows no free-text input." [ref=f1e1477]
+              - cell [ref=f1e1478]:
+                - link "P1-S3" [ref=f1e1479] [cursor=pointer]:
+                  - /url: "#P1-S3"
+            - row [ref=f1e1480]:
+              - cell "AC-04" [ref=f1e1481]
+              - cell "Greeting, topic labels, default answers and follow-ups are read from the CMS, not hardcoded." [ref=f1e1482]
+              - cell [ref=f1e1483]:
+                - link "P1-S3" [ref=f1e1484] [cursor=pointer]:
+                  - /url: "#P1-S3"
+                - text: ·
+                - link "P1-S9" [ref=f1e1485] [cursor=pointer]:
+                  - /url: "#P1-S9"
+            - row [ref=f1e1486]:
+              - cell "AC-05" [ref=f1e1487]
+              - cell "While the CMS content loads, the message area shows skeleton rows in place of the topic list." [ref=f1e1488]
+              - cell [ref=f1e1489]:
+                - link "P1-S9" [ref=f1e1490] [cursor=pointer]:
+                  - /url: "#P1-S9"
+            - row [ref=f1e1491]:
+              - cell "AC-06" [ref=f1e1492]
+              - cell "A failed CMS load shows an inline error with a Retry button, not a blank panel." [ref=f1e1493]
+              - cell [ref=f1e1494]:
+                - link "P1-E1" [ref=f1e1495] [cursor=pointer]:
+                  - /url: "#P1-E1"
+            - row [ref=f1e1496]:
+              - cell "AC-07" [ref=f1e1497]
+              - cell "A second failure after Retry reveals the free-text input so the user is not dead-ended." [ref=f1e1498]
+              - cell [ref=f1e1499]:
+                - link "P1-E2" [ref=f1e1500] [cursor=pointer]:
+                  - /url: "#P1-E2"
+            - row [ref=f1e1501]:
+              - cell "AC-08" [ref=f1e1502]
+              - cell "Tapping a topic echoes the tap and renders that topic default answer." [ref=f1e1503]
+              - cell [ref=f1e1504]:
+                - link "P1-S4" [ref=f1e1505] [cursor=pointer]:
+                  - /url: "#P1-S4"
+            - row [ref=f1e1506]:
+              - cell "AC-09" [ref=f1e1507]
+              - cell "Each default answer is followed by its follow-ups and a “None of above” option." [ref=f1e1508]
+              - cell [ref=f1e1509]:
+                - link "P1-S5" [ref=f1e1510] [cursor=pointer]:
+                  - /url: "#P1-S5"
+            - row [ref=f1e1511]:
+              - cell "AC-10" [ref=f1e1512]
+              - cell "A used topic button is disabled while the others stay clickable, and replies append in order." [ref=f1e1513]
+              - cell [ref=f1e1514]:
+                - link "P1-S6" [ref=f1e1515] [cursor=pointer]:
+                  - /url: "#P1-S6"
+            - row [ref=f1e1516]:
+              - cell "AC-11" [ref=f1e1517]
+              - cell "A canned follow-up answer is followed by “Does this solution meet your needs?” with No / Yes." [ref=f1e1518]
+              - cell [ref=f1e1519]:
+                - link "P1-S7" [ref=f1e1520] [cursor=pointer]:
+                  - /url: "#P1-S7"
+            - row [ref=f1e1521]:
+              - cell "AC-12" [ref=f1e1522]
+              - cell "At most one feedback chip is on screen; any new user turn removes the pending one." [ref=f1e1523]
+              - cell [ref=f1e1524]:
+                - link "P1-S10" [ref=f1e1525] [cursor=pointer]:
+                  - /url: "#P1-S10"
+            - row [ref=f1e1526]:
+              - cell "AC-13" [ref=f1e1527]
+              - cell "Choosing Yes ends the conversation with a resolved message carrying no buttons." [ref=f1e1528]
+              - cell [ref=f1e1529]:
+                - link "P1-S8" [ref=f1e1530] [cursor=pointer]:
+                  - /url: "#P1-S8"
+            - row [ref=f1e1531]:
+              - cell "AC-14" [ref=f1e1532]
+              - cell "“None of above”, or No on a canned chip, reveals the input and disables every canned button." [ref=f1e1533]
+              - cell [ref=f1e1534]:
+                - link "P2-S1" [ref=f1e1535] [cursor=pointer]:
+                  - /url: "#P2-S1"
+            - row [ref=f1e1536]:
+              - cell "AC-15" [ref=f1e1537]
+              - cell "Agent replies arrive as Markdown and render as formatted text with clickable links." [ref=f1e1538]
+              - cell [ref=f1e1539]:
+                - link "P2-S2" [ref=f1e1540] [cursor=pointer]:
+                  - /url: "#P2-S2"
+            - row [ref=f1e1541]:
+              - cell "AC-16" [ref=f1e1542]
+              - cell "A single message can carry at most 5 MB of images." [ref=f1e1543]
+              - cell [ref=f1e1544]:
+                - link "P2-S2" [ref=f1e1545] [cursor=pointer]:
+                  - /url: "#P2-S2"
+                - text: ·
+                - link "P2-E1" [ref=f1e1546] [cursor=pointer]:
+                  - /url: "#P2-E1"
+            - row [ref=f1e1547]:
+              - cell "AC-17" [ref=f1e1548]
+              - cell "A chat can carry at most 50 MB of images in total, and New chat resets the budget." [ref=f1e1549]
+              - cell [ref=f1e1550]:
+                - link "P2-E1" [ref=f1e1551] [cursor=pointer]:
+                  - /url: "#P2-E1"
+                - text: ·
+                - link "P3-S1" [ref=f1e1552] [cursor=pointer]:
+                  - /url: "#P3-S1"
+            - row [ref=f1e1553]:
+              - cell "AC-18" [ref=f1e1554]
+              - cell "Every refused chat attachment is explained inside the input field, not a toast." [ref=f1e1555]
+              - cell [ref=f1e1556]:
+                - link "P2-E1" [ref=f1e1557] [cursor=pointer]:
+                  - /url: "#P2-E1"
+            - row [ref=f1e1558]:
+              - cell "AC-19" [ref=f1e1559]
+              - cell "The ticket CTA shows a single primary button." [ref=f1e1560]
+              - cell [ref=f1e1561]:
+                - link "P2-S3" [ref=f1e1562] [cursor=pointer]:
+                  - /url: "#P2-S3"
+            - row [ref=f1e1563]:
+              - cell "AC-20" [ref=f1e1564]
+              - cell "The ticket form is flat, with Subject and Description pre-filled from the agent summary." [ref=f1e1565]
+              - cell [ref=f1e1566]:
+                - link "P2-S4" [ref=f1e1567] [cursor=pointer]:
+                  - /url: "#P2-S4"
+            - row [ref=f1e1568]:
+              - cell "AC-21" [ref=f1e1569]
+              - 'cell "Order ID / Invoice # is the ID on the 2Checkout or Stripe receipt, and the field says so." [ref=f1e1570]'
+              - cell [ref=f1e1571]:
+                - link "P2-S4" [ref=f1e1572] [cursor=pointer]:
+                  - /url: "#P2-S4"
+            - row [ref=f1e1573]:
+              - cell "AC-22" [ref=f1e1574]
+              - cell "Ticket attachments accept any type and count up to 10 MB total, with the refusal shown in the form." [ref=f1e1575]
+              - cell [ref=f1e1576]:
+                - link "P2-E2" [ref=f1e1577] [cursor=pointer]:
+                  - /url: "#P2-E2"
+            - row [ref=f1e1578]:
+              - cell "AC-23" [ref=f1e1579]
+              - cell "A valid submit shows a success state carrying a YCO-2026-XXXXXX reference." [ref=f1e1580]
+              - cell [ref=f1e1581]:
+                - link "P2-S5" [ref=f1e1582] [cursor=pointer]:
+                  - /url: "#P2-S5"
+            - row [ref=f1e1583]:
+              - cell "AC-24" [ref=f1e1584]
+              - cell "Submitting also sends the same content by email to the CS inbox." [ref=f1e1585]
+              - cell [ref=f1e1586]:
+                - link "P2-S5" [ref=f1e1587] [cursor=pointer]:
+                  - /url: "#P2-S5"
+            - row [ref=f1e1588]:
+              - cell "AC-25" [ref=f1e1589]
+              - cell "New chat returns to the home state with the input hidden again." [ref=f1e1590]
+              - cell [ref=f1e1591]:
+                - link "P3-S1" [ref=f1e1592] [cursor=pointer]:
+                  - /url: "#P3-S1"
+            - row [ref=f1e1593]:
+              - cell "AC-26" [ref=f1e1594]
+              - cell "Closing after at least one exchanged message shows a close-confirm step." [ref=f1e1595]
+              - cell [ref=f1e1596]:
+                - link "P3-S2" [ref=f1e1597] [cursor=pointer]:
+                  - /url: "#P3-S2"
+            - row [ref=f1e1598]:
+              - cell "AC-27" [ref=f1e1599]
+              - cell "The FAQ tab shows searchable FAQ content and hides the input area." [ref=f1e1600]
+              - cell [ref=f1e1601]:
+                - link "P4-S1" [ref=f1e1602] [cursor=pointer]:
+                  - /url: "#P4-S1"
+      - generic [ref=f1e1603]:
+        - generic [ref=f1e1604]:
+          - generic [ref=f1e1605]: "!"
+          - text: Error States
+        - table [ref=f1e1607]:
+          - rowgroup [ref=f1e1608]:
+            - row [ref=f1e1609]:
+              - columnheader "Error" [ref=f1e1610]
+              - columnheader "Trigger" [ref=f1e1611]
+              - columnheader "Message shown to user" [ref=f1e1612]
+              - columnheader "Recovery" [ref=f1e1613]
+              - columnheader "Refund?" [ref=f1e1614]
+          - rowgroup [ref=f1e1615]:
+            - row [ref=f1e1616]:
+              - cell "CMS content unavailable" [ref=f1e1617]
+              - cell "The canned-content request fails" [ref=f1e1618]
+              - cell "“We couldn’t load the help topics. Try again.”" [ref=f1e1619]
+              - cell "Retry; a second failure reveals the free-text input" [ref=f1e1620]
+              - cell "N/A" [ref=f1e1621]
+            - row [ref=f1e1622]:
+              - cell "Email missing / invalid" [ref=f1e1623]
+              - cell "Email blank or malformed on submit; field marked invalid, submit blocked" [ref=f1e1624]
+              - cell "“Please enter a valid email so we can reply.”" [ref=f1e1625]
+              - cell "Enter a valid email and resubmit" [ref=f1e1626]
+              - cell "N/A" [ref=f1e1627]
+            - row [ref=f1e1628]:
+              - cell "No issue type selected" [ref=f1e1629]
+              - cell "Type placeholder still showing on submit; field marked invalid" [ref=f1e1630]
+              - cell "“Please select an issue type.”" [ref=f1e1631]
+              - cell "Choose an issue type" [ref=f1e1632]
+              - cell "N/A" [ref=f1e1633]
+            - row [ref=f1e1634]:
+              - cell "Subject missing" [ref=f1e1635]
+              - cell "Subject empty on submit; field marked invalid" [ref=f1e1636]
+              - cell "“Please add a subject so we can route this ticket.”" [ref=f1e1637]
+              - cell "Add a subject" [ref=f1e1638]
+              - cell "N/A" [ref=f1e1639]
+            - row [ref=f1e1640]:
+              - cell "Description missing" [ref=f1e1641]
+              - cell "Description empty on submit; field marked invalid" [ref=f1e1642]
+              - cell "“Please describe your issue so we can help.”" [ref=f1e1643]
+              - cell "Describe the issue" [ref=f1e1644]
+              - cell "N/A" [ref=f1e1645]
+            - row [ref=f1e1646]:
+              - cell "Ticket attachment rejected" [ref=f1e1647]
+              - cell "The selection would push the ticket total over 10 MB" [ref=f1e1648]
+              - cell "“Attachments can total up to 10 MB — only [n] MB is left.”" [ref=f1e1649]
+              - cell "Remove a file, or attach a smaller one" [ref=f1e1650]
+              - cell "N/A" [ref=f1e1651]
+            - row [ref=f1e1652]:
+              - cell "Chat image rejected" [ref=f1e1653]
+              - cell "Over 5 MB in one message, over the 50 MB chat budget, or not an image" [ref=f1e1654]
+              - cell "“Each message can carry up to 5 MB of images.”" [ref=f1e1655]
+              - cell "Attach a smaller image, or start a new chat" [ref=f1e1656]
+              - cell "N/A" [ref=f1e1657]
+            - row [ref=f1e1658]:
+              - cell "Ticket submission failure" [ref=f1e1659]
+              - cell "The backend submission fails (production only)" [ref=f1e1660]
+              - cell "“TBD — production must define an error state + retry that preserves entered data”" [ref=f1e1661]
+              - cell "Retry submit" [ref=f1e1662]
+              - cell "N/A" [ref=f1e1663]
+        - paragraph [ref=f1e1664]: Every message above renders in place — inside the input field for chat uploads, inside the form for ticket fields and attachments. None of them is a toast.
+      - generic [ref=f1e1665]:
+        - generic [ref=f1e1666]:
+          - generic [ref=f1e1667]: ⚠
+          - text: Prototype Simplifications — NOT the production contract
+        - paragraph [ref=f1e1668]:
+          - text: Where the prototype fakes or stubs behaviour. Build the
+          - strong [ref=f1e1669]: production must do
+          - text: column — never the prototype behaviour.
+        - table [ref=f1e1671]:
+          - rowgroup [ref=f1e1672]:
+            - row [ref=f1e1673]:
+              - columnheader "Area" [ref=f1e1674]
+              - columnheader "Prototype does" [ref=f1e1675]
+              - columnheader "Production must do" [ref=f1e1676]
+          - rowgroup [ref=f1e1677]:
+            - row [ref=f1e1678]:
+              - cell "Canned content source" [ref=f1e1679]
+              - cell "A fixture with the same payload shape is served behind a simulated request, with a demo switch to force the failure branch." [ref=f1e1680]
+              - cell [ref=f1e1681]:
+                - text: RD calls the CMS (Strapi) for the payload in
+                - link "T2" [ref=f1e1682] [cursor=pointer]:
+                  - /url: "#T2"
+                - text: . Nothing in the canned tree ships in the client bundle.
+            - row [ref=f1e1683]:
+              - cell "AI replies" [ref=f1e1684]
+              - cell "A canned Markdown “sample” reply with a simulated “Analyzing” delay." [ref=f1e1685]
+              - cell "A real CX Agent generates the Markdown; the frontend renders it through the same path." [ref=f1e1686]
+            - row [ref=f1e1687]:
+              - cell "LLM gating" [ref=f1e1688]
+              - cell "The free-text input is hidden until None of above / feedback chip No; the home is canned-only." [ref=f1e1689]
+              - cell "Same cost-guard UX; the agent is only called once the input is used." [ref=f1e1690]
+            - row [ref=f1e1691]:
+              - cell "Escalation / ticket trigger" [ref=f1e1692]
+              - cell "Only the Refund “letters and numbers” follow-up is hard-coded to open a ticket; the LLM “No” opens one by frontend rule." [ref=f1e1693]
+              - cell "Frontend acts on agent tags (show-ticket, feedback); the agent decides when to offer a ticket. Not yet ratified — see Q-04." [ref=f1e1694]
+            - row [ref=f1e1695]:
+              - cell "Agent-driven escalation (RD note)" [ref=f1e1696]
+              - 'cell "Two extra ticket CTAs exist but are reachable only via the demo bar, not organic clicks: “agent proactively escalates” and “user asks for a human”." [ref=f1e1697]'
+              - cell "The agent sends a show-ticket tag with the CTA variant; the frontend renders whichever variant the response carries and opens the same ticket flow." [ref=f1e1698]
+            - row [ref=f1e1699]:
+              - cell "AI summary" [ref=f1e1700]
+              - cell "A short title (Subject) and a summary string (Description) are derived from the last user message." [ref=f1e1701]
+              - cell "The agent supplies both the AI title (Subject) and the AI summary (Description)." [ref=f1e1702]
+            - row [ref=f1e1703]:
+              - cell "Ticket submission" [ref=f1e1704]
+              - cell "Generates a fake YCO-2026-XXXXXX; nothing is sent." [ref=f1e1705]
+              - cell [ref=f1e1706]:
+                - text: POST to the CSB feedback endpoint with the
+                - link "T3" [ref=f1e1707] [cursor=pointer]:
+                  - /url: "#T3"
+                - text: params. That endpoint also sends the CS notification email — see
+                - link "D-19" [ref=f1e1708] [cursor=pointer]:
+                  - /url: "#D-19"
+                - text: . RD-log attachment and packaged chat history TBD.
+            - row [ref=f1e1709]:
+              - cell "Order ID pre-fill" [ref=f1e1710]
+              - cell "Empty unless a value is seeded by hand." [ref=f1e1711]
+              - cell "Pre-filled with the payment provider order/invoice ID of the latest order, subject to Q-03." [ref=f1e1712]
+            - row [ref=f1e1713]:
+              - cell "Attachments" [ref=f1e1714]
+              - cell "Chat images and ticket files are held client-side only." [ref=f1e1715]
+              - cell "Uploaded to storage with malware + PII scanning (legal sign-off required)." [ref=f1e1716]
+      - generic [ref=f1e1717]:
+        - generic [ref=f1e1718]:
+          - generic [ref=f1e1719]: ✓
+          - text: Design Decisions — reference index
+        - paragraph [ref=f1e1720]: Each decision also appears inline beside the step it governs; this is the recap. Follow the ↩ link to jump to the first step that relies on it.
+        - table [ref=f1e1722]:
+          - rowgroup [ref=f1e1723]:
+            - row [ref=f1e1724]:
+              - columnheader "ID" [ref=f1e1725]
+              - columnheader "Question" [ref=f1e1726]
+              - columnheader "Decision" [ref=f1e1727]
+          - rowgroup [ref=f1e1728]:
+            - row [ref=f1e1729]:
+              - cell "D-01" [ref=f1e1730]
+              - cell "How is the widget opened?" [ref=f1e1731]
+              - 'cell "Two entry points: the profile dropdown “Support” item (site-wide), and a support icon on the FAQ page only. Both open the same panel." [ref=f1e1732]'
+            - row [ref=f1e1733]:
+              - cell "D-02" [ref=f1e1734]
+              - cell "How is LLM cost controlled?" [ref=f1e1735]
+              - cell [ref=f1e1736]:
+                - text: Home shows canned buttons only with the free-text input hidden, so the paid LLM is not called until the user opts in.
+                - link "↩ P1-S3" [ref=f1e1737] [cursor=pointer]:
+                  - /url: "#P1-S3"
+            - row [ref=f1e1738]:
+              - cell "D-03" [ref=f1e1739]
+              - cell "Where does “None of above” appear?" [ref=f1e1740]
+              - cell [ref=f1e1741]:
+                - text: At Layer 1 (after the six Popular questions) and after each topic’s follow-ups. There is no feedback chip at the default level.
+                - link "↩ P1-S3" [ref=f1e1742] [cursor=pointer]:
+                  - /url: "#P1-S3"
+            - row [ref=f1e1743]:
+              - cell "D-04" [ref=f1e1744]
+              - cell "Do canned buttons persist?" [ref=f1e1745]
+              - cell [ref=f1e1746]:
+                - text: Yes — a clicked button becomes disabled; others stay clickable and replies append. Invoking the LLM or a ticket disables all of them. New chat resets.
+                - link "↩ P1-S6" [ref=f1e1747] [cursor=pointer]:
+                  - /url: "#P1-S6"
+            - row [ref=f1e1748]:
+              - cell "D-05" [ref=f1e1749]
+              - cell "What opens the free-text LLM input, and how does the user know?" [ref=f1e1750]
+              - cell [ref=f1e1751]:
+                - text: "Only two triggers: tapping “None of above”, or “No” on a follow-up answer. The two feedback prompts differ so the outcome is legible: a canned answer shows “Does this solution meet your needs?” (No opens the input); an AI reply shows “Did this help?” (No, still stuck opens the ticket)."
+                - link "↩ P1-S5" [ref=f1e1752] [cursor=pointer]:
+                  - /url: "#P1-S5"
+            - row [ref=f1e1753]:
+              - cell "D-06" [ref=f1e1754]
+              - cell "How is a ticket offered?" [ref=f1e1755]
+              - cell [ref=f1e1756]:
+                - text: "Per BD chatbot_spec_v2: the only direct-ticket follow-up is Refund “My Order ID / Invoice has letters and numbers” (Stripe). Every other follow-up routes through the feedback chip to the LLM, and the AI reply’s “No” then opens the ticket. Single CTA, no “Keep trying”."
+                - link "↩ P2-S3" [ref=f1e1757] [cursor=pointer]:
+                  - /url: "#P2-S3"
+            - row [ref=f1e1758]:
+              - cell "D-07" [ref=f1e1759]
+              - cell "Ticket Type options and backend mapping?" [ref=f1e1760]
+              - cell [ref=f1e1761]:
+                - text: "Four types, each mapped to a CSB questionTypeId: Purchase and Payment (313) / Account (348) / Feature Issue (204) / Others (211). Placeholder “Select an issue type”, no pre-selection. The form is flat — no type-conditional fields."
+                - link "↩ P2-S4" [ref=f1e1762] [cursor=pointer]:
+                  - /url: "#P2-S4"
+            - row [ref=f1e1763]:
+              - cell "D-08" [ref=f1e1764]
+              - cell "What are the upload limits?" [ref=f1e1765]
+              - cell [ref=f1e1766]:
+                - text: "Chat: images only (JPG/PNG/WebP/HEIC), 5 MB per message and 50 MB per chat. The 50 MB budget counts bytes actually sent and is reset by New chat. Ticket: any file type, any number of files, 10 MB across all of them. The two budgets are independent."
+                - link "↩ P2-S2" [ref=f1e1767] [cursor=pointer]:
+                  - /url: "#P2-S2"
+            - row [ref=f1e1768]:
+              - cell "D-09" [ref=f1e1769]
+              - cell "How are Subject and Description pre-filled?" [ref=f1e1770]
+              - cell [ref=f1e1771]:
+                - text: "Both are agent-supplied on the LLM path: Subject = a short AI title, Description = the full AI summary; both editable. On a direct ticket with no LLM turn they open empty. There is no minimum-length rule."
+                - link "↩ P2-S4" [ref=f1e1772] [cursor=pointer]:
+                  - /url: "#P2-S4"
+            - row [ref=f1e1773]:
+              - cell "D-10" [ref=f1e1774]
+              - cell "What does “resolved” look like?" [ref=f1e1775]
+              - cell "A resolved message with no action buttons; no “Anything else?” re-show." [ref=f1e1776]
+            - row [ref=f1e1777]:
+              - cell "D-12" [ref=f1e1778]
+              - cell "What does the client send to the CSB backend?" [ref=f1e1779]
+              - cell [ref=f1e1780]:
+                - text: "Visible: Email, Type, Subject, Order ID and Description. Hidden/auto: product (prodVerId=504), UI language, packaged chat history. User ID, Order ID and Description are concatenated into the backend q field, each with a label. Full mapping:"
+                - link "T3" [ref=f1e1781] [cursor=pointer]:
+                  - /url: "#T3"
+                - text: .
+            - row [ref=f1e1782]:
+              - cell "D-13" [ref=f1e1783]
+              - cell "Where do the canned strings come from?" [ref=f1e1784]
+              - cell [ref=f1e1785]:
+                - text: The CMS. The greeting, the six topic labels, every default answer and every follow-up label and answer are CMS content read at runtime (
+                - link "T2" [ref=f1e1786] [cursor=pointer]:
+                  - /url: "#T2"
+                - text: ). UI chrome — “None of above”, the feedback prompts, error copy and the ticket form labels — stays in the frontend string bundle. A question whose answer could not be edited alongside it would drift.
+                - link "↩ P1-S3" [ref=f1e1787] [cursor=pointer]:
+                  - /url: "#P1-S3"
+            - row [ref=f1e1788]:
+              - cell "D-14" [ref=f1e1789]
+              - cell "What happens when the CMS content cannot be loaded?" [ref=f1e1790]
+              - cell [ref=f1e1791]:
+                - text: Skeleton rows while it loads; on failure an inline error with Retry (
+                - link "P1-E1" [ref=f1e1792] [cursor=pointer]:
+                  - /url: "#P1-E1"
+                - text: ); if Retry fails too, the free-text input is revealed (
+                - link "P1-E2" [ref=f1e1793] [cursor=pointer]:
+                  - /url: "#P1-E2"
+                - text: ). The cost guard yields rather than leaving the user with a panel that can do nothing.
+                - link "↩ P1-E2" [ref=f1e1794] [cursor=pointer]:
+                  - /url: "#P1-E2"
+            - row [ref=f1e1795]:
+              - cell "D-15" [ref=f1e1796]
+              - cell "How many feedback chips can be on screen?" [ref=f1e1797]
+              - cell [ref=f1e1798]:
+                - text: Exactly one. Any new user turn — another topic, another follow-up, “None of above”, or a typed message — removes the pending chip, so the chip always refers to the newest answer. An answered chip is removed as before.
+                - link "↩ P1-S10" [ref=f1e1799] [cursor=pointer]:
+                  - /url: "#P1-S10"
+            - row [ref=f1e1800]:
+              - cell "D-16" [ref=f1e1801]
+              - cell "What Markdown must the chat render?" [ref=f1e1802]
+              - cell [ref=f1e1803]:
+                - text: Bold, italic, ordered lists, unordered lists, links, paragraphs and two-space line breaks — from the CX Agent and from the CMS alike. Everything else renders as literal text. Raw HTML is escaped rather than executed, only http and https links are made clickable, and every link opens in a new tab. The supported set is tabulated on
+                - link "P2-S2" [ref=f1e1804] [cursor=pointer]:
+                  - /url: "#P2-S2"
+                - text: .
+                - link "↩ P2-S2" [ref=f1e1805] [cursor=pointer]:
+                  - /url: "#P2-S2"
+            - row [ref=f1e1806]:
+              - cell "D-17" [ref=f1e1807]
+              - cell "Where do upload errors appear?" [ref=f1e1808]
+              - cell [ref=f1e1809]:
+                - text: "In place: chat upload errors render inside the input field above the thumbnails; ticket attachment errors render under the attachment field inside the form. No toasts — a message about a file belongs where the file was attached."
+                - link "↩ P2-E1" [ref=f1e1810] [cursor=pointer]:
+                  - /url: "#P2-E1"
+            - row [ref=f1e1811]:
+              - cell "D-18" [ref=f1e1812]
+              - cell "What is the Order ID field asking for?" [ref=f1e1813]
+              - cell [ref=f1e1814]:
+                - text: The order or invoice ID that 2Checkout or Stripe printed on the user’s receipt email, so the user can match it to their own purchase. The hint names both providers. Whether the frontend can pre-fill it is Q-03.
+                - link "↩ P2-S4" [ref=f1e1815] [cursor=pointer]:
+                  - /url: "#P2-S4"
+            - row [ref=f1e1816]:
+              - cell "D-19" [ref=f1e1817]
+              - cell "Who emails the CS inbox on submit?" [ref=f1e1818]
+              - cell [ref=f1e1819]:
+                - text: The backend. The frontend makes one submission to the CSB feedback endpoint (/prog/support/app/feedback.jsp), which already sends the notification mail to youcamenhance_web@perfectcorp.com with the same content when it creates the CS ticket. No frontend work; QA verifies the mail lands.
+                - link "↩ P2-S5" [ref=f1e1820] [cursor=pointer]:
+                  - /url: "#P2-S5"
+      - generic [ref=f1e1821]:
+        - generic [ref=f1e1822]:
+          - generic [ref=f1e1823]: 🔗
+          - text: References
+        - table [ref=f1e1825]:
+          - rowgroup [ref=f1e1826]:
+            - row [ref=f1e1827]:
+              - columnheader "Item" [ref=f1e1828]
+              - columnheader "Link" [ref=f1e1829]
+              - columnheader "Owner" [ref=f1e1830]
+          - rowgroup [ref=f1e1831]:
+            - row [ref=f1e1832]:
+              - cell "CS Chatbot — Support ticket spec (CSB field mapping, source of truth)" [ref=f1e1833]
+              - cell "specs/CS Chatbot - Support ticket spec.pdf" [ref=f1e1834]
+              - cell "BD / CS" [ref=f1e1835]
+            - row [ref=f1e1836]:
+              - cell "Canned message copy (to be loaded into the CMS)" [ref=f1e1837]
+              - cell "canned-strings.html" [ref=f1e1838]
+              - cell "CS / CMS" [ref=f1e1839]
+            - row [ref=f1e1840]:
+              - cell "Agent reply sample payload" [ref=f1e1841]
+              - cell "specs/agent-reply.sample.json" [ref=f1e1842]
+              - cell "BD / agent team" [ref=f1e1843]
+            - row [ref=f1e1844]:
+              - cell "CMS canned content sample payload" [ref=f1e1845]
+              - cell "specs/cms-canned-content.sample.json" [ref=f1e1846]
+              - cell "CMS / RD" [ref=f1e1847]
+      - generic [ref=f1e1848]:
+        - generic [ref=f1e1849]:
+          - generic [ref=f1e1850]: ↻
+          - text: Changelog
+        - paragraph [ref=f1e1851]:
+          - text: Newest first. New or changed content above is marked with a green
+          - generic [ref=f1e1852]: NEW
+          - text: badge. Superseded full versions are archived under
+          - code [ref=f1e1853]: specs/_archive/
+          - text: .
+        - table [ref=f1e1855]:
+          - rowgroup [ref=f1e1856]:
+            - row [ref=f1e1857]:
+              - columnheader "Version" [ref=f1e1858]
+              - columnheader "Date" [ref=f1e1859]
+              - columnheader "What changed" [ref=f1e1860]
+          - rowgroup [ref=f1e1861]:
+            - row [ref=f1e1862]:
+              - cell "v2" [ref=f1e1863]
+              - cell "2026-08-10" [ref=f1e1864]
+              - cell [ref=f1e1865]:
+                - text: Canned content moves to the CMS, with a load and failure branch (
+                - link "P1-S9" [ref=f1e1866] [cursor=pointer]:
+                  - /url: "#P1-S9"
+                - text: ","
+                - link "P1-E1" [ref=f1e1867] [cursor=pointer]:
+                  - /url: "#P1-E1"
+                - text: ","
+                - link "P1-E2" [ref=f1e1868] [cursor=pointer]:
+                  - /url: "#P1-E2"
+                - text: ). Only one feedback chip is ever on screen (
+                - link "P1-S10" [ref=f1e1869] [cursor=pointer]:
+                  - /url: "#P1-S10"
+                - text: ). Chat uploads gain a 50 MB per-chat budget alongside the 5 MB per-message ceiling, with the error shown in the input field (
+                - link "P2-E1" [ref=f1e1870] [cursor=pointer]:
+                  - /url: "#P2-E1"
+                - text: ). Ticket attachments drop the type and count limits and cap at 10 MB in total, with the error shown in the form (
+                - link "P2-E2" [ref=f1e1871] [cursor=pointer]:
+                  - /url: "#P2-E2"
+                - text: ). Order ID is the 2Checkout / Stripe invoice ID. Agent replies are Markdown and are rendered (
+                - link "P2-S2" [ref=f1e1872] [cursor=pointer]:
+                  - /url: "#P2-S2"
+                - text: ). Adds the Data Contract, QA Coverage and Open Questions sections.
+            - row [ref=f1e1873]:
+              - cell "v1" [ref=f1e1874]
+              - cell "2026-07-28" [ref=f1e1875]
+              - 'cell "First RD-facing behavior spec: Popular Question deflection with follow-ups, LLM escalation and support-ticket submission, session controls (New chat / Close), and the FAQ tab. Two entry points — profile dropdown (site-wide) and a support icon on the FAQ page." [ref=f1e1876]'
+  - complementary [ref=f1e1877]:
+    - generic [ref=f1e1878]:
+      - generic [ref=f1e1879]: Review
+      - generic [ref=f1e1881]:
+        - button "Activity" [ref=f1e1882] [cursor=pointer]
+        - button "Close panel" [ref=f1e1883] [cursor=pointer]: ×
+    - generic [ref=f1e1884]:
+      - generic [ref=f1e1885]:
+        - button "All" [ref=f1e1886] [cursor=pointer]
+        - button "Open" [ref=f1e1887] [cursor=pointer]
+        - button "Resolved" [ref=f1e1888] [cursor=pointer]
+      - combobox "Filter by department" [ref=f1e1889] [cursor=pointer]:
+        - option "All depts" [selected]
+        - option "PM"
+        - option "RD"
+        - option "QA"
+        - option "MM"
+        - option "Design"
+        - option "Marcom"
+    - generic [ref=f1e1891]:
+      - generic [ref=f1e1892]:
+        - text: as
+        - emphasis [ref=f1e1893]: Not identified
+      - button "Edit" [ref=f1e1894] [cursor=pointer]
+  - button "💬" [ref=f1e1895] [cursor=pointer]

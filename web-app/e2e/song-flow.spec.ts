@@ -2,7 +2,9 @@ import { test, expect } from "@playwright/test";
 
 // Walks the AI Song creation flow (mock backend).
 test("AI Song: describe -> compose -> result", async ({ page }) => {
-  // /song/create is behind AuthGuard; seed the mock auth flag before any page script
+  // /song/create is open to guests since 2026-08-12, but this spec drives the
+  // FULL create flow and Create Song is gated — so seed the mock auth flag
+  // before any page script
   // runs so the guard sees a logged-in user instead of opening the sign-in modal.
   await page.addInitScript(() => window.localStorage.setItem("muse_auth", "1"));
   await page.goto("/song/create");

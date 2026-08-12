@@ -18,6 +18,15 @@ Next.js 16.2 (App Router) + React 19 + TypeScript strict + Tailwind v4. Package 
   The a11y spec auto-discovers routes from `src/app/`; known accent-pill contrast issues are
   excluded via selectors in `e2e/a11y.spec.ts` until the design decision lands (`TODO.md` #2).
   **Run it on a quiet machine, and don't leave a `next start -p 3100` of your own running.**
+  **In an agent session: do NOT run `npm run e2e` yourself at all — the Stop hook already runs it.**
+  A full run takes ~14 minutes but the Bash tool's timeout caps at 10, so the call is ALWAYS moved
+  to the background and its `next start -p 3100` is ALWAYS still holding the port when the Stop
+  hook fires its own run. The hook then dies on `http://localhost:3100 is already used` — which
+  looks like a gate failure and is really just you racing yourself. This has now happened FIVE
+  times (twice in the 2026-08-12 session alone, after the first three were already written up in
+  `docs/NEXT-SESSION.md` §A.1). Your job before stopping is: leave port 3100 free, leave a fresh
+  `npm run build`, and let the hook own the run. If you need a targeted answer while working, run
+  ONE spec file with `--grep` — that finishes in seconds and does not hold the port.
   Two ways that bites (both measured 2026-08-05): a server already on :3100 makes the run abort
   immediately (`reuseExistingServer` is false on purpose — see `playwright.config.ts`); and CPU
   contention makes the long chained specs flake on a `.click()` timeout. `G5-d#2` failed that way

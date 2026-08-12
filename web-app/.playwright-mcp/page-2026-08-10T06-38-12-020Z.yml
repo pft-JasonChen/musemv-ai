@@ -1,0 +1,265 @@
+- generic [active] [ref=f3e1]:
+  - banner [ref=f3e3]:
+    - generic [ref=f3e4]:
+      - link "YouCam Online Editor home" [ref=f3e5] [cursor=pointer]:
+        - /url: /
+        - img "YouCam Online Editor" [ref=f3e19]
+      - navigation "Main navigation" [ref=f3e20]:
+        - link "Product" [ref=f3e21] [cursor=pointer]:
+          - /url: "#"
+        - link "Use Case" [ref=f3e24] [cursor=pointer]:
+          - /url: "#"
+        - link "API" [ref=f3e27] [cursor=pointer]:
+          - /url: "#"
+        - link "Pricing" [ref=f3e30] [cursor=pointer]:
+          - /url: "#"
+    - generic [ref=f3e31]:
+      - generic [ref=f3e32]:
+        - generic [ref=f3e33]: C
+        - generic [ref=f3e34]: "5"
+      - button "Subscribe" [ref=f3e35] [cursor=pointer]
+      - button "Account menu" [ref=f3e41] [cursor=pointer]
+  - generic [ref=f3e44]:
+    - heading "FAQs" [level=1] [ref=f3e45]
+    - paragraph [ref=f3e46]: Find answers to the most common questions about YouCam Online Editor.
+    - main [ref=f3e47]:
+      - generic [ref=f3e48]: General
+      - generic [ref=f3e49]:
+        - button "What is YouCam Online Editor?" [ref=f3e50] [cursor=pointer]
+        - region:
+          - generic [ref=f3e53]: YouCam Online Editor is a powerful all-in-one AI photo enhancer and upscaler that lets you transform photos, fix old or blurry images, remove backgrounds, erase objects, create HD images, and much more. Sharpen, unblur, and upscale images with the power of AI — all directly in your browser with no software installation required.
+      - generic [ref=f3e54]:
+        - button "Is YouCam Online Editor free?" [ref=f3e55] [cursor=pointer]
+        - region:
+          - generic [ref=f3e58]: YouCam Online Editor offers a free tier with access to core editing tools. For advanced AI features, higher resolution exports, and commercial use, you can upgrade to a Pro or Plus subscription, or purchase pay-as-you-go credits.
+      - generic [ref=f3e59]:
+        - button "Can I use YouCam Online Editor for commercial purposes?" [ref=f3e60] [cursor=pointer]
+        - region:
+          - generic [ref=f3e63]:
+            - text: Commercial use is only allowed for Pro subscribers and for images generated using API units. For more information, please refer to our
+            - link "Terms of Service" [ref=f3e64] [cursor=pointer]:
+              - /url: "#"
+            - text: .
+      - generic [ref=f3e65]:
+        - button "What kind of images can I use with YouCam Online Editor?" [ref=f3e66] [cursor=pointer]
+        - region:
+          - generic [ref=f3e69]: YouCam Online Editor supports JPEG, PNG, HEIC, and WebP formats. For best results, use images under 20 MB. Very low resolution images (under 100 × 100 px) may produce limited results with AI enhancement tools.
+      - generic [ref=f3e70]:
+        - button "I would like to understand more about the privacy of my photos. Does Perfect Corp. have access to the photos?" [ref=f3e71] [cursor=pointer]
+        - region:
+          - generic [ref=f3e74]:
+            - text: Your privacy is important to us. Photos you upload are processed solely to provide the requested AI feature and are not used for advertising or shared with third parties. Please review our
+            - link "Privacy Policy" [ref=f3e75] [cursor=pointer]:
+              - /url: "#"
+            - text: for full details on data handling and retention.
+      - generic [ref=f3e76]: Credits & Billing
+      - generic [ref=f3e77]:
+        - button "What is credit?" [ref=f3e78] [cursor=pointer]
+        - region:
+          - generic [ref=f3e81]: Credits are the in-app currency used to run AI features such as photo enhancement, background removal, and image generation. Each action consumes a set number of credits depending on complexity. You can earn credits through your subscription plan or purchase them separately.
+      - generic [ref=f3e82]:
+        - button "What's the difference between credits and units?" [ref=f3e83] [cursor=pointer]
+        - region:
+          - generic [ref=f3e86]: Credits are used within the YouCam Online Editor web product. API units are exclusively for API access and cannot be used in the web editor. Purchasing a Pro or Plus plan, or buying credits, does not grant API access.
+      - generic [ref=f3e87]:
+        - button "What's the difference between Pay as you go credits and Subscription?" [ref=f3e88] [cursor=pointer]
+        - region:
+          - generic [ref=f3e91]: A subscription gives you a recurring allocation of credits each billing cycle and access to premium features at a lower per-use cost. Pay-as-you-go credits never expire and are ideal for occasional use — you purchase only what you need, with no monthly commitment.
+      - generic [ref=f3e92]:
+        - button "What is the supported payment method?" [ref=f3e93] [cursor=pointer]
+        - region:
+          - generic [ref=f3e96]: We accept all major credit and debit cards (Visa, Mastercard, American Express), as well as PayPal. Payment processing is handled securely through our payment provider.
+      - generic [ref=f3e97]: Subscription Management
+      - generic [ref=f3e98]:
+        - button "What's the AI Avatar pack plan?" [ref=f3e99] [cursor=pointer]
+        - region:
+          - generic [ref=f3e102]: The AI Avatar pack is an add-on that lets you generate a full set of professional-style AI avatars from your selfies. It is available as a one-time purchase and does not require a subscription. Generated avatars can be downloaded in high resolution.
+      - generic [ref=f3e103]:
+        - button "What will happen if the subscription plan is upgraded?" [ref=f3e104] [cursor=pointer]
+        - region:
+          - generic [ref=f3e107]: When you upgrade your plan, the new plan takes effect immediately. Any unused credits from your previous plan are forfeited, and you will receive the full credit allocation of your new plan. The price difference is prorated for the remaining billing period.
+      - generic [ref=f3e108]:
+        - button "How can I change my subscription plan for YouCam Online Editor?" [ref=f3e109] [cursor=pointer]
+        - region:
+          - generic [ref=f3e112]:
+            - text: To change your plan, go to
+            - link "Account → My Plan" [ref=f3e113] [cursor=pointer]:
+              - /url: "#"
+            - text: and select the plan you'd like to switch to. Changes to a higher tier take effect immediately; downgrades take effect at the end of the current billing cycle.
+      - generic [ref=f3e114]:
+        - button "How do I cancel my subscription?" [ref=f3e115] [cursor=pointer]
+        - region:
+          - generic [ref=f3e118]:
+            - text: You can cancel at any time from
+            - link "Account → My Plan → Cancel Plan" [ref=f3e119] [cursor=pointer]:
+              - /url: "#"
+            - text: . After cancellation, you retain access to your current plan's features until the end of the billing period. No further charges will be made.
+      - generic [ref=f3e120]:
+        - button "Can I request a refund for YouCam Online Editor?" [ref=f3e121] [cursor=pointer]
+        - region:
+          - generic [ref=f3e124]:
+            - text: Refund requests can be submitted within 14 days of purchase via
+            - link "Account → Billing → Purchase history" [ref=f3e125] [cursor=pointer]:
+              - /url: "#"
+            - text: . Select the order and click
+            - strong [ref=f3e126]: Request refund
+            - text: . If the option is not available, please contact our support team with your Order ID.
+      - generic [ref=f3e127]:
+        - button "Can I transfer my subscription between YouCam Online Editor and YouCam Enhance app?" [ref=f3e128] [cursor=pointer]
+        - region:
+          - generic [ref=f3e131]: Subscriptions are currently tied to the platform they were purchased on and cannot be transferred between YouCam Online Editor and the YouCam Enhance mobile app. Each platform manages its own billing independently.
+      - generic [ref=f3e132]: How Can I Remove the Watermark?
+      - generic [ref=f3e133]:
+        - button "How can I remove the watermark?" [ref=f3e134] [cursor=pointer]
+        - region:
+          - generic [ref=f3e137]: Watermarks are removed automatically when you are on a paid plan (Plus or Pro). If you are on a paid plan and still see a watermark, try signing out and signing back in to refresh your plan status, then attempt the export again.
+      - generic [ref=f3e138]: Technical
+      - generic [ref=f3e139]:
+        - button "How does enhancement affect the resolution of my image?" [ref=f3e140] [cursor=pointer]
+        - region:
+          - generic [ref=f3e143]: AI enhancement can upscale your image by up to 4×, reconstructing fine detail using machine learning. The output resolution depends on your subscription plan — free users receive standard output, while Pro users get full 4× upscaling with maximum detail recovery.
+      - generic [ref=f3e144]:
+        - button "How can I solve this error, \"Oops! Might be user input unsupported format, server issue or other unknown issue\"?" [ref=f3e145] [cursor=pointer]
+        - region:
+          - generic [ref=f3e148]: "This error usually means the file format or size is not supported. Try: (1) converting your image to JPG or PNG, (2) reducing the file size to under 20 MB, (3) doing a hard reload (Cmd/Ctrl + Shift + R), and (4) trying a different browser. If the error persists, contact support with the file details."
+      - generic [ref=f3e149]:
+        - button "After clicking the share link why do I see the message, \"Invalid link — The link has either expired or is incorrect\"?" [ref=f3e150] [cursor=pointer]
+        - region:
+          - generic [ref=f3e153]: Share links expire after 30 days or if the original image is deleted from your account. To share again, re-upload or re-generate the image and create a new share link from the result page.
+      - generic [ref=f3e154]: Account
+      - generic [ref=f3e155]:
+        - button "How do I migrate my old Facebook account to the new registered one?" [ref=f3e156] [cursor=pointer]
+        - region:
+          - generic [ref=f3e159]: We apologize for the technical issue with Facebook Connect login. To migrate, please contact our support team with your old Facebook-linked email and the email of your new account. Our team will manually transfer your credits and subscription status within 2–3 business days.
+      - generic [ref=f3e160]:
+        - button "I can't log in with my login details" [ref=f3e161] [cursor=pointer]
+        - region:
+          - generic [ref=f3e164]:
+            - text: First, try resetting your password via the
+            - link "Forgot password" [ref=f3e165] [cursor=pointer]:
+              - /url: "#"
+            - text: link on the sign-in page. If you signed up with a social login (Google, Facebook, Apple), use that same method — a password may not have been set. Still stuck? Contact support and we'll help you regain access.
+      - generic [ref=f3e166]:
+        - button "How can I change my YouCam Online Editor account password?" [ref=f3e167] [cursor=pointer]
+        - region:
+          - generic [ref=f3e170]:
+            - text: Go to
+            - link "Account → Settings → Change password" [ref=f3e171] [cursor=pointer]:
+              - /url: "#"
+            - text: . You'll need to confirm your current password before setting a new one. If you signed up via social login, a password has not been set — you can add one from the same settings page.
+      - generic [ref=f3e172]:
+        - button "How can I delete my account?" [ref=f3e173] [cursor=pointer]
+        - region:
+          - generic [ref=f3e176]:
+            - text: Before deleting your account, cancel any active subscription at
+            - link "My Plan" [ref=f3e177] [cursor=pointer]:
+              - /url: "#"
+            - text: to avoid future charges. Download any creations you want to keep from
+            - link "My Creations" [ref=f3e178] [cursor=pointer]:
+              - /url: "#"
+            - text: . Then go to
+            - link "Account → Settings → Delete account" [ref=f3e179] [cursor=pointer]:
+              - /url: "#"
+            - text: and confirm. Deletion is permanent and removes all data within 30 days.
+      - generic [ref=f3e180]:
+        - button "How to contact us?" [ref=f3e181] [cursor=pointer]
+        - region:
+          - generic [ref=f3e184]:
+            - text: You can reach our support team by clicking
+            - strong [ref=f3e185]: Contact Support
+            - text: in the footer, or by using the chat widget on this page. Our team typically replies by email.
+    - contentinfo [ref=f3e186]:
+      - text: © 2026 Perfect Corp. · YouCam Online ·
+      - link "Privacy" [ref=f3e187] [cursor=pointer]:
+        - /url: "#"
+      - text: ·
+      - link "Terms" [ref=f3e188] [cursor=pointer]:
+        - /url: "#"
+      - text: ·
+      - link "Contact Support" [ref=f3e189] [cursor=pointer]:
+        - /url: "#"
+    - dialog:
+      - banner:
+        - generic: YC
+        - generic:
+          - generic: YouCam Support Agent
+          - generic: Online · usually replies instantly
+        - button
+        - button
+      - generic:
+        - button: Chat
+        - button: FAQ
+      - generic:
+        - generic:
+          - heading [level=2]: Hi, I'm YouCam Support Agent
+          - paragraph: How can I help today? Pick a topic below to get started. ✨
+    - dialog:
+      - generic:
+        - banner:
+          - generic:
+            - heading [level=3]: Send us a ticket
+            - paragraph: Fill in the details and our team will reply by email.
+          - button
+        - generic:
+          - generic:
+            - generic:
+              - text: Email
+              - generic: "*"
+            - textbox:
+              - /placeholder: Enter your email
+          - generic:
+            - generic:
+              - text: Type
+              - generic: "*"
+            - combobox
+          - generic:
+            - generic:
+              - text: Subject
+              - generic: "*"
+            - textbox:
+              - /placeholder: Brief summary of your issue
+          - generic:
+            - generic:
+              - text: "Order ID / Invoice #"
+              - generic: (optional)
+            - textbox:
+              - /placeholder: e.g. 123456789 or ABCDEFGH-0005
+            - paragraph: The order or invoice ID on your 2Checkout or Stripe receipt email — pre-filled with your most recent order.
+          - generic:
+            - generic:
+              - text: Description
+              - generic: "*"
+            - textbox:
+              - /placeholder: Describe your issue in detail.
+          - generic:
+            - generic:
+              - text: Attachment
+              - generic: (optional)
+            - generic: 📎 Attach your invoice, or the source image / video
+            - paragraph: Any file type, any number of files · up to 10 MB in total.
+        - contentinfo:
+          - button: Cancel
+          - button: Submit ticket →
+    - dialog:
+      - generic:
+        - heading [level=4]: Close this chat?
+        - paragraph: Closing will end your conversation. Your messages won't be saved.
+        - generic:
+          - button: Stay
+          - button: Close anyway
+    - complementary "Demo controls" [ref=f3e190]:
+      - generic [ref=f3e191]:
+        - generic [ref=f3e192]: ▶ Full scenario
+        - button "1 Issue Unresolved Backend escalates → Support ticket" [ref=f3e193] [cursor=pointer]:
+          - generic [ref=f3e194]: "1"
+          - generic [ref=f3e195]:
+            - generic [ref=f3e196]: Issue Unresolved
+            - generic [ref=f3e197]: Backend escalates → Support ticket
+        - button "2 CMS unavailable Skeleton → greeting + free-text input" [ref=f3e198] [cursor=pointer]:
+          - generic [ref=f3e199]: "2"
+          - generic [ref=f3e200]:
+            - generic [ref=f3e201]: CMS unavailable
+            - generic [ref=f3e202]: Skeleton → greeting + free-text input
+      - button "🎬 Demo" [expanded] [ref=f3e203] [cursor=pointer]:
+        - generic [ref=f3e204]: 🎬
+        - text: Demo

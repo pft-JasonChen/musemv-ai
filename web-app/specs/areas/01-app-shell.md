@@ -9,12 +9,30 @@
 
 ## 1. Overview & scope
 
-The app shell is the persistent frame: a **left sidebar** (desktop, ≥640px) or **bottom tab bar**
-(mobile, <640px), a sticky **top bar** with a credits badge + account control, and the **account
+The app shell is the persistent frame: a **left sidebar** (desktop, ≥768px) or **bottom tab bar**
+(phone, <768px), a top bar with a credits badge + account control, and the **account
 dropdown menu**. It wraps every route via `AppShell` in `src/app/[locale]/layout.tsx`, except the
 public `/share` page which renders bare.
 
+> **Rewritten 2026-08-12 — this area predated the designer-UI migration (its previous revision was
+> dated 2026-07-23, before the migration ran 08-04 → 08-07) and three of its statements had become
+> factually wrong.** What changed, all verified against code:
+>
+> 1. **The phone cutover is 767px, not 640px.** `PHONE_QUERY = "(max-width: 767px)"`
+>    (`src/lib/ssr.ts:13`), matching `designer/AppLayout.css`'s own media query. Both `AppShell.tsx`
+>    and `MobileTabBar.tsx` carry the comment "the phone cutover moves 640px → 767px".
+> 2. **The phone bar has THREE destinations, not five.** `MobileTabBar` is Explore / Create /
+>    History. Profile and the second create entry are not on it; Profile is reached from
+>    `MobileHeader`'s account button (phone) or the `Sidebar` profile footer (desktop). This
+>    follows DP and was accepted as a product decision on 2026-08-12.
+> 3. **`TopBar` is no longer universal.** Routes listed in `AppShell`'s `OWN_CHROME` draw their own
+>    chrome (`DetailNavbar` / `RoomNavbar` / `MobileHeader` + `MobileTabBar`); `TopBar` survives only
+>    as the fallback for routes not yet migrated, and `/` gets the marketing `Navbar` instead. `/`
+>    can never be listed in `OWN_CHROME` because the check is `path.startsWith(r)`, which `"/"`
+>    matches for every route.
+
 **In scope:** `shell/AppShell`, `shell/Sidebar`, `shell/TopBar`, `shell/HeaderActions`,
+`shell/MobileHeader`, `shell/MobileTabBar`, `shell/DetailNavbar`, `shell/RoomNavbar`,
 `account/AccountMenu` (surface only — its destinations belong to areas 06/07).
 **Out of scope:** `SignInModal` (area 09), the credits modals (area 07), the Profile/History/Settings
 screens the shell links to (areas 05/06).
@@ -29,13 +47,17 @@ Feedback** rows (SHELL-03, UI-only) alongside Profile / My Creations / Sign Out.
 
 ## 2. Route / component / state / API map (RD)
 
-| Component | Owns UI | Reads/writes state | `MuseApi` |
-|---|---|---|---|
-| `shell/AppShell` | chrome vs bare decision; `Sidebar` + `TopBar` + `<main>` | `usePathname` + `stripLocalePrefix` | — |
-| `shell/Sidebar` | desktop rail + mobile bottom bar, 5 nav links, active state | `useAuth().{loggedIn,requireLogin}`, `useLocale().{locale}`, `useT()` | — |
-| `shell/TopBar` | sticky header, mobile wordmark | — | — |
-| `shell/HeaderActions` | logged-out Sign In button; logged-in credits badge + avatar; purchase toast | `useCredits().credits`, `useAuth().{loggedIn,openSignIn,profile,subscribed}` | — |
-| `account/AccountMenu` | account dropdown (profile header, credits row, Profile / My Creations / Sign Out) | `useCredits().credits`, `useAuth().{signOut,profile,subscribed}`, `useLocale()` | — |
+| Component             | Owns UI                                                                                | Reads/writes state                                                              | `MuseApi` |
+| --------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------- |
+| `shell/AppShell`      | chrome vs bare decision; `OWN_CHROME` routing between own-chrome / `TopBar` / `Navbar` | `usePathname` + `stripLocalePrefix`                                             | —         |
+| `shell/Sidebar`       | desktop rail (≥768px), 5 nav links, active state, profile footer                       | `useAuth().{loggedIn,requireLogin}`, `useLocale().{locale}`, `useT()`           | —         |
+| `shell/MobileTabBar`  | phone bottom bar (<768px), **3** items: Explore / Create / History                     | `useAuth().{loggedIn,requireLogin}`, `useLocale()`, `useT()`                    | —         |
+| `shell/MobileHeader`  | phone top bar (<768px) — wordmark, credits, account button (the Profile entry)         | `useCredits().credits`, `useAuth()`                                             | —         |
+| `shell/DetailNavbar`  | back + title bar for detail routes (own-chrome)                                        | `useCredits().credits`, `useAuth()`                                             | —         |
+| `shell/RoomNavbar`    | create/room-screen navbar; also exports the shared `Tabs`                              | `useCredits().credits`, `useAuth()`                                             | —         |
+| `shell/TopBar`        | **fallback only** — routes not in `OWN_CHROME`; `/` uses the marketing `Navbar`        | —                                                                               | —         |
+| `shell/HeaderActions` | logged-out Sign In button; logged-in credits badge + avatar; purchase toast            | `useCredits().credits`, `useAuth().{loggedIn,openSignIn,profile,subscribed}`    | —         |
+| `account/AccountMenu` | account dropdown (profile header, credits row, Profile / My Creations / Sign Out)      | `useCredits().credits`, `useAuth().{signOut,profile,subscribed}`, `useLocale()` | —         |
 
 Nav labels are localized via `useT()` (`nav.home/createMv/createSong/history/profile`) — one of the
 only two localized surfaces (nav + Profile). Everything else in the shell is hardcoded English.
@@ -51,9 +73,18 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
   (`nav.createSong`) · **History** `/history` (`nav.history` = "History") · Profile `/profile`
   (`nav.profile`). Note: the **same `/history` route is labeled "History" in the nav but
   "My Creations" in the account menu** (`AccountMenu.tsx:98`) and as the page title (area 05).
-- **Gated nav** (`GATED = {/mv/room, /song/create, /history, /profile}`, `Sidebar.tsx:13`): clicking a
-  gated item **while logged out** calls `requireLogin(() => push(target))` — opens `SignInModal` and
-  queues the navigation for after sign-in (`Sidebar.tsx:45-51`). (Matches the four `AuthGuard` routes.)
+- **Gated nav** (`GATED = {/history, /profile, /settings}`, `Sidebar.tsx`): clicking a gated item
+  **while logged out** calls `requireLogin(() => push(target))` — opens `SignInModal` and queues the
+  navigation for after sign-in. Matches the four `AuthGuard` routes (`/profile/credits` has no nav
+  item of its own).
+  > **Corrected 2026-08-12.** Was `{/mv/room, /song/create, /history, /profile}`. The two CREATE
+  > entries were removed by product decision: gating the nav click meant a guest tapping **Create MV**
+  > — or the ＋ sheet on a phone — got a sign-in modal _instead of_ the screen, which walled off the
+  > whole create flow and defeated the marketing Navbar's **Start for Free** (which lands on
+  > `/mv/room`). `MobileTabBar`'s create sheet gated the same way and was un-gated with it; its
+  > History entry still gates. The gates now live on the actions inside those screens — Song Library
+  > and Create Music Video (area 02), Create Song (area 03), see AC-AUTH-08. `/settings` was already
+  > gated by PROF-03 but had never been listed here.
 - **Active state** (`Sidebar.tsx:40-43`): Home active when `pathname === localePath(locale,"/")`;
   other items active when `pathname.startsWith(localePath(locale, href))`. Locale prefix preserved via
   `localePath`.
@@ -76,45 +107,52 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
 Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); account menu open.
 
 ### SHELL-P1 — Navigate (signed in, or to a public route)
+
 - **SHELL-P1-S1** User clicks a nav item (sidebar or bottom bar). **System:** routes via `next/link` to `localePath(locale, href)`, preserving locale; active styling updates.
 
 ### SHELL-P2 — Gated nav while logged out
+
 - **SHELL-P2-S1** Logged-out user clicks Create MV / Create Song / My Creations / Profile. **System:** prevents navigation, `requireLogin` opens `SignInModal`, queues the target.
 - **SHELL-P2-S2** On successful sign-in → the queued navigation runs. On dismiss → stays put (`onCancel` unset here, so no redirect).
 
 ### SHELL-P3 — Header, logged out
+
 - **SHELL-P3-S1** User clicks **Sign In** (top bar). **System:** `openSignIn()` opens `SignInModal` with no queued action.
 
 ### SHELL-P4 — Header, logged in
+
 - **SHELL-P4-S1** Click the **credits badge**. **System:** opens `BuyCreditsModal` (area 07); on purchase, toast "Added N credits".
 - **SHELL-P4-S2** Click the **avatar**. **System:** opens `AccountMenu`.
 - **SHELL-P4-S3** In the menu: **Buy Credits** → `BuyCreditsModal`; **Profile** → `/profile`; **My Creations** → `/history`; **Sign Out** → `signOut()` (clears session + resets subscription/profile in-memory). Outside-click/Esc closes.
 
 ### SHELL-P5 — Bare page
+
 - **SHELL-P5-S1** Navigating to `/share…` renders the page **without** sidebar/top bar (standalone).
 
 ---
 
 ## 5. Error & edge states
 
-| ID | Trigger | Behaviour |
-|---|---|---|
+| ID           | Trigger                         | Behaviour                                                                                                                                           |
+| ------------ | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **SHELL-E1** | Pre-hydration (SSR/first paint) | **Fixed (SHELL-04, 2026-07-23):** `HeaderActions` returns a fixed-height placeholder until `hydrated`, so the logged-out→in flash no longer occurs. |
-| **SHELL-E2** | Non-default locale active | All nav/menu links go through `localePath`, keeping the `/jpn/…` prefix; active-state comparison also prefix-aware. |
-| **SHELL-E3** | Missing translation key | `useT()` falls back to English per key (empty non-English dicts). |
+| **SHELL-E2** | Non-default locale active       | All nav/menu links go through `localePath`, keeping the `/jpn/…` prefix; active-state comparison also prefix-aware.                                 |
+| **SHELL-E3** | Missing translation key         | `useT()` falls back to English per key (empty non-English dicts).                                                                                   |
 
 ---
 
 ## 6. Acceptance criteria (EARS)
 
-- **AC-SHELL-01** — WHILE viewport ≥640px, THE SYSTEM SHALL show the left sidebar; WHILE <640px, the bottom tab bar — both with the same five destinations. *(visual)*
+- **AC-SHELL-01** — WHILE viewport ≥768px, THE SYSTEM SHALL show the left sidebar with its five destinations; WHILE <768px, the bottom tab bar with **three** (Explore / Create / History). _(visual)_
+  > **Rewritten 2026-08-12.** Was "≥640px … <640px … both with the same five destinations" — wrong on both counts after the designer migration. The cutover is `PHONE_QUERY = "(max-width: 767px)"`, and `MobileTabBar` carries three items, not five. Profile is not on the phone bar; it is reached from `MobileHeader`'s account button. Following DP, accepted 2026-08-12.
 - **AC-SHELL-02** — WHEN a nav item is clicked, THE SYSTEM SHALL navigate to that route under the active locale prefix and reflect the active item.
 - **AC-SHELL-03** — WHEN a logged-out user clicks a gated nav item (`/mv/room`, `/song/create`, `/history`, `/profile`), THE SYSTEM SHALL open the sign-in modal and, on success, proceed to the queued route.
 - **AC-SHELL-04** — WHILE logged out, THE SYSTEM SHALL show a **Sign In** button in the top bar and no credits badge/avatar.
 - **AC-SHELL-05** — WHILE logged in, THE SYSTEM SHALL show the credits badge (current balance) and the avatar; and WHEN `subscribed`, render the avatar with the gold ring and a **PRO** badge in the menu.
 - **AC-SHELL-06** — WHEN the avatar is clicked, THE SYSTEM SHALL open the account menu exposing Buy Credits, Profile, My Creations, Notifications, Send Feedback, and Sign Out; and close it on outside-click or Escape.
 - **AC-SHELL-07** — WHEN the path starts with `/share`, THE SYSTEM SHALL render the page bare (no sidebar/top bar).
-- **AC-SHELL-08** — THE SYSTEM SHALL render the shell at 390/768/1024/1440px with no overflow and the correct bar (bottom vs side) at the 640px switch. *(visual)*
+- **AC-SHELL-08** — THE SYSTEM SHALL render the shell at 390/768/1024/1440px with no overflow and the correct bar (bottom vs side) at the **767px** switch. _(visual)_
+  > **Corrected 2026-08-12** — was "640px". Note 768 is both a review viewport and the first width on the sidebar side of the cutover, so it exercises the boundary directly.
 
 ---
 
@@ -125,7 +163,7 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 - [ ] **SHELL-P3/P4**: logged-out shows Sign In only; logged-in shows badge+avatar; subscribed → gold ring + PRO (AC-04/05).
 - [ ] **SHELL-P4-S3**: menu links route correctly; Sign Out resets to guest; menu closes on outside-click/Esc (AC-06).
 - [ ] **SHELL-P5**: `/share` renders bare (AC-07).
-- [ ] **AC-08**: 390/768/1024/1440 clean; bottom-bar↔sidebar switch at 640px *(visual)*.
+- [ ] **AC-08**: 390/768/1024/1440 clean; bottom-bar↔sidebar switch at 640px _(visual)_.
 
 ---
 

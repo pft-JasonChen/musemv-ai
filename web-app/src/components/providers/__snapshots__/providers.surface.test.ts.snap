@@ -29,9 +29,7 @@ exports[`C4 — provider hook surfaces [additive only] > useAuth > shape is unch
 exports[`C4 — provider hook surfaces [additive only] > useCredits > shape is unchanged 1`] = `
 [
   "addCredits",
-  "consumeEnhance",
   "credits",
-  "enhanceCost",
 ]
 `;
 

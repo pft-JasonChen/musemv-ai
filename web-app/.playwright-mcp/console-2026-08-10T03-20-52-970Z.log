@@ -1,0 +1,19 @@
+[     252ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[     871ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[    9541ms] [INFO] [chatbot:event] chat_opened {topics_consumed_prev: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   10545ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 0, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   10546ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   10548ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   11150ms] [INFO] [chatbot:event] cms_content_failed {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   11151ms] [INFO] [chatbot:event] llm_unlocked {reason: cms_unavailable} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   11950ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 0, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   11951ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   12552ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   27026ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 0, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   27027ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   27629ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   28331ms] [INFO] [chatbot:event] path2_user_requested_agent_demo {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   28781ms] [INFO] [chatbot:event] ticket_cta_shown {reason: user_request, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   29431ms] [INFO] [chatbot:event] ticket_form_opened {from: user_request, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   30135ms] [INFO] [chatbot:event] upload_rejected {surface: ticket} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   30224ms] [INFO] [chatbot:event] ticket_submitted {type: purchase, questionTypeId: 313, email_set: true, order_set: false, attachment_count: 1} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243

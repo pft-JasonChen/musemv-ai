@@ -20,10 +20,10 @@ the web build.
 Terms/Privacy/Delete-account destinations (area 06 Settings).
 
 **Key divergences from App F01/F22:** **no email/password** option — only Continue with Apple /
-Google ⚠️; **no OAuth** — a 1.5s fake success 🔒; **no Splash & Onboarding carousel** (F01) at all ⚠️
+Google ⚠️; **no OAuth** — a 1.8s fake success 🔒; **no Splash & Onboarding carousel** (F01) at all ⚠️
 (→ `TBD-GL-03`). **GL-02 landed 2026-07-23:** gating is now **action-level** (Create MV / Create Song /
-Like / publish call `requireLogin` at the action), synced to App F22 — `AuthGuard` on the four route
-entries is kept as a backstop.
+Like / publish call `requireLogin` at the action), synced to App F22 — `AuthGuard` on the **four** gated route entries is kept as a backstop.
+**⚠️ Neither create route is one of them** — `/mv/room` and `/song/create` are open to guests; see §3.
 
 ---
 
@@ -56,16 +56,24 @@ entries is kept as a backstop.
 - **`openSignIn()`**: open the modal with **no** queued action (`AuthProvider.tsx:55-59`).
 - **`AuthGuard`** (`AuthGuard.tsx`): renders `null` until `hydrated && loggedIn`. When hydrated and
   logged out, calls `requireLogin(undefined, () => router.replace(home))` — i.e. dismissing the modal
-  **redirects Home**. Wraps `/mv/room`, `/song/create`, `/history`, `/profile`.
+  **redirects Home**. Wraps **`/history`, `/profile`, `/profile/credits`, `/settings`** (4) — all personal-data screens.
+  > **Corrected 2026-08-12.** Was "`/mv/room`, `/song/create`, `/history`, `/profile`" — wrong in both
+  > directions. **`/mv/room` lost its guard on 2026-08-07 by designer request** and is now open to
+  > guests: it is where the marketing Navbar's **Start for Free** lands, so a guest must be able to
+  > browse and compose before deciding to sign in. The gate moved to the point that costs something —
+  > `MvRoom`'s **Create Music Video** button calls `requireLogin` itself (the page file carries the
+  > rationale). `/settings` was added by PROF-03 (2026-07-23) and `/profile/credits` by the route move
+  > (2026-08-11); neither was recorded here.
 - **`SignInModal`** (`SignInModal.tsx`): title **"Sign in to YouCam Muse"** (SHELL-01); **Continue with
   Apple** and **Continue with Google** (white buttons); Terms of Service / Privacy Policy are **real
   links** to `lib/legal.ts` (`TERMS_URL`/`PRIVACY_URL`, new tab) — same set as Settings (AUTH-03 /
-  PROF-06); picking a provider shows a 1.5s success state ("Signed in successfully! Welcome back,
+  PROF-06); picking a provider shows a 1.8s success state ("Signed in successfully! Welcome back,
   {firstName} · via {provider}") then calls `onSignedIn` → `authStore.set(true)`. Dismissal is
   **blocked during** the success animation (`onClose` swallowed).
 - **Sign-in trigger points (action-level, GL-02):** header **Sign In** (`openSignIn`, area 01);
   **gated nav** click while logged out (`Sidebar` → `requireLogin(→push)`, area 01); **AuthGuard** on
-  the four gated routes (dismiss → Home) as a backstop; Home hero create CTAs / song-card create
+  the four gated routes (dismiss → Home) as a backstop; **the two create screens' own actions** —
+  `/mv/room`'s **Song Library** and **Create Music Video**, `/song/create`'s **Create Song**; Home hero create CTAs / song-card create
   (`HomeView`, area 04); and — new — **Create MV / Create Song / Like** on community surfaces
   (`CommunityMvPlayer`, `CommunitySongPlayer`, `SongExplore`) and **publish** on
   an MV result (`MvResult`) all call
@@ -81,11 +89,11 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 ### AUTH-P1 — Sign in from the header (no queued action)
 
 - **AUTH-P1-S1** Logged-out user clicks **Sign In** (top bar) → `openSignIn()` opens the modal.
-- **AUTH-P1-S2** Pick Apple/Google → 1.5s success animation → `authStore.set(true)`; header swaps to logged-in chrome. No navigation.
+- **AUTH-P1-S2** Pick Apple/Google → 1.8s success animation → `authStore.set(true)`; header swaps to logged-in chrome. No navigation.
 
 ### AUTH-P2 — Gated route entry (queued action)
 
-- **AUTH-P2-S1** Logged-out user navigates to `/mv/room` (or `/song/create` `/history` `/profile`). `AuthGuard` renders nothing and opens the modal via `requireLogin`.
+- **AUTH-P2-S1** Logged-out user navigates to `/history`, `/profile`, `/profile/credits` or `/settings`. `AuthGuard` renders nothing and opens the modal via `requireLogin`. **`/mv/room` and `/song/create` are NOT in this set** (2026-08-12) — they render normally for a guest; their gates fire on Song Library / Create Music Video / Create Song instead.
 - **AUTH-P2-S2** Sign in → guard re-renders the page (now `loggedIn`). **Dismiss without signing in → `router.replace(home)`.**
 
 ### AUTH-P3 — Gated create entry (queued push)
@@ -111,7 +119,8 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 
 ## 6. Acceptance criteria (EARS)
 
-- **AC-AUTH-01** — WHILE logged out, WHEN a user opens a guarded route (`/mv/room`, `/song/create`, `/history`, `/profile`), THE SYSTEM SHALL render no page content and open the sign-in modal.
+- **AC-AUTH-01** — WHILE logged out, WHEN a user opens a guarded route (`/history`, `/profile`, `/profile/credits`, `/settings`), THE SYSTEM SHALL render no page content and open the sign-in modal.
+- **AC-AUTH-08** — WHILE logged out, WHEN a user opens `/mv/room` or `/song/create`, THE SYSTEM SHALL render the full compose screen and SHALL NOT open the sign-in modal; and THE SYSTEM SHALL open it only when the user activates **Song Library** or **Create Music Video** (`/mv/room`) or **Create Song** (`/song/create`). _(new 2026-08-12)_
 - **AC-AUTH-02** — WHEN the user completes mock sign-in (Apple/Google), THE SYSTEM SHALL, after the success animation, set the persisted logged-in flag and run any queued action (navigation).
 - **AC-AUTH-03** — WHEN the user dismisses the modal opened by `AuthGuard`, THE SYSTEM SHALL navigate Home; WHEN dismissed after a gated-nav click, THE SYSTEM SHALL leave the current page unchanged.
 - **AC-AUTH-04** — WHILE the success animation is playing, THE SYSTEM SHALL block modal dismissal.
@@ -123,7 +132,7 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 
 ## 7. Per-path QA checklist
 
-- [ ] **AUTH-P1**: header Sign In → modal → provider pick → 1.5s success → logged-in chrome (AC-01/02).
+- [ ] **AUTH-P1**: header Sign In → modal → provider pick → 1.8s success → logged-in chrome (AC-01/02).
 - [ ] **AUTH-P2**: open `/mv/room` logged out → no page content + modal; sign in → page renders; dismiss → Home (AC-01/03).
 - [ ] **AUTH-P3**: gated nav click → modal; sign in → target; dismiss → stay (AC-03).
 - [ ] **AUTH-P4/E1**: sign out resets to guest; reload keeps logged-in only, subscription lost (AC-05/06).
@@ -150,7 +159,7 @@ flowchart TD
   Trigger{Sign-in trigger} -->|header Sign In| Modal["SignInModal (Apple / Google)"]
   Trigger -->|gated nav / Home create CTA| Modal
   Trigger -->|AuthGuard on gated route| Modal
-  Modal -->|pick provider| Success["1.5s success → authStore.set(true)"]
+  Modal -->|pick provider| Success["1.8s success → authStore.set(true)"]
   Success --> Resume["Run queued action (navigate) / render guarded page"]
   Modal -->|dismiss on guarded route| Home["router.replace(home)"]
   Modal -->|dismiss on nav trigger| Stay["stay put"]
@@ -159,5 +168,5 @@ flowchart TD
 ---
 
 **Decisions (as-built):** auth is mock and outside `MuseApi`; only the logged-in boolean persists;
-route-entry gating (four routes) plus action-level gating (GL-02) on Create/Like/Publish; no
+route-entry gating (four personal-data routes; both create routes deliberately excluded) plus action-level gating (GL-02) on Create/Like/Publish; no
 onboarding/splash; social-only sign-in.

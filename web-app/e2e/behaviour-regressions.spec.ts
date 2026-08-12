@@ -26,7 +26,8 @@
 // this file checks the app actually applies them.
 
 import { expect, test, type Page } from "@playwright/test";
-import { COST_RENDER, COST_STORYBOARD } from "../src/lib/mv/types";
+import { COST_REGEN, COST_RENDER, COST_STORYBOARD } from "../src/lib/mv/types";
+import { DEFAULT_CREDITS } from "../src/lib/user";
 import { DEFAULT_LOCALE, HTML_LANG, LOCALES, localePath } from "../src/lib/i18n/config";
 
 const MV_DESCRIPTION = "A glamorous neon-lit night drive through the city.";
@@ -37,6 +38,42 @@ const FAIL_TRIGGER = "[fail]";
 /** Seed the mock auth flag before any page script runs, so AuthGuard sees a user. */
 async function login(page: Page) {
   await page.addInitScript(() => window.localStorage.setItem("muse_auth", "1"));
+}
+
+/**
+ * Give the account enough credits to drive a full generation flow, **in place**.
+ *
+ * Needed since 2026-08-12: `DEFAULT_CREDITS` dropped 390 → 10 (`TBD-CR-06a`), so a
+ * fresh free account cannot afford a storyboard (20) or a render (200), and every
+ * multi-step flow test would otherwise stop at the IAP upsell — which is the
+ * intended product behaviour, not a bug.
+ *
+ * ⚠️ **Call this AFTER `page.goto()`, never before, and never navigate between
+ * funding and the flow under test.** `subscribed` and the credit balance are
+ * in-memory React state (`AuthProvider` / `CreditsProvider`); only `muse_auth`
+ * persists to localStorage (AUTH-E1 / `TBD-GL-04`). A `goto` is a full page load,
+ * so it resets the balance straight back to 10 — which is exactly how the first
+ * two attempts at this helper failed, silently, with the flow then stopping at the
+ * upsell instead of erroring.
+ *
+ * It funds through the REAL subscribe flow rather than injecting a balance, so the
+ * path a user actually takes stays exercised (and CR-06 keeps holding: credit packs
+ * are subscriber-only, so subscribing IS how you get funds). Featured card =
+ * Weekly Pro = 1,000 credits.
+ */
+async function fundAccount(page: Page, plan: "weekly" | "weekly_pro" = "weekly_pro") {
+  await page.getByRole("button", { name: "Upgrade" }).first().click();
+  // DP's dialog is one Subscribe button PER CARD, not a shared selection, so the
+  // card decides the plan — same locator the 3f tests use. Weekly Pro (featured)
+  // grants 1,000; Weekly grants 200, which some tests need because they assert on
+  // a LOW balance afterwards and 1,000 would overshoot the precondition.
+  const card =
+    plan === "weekly_pro"
+      ? page.locator(".upgrade-dialog__card--featured")
+      : page.locator(".upgrade-dialog__card").first();
+  await card.getByRole("button", { name: "Subscribe" }).click();
+  await expect(page.getByRole("dialog", { name: "Upgrade Your Plan" })).toBeHidden();
+  await expect.poll(() => balance(page)).toBeGreaterThan(DEFAULT_CREDITS);
 }
 
 /** Current header credit balance. Keeps the sign — the balance can go negative (TBD-CR-08). */
@@ -90,6 +127,7 @@ test("G5-d#1 charges COST_STORYBOARD then COST_RENDER at job start", async ({ pa
   test.slow(); // two full mock generations
   await login(page);
   await page.goto("/mv/room");
+  await fundAccount(page);
   const before = await balance(page);
 
   await composeMv(page);
@@ -111,6 +149,7 @@ test("G5-d#1 charges COST_STORYBOARD then COST_RENDER at job start", async ({ pa
 test("G5-d#1 refunds the charge when the job fails", async ({ page }) => {
   await login(page);
   await page.goto("/mv/room");
+  await fundAccount(page);
   const before = await balance(page);
 
   await composeMv(page, `${MV_DESCRIPTION} ${FAIL_TRIGGER}`);
@@ -187,11 +226,17 @@ test("G5-d#2 insufficient balance routes to IAP instead of generating", async ({
 // ════════════════════════════════════════════════════════════════════════════
 // G5-d #3 — AuthGuard on every signed-in-only route
 // ════════════════════════════════════════════════════════════════════════════
-// `/mv/room` is NOT in this list (2026-08-07, designer request) — it dropped
-// its `AuthGuard` on purpose so the marketing Navbar's "Start for Free" can
-// land a guest here to compose. See the "/mv/room is guest-reachable" block
-// below for where its gate actually is now.
-const GUARDED_ROUTES = ["/settings", "/song/create", "/profile", "/history"];
+// NEITHER create route is in this list. `/mv/room` dropped its `AuthGuard` on
+// 2026-08-07 (designer request) and `/song/create` followed on 2026-08-12
+// (product decision) — a guest must be able to open both and compose before
+// deciding to sign in. Their gates are on the actions instead; see the
+// "guest-reachable" blocks below, which assert that for each of them.
+//
+// `/profile/credits` joined the list on 2026-08-12. It became a route on
+// 2026-08-11 and was guarded from the start, but nothing here covered it for a
+// day — the standing `a11y.spec.ts` sweep never seeds auth, so a guarded route
+// can look green while only its sign-in wall was ever tested.
+const GUARDED_ROUTES = ["/settings", "/profile", "/history", "/profile/credits"];
 
 for (const route of GUARDED_ROUTES) {
   test(`G5-d#3 AuthGuard: ${route} is closed to guests`, async ({ page }) => {
@@ -212,10 +257,83 @@ test("G5-d#3 /mv/room is guest-reachable, unlike the routes above", async ({ pag
 
 test("G5-d#3 /mv/room's gate moved to Create Music Video", async ({ page }) => {
   // Still a guest — compose is allowed, generating is not.
+  //
+  // ⚠️ This test used `composeMv()` from 0748b66 (the commit that opened
+  // /mv/room to guests) until 2026-08-12, and had NEVER passed: `composeMv`
+  // picks a song through **Song Library**, which the same commit's designer
+  // decision put behind `requireLogin`. So the sign-in modal opened at the
+  // library and the "Choose Song" dialog never appeared — the test timed out on
+  // a premise that contradicted the feature it was guarding.
+  //
+  // The real guest path to a composed MV is **Import Audio**, which is
+  // deliberately ungated (a file the user already has is not account data).
+  // `isComposeReady` needs a song AND a description, so both are required
+  // before the CTA is even enabled.
   await page.goto("/mv/room");
-  await composeMv(page);
-  await page.getByRole("button", { name: "Create Music Video" }).click();
+
+  await page.locator('input[type="file"][accept="audio/*"]').setInputFiles({
+    name: "guest-track.mp3",
+    mimeType: "audio/mpeg",
+    // Minimal MP3 frame — enough for the import handler to accept the file.
+    buffer: Buffer.from("SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA", "base64"),
+  });
+  // Import opens the Trim sheet; the song only lands in `compose.song` once it
+  // is confirmed. (The probe's `error` handler falls back to duration 0, so an
+  // undecodable buffer still reaches this step — no real audio needed.)
+  await trimConfirm(page).click();
+
+  await page
+    .getByPlaceholder("Describe your video to help AI create a more compelling story.")
+    .fill("A neon city at night, rain on the windows.");
+
+  const cta = page.getByRole("button", { name: "Create Music Video" });
+  await expect(cta).toBeEnabled();
+  await cta.click();
   await expect(page.getByRole("dialog", { name: /Sign in/i })).toBeVisible();
+});
+
+test("G5-d#3 /mv/room's Song library is gated too", async ({ page }) => {
+  // The second gate on this screen: the library lists the user's OWN songs, so
+  // a guest has nothing to show — opening it must ask for sign-in rather than
+  // render an empty sheet.
+  await page.goto("/mv/room");
+  await page.getByRole("button", { name: /Song library/i }).click();
+  await expect(page.getByRole("dialog", { name: /Sign in/i })).toBeVisible();
+});
+
+test("G5-d#3 /song/create is guest-reachable, unlike the routes above", async ({ page }) => {
+  // No login(). Until 2026-08-12 this route had an `AuthGuard` and a guest saw
+  // only the sign-in wall; it now mirrors `/mv/room`.
+  await page.goto("/song/create");
+  await expect(page.getByRole("dialog", { name: /Sign in/i })).not.toBeVisible();
+  await expect(page.getByRole("button", { name: /Create Song/i })).toBeVisible();
+});
+
+test("G5-d#3 /song/create's gate moved to Create Song", async ({ page }) => {
+  // Still a guest — compose is allowed, generating is not. The description is
+  // what makes the CTA `--active`; a disabled button would pass this test for
+  // the wrong reason, so assert it is enabled before clicking.
+  await page.goto("/song/create");
+  await page
+    .getByPlaceholder(/A bittersweet love song/)
+    .fill("An upbeat summer anthem about chasing dreams.");
+  const cta = page.getByRole("button", { name: /Create Song/i });
+  await expect(cta).toBeEnabled();
+  await cta.click();
+  await expect(page.getByRole("dialog", { name: /Sign in/i })).toBeVisible();
+});
+
+test("G5-d#3 a guest is never shown the credits upsell before signing in", async ({ page }) => {
+  // Ordering rule inside `SongCompose.generate()`: `requireLogin` wraps the
+  // GL-01 balance check, so a logged-out user cannot be asked to buy credits
+  // for an account that does not exist yet. Sign-in must come first.
+  await page.goto("/song/create");
+  await page
+    .getByPlaceholder(/A bittersweet love song/)
+    .fill("An upbeat summer anthem about chasing dreams.");
+  await page.getByRole("button", { name: /Create Song/i }).click();
+  await expect(page.getByRole("dialog", { name: /Sign in/i })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: /Buy Credits/i })).not.toBeVisible();
 });
 
 test("G5-d#3 requireLogin: dismissing the sign-in modal returns Home", async ({ page }) => {
@@ -1323,6 +1441,36 @@ test("3d: the seek bar is operable by keyboard, not just pointer", async ({ page
   await expect(slider).toBeFocused();
 });
 
+test("TODO#5: every ported seek bar is a keyboard-operable slider, not a bare div", async ({
+  page,
+}) => {
+  // TODO.md #5 closed 2026-08-12. `/watch` (above) already used `SeekBar`; these are
+  // the five that were still bare `<div onPointerDown>` — a Serious WCAG 2.1.1 failure.
+  // Asserting the ROLE, not the class, is the point: the markup and class names were
+  // deliberately unchanged by the swap, so only the a11y contract can prove it happened.
+  //
+  // `SongPlayBar` is here because it was the FIFTH — it arrived with the drop-2
+  // re-sync after TODO #5 was written, carrying the same defect, and was on no list.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  // /mv/edit — reachable with flow state seeded the way /history rows do it.
+  await page.goto("/song/create");
+  await page.getByPlaceholder(/A bittersweet love song/).fill("A slow piano ballad.");
+  await page.getByRole("button", { name: /Create Song/i }).click();
+  await page.waitForURL(/\/song\/(creating|result)/);
+  await page.waitForURL(/\/song\/result/, { timeout: 30_000 });
+
+  // Scope by name: the transport also has a volume <input type="range">, which is
+  // ALSO role=slider and comes first in the DOM.
+  const slider = page.getByRole("slider", { name: "Seek within the song" });
+  await expect(slider).toBeVisible();
+  await expect(slider).toHaveAttribute("aria-valuenow", /\d+/);
+  await expect(slider).toHaveAttribute("tabindex", "0");
+  await slider.focus();
+  await expect(slider).toBeFocused();
+});
+
 test("3d / EXP-06: an unresolvable /watch id is a not-found state", async ({ page }) => {
   await login(page);
   await page.goto("/watch?id=does-not-exist");
@@ -2038,6 +2186,7 @@ test("3h: both stages render DP's blocks, not the old Tailwind layout", async ({
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/mv/room");
+  await fundAccount(page);
   await composeMv(page);
   await page.getByRole("button", { name: "Create Music Video" }).click();
   await page.getByText("Create Storyboard First").click();
@@ -2090,6 +2239,7 @@ test("3h: the character image's Download and Expand survived, and Expand really 
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/mv/room");
+  await fundAccount(page);
   await composeMv(page);
   await page.getByRole("button", { name: "Create Music Video" }).click();
   await page.getByText("Create Storyboard First").click();
@@ -2140,6 +2290,7 @@ test("3h / GL-01: the storyboard CTA still states its cost and still gates on it
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/mv/room");
+  await fundAccount(page);
   await composeMv(page);
   await page.getByRole("button", { name: "Create Music Video" }).click();
   await page.getByText("Create Storyboard First").click();
@@ -2352,7 +2503,25 @@ test("3j / SONG-03: Recreate names its price and gates on the balance", async ({
 
   const recreate = page.locator(".song-result__cta-secondary");
   await expect(recreate).toContainText("Recreate");
-  await expect(recreate).toContainText("50");
+
+  // ⚠️ This used to assert the button also showed "50". It NEVER passed:
+  // `.song-result__cta-secondary` renders an icon + the word "Recreate" and no
+  // price — verified 2026-08-12 by reading the received text ("Recreate"), and the
+  // markup is unchanged since the 3j migration. AC-SONG-12 only requires the charge
+  // and the gate, not a label, so the assertion over-reached the spec.
+  //
+  // What IS the rule, and what this now guards: a Recreate is a PAID re-roll, and
+  // below the price it must route to IAP instead of regenerating. Since 2026-08-12
+  // that price is one normal generation (6 vocal / 12 instrumental), not a flat 50.
+  // The account starts on 10 and this song cost 6, leaving 4 — under the 6 needed.
+  await expect(page.getByTestId("credit-balance").first()).toContainText("4");
+  await recreate.click();
+  await expect(
+    page.getByRole("dialog", { name: /Upgrade Your Plan|Muse Pro|Buy Credits/i }),
+  ).toBeVisible();
+
+  // The missing price LABEL is a real affordance gap (a paid action with no warning)
+  // — raised as DESIGNER-TODO A23, not silently accepted here.
 });
 
 test("3j: the result still says what was generated, not just its title", async ({ page }) => {
@@ -2378,6 +2547,10 @@ test("3j: the result still says what was generated, not just its title", async (
 /** Compose an MV, render it directly, and open the editor from the result. */
 async function openEditor(page: Page) {
   await page.goto("/mv/room");
+  // A direct render costs COST_RENDER (200) and a free account now starts on 10.
+  // Weekly (200), NOT Weekly Pro (1,000): 3k asserts the balance is UNDER the
+  // scene cost afterwards, so 210 − 200 = 10 keeps that precondition true.
+  await fundAccount(page, "weekly");
   await composeMv(page);
   await page.getByRole("button", { name: "Create Music Video" }).click();
   await page.getByText("Create MV Directly").click();
@@ -2478,18 +2651,27 @@ test("3k / GL-01: Recreate routes to IAP when the balance cannot cover it", asyn
   const before = await balance(page);
   expect(before, "precondition: the balance must be under the scene cost").toBeLessThan(200);
 
+  // ⚠️ Recreate starts DISABLED and only enables once THIS scene's prompt has
+  // actually been edited (designer request, 2026-08-11 — recreating an untouched
+  // scene would spend COST_REGEN on a result the edit did not drive). The test
+  // predates that rule and clicked the disabled button, so it could not pass in
+  // either branch; edit the prompt first. Found 2026-08-12.
+  await page.getByRole("textbox", { name: /^Scene / }).first().fill("A neon alley in the rain.");
+  const recreate = page.locator(".mv-edit__recreate-scene");
+  await expect(recreate).toBeEnabled();
+
   // Cover recreate costs 10 and the balance is far above that, so use the
   // scene recreate (20) only when it is genuinely unaffordable.
-  if (before < 20) {
-    await page.locator(".mv-edit__recreate-scene").click();
+  if (before < COST_REGEN) {
+    await recreate.click();
     await expect(
       page.getByRole("dialog", { name: /Upgrade Your Plan|Muse Pro|Buy Credits/i }),
     ).toBeVisible();
     expect(await balance(page), "a refused recreate must not charge").toBe(before);
   } else {
     // Affordable: it charges exactly COST_REGEN and records a version.
-    await page.locator(".mv-edit__recreate-scene").click();
-    await expect.poll(() => balance(page)).toBe(before - 20);
+    await recreate.click();
+    await expect.poll(() => balance(page)).toBe(before - COST_REGEN);
   }
 });
 
@@ -2892,10 +3074,6 @@ test("landing page: New Songs' Create requires login", async ({ page }) => {
   // had it; a port that dropped it would look identical.
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/");
-  await page
-    .locator(".new-songs__item")
-    .first()
-    .getByRole("button", { name: "Create" })
-    .click();
+  await page.locator(".new-songs__item").first().getByRole("button", { name: "Create" }).click();
   await expect(page.getByRole("dialog", { name: /sign in/i })).toBeVisible();
 });

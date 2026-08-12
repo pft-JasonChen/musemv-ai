@@ -2,7 +2,8 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
+import { SeekBar } from "@/components/ui/SeekBar";
+import type { RefObject } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -135,34 +136,18 @@ const linesOf = (song: CommunitySong): string[] => {
  * The `pointermove`/`pointerup` listeners are added inside the handler, not in a
  * render-time effect — benign, and the pre-flight's SSR sweep cleared them.
  */
+// TODO.md #5 / 7a: seeking goes through `ui/SeekBar`, which is keyboard-operable.
+// DP draws this bar as a bare div with only `onPointerDown` — a Serious WCAG 2.1.1
+// failure. Adopted 2026-08-12; pixel-neutral, same markup and class names.
 function useSeek(audioRef: RefObject<HTMLAudioElement | null>) {
-  const trackRef = useRef<HTMLDivElement>(null);
-
-  function seekFromClientX(clientX: number) {
-    const track = trackRef.current;
+  function seek(next: number) {
     const audio = audioRef.current;
-    if (!track || !audio || !audio.duration) return;
-    const rect = track.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    if (!audio || !audio.duration) return;
     // S3: no clamp. The old player capped this at `maxPct` for free accounts and
     // opened SubscribeModal when you tried to pass it.
-    audio.currentTime = ratio * audio.duration;
+    audio.currentTime = Math.min(audio.duration, Math.max(0, next));
   }
-
-  function onPointerDown(event: ReactPointerEvent) {
-    seekFromClientX(event.clientX);
-    function handleMove(moveEvent: PointerEvent) {
-      seekFromClientX(moveEvent.clientX);
-    }
-    function handleUp() {
-      window.removeEventListener("pointermove", handleMove);
-      window.removeEventListener("pointerup", handleUp);
-    }
-    window.addEventListener("pointermove", handleMove);
-    window.addEventListener("pointerup", handleUp);
-  }
-
-  return { trackRef, onPointerDown };
+  return { seek };
 }
 
 interface PlayerProps {
@@ -220,9 +205,8 @@ function MobileNowPlaying({
   const [showLyrics, setShowLyrics] = useState(false);
   const mounted = useIsMounted();
   const { locale } = useLocale();
-  const { trackRef, onPointerDown } = useSeek(audioRef);
+  const { seek } = useSeek(audioRef);
 
-  const progressRatio = duration ? currentTime / duration : 0;
 
   if (!mounted) return null;
 
@@ -303,21 +287,16 @@ function MobileNowPlaying({
           </div>
         </div>
 
-        <div
+        <SeekBar
+          value={currentTime}
+          max={duration}
+          onSeek={seek}
+          label="Seek within the song"
           className="song-detail-mobile-player__progress"
-          ref={trackRef}
-          onPointerDown={onPointerDown}
-        >
-          <div className="song-detail-mobile-player__progress-track" />
-          <div
-            className="song-detail-mobile-player__progress-fill"
-            style={{ width: `${progressRatio * 100}%` }}
-          />
-          <div
-            className="song-detail-mobile-player__progress-thumb"
-            style={{ left: `${progressRatio * 100}%` }}
-          />
-        </div>
+          trackClassName="song-detail-mobile-player__progress-track"
+          fillClassName="song-detail-mobile-player__progress-fill"
+          thumbClassName="song-detail-mobile-player__progress-thumb"
+        />
         <div className="song-detail-mobile-player__time">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>

@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { SeekBar } from "@/components/ui/SeekBar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
@@ -84,7 +84,6 @@ export function MvResult() {
   const { history } = useHistory();
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   // G7 finding 3i-1. The pre-migration screen was a `<video controls>`, so the
@@ -124,7 +123,6 @@ export function MvResult() {
   const title = (compose.settings.title.on && compose.settings.title.text) || songTitle;
   const author = (compose.settings.author.on && compose.settings.author.text) || MOCK_USER.name;
   const isPortrait = compose.settings.ratio === "9:16";
-  const progressRatio = duration ? currentTime / duration : 0;
 
   function editMv() {
     // Carry this video into the editor; ensure a storyboard exists (direct-mode
@@ -147,24 +145,14 @@ export function MvResult() {
     else video.pause();
   }
 
-  function seekFromClientX(clientX: number) {
-    const track = progressRef.current;
-    const video = videoRef.current;
-    if (!track || !video || !video.duration) return;
-    const rect = track.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    video.currentTime = ratio * video.duration;
-  }
-
-  function onProgressPointerDown(event: ReactPointerEvent) {
-    seekFromClientX(event.clientX);
-    const onMove = (e: PointerEvent) => seekFromClientX(e.clientX);
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
+  // TODO.md #5 / 7a: seeking goes through `ui/SeekBar`, which is keyboard-
+  // operable. DP draws this bar as a bare div with only `onPointerDown`; that
+  // is a Serious WCAG 2.1.1 failure, and `SeekBar` was built for `/watch` to
+  // avoid copying it. Adopted here 2026-08-12 — pixel-neutral, same markup.
+  function seek(next: number) {
+    const media = videoRef.current;
+    if (!media || !media.duration) return;
+    media.currentTime = Math.min(media.duration, Math.max(0, next));
   }
 
   // MV-12 + GL-02.
@@ -237,21 +225,16 @@ export function MvResult() {
                 />
               </button>
               <span className="mv-result__time">{formatTime(currentTime)}</span>
-              <div
+              <SeekBar
+                value={currentTime}
+                max={duration}
+                onSeek={seek}
+                label="Seek within the music video"
                 className="mv-result__progress"
-                ref={progressRef}
-                onPointerDown={onProgressPointerDown}
-              >
-                <div className="mv-result__progress-track" />
-                <div
-                  className="mv-result__progress-fill"
-                  style={{ width: `${progressRatio * 100}%` }}
-                />
-                <div
-                  className="mv-result__progress-thumb"
-                  style={{ left: `${progressRatio * 100}%` }}
-                />
-              </div>
+                trackClassName="mv-result__progress-track"
+                fillClassName="mv-result__progress-fill"
+                thumbClassName="mv-result__progress-thumb"
+              />
               <span className="mv-result__time">{formatTime(duration)}</span>
               <button
                 type="button"

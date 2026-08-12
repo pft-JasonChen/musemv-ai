@@ -37,10 +37,17 @@ backlog, not porting. Four things from that slice are worth carrying:
 sound enough for RD to wire the backend". A finding that is **purely UI** and touches neither the
 contract, the providers, nor a product rule is **deliberately left unfixed** until the next DP
 drop. That is why most of `TODO.md` #7 and nearly all of `DESIGNER-TODO.md` are open — they are
-decisions, not slipped work. The uncomfortable case to know: **all of 7a is deferred, including
-the keyboard-seek half**, so four playback seek bars stay pointer-only (WCAG 2.1.1 Serious), and
-on `/mv/result` that is a regression against the pre-migration `<video controls>`. Offered
-separately, deferred anyway, accepted knowingly.
+decisions, not slipped work.
+
+> **UPDATE 2026-08-12 — the keyboard-seek half of that is now DONE, and there were FIVE bars, not
+> four.** `TODO.md` #5 is closed: `/song/result`, `/mv/result`, `/mv/edit`, `/song/play` **and
+> `SongPlayBar`** all render through `ui/SeekBar` (role=slider, tabIndex, aria-valuenow, arrow /
+> page / Home-End keys). Markup and class names unchanged, so it is pixel-neutral. `SongPlayBar`
+> was the one nobody had counted — it arrived with the drop-2 re-sync on 2026-08-07, *after* this
+> paragraph and `NEXT-SESSION` were written, carrying the same defect. It was found by grepping
+> for the defect, not by working from the list. Guarded by `e2e`'s "TODO#5: every ported seek bar
+> is a keyboard-operable slider", mutation-tested both ways. **The rest of 7a (the ±15s glyph) is
+> still deferred and still blocked on designer artwork.**
 
 **DROP 2 IS VENDORED AND ITS RE-SYNC IS COMPLETE (`2670ed2`; vendored 2026-08-06, finished
 2026-08-07).** `designer-prototype/` is no longer `568e64c`. `tokens.css` and every icon are
@@ -358,6 +365,13 @@ a detail screen:**
   migrating a screen, diff it against its `AC-*` acceptance criteria, not just against DP.
 
 ## Error log (one line per user correction; fold recurring lessons into an AGENTS.md rule)
+
+- 2026-08-12: ran `npm run e2e` from the session twice; both times it was auto-backgrounded at the
+  10-minute Bash cap and its `next start -p 3100` was still holding the port when the Stop hook fired
+  its own run, blocking Stop with "port already used" — the documented concurrent-e2e poisoning,
+  occurrences 4 and 5. Rule now in `AGENTS.md`: an agent session must NOT run the full `e2e` itself;
+  leave the port free and a fresh build, and let the Stop hook own it. Use `--grep` on one spec file
+  when a targeted answer is needed.
 
 - 2026-07-21: a large feature commit (auth/i18n/subscriptions, `79eb1b1`) changed `src/` without
   updating AGENTS.md/README/DEVELOPER-HANDOVER/specs — docs drifted. When changing code, update

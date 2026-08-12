@@ -1,0 +1,10 @@
+[     420ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[     716ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8010/favicon.ico:0
+[    1028ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   13092ms] [INFO] [chatbot:event] chat_opened {topics_consumed_prev: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   14097ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 0, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   14098ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   14100ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   14701ms] [INFO] [chatbot:event] cms_content_failed {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   14701ms] [INFO] [chatbot:event] llm_unlocked {reason: cms_unavailable} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243
+[   14701ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2243

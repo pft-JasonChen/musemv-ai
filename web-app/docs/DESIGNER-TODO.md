@@ -567,6 +567,45 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
   把**這個損失本身寫成斷言**(和 A19 同一手法),免得下次交稿或下個 session
   順手把 WA 自己的 rail 加回來。
 
+### A21. Credits Detail 的「Buy More」少了 free user 狀態 —— 🔴 **擋開發,且已經改錯了 code**
+
+**發現於:** 2026-08-12,spec 與 code 對齊掃描。**產品負責人已於同日裁決:spec 是對的。**
+
+**規則(Business Model,CR-06):**
+
+| 使用者           | Credits Detail 的 CTA                                    | 點下去                          |
+| ---------------- | -------------------------------------------------------- | ------------------------------- |
+| **未訂閱(free)** | **只能 Upgrade** —— 不可出現「Buy More」/「Buy Credits」 | `SubscribeModal`(Muse Pro 方案) |
+| **已訂閱**       | **Buy More**                                             | `BuyCreditsModal`(點數包)       |
+
+也就是**點數包是訂閱者專屬**,free user 在任何可以買點數的入口都只看得到 Upgrade。
+
+**稿面缺口:** DP 沒有 auth,更沒有訂閱狀態,所以 `CreditsPage.tsx` 的
+`<Button variant="PrimaryPayg">Buy More</Button>` 是**無條件**的 —— free user 的那一版
+從來沒被畫過。同樣的缺口也在 `CreditsDialog`(DP 的買點數 dialog)。
+
+**需要設計師提供:**
+
+1. Credits Detail(Figma 636:11875)**free user 版**的 CTA —— 文案與樣式。WA 目前暫用
+   「Get Muse Pro」,但那是工程補的,不是設計決定的。
+2. 這顆 CTA 在 free 狀態要不要換 variant?現在是 `PrimaryPayg`(帶點數叢集的付費樣式),
+   導向訂閱時語意上未必合適。
+3. 順帶確認:餘額不足時從創作流程彈出的購買入口,free user 是否走同一條規則
+   (目前 spec 的 CR-E4/CR-E5 說是)。
+
+**⚠️ 這一項跟其他 A 項不同 —— code 已經被改成錯的,要改回來。**
+`d329719`(2026-08-11)的 `BuyCreditsModal.tsx:56` 宣告
+`── CR-06 REVERSED (designer decision, 2026-08-11) ──`,把 `subscribed` gate 整個拿掉,
+`CreditsView` 的 CTA 也跟著變成無條件「Buy More」。**CR-06 出自 Business Model,不是稿面
+可以推翻的範圍。** 依裁決要復原:
+
+- `BuyCreditsModal.tsx` —— 恢復 `if (!subscribed) return <SubscribeModal … />` 的 gate
+- `CreditsView.tsx` —— CTA 恢復依 `subscribed` 分支
+- 兩處都要回歸測試(free / subscribed 兩種狀態)
+
+登記為 `specs/areas/07` 的 **TBD-CR-10**,`specs/OPEN-QUESTIONS.md` 亦有。
+**這是 spec 從頭到尾都寫對、code 走偏的案例** —— 所以 spec 沒有被改成配合 code。
+
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 
 | 畫面                           | 狀況                                                                                                                                                        | 影響                                              |

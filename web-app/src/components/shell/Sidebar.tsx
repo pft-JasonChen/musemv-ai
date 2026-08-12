@@ -48,7 +48,16 @@ const NAV: NavItem[] = [
 ];
 
 /** Routes (unprefixed) that require sign-in; clicking them logged out opens the gate. */
-const GATED = new Set(["/mv/room", "/song/create", "/history", "/profile", "/settings"]);
+// Nav destinations a guest cannot reach at all. The two CREATE entries are
+// deliberately NOT here (product decision 2026-08-12): a guest may open
+// `/mv/room` and `/song/create` and compose freely — gating the nav click made
+// the whole create flow feel walled off, and `/mv/room` is where the marketing
+// Navbar's "Start for Free" lands. The gate sits on the actions that actually
+// cost something or need the user's own data instead:
+//   · /mv/room     → "Song library" (needs My Songs) and "Create Music Video"
+//   · /song/create → "Create Song"
+// See `MvRoom.tsx` / `SongCompose.tsx`, spec area 09 §3 and AC-AUTH-01.
+const GATED = new Set(["/history", "/profile", "/settings"]);
 
 /** Below Laptop the rail collapses to icon-only by default; the toggle overrides it. */
 const COLLAPSE_QUERY = "(max-width: 1024px)";

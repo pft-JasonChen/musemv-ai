@@ -579,7 +579,7 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 </table>
 <p><strong>Modals / sheets (no route)</strong> — specced inside the owning area:</p>
 <ul>
-<li>Credits/IAP: <code>SubscribeModal</code>, <code>BuyCreditsModal</code>, <code>CreditsDetailModal</code> → area 07 (F20)</li>
+<li>Credits/IAP: <code>SubscribeModal</code>, <code>BuyCreditsModal</code> (modals) + <code>/profile/credits</code> <code>CreditsView</code> (route) → area 07 (F20)</li>
 <li>Auth: <code>SignInModal</code> → area 09 (F22)</li>
 <li>Account menu, Edit-profile → area 06 (F18)</li>
 <li>MV sheets: <code>ChooseSongModal</code>, <code>TrimAudioModal</code>, <code>FacePickerModal</code>, <code>SettingsModal</code>, <code>ModeModal</code>, Templates (inline modal) → area 02</li>
@@ -612,7 +612,7 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 </ul>
 <h2 id="6-credits-model">6. Credits model 🔒</h2>
 <ul>
-<li><code>CreditsProvider</code>: single in-memory balance (<code>DEFAULT_CREDITS = 390</code>), <code>addCredits(n)</code>, plus <code>enhanceCost</code>/<code>consumeEnhance</code> (SONG-04). Resets on reload; ledger in <code>CreditsDetailModal</code> is a static seed, not live.</li>
+<li><code>CreditsProvider</code>: single in-memory balance (<code>DEFAULT_CREDITS = 390</code>), <code>addCredits(n)</code>, plus <code>enhanceCost</code>/<code>consumeEnhance</code> (SONG-04). Resets on reload; the ledger on <code>/profile/credits</code> is a static seed, not live.</li>
 <li><strong>Real charging (GL-01, 2026-07-23):</strong> the MV/song <strong>flow providers</strong> decrement on generation start — <code>COST_STORYBOARD=20 / COST_RENDER=200 / COST_SONG=10</code> (<code>src/lib/mv/types.ts</code>; song recreate <code>COST_SONG_RECREATE=50</code>) — and <strong>refund on failure</strong>; Edit-MV still charges its micro-ops <code>COST_REGEN=20 / COST_COVER=10</code> (in <code>MvEditor.tsx</code>). The former <code>COST_MERGE</code> was removed — Merge MV is the re-render priced at <code>COST_RENDER</code> (see the handoff reconciliation note).</li>
 <li><strong>Backend charging contract → <code>areas/11-credit-consumption.md</code>.</strong> The prototype's <code>COST_*</code> constants are<br>
 <strong>placeholders</strong>; the real charge is the MSR Credit Consume Form (<code>credit_consume: 1.0</code>), where each<br>
@@ -867,11 +867,31 @@ calls</strong> and no route of its own.</p>
 </blockquote>
 <hr>
 <h2 id="1-overview-scope">1. Overview &amp; scope</h2>
-<p>The app shell is the persistent frame: a <strong>left sidebar</strong> (desktop, ≥640px) or <strong>bottom tab bar</strong><br>
-(mobile, &lt;640px), a sticky <strong>top bar</strong> with a credits badge + account control, and the <strong>account<br>
+<p>The app shell is the persistent frame: a <strong>left sidebar</strong> (desktop, ≥768px) or <strong>bottom tab bar</strong><br>
+(phone, &lt;768px), a top bar with a credits badge + account control, and the <strong>account<br>
 dropdown menu</strong>. It wraps every route via <code>AppShell</code> in <code>src/app/[locale]/layout.tsx</code>, except the<br>
 public <code>/share</code> page which renders bare.</p>
+<blockquote>
+<p><strong>Rewritten 2026-08-12 — this area predated the designer-UI migration (its previous revision was<br>
+dated 2026-07-23, before the migration ran 08-04 → 08-07) and three of its statements had become<br>
+factually wrong.</strong> What changed, all verified against code:</p>
+<ol>
+<li><strong>The phone cutover is 767px, not 640px.</strong> <code>PHONE_QUERY = "(max-width: 767px)"</code><br>
+   (<code>src/lib/ssr.ts:13</code>), matching <code>designer/AppLayout.css</code>'s own media query. Both <code>AppShell.tsx</code><br>
+   and <code>MobileTabBar.tsx</code> carry the comment "the phone cutover moves 640px → 767px".</li>
+<li><strong>The phone bar has THREE destinations, not five.</strong> <code>MobileTabBar</code> is Explore / Create /<br>
+   History. Profile and the second create entry are not on it; Profile is reached from<br>
+<code>MobileHeader</code>'s account button (phone) or the <code>Sidebar</code> profile footer (desktop). This<br>
+   follows DP and was accepted as a product decision on 2026-08-12.</li>
+<li><strong><code>TopBar</code> is no longer universal.</strong> Routes listed in <code>AppShell</code>'s <code>OWN_CHROME</code> draw their own<br>
+   chrome (<code>DetailNavbar</code> / <code>RoomNavbar</code> / <code>MobileHeader</code> + <code>MobileTabBar</code>); <code>TopBar</code> survives only<br>
+   as the fallback for routes not yet migrated, and <code>/</code> gets the marketing <code>Navbar</code> instead. <code>/</code><br>
+   can never be listed in <code>OWN_CHROME</code> because the check is <code>path.startsWith(r)</code>, which <code>"/"</code><br>
+   matches for every route.</li>
+</ol>
+</blockquote>
 <p><strong>In scope:</strong> <code>shell/AppShell</code>, <code>shell/Sidebar</code>, <code>shell/TopBar</code>, <code>shell/HeaderActions</code>,<br>
+<code>shell/MobileHeader</code>, <code>shell/MobileTabBar</code>, <code>shell/DetailNavbar</code>, <code>shell/RoomNavbar</code>,<br>
 <code>account/AccountMenu</code> (surface only — its destinations belong to areas 06/07).<br>
 <strong>Out of scope:</strong> <code>SignInModal</code> (area 09), the credits modals (area 07), the Profile/History/Settings<br>
 screens the shell links to (areas 05/06).</p>
@@ -894,19 +914,43 @@ Feedback</strong> rows (SHELL-03, UI-only) alongside Profile / My Creations / Si
 <tbody>
 <tr>
 <td><code>shell/AppShell</code></td>
-<td>chrome vs bare decision; <code>Sidebar</code> + <code>TopBar</code> + <code>&lt;main&gt;</code></td>
+<td>chrome vs bare decision; <code>OWN_CHROME</code> routing between own-chrome / <code>TopBar</code> / <code>Navbar</code></td>
 <td><code>usePathname</code> + <code>stripLocalePrefix</code></td>
 <td>—</td>
 </tr>
 <tr>
 <td><code>shell/Sidebar</code></td>
-<td>desktop rail + mobile bottom bar, 5 nav links, active state</td>
+<td>desktop rail (≥768px), 5 nav links, active state, profile footer</td>
 <td><code>useAuth().{loggedIn,requireLogin}</code>, <code>useLocale().{locale}</code>, <code>useT()</code></td>
 <td>—</td>
 </tr>
 <tr>
+<td><code>shell/MobileTabBar</code></td>
+<td>phone bottom bar (&lt;768px), <strong>3</strong> items: Explore / Create / History</td>
+<td><code>useAuth().{loggedIn,requireLogin}</code>, <code>useLocale()</code>, <code>useT()</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>shell/MobileHeader</code></td>
+<td>phone top bar (&lt;768px) — wordmark, credits, account button (the Profile entry)</td>
+<td><code>useCredits().credits</code>, <code>useAuth()</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>shell/DetailNavbar</code></td>
+<td>back + title bar for detail routes (own-chrome)</td>
+<td><code>useCredits().credits</code>, <code>useAuth()</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>shell/RoomNavbar</code></td>
+<td>create/room-screen navbar; also exports the shared <code>Tabs</code></td>
+<td><code>useCredits().credits</code>, <code>useAuth()</code></td>
+<td>—</td>
+</tr>
+<tr>
 <td><code>shell/TopBar</code></td>
-<td>sticky header, mobile wordmark</td>
+<td><strong>fallback only</strong> — routes not in <code>OWN_CHROME</code>; <code>/</code> uses the marketing <code>Navbar</code></td>
 <td>—</td>
 <td>—</td>
 </tr>
@@ -936,9 +980,20 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
   (<code>nav.createSong</code>) · <strong>History</strong> <code>/history</code> (<code>nav.history</code> = "History") · Profile <code>/profile</code><br>
   (<code>nav.profile</code>). Note: the <strong>same <code>/history</code> route is labeled "History" in the nav but<br>
   "My Creations" in the account menu</strong> (<code>AccountMenu.tsx:98</code>) and as the page title (area 05).</li>
-<li><strong>Gated nav</strong> (<code>GATED = {/mv/room, /song/create, /history, /profile}</code>, <code>Sidebar.tsx:13</code>): clicking a<br>
-  gated item <strong>while logged out</strong> calls <code>requireLogin(() =&gt; push(target))</code> — opens <code>SignInModal</code> and<br>
-  queues the navigation for after sign-in (<code>Sidebar.tsx:45-51</code>). (Matches the four <code>AuthGuard</code> routes.)</li>
+<li><strong>Gated nav</strong> (<code>GATED = {/history, /profile, /settings}</code>, <code>Sidebar.tsx</code>): clicking a gated item<br>
+<strong>while logged out</strong> calls <code>requireLogin(() =&gt; push(target))</code> — opens <code>SignInModal</code> and queues the<br>
+  navigation for after sign-in. Matches the four <code>AuthGuard</code> routes (<code>/profile/credits</code> has no nav<br>
+  item of its own).<blockquote>
+<p><strong>Corrected 2026-08-12.</strong> Was <code>{/mv/room, /song/create, /history, /profile}</code>. The two CREATE<br>
+entries were removed by product decision: gating the nav click meant a guest tapping <strong>Create MV</strong><br>
+— or the ＋ sheet on a phone — got a sign-in modal <em>instead of</em> the screen, which walled off the<br>
+whole create flow and defeated the marketing Navbar's <strong>Start for Free</strong> (which lands on<br>
+<code>/mv/room</code>). <code>MobileTabBar</code>'s create sheet gated the same way and was un-gated with it; its<br>
+History entry still gates. The gates now live on the actions inside those screens — Song Library<br>
+and Create Music Video (area 02), Create Song (area 03), see AC-AUTH-08. <code>/settings</code> was already<br>
+gated by PROF-03 but had never been listed here.</p>
+</blockquote>
+</li>
 <li><strong>Active state</strong> (<code>Sidebar.tsx:40-43</code>): Home active when <code>pathname === localePath(locale,"/")</code>;<br>
   other items active when <code>pathname.startsWith(localePath(locale, href))</code>. Locale prefix preserved via<br>
 <code>localePath</code>.</li>
@@ -1011,14 +1066,20 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
 <hr>
 <h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
 <ul>
-<li><strong>AC-SHELL-01</strong> — WHILE viewport ≥640px, THE SYSTEM SHALL show the left sidebar; WHILE &lt;640px, the bottom tab bar — both with the same five destinations. <em>(visual)</em></li>
+<li><strong>AC-SHELL-01</strong> — WHILE viewport ≥768px, THE SYSTEM SHALL show the left sidebar with its five destinations; WHILE &lt;768px, the bottom tab bar with <strong>three</strong> (Explore / Create / History). <em>(visual)</em><blockquote>
+<p><strong>Rewritten 2026-08-12.</strong> Was "≥640px … &lt;640px … both with the same five destinations" — wrong on both counts after the designer migration. The cutover is <code>PHONE_QUERY = "(max-width: 767px)"</code>, and <code>MobileTabBar</code> carries three items, not five. Profile is not on the phone bar; it is reached from <code>MobileHeader</code>'s account button. Following DP, accepted 2026-08-12.</p>
+</blockquote>
+</li>
 <li><strong>AC-SHELL-02</strong> — WHEN a nav item is clicked, THE SYSTEM SHALL navigate to that route under the active locale prefix and reflect the active item.</li>
 <li><strong>AC-SHELL-03</strong> — WHEN a logged-out user clicks a gated nav item (<code>/mv/room</code>, <code>/song/create</code>, <code>/history</code>, <code>/profile</code>), THE SYSTEM SHALL open the sign-in modal and, on success, proceed to the queued route.</li>
 <li><strong>AC-SHELL-04</strong> — WHILE logged out, THE SYSTEM SHALL show a <strong>Sign In</strong> button in the top bar and no credits badge/avatar.</li>
 <li><strong>AC-SHELL-05</strong> — WHILE logged in, THE SYSTEM SHALL show the credits badge (current balance) and the avatar; and WHEN <code>subscribed</code>, render the avatar with the gold ring and a <strong>PRO</strong> badge in the menu.</li>
 <li><strong>AC-SHELL-06</strong> — WHEN the avatar is clicked, THE SYSTEM SHALL open the account menu exposing Buy Credits, Profile, My Creations, Notifications, Send Feedback, and Sign Out; and close it on outside-click or Escape.</li>
 <li><strong>AC-SHELL-07</strong> — WHEN the path starts with <code>/share</code>, THE SYSTEM SHALL render the page bare (no sidebar/top bar).</li>
-<li><strong>AC-SHELL-08</strong> — THE SYSTEM SHALL render the shell at 390/768/1024/1440px with no overflow and the correct bar (bottom vs side) at the 640px switch. <em>(visual)</em></li>
+<li><strong>AC-SHELL-08</strong> — THE SYSTEM SHALL render the shell at 390/768/1024/1440px with no overflow and the correct bar (bottom vs side) at the <strong>767px</strong> switch. <em>(visual)</em><blockquote>
+<p><strong>Corrected 2026-08-12</strong> — was "640px". Note 768 is both a review viewport and the first width on the sidebar side of the cutover, so it exercises the boundary directly.</p>
+</blockquote>
+</li>
 </ul>
 <hr>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
@@ -1136,7 +1197,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <tr>
 <td><code>/mv/edit</code></td>
 <td><code>MvEditor</code></td>
-<td>Back, cover (+ lightbox), per-clip storyboard strip w/ preview + scene-version row, scene editor (phones: full-screen <code>MobileSceneDetail</code>), output settings, Delete this Project, Merge MV (MV-08: no Save, no take tray)</td>
+<td>Back, cover (+ lightbox), per-clip storyboard strip w/ preview + scene-version row, scene editor (phones: a full-screen scene view, DP's <code>MobileSceneDetail</code> — implemented inline in <code>MvEditor.tsx</code> behind <code>isPhone</code>, not a separate component file), output settings, Delete this Project, Merge MV (MV-08: no Save, no take tray)</td>
 <td><code>storyboard</code>, <code>compose</code>, <code>useCredits().{credits,addCredits}</code></td>
 <td><code>enhancePrompt</code> (scene, cover)</td>
 </tr>
@@ -1310,7 +1371,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <tr>
 <td><strong>MV-E3</strong></td>
 <td>Logged-out user hits <code>/mv/room</code></td>
-<td><code>AuthGuard</code> opens <code>SignInModal</code>; dismiss → Home.</td>
+<td><strong>No route guard — the page renders.</strong> ⚠️ <strong>Corrected 2026-08-12:</strong> this row used to say "<code>AuthGuard</code> opens <code>SignInModal</code>; dismiss → Home". <code>/mv/room</code> lost its <code>AuthGuard</code> on 2026-08-07 by designer request — it is the destination of the marketing Navbar's <strong>Start for Free</strong>, so a guest must be able to browse and compose first. The gate moved to the action: <code>MvRoom</code>'s <strong>Create Music Video</strong> button calls <code>requireLogin</code> before opening the mode chooser (GL-02). Dismissing that modal leaves the user on <code>/mv/room</code> with their draft intact. See area 09 §3.</td>
 </tr>
 <tr>
 <td><strong>MV-E4</strong></td>
@@ -1339,6 +1400,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <p>Legend: <em>(visual)</em> = verification blocked until the screenshot phase.</p>
 <ul>
 <li><strong>AC-MV-01</strong> — WHEN <code>/mv/room</code> loads, THE SYSTEM SHALL default <code>mvType=singing</code> and keep <strong>Create</strong> disabled until <code>song != null</code> AND <code>description.trim() !== ""</code>.</li>
+<li><strong>AC-MV-01b</strong> — WHILE logged out, WHEN <code>/mv/room</code> is opened, THE SYSTEM SHALL render the full compose screen with no sign-in modal; and THE SYSTEM SHALL open the sign-in modal only when the user activates <strong>Song Library</strong> or <strong>Create Music Video</strong>. <strong>Import Audio stays ungated</strong> — a file the user already holds is not account data, and it is therefore the only way a guest can reach a CTA-ready state (AC-MV-01 needs a song). <em>(new 2026-08-12; see area 09 AC-AUTH-08)</em></li>
 <li><strong>AC-MV-02</strong> — WHEN a song is selected from any source (My Songs, Sample Songs, or Import), THE SYSTEM SHALL route it through Trim, and on confirm show the song card (art/title/effective duration) and re-evaluate CTA-ready.</li>
 <li><strong>AC-MV-03</strong> — WHEN the description is typed or pasted beyond 2500 chars, THE SYSTEM SHALL reject input past 2500 and show <code>2500/2500</code>. (Programmatic fills — Templates/Enhance — are not length-capped; fixtures stay under the cap.)</li>
 <li><strong>AC-MV-04</strong> — WHEN <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>resetForNewMv()</code> and open <code>ModeModal</code> preserving compose state.</li>
@@ -1444,10 +1506,11 @@ result (disc player + synced Lyrics sheet) → use the song in an MV or recreate
 migration, slice 3j):</strong> Custom mode has Genre / Mood / Vocal chips + Title; the <strong>Lyrics</strong><br>
 input is a free-form textarea (app-style — Lyrics sample + Enhance; the Idea fills were removed<br>
 for V1 on 2026-08-06), matching the app<br>
-prototype; <strong>Recreate charges <code>COST_SONG_RECREATE</code> (50) and keeps the prior song in History</strong><br>
-(SONG-03); <strong>AI Enhance is free the first time per session, then 1 credit</strong> (SONG-04); the compose<br>
-credit pill shows the <strong>live balance</strong> (SONG-05). Generation itself charges <code>COST_SONG</code> (10) on<br>
-start (GL-01, insufficient → IAP).</p>
+prototype; <strong>Recreate charges a normal generation (6 / 12) and keeps the prior song in History</strong><br>
+(SONG-03); <strong>AI Enhance is FREE</strong> (SONG-04 — the old free-first-then-1-credit rule was removed 2026-08-12, spec area 11 §5.5, closing TBD-CC-03); the compose<br>
+credit pill shows the <strong>live balance</strong> (SONG-05). Generation itself charges <strong>6 (vocal) / 12<br>
+(instrumental)</strong> on start (GL-01, insufficient → IAP) — <code>songCost(instrumental)</code>, repriced<br>
+2026-08-12 from a flat <code>COST_SONG = 10</code> placeholder per spec area 11 §3.1.</p>
 <p><strong>Two of SONG-01/02 no longer describe the code — both by decision, both recorded here:</strong></p>
 <ul>
 <li>⚠️ <strong>SONG-01's BPM slider and Key selector are GONE from the form</strong> (plan S4, slice 3j). The<br>
@@ -1516,7 +1579,9 @@ History alone.</p>
 <li><code>lyrics</code>: string (Custom), max 2500.</li>
 <li><code>genre</code> (default "Pop"), <code>mood</code> (default "Uplifting"), <code>vocal</code> (nullable, optional), <code>title</code> (optional).</li>
 <li><strong>CTA-ready</strong> (<code>isSongReady</code>): <strong>Custom → always ready</strong>; <strong>Simple → <code>describe.trim() !== ""</code></strong>.</li>
-<li>Cost: <code>COST_SONG = 10</code> shown on the <strong>Create Song</strong> CTA (label matches the app prototype, 2026-07-23).</li>
+<li>Cost: <code>songCost(instrumental)</code> — <strong>6 vocal / 12 instrumental</strong> — shown live on the <strong>Create Song</strong><br>
+  CTA, so toggling Instrumental changes the number. (Was a flat <code>COST_SONG = 10</code>; repriced<br>
+  2026-08-12, spec area 11 §3.1.)</li>
 <li>Custom-mode <strong>Lyrics</strong> field: a <strong>free-form textarea</strong> (<code>s.lyrics</code>, max 2500) with<br>
   Lyrics sample fills + Enhance — matching the app prototype (an earlier per-line editor was<br>
   reverted 2026-07-23).</li>
@@ -1529,8 +1594,10 @@ History alone.</p>
 <li>Compose helpers (<strong>2026-08-06: the "Idea" buttons are REMOVED — V1 ships no canned-sample<br>
   fillers. Custom mode keeps </strong>Lyrics<strong>, a sample fill with a different purpose. This is a<br>
   deliberate subtraction from DP, which still ships both Idea buttons</strong>):<br>
-<strong>Enhance</strong> (<code>enhancePrompt</code>; Custom lyrics offers Refine Idea vs Refine Lyrics; <strong>first free/session<br>
-  then 1 cr</strong> via <code>useCredits().{enhanceCost,consumeEnhance}</code> — SONG-04), a supported-languages info<br>
+<strong>Enhance</strong> (<code>enhancePrompt</code>; Custom lyrics offers Refine Idea vs Refine Lyrics; <strong>FREE — no charge<br>
+  at all</strong> since 2026-08-12. <code>enhanceCost</code> / <code>consumeEnhance</code> were removed from <code>useCredits</code> and the<br>
+  cost badge from <code>EnhanceButton</code>; there is no cloud-config action for Enhance, so billing it was<br>
+  never in the approved model — SONG-04, spec area 11 §5.5), a supported-languages info<br>
   popover (Custom). The inline <strong><code>CreditPill</code> shows the live balance</strong> (SONG-05).</li>
 </ul>
 <p><strong>Job (<code>SongJob</code> → <code>SongResult</code>)</strong>: <code>createSongJob(compose)</code> → poll <code>getSongJob</code> → on done sets<br>
@@ -1555,7 +1622,10 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
 <li>
 <p><strong>Use in Music Video</strong> → <code>patchCompose({ song: {source:"library", …, lyrics} })</code> + <code>/mv/room</code> (area 02).</p>
 </li>
-<li><strong>Recreate</strong> (SONG-03) → charges <code>COST_SONG_RECREATE</code> (50) via <code>resetForRecreate()</code> and routes to <code>/song/creating</code> to generate a fresh take, <strong>keeping the previous song in History</strong>; if <code>credits &lt; 50</code>, opens <code>BuyCreditsModal</code> instead.</li>
+<li><strong>Recreate</strong> (SONG-03) → charges <strong>the same as a fresh generation</strong> (<code>songRecreateCost</code> — vocal 6 / instrumental 12, spec area 11 §3.1) via <code>resetForRecreate()</code> and routes to <code>/song/creating</code>, <strong>keeping the previous song in History</strong>; below that balance it opens <code>BuyCreditsModal</code> instead.<blockquote>
+<p><strong>Repriced 2026-08-12 (TBD-CC-05).</strong> Was a flat <code>COST_SONG_RECREATE = 50</code>, a number with <strong>no counterpart anywhere in spec area 11 or the cloud config</strong>. Product decision: a Recreate is just another generation, so it bills what one bills. ⚠️ <strong>The button does not display its price</strong> — it never has; <code>.song-result__cta-secondary</code> renders only the icon + "Recreate". AC-SONG-12 requires the charge and the gate, not a label, so this is within spec — but it means a paid action gives no warning before charging. Raised as <code>DESIGNER-TODO</code> <strong>A23</strong>.</p>
+</blockquote>
+</li>
 </ul>
 <p>🔒 <code>songResult</code> is in-memory; a reload on <code>/song/creating</code> or <code>/song/result</code> triggers the flow-guard<br>
 (redirect to <code>/song/create</code>).</p>
@@ -1579,7 +1649,7 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
 <ul>
 <li><strong>SONG-P3-S1</strong> Player autoloads; play/pause, drag-to-seek, prev/next through <strong>My Creations</strong>, volume/mute on desktop. Playback is not capped (SONG-02 cancelled).</li>
 <li><strong>SONG-P3-S2</strong> <strong>Lyrics</strong> → the shared <code>LyricsSheet</code> (synced highlight + mini player) — only when lyrics exist. In practice this means <strong>Custom mode + non-instrumental + typed lyrics</strong>; Simple mode never sets <code>lyrics</code>, so a Simple-mode result has no Lyrics sheet.</li>
-<li><strong>SONG-P3-S3</strong> <strong>Share</strong> → <code>ShareDialog</code>; <strong>Download</strong> saves the mp3 (desktop). <strong>Use in Music Video</strong> → <code>/mv/room</code> with the song pre-loaded (incl. lyrics). <strong>Recreate</strong> → charges 50 cr and regenerates (<code>/song/creating</code>), keeping the prior song in History (SONG-03).</li>
+<li><strong>SONG-P3-S3</strong> <strong>Share</strong> → <code>ShareDialog</code>; <strong>Download</strong> saves the mp3 (desktop). <strong>Use in Music Video</strong> → <code>/mv/room</code> with the song pre-loaded (incl. lyrics). <strong>Recreate</strong> → charges a normal generation (6 / 12) and regenerates (<code>/song/creating</code>), keeping the prior song in History (SONG-03).</li>
 <li><strong>SONG-P3-S4</strong> <strong>Publish</strong> toggle publishes the song to the community immediately when switched on — sign-in required, <strong>no confirm step</strong> (GL-02; MV's equivalent does confirm, MV-12).</li>
 </ul>
 <hr>
@@ -1606,7 +1676,7 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
 <tr>
 <td><strong>SONG-E3</strong></td>
 <td>Logged-out user opens <code>/song/create</code></td>
-<td><code>AuthGuard</code> → sign-in modal (area 09).</td>
+<td><strong>The page renders — no route guard.</strong> ⚠️ <strong>Corrected 2026-08-12:</strong> this row said "<code>AuthGuard</code> → sign-in modal". <code>/song/create</code> lost its <code>AuthGuard</code> by product decision so a guest can compose before signing in, matching <code>/mv/room</code>. The gate moved to <strong>Create Song</strong>: <code>SongCompose.generate()</code> wraps the whole action in <code>requireLogin</code>, and the GL-01 balance check runs INSIDE that callback so a guest is never shown the credits upsell for an account they do not have. Dismissing the modal leaves the draft intact. See area 09 §3 / AC-AUTH-08.</td>
 </tr>
 <tr>
 <td><strong>SONG-E4</strong></td>
@@ -1619,6 +1689,7 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
 <h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
 <ul>
 <li><strong>AC-SONG-01</strong> — WHEN <code>/song/create</code> loads, THE SYSTEM SHALL default to <strong>Simple</strong> and keep <strong>Create Song</strong> disabled until <code>describe.trim() !== ""</code>; in <strong>Custom</strong>, it SHALL be enabled by default.</li>
+<li><strong>AC-SONG-01b</strong> — WHILE logged out, WHEN <code>/song/create</code> is opened, THE SYSTEM SHALL render the full compose screen with no sign-in modal; and THE SYSTEM SHALL open the sign-in modal only when the user activates <strong>Create Song</strong>. THE SYSTEM SHALL NOT show the insufficient-credit upsell to a logged-out user — <code>requireLogin</code> wraps the GL-01 balance check, so sign-in always comes first. <em>(new 2026-08-12; see area 09 AC-AUTH-08)</em></li>
 <li><strong>AC-SONG-02</strong> — WHEN Instrumental is ON in Custom, THE SYSTEM SHALL hide the lyrics editor and typically generate without lyrics (no Lyrics sheet). <em>(Note: toggling does not clear previously-typed lyrics — see SONG-E4 / <code>TBD-SONG-01</code>.)</em></li>
 <li><strong>AC-SONG-03</strong> — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Enhance and the Lyrics sample fill are not capped.)</li>
 <li><strong>AC-SONG-04</strong> — WHEN <strong>Create Song</strong> is tapped, THE SYSTEM SHALL <code>resetForNewSong()</code>, insert a Generating History row, and navigate to <code>/song/creating</code>.</li>
@@ -1627,7 +1698,7 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
 <li><strong>AC-SONG-06</strong> — WHEN <code>/song/result</code> loads, THE SYSTEM SHALL expose drag-to-seek, prev/next across My Creations, Share, Download, a Lyrics sheet (when lyrics exist), a Publish toggle, Use in Music Video, and Recreate. Playback SHALL NOT be capped for any account.</li>
 <li>⚠️ <strong>Two clauses of the original AC-SONG-06 are now knowingly untrue and are NOT rewritten away.</strong> <em>(a)</em> "<strong>±15s</strong>" — removed in 3j; DP's transport uses those slots for prev/next. <em>(b)</em> "<strong>and no Like</strong>" — DP's player has a Like and it was ported (local state only). <em>(c)</em> the 30s cap it required is cancelled by S3 (§1). (a) and (b) need a product/designer decision; (c) is already decided.</li>
 <li><strong>AC-SONG-11</strong> — ⚠️ <strong>SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.</strong> It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and <code>songCompose.{bpm,key}</code> persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident.</li>
-<li><strong>AC-SONG-12</strong> — WHEN Recreate is invoked with <code>credits ≥ 50</code>, THE SYSTEM SHALL charge 50 and regenerate while keeping the prior song in History; otherwise it SHALL open the buy-credits IAP (SONG-03).</li>
+<li><strong>AC-SONG-12</strong> — WHEN Recreate is invoked with a balance covering one generation (<code>songRecreateCost</code> — 6 vocal / 12 instrumental), THE SYSTEM SHALL charge that amount and regenerate while keeping the prior song in History; otherwise it SHALL open the buy-credits IAP (SONG-03). <em>(repriced 2026-08-12; was a flat 50)</em></li>
 <li><strong>AC-SONG-13</strong> — WHEN AI Enhance is used, THE SYSTEM SHALL charge nothing the first time per session and 1 credit each time after (SONG-04).</li>
 <li><strong>AC-SONG-07</strong> — WHEN <strong>Use in Music Video</strong> is tapped, THE SYSTEM SHALL pre-load the song (incl. lyrics) into MV compose and navigate to <code>/mv/room</code>.</li>
 <li><strong>AC-SONG-08</strong> — IF the song job fails, THEN THE SYSTEM SHALL show the shared error state with Back + Retry.</li>
@@ -1784,22 +1855,46 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <h2 id="3-state-model-rules">3. State model &amp; rules</h2>
 <h3 id="31-the-three-rails-home-seed-not-ranked">3.1 The three rails (Home) — 🔒 seed, not ranked</h3>
 <blockquote>
-<p><strong>Rewritten 2026-08-07 — the landing page migrated to the designer UI (the 17th and last route).</strong> It described the pre-migration Tailwind screen: FOUR rails led by a Trending MV marquee, and two gradient hero CTA tiles. Both are gone. What follows is the migrated screen.</p>
+<p><strong>Rewritten 2026-08-07 — the landing page migrated to the designer UI (the 17th and last<br>
+route).</strong> It described the pre-migration Tailwind screen: FOUR rails led by a Trending MV<br>
+marquee, and two gradient hero CTA tiles. Both are gone. What follows is the migrated screen.</p>
 </blockquote>
-<p><code>HomeView</code> renders a hero, a tool selector and <strong>three</strong> rails. Each rail is still a <strong>fixed seed array</strong> — nothing here is ranked or served.</p>
-<p><strong>Hero + tool selector — two treatments, chosen in JS, not CSS.</strong> <code>HomeView</code> reads <code>useMediaQuery(PHONE_QUERY)</code> and mounts a structurally different pair on each side of 768px, which is DP's own arrangement:</p>
+<p><code>HomeView</code> renders a hero, a tool selector and <strong>three</strong> rails. Each rail is still a <strong>fixed seed<br>
+array</strong> — nothing here is ranked or served.</p>
+<p><strong>Hero + tool selector — two treatments, chosen in JS, not CSS.</strong> <code>HomeView</code> reads<br>
+<code>useMediaQuery(PHONE_QUERY)</code> and mounts a structurally different pair on each side of 768px, which<br>
+is DP's own arrangement:</p>
 <ul>
-<li><strong>≥768px:</strong> <code>ToolSelectorSectionV3</code> (a display heading over two cards) ABOVE <code>HeroBannerSectionV3</code> (a scroll-snap filmstrip of 8 hero items; only the centred card plays its video, the rest show posters).</li>
-<li><strong>&lt;768px:</strong> <code>HeroBannerSection</code> (a draggable, auto-advancing infinite carousel) ABOVE <code>ToolSelectorSection</code> (two compact full-gradient tiles).</li>
-<li>Both tool-selector cards are <code>requireLogin</code> gated: <strong>AI Music Video</strong> → <code>/mv/room</code>, <strong>AI Song</strong> → <code>/song/create</code> (auth triggers — area 09; GL-02 / <code>AC-EXP-02</code>). Both hero "Create MV" CTAs are the same gate to <code>/mv/room</code>. DP has no auth at all, so every one of these gates is WA's.</li>
-<li>Hero media is <code>public/assets/hero/</code> — 8 mp4 + poster pairs vendored from the DP drop (<code>designer-prototype/PROVENANCE.md</code> explains why that one directory is not excluded).</li>
+<li><strong>≥768px:</strong> <code>ToolSelectorSectionV3</code> (a display heading over two cards) ABOVE<br>
+<code>HeroBannerSectionV3</code> (a scroll-snap filmstrip of 8 hero items; only the centred card plays its<br>
+  video, the rest show posters).</li>
+<li><strong>&lt;768px:</strong> <code>HeroBannerSection</code> (a draggable, auto-advancing infinite carousel) ABOVE<br>
+<code>ToolSelectorSection</code> (two compact full-gradient tiles).</li>
+<li>Both tool-selector cards are <code>requireLogin</code> gated: <strong>AI Music Video</strong> → <code>/mv/room</code>,<br>
+<strong>AI Song</strong> → <code>/song/create</code> (auth triggers — area 09; GL-02 / <code>AC-EXP-02</code>). Both hero<br>
+  "Create MV" CTAs are the same gate to <code>/mv/room</code>. DP has no auth at all, so every one of these<br>
+  gates is WA's.</li>
+<li>Hero media is <code>public/assets/hero/</code> — 8 mp4 + poster pairs vendored from the DP drop<br>
+  (<code>designer-prototype/PROVENANCE.md</code> explains why that one directory is not excluded).</li>
 </ul>
 <p>The rails:</p>
 <ul>
-<li><strong>Trending Music Videos</strong> — horizontal scroll of the whole of <code>NEW_MVS</code>, prev/next arrows that appear only when the row can scroll that way; card → <code>/watch?id</code>; "See all" → <code>/explore/mvs</code>.</li>
-<li><strong>Top Picks Songs</strong> — horizontal scroll, <code>TOP_PICKS_SONGS</code>, square cards; the card navigates to <code>/song/play?id</code>, the cover's play button previews the real audio in place; "See all" → <code>/explore/songs</code>.</li>
-<li><strong>Newly Released Songs</strong> — <code>NEW_SONGS.slice(0,6)</code> in 2 columns (1 column below 768px); per row a <strong>title</strong> that navigates to <code>/song/play?id</code>, <strong>album art</strong> that starts <code>SongPlayBar</code> (the desktop preview bar; on a phone it falls back to navigating, because the bar is <code>display:none</code> there), Like (local), Share (<code>ShareDialog</code>), and <strong>Create</strong> → <code>requireLogin</code> → <code>patchSongCompose</code> → <code>/song/create</code>.</li>
-<li>⚠️ <strong>The Trending MV marquee is GONE, and with it <code>TRENDING_MVS</code>'s only home entry point.</strong> It was WA's own 45s infinite rail; DP has no equivalent, and the product owner decided 2026-08-07 to follow DP ("TRENDING_MVS 不用首頁 (Match DP)"). <code>TRENDING_MVS</code> is now reachable from <code>/explore/mvs</code> alone, where it is the <code>--primary</code> section — which is also the only MV catalog a phone can reach there (A19). <code>DESIGNER-TODO</code> <strong>A20</strong>; asserted in <code>e2e</code> so it is not quietly restored.</li>
+<li><strong>Trending Music Videos</strong> — horizontal scroll of the whole of <code>NEW_MVS</code>, prev/next arrows that<br>
+  appear only when the row can scroll that way; card → <code>/watch?id</code>; "See all" → <code>/explore/mvs</code>.</li>
+<li><strong>Top Picks Songs</strong> — horizontal scroll, <code>TOP_PICKS_SONGS</code>, square cards; the card navigates to<br>
+<code>/song/play?id</code>, the cover's play button previews the real audio in place; "See all" →<br>
+<code>/explore/songs</code>.</li>
+<li><strong>Newly Released Songs</strong> — <code>NEW_SONGS.slice(0,6)</code> in 2 columns (1 column below 768px); per row a<br>
+<strong>title</strong> that navigates to <code>/song/play?id</code>, <strong>album art</strong> that starts <code>SongPlayBar</code> (the desktop<br>
+  preview bar; on a phone it falls back to navigating, because the bar is <code>display:none</code> there),<br>
+  Like (local), Share (<code>ShareDialog</code>), and <strong>Create</strong> → <code>requireLogin</code> → <code>patchSongCompose</code> →<br>
+<code>/song/create</code>.</li>
+<li>⚠️ <strong>The Trending MV marquee is GONE, and with it <code>TRENDING_MVS</code>'s only home entry point.</strong><br>
+  It was WA's own 45s infinite rail; DP has no equivalent, and the product owner decided<br>
+  2026-08-07 to follow DP ("TRENDING_MVS 不用首頁 (Match DP)"). <code>TRENDING_MVS</code> is now reachable<br>
+  from <code>/explore/mvs</code> alone, where it is the <code>--primary</code> section — which is also the only MV<br>
+  catalog a phone can reach there (A19). <code>DESIGNER-TODO</code> <strong>A20</strong>; asserted in <code>e2e</code> so it is not<br>
+  quietly restored.</li>
 <li>⚠️ <strong>No ranking, refresh, eligibility, or dedup</strong> from the Curation PRD — ordering is array order (<code>TBD-EXP-01</code>).</li>
 <li>📄 <strong>Publish→feed locale contract (backend; spec-only).</strong> When a creation is published (area 02/05) it carries a <strong>language/locale code</strong>. The backend returns each feed <strong>already ranked locale-primary</strong> (viewer's locale first, then engagement signals per the Curation PRD). The <strong>frontend just requests and displays</strong> the server-sorted data — no client-side ranking; "we only ask, the backend sorts." The <strong>code format (2-char ISO <code>en</code> vs 3-char product <code>enu</code>, etc.) is RD-TBD</strong> → <code>TBD-EXP-10</code> (relates to i18n <code>TBD-GL-06</code>). No prototype change now (mock feed stays seed).</li>
 </ul>
@@ -1875,8 +1970,9 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 </ul>
 <h3 id="exp-p3-explore-songs">EXP-P3 — Explore Songs</h3>
 <ul>
-<li><strong>EXP-P3-S1</strong> <code>/explore/songs</code>: one tabbed list — <strong>All</strong> / <strong>Top Picks</strong> / <strong>New Releases</strong> — beside a Now Playing column (the same screen as <code>/song/play</code>; see §3.2). Row → selects that song in Now Playing at ≥768px, or opens the full-screen player at <code>/song/play?id</code> below 768px; creator → <code>/creator</code>; <strong>Create</strong> → <code>/song/create</code> (pre-filled). Switching a tab changes the list only and must NOT change what is playing.<blockquote>
-<p><strong>Rewritten 2026-08-05 (Slice 3b), flagged by the G7 reviewer.</strong> Was: "Top Picks + New Songs lists. Row → <code>/song/play?id</code>". Two things changed: the two stacked lists became three tabs (<code>Trending</code> deliberately not built — <code>DESIGNER-TODO.md</code> A6), and the row click stopped navigating on desktop. <strong>The "must NOT change what is playing" clause is also a G7 finding</strong> — the default was derived live from the visible list, so changing a browse filter restarted playback; now guarded by an e2e.</p>
+<li><strong>EXP-P3-S1</strong> <code>/explore/songs</code>: one tabbed list — <strong>All</strong> / <strong>Top Picks</strong> / <strong>New Releases</strong> — occupying the full width, two columns at ≥1024px (the same screen as <code>/song/play</code>; see §3.2). Row title → <code>/song/result?id&amp;from=song-detail</code> at ≥768px, or the full-screen player at <code>/song/play?id</code> below 768px; row album art → a preview in the bottom <code>SongPlayBar</code> at ≥768px, the full-screen player below it; creator → <code>/creator</code>; <strong>Create</strong> → <code>/song/create</code> (pre-filled). Switching a tab changes the list only and must NOT change what is playing.<blockquote>
+<p><strong>Updated 2026-08-07 with <code>AC-EXP-03</code>.</strong> The Now Playing column this line used to describe was deleted by DP drop <code>2670ed2</code>; the tab pills are also hidden below 768px as of that drop (<code>designer-overrides.css</code>, A4), so a phone sees the <strong>All</strong> catalog only.<br>
+<strong>Rewritten 2026-08-05 (Slice 3b), flagged by the G7 reviewer.</strong> Was: "Top Picks + New Songs lists. Row → <code>/song/play?id</code>". Two things changed: the two stacked lists became three tabs (<code>Trending</code> deliberately not built — <code>DESIGNER-TODO.md</code> A6), and the row click stopped navigating on desktop. <strong>The "must NOT change what is playing" clause is also a G7 finding</strong> — the default was derived live from the visible list, so changing a browse filter restarted playback; now guarded by an e2e.</p>
 </blockquote>
 </li>
 </ul>
@@ -1947,16 +2043,27 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
 <ul>
 <li><strong>AC-EXP-01</strong> — WHEN <code>/</code> loads, THE SYSTEM SHALL render the hero, the tool selector, and the three seed rails (Trending Music Videos, Top Picks Songs, Newly Released Songs) in seed order — and SHALL mount the phone treatment of the hero and tool selector below 768px and the desktop treatment at or above it.<blockquote>
-<p><strong>Rewritten 2026-08-07 with the landing-page migration.</strong> It said "the hero CTAs and the four seed rails (Trending MV marquee, …)". The marquee rail was deleted to follow DP (A20), so the count is three; and the hero/tool-selector branch is new, load-bearing and invisible to a screenshot taken at one width, so it is stated here rather than left as an implementation detail.</p>
-</blockquote></li>
+<p><strong>Rewritten 2026-08-07 with the landing-page migration.</strong> It said "the hero CTAs and the four<br>
+seed rails (Trending MV marquee, …)". The marquee rail was deleted to follow DP (A20), so the<br>
+count is three; and the hero/tool-selector branch is new, load-bearing and invisible to a<br>
+screenshot taken at one width, so it is stated here rather than left as an implementation<br>
+detail.</p>
+</blockquote>
+</li>
 <li><strong>AC-EXP-02</strong> — WHEN a hero CTA, a tool-selector card, or a New-Songs <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>requireLogin</code> and, on success, navigate to the create flow (pre-filling the song for Create-from-song).</li>
-<li><strong>AC-EXP-03</strong> — WHEN an MV card is tapped <strong>anywhere</strong> (Home rails or <code>/explore/mvs</code>), THE SYSTEM SHALL navigate to <code>/watch?id</code>. WHEN a song card is tapped <strong>from Home</strong>, THE SYSTEM SHALL navigate to <code>/song/play?id</code>. WHEN a song row is tapped <strong>on <code>/explore/songs</code></strong>, THE SYSTEM SHALL, below 768px, open the full-screen player at <code>/song/play?id</code>; and at 768px and above, select that song in the Now Playing column <strong>without navigating</strong>.<blockquote>
-<p><strong>Corrected 2026-08-05 (Slice 3b).</strong> This criterion previously said a song card always routes to <code>/song/play?id</code>, which the merge of <code>/explore/songs</code> and <code>/song/play</code> made false on desktop — the two are now one screen, so a desktop row click swaps the right-hand column and deliberately leaves the URL alone (asserted by <code>e2e/behaviour-regressions.spec.ts</code>, "3b desktop: clicking a song swaps the right column without navigating"). Home is NOT migrated and still navigates, which is why the criterion is now split by entry point. <strong>Found by the Gate G7 reviewer:</strong> the same change rewrote <code>AC-EXP-05</code> with a full rationale and left this sibling — and <code>EXP-P3-S1</code> — asserting the old behaviour.</p>
+<li><strong>AC-EXP-03</strong> — WHEN an MV card is tapped <strong>anywhere</strong> (Home rails or <code>/explore/mvs</code>), THE SYSTEM SHALL navigate to <code>/watch?id</code>. WHEN a song card is tapped <strong>from Home</strong>, THE SYSTEM SHALL navigate to <code>/song/play?id</code>. WHEN a song row is tapped <strong>on <code>/explore/songs</code></strong>, THE SYSTEM SHALL, below 768px, open the full-screen player at <code>/song/play?id</code>; and at 768px and above, navigate to <code>/song/result?id&amp;from=song-detail</code>. WHEN a row's <strong>album art</strong> is tapped at 768px and above, THE SYSTEM SHALL start a preview in the persistent bottom bar <strong>without navigating</strong>.<blockquote>
+<p><strong>Rewritten 2026-08-07 (DP drop <code>2670ed2</code>), and this REVERSES the 2026-08-05 wording below.</strong> Drop 2 deleted DP's desktop Now Playing column — all 54 <code>.now-playing__*</code> rules — and made the list a full-width two-column grid. There is no right-hand column left to swap, so the previous criterion described markup that no stylesheet dresses. The product owner chose to adopt DP (2026-08-07): a desktop row click now navigates to the result-stage player, seeding SongFlow first the way <code>/history</code> rows already do.</p>
+<p><strong>The two affordances split, and that is the part worth reading.</strong> DP did not simply replace "swap" with "navigate": the row's TITLE navigates, while the row's ALBUM ART starts <code>SongPlayBar</code>, a desktop-only preview bar, so browsing continues while a preview plays. An earlier reading of this drop concluded the bar had REPLACED the player and that adopting it would delete four of <code>AC-EXP-05</code>'s five requirements. That was wrong — inferred from a CSS diff instead of read from the markup — and nothing is lost: the disc player, Like, Lyrics and the Create CTA all still exist, on <code>/song/result</code> for desktop and in <code>MobileNowPlaying</code> on phones.</p>
+<p>Asserted by <code>e2e/behaviour-regressions.spec.ts</code>, "drop 2 desktop: clicking a song navigates to its result screen" and "drop 2 desktop: the album art previews in place without navigating". Home is NOT migrated and still navigates, which is why the criterion stays split by entry point.</p>
+<p><details><summary>Superseded 2026-08-05 wording (Slice 3b)</summary></p>
+<p><em>"…and at 768px and above, select that song in the Now Playing column <strong>without navigating</strong>."</em> — correct for one day. This is the error log's "a test can hold a decision in place after the decision is wrong": 3b pinned the swap with an e2e assertion, and when drop 2 reversed the decision the assertion had to move with the criterion rather than argue against it.</p>
+</details>
 </blockquote>
 </li>
 <li><strong>AC-EXP-04</strong> — WHEN <code>/watch</code> loads, THE SYSTEM SHALL play the MV muted in 3:4 with play/pause + mute, and expose Like, Share, and <strong>Create Music Video</strong> → <code>/mv/room</code> pre-filled.</li>
-<li><strong>AC-EXP-05</strong> — WHEN <code>/song/play</code> loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community), show the disc player with <strong>real <code>&lt;audio&gt;</code> progress</strong>, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist, and <strong>Create AI Song</strong> → <code>/song/create</code> pre-filled. Playback SHALL NOT be capped for free accounts.<blockquote>
-<p><strong>Rewritten 2026-08-05 by the designer-UI migration (Slice 3b). Three changes, all deliberate:</strong></p>
+<li><strong>AC-EXP-05</strong> — WHEN <code>/song/play</code> loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community) and present the disc player with <strong>real <code>&lt;audio&gt;</code> progress</strong>, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist, and <strong>Create AI Song</strong> → <code>/song/create</code> pre-filled — below 768px in the full-screen <code>MobileNowPlaying</code>, and at 768px and above on <code>/song/result</code>, which the row click navigates to. Playback SHALL NOT be capped for free accounts.<blockquote>
+<p><strong>Amended 2026-08-07 (DP drop <code>2670ed2</code>) — the requirements are unchanged, only WHERE desktop satisfies them.</strong> Drop 2 deleted the desktop Now Playing column, so this screen no longer carries the disc player at ≥768px; <code>/song/result</code> does, and <code>AC-EXP-03</code>'s row click is what reaches it. Every one of the five requirements above still holds at every width. This was very nearly recorded as "adopting drop 2 deletes four of AC-EXP-05's five requirements" — a conclusion reached by reading a CSS diff rather than DP's markup, and caught by the product owner running the prototype.<br>
+<strong>Rewritten 2026-08-05 by the designer-UI migration (Slice 3b). Three changes, all deliberate:</strong></p>
 <ol>
 <li><strong>The 30s cap is gone</strong> — plan §1.4 decided S1/S3 cancel the Pro playback gate; 3b is where it actually landed. <code>e2e/behaviour-regressions.spec.ts</code> asserts the inverse ("S3 / G5-d#7 inverted"), so it cannot creep back.</li>
 <li><strong>Progress is a real <code>&lt;audio&gt;</code> element</strong>, not <code>setInterval</code> against a hardcoded <code>DURATION = 125</code>. URLs are derived per id in <code>community.ts</code> (<code>songAudioUrl</code>) — the frozen <code>CommunitySongSchema</code> (C2) has no <code>audio</code> field, so there is no contract change. Known cost: the whole catalog maps onto two mp3s (demo-media limit U4).</li>
@@ -2302,7 +2409,7 @@ links + Sign Out + subscription cancel + account delete.</p>
 <p><strong>In scope:</strong> <code>profile/ProfileView</code> (<code>/profile</code>, 🔒 <strong>Auth</strong>), <code>profile/SettingsView</code> (<code>/settings</code>),<br>
 the Edit-Profile / Language / Feedback modals.<br>
 <strong>Out of scope (cross-referenced):</strong> the account dropdown (area 01 <code>AccountMenu</code>); the credits/IAP<br>
-modals opened from here (area 07 — <code>BuyCreditsModal</code>, <code>CreditsDetailModal</code>, <code>SubscribeModal</code>); the<br>
+the Credits Detail route + modals reached from here (area 07 — <code>/profile/credits</code>, <code>BuyCreditsModal</code>, <code>SubscribeModal</code>); the<br>
 <strong>community profile content grid</strong> at <code>/creator?self=1</code> that the stat tiles link to (area 04);<br>
 sign-in (area 09).</p>
 <p><strong>Key mapping note (important):</strong> web <code>/profile</code> is closest to the <strong>App's Account screen (F18)</strong> — a<br>
@@ -2345,9 +2452,9 @@ localized surfaces (nav + Profile). <code>/settings</code> copy is hardcoded Eng
 <h2 id="3-state-model-rules">3. State model &amp; rules</h2>
 <p><strong>Profile header</strong> (<code>ProfileView.tsx</code>): avatar (image or name-initial), name, <strong>PRO</strong> pill when<br>
 <code>subscribed</code>, email; edit-pencil → Edit-Profile modal.<br>
-<strong>Stat tiles</strong> (<code>:116-127</code>): <strong>Credits</strong> → <code>CreditsDetailModal</code> (area 07; its <strong>Buy More</strong> opens <code>BuyCreditsModal</code>, also mounted here); <strong>MVs</strong> → <code>/creator?self=1&amp;tab=mv</code>; <strong>Songs</strong> → <code>/creator?self=1&amp;tab=songs</code> (area 04). Counts derive from the <strong>static</strong> <code>SAMPLE_CREATIONS</code> (not the user's real creations) ⚠️.<br>
+<strong>Stat tiles</strong> (<code>:116-127</code>): <strong>Credits</strong> → <code>router.push('/profile/credits')</code> (area 07; its <strong>Buy More</strong> opens <code>BuyCreditsModal</code>, now mounted on that route); <strong>MVs</strong> → <code>/creator?self=1&amp;tab=mv</code>; <strong>Songs</strong> → <code>/creator?self=1&amp;tab=songs</code> (area 04). Counts derive from the <strong>static</strong> <code>SAMPLE_CREATIONS</code> (not the user's real creations) ⚠️.<br>
 <strong>Rows</strong> (<code>:129-146</code>):<br>
-- <strong>Muse Pro</strong> — not subscribed → <strong>Subscribe</strong> → <code>SubscribeModal</code> (area 07); subscribed → shows plan name + hardcoded "validity 2026-08-10" + <strong>Manage</strong> → <code>CreditsDetailModal</code>.<br>
+- <strong>Muse Pro</strong> — not subscribed → <strong>Subscribe</strong> → <code>SubscribeModal</code> (area 07); subscribed → shows plan name + hardcoded "validity 2026-08-10" + <strong>Manage</strong> → <code>/profile/credits</code>.<br>
 - <strong>Notifications</strong> — local <code>useState(true)</code> toggle; <strong>no effect</strong> 🔒 (→ <code>TBD-PROF-01</code>).<br>
 - <strong>Language</strong> — opens a 9-locale picker → <code>setLocale(code)</code> (i18n, area-wide).<br>
 - <strong>Send Feedback</strong> — opens a textarea modal; submit → toast, <strong>content discarded</strong> 🔒 (→ <code>TBD-PROF-02</code>).<br>
@@ -2366,7 +2473,7 @@ redirect Home. <strong>Auth-gated route</strong> (<code>AuthGuard</code>, PROF-0
 <h3 id="prof-p1-view-profile-hub">PROF-P1 — View profile hub</h3>
 <ul>
 <li><strong>PROF-P1-S1</strong> Open <code>/profile</code> (auth-gated). <strong>System:</strong> header + stat tiles + rows; PRO pill if subscribed.</li>
-<li><strong>PROF-P1-S2</strong> Tap <strong>Credits</strong> tile → <code>CreditsDetailModal</code>; <strong>MVs</strong>/<strong>Songs</strong> tile → <code>/creator?self=1&amp;tab=…</code> (area 04).</li>
+<li><strong>PROF-P1-S2</strong> Tap <strong>Credits</strong> tile → navigates to <code>/profile/credits</code>; <strong>MVs</strong>/<strong>Songs</strong> tile → <code>/creator?self=1&amp;tab=…</code> (area 04).</li>
 </ul>
 <h3 id="prof-p2-edit-profile">PROF-P2 — Edit profile</h3>
 <ul>
@@ -2420,7 +2527,7 @@ redirect Home. <strong>Auth-gated route</strong> (<code>AuthGuard</code>, PROF-0
 <h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
 <ul>
 <li><strong>AC-PROF-01</strong> — WHEN <code>/profile</code> loads for a signed-in user, THE SYSTEM SHALL show avatar/name/email, a PRO pill iff subscribed, the Credits/MVs/Songs tiles, and the row list.</li>
-<li><strong>AC-PROF-02</strong> — WHEN a stat tile is tapped, THE SYSTEM SHALL open <code>CreditsDetailModal</code> (Credits) or navigate to <code>/creator?self=1&amp;tab=mv|songs</code> (MVs/Songs).</li>
+<li><strong>AC-PROF-02</strong> — WHEN a stat tile is tapped, THE SYSTEM SHALL navigate to <code>/profile/credits</code> (Credits) or to <code>/creator?self=1&amp;tab=mv|songs</code> (MVs/Songs). <em>(rewritten 2026-08-12: Credits Detail became a route on 2026-08-11)</em></li>
 <li><strong>AC-PROF-03</strong> — WHEN Edit-Profile is saved, THE SYSTEM SHALL commit name/avatar via <code>updateProfile</code> and reflect them in the shell (in-memory).</li>
 <li><strong>AC-PROF-04</strong> — WHEN the Muse Pro row is tapped, THE SYSTEM SHALL open the Subscribe modal (not subscribed) or the Credits detail (subscribed).</li>
 <li><strong>AC-PROF-05</strong> — WHEN Language is changed, THE SYSTEM SHALL switch locale via <code>setLocale</code> and reflect it in localized surfaces.</li>
@@ -2498,16 +2605,26 @@ restore-purchases are backend/store concerns this spec does <strong>not</strong>
 </blockquote>
 <hr>
 <h2 id="1-overview-scope">1. Overview &amp; scope</h2>
-<p>Credit balance + the three monetization modals. <code>CreditsProvider</code> holds an in-memory balance;<br>
-<code>SubscribeModal</code> (Muse Pro plans), <code>BuyCreditsModal</code> (credit packs), and <code>CreditsDetailModal</code> (balance</p>
+<p>Credit balance + two monetization modals and one route. <code>CreditsProvider</code> holds an in-memory<br>
+balance; <code>SubscribeModal</code> (Muse Pro plans) and <code>BuyCreditsModal</code> (credit packs) are opened as modals<br>
+from the shell, account menu, profile and the in-flow insufficient-balance paths, while the balance</p>
 <ul>
-<li>ledger) are opened from the shell, account menu, and profile. Disclaimer copy differs per modal:<br>
-  only <strong><code>SubscribeModal</code></strong> says "Demo only — no real payment. Subscription credits expire each cycle.";<br>
-<code>BuyCreditsModal</code> says purchased credits are <strong>valid for 2 years</strong> (non-refundable / prices-vary);<br>
-<code>CreditsDetailModal</code> has none.</li>
+<li>ledger screen is the <strong><code>/profile/credits</code> route</strong> (<code>CreditsView</code>). Disclaimer copy differs per<br>
+  surface: only <strong><code>SubscribeModal</code></strong> says "Demo only — no real payment. Subscription credits expire<br>
+  each cycle."; <code>BuyCreditsModal</code> says purchased credits are <strong>valid for 2 years</strong> (non-refundable /<br>
+  prices-vary); the Credits Detail screen has none.</li>
 </ul>
+<blockquote>
+<p><strong>Corrected 2026-08-12 — Credits Detail is a ROUTE, not a modal.</strong> It moved on 2026-08-11<br>
+(<code>d329719</code>, designer request): <code>CreditsDetailModal.tsx</code> was <strong>deleted</strong> and replaced by<br>
+<code>credits/CreditsView.tsx</code> at <code>/profile/credits</code>, gated by <code>AuthGuard</code>. That commit declared the<br>
+C7 change correctly (route-map snapshot + <code>CHANGELOG-RD.md</code>, per G4-c/G4-g) but did not update<br>
+<code>specs/areas/*</code>, so this file described a component that no longer existed for a day.<br>
+Subscribe and Buy Credits deliberately gained <strong>no</strong> route — DP has none for either, and keeping<br>
+them modal means a mid-creation top-up never navigates out of an in-memory flow.</p>
+</blockquote>
 <p><strong>In scope:</strong> <code>providers/CreditsProvider</code>, <code>credits/SubscribeModal</code>, <code>credits/BuyCreditsModal</code>,<br>
-<code>credits/CreditsDetailModal</code>; the plan/pack/ledger data in <code>lib/user.ts</code>.<br>
+<code>credits/CreditsView</code> + the <code>/profile/credits</code> route; the plan/pack/ledger data in <code>lib/user.ts</code>.<br>
 <strong>Out of scope (cross-referenced):</strong> entry points — header credits badge + account menu Buy Credits<br>
 (area 01), profile Credits tile / Muse Pro row (area 06); how generation <em>spends</em> credits (area 02<br>
 MV flow + Edit MV, area 03 song; charging is now real — <code>GL-01</code>, see §6 overview).</p>
@@ -2520,8 +2637,20 @@ form" tables — annotated <em>price/SKU 須跟後台一樣</em>). <code>SUBSCRI
 <strong>Free users never see a Buy-Credits affordance</strong> — every entry point shows <strong>Subscribe</strong> instead<br>
   (header pill, account-menu button, Credits-detail CTA "Get Muse Pro"), and <code>BuyCreditsModal</code> renders<br>
 <code>SubscribeModal</code> for a non-subscriber (also the safety net for the in-flow insufficient-balance path).<br>
-  Only subscribers see <strong>Buy Credits</strong> (CR-06). ⚠️ The in-memory starting balance is still <code>390</code> so the<br>
-  demo is playable without subscribing (<code>TBD-CR-06</code>).</li>
+  Only subscribers see <strong>Buy Credits</strong> (CR-06).<blockquote>
+<p><strong>Starting balance is now <code>DEFAULT_CREDITS = 10</code></strong> (was 390; product decision 2026-08-12,<br>
+<code>TBD-CR-06a</code>). <strong>10 does not cover any MV</strong> — the cheapest MV path is 220 — so a free account<br>
+generates one vocal song (6) and then meets the paywall. That is the intended funnel, and it<br>
+<strong>reverses</strong> this line's old claim that the demo stays playable without subscribing. Because<br>
+<code>AGENTS.md</code> also calls this a CEO-demoable prototype, <code>startingCredits()</code> in <code>lib/user.ts</code><br>
+reads <strong><code>NEXT_PUBLIC_DEMO_CREDITS</code></strong> and falls back to the rule — set it to 1000 for a demo<br>
+build. e2e funds itself through the real subscribe flow (<code>fundAccount</code>) rather than the env var.<br>
+✅ <strong>Re-affirmed and re-implemented 2026-08-12.</strong> A designer drop removed this gate on<br>
+2026-08-11; CR-06 comes from the Business Model, not the comp, so the product owner reinstated<br>
+it and the code was reverted the same day. "As-built" holds again. Guarded by<br>
+<code>e2e</code>'s "3f / CR-06: a free account cannot reach Buy Credits". History in TBD-CR-10.</p>
+</blockquote>
+</li>
 <li><strong>Discount presentation (sample, <code>TBD-CR-07</code>):</strong> <code>BuyCreditsModal</code> demonstrates the Business Model<br>
   sale UI — a "Limited-time · N% OFF" banner, a struck-through list price + a red "N% OFF" badge per<br>
   pack (a card may carry its tier badge and the discount badge together), and the sale price on the Buy<br>
@@ -2569,7 +2698,7 @@ stay mounted with <code>inert</code>). Two things about that port matter to RD:<
 <tr>
 <td><code>providers/CreditsProvider</code></td>
 <td>— (state only)</td>
-<td><code>useState(DEFAULT_CREDITS=390)</code>, <code>addCredits(n)</code></td>
+<td><code>useState(startingCredits())</code> — <code>DEFAULT_CREDITS=10</code>, or <code>NEXT_PUBLIC_DEMO_CREDITS</code>; <code>addCredits(n)</code></td>
 <td><strong>none</strong></td>
 </tr>
 <tr>
@@ -2585,18 +2714,40 @@ stay mounted with <code>inert</code>). Two things about that port matter to RD:<
 <td>—</td>
 </tr>
 <tr>
-<td><code>credits/CreditsDetailModal</code></td>
-<td>balance + transaction ledger + Buy CTA</td>
+<td><code>credits/CreditsView</code></td>
+<td>balance + All/Spend/Earn filter + ledger + Buy CTA</td>
 <td><code>useCredits().credits</code>, <code>CREDIT_TRANSACTIONS</code></td>
 <td>—</td>
 </tr>
 </tbody>
 </table>
-<p>No route of its own; opened as modals. No backend.</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Component</th>
+<th>Guard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/profile/credits</code></td>
+<td><code>credits/CreditsView</code></td>
+<td><code>AuthGuard</code> (same as <code>/profile</code>, <code>/settings</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Subscribe and Buy Credits have no route of their own — they stay modals, opened from the shell,<br>
+account menu, profile, the in-flow insufficient-balance paths, and from <code>/profile/credits</code> itself.<br>
+No backend.</p>
+<p><code>CreditsView</code> renders DP's Credits Detail (Figma 636:11875) using <code>styles/designer/CreditsPage.css</code><br>
+verbatim, with <code>shell/DetailNavbar</code> for the back+title bar and <code>RoomNavbar</code>'s shared <code>Tabs</code> for the<br>
+filter. The <strong>All / Spend / Earn</strong> filter and the per-row type icon are DP additions WA did not have<br>
+before the migration; the filter derives from the sign of <code>amount</code>.</p>
 <hr>
 <h2 id="3-state-model-rules">3. State model &amp; rules</h2>
 <ul>
-<li><strong>Balance</strong> (<code>CreditsProvider.tsx</code>): single in-memory <code>credits</code> (<code>DEFAULT_CREDITS = 390</code>) +<br>
+<li><strong>Balance</strong> (<code>CreditsProvider.tsx</code>): single in-memory <code>credits</code> (<code>startingCredits()</code> — <code>DEFAULT_CREDITS = 10</code>, demo override <code>NEXT_PUBLIC_DEMO_CREDITS</code>) +<br>
 <code>addCredits(n)</code> (adds <code>n</code>, may be negative). <strong>GL-01 (2026-07-23):</strong> the MV/song <strong>flow providers</strong><br>
   now decrement on generation start (<code>COST_STORYBOARD</code>/<code>COST_RENDER</code>/<code>COST_SONG</code>, refunded on failure)<br>
   and Edit-MV still charges its micro-ops (<code>COST_REGEN</code>/<code>COST_COVER</code>); when the balance can't cover a<br>
@@ -2627,16 +2778,20 @@ stay mounted with <code>inert</code>). Two things about that port matter to RD:<
   valid for 2 years. Non-refundable and lost upon account deletion. Prices may vary by region."</strong> —<br>
   DP's own copy says purchased credits "never expire", which contradicts the Business Model, so WA's<br>
   wording wins for the same reason its prices do.</li>
-<li><strong><code>CreditsDetailModal</code></strong> (<code>CreditsDetailModal.tsx</code>): balance card + a purchase CTA + a<br>
-<strong>Transaction History</strong> list rendered from the static 7-entry <code>CREDIT_TRANSACTIONS</code> seed<br>
-  (<code>lib/user.ts</code>) — 🔒 <strong>not live</strong>; it does not reflect <code>addCredits</code> calls. CR-06 applies to its CTA<br>
-  too: <strong>"Buy More"</strong> for a subscriber, <strong>"Get Muse Pro"</strong> for a free user (DP has one unconditional<br>
-  "Buy More").</li>
+<li><strong><code>CreditsView</code></strong> (<code>CreditsView.tsx</code>, route <code>/profile/credits</code>): back+title bar, balance card, an<br>
+<strong>All / Spend / Earn</strong> filter, and the ledger rendered from the static 7-entry<br>
+<code>CREDIT_TRANSACTIONS</code> seed (<code>lib/user.ts</code>) — 🔒 <strong>not live</strong>; it does not reflect <code>addCredits</code><br>
+  calls. Its CTA is now an <strong>unconditional "Buy More"</strong> opening <code>BuyCreditsModal</code>.<blockquote>
+<p>✅ <strong>Restored 2026-08-12.</strong> The CTA is CR-06-branched again: <strong>"Buy More"</strong> for a subscriber,<br>
+<strong>"Get Muse Pro"</strong> for a free user, both opening <code>BuyCreditsModal</code> (which itself renders<br>
+<code>SubscribeModal</code> for a non-subscriber, so label and destination cannot drift apart).</p>
+</blockquote>
+</li>
 <li>🔒 All credit state and the ledger are in-memory/static; nothing persists across reload; no store integration.</li>
 </ul>
 <hr>
 <h2 id="4-journeys">4. Journeys</h2>
-<p>Screens to capture later: SubscribeModal, BuyCreditsModal, CreditsDetailModal.</p>
+<p>Screens to capture later: SubscribeModal, BuyCreditsModal, <code>/profile/credits</code>.</p>
 <h3 id="cr-p1-buy-credits-subscriber-only">CR-P1 — Buy credits (subscriber-only)</h3>
 <ul>
 <li><strong>CR-P1-S0</strong> (non-subscriber) Open <code>BuyCreditsModal</code> → it <strong>renders <code>SubscribeModal</code> directly</strong>, with no intermediate "Credit packs are a Muse Pro perk" gate screen and no "See Muse Pro Plans" step (CR-06). ⚠️ The gate screen this step used to describe no longer exists.</li>
@@ -2650,7 +2805,9 @@ stay mounted with <code>inert</code>). Two things about that port matter to RD:<
 </ul>
 <h3 id="cr-p3-credits-detail">CR-P3 — Credits detail</h3>
 <ul>
-<li><strong>CR-P3-S1</strong> Open <code>CreditsDetailModal</code> (profile Credits tile / Muse Pro Manage). <strong>System:</strong> balance + static ledger + <strong>Buy Credits</strong> → <code>BuyCreditsModal</code>.</li>
+<li><strong>CR-P3-S1</strong> Navigate to <code>/profile/credits</code> (profile Credits tile / Muse Pro <strong>Manage</strong> — both <code>router.push</code>, no longer a modal). <strong>System:</strong> balance + All/Spend/Earn filter + static ledger + <strong>Buy More</strong> → <code>BuyCreditsModal</code>.</li>
+<li><strong>CR-P3-S2</strong> Pick <strong>Spend</strong> or <strong>Earn</strong> → the ledger filters to negative / positive entries; <strong>All</strong> restores all 7.</li>
+<li><strong>CR-P3-S3</strong> Back → <code>/profile</code>. The route is deep-linkable and survives browser back/forward — the reason it stopped being a modal.</li>
 </ul>
 <hr>
 <h2 id="5-error-edge-states">5. Error &amp; edge states</h2>
@@ -2695,8 +2852,8 @@ stay mounted with <code>inert</code>). Two things about that port matter to RD:<
 <ul>
 <li><strong>AC-CR-01</strong> — WHEN a credit pack is purchased, THE SYSTEM SHALL add the pack's credits to the balance, toast, and close — with no real payment step.</li>
 <li><strong>AC-CR-02</strong> — WHEN a plan is subscribed, THE SYSTEM SHALL set the account to subscriber, add the plan's credits, and reflect PRO status in the shell/profile.</li>
-<li><strong>AC-CR-03</strong> — WHEN <code>CreditsDetailModal</code> opens, THE SYSTEM SHALL show the current balance, the static transaction ledger, and a Buy Credits CTA.</li>
-<li><strong>AC-CR-04</strong> — THE SYSTEM SHALL show <code>SubscribeModal</code>'s footer disclaimer "Demo only — no real payment"; <code>BuyCreditsModal</code>'s "Purchased credits are valid for 2 years. Non-refundable and lost upon account deletion. Prices may vary by region."; and no disclaimer on <code>CreditsDetailModal</code>. <em>(as-built per-dialog copy — the longer "Subscription credits expire each cycle. Cancel anytime." string was replaced in 3f by the per-plan "Credits Expire {cadence}" line inside each card, and the pack cards carry their own "Subscriber-only · No commitment" framing no longer.)</em></li>
+<li><strong>AC-CR-03</strong> — WHEN a signed-in user opens <code>/profile/credits</code>, THE SYSTEM SHALL show the current balance, the All/Spend/Earn filter, the static transaction ledger, and a purchase CTA. WHEN a guest opens it, <code>AuthGuard</code> SHALL require sign-in first. <em>(rewritten 2026-08-12: was "WHEN <code>CreditsDetailModal</code> opens")</em></li>
+<li><strong>AC-CR-04</strong> — THE SYSTEM SHALL show <code>SubscribeModal</code>'s footer disclaimer "Demo only — no real payment"; <code>BuyCreditsModal</code>'s "Purchased credits are valid for 2 years. Non-refundable and lost upon account deletion. Prices may vary by region."; and no disclaimer on the <code>/profile/credits</code> screen. <em>(as-built per-surface copy — the longer "Subscription credits expire each cycle. Cancel anytime." string was replaced in 3f by the per-plan "Credits Expire {cadence}" line inside each card, and the pack cards carry their own "Subscriber-only · No commitment" framing no longer.)</em></li>
 <li><strong>AC-CR-05</strong> — THE SYSTEM SHALL render the three dialogs at 320/375/768/1024/1440/1920px with no overflow. <em>(visual — six widths since plan D2, not the old four)</em></li>
 <li><strong>AC-CR-06</strong> — WHILE already subscribed, WHEN <code>SubscribeModal</code> opens, THE SYSTEM SHALL show the "You're already on Muse Pro" state (no plan cards) with a <strong>Done</strong> action. ⚠️ <strong>Restore Purchases is NOT reachable from that state</strong> — the subscribed branch returns before the footer. This is <strong>pre-existing, not a migration regression</strong> (<code>5296f1a</code> behaved identically); the AC has been wrong since CR-05 landed. Decide whether Restore belongs in the subscribed state (arguably where a user would look for it) → <code>TBD-CR-08</code>.</li>
 <li><strong>AC-CR-07</strong> — WHEN a generation is started with <code>credits &lt; cost</code>, THE SYSTEM SHALL open the buy-credits IAP instead of generating (GL-01).</li>
@@ -2732,7 +2889,7 @@ stay mounted with <code>inert</code>). Two things about that port matter to RD:<
 </tr>
 <tr>
 <td><strong>TBD-CR-04</strong></td>
-<td>🔧 <strong>Backend (RD)</strong> — live credit ledger. <code>CreditsDetailModal</code> shows a static seed, not real transactions.</td>
+<td>🔧 <strong>Backend (RD)</strong> — live credit ledger. <code>/profile/credits</code> shows a static seed, not real transactions.</td>
 </tr>
 <tr>
 <td><strong>TBD-CR-06a</strong></td>
@@ -2747,6 +2904,10 @@ stay mounted with <code>inert</code>). Two things about that port matter to RD:<
 <td>⏳ <strong>Product (raised 2026-08-06)</strong> — <strong>Restore Purchases is unreachable while subscribed</strong> (the already-Pro branch returns before the footer). Pre-existing, not caused by the migration. Decide whether it belongs there; AC-CR-06 is annotated until then.</td>
 </tr>
 <tr>
+<td>~~<strong>TBD-CR-10</strong>~~</td>
+<td>✅ <strong>CLOSED 2026-08-12 — ruled AND fixed.</strong> The spec was correct: a free user may only <strong>Upgrade</strong>; <strong>Buy Credits appears only after subscribing</strong>. The unauthorized 2026-08-11 reversal is reverted — <code>BuyCreditsModal</code> gates on <code>subscribed</code> again (returning <code>SubscribeModal</code> for a free user) and <code>CreditsView</code>'s CTA branches to "Get Muse Pro". Nothing in this file needed rewriting, which was the point of leaving it alone while the question was open. The missing free-user comp is still owed by the designer (<code>DESIGNER-TODO</code> A21) — adopting it later is a label/style change, not a behaviour change.</td>
+</tr>
+<tr>
 <td><strong>TBD-CR-09</strong></td>
 <td>🎨 <strong>Designer (from 3f)</strong> — DP's <code>UpgradeDialog</code> disagrees with the approved Business Model in three places: Weekly at <strong>$9.99</strong> (approved: $19.99), a hardcoded <strong>"/ week"</strong> on the Yearly card, and "credits <strong>never expire</strong>" against the approved 2-year validity. WA follows the Business Model (S20). Please correct the comp so the next drop does not re-introduce them.</td>
 </tr>
@@ -2758,7 +2919,7 @@ stay mounted with <code>inert</code>). Two things about that port matter to RD:<
 <pre><code class="language-mermaid">flowchart TD
   Badge[&quot;Header badge / Account menu / Profile&quot;] --&gt; Buy[&quot;BuyCreditsModal&quot;]
   Profile[&quot;Profile Muse Pro row (area 06)&quot;] --&gt; Sub[&quot;SubscribeModal (plans)&quot;]
-  ProfileCredits[&quot;Profile Credits tile&quot;] --&gt; Detail[&quot;CreditsDetailModal (balance + ledger)&quot;]
+  ProfileCredits[&quot;Profile Credits tile&quot;] --&gt; Detail[&quot;/profile/credits route (balance + filter + ledger)&quot;]
   Detail --&gt; Buy
   Buy --&gt;|subscriber?| Q{&quot;subscribed&quot;}
   Q --&gt;|no| Sub
@@ -2806,10 +2967,10 @@ the web build.</p>
 <strong>Out of scope:</strong> the account menu + Sign Out surface (area 01/06); subscription state (area 07);<br>
 Terms/Privacy/Delete-account destinations (area 06 Settings).</p>
 <p><strong>Key divergences from App F01/F22:</strong> <strong>no email/password</strong> option — only Continue with Apple /<br>
-Google ⚠️; <strong>no OAuth</strong> — a 1.5s fake success 🔒; <strong>no Splash &amp; Onboarding carousel</strong> (F01) at all ⚠️<br>
+Google ⚠️; <strong>no OAuth</strong> — a 1.8s fake success 🔒; <strong>no Splash &amp; Onboarding carousel</strong> (F01) at all ⚠️<br>
 (→ <code>TBD-GL-03</code>). <strong>GL-02 landed 2026-07-23:</strong> gating is now <strong>action-level</strong> (Create MV / Create Song /<br>
-Like / publish call <code>requireLogin</code> at the action), synced to App F22 — <code>AuthGuard</code> on the four route<br>
-entries is kept as a backstop.</p>
+Like / publish call <code>requireLogin</code> at the action), synced to App F22 — <code>AuthGuard</code> on the <strong>four</strong> gated route entries is kept as a backstop.<br>
+<strong>⚠️ Neither create route is one of them</strong> — <code>/mv/room</code> and <code>/song/create</code> are open to guests; see §3.</p>
 <hr>
 <h2 id="2-route-component-state-api-map-rd">2. Route / component / state / API map (RD)</h2>
 <table>
@@ -2866,16 +3027,26 @@ entries is kept as a backstop.</p>
 <li><strong><code>openSignIn()</code></strong>: open the modal with <strong>no</strong> queued action (<code>AuthProvider.tsx:55-59</code>).</li>
 <li><strong><code>AuthGuard</code></strong> (<code>AuthGuard.tsx</code>): renders <code>null</code> until <code>hydrated &amp;&amp; loggedIn</code>. When hydrated and<br>
   logged out, calls <code>requireLogin(undefined, () =&gt; router.replace(home))</code> — i.e. dismissing the modal<br>
-<strong>redirects Home</strong>. Wraps <code>/mv/room</code>, <code>/song/create</code>, <code>/history</code>, <code>/profile</code>.</li>
+<strong>redirects Home</strong>. Wraps <strong><code>/history</code>, <code>/profile</code>, <code>/profile/credits</code>, <code>/settings</code></strong> (4) — all personal-data screens.<blockquote>
+<p><strong>Corrected 2026-08-12.</strong> Was "<code>/mv/room</code>, <code>/song/create</code>, <code>/history</code>, <code>/profile</code>" — wrong in both<br>
+directions. <strong><code>/mv/room</code> lost its guard on 2026-08-07 by designer request</strong> and is now open to<br>
+guests: it is where the marketing Navbar's <strong>Start for Free</strong> lands, so a guest must be able to<br>
+browse and compose before deciding to sign in. The gate moved to the point that costs something —<br>
+<code>MvRoom</code>'s <strong>Create Music Video</strong> button calls <code>requireLogin</code> itself (the page file carries the<br>
+rationale). <code>/settings</code> was added by PROF-03 (2026-07-23) and <code>/profile/credits</code> by the route move<br>
+(2026-08-11); neither was recorded here.</p>
+</blockquote>
+</li>
 <li><strong><code>SignInModal</code></strong> (<code>SignInModal.tsx</code>): title <strong>"Sign in to YouCam Muse"</strong> (SHELL-01); <strong>Continue with<br>
   Apple</strong> and <strong>Continue with Google</strong> (white buttons); Terms of Service / Privacy Policy are <strong>real<br>
   links</strong> to <code>lib/legal.ts</code> (<code>TERMS_URL</code>/<code>PRIVACY_URL</code>, new tab) — same set as Settings (AUTH-03 /<br>
-  PROF-06); picking a provider shows a 1.5s success state ("Signed in successfully! Welcome back,<br>
+  PROF-06); picking a provider shows a 1.8s success state ("Signed in successfully! Welcome back,<br>
   {firstName} · via {provider}") then calls <code>onSignedIn</code> → <code>authStore.set(true)</code>. Dismissal is<br>
 <strong>blocked during</strong> the success animation (<code>onClose</code> swallowed).</li>
 <li><strong>Sign-in trigger points (action-level, GL-02):</strong> header <strong>Sign In</strong> (<code>openSignIn</code>, area 01);<br>
 <strong>gated nav</strong> click while logged out (<code>Sidebar</code> → <code>requireLogin(→push)</code>, area 01); <strong>AuthGuard</strong> on<br>
-  the four gated routes (dismiss → Home) as a backstop; Home hero create CTAs / song-card create<br>
+  the four gated routes (dismiss → Home) as a backstop; <strong>the two create screens' own actions</strong> —<br>
+<code>/mv/room</code>'s <strong>Song Library</strong> and <strong>Create Music Video</strong>, <code>/song/create</code>'s <strong>Create Song</strong>; Home hero create CTAs / song-card create<br>
   (<code>HomeView</code>, area 04); and — new — <strong>Create MV / Create Song / Like</strong> on community surfaces<br>
   (<code>CommunityMvPlayer</code>, <code>CommunitySongPlayer</code>, <code>SongExplore</code>) and <strong>publish</strong> on<br>
   an MV result (<code>MvResult</code>) all call<br>
@@ -2888,11 +3059,11 @@ entries is kept as a backstop.</p>
 <h3 id="auth-p1-sign-in-from-the-header-no-queued-action">AUTH-P1 — Sign in from the header (no queued action)</h3>
 <ul>
 <li><strong>AUTH-P1-S1</strong> Logged-out user clicks <strong>Sign In</strong> (top bar) → <code>openSignIn()</code> opens the modal.</li>
-<li><strong>AUTH-P1-S2</strong> Pick Apple/Google → 1.5s success animation → <code>authStore.set(true)</code>; header swaps to logged-in chrome. No navigation.</li>
+<li><strong>AUTH-P1-S2</strong> Pick Apple/Google → 1.8s success animation → <code>authStore.set(true)</code>; header swaps to logged-in chrome. No navigation.</li>
 </ul>
 <h3 id="auth-p2-gated-route-entry-queued-action">AUTH-P2 — Gated route entry (queued action)</h3>
 <ul>
-<li><strong>AUTH-P2-S1</strong> Logged-out user navigates to <code>/mv/room</code> (or <code>/song/create</code> <code>/history</code> <code>/profile</code>). <code>AuthGuard</code> renders nothing and opens the modal via <code>requireLogin</code>.</li>
+<li><strong>AUTH-P2-S1</strong> Logged-out user navigates to <code>/history</code>, <code>/profile</code>, <code>/profile/credits</code> or <code>/settings</code>. <code>AuthGuard</code> renders nothing and opens the modal via <code>requireLogin</code>. <strong><code>/mv/room</code> and <code>/song/create</code> are NOT in this set</strong> (2026-08-12) — they render normally for a guest; their gates fire on Song Library / Create Music Video / Create Song instead.</li>
 <li><strong>AUTH-P2-S2</strong> Sign in → guard re-renders the page (now <code>loggedIn</code>). <strong>Dismiss without signing in → <code>router.replace(home)</code>.</strong></li>
 </ul>
 <h3 id="auth-p3-gated-create-entry-queued-push">AUTH-P3 — Gated create entry (queued push)</h3>
@@ -2939,7 +3110,8 @@ entries is kept as a backstop.</p>
 <hr>
 <h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
 <ul>
-<li><strong>AC-AUTH-01</strong> — WHILE logged out, WHEN a user opens a guarded route (<code>/mv/room</code>, <code>/song/create</code>, <code>/history</code>, <code>/profile</code>), THE SYSTEM SHALL render no page content and open the sign-in modal.</li>
+<li><strong>AC-AUTH-01</strong> — WHILE logged out, WHEN a user opens a guarded route (<code>/history</code>, <code>/profile</code>, <code>/profile/credits</code>, <code>/settings</code>), THE SYSTEM SHALL render no page content and open the sign-in modal.</li>
+<li><strong>AC-AUTH-08</strong> — WHILE logged out, WHEN a user opens <code>/mv/room</code> or <code>/song/create</code>, THE SYSTEM SHALL render the full compose screen and SHALL NOT open the sign-in modal; and THE SYSTEM SHALL open it only when the user activates <strong>Song Library</strong> or <strong>Create Music Video</strong> (<code>/mv/room</code>) or <strong>Create Song</strong> (<code>/song/create</code>). <em>(new 2026-08-12)</em></li>
 <li><strong>AC-AUTH-02</strong> — WHEN the user completes mock sign-in (Apple/Google), THE SYSTEM SHALL, after the success animation, set the persisted logged-in flag and run any queued action (navigation).</li>
 <li><strong>AC-AUTH-03</strong> — WHEN the user dismisses the modal opened by <code>AuthGuard</code>, THE SYSTEM SHALL navigate Home; WHEN dismissed after a gated-nav click, THE SYSTEM SHALL leave the current page unchanged.</li>
 <li><strong>AC-AUTH-04</strong> — WHILE the success animation is playing, THE SYSTEM SHALL block modal dismissal.</li>
@@ -2950,7 +3122,7 @@ entries is kept as a backstop.</p>
 <hr>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
 <ul>
-<li>[ ] <strong>AUTH-P1</strong>: header Sign In → modal → provider pick → 1.5s success → logged-in chrome (AC-01/02).</li>
+<li>[ ] <strong>AUTH-P1</strong>: header Sign In → modal → provider pick → 1.8s success → logged-in chrome (AC-01/02).</li>
 <li>[ ] <strong>AUTH-P2</strong>: open <code>/mv/room</code> logged out → no page content + modal; sign in → page renders; dismiss → Home (AC-01/03).</li>
 <li>[ ] <strong>AUTH-P3</strong>: gated nav click → modal; sign in → target; dismiss → stay (AC-03).</li>
 <li>[ ] <strong>AUTH-P4/E1</strong>: sign out resets to guest; reload keeps logged-in only, subscription lost (AC-05/06).</li>
@@ -2984,14 +3156,14 @@ entries is kept as a backstop.</p>
   Trigger{Sign-in trigger} --&gt;|header Sign In| Modal[&quot;SignInModal (Apple / Google)&quot;]
   Trigger --&gt;|gated nav / Home create CTA| Modal
   Trigger --&gt;|AuthGuard on gated route| Modal
-  Modal --&gt;|pick provider| Success[&quot;1.5s success → authStore.set(true)&quot;]
+  Modal --&gt;|pick provider| Success[&quot;1.8s success → authStore.set(true)&quot;]
   Success --&gt; Resume[&quot;Run queued action (navigate) / render guarded page&quot;]
   Modal --&gt;|dismiss on guarded route| Home[&quot;router.replace(home)&quot;]
   Modal --&gt;|dismiss on nav trigger| Stay[&quot;stay put&quot;]
 </code></pre>
 <hr>
 <p><strong>Decisions (as-built):</strong> auth is mock and outside <code>MuseApi</code>; only the logged-in boolean persists;<br>
-route-entry gating (four routes) plus action-level gating (GL-02) on Create/Like/Publish; no<br>
+route-entry gating (four personal-data routes; both create routes deliberately excluded) plus action-level gating (GL-02) on Create/Like/Publish; no<br>
 onboarding/splash; social-only sign-in.</p>
 </article>
 <article class="doc" id="doc-10" data-name="Share" data-file="areas/10-share.md">
@@ -3236,14 +3408,14 @@ in-memory History only; 30-day expiry is copy, not enforced; the video frame is 
 <pre><code class="language-json">// 有 sub action（委派型 main action）
 {
   &quot;action&quot;: &quot;&lt;main action&gt;&quot;,
-  &quot;consumedType&quot;: &quot;duration&quot;,
+  &quot;consumedType&quot;: &quot;credit&quot;,
   &quot;rule&quot;: [&quot;&lt;sub action&gt;&quot;, &quot;…&quot;]
 }
 
 // 無 sub action（自帶規則型 main action）— rule 整個欄位省略
 {
   &quot;action&quot;: &quot;&lt;main action&gt;&quot;,
-  &quot;consumedType&quot;: &quot;duration&quot;
+  &quot;consumedType&quot;: &quot;credit&quot;
 }
 </code></pre>
 <table>
@@ -3260,7 +3432,7 @@ in-memory History only; 30-day expiry is copy, not enforced; the video frame is 
 </tr>
 <tr>
 <td><code>consumedType</code></td>
-<td><strong>一律填 <code>"duration"</code></strong>。後端以此區分 <code>duration</code> / <code>credit</code> 兩種計費基準；本文所有情境都是 <code>duration</code>，<strong>只要 payload 有這個欄位就必須帶上</strong>。</td>
+<td><strong>一律填 <code>"credit"</code></strong>（cloud config 2026-08-12 更新：23 個 action 全部從 <code>"duration"</code> 改為 <code>"credit"</code>）。後端以此區分 <code>duration</code> / <code>credit</code> 兩種計費基準。<strong>只要 payload 有這個欄位就必須帶上。</strong> ⚠️ 這個改動同時改變了前端責任 —— 見下方 §「數量由誰提供」。</td>
 </tr>
 <tr>
 <td><code>rule</code></td>
@@ -3336,8 +3508,14 @@ in-memory History only; 30-day expiry is copy, not enforced; the video frame is 
 </tr>
 </tbody>
 </table>
-<p><strong><code>consumedType: "duration"</code> + <code>x sec</code>：</strong> 秒數由<strong>後端自己從 task 取得</strong>，App / Web <strong>不需要在<br>
-payload 帶秒數</strong>。基準為：</p>
+<p><strong>數量由誰提供 —— 2026-08-12 起改由前端負責。</strong></p>
+<blockquote>
+<p>⚠️ <strong>這一段在 2026-08-12 反轉了。</strong> 原文是「<code>consumedType: "duration"</code> + <code>x sec</code>：秒數由<strong>後端<br>
+自己從 task 取得</strong>，App / Web <strong>不需要在 payload 帶秒數</strong>」。cloud config 改成 <code>"credit"</code> 之後，<br>
+產品負責人確認(2026-08-12)：<strong>前端要自己在 payload 帶數量／秒數</strong>。這是真正的介面契約變更，<br>
+不只是欄位換名字 —— RD 與前端都要動。實際 payload 欄位名與格式尚未定案(<code>TBD-CC-06</code>)。</p>
+</blockquote>
+<p>各 action 的計量基準(仍然不變，只是改由前端提供)：</p>
 <ul>
 <li><code>create_mv</code> / <code>generate_mv</code> → <strong>最終 MV 總長</strong></li>
 <li><code>edit_mv</code>（recreate）→ <strong>被重生成的那一個 shot 的長度</strong></li>
@@ -3393,7 +3571,7 @@ payload 帶秒數</strong>。基準為：</p>
 </blockquote>
 <pre><code class="language-json">{
   &quot;action&quot;: &quot;ai_song_custom_vocal&quot;,
-  &quot;consumedType&quot;: &quot;duration&quot;
+  &quot;consumedType&quot;: &quot;credit&quot;
 }
 </code></pre>
 <hr>
@@ -3424,7 +3602,7 @@ payload 帶秒數</strong>。基準為：</p>
 <p><code>mvType</code> = <code>singing</code> | <code>storytelling</code> | <code>hybrid</code>　·　<code>res</code> = <code>720p</code>（UI <strong>Standard</strong>）| <code>1080p</code>（UI <strong>High</strong>）</p>
 <pre><code class="language-json">{
   &quot;action&quot;: &quot;create_mv&quot;,
-  &quot;consumedType&quot;: &quot;duration&quot;,
+  &quot;consumedType&quot;: &quot;credit&quot;,
   &quot;rule&quot;: [&quot;upload_song&quot;, &quot;singing_1080p_seedance15&quot;]
 }
 </code></pre>
@@ -3453,7 +3631,7 @@ payload 帶秒數</strong>。基準為：</p>
 </table>
 <pre><code class="language-json">{
   &quot;action&quot;: &quot;create_script_upload_song&quot;,
-  &quot;consumedType&quot;: &quot;duration&quot;
+  &quot;consumedType&quot;: &quot;credit&quot;
 }
 </code></pre>
 <blockquote>
@@ -3466,7 +3644,7 @@ payload 帶秒數</strong>。基準為：</p>
 （<code>from_script</code> 35 取代 <code>upload_song</code> 45，因為腳本階段已收過費）。</p>
 <pre><code class="language-json">{
   &quot;action&quot;: &quot;generate_mv&quot;,
-  &quot;consumedType&quot;: &quot;duration&quot;,
+  &quot;consumedType&quot;: &quot;credit&quot;,
   &quot;rule&quot;: [&quot;from_script&quot;, &quot;storytelling_720p_seedance15&quot;]
 }
 </code></pre>
@@ -3501,7 +3679,7 @@ payload 帶秒數</strong>。基準為：</p>
 （此處<strong>沒有</strong> <code>hybrid_*</code> 的 sub action。）</p>
 <pre><code class="language-json">{
   &quot;action&quot;: &quot;edit_mv&quot;,
-  &quot;consumedType&quot;: &quot;duration&quot;,
+  &quot;consumedType&quot;: &quot;credit&quot;,
   &quot;rule&quot;: [&quot;recreate&quot;, &quot;story_1080p&quot;]
 }
 </code></pre>
@@ -3530,7 +3708,7 @@ payload 帶秒數</strong>。基準為：</p>
 </table>
 <pre><code class="language-json">{
   &quot;action&quot;: &quot;merge_mv&quot;,
-  &quot;consumedType&quot;: &quot;duration&quot;
+  &quot;consumedType&quot;: &quot;credit&quot;
 }
 </code></pre>
 <hr>
@@ -3665,12 +3843,42 @@ payload 帶秒數</strong>。基準為：</p>
    與此決議不符，需移除（<code>TBD-CC-05</code>）。</li>
 </ol>
 <hr>
-<h2 id="6-action">6. 保留 / 不使用的 action</h2>
-<p>Cloud config 內以下 <strong>12 個 action 為預留、目前不上線</strong>，RD <strong>不要呼叫</strong>：</p>
-<pre><code>{singing|storytelling|hybrid}_{short|full}_{720p|1080p}_seedance15
+<h2 id="6-cloud-config-action2026-08-12">6. 已從 cloud config 移除的 action（2026-08-12）</h2>
+<p>先前列為「預留、不上線」的 13 個 action <strong>已在 2026-08-12 的 config 更新中實際刪除</strong>，<br>
+config 從 35 個 action 降為 23 個。這是 config 往本規格靠攏，不是新的分歧：</p>
+<pre><code>{singing|storytelling|hybrid}_{short|full}_{720p|1080p}_seedance15   ← 12 個，全數移除
+ai_song_custom_vocal_refine                                          ← 移除
 </code></pre>
-<p>它們用 <code>tknPerRes</code>（固定收費）而非每秒收費，屬於未來「固定長度 MV 方案」的預留設定。</p>
-<p><code>ai_song_custom_vocal_refine</code>（0 點）為<strong>已刪除的 action</strong>，prototype 無對應功能，<strong>忽略</strong>。</p>
+<p>那 12 個用 <code>tknPerRes</code>（固定收費）而非每秒收費，屬於未來「固定長度 MV 方案」的預留設定；<br>
+移除代表<strong>該方案的設定已收回</strong>，若日後要做需重新加回。<code>ai_song_custom_vocal_refine</code><br>
+（0 點）本來就標為已刪除、prototype 無對應功能。</p>
+<p><strong>RD：這 13 個不會再出現在 config，也不要呼叫。</strong></p>
+<h3 id="61-2026-08-12-config">6.1 2026-08-12 config 更新的其他變更</h3>
+<table>
+<thead>
+<tr>
+<th>變更</th>
+<th>內容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>edit_poster</code>（新增）</strong></td>
+<td>MV Edit 的<strong>封面重新生成</strong>（<code>MvEditor.recreateCover()</code>）。<strong>每次結果固定 4 點</strong> = <code>tknPerRes: 4</code> + <code>procUnit: 1</code>。⚠️ config 目前寫成 <code>{ "token": 4, "tknPerRes": 1 }</code> —— 兩個費率 key、缺 <code>procUnit</code>，不符合 §「計費規則速查」的任一種合法組合。原始版本是 <code>perRes</code>，改名時把 <code>4</code> 留在 <code>token</code> 上。<strong>產品負責人確認語意為「每次 4 點」(2026-08-12)；請後台把形狀修正為 <code>tknPerRes: 4</code> + <code>procUnit: 1</code>。</strong></td>
+</tr>
+<tr>
+<td><strong><code>create_script_upload_song</code>（新增級距）</strong></td>
+<td>原本 <code>[1,120] = 15</code> / <code>[121,240] = 18</code>；現在多一段 <strong><code>[1,40] = 12</code></strong>，即 40 秒以內的短歌從 15 降為 12。</td>
+</tr>
+<tr>
+<td><strong><code>consumedType</code></strong></td>
+<td>23 個 action 全部 <code>"duration"</code> → <code>"credit"</code>。見 §「數量由誰提供」。</td>
+</tr>
+</tbody>
+</table>
+<p><strong>prototype 對照：</strong> <code>COST_COVER</code>（<code>src/lib/mv/types.ts</code>，2026-08-12 從 <code>MvEditor.tsx</code> 搬入 C8）<br>
+目前寫死 <strong>10</strong>，而 <code>edit_poster</code> 的權威值是 <strong>4</strong>。與其他五個 <code>COST_*</code> 一樣屬於<br>
+<code>TBD-CC-05</code> 要重算的 placeholder，<strong>本次不改數值</strong>——搬移只是把它納入 C8 契約面。</p>
 <hr>
 <h2 id="7-tbd">7. 待確認 (TBD)</h2>
 <table>
@@ -3682,12 +3890,16 @@ payload 帶秒數</strong>。基準為：</p>
 </thead>
 <tbody>
 <tr>
-<td><strong>TBD-CC-01</strong></td>
-<td><code>create_script_upload_song</code> 的級距：PDF 有 3 階（1–40s=12 / 41–120s=15 / 121–240s=18），JSON 只有 2 階（1–120s=15 / 121–240s=18）。以 JSON 為準，但需確認是否要補回 12 點那一階。</td>
+<td>~~<strong>TBD-CC-01</strong>~~</td>
+<td>✅ <strong>2026-08-12 結案</strong> — config 已補回 <code>[1,40] = 12</code> 那一階，三階與 PDF 一致（12 / 15 / 18）。</td>
 </tr>
 <tr>
-<td><strong>TBD-CC-02</strong></td>
-<td><strong>Edit MV 的封面 Recreate — 後端待補 action。</strong> 功能保留在 spec 中（見 §3.5），但 cloud config 目前無對應 action，後端補上後回填本文的 payload 與點數。在那之前前端不呼叫扣點 API。</td>
+<td>~~<strong>TBD-CC-02</strong>~~</td>
+<td>✅ <strong>2026-08-12 結案</strong> — 後端補上了 <strong><code>edit_poster</code></strong>，就是 Edit MV 封面 Recreate 的 action（每次 4 點）。仍待後台修正規則形狀，見 §6.1。</td>
+</tr>
+<tr>
+<td><strong>TBD-CC-06</strong></td>
+<td>🔴 <strong>前端要帶數量／秒數，但欄位名與格式未定。</strong> <code>consumedType</code> 改為 <code>"credit"</code> 後，產品負責人確認前端須自行在 payload 帶數量／秒數（原本由後端從 task 取得）。<strong>這是介面契約變更</strong>：需要 RD 給出欄位名、單位（秒?幀?結果數?）、以及委派型 action（<code>create_mv</code>/<code>generate_mv</code>/<code>edit_mv</code>）的數量要對應到哪一個 sub action。在定案前前端無法實作扣點呼叫。</td>
 </tr>
 <tr>
 <td><strong>TBD-CC-05</strong></td>
@@ -3721,6 +3933,77 @@ payload 帶秒數</strong>。基準為：</p>
 <p><strong>圖例:</strong> ⏸ Phase 2(MVP 不做)· 📄 只補 spec、後端由 RD 之後實作(Curation)· 🔧 後端實作(RD)·<br>
 ⏳ 仍待議/待設計。</p>
 </blockquote>
+<hr>
+<h2 id="rd-2026-08-12">🚦 可以交接給 RD 了嗎?(2026-08-12 盤點)</h2>
+<p><strong>一句話:生成(MV / Song)那一半可以交,社群(Explore / Community)那一半不行 —— 而缺的是「還沒寫的<br>
+section」,不是「小的 UI 問題」。</strong></p>
+<h3 id="rd-ready">✅ 已經 RD-ready</h3>
+<ul>
+<li><strong>MV + Song 生成全流程</strong> —— <code>MuseApi</code> 6 個 endpoint、job 輪詢模型、Zod schema 即 wire contract、<br>
+<code>MockMuseApi</code> 可整包抽換(<code>src/lib/api/index.ts</code> 一行)。契約面 C1–C8 已凍結並有 snapshot 測試。</li>
+<li><strong>Credits / IAP 的 UI 與規則</strong> —— 方案、點數包、CR-06 訂閱閘、GL-01 餘額不足導購,全部有 spec 與<br>
+  e2e。(<strong>但數字還不能用 —— 見下方 CC-05。</strong>)</li>
+<li><strong>Auth 模型、i18n(9 語)、routing、shell、History</strong> —— 形狀都已定義,RD 只需接真實後端。</li>
+<li><strong>11 個 area spec 全部存在</strong>;其中 01/02/05/06/07/09/10 於 2026-08-12 逐行對照過 code。</li>
+</ul>
+<h3 id="_1">🔴 交接前必須補的 —— 這兩項是硬阻礙</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>缺什麼</th>
+<th>為什麼擋住 RD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1</strong></td>
+<td><strong>整條 Explore / Community 的 API 契約</strong>(<code>TBD-GL-05</code> / <code>TBD-EXP-01</code> / <code>TBD-EXP-07</code> / <code>TODO.md</code> #1)</td>
+<td><code>MuseApi</code> <strong>完全沒有</strong> community endpoint(feed / detail / like / share / publish / creator)。<strong>17 個元件、橫跨 9 條 route</strong> 目前跑在 <code>src/lib/mv/community.ts</code> 的寫死種子上。schema(<code>CommunityMv</code> / <code>CommunitySong</code> / <code>CommunityCreator</code>)有了,消費它們的介面沒有。<strong>來源 PRD <code>ycmuse-app-skill/YouCam_Muse_Explore_Curation_PRD - V2.pdf</code> 至今未讀。</strong> 這是「未出現的 section」本身。</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>扣點 payload 的欄位契約</strong>(<code>TBD-CC-06</code>)</td>
+<td>cloud config 2026-08-12 把 <code>consumedType</code> 全改為 <code>"credit"</code>,<strong>前端須自行帶數量／秒數</strong>(原由後端從 task 取得)。欄位名、單位(秒?結果數?)、委派型 action(<code>create_mv</code>/<code>generate_mv</code>/<code>edit_mv</code>)的數量要對應到哪個 sub action —— 全未定。<strong>RD 拿到也寫不出扣點呼叫。</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="rd">🟠 交接前最好補的 —— 不補 RD 會照錯的數字實作</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>缺什麼</th>
+<th>風險</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>~~<strong>3</strong>~~</td>
+<td>✅ <strong>2026-08-12 部分結案</strong> — 固定值已修正:<code>COST_COVER</code> 10→<strong>4</strong>、<code>COST_SONG</code> 拆成 vocal <strong>6</strong> / instrumental <strong>12</strong>、<code>COST_SONG_RECREATE</code> 50→比照一般生成。<strong>四個隨長度變動的(storyboard / render / regen)維持 placeholder</strong>,權威公式寫進 <code>types.ts</code> 檔頭 —— TBD-CC-05 自己的結論就是「由後端回傳而非 hardcode」,不自建 client 計算器。</td>
+<td></td>
+</tr>
+<tr>
+<td>~~<strong>4</strong>~~</td>
+<td>✅ <strong>2026-08-12 結案</strong> — <code>enhanceCost</code> / <code>consumeEnhance</code> 已從 <code>useCredits</code> 移除,費用徽章也拿掉。⚠️ 這是 <strong>C4 的刪除</strong>(C4 原則只可新增),刻意為之並記在 <code>CHANGELOG-RD.md</code>。</td>
+<td></td>
+</tr>
+<tr>
+<td>~~<strong>5</strong>~~</td>
+<td>✅ <strong>2026-08-12 結案</strong> — <code>DEFAULT_CREDITS = 10</code>。⚠️ 10 <strong>做不出任何 MV</strong>(最便宜 220),免費帳號生一首人聲歌就撞到付費牆 —— 這是刻意的漏斗。demo 另有 <code>NEXT_PUBLIC_DEMO_CREDITS</code> 環境變數可覆寫。</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="rd_1">⚪ 不擋交接(但要讓 RD 知道)</h3>
+<ul>
+<li><strong>a11y A1–A5 驗收從未完成</strong> —— 唯一跑過又被作廢的驗證(環境壞掉,<code>PHASE-3-ACCEPTANCE</code> §6/§7.1)。<br>
+  這是品質缺口,不是契約缺口。</li>
+<li><strong><code>e2e/a11y.spec.ts</code> 三個盲點</strong>:不 seed 登入(4 條 guarded route 只掃到登入牆)、只有桌機寬度、<br>
+  只掃英文未加前綴的路由。</li>
+<li><strong><code>DESIGNER-TODO</code> A1–A21 幾乎全開</strong> —— 依 2026-08-06 的 scope rule 刻意保留給下一版設計稿,<br>
+<strong>不是漏做的工</strong>。</li>
+</ul>
 <hr>
 <h2 id="phase-2-mvp-phase-2">⏸ Phase 2 — MVP 不做,放進 Phase 2 待辦</h2>
 <table>
@@ -3792,6 +4075,16 @@ payload 帶秒數</strong>。基準為：</p>
 </thead>
 <tbody>
 <tr>
+<td><strong>TBD-CC-06</strong> 🔴</td>
+<td><strong>Credits / 契約</strong></td>
+<td><strong>交接阻礙。</strong> cloud config 2026-08-12 把 <code>consumedType</code> 全部改為 <code>"credit"</code>,產品負責人確認<strong>前端須自行在 payload 帶數量／秒數</strong>(原本由後端從 task 取得)。欄位名、單位、委派型 action 的數量對應皆未定 —— 前端無法實作扣點呼叫。詳見 <code>areas/11</code> §「數量由誰提供」。</td>
+</tr>
+<tr>
+<td><strong>TBD-EXP-11</strong> 🔴</td>
+<td><strong>Explore / 契約</strong></td>
+<td><strong>交接阻礙。</strong> <code>MuseApi</code> 完全沒有 community endpoint(feed / detail / like / share / publish / creator),但 17 個元件、9 條 route 跑在 <code>lib/mv/community.ts</code> 的寫死種子上。schema 已存在(<code>CommunityMv</code> / <code>CommunitySong</code> / <code>CommunityCreator</code>),消費它們的介面不存在。來源 PRD 尚未讀。見 <code>TODO.md</code> #1。</td>
+</tr>
+<tr>
 <td>TBD-GL-04</td>
 <td>全域</td>
 <td>正式環境的狀態持久化(history、storyboard、credits、subscription、profile 皆需接後端)。</td>
@@ -3804,7 +4097,7 @@ payload 帶秒數</strong>。基準為：</p>
 <tr>
 <td>TBD-CR-04</td>
 <td>Credits</td>
-<td>真實點數帳本(<code>CreditsDetailModal</code> 目前是靜態假資料)。</td>
+<td>真實點數帳本(<code>/profile/credits</code> 目前是靜態假資料)。</td>
 </tr>
 <tr>
 <td>TBD-AUTH-01</td>
@@ -3914,6 +4207,15 @@ payload 帶秒數</strong>。基準為：</p>
 <h2 id="proof-of-creation-web">Proof of Creation — 已移除(不在 web 範圍)</h2>
 <p>2026-07-24:App F21「創作證明」決定不做,<code>/proof</code> 路由與 <code>ProofView</code> 元件已從程式碼移除,History 選單<br>
 的「Get Proof」也已拿掉。詳見 <a href="areas/08-proof-of-creation.md"><code>areas/08-proof-of-creation.md</code></a>。</p>
+<hr>
+<h2 id="2026-08-12">近期結案(2026-08-12,留一行備查)</h2>
+<ul>
+<li><strong>TBD-CR-10</strong> — CR-06 訂閱閘曾於 2026-08-11 被設計稿單方面推翻(買點數不再需要訂閱)。產品負責人<br>
+  裁決 <strong>spec 對</strong>,code 已改回:免費用戶只能 Upgrade,訂閱後才變 Buy Credits。free user 版稿面仍<br>
+  待設計師(<code>DESIGNER-TODO</code> A21)。詳見 <code>areas/07-credits-iap.md</code>。</li>
+<li><strong>TBD-CC-01</strong> — <code>create_script_upload_song</code> 的 <code>[1,40] = 12</code> 級距已補回,三階與 PDF 一致。</li>
+<li><strong>TBD-CC-02</strong> — Edit MV 封面 Recreate 的後端 action 已補上,即 <strong><code>edit_poster</code></strong>(每次 4 點)。</li>
+</ul>
 <hr>
 <h2 id="pm">PM 該去哪裡看(導覽)</h2>
 <ul>

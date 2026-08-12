@@ -1,0 +1,3 @@
+[    1233ms] [ERROR] Failed to load resource: net::ERR_FILE_NOT_FOUND @ file:///shared/yco-sections.js:0
+[    1409ms] [INFO] [chatbot:event] cms_content_requested {} @ file:///Users/jasonchen/Documents/Claude/Projects/Prototype%20Automation/prototypes/support-chatbot/v4/index.html:2105
+[    2012ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ file:///Users/jasonchen/Documents/Claude/Projects/Prototype%20Automation/prototypes/support-chatbot/v4/index.html:2105

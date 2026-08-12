@@ -1,8 +1,9 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { SeekBar } from "@/components/ui/SeekBar";
+import type { RefObject } from "react";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { formatTime } from "@/components/ui/LyricsSheet";
@@ -67,7 +68,6 @@ export function SongPlayBar({
   onNext,
   onClose,
 }: SongPlayBarProps) {
-  const progressRef = useRef<HTMLDivElement>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
@@ -110,25 +110,15 @@ export function SongPlayBar({
     return () => observer.disconnect();
   }, []);
 
-  function seekFromClientX(clientX: number) {
-    const track = progressRef.current;
+  // TODO.md #5 / 7a: seeking goes through `ui/SeekBar`, which is keyboard-operable.
+  // This bar arrived with the drop-2 re-sync (2026-08-07), AFTER TODO #5 listed the
+  // four pointer-only seek bars — so it was a fifth instance of the same Serious
+  // WCAG 2.1.1 defect that no list mentioned. Adopted 2026-08-12 with the other four.
+  function seek(next: number) {
     const audio = audioRef.current;
-    if (!track || !audio || !audio.duration) return;
-    const rect = track.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    if (!audio || !audio.duration) return;
     // S3: no clamp, same as every other seek in the product.
-    audio.currentTime = ratio * audio.duration;
-  }
-
-  function onProgressPointerDown(event: ReactPointerEvent) {
-    seekFromClientX(event.clientX);
-    const onMove = (e: PointerEvent) => seekFromClientX(e.clientX);
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
+    audio.currentTime = Math.min(audio.duration, Math.max(0, next));
   }
 
   function applyVolume(next: number) {
@@ -148,7 +138,6 @@ export function SongPlayBar({
     setMuted(next);
   }
 
-  const progressRatio = duration ? currentTime / duration : 0;
 
   return (
     <div className="song-bar" style={{ left: sidebarWidth }}>
@@ -186,11 +175,16 @@ export function SongPlayBar({
       </div>
 
       <span className="song-bar__time">{formatTime(currentTime)}</span>
-      <div className="song-bar__progress" ref={progressRef} onPointerDown={onProgressPointerDown}>
-        <div className="song-bar__progress-track" />
-        <div className="song-bar__progress-fill" style={{ width: `${progressRatio * 100}%` }} />
-        <div className="song-bar__progress-thumb" style={{ left: `${progressRatio * 100}%` }} />
-      </div>
+      <SeekBar
+        value={currentTime}
+        max={duration}
+        onSeek={seek}
+        label="Seek within the song"
+        className="song-bar__progress"
+        trackClassName="song-bar__progress-track"
+        fillClassName="song-bar__progress-fill"
+        thumbClassName="song-bar__progress-thumb"
+      />
       <span className="song-bar__time">{formatTime(duration)}</span>
 
       <button

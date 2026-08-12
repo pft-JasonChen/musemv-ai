@@ -49,15 +49,20 @@ export function MobileTabBar() {
     }
   }
 
+  /**
+   * The create sheet's two destinations (`/mv/room`, `/song/create`).
+   *
+   * NOT gated (product decision 2026-08-12) — a guest may open either screen
+   * and compose freely; the gate sits on the actions inside them ("Song
+   * library" / "Create Music Video" / "Create Song"). This used to call
+   * `requireLogin` here, which meant a guest tapping ＋ got a sign-in modal
+   * instead of the create screen — the same walled-off feel the sidebar had.
+   * `guardHistory` above is unchanged: History IS personal data.
+   */
   function go(e: React.MouseEvent, href: string) {
     e.preventDefault();
     setCreateOpen(false);
-    const target = localePath(locale, href);
-    if (!loggedIn) {
-      requireLogin(() => router.push(target));
-      return;
-    }
-    router.push(target);
+    router.push(localePath(locale, href));
   }
 
   return (

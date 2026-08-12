@@ -23,6 +23,153 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-12 (c) — **C4 REMOVAL** (AI Enhance is free) + **C8 repriced** (TBD-CC-05)
+
+**Surfaces:** **C4** (`useCredits`) — a **removal**, which C4 normally forbids. **C8**
+(`src/lib/mv/types.ts`) — two constants replaced, one revalued.
+
+### C4 — `enhanceCost` / `consumeEnhance` are GONE
+
+AI Enhance costs nothing (spec `areas/11` §5.5, closing TBD-CC-03). There is **no cloud-config
+action for Enhance at all**, so billing it was never part of the approved credit model; the old
+"first free per session, then 1 credit" rule was WA's own invention.
+
+`useCredits()` is now `{ credits, addCredits }`. `providers.surface.test.ts` + its snapshot updated.
+
+> **This breaks C4's "additive only" rule, deliberately.** The alternative was to keep two
+> permanently-inert keys in a frozen contract, which would tell RD to implement billing that must
+> not exist. Product decision 2026-08-12. **RD: if you built against `enhanceCost` /
+> `consumeEnhance`, delete it — Enhance is free and has no action to bill.**
+
+### C8 — song costs repriced, cover cost corrected
+
+| before | after | why |
+| --- | --- | --- |
+| `COST_SONG = 10` | **`COST_SONG_VOCAL = 6`** + **`COST_SONG_INSTRUMENTAL = 12`** + `songCost(instrumental)` | spec 11 §3.1 bills on the Instrumental toggle; one constant could not express it |
+| `COST_SONG_RECREATE = 50` | **`songRecreateCost` = `songCost`** | the flat 50 had **no counterpart anywhere** in spec 11 or the cloud config. A Recreate is just another generation |
+| `COST_COVER = 10` | **`COST_COVER = 4`** | `edit_poster`, added in the 2026-08-12 cloud-config drop (closes TBD-CC-02) |
+
+`COST_STORYBOARD` (20), `COST_RENDER` (200) and `COST_REGEN` (20) are **unchanged and still
+placeholders** — they are `base + rate × seconds` in spec 11, so no constant is correct. Their real
+formulas are recorded in `types.ts`'s header. TBD-CC-05's own resolution is *"由後端回傳而非
+hardcode"*, so a client-side calculator was deliberately NOT built.
+
+Side effect worth knowing: `SongFlowProvider`'s `nextCost` ref is gone — it existed only to make one
+Recreate charge a different amount.
+
+### Also in this change (not a contract surface)
+
+**`DEFAULT_CREDITS` 390 → 10** (`TBD-CR-06a`), plus a demo escape hatch. 10 is the free-tier rule and
+**does not cover any MV** (cheapest MV path is 220), so a free account generates one vocal song and
+then meets the paywall — intended. Because `AGENTS.md` also calls this a *CEO-demoable* prototype,
+`startingCredits()` reads **`NEXT_PUBLIC_DEMO_CREDITS`** and falls back to the rule. Set it to 1000
+for a demo build; leave it unset everywhere else. No UI branch, nothing in the URL.
+
+**RD action required:** drop any use of `enhanceCost` / `consumeEnhance`. Read song costs through
+`songCost(instrumental)` rather than a flat constant. Treat all six `COST_*` as placeholders that the
+backend will supply — `types.ts` says which are already right (`COST_COVER`, the two song costs) and
+which are not.
+
+**Notified:** ⚠️ **not yet sent** — same as the entries below.
+
+**Verified by:** typecheck / lint / test:run 84/84 (C4 + C8 snapshots updated deliberately) / build /
+designer:check 42/42; the five e2e that assert credit behaviour all re-run green.
+
+## 2026-08-12 (b) — **C8 GREW: `COST_REGEN` + `COST_COVER` are now contract**
+
+**Surface:** **C8** (`src/lib/mv/types.ts`) — **additive only**, which is what C8 permits.
+No existing constant changed name or value.
+
+**Change:** the two MV-Edit credit costs moved into the contract file.
+
+```
+COST_REGEN = 20   // per-scene Recreate   — was a module-local const in components/mv/MvEditor.tsx
+COST_COVER = 10   // cover Recreate       — same
+```
+
+Both are also added to `contract.surface.test.ts`'s C8 snapshot, so they are now frozen like the
+other four. Snapshot diff is exactly two added lines.
+
+**Why this mattered:** C8 freezes the `COST_*` surface **in that one file**. These two lived in a
+component, so **two of the six credit costs sat outside the RD contract** — they could be changed
+without the C8 snapshot or the G4-g changelog gate noticing. A spec-vs-code audit on 2026-08-12
+found it; RD reading C8 would have seen four of six credit costs and had no signal the other two
+existed.
+
+**Values are unchanged and are still placeholders.** `specs/areas/11` holds the authoritative
+cloud-config rules and `TBD-CC-05` owns the revaluation. For the record, the authoritative mapping
+now that the 2026-08-12 cloud-config update landed:
+
+| constant | cloud-config rule | authoritative cost | prototype placeholder |
+| --- | --- | --- | --- |
+| `COST_REGEN` | `edit_mv` + `recreate` + `sing_<res>`\|`story_<res>` | fixed + per-second | 20 |
+| `COST_COVER` | **`edit_poster`** (new in this config drop) | 4 per result | 10 |
+
+`edit_poster` also closes **TBD-CC-02** ("Edit MV cover Recreate — backend action missing").
+
+**RD action required:** none now. When you wire real billing, read all six from `types.ts` — that
+is now the complete set.
+
+**⚠️ Separately, and bigger — see `specs/areas/11` `TBD-CC-06`:** the same config drop flipped
+`consumedType` from `"duration"` to `"credit"` on all 23 actions, and the product owner confirmed
+this moves the quantity/duration into the **frontend's** payload (it was previously derived
+backend-side from the task). That IS an interface-contract change, but it is not yet implementable —
+field name, unit, and how a delegating action's quantity maps to its sub-actions are all undefined.
+Nothing in C1–C8 has moved for it yet.
+
+**Notified:** ⚠️ **not yet sent** — same as the two entries below.
+
+**Verified by:** typecheck / lint / test:run 84/84 (C8 snapshot updated deliberately, +2 lines) /
+build / designer:check 42/42.
+
+## 2026-08-12 — `/song/create` loses its `AuthGuard`; **no C1–C8 change**
+
+**Surface:** **none of C1–C8.** `src/app/[locale]/song/create/page.tsx` trips the gate because
+C7 is watched by the `src/app/` **prefix**, but **C7 is "URL shapes" and no URL moved** — the
+route map is byte-identical, and `contract.surface.test.ts`'s C7 snapshot is untouched (verify:
+`npm run test:run` stays 84/84 with no snapshot write).
+
+**Change:** the route stopped wrapping its view in `AuthGuard`. `/song/create` is now reachable
+by a logged-out user, matching `/mv/room` (which was opened to guests on 2026-08-07). The
+sign-in gate moved from the route entry to the action:
+
+| screen         | guest can                      | gate fires on                            |
+| -------------- | ------------------------------ | ---------------------------------------- |
+| `/mv/room`     | browse, Import Audio, describe | **Song Library**, **Create Music Video** |
+| `/song/create` | browse, describe, pick mode    | **Create Song**                          |
+
+Also changed, same reason, neither a contract surface: `shell/Sidebar.tsx`'s `GATED` set
+(`{/mv/room, /song/create, /history, /profile}` → `{/history, /profile, /settings}`),
+`shell/MobileTabBar.tsx`'s create sheet (no longer calls `requireLogin` before navigating;
+its History entry still does), and `song/SongCompose.tsx` (`generate()` now wraps the whole
+action in `requireLogin`).
+
+**Why:** product decision 2026-08-12. Gating the nav click meant a guest tapping **Create MV**
+or the phone ＋ sheet got a sign-in modal _instead of_ the screen, which walled off the entire
+create flow and defeated the marketing Navbar's **Start for Free** (which lands on `/mv/room`).
+
+**One ordering rule worth knowing, because it is a revenue path:** in `SongCompose.generate()`
+the GL-01 insufficient-balance check runs **inside** the `requireLogin` callback. A logged-out
+user is therefore never shown the Buy-Credits upsell — sign-in always comes first. Asserted in
+`e2e/behaviour-regressions.spec.ts` ("a guest is never shown the credits upsell before signing in").
+
+**RD action required:** none for the contract. If you rely on "these five routes are
+`AuthGuard`-wrapped", the set is now **four**: `/history`, `/profile`, `/profile/credits`,
+`/settings`. Specs 01 / 02 / 03 / 09 were updated in the same change (AC-AUTH-08, AC-MV-01b,
+AC-SONG-01b).
+
+**Notified:** ⚠️ **not yet sent** — same as the 2026-08-12 (a) entry below. Whoever lands this
+must tell RD and replace this line.
+
+**Verified by:** typecheck / lint / test:run 84/84 / build / designer:check 42/42 all green;
+`e2e` G5-d#3 block **11/11**, which now also covers `/profile/credits` (previously untested) and
+repairs a test that had never passed — see below.
+
+**Bonus fix, unrelated to the contract:** `e2e`'s "G5-d#3 /mv/room's gate moved to Create Music
+Video" had been failing since the commit that introduced it (`0748b66`). It composed via
+`composeMv()`, which picks a song through **Song Library** — the very control that same commit
+put behind `requireLogin`. The test now imports audio (deliberately ungated) instead.
+
 ## 2026-08-11 (b) — `globals.css` touched under `src/app/`; no contract change
 
 **Surface:** none of C1–C8 — this is a styling-only edit to `src/app/globals.css`, which the
@@ -30,6 +177,7 @@ gate watches by prefix (`src/app/`) because that directory also holds `page.tsx`
 not because every file under it is a contract surface.
 
 **Change:** three rules, none of them C7 (no route/URL shape touched):
+
 - `.app-layout__content { z-index: 2; }` — raises page content above the footer's own
   `z-index: 1` so the fixed `SongPlayBar` isn't painted over by a later-in-DOM footer.
 - `body:has(.song-bar) footer.footer { display: none; }` — hides the footer entirely while
@@ -66,16 +214,16 @@ opened from the new page exactly as they were opened from the old modal.
 addition. If RD wants to deep-link straight to a user's credit balance, `/profile/credits` now
 exists for that.
 
-| Surface | Path                                     | Diff                                                                 |
-| ------- | ----------------------------------------- | --------------------------------------------------------------------- |
-| C1      | `src/lib/api/contract.ts`                 | untouched                                                              |
-| C2      | `src/lib/api/schemas.ts`                  | untouched                                                              |
-| C3      | `src/lib/api/index.ts`                    | untouched                                                              |
-| C4      | the five providers                        | untouched — `CreditsView` only CONSUMES `useCredits`/`useAuth`, both long-standing keys |
-| C5      | `src/lib/authStore.ts`                    | untouched                                                              |
-| C6      | `config.ts` / `middleware.ts`             | untouched                                                              |
-| C7      | `src/app/**/page.tsx`                     | **one route added**: `/[locale]/profile/credits`                      |
-| C8      | `src/lib/mv/types.ts`                     | untouched                                                              |
+| Surface | Path                          | Diff                                                                                    |
+| ------- | ----------------------------- | --------------------------------------------------------------------------------------- |
+| C1      | `src/lib/api/contract.ts`     | untouched                                                                               |
+| C2      | `src/lib/api/schemas.ts`      | untouched                                                                               |
+| C3      | `src/lib/api/index.ts`        | untouched                                                                               |
+| C4      | the five providers            | untouched — `CreditsView` only CONSUMES `useCredits`/`useAuth`, both long-standing keys |
+| C5      | `src/lib/authStore.ts`        | untouched                                                                               |
+| C6      | `config.ts` / `middleware.ts` | untouched                                                                               |
+| C7      | `src/app/**/page.tsx`         | **one route added**: `/[locale]/profile/credits`                                        |
+| C8      | `src/lib/mv/types.ts`         | untouched                                                                               |
 
 ---
 
@@ -94,16 +242,16 @@ landing-page migration. Their only consumer went with them.
 
 **Checked rather than assumed, since this slice rewrote a whole route:**
 
-| Surface | Path                                    | Diff                                                                                                                       |
-| ------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| C1      | `src/lib/api/contract.ts`               | untouched                                                                                                                  |
-| C2      | `src/lib/api/schemas.ts`                | untouched                                                                                                                  |
-| C3      | `src/lib/api/index.ts`                  | untouched                                                                                                                  |
-| C4      | the five providers                      | untouched — the new screen only CONSUMES `requireLogin` and `patchSongCompose`, both long-standing keys                     |
-| C5      | `src/lib/authStore.ts`                  | untouched                                                                                                                  |
-| C6      | `config.ts` / `middleware.ts`           | untouched                                                                                                                  |
-| C7      | `src/app/**/page.tsx`                   | untouched — `/`'s `page.tsx` still returns `<HomeView />`; the rewrite is entirely inside `src/components/home/`            |
-| C8      | `src/lib/mv/types.ts`                   | untouched                                                                                                                  |
+| Surface | Path                          | Diff                                                                                                             |
+| ------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| C1      | `src/lib/api/contract.ts`     | untouched                                                                                                        |
+| C2      | `src/lib/api/schemas.ts`      | untouched                                                                                                        |
+| C3      | `src/lib/api/index.ts`        | untouched                                                                                                        |
+| C4      | the five providers            | untouched — the new screen only CONSUMES `requireLogin` and `patchSongCompose`, both long-standing keys          |
+| C5      | `src/lib/authStore.ts`        | untouched                                                                                                        |
+| C6      | `config.ts` / `middleware.ts` | untouched                                                                                                        |
+| C7      | `src/app/**/page.tsx`         | untouched — `/`'s `page.tsx` still returns `<HomeView />`; the rewrite is entirely inside `src/components/home/` |
+| C8      | `src/lib/mv/types.ts`         | untouched                                                                                                        |
 
 **One thing RD should know even though it is not a contract change:** `web-app/public/assets/hero/`
 is new and is 13 MB of vendored demo media (8 mp4 + 8 posters), referenced by path string from

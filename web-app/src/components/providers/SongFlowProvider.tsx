@@ -6,8 +6,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { api, pollJob } from "@/lib/api";
 import {
-  COST_SONG,
-  COST_SONG_RECREATE,
+  songCost,
   DEFAULT_SONG_COMPOSE,
   type SongCompose,
   type SongResult,
@@ -47,9 +46,11 @@ export function SongFlowProvider({ children }: { children: React.ReactNode }) {
   const [gen, setGen] = useState<Gen>(IDLE_GEN);
   const [songResult, setSongResult] = useState<SongResult | null>(null);
   const cancelPoll = useRef<(() => void) | null>(null);
-  // Cost the NEXT generation charges — a plain compose is COST_SONG; a recreate
-  // bumps it to COST_SONG_RECREATE for one run, then falls back.
-  const nextCost = useRef(COST_SONG);
+  // NOTE: there used to be a `nextCost` ref here, because a Recreate charged a
+  // different (flat 50) amount for exactly one run. Since 2026-08-12 a Recreate
+  // bills the same as any generation (spec 11 §3.1 — vocal 6 / instrumental 12),
+  // so the amount is simply derived from the compose at charge time and the
+  // one-shot ref is gone.
 
   const patchSongCompose = useCallback(
     (p: Partial<SongCompose>) => setSongCompose((c) => ({ ...c, ...p })),
@@ -60,10 +61,8 @@ export function SongFlowProvider({ children }: { children: React.ReactNode }) {
 
   const startSong = useCallback(() => {
     setSongResult(null);
-    // GL-01: charge on generation start; refund if the job fails. The amount is
-    // COST_SONG normally, or COST_SONG_RECREATE for a one-shot recreate (SONG-03).
-    const cost = nextCost.current;
-    nextCost.current = COST_SONG;
+    // GL-01: charge on generation start; refund if the job fails.
+    const cost = songCost(songCompose.instrumental);
     addCredits(-cost);
     const refund = () => addCredits(cost);
     void api
@@ -96,14 +95,12 @@ export function SongFlowProvider({ children }: { children: React.ReactNode }) {
   // generation screen's `alreadyDone` guard skips generation (showing the old song).
   const resetForNewSong = useCallback(() => {
     cancelPoll.current?.();
-    nextCost.current = COST_SONG;
     setGen(IDLE_GEN);
     setSongResult(null);
   }, []);
 
   const resetForRecreate = useCallback(() => {
     cancelPoll.current?.();
-    nextCost.current = COST_SONG_RECREATE; // the upcoming generation charges the recreate cost
     setGen(IDLE_GEN);
     setSongResult(null);
   }, []);

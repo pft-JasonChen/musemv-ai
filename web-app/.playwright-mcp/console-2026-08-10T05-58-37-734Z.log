@@ -1,0 +1,26 @@
+[     449ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[    1061ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  168583ms] [INFO] [chatbot:event] chat_opened {topics_consumed_prev: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  171943ms] [INFO] [chatbot:event] topic_clicked {topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  172654ms] [INFO] [chatbot:event] agent_replied {mode: canned, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  178999ms] [INFO] [chatbot:event] message_feedback {value: up, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  179701ms] [INFO] [chatbot:event] message_feedback {value: down, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  180198ms] [INFO] [chatbot:event] message_feedback {value: up, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  180684ms] [INFO] [chatbot:event] message_feedback {value: down, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  181478ms] [INFO] [chatbot:event] none_of_above {from: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  181479ms] [INFO] [chatbot:event] llm_unlocked {reason: none_of_above} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  190793ms] [INFO] [chatbot:event] free_text_sent {length: 5, images: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  192116ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  193449ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 2, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  193452ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  194054ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  195358ms] [INFO] [chatbot:event] path1_agent_escalates_demo {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  195807ms] [INFO] [chatbot:event] ticket_cta_shown {reason: agent, topic: freetext:credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  202284ms] [INFO] [chatbot:event] ticket_form_opened {from: agent, topic: freetext:credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  208056ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 0, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  208058ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  208662ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  210137ms] [INFO] [chatbot:event] topic_clicked {topic: delete} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  210847ms] [INFO] [chatbot:event] agent_replied {mode: canned, topic: delete} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  212050ms] [INFO] [chatbot:event] followup_clicked {topic: delete, label: Will deleting my account automatically issue a refund?, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[  212706ms] [INFO] [chatbot:event] agent_replied {mode: canned_followup, topic: delete, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105

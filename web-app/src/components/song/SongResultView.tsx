@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { SeekBar } from "@/components/ui/SeekBar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
@@ -18,7 +18,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
-import { COST_SONG_RECREATE } from "@/lib/mv/types";
+import { songRecreateCost } from "@/lib/mv/types";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import {
@@ -87,7 +87,7 @@ function formatTime(seconds: number): string {
  *
  * ── WHAT DP DOES NOT HAVE, AND IS KEPT ──────────────────────────────────────
  *
- * · SONG-03 + GL-01: Recreate is a paid re-roll (`COST_SONG_RECREATE`) that
+ * · SONG-03 + GL-01: Recreate is a paid re-roll (`songRecreateCost`) that
  *   keeps the current take in History, and routes to IAP when the balance
  *   cannot cover it. DP's Recreate just goes back to the form for free.
  * · "Use in Music Video" actually carries the song into the MV compose state
@@ -136,14 +136,14 @@ export function SongResultView() {
    */
   const fromSongDetail = params.get("from") === "song-detail";
   const { locale } = useLocale();
-  const { songResult, setSongResult, resetForRecreate, patchSongCompose } = useSongFlow();
+  const { songCompose, songResult, setSongResult, resetForRecreate, patchSongCompose } =
+    useSongFlow();
   const { patchCompose } = useMvFlow();
   const { history } = useHistory();
   const { credits } = useCredits();
   const { requireLogin, profile } = useAuth();
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
   const activeLineRef = useRef<HTMLParagraphElement>(null);
   const [buyOpen, setBuyOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -259,24 +259,14 @@ export function SongResultView() {
     setMuted(next === 0);
   }
 
-  function seekFromClientX(clientX: number) {
-    const track = progressRef.current;
-    const audio = audioRef.current;
-    if (!track || !audio || !audio.duration) return;
-    const rect = track.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    audio.currentTime = ratio * audio.duration;
-  }
-
-  function onProgressPointerDown(event: ReactPointerEvent) {
-    seekFromClientX(event.clientX);
-    const onMove = (e: PointerEvent) => seekFromClientX(e.clientX);
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
+  // TODO.md #5 / 7a: seeking goes through `ui/SeekBar`, which is keyboard-
+  // operable. DP draws this bar as a bare div with only `onPointerDown`; that
+  // is a Serious WCAG 2.1.1 failure, and `SeekBar` was built for `/watch` to
+  // avoid copying it. Adopted here 2026-08-12 — pixel-neutral, same markup.
+  function seek(next: number) {
+    const media = audioRef.current;
+    if (!media || !media.duration) return;
+    media.currentTime = Math.min(media.duration, Math.max(0, next));
   }
 
   function useInMv() {
@@ -294,10 +284,12 @@ export function SongResultView() {
     router.push(localePath(locale, "/mv/room"));
   }
 
-  // SONG-03: Recreate re-rolls for COST_SONG_RECREATE and keeps the current take
+  // SONG-03: Recreate re-rolls at normal generation price and keeps the current take
   // in History. Insufficient balance routes to IAP (GL-01).
   function recreate() {
-    if (credits < COST_SONG_RECREATE) {
+    // SONG-03: a Recreate bills exactly what a fresh generation bills (spec 11 §3.1,
+    // decision 2026-08-12). The old flat 50 had no counterpart in the credit model.
+    if (credits < songRecreateCost(songCompose.instrumental)) {
       setBuyOpen(true);
       return;
     }
@@ -305,7 +297,6 @@ export function SongResultView() {
     router.push(localePath(locale, "/song/creating"));
   }
 
-  const progressRatio = duration ? currentTime / duration : 0;
   // Opened from a `/history` row the id is in the URL and there is no live
   // History job to match on (seed rows are fixtures, not jobs) — without it
   // Share would build `/share?id=`, which resolves to the expired state.
@@ -432,21 +423,16 @@ export function SongResultView() {
                       </div>
                     </div>
 
-                    <div
+                    <SeekBar
+                      value={currentTime}
+                      max={duration}
+                      onSeek={seek}
+                      label="Seek within the song"
                       className="song-result__progress"
-                      ref={progressRef}
-                      onPointerDown={onProgressPointerDown}
-                    >
-                      <div className="song-result__progress-track" />
-                      <div
-                        className="song-result__progress-fill"
-                        style={{ width: `${progressRatio * 100}%` }}
-                      />
-                      <div
-                        className="song-result__progress-thumb"
-                        style={{ left: `${progressRatio * 100}%` }}
-                      />
-                    </div>
+                      trackClassName="song-result__progress-track"
+                      fillClassName="song-result__progress-fill"
+                      thumbClassName="song-result__progress-thumb"
+                    />
                     <div className="song-result__time">
                       <span>{formatTime(currentTime)}</span>
                       <span>{formatTime(duration)}</span>

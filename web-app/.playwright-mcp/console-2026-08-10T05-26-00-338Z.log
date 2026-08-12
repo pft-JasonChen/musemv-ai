@@ -1,0 +1,28 @@
+[     556ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[     644ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8010/favicon.ico:0
+[    1165ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   12738ms] [INFO] [chatbot:event] chat_opened {topics_consumed_prev: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   13743ms] [INFO] [chatbot:event] topic_clicked {topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   14451ms] [INFO] [chatbot:event] agent_replied {mode: canned, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   14845ms] [INFO] [chatbot:event] followup_clicked {topic: credits, label: Where can I use Units?, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   15499ms] [INFO] [chatbot:event] agent_replied {mode: canned_followup, topic: credits, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   16249ms] [INFO] [chatbot:event] message_feedback {value: up, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   16250ms] [INFO] [chatbot:event] message_feedback {value: down, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   16250ms] [INFO] [chatbot:event] message_feedback {value: null, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   34052ms] [INFO] [chatbot:event] none_of_above {from: home} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   34052ms] [INFO] [chatbot:event] llm_unlocked {reason: none_of_above} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   34560ms] [INFO] [chatbot:event] free_text_sent {length: 22, images: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   35870ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   36766ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 2, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   36769ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   37370ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   37872ms] [INFO] [chatbot:event] topic_clicked {topic: refund} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   38575ms] [INFO] [chatbot:event] agent_replied {mode: canned, topic: refund} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   38973ms] [INFO] [chatbot:event] followup_clicked {topic: refund, label: My Order ID / Invoice has letters and numbers, ticket: true} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   39625ms] [INFO] [chatbot:event] agent_replied {mode: canned_followup, topic: refund, ticket: true} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   40078ms] [INFO] [chatbot:event] ticket_cta_shown {reason: cms_flag, topic: refund} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   40575ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 1, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   40576ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   41178ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   42479ms] [INFO] [chatbot:event] path1_agent_escalates_demo {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134
+[   42930ms] [INFO] [chatbot:event] ticket_cta_shown {reason: agent, topic: freetext:credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2134

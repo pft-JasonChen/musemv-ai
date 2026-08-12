@@ -44,9 +44,11 @@ import {
   localePath,
 } from "@/lib/i18n/config";
 import {
+  COST_COVER,
+  COST_REGEN,
   COST_RENDER,
-  COST_SONG,
-  COST_SONG_RECREATE,
+  COST_SONG_INSTRUMENTAL,
+  COST_SONG_VOCAL,
   COST_STORYBOARD,
   DEFAULT_SETTINGS,
   DESCRIPTION_MAX,
@@ -221,11 +223,23 @@ describe("C7 — route map (src/app/**/page.tsx)", () => {
 // ── C8 — domain constants ─────────────────────────────────────────────────
 describe("C8 — domain constants (src/lib/mv/types.ts) [additive only]", () => {
   it("credit costs are unchanged (billing depends on these)", () => {
+    // COST_REGEN / COST_COVER joined this file on 2026-08-12. They had lived as
+    // module-local consts in `components/mv/MvEditor.tsx`, i.e. OUTSIDE C8 — two
+    // of the six credit costs could be changed without this snapshot or the
+    // G4-g changelog gate noticing. Freezing them here is the point of the move.
+    //
+    // Same day, TBD-CC-05 replaced the two SONG placeholders: `COST_SONG` (10)
+    // and `COST_SONG_RECREATE` (50) became `COST_SONG_VOCAL` (6) /
+    // `COST_SONG_INSTRUMENTAL` (12), because spec 11 §3.1 bills on the
+    // Instrumental toggle and a Recreate is just another generation. That is a
+    // C8 REMOVAL as well as an addition — logged in `docs/CHANGELOG-RD.md`.
     expect({
       COST_STORYBOARD,
       COST_RENDER,
-      COST_SONG,
-      COST_SONG_RECREATE,
+      COST_SONG_VOCAL,
+      COST_SONG_INSTRUMENTAL,
+      COST_REGEN,
+      COST_COVER,
       DESCRIPTION_MAX,
     }).toMatchSnapshot();
   });

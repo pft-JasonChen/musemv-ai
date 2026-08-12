@@ -11,16 +11,25 @@
 
 ## 1. Overview & scope
 
-Credit balance + the three monetization modals. `CreditsProvider` holds an in-memory balance;
-`SubscribeModal` (Muse Pro plans), `BuyCreditsModal` (credit packs), and `CreditsDetailModal` (balance
+Credit balance + two monetization modals and one route. `CreditsProvider` holds an in-memory
+balance; `SubscribeModal` (Muse Pro plans) and `BuyCreditsModal` (credit packs) are opened as modals
+from the shell, account menu, profile and the in-flow insufficient-balance paths, while the balance
 
-- ledger) are opened from the shell, account menu, and profile. Disclaimer copy differs per modal:
-  only **`SubscribeModal`** says "Demo only — no real payment. Subscription credits expire each cycle.";
-  `BuyCreditsModal` says purchased credits are **valid for 2 years** (non-refundable / prices-vary);
-  `CreditsDetailModal` has none.
+- ledger screen is the **`/profile/credits` route** (`CreditsView`). Disclaimer copy differs per
+  surface: only **`SubscribeModal`** says "Demo only — no real payment. Subscription credits expire
+  each cycle."; `BuyCreditsModal` says purchased credits are **valid for 2 years** (non-refundable /
+  prices-vary); the Credits Detail screen has none.
+
+> **Corrected 2026-08-12 — Credits Detail is a ROUTE, not a modal.** It moved on 2026-08-11
+> (`d329719`, designer request): `CreditsDetailModal.tsx` was **deleted** and replaced by
+> `credits/CreditsView.tsx` at `/profile/credits`, gated by `AuthGuard`. That commit declared the
+> C7 change correctly (route-map snapshot + `CHANGELOG-RD.md`, per G4-c/G4-g) but did not update
+> `specs/areas/*`, so this file described a component that no longer existed for a day.
+> Subscribe and Buy Credits deliberately gained **no** route — DP has none for either, and keeping
+> them modal means a mid-creation top-up never navigates out of an in-memory flow.
 
 **In scope:** `providers/CreditsProvider`, `credits/SubscribeModal`, `credits/BuyCreditsModal`,
-`credits/CreditsDetailModal`; the plan/pack/ledger data in `lib/user.ts`.
+`credits/CreditsView` + the `/profile/credits` route; the plan/pack/ledger data in `lib/user.ts`.
 **Out of scope (cross-referenced):** entry points — header credits badge + account menu Buy Credits
 (area 01), profile Credits tile / Muse Pro row (area 06); how generation _spends_ credits (area 02
 MV flow + Edit MV, area 03 song; charging is now real — `GL-01`, see §6 overview).
@@ -34,8 +43,18 @@ form" tables — annotated _price/SKU 須跟後台一樣_). `SUBSCRIPTION_PLANS`
   **Free users never see a Buy-Credits affordance** — every entry point shows **Subscribe** instead
   (header pill, account-menu button, Credits-detail CTA "Get Muse Pro"), and `BuyCreditsModal` renders
   `SubscribeModal` for a non-subscriber (also the safety net for the in-flow insufficient-balance path).
-  Only subscribers see **Buy Credits** (CR-06). ⚠️ The in-memory starting balance is still `390` so the
-  demo is playable without subscribing (`TBD-CR-06`).
+  Only subscribers see **Buy Credits** (CR-06).
+  > **Starting balance is now `DEFAULT_CREDITS = 10`** (was 390; product decision 2026-08-12,
+  > `TBD-CR-06a`). **10 does not cover any MV** — the cheapest MV path is 220 — so a free account
+  > generates one vocal song (6) and then meets the paywall. That is the intended funnel, and it
+  > **reverses** this line's old claim that the demo stays playable without subscribing. Because
+  > `AGENTS.md` also calls this a CEO-demoable prototype, `startingCredits()` in `lib/user.ts`
+  > reads **`NEXT_PUBLIC_DEMO_CREDITS`** and falls back to the rule — set it to 1000 for a demo
+  > build. e2e funds itself through the real subscribe flow (`fundAccount`) rather than the env var.
+  > ✅ **Re-affirmed and re-implemented 2026-08-12.** A designer drop removed this gate on
+  > 2026-08-11; CR-06 comes from the Business Model, not the comp, so the product owner reinstated
+  > it and the code was reverted the same day. "As-built" holds again. Guarded by
+  > `e2e`'s "3f / CR-06: a free account cannot reach Buy Credits". History in TBD-CR-10.
 - **Discount presentation (sample, `TBD-CR-07`):** `BuyCreditsModal` demonstrates the Business Model
   sale UI — a "Limited-time · N% OFF" banner, a struck-through list price + a red "N% OFF" badge per
   pack (a card may carry its tier badge and the discount badge together), and the sale price on the Buy
@@ -74,20 +93,31 @@ stay mounted with `inert`). Two things about that port matter to RD:
 
 ## 2. Route / component / state / API map (RD)
 
-| Component                    | Owns UI                                | Reads/writes state                                                     | `MuseApi` |
-| ---------------------------- | -------------------------------------- | ---------------------------------------------------------------------- | --------- |
-| `providers/CreditsProvider`  | — (state only)                         | `useState(DEFAULT_CREDITS=390)`, `addCredits(n)`                       | **none**  |
-| `credits/SubscribeModal`     | Muse Pro plan picker + Subscribe CTA   | `useAuth().subscribe`, `useCredits().addCredits`, `SUBSCRIPTION_PLANS` | —         |
-| `credits/BuyCreditsModal`    | balance + credit-pack picker + Buy CTA | `useCredits().{credits,addCredits}`, `CREDIT_PACKS`                    | —         |
-| `credits/CreditsDetailModal` | balance + transaction ledger + Buy CTA | `useCredits().credits`, `CREDIT_TRANSACTIONS`                          | —         |
+| Component                   | Owns UI                                            | Reads/writes state                                                     | `MuseApi` |
+| --------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------- | --------- |
+| `providers/CreditsProvider` | — (state only)                                     | `useState(startingCredits())` — `DEFAULT_CREDITS=10`, or `NEXT_PUBLIC_DEMO_CREDITS`; `addCredits(n)` | **none**  |
+| `credits/SubscribeModal`    | Muse Pro plan picker + Subscribe CTA               | `useAuth().subscribe`, `useCredits().addCredits`, `SUBSCRIPTION_PLANS` | —         |
+| `credits/BuyCreditsModal`   | balance + credit-pack picker + Buy CTA             | `useCredits().{credits,addCredits}`, `CREDIT_PACKS`                    | —         |
+| `credits/CreditsView`       | balance + All/Spend/Earn filter + ledger + Buy CTA | `useCredits().credits`, `CREDIT_TRANSACTIONS`                          | —         |
 
-No route of its own; opened as modals. No backend.
+| Route              | Component             | Guard                                         |
+| ------------------ | --------------------- | --------------------------------------------- |
+| `/profile/credits` | `credits/CreditsView` | `AuthGuard` (same as `/profile`, `/settings`) |
+
+Subscribe and Buy Credits have no route of their own — they stay modals, opened from the shell,
+account menu, profile, the in-flow insufficient-balance paths, and from `/profile/credits` itself.
+No backend.
+
+`CreditsView` renders DP's Credits Detail (Figma 636:11875) using `styles/designer/CreditsPage.css`
+verbatim, with `shell/DetailNavbar` for the back+title bar and `RoomNavbar`'s shared `Tabs` for the
+filter. The **All / Spend / Earn** filter and the per-row type icon are DP additions WA did not have
+before the migration; the filter derives from the sign of `amount`.
 
 ---
 
 ## 3. State model & rules
 
-- **Balance** (`CreditsProvider.tsx`): single in-memory `credits` (`DEFAULT_CREDITS = 390`) +
+- **Balance** (`CreditsProvider.tsx`): single in-memory `credits` (`startingCredits()` — `DEFAULT_CREDITS = 10`, demo override `NEXT_PUBLIC_DEMO_CREDITS`) +
   `addCredits(n)` (adds `n`, may be negative). **GL-01 (2026-07-23):** the MV/song **flow providers**
   now decrement on generation start (`COST_STORYBOARD`/`COST_RENDER`/`COST_SONG`, refunded on failure)
   and Edit-MV still charges its micro-ops (`COST_REGEN`/`COST_COVER`); when the balance can't cover a
@@ -118,18 +148,20 @@ No route of its own; opened as modals. No backend.
   valid for 2 years. Non-refundable and lost upon account deletion. Prices may vary by region."** —
   DP's own copy says purchased credits "never expire", which contradicts the Business Model, so WA's
   wording wins for the same reason its prices do.
-- **`CreditsDetailModal`** (`CreditsDetailModal.tsx`): balance card + a purchase CTA + a
-  **Transaction History** list rendered from the static 7-entry `CREDIT_TRANSACTIONS` seed
-  (`lib/user.ts`) — 🔒 **not live**; it does not reflect `addCredits` calls. CR-06 applies to its CTA
-  too: **"Buy More"** for a subscriber, **"Get Muse Pro"** for a free user (DP has one unconditional
-  "Buy More").
+- **`CreditsView`** (`CreditsView.tsx`, route `/profile/credits`): back+title bar, balance card, an
+  **All / Spend / Earn** filter, and the ledger rendered from the static 7-entry
+  `CREDIT_TRANSACTIONS` seed (`lib/user.ts`) — 🔒 **not live**; it does not reflect `addCredits`
+  calls. Its CTA is now an **unconditional "Buy More"** opening `BuyCreditsModal`.
+  > ✅ **Restored 2026-08-12.** The CTA is CR-06-branched again: **"Buy More"** for a subscriber,
+  > **"Get Muse Pro"** for a free user, both opening `BuyCreditsModal` (which itself renders
+  > `SubscribeModal` for a non-subscriber, so label and destination cannot drift apart).
 - 🔒 All credit state and the ledger are in-memory/static; nothing persists across reload; no store integration.
 
 ---
 
 ## 4. Journeys
 
-Screens to capture later: SubscribeModal, BuyCreditsModal, CreditsDetailModal.
+Screens to capture later: SubscribeModal, BuyCreditsModal, `/profile/credits`.
 
 ### CR-P1 — Buy credits (subscriber-only)
 
@@ -144,7 +176,9 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, CreditsDetailModal.
 
 ### CR-P3 — Credits detail
 
-- **CR-P3-S1** Open `CreditsDetailModal` (profile Credits tile / Muse Pro Manage). **System:** balance + static ledger + **Buy Credits** → `BuyCreditsModal`.
+- **CR-P3-S1** Navigate to `/profile/credits` (profile Credits tile / Muse Pro **Manage** — both `router.push`, no longer a modal). **System:** balance + All/Spend/Earn filter + static ledger + **Buy More** → `BuyCreditsModal`.
+- **CR-P3-S2** Pick **Spend** or **Earn** → the ledger filters to negative / positive entries; **All** restores all 7.
+- **CR-P3-S3** Back → `/profile`. The route is deep-linkable and survives browser back/forward — the reason it stopped being a modal.
 
 ---
 
@@ -164,8 +198,8 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, CreditsDetailModal.
 
 - **AC-CR-01** — WHEN a credit pack is purchased, THE SYSTEM SHALL add the pack's credits to the balance, toast, and close — with no real payment step.
 - **AC-CR-02** — WHEN a plan is subscribed, THE SYSTEM SHALL set the account to subscriber, add the plan's credits, and reflect PRO status in the shell/profile.
-- **AC-CR-03** — WHEN `CreditsDetailModal` opens, THE SYSTEM SHALL show the current balance, the static transaction ledger, and a Buy Credits CTA.
-- **AC-CR-04** — THE SYSTEM SHALL show `SubscribeModal`'s footer disclaimer "Demo only — no real payment"; `BuyCreditsModal`'s "Purchased credits are valid for 2 years. Non-refundable and lost upon account deletion. Prices may vary by region."; and no disclaimer on `CreditsDetailModal`. _(as-built per-dialog copy — the longer "Subscription credits expire each cycle. Cancel anytime." string was replaced in 3f by the per-plan "Credits Expire {cadence}" line inside each card, and the pack cards carry their own "Subscriber-only · No commitment" framing no longer.)_
+- **AC-CR-03** — WHEN a signed-in user opens `/profile/credits`, THE SYSTEM SHALL show the current balance, the All/Spend/Earn filter, the static transaction ledger, and a purchase CTA. WHEN a guest opens it, `AuthGuard` SHALL require sign-in first. _(rewritten 2026-08-12: was "WHEN `CreditsDetailModal` opens")_
+- **AC-CR-04** — THE SYSTEM SHALL show `SubscribeModal`'s footer disclaimer "Demo only — no real payment"; `BuyCreditsModal`'s "Purchased credits are valid for 2 years. Non-refundable and lost upon account deletion. Prices may vary by region."; and no disclaimer on the `/profile/credits` screen. _(as-built per-surface copy — the longer "Subscription credits expire each cycle. Cancel anytime." string was replaced in 3f by the per-plan "Credits Expire {cadence}" line inside each card, and the pack cards carry their own "Subscriber-only · No commitment" framing no longer.)_
 - **AC-CR-05** — THE SYSTEM SHALL render the three dialogs at 320/375/768/1024/1440/1920px with no overflow. _(visual — six widths since plan D2, not the old four)_
 - **AC-CR-06** — WHILE already subscribed, WHEN `SubscribeModal` opens, THE SYSTEM SHALL show the "You're already on Muse Pro" state (no plan cards) with a **Done** action. ⚠️ **Restore Purchases is NOT reachable from that state** — the subscribed branch returns before the footer. This is **pre-existing, not a migration regression** (`5296f1a` behaved identically); the AC has been wrong since CR-05 landed. Decide whether Restore belongs in the subscribed state (arguably where a user would look for it) → `TBD-CR-08`.
 - **AC-CR-07** — WHEN a generation is started with `credits < cost`, THE SYSTEM SHALL open the buy-credits IAP instead of generating (GL-01).
@@ -189,14 +223,15 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, CreditsDetailModal.
 
 ## 8. Open items for RD
 
-| ID             | Open item                                                                                                                                                                                                                                                                                                                                                                        |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **TBD-CR-01**  | 🔧 **Backend (RD)** — real IAP (App Store / Play Store) for packs and subscription. None today (instant `addCredits`).                                                                                                                                                                                                                                                           |
-| **TBD-CR-04**  | 🔧 **Backend (RD)** — live credit ledger. `CreditsDetailModal` shows a static seed, not real transactions.                                                                                                                                                                                                                                                                       |
-| **TBD-CR-06a** | ⏳ **Free-user starting balance** — credits are subscriber-only (gating resolved), but the real free-tier credit grant is still open. The web demo keeps `DEFAULT_CREDITS = 390` so it stays playable pre-subscription — is the real value 0? a small trial pack? Proposal 2's 45-credit entry pack?                                                                             |
-| **TBD-CR-07**  | ⏳ **IAP presentation** — `BuyCreditsModal` demonstrates the discount UI (struck price + "N% OFF" badge, `CREDIT_SALE_PCT`) as a **sample only**. Still open: the real promotion values, the "% off vs 300 credits" value framing, the "View all plans" expand, and the final grid/list/popup layout choice.                                                                     |
-| **TBD-CR-08**  | ⏳ **Product (raised 2026-08-06)** — **Restore Purchases is unreachable while subscribed** (the already-Pro branch returns before the footer). Pre-existing, not caused by the migration. Decide whether it belongs there; AC-CR-06 is annotated until then.                                                                                                                     |
-| **TBD-CR-09**  | 🎨 **Designer (from 3f)** — DP's `UpgradeDialog` disagrees with the approved Business Model in three places: Weekly at **$9.99** (approved: $19.99), a hardcoded **"/ week"** on the Yearly card, and "credits **never expire**" against the approved 2-year validity. WA follows the Business Model (S20). Please correct the comp so the next drop does not re-introduce them. |
+| ID             | Open item                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TBD-CR-01**  | 🔧 **Backend (RD)** — real IAP (App Store / Play Store) for packs and subscription. None today (instant `addCredits`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **TBD-CR-04**  | 🔧 **Backend (RD)** — live credit ledger. `/profile/credits` shows a static seed, not real transactions.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **TBD-CR-06a** | ⏳ **Free-user starting balance** — credits are subscriber-only (gating resolved), but the real free-tier credit grant is still open. The web demo keeps `DEFAULT_CREDITS = 390` so it stays playable pre-subscription — is the real value 0? a small trial pack? Proposal 2's 45-credit entry pack?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **TBD-CR-07**  | ⏳ **IAP presentation** — `BuyCreditsModal` demonstrates the discount UI (struck price + "N% OFF" badge, `CREDIT_SALE_PCT`) as a **sample only**. Still open: the real promotion values, the "% off vs 300 credits" value framing, the "View all plans" expand, and the final grid/list/popup layout choice.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **TBD-CR-08**  | ⏳ **Product (raised 2026-08-06)** — **Restore Purchases is unreachable while subscribed** (the already-Pro branch returns before the footer). Pre-existing, not caused by the migration. Decide whether it belongs there; AC-CR-06 is annotated until then.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ~~**TBD-CR-10**~~ | ✅ **CLOSED 2026-08-12 — ruled AND fixed.** The spec was correct: a free user may only **Upgrade**; **Buy Credits appears only after subscribing**. The unauthorized 2026-08-11 reversal is reverted — `BuyCreditsModal` gates on `subscribed` again (returning `SubscribeModal` for a free user) and `CreditsView`'s CTA branches to "Get Muse Pro". Nothing in this file needed rewriting, which was the point of leaving it alone while the question was open. The missing free-user comp is still owed by the designer (`DESIGNER-TODO` A21) — adopting it later is a label/style change, not a behaviour change. |
+| **TBD-CR-09**  | 🎨 **Designer (from 3f)** — DP's `UpgradeDialog` disagrees with the approved Business Model in three places: Weekly at **$9.99** (approved: $19.99), a hardcoded **"/ week"** on the Yearly card, and "credits **never expire**" against the approved 2-year validity. WA follows the Business Model (S20). Please correct the comp so the next drop does not re-introduce them.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 See also global: `TBD-GL-01` (credit charging/spending), `TBD-GL-04` (persistence).
 
@@ -208,7 +243,7 @@ See also global: `TBD-GL-01` (credit charging/spending), `TBD-GL-04` (persistenc
 flowchart TD
   Badge["Header badge / Account menu / Profile"] --> Buy["BuyCreditsModal"]
   Profile["Profile Muse Pro row (area 06)"] --> Sub["SubscribeModal (plans)"]
-  ProfileCredits["Profile Credits tile"] --> Detail["CreditsDetailModal (balance + ledger)"]
+  ProfileCredits["Profile Credits tile"] --> Detail["/profile/credits route (balance + filter + ledger)"]
   Detail --> Buy
   Buy -->|subscriber?| Q{"subscribed"}
   Q -->|no| Sub

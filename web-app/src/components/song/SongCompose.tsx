@@ -21,7 +21,7 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { GENRES, MOODS, VOCALS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
 import { TOP_PICKS_SONGS } from "@/lib/mv/community";
-import { COST_SONG, DESCRIPTION_MAX, isSongReady, type SongMode } from "@/lib/mv/types";
+import { DESCRIPTION_MAX, isSongReady, songCost, type SongMode } from "@/lib/mv/types";
 
 const pick = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
 
@@ -80,7 +80,7 @@ export function SongCompose() {
   const router = useRouter();
   const { locale } = useLocale();
   const { songCompose: s, patchSongCompose: patch, resetForNewSong } = useSongFlow();
-  const { loggedIn } = useAuth();
+  const { loggedIn, requireLogin } = useAuth();
   const { history } = useHistory();
   const openCreation = useOpenCreation();
   const { credits } = useCredits();
@@ -91,15 +91,25 @@ export function SongCompose() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const ready = isSongReady(s);
+  // Spec 11 §3.1: vocal 6 / instrumental 12. One constant could not express this.
+  const cost = songCost(s.instrumental);
 
   function generate() {
-    // GL-01: insufficient balance routes to IAP instead of starting generation.
-    if (credits < COST_SONG) {
-      setBuyOpen(true);
-      return;
-    }
-    resetForNewSong();
-    router.push(localePath(locale, "/song/creating"));
+    // GL-02: this screen is open to guests (the route lost its AuthGuard on
+    // 2026-08-12), so "Create Song" is where the sign-in gate lives — same
+    // shape as `MvRoom`'s "Create Music Video". The credit check runs INSIDE
+    // the callback on purpose: a guest must sign in before ever being shown
+    // the IAP upsell, otherwise a logged-out user with a 0 balance would be
+    // asked to buy credits for an account they do not have yet.
+    requireLogin(() => {
+      // GL-01: insufficient balance routes to IAP instead of starting generation.
+      if (credits < cost) {
+        setBuyOpen(true);
+        return;
+      }
+      resetForNewSong();
+      router.push(localePath(locale, "/song/creating"));
+    });
   }
 
   const cta = (
@@ -114,7 +124,7 @@ export function SongCompose() {
         {/* Real <img>: `.song-create__cta-credit-icon` sets width/height only,
             so the coin keeps its own gold — a mask here paints nothing. */}
         <img src="/assets/icons/ui/ic_credit.svg" alt="" className="song-create__cta-credit-icon" />
-        {COST_SONG}
+        {cost}
       </span>
     </button>
   );

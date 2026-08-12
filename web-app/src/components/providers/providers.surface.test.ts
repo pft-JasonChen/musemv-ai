@@ -70,7 +70,7 @@ const BASELINE: Record<string, string[]> = {
     "hydrated", "loggedIn", "openSignIn", "profile", "requireLogin", "signOut",
     "status", "subscribe", "subscribed", "subscribedPlan", "updateProfile",
   ],
-  useCredits: ["addCredits", "consumeEnhance", "credits", "enhanceCost"],
+  useCredits: ["addCredits", "credits"],
   useHistory: ["history", "markCompleted", "markFailed", "upsertGenerating"],
   useMvFlow: [
     "compose", "gen", "patchCompose", "resetForNewMv", "resetForRerender",

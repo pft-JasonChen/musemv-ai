@@ -2,7 +2,9 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
+import { SubscribeModal } from "@/components/credits/SubscribeModal";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { DpDialog } from "@/components/ui/DpDialog";
 import {
@@ -53,19 +55,27 @@ interface Props {
  * presence of the footer was asked for explicitly and `guard-greps.sh`'s
  * R-9 rule only bans a literal internal (`/…`) href, not `#`.
  *
- * ── CR-06 REVERSED (designer decision, 2026-08-11) ──────────────────────────
+ * ── CR-06: SUBSCRIBER-ONLY. Reversed 2026-08-11, RESTORED 2026-08-12 ────────
  *
- * This used to gate the whole dialog behind `subscribed`, returning
- * `SubscribeModal` in its place for anyone not on Muse Pro ("credits are
- * sold to Muse Pro subscribers only" — the prior Business Model's Final
- * Decision, predating this migration). The designer overrode that directly:
- * credits are a standalone purchase, not conditional on a subscription.
- * Every caller (`RoomNavbar`/`DetailNavbar`'s credit pill, `CreditsView`'s
- * "Buy More", `HeaderActions`, `AccountMenu`) now reaches the real pack list
- * unconditionally — none of them needed to change, since they all just
- * open this same dialog and it decides its own content.
+ * Credits are sold to Muse Pro subscribers only — Business Model "Credit Plans
+ * → Proposal 1, Final Decision". A free user must never see a Buy-Credits
+ * affordance; every entry point shows Subscribe instead, and this dialog is
+ * the safety net for the in-flow insufficient-balance path.
+ *
+ * A designer drop dropped this gate on 2026-08-11 ("credits are a standalone
+ * purchase"). **That was not the designer's call to make** — CR-06 comes from
+ * the Business Model, not the comp — and the product owner reinstated the rule
+ * on 2026-08-12. The gate is back; `specs/areas/07` never stopped specifying
+ * it (it was left deliberately un-rewritten while the question was open — see
+ * TBD-CR-10).
+ *
+ * The free-user comp is still missing from DP (it has no auth concept at all),
+ * so the label falls back to WA's pre-existing "Get Muse Pro". Requested as
+ * `DESIGNER-TODO` A21; adopting the real comp later is a label/style change,
+ * not a behaviour change.
  */
 export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
+  const { subscribed } = useAuth();
   const { credits, addCredits } = useCredits();
   const [selected, setSelected] = useState(DEFAULT_CREDIT_PACK_ID);
   const pack = CREDIT_PACKS.find((p) => p.id === selected)!;
@@ -75,6 +85,13 @@ export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
     addCredits(pack.credits);
     onPurchased?.(pack.credits);
     onClose();
+  }
+
+  // CR-06: a non-subscriber never reaches the pack list. Returning the
+  // Subscribe dialog (rather than rendering a gate screen) keeps every caller
+  // unchanged — they all just open "the purchase dialog" and it decides.
+  if (!subscribed) {
+    return <SubscribeModal open={open} onClose={onClose} />;
   }
 
   return (

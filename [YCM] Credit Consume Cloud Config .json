@@ -1,12 +1,12 @@
 {
     "create_mv": {
         "action": "create_mv",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": []
     },
     "ai_song_simple_vocal": {
         "action": "ai_song_simple_vocal",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "tknPerRes": 6,
@@ -16,7 +16,7 @@
     },
     "ai_song_custom_vocal": {
         "action": "ai_song_custom_vocal",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "tknPerRes": 6,
@@ -24,19 +24,9 @@
             }
         ]
     },
-    "ai_song_custom_vocal_refine": {
-        "action": "ai_song_custom_vocal_refine",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "tknPerRes": 0,
-                "procUnit": 1
-            }
-        ]
-    },
     "ai_song_simple_instrumental": {
         "action": "ai_song_simple_instrumental",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "tknPerRes": 12,
@@ -46,7 +36,7 @@
     },
     "ai_song_custom_instrumental": {
         "action": "ai_song_custom_instrumental",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "tknPerRes": 12,
@@ -56,11 +46,18 @@
     },
     "create_script_upload_song": {
         "action": "create_script_upload_song",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "procUnitRange": [
                     1,
+                    40
+                ],
+                "token": 12
+            },
+            {
+                "procUnitRange": [
+                    41,
                     120
                 ],
                 "token": 15
@@ -76,17 +73,17 @@
     },
     "generate_mv": {
         "action": "generate_mv",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": []
     },
     "edit_mv": {
         "action": "edit_mv",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": []
     },
     "merge_mv": {
         "action": "merge_mv",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "procUnitRange": [
@@ -99,7 +96,7 @@
     },
     "upload_song": {
         "action": "upload_song",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "tknPerRes": 45,
@@ -109,7 +106,7 @@
     },
     "from_script": {
         "action": "from_script",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "tknPerRes": 35,
@@ -119,7 +116,7 @@
     },
     "recreate": {
         "action": "recreate",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "tknPerRes": 8,
@@ -129,7 +126,7 @@
     },
     "singing_720p_seedance15": {
         "action": "singing_720p_seedance15",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "procUnit": 1,
@@ -139,7 +136,7 @@
     },
     "singing_1080p_seedance15": {
         "action": "singing_1080p_seedance15",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "procUnit": 1,
@@ -149,7 +146,7 @@
     },
     "storytelling_720p_seedance15": {
         "action": "storytelling_720p_seedance15",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "procUnit": 1,
@@ -159,7 +156,7 @@
     },
     "storytelling_1080p_seedance15": {
         "action": "storytelling_1080p_seedance15",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "procUnit": 1,
@@ -169,7 +166,7 @@
     },
     "hybrid_720p_seedance15": {
         "action": "hybrid_720p_seedance15",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "procUnit": 1,
@@ -179,7 +176,7 @@
     },
     "hybrid_1080p_seedance15": {
         "action": "hybrid_1080p_seedance15",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "procUnit": 1,
@@ -189,7 +186,7 @@
     },
     "sing_720p": {
         "action": "sing_720p",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "token": 7,
@@ -199,7 +196,7 @@
     },
     "sing_1080p": {
         "action": "sing_1080p",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "token": 7,
@@ -209,7 +206,7 @@
     },
     "story_720p": {
         "action": "story_720p",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "token": 2,
@@ -219,7 +216,7 @@
     },
     "story_1080p": {
         "action": "story_1080p",
-        "consumedType": "duration",
+        "consumedType": "credit",
         "rule": [
             {
                 "token": 4,
@@ -227,123 +224,13 @@
             }
         ]
     },
-    "singing_short_720p_seedance15": {
-        "action": "singing_short_720p_seedance15",
-        "consumedType": "duration",
+    "edit_poster": {
+        "action": "edit_poster",
+        "consumedType": "credit",
         "rule": [
             {
-                "procUnit": 1,
-                "tknPerRes": 390
-            }
-        ]
-    },
-    "singing_short_1080p_seedance15": {
-        "action": "singing_short_1080p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 450
-            }
-        ]
-    },
-    "storytelling_short_720p_seedance15": {
-        "action": "storytelling_short_720p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 205
-            }
-        ]
-    },
-    "storytelling_short_1080p_seedance15": {
-        "action": "storytelling_short_1080p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 320
-            }
-        ]
-    },
-    "hybrid_short_720p_seedance15": {
-        "action": "hybrid_short_720p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 350
-            }
-        ]
-    },
-    "hybrid_short_1080p_seedance15": {
-        "action": "hybrid_short_1080p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 400
-            }
-        ]
-    },
-    "singing_full_720p_seedance15": {
-        "action": "singing_full_720p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 1080
-            }
-        ]
-    },
-    "singing_full_1080p_seedance15": {
-        "action": "singing_full_1080p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 1200
-            }
-        ]
-    },
-    "storytelling_full_720p_seedance15": {
-        "action": "storytelling_full_720p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 520
-            }
-        ]
-    },
-    "storytelling_full_1080p_seedance15": {
-        "action": "storytelling_full_1080p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 850
-            }
-        ]
-    },
-    "hybrid_full_720p_seedance15": {
-        "action": "hybrid_full_720p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 950
-            }
-        ]
-    },
-    "hybrid_full_1080p_seedance15": {
-        "action": "hybrid_full_1080p_seedance15",
-        "consumedType": "duration",
-        "rule": [
-            {
-                "procUnit": 1,
-                "tknPerRes": 1150
+                "token": 4,
+                "tknPerRes": 1
             }
         ]
     }

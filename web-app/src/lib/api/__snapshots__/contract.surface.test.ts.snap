@@ -361,9 +361,11 @@ exports[`C8 — domain constants (src/lib/mv/types.ts) [additive only] > DEFAULT
 
 exports[`C8 — domain constants (src/lib/mv/types.ts) [additive only] > credit costs are unchanged (billing depends on these) 1`] = `
 {
+  "COST_COVER": 4,
+  "COST_REGEN": 20,
   "COST_RENDER": 200,
-  "COST_SONG": 10,
-  "COST_SONG_RECREATE": 50,
+  "COST_SONG_INSTRUMENTAL": 12,
+  "COST_SONG_VOCAL": 6,
   "COST_STORYBOARD": 20,
   "DESCRIPTION_MAX": 2500,
 }

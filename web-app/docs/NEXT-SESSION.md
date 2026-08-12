@@ -1,12 +1,43 @@
-# NEXT-SESSION.md — start here (rewritten 2026-08-07, second time that day)
+# NEXT-SESSION.md — start here (updated 2026-08-12)
 
 **Read this file, then `CLAUDE.md`'s "In flight" block. Nothing else, until you have picked a
 task below.** Every number here was measured, not estimated; where something was not measured, it
 says so.
 
 **§2 — the landing page — is DONE.** It was the last unmigrated route, so **the designer-UI
-migration is complete: 17 of 17.** What is left is verification and backlog, not porting. §2 is
-kept as the record of what was decided and what it cost; **the next task is §3 item 2 or 3.**
+migration is complete: 17 of 17.** What is left is verification and backlog, not porting.
+
+> ## 🚦 2026-08-12 — can this go to RD?
+>
+> **The generation half yes; the community half no.** `MuseApi` has 6 endpoints, all MV/Song
+> generation, and **zero** community endpoints — while **17 components across 9 routes** run on the
+> hardcoded seeds in `lib/mv/community.ts`. That missing contract is `TBD-EXP-11`, and it is not a
+> "small UI issue": it is a section of the spec that has never been written. The second blocker is
+> `TBD-CC-06` (the credit payload). **`specs/OPEN-QUESTIONS.md` now opens with a
+> handover-readiness section listing all five things to fill — read that before promising a date.**
+>
+> ### What changed on 2026-08-12, so you do not re-derive it
+>
+> - **Both create screens are now open to guests.** `/mv/room` (since 08-07) and `/song/create`
+>   (new) render for a logged-out user; the gate moved to **Song Library** / **Create Music Video**
+>   / **Create Song**. `Sidebar`'s `GATED` set and `MobileTabBar`'s create sheet stopped gating
+>   navigation. `AuthGuard` now wraps **four** routes: `/history`, `/profile`, `/profile/credits`,
+>   `/settings`. Specs 01/02/03/09 updated (AC-AUTH-08, AC-MV-01b, AC-SONG-01b).
+> - **Credits Detail is a route** — `/profile/credits`, since 08-11. `CreditsDetailModal` is gone.
+> - **CR-06 was reversed by a design drop and reinstated by the product owner.** Credit packs are
+>   subscriber-only; a free user only ever sees Upgrade. A designer drop cannot overturn a Business
+>   Model rule — that is the lesson, and `DESIGNER-TODO` **A21** asks for the free-user comp DP has
+>   never drawn.
+> - **`TODO.md` #5 is CLOSED** — see §1 below; there were **five** seek bars, not four.
+> - **A spec↔code audit ran across all 11 areas.** 02/09 had factually wrong statements (the
+>   guarded-route set, a 1.5s-vs-1800ms animation); 05/10 were clean; 01/06/07 were corrected. The
+>   `specs/index.html` reader had also been stale for a rewrite. All fixed.
+>
+> ### For the designer specifically
+>
+> Nothing in `DESIGNER-TODO.md` was silently resolved. It gained **A21** (Credits Detail has no
+> free-user CTA comp) and everything else A1–A20 is untouched and still owed. §3 item 2 below is
+> still the right next designer-facing task.
 
 ---
 
@@ -33,8 +64,8 @@ Playwright browser: `CHROMIUM_PATH=$(find /opt/pw-browsers -name chrome -type f 
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Designer-UI migration         | **DONE, 17/17 routes.** The landing page landed 2026-08-07 and was the last one.                                            |
 | DP drop 2 (`2670ed2`) re-sync | **DONE 2026-08-07.** Appendix A is the record.                                                                              |
-| Gates                         | typecheck / lint / vitest 84 / build / `e2e` **176** / `e2e:visual` 115 / designer-css **42/42** / guard-greps — all green. |
-| RD contract C1–C8             | Frozen. One additive C4 change on 2026-08-06 (`setResultUrl`, `setSongResult`), logged in `CHANGELOG-RD.md`. Nothing since. |
+| Gates                         | typecheck / lint / vitest **84** / build / `e2e` (Stop hook owns the run — see below) / `e2e:visual` 115 / designer-css **42/42** / guard-greps — all green. |
+| RD contract C1–C8             | Frozen. Additive C4 on 2026-08-06; **additive C8 on 2026-08-12** (`COST_REGEN` / `COST_COVER` moved in from `MvEditor.tsx` and frozen in the snapshot). Both in `CHANGELOG-RD.md`. |
 | Dead code                     | **None.** Six orphaned components deleted 2026-08-06; five now-unused `community/ui` exports deleted with the landing page. |
 
 ### The scope rule still in force (product owner, 2026-08-06)
@@ -46,11 +77,17 @@ Playwright browser: `CHROMIUM_PATH=$(find /opt/pw-browsers -name chrome -type f 
 That rule is why most of `TODO.md` #7 and nearly all of `DESIGNER-TODO.md` are open. **They are
 not slipped work.** Do not "helpfully" fix them.
 
-**The uncomfortable consequence, stated plainly:** all of `TODO.md` 7a is deferred, including the
-keyboard-seek half. Four playback seek bars (`/song/result`, `/mv/result`, `/mv/edit`,
-`/song/play`) are bare `<div onPointerDown>` — pointer-only, WCAG 2.1.1 Serious — and on
-`/mv/result` that is a regression against the pre-migration `<video controls>`. Offered as a
-separable, pixel-neutral fix and deferred anyway. Known and accepted, not an oversight.
+**That consequence USED to be the seek bars. It is not any more — `TODO.md` #5 closed 2026-08-12.**
+All of them now render through `ui/SeekBar` (role=slider, tabIndex, aria-valuenow, arrow / page /
+Home-End keys), markup and class names unchanged so it is pixel-neutral. **There were FIVE, not the
+four every list said:** `/song/result`, `/mv/result`, `/mv/edit`, `/song/play` **and `SongPlayBar`**
+— the last arrived with the drop-2 re-sync on 2026-08-07, *after* those lists were written, carrying
+the same defect. It was found by grepping for the defect rather than working from the list, which is
+the transferable part. Guarded by `e2e`'s "TODO#5: every ported seek bar is a keyboard-operable
+slider", mutation-tested both ways.
+
+**The rest of 7a — the ±15s glyph and the five-slot transport — is still deferred and still blocked
+on designer artwork.** The scope rule above still applies to everything else.
 
 ---
 
@@ -193,7 +230,8 @@ mistake them for oversights:
 | ~~1~~ | ~~**The landing page** (§2)~~                                         | —          | **DONE 2026-08-07.** §2 is the record. The migration is now 17/17.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | **2** | **The deferred UI backlog** — `TODO.md` 7a–7h, `DESIGNER-TODO` A1–A20 | designer   | The next drop is when these get answers. Put 7a's ±15s glyph and A1/A9/A13's contrast in front of the designer **with** the drop, plus the three new ones this week added (A19, **A20**, and 7j's record).                                                                                                                                                                                                                                                                                                                                                         |
 | **3** | **a11y A1–A5, re-run**                                                | #2         | `PHASE-3-ACCEPTANCE` §7.1. **The one verification that ran and was thrown away**, and now the whole app is migrated it is the biggest single hole. Also widen `a11y.spec.ts` to a mobile viewport (`TODO.md` #6) — but sequence it: that turns A9's 3.74:1 into an immediate gate failure, so either A9's colour lands first or the mobile pass ships with A9 excluded and a comment. **`/` is newly in scope for it and is the only route with a JS-branched layout**, so it needs auditing at BOTH a phone and a desktop width — one sweep sees half the screen. |
-| **4** | **Community spec + API contract** (`TODO.md` #1)                      | product    | **The actual RD blocker.** `MuseApi` has no community endpoints at all, so half the product has nothing for RD to implement. Source: `ycmuse-app-skill/YouCam_Muse_Explore_Curation_PRD  -  V2.pdf` at the REPO ROOT. **Still not read** — page 03's homepage UI is superseded by DP, everything else stands. Read it properly when its phase starts; do not skim and summarise.                                                                                                                                                                                   |
+| **3.5** | **Credit payload contract** (`TBD-CC-06`)                          | RD         | **New handover blocker, 2026-08-12.** The cloud config flipped `consumedType` to `"credit"` on all 23 actions and the product owner confirmed the **frontend** must now send the quantity/seconds (it was derived backend-side before). Field name, unit, and how a delegating action's quantity maps to its sub-actions are all undefined, so the deduction call cannot be written. `specs/areas/11` §「數量由誰提供」 has the reversal written up. |
+| **4** | **Community spec + API contract** (`TODO.md` #1 / `TBD-EXP-11`) | product | **The #1 handover blocker.** `MuseApi` has **zero** community endpoints while **17 components across 9 routes** run on the hardcoded seeds in `lib/mv/community.ts`. The Zod schemas (`CommunityMv` / `CommunitySong` / `CommunityCreator`) exist; nothing consumes them. Source: `ycmuse-app-skill/YouCam_Muse_Explore_Curation_PRD  -  V2.pdf` at the REPO ROOT — **still not read**; page 03's homepage UI is superseded by DP, everything else stands. Read it properly when its phase starts; do not skim and summarise. |
 | **5** | **RD hand-off doc consolidation**                                     | #2–#4      | Fold README / DEVELOPER-HANDOVER / PHASE-3-ACCEPTANCE §7 / TODO / DESIGNER-TODO into one RD entry point. Best done last so it describes the finished state.                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ### Open items by owner, so nobody re-derives who is waiting on what
@@ -202,27 +240,36 @@ mistake them for oversights:
 (neither DP's 90 icons nor WA's contain a ±15s glyph, and drop 2 added no icons at all — this is
 blocked on artwork, not effort); 7b (Face Picker Cancel); 7c ("Change song" affordance); 7d
 (`/song/result`'s phone volume); 7h (`/mv/room`'s disabled-CTA hint class); A16; A17; A18;
-**A19** — a phone-friendly two-section design for `/explore/mvs`; **A20 (new)** — whether home
+**A19** — a phone-friendly two-section design for `/explore/mvs`; **A20** — whether home
 deserves a Trending rail now that the marquee is gone, which would be a block DP has not drawn;
+**A21 (new 2026-08-12)** — Credits Detail's **free-user CTA**: DP has no auth concept, so its
+`CreditsPage` has one unconditional "Buy More" and the free-user state was never drawn. WA falls
+back to its own "Get Muse Pro" copy. Also confirm whether the `PrimaryPayg` variant is right when
+the button leads to Subscribe rather than a purchase;
 and a mobile tabs design for `/explore/songs` if the three-catalog loss turns out to matter.
 
 **The product owner owes:** the community scope (#4 above); and whether to delete
 `token-aliases.css`'s **85 dead names** (of 110, only 25 are consumed — a design-system change
 under the ASK FIRST rule, so it must be proposed, not done as a side quest).
 
-**Already answered, do not re-ask:** `SongPlayBar` is **in** and is ported (2026-08-07); the
+**Already answered, do not re-ask:** **CR-06 stands — credit packs are subscriber-only, a free user
+only ever sees Upgrade** (product owner, 2026-08-12, after a design drop reversed it); **both create
+screens are open to guests with action-level gates** (2026-08-12); `SongPlayBar` is **in** and is ported (2026-08-07); the
 landing page's four decisions incl. **`TRENDING_MVS` is not wanted on home, match DP** (§2.3);
 7g (rails show both by state); 7e (six dead components deleted); A5 (closed by drop 2); S2's 30s
 floor; S20's prices.
 
 ### Known gaps that are accepted, not forgotten
 
-- **Four seek bars are pointer-only** (WCAG 2.1.1 Serious) — `TODO.md` #5 / 7a. `SeekBar`
-  (`src/components/ui/SeekBar.tsx`) already exists, is keyboard-operable, takes its BEM class
-  names as props and is in production on `/watch`. Swapping the four bare tracks onto it is
-  mechanical and pixel-neutral **whenever it is unblocked**.
-- **`e2e/a11y.spec.ts` has three blind spots**: no auth seeding (four guarded routes show only the
-  sign-in modal to axe), desktop viewport only, unprefixed English routes only. The second one now
+- ~~**Four seek bars are pointer-only**~~ ✅ **CLOSED 2026-08-12 — and there were five.** All of
+  `/song/result`, `/mv/result`, `/mv/edit`, `/song/play` and **`SongPlayBar`** now use
+  `ui/SeekBar`. The fifth was on no list because it landed with drop 2 after the lists were
+  written. Lesson worth keeping: **when a list of defect sites is more than a few days old, grep
+  for the defect instead of trusting the list.**
+- **`e2e/a11y.spec.ts` has three blind spots**: no auth seeding (the **four** guarded routes —
+  `/history`, `/profile`, `/profile/credits`, `/settings` — show only the sign-in modal to axe;
+  note `/song/create` LEFT that set on 2026-08-12 and is now genuinely scanned), desktop viewport
+  only, unprefixed English routes only. The second one now
   costs more than it used to: `/` mounts a **different hero and tool selector** below 768px, so a
   desktop-only sweep does not merely miss the mobile chrome, it misses half of one route's content.
 - **`/explore/songs` phones show one of three catalogs**; **`/explore/mvs` phones show 3 of 14
@@ -259,6 +306,12 @@ Full versions are in `AGENTS.md` and `CLAUDE.md`; this is the index.
   defensible decision in a code comment or, worse, in a passing test. `e2e` literally asserted
   "clicking a card still opens the dialog, not a navigation" for two weeks after that stopped
   being what anyone wanted.
+- **Do NOT run `npm run e2e` yourself in an agent session — the Stop hook already does.** A full
+  run takes ~14 min but the Bash tool caps at 10, so the call is ALWAYS backgrounded and its
+  `next start -p 3100` is ALWAYS still holding the port when the hook fires its own run, which
+  then dies on "port already used". That is **five** occurrences now (two on 2026-08-12 alone,
+  after §A.1's first three). Leave the port free and a fresh build; use `--grep` on one spec file
+  when you need a targeted answer. Rule is in `AGENTS.md`.
 - **Run `npm run e2e` on a quiet machine.** A gate that fails under load is not evidence of a bug.
 
 ### Verification, and what it should cost

@@ -1,0 +1,22 @@
+[     730ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[    1341ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   13454ms] [INFO] [chatbot:event] chat_opened {topics_consumed_prev: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   14457ms] [INFO] [chatbot:event] topic_clicked {topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   15166ms] [INFO] [chatbot:event] agent_replied {mode: canned, topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   15660ms] [INFO] [chatbot:event] followup_clicked {topic: credits, label: Where can I use Units?, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   16334ms] [INFO] [chatbot:event] agent_replied {mode: canned_followup, topic: credits, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   17261ms] [INFO] [chatbot:event] followup_clicked {topic: credits, label: Can't find my Order, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   17262ms] [INFO] [chatbot:event] feedback_chip_superseded {topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   17914ms] [INFO] [chatbot:event] agent_replied {mode: canned_followup, topic: credits, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   18865ms] [INFO] [chatbot:event] chat_end_eval_yes {topic: credits} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   31302ms] [INFO] [chatbot:event] chat_reset {topics_consumed: 1, unresolved_count: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   31303ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   31905ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   32406ms] [INFO] [chatbot:event] topic_clicked {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   33111ms] [INFO] [chatbot:event] agent_replied {mode: canned, topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   33608ms] [INFO] [chatbot:event] followup_clicked {topic: cancel, label: Why can't I see the Cancel Plan button?, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   34260ms] [INFO] [chatbot:event] agent_replied {mode: canned_followup, topic: cancel, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   35211ms] [INFO] [chatbot:event] chat_end_eval_no {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   35212ms] [INFO] [chatbot:event] llm_unlocked {reason: did_not_help} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   35819ms] [INFO] [chatbot:event] free_text_sent {length: 11, images: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152
+[   37138ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2152

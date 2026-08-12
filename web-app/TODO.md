@@ -152,7 +152,35 @@ re-checked and baselines re-recorded on Linux.
   mutation, not by reading it.
 - Baselines: only the 12 already-stale ones changed (see the note at the top of this entry).
 
-## 5. The playback seek bar cannot be operated by keyboard (found 2026-08-05, G7 a11y audit)
+## 5. ~~The playback seek bar cannot be operated by keyboard~~ ✅ FIXED 2026-08-12
+
+> **Closed 2026-08-12 — all of them, and there were FIVE, not four.** Every bare
+> `<div onPointerDown>` seek track now renders through `ui/SeekBar`, which has `role="slider"`,
+> `tabIndex={0}`, `aria-valuemin/max/now/text` and the conventional media-scrubber key map
+> (←/→/↑/↓ = 5s, PageUp/PageDown = 10%, Home/End). The swap is markup- and class-name-identical,
+> so it is pixel-neutral by construction.
+>
+> | screen | component | block |
+> |---|---|---|
+> | `/song/result` | `SongResultView` | `.song-result__progress` |
+> | `/mv/result` | `MvResult` | `.mv-result__progress` |
+> | `/mv/edit` | `MvEditor` | `.mv-edit__progress` |
+> | `/song/play` | `SongDetailView` | `.song-detail-mobile-player__progress` |
+> | **`SongPlayBar`** | `SongPlayBar` | `.song-bar__progress` |
+>
+> **The fifth was not on anyone's list.** `SongPlayBar` arrived with the drop-2 re-sync on
+> 2026-08-07, *after* this entry and `NEXT-SESSION`'s "four seek bars" were written, and it was
+> ported with the same pointer-only defect. Found by grepping for the defect rather than working
+> from the list — worth remembering, because the list was accurate when written and wrong by the
+> time it was actioned.
+>
+> `/mv/result`'s bar was also a regression against the pre-migration `<video controls>`; that is
+> now closed too. `/watch` already used `SeekBar` and is unchanged.
+>
+> Note `useSeek` in `SongDetailView` survives as a hook but now returns `{ seek }` instead of
+> `{ trackRef, onPointerDown }`. Original entry follows.
+
+### 5.1 Original entry (2026-08-05, G7 a11y audit)
 
 **WCAG 2.1.1 Keyboard, severity Serious.** Both progress tracks on the merged song screen —
 `.now-playing__progress` (desktop) and `.song-detail-mobile-player__progress` (mobile) — are

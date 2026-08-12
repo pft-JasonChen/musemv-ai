@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
@@ -43,6 +44,7 @@ const CREDIT_TABS = [
 ];
 
 export function CreditsView() {
+  const { subscribed } = useAuth();
   const { credits } = useCredits();
   const { locale } = useLocale();
   const [tab, setTab] = useState<CreditTab>("all");
@@ -76,17 +78,20 @@ export function CreditsView() {
                 {credits} <span>Credits</span>
               </strong>
             </div>
-            {/* Designer fix, 2026-08-11: DP's own unconditional "Buy More"
-                (Figma node 1783:39034), no per-subscriber label swap —
-                Buy Credits is a standalone purchase now (CR-06 reversed,
-                see `BuyCreditsModal`'s own note), so there's no longer a
-                reason for this button to say anything else. */}
+            {/* CR-06 (restored 2026-08-12): credit packs are subscriber-only, so
+                this CTA has to say which thing it is. DP's comp has one
+                unconditional "Buy More" (Figma node 1783:39034) because DP has no
+                auth concept at all — the free-user state was never drawn, and is
+                requested as `DESIGNER-TODO` A21. "Get Muse Pro" is WA's own
+                pre-existing copy for that state. Both open `BuyCreditsModal`,
+                which itself renders `SubscribeModal` for a non-subscriber, so the
+                label and the destination cannot drift apart. */}
             <button
               type="button"
               className="button button--small button--primary-payg"
               onClick={() => setBuyOpen(true)}
             >
-              <span className="button__label">Buy More</span>
+              <span className="button__label">{subscribed ? "Buy More" : "Get Muse Pro"}</span>
             </button>
           </div>
 

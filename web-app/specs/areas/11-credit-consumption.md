@@ -27,21 +27,21 @@
 // 有 sub action（委派型 main action）
 {
   "action": "<main action>",
-  "consumedType": "duration",
+  "consumedType": "credit",
   "rule": ["<sub action>", "…"]
 }
 
 // 無 sub action（自帶規則型 main action）— rule 整個欄位省略
 {
   "action": "<main action>",
-  "consumedType": "duration"
+  "consumedType": "credit"
 }
 ```
 
 | Key | 說明 |
 |---|---|
 | `action` | main action 名稱，一次任務一個。 |
-| `consumedType` | **一律填 `"duration"`**。後端以此區分 `duration` / `credit` 兩種計費基準；本文所有情境都是 `duration`，**只要 payload 有這個欄位就必須帶上**。 |
+| `consumedType` | **一律填 `"credit"`**（cloud config 2026-08-12 更新：23 個 action 全部從 `"duration"` 改為 `"credit"`）。後端以此區分 `duration` / `credit` 兩種計費基準。**只要 payload 有這個欄位就必須帶上。** ⚠️ 這個改動同時改變了前端責任 —— 見下方 §「數量由誰提供」。 |
 | `rule` | sub action 名稱陣列。**注意 key 是 `rule`，不是 `subActions`** — `MSR Credit Consume Form (with Sub-Actions).md` 的示意範例寫作 `subActions`，實際 API 以 `rule` 為準。**無 sub action 時整個欄位省略，不要送空陣列 `[]`。** |
 
 Sub-action 機制的設計理由（避免組合爆炸、子服務可獨立複用）見 `MSR Credit Consume Form
@@ -77,8 +77,14 @@ Sub-action 機制的設計理由（避免組合爆炸、子服務可獨立複用
 | `procUnitRange: [a,b]`, `token: N` | 長度落在 a~b 秒 → **固定 N 點** | `merge_mv` 1–240s → 10 |
 | `[]`（空陣列） | 不計費，委派給 sub actions | `create_mv` |
 
-**`consumedType: "duration"` + `x sec`：** 秒數由**後端自己從 task 取得**，App / Web **不需要在
-payload 帶秒數**。基準為：
+**數量由誰提供 —— 2026-08-12 起改由前端負責。**
+
+> ⚠️ **這一段在 2026-08-12 反轉了。** 原文是「`consumedType: "duration"` + `x sec`：秒數由**後端
+> 自己從 task 取得**，App / Web **不需要在 payload 帶秒數**」。cloud config 改成 `"credit"` 之後，
+> 產品負責人確認(2026-08-12)：**前端要自己在 payload 帶數量／秒數**。這是真正的介面契約變更，
+> 不只是欄位換名字 —— RD 與前端都要動。實際 payload 欄位名與格式尚未定案(`TBD-CC-06`)。
+
+各 action 的計量基準(仍然不變，只是改由前端提供)：
 
 - `create_mv` / `generate_mv` → **最終 MV 總長**
 - `edit_mv`（recreate）→ **被重生成的那一個 shot 的長度**
@@ -111,7 +117,7 @@ payload 帶秒數**。基準為：
 ```json
 {
   "action": "ai_song_custom_vocal",
-  "consumedType": "duration"
+  "consumedType": "credit"
 }
 ```
 
@@ -132,7 +138,7 @@ payload 帶秒數**。基準為：
 ```json
 {
   "action": "create_mv",
-  "consumedType": "duration",
+  "consumedType": "credit",
   "rule": ["upload_song", "singing_1080p_seedance15"]
 }
 ```
@@ -154,7 +160,7 @@ payload 帶秒數**。基準為：
 ```json
 {
   "action": "create_script_upload_song",
-  "consumedType": "duration"
+  "consumedType": "credit"
 }
 ```
 
@@ -171,7 +177,7 @@ payload 帶秒數**。基準為：
 ```json
 {
   "action": "generate_mv",
-  "consumedType": "duration",
+  "consumedType": "credit",
   "rule": ["from_script", "storytelling_720p_seedance15"]
 }
 ```
@@ -199,7 +205,7 @@ payload 帶秒數**。基準為：
 ```json
 {
   "action": "edit_mv",
-  "consumedType": "duration",
+  "consumedType": "credit",
   "rule": ["recreate", "story_1080p"]
 }
 ```
@@ -223,7 +229,7 @@ payload 帶秒數**。基準為：
 ```json
 {
   "action": "merge_mv",
-  "consumedType": "duration"
+  "consumedType": "credit"
 }
 ```
 
@@ -269,17 +275,33 @@ payload 帶秒數**。基準為：
 
 ---
 
-## 6. 保留 / 不使用的 action
+## 6. 已從 cloud config 移除的 action（2026-08-12）
 
-Cloud config 內以下 **12 個 action 為預留、目前不上線**，RD **不要呼叫**：
+先前列為「預留、不上線」的 13 個 action **已在 2026-08-12 的 config 更新中實際刪除**，
+config 從 35 個 action 降為 23 個。這是 config 往本規格靠攏，不是新的分歧：
 
 ```
-{singing|storytelling|hybrid}_{short|full}_{720p|1080p}_seedance15
+{singing|storytelling|hybrid}_{short|full}_{720p|1080p}_seedance15   ← 12 個，全數移除
+ai_song_custom_vocal_refine                                          ← 移除
 ```
 
-它們用 `tknPerRes`（固定收費）而非每秒收費，屬於未來「固定長度 MV 方案」的預留設定。
+那 12 個用 `tknPerRes`（固定收費）而非每秒收費，屬於未來「固定長度 MV 方案」的預留設定；
+移除代表**該方案的設定已收回**，若日後要做需重新加回。`ai_song_custom_vocal_refine`
+（0 點）本來就標為已刪除、prototype 無對應功能。
 
-`ai_song_custom_vocal_refine`（0 點）為**已刪除的 action**，prototype 無對應功能，**忽略**。
+**RD：這 13 個不會再出現在 config，也不要呼叫。**
+
+### 6.1 2026-08-12 config 更新的其他變更
+
+| 變更 | 內容 |
+|---|---|
+| **`edit_poster`（新增）** | MV Edit 的**封面重新生成**（`MvEditor.recreateCover()`）。**每次結果固定 4 點** = `tknPerRes: 4` + `procUnit: 1`。⚠️ config 目前寫成 `{ "token": 4, "tknPerRes": 1 }` —— 兩個費率 key、缺 `procUnit`，不符合 §「計費規則速查」的任一種合法組合。原始版本是 `perRes`，改名時把 `4` 留在 `token` 上。**產品負責人確認語意為「每次 4 點」(2026-08-12)；請後台把形狀修正為 `tknPerRes: 4` + `procUnit: 1`。** |
+| **`create_script_upload_song`（新增級距）** | 原本 `[1,120] = 15` / `[121,240] = 18`；現在多一段 **`[1,40] = 12`**，即 40 秒以內的短歌從 15 降為 12。 |
+| **`consumedType`** | 23 個 action 全部 `"duration"` → `"credit"`。見 §「數量由誰提供」。 |
+
+**prototype 對照：** `COST_COVER`（`src/lib/mv/types.ts`，2026-08-12 從 `MvEditor.tsx` 搬入 C8）
+目前寫死 **10**，而 `edit_poster` 的權威值是 **4**。與其他五個 `COST_*` 一樣屬於
+`TBD-CC-05` 要重算的 placeholder，**本次不改數值**——搬移只是把它納入 C8 契約面。
 
 ---
 
@@ -287,8 +309,9 @@ Cloud config 內以下 **12 個 action 為預留、目前不上線**，RD **不�
 
 | ID | 項目 |
 |---|---|
-| **TBD-CC-01** | `create_script_upload_song` 的級距：PDF 有 3 階（1–40s=12 / 41–120s=15 / 121–240s=18），JSON 只有 2 階（1–120s=15 / 121–240s=18）。以 JSON 為準，但需確認是否要補回 12 點那一階。 |
-| **TBD-CC-02** | **Edit MV 的封面 Recreate — 後端待補 action。** 功能保留在 spec 中（見 §3.5），但 cloud config 目前無對應 action，後端補上後回填本文的 payload 與點數。在那之前前端不呼叫扣點 API。 |
+| ~~**TBD-CC-01**~~ | ✅ **2026-08-12 結案** — config 已補回 `[1,40] = 12` 那一階，三階與 PDF 一致（12 / 15 / 18）。 |
+| ~~**TBD-CC-02**~~ | ✅ **2026-08-12 結案** — 後端補上了 **`edit_poster`**，就是 Edit MV 封面 Recreate 的 action（每次 4 點）。仍待後台修正規則形狀，見 §6.1。 |
+| **TBD-CC-06** | 🔴 **前端要帶數量／秒數，但欄位名與格式未定。** `consumedType` 改為 `"credit"` 後，產品負責人確認前端須自行在 payload 帶數量／秒數（原本由後端從 task 取得）。**這是介面契約變更**：需要 RD 給出欄位名、單位（秒?幀?結果數?）、以及委派型 action（`create_mv`/`generate_mv`/`edit_mv`）的數量要對應到哪一個 sub action。在定案前前端無法實作扣點呼叫。 |
 | **TBD-CC-05** | Prototype 目前的 placeholder 點數（`COST_STORYBOARD=20` / `COST_RENDER=200` / `COST_SONG=10` / `COST_SONG_RECREATE=50` / `COST_REGEN=20` / `COST_COVER=10`）與本規格不符 — 需依本文重算，並改為由後端回傳而非 hardcode；同時移除 AI Enhance 的 1 點收費（`enhanceCost`/`consumeEnhance`，見 §5.5）。 |
 
 **已結案：** ~~TBD-CC-03~~（AI Enhance 不扣點，見 §5.5）·

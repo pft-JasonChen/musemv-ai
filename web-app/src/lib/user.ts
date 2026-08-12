@@ -61,7 +61,46 @@ export const MOCK_USER = {
   email: "scott_wu@mail.com",
 };
 
-export const DEFAULT_CREDITS = 390;
+/**
+ * Starting balance for a signed-in free account — **the product rule**.
+ *
+ * 10 by product decision 2026-08-12 (`TBD-CR-06a`). Was `390`, which existed only
+ * so the demo stayed playable before CR-06 made credit packs subscriber-only.
+ *
+ * ⚠️ **10 does not cover any MV.** The cheapest MV path is 220 (`COST_STORYBOARD`
+ * 20 + `COST_RENDER` 200) and an instrumental song is 12, so a fresh free account
+ * can generate exactly one vocal song (6) and then meets the paywall. That is the
+ * intended funnel — and it is why `startingCredits()` below exists.
+ */
+export const DEFAULT_CREDITS = 10;
+
+/** Env var that overrides the starting balance for demo builds. */
+export const DEMO_CREDITS_ENV = "NEXT_PUBLIC_DEMO_CREDITS";
+
+/**
+ * Starting balance actually used by `CreditsProvider`.
+ *
+ * `DEFAULT_CREDITS` is the product rule; this is the rule **plus a demo escape
+ * hatch**, added 2026-08-12 because those two needs genuinely conflict in a
+ * backend-less prototype:
+ *
+ * - the real free-tier grant should meet the paywall almost immediately, and
+ * - `AGENTS.md` calls this a **CEO-demoable** prototype, which means walking the
+ *   whole MV flow without stopping to subscribe.
+ *
+ * Set `NEXT_PUBLIC_DEMO_CREDITS=1000` for a demo build and the flow runs end to
+ * end; leave it unset and every user sees the real rule. Nothing else changes —
+ * no UI branch, no debug affordance, and the value is not readable from the URL.
+ *
+ * `process.env.NEXT_PUBLIC_*` is inlined by Next at build time, so this must stay
+ * a literal member access — do not refactor it to `process.env[DEMO_CREDITS_ENV]`,
+ * which would silently always be `undefined` in the browser bundle.
+ */
+export function startingCredits(): number {
+  const raw = process.env.NEXT_PUBLIC_DEMO_CREDITS;
+  const n = raw === undefined ? Number.NaN : Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 0 ? n : DEFAULT_CREDITS;
+}
 
 /** Sample avatar photos cycled by the profile "Change Photo" action (mock upload). */
 export const AVATAR_SAMPLES = [

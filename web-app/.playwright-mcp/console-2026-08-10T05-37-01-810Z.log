@@ -1,0 +1,11 @@
+[     426ms] [INFO] [chatbot:event] cms_content_requested {} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[    1029ms] [INFO] [chatbot:event] cms_content_loaded {topics: 6} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[   11680ms] [INFO] [chatbot:event] chat_opened {topics_consumed_prev: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[   12685ms] [INFO] [chatbot:event] topic_clicked {topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[   13396ms] [INFO] [chatbot:event] agent_replied {mode: canned, topic: cancel} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[   13990ms] [INFO] [chatbot:event] followup_clicked {topic: cancel, label: Why can't I see the Cancel Plan button?, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[   14642ms] [INFO] [chatbot:event] agent_replied {mode: canned_followup, topic: cancel, ticket: false} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[   15493ms] [INFO] [chatbot:event] none_of_above {from: home} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[   15494ms] [INFO] [chatbot:event] llm_unlocked {reason: none_of_above} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[   16101ms] [INFO] [chatbot:event] free_text_sent {length: 12, images: 0} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
+[   17406ms] [INFO] [chatbot:event] agent_replied {mode: llm, topic: null} @ http://localhost:8010/prototypes/support-chatbot/v4/index.html:2105
