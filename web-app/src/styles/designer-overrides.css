@@ -748,13 +748,28 @@
 /* Figma's tab pill: 13px bold (was 11px medium), 60% white for the inactive
    label (was 40%), 16/8 padding (was 10/5), and a fixed 20px radius rather
    than the full pill the ported class used — close at this height (~17px)
-   but not identical, and Figma states 20 explicitly. */
+   but not identical, and Figma states 20 explicitly.
+
+   Bug fix, 2026-08-13 — `:not(.mv-song-picker__tab--active)` on the color
+   line is load-bearing, the exact A1 shape from earlier in this file: DP's
+   `.mv-song-picker__tab--active` sets the active tab's text fully white
+   with the SAME (0,1,0) specificity a bare `.mv-song-picker__tab` has, and
+   this file loads after `designer.css`, so the bare rule below was winning
+   the tie and silently dimming the ACTIVE tab's white text to 60% too —
+   confirmed live (My Songs, the active tab: background correctly purple,
+   color wrongly `rgba(255,255,255,0.6)` instead of white). The inactive
+   tab's own background (`--neutral-dark-14`, #212127) was never touched by
+   this rule and already matches Figma — no fix needed there, only the
+   color leak onto `--active`. */
 .mv-song-picker__tab {
   padding: 8px 16px;
   border-radius: 20px;
-  color: rgba(255, 255, 255, 0.6);
   font-size: 13px;
   font-weight: var(--font-weight-bold);
+}
+
+.mv-song-picker__tab:not(.mv-song-picker__tab--active) {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Figma's "Use" pill: 5px/6px padding (was 6px/12px), a 16px radius (was a
