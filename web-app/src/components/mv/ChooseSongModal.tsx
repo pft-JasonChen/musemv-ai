@@ -165,6 +165,13 @@ export function ChooseSongModal({ open, onClose, onPick }: Props) {
                     )}
                   </span>
                 </span>
+                {/* Figma node 2333:120323 ("Next Indicator") — a trailing
+                    chevron hinting the row is tappable, on every row that
+                    isn't the active one. No such class exists in DP's
+                    vendored CSS at all (WA-only addition, see
+                    designer-overrides.css); it fades out exactly as "Use"
+                    fades in, so the two never show at once. */}
+                <DpIcon name="ic_chevron-right" className="mv-song-picker__next-icon" />
                 <button
                   type="button"
                   className="mv-song-picker__use"

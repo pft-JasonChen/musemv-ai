@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import { SeekBar } from "@/components/ui/SeekBar";
 import type { RefObject } from "react";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { IconButton } from "@/components/ui/IconButton";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { formatTime } from "@/components/ui/LyricsSheet";
 import { buildShareUrl } from "@/lib/share";
@@ -51,6 +52,8 @@ export interface SongPlayBarProps {
   currentTime: number;
   duration: number;
   audioRef: RefObject<HTMLAudioElement | null>;
+  liked: boolean;
+  onToggleLike: () => void;
   onTogglePlay: () => void;
   onPrev: () => void;
   onNext: () => void;
@@ -63,6 +66,8 @@ export function SongPlayBar({
   currentTime,
   duration,
   audioRef,
+  liked,
+  onToggleLike,
   onTogglePlay,
   onPrev,
   onNext,
@@ -144,7 +149,47 @@ export function SongPlayBar({
       <img src={song.cover} alt="" className="song-bar__cover" />
       <div className="song-bar__meta">
         <p className="song-bar__title">{song.title}</p>
-        <p className="song-bar__username">{song.creator}</p>
+        {/* Figma node 2330:63547 (2311:62919) — a circular profile picture
+            next to the creator name. `CommunitySong` has no avatar field
+            (only `creator: string`, see schemas.ts), so — same as Figma's
+            own placeholder — this is a decorative default badge, not a
+            per-user photo. No DP-native class covers this new element, so
+            it's styled inline rather than adding a rule to a
+            verbatim-copied stylesheet. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span
+            aria-hidden="true"
+            style={{
+              display: "flex",
+              flexShrink: 0,
+              alignItems: "center",
+              justifyContent: "center",
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              background:
+                "linear-gradient(45deg, rgb(255, 107, 206) 14.6%, rgb(168, 85, 247) 50%, rgb(67, 56, 202) 85.4%)",
+            }}
+          >
+            <span
+              style={{
+                display: "block",
+                width: 7,
+                height: 7,
+                backgroundColor: "#fff",
+                WebkitMaskImage: 'url("/assets/icons/ui/ic_user.svg")',
+                maskImage: 'url("/assets/icons/ui/ic_user.svg")',
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+                maskPosition: "center",
+                WebkitMaskSize: "contain",
+                maskSize: "contain",
+              }}
+            />
+          </span>
+          <p className="song-bar__username">{song.creator}</p>
+        </div>
       </div>
 
       <div className="song-bar__transport">
@@ -187,15 +232,7 @@ export function SongPlayBar({
       />
       <span className="song-bar__time">{formatTime(duration)}</span>
 
-      <button
-        type="button"
-        className="song-bar__icon-btn"
-        onClick={() => setShareOpen(true)}
-        aria-label="Share"
-      >
-        <DpIcon name="ic_share" className="song-bar__icon" />
-      </button>
-
+      {/* Figma node 2330:64177 — order is Volume > Like > Share > Close. */}
       <div className="song-bar__volume">
         <div className="song-bar__volume-slider">
           <input
@@ -221,14 +258,34 @@ export function SongPlayBar({
         </button>
       </div>
 
+      {/* Figma node 2330:64177 (2311:62918's "Like" `SelectionToggle`) — was
+          missing entirely from this bar. Wired through the same `likedIds`/
+          `toggleLike` SongDetailView already uses for the list rows and for
+          `MobileNowPlaying`'s own Like button, so liking here stays in sync
+          with both. */}
+      <button
+        type="button"
+        className={`song-bar__icon-btn${liked ? " song-bar__icon-btn--active" : ""}`}
+        onClick={onToggleLike}
+        aria-label={liked ? "Unlike" : "Like"}
+      >
+        <DpIcon name={liked ? "ic_favorite_on" : "ic_favorite_off"} className="song-bar__icon" />
+      </button>
+
       <button
         type="button"
         className="song-bar__icon-btn"
-        onClick={onClose}
-        aria-label="Close player"
+        onClick={() => setShareOpen(true)}
+        aria-label="Share"
       >
-        <DpIcon name="ic_close" className="song-bar__icon" />
+        <DpIcon name="ic_share" className="song-bar__icon" />
       </button>
+
+      {/* Figma node 2330:63547 (2330:64278) — "Button/Circular" XSmall/Tertiary
+          glass pill, not the bare/transparent `.song-bar__icon-btn` the other
+          icons here use. Reuses the shared `IconButton` (same component the
+          hero mute button above now uses) instead of a new CSS rule. */}
+      <IconButton size="xsmall" variant="tertiary" icon="ic_close" label="Close player" onClick={onClose} />
 
       <ShareDialog
         open={shareOpen}

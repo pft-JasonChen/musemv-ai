@@ -133,7 +133,7 @@ export function TopSongListItem({
 
       <div className="top-song__info">
         <div className="top-song__heading">
-          <p className="top-song__title">{title}</p>
+          <p className={`top-song__title${isPlaying ? " top-song__title--playing" : ""}`}>{title}</p>
           {username && (
             <Link
               href={localePath(locale, "/creator")}

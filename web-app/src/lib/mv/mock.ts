@@ -10,20 +10,23 @@ export interface MvTypeOption {
 
 export const MV_TYPES: MvTypeOption[] = [
   {
-    id: "singing",
-    name: "Singing",
-    desc: "A virtual artist lip-syncs to your vocals, focusing on the singing performance.",
-    video: "/assets/videos/mv-preview/feature_intro_ai_mv_singing_480x640.mp4",
-  },
-  {
     id: "storytelling",
     name: "Storytelling",
     desc: "A cinematic narrative unfolds scene by scene, driven by your description.",
     video: "/assets/videos/mv-preview/feature_intro_ai_mv_storytelling_480x640.mp4",
   },
   {
+    id: "singing",
+    name: "Singing",
+    desc: "A virtual artist lip-syncs to your vocals, focusing on the singing performance.",
+    video: "/assets/videos/mv-preview/feature_intro_ai_mv_singing_480x640.mp4",
+  },
+  {
+    // Product owner request, 2026-08-13: display name only, "Sing & Story" —
+    // `id` stays `"hybrid"` (MvTypeSchema, C2 contract surface, frozen; a
+    // renamed enum value would be a G4-a contract break, not a UI change).
     id: "hybrid",
-    name: "Hybrid",
+    name: "Sing & Story",
     desc: "Blends singing performance with story-driven cinematic moments.",
     video: "/assets/videos/mv-preview/feature_intro_ai_mv_hybrid_480x640.mp4",
   },

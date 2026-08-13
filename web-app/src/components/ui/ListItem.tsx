@@ -120,7 +120,9 @@ export function ListItem({
 
   const artClass = `list-item__album-art${isSong ? " list-item__album-art--song" : ""}`;
 
-  const titleEl = <p className="list-item__title">{title}</p>;
+  const titleEl = (
+    <p className={`list-item__title${isPlaying ? " list-item__title--playing" : ""}`}>{title}</p>
+  );
 
   return (
     <div

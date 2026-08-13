@@ -381,9 +381,16 @@ export function SongCompose() {
             </div>
           )}
 
-          {/* DP docks the CTA only in Custom mode — Simple's form is short
-              enough that a fixed bar would sit over empty space. */}
-          {s.mode === "simple" ? cta : <FloatingCTA alignToParent>{cta}</FloatingCTA>}
+          {/* Product owner request, 2026-08-13 — `adaptive` (Figma node
+              1367:33182) now covers both modes: float only when the page
+              actually needs scrolling to reach the CTA, otherwise render it
+              as the panel's own last row. Was Simple = always inline,
+              Custom = always floating, on the assumption that Simple's form
+              is always short enough and Custom's never is — `adaptive`
+              measures instead of assuming, for both. */}
+          <FloatingCTA alignToParent adaptive>
+            {cta}
+          </FloatingCTA>
         </div>
 
         {/* Same two-mode rail as `/mv/room` — the reasoning is written up once,
@@ -422,10 +429,20 @@ export function SongCompose() {
                       });
                     }}
                   >
+                    {/* Figma node 1351:28869 (1367:34073, reused for "My
+                        Creations" too) — same community-style row as
+                        Trending Songs below. `HistoryItem` has no
+                        plays/likes/shares (see HistoryProvider.tsx), so
+                        these are genuinely 0 for a just-created, unpublished
+                        song — not a fabricated stand-in for real data. */}
                     <ListItem
+                      variant="community"
                       title={song.title}
                       coverImage={song.thumb}
-                      subtitle={MOCK_USER.name}
+                      username={MOCK_USER.name}
+                      plays={0}
+                      likes={0}
+                      shares={0}
                     />
                   </Link>
                 ))
@@ -435,7 +452,19 @@ export function SongCompose() {
                     href={localePath(locale, `/song/play?id=${song.id}`)}
                     className="song-create__side-item"
                   >
-                    <ListItem title={song.title} coverImage={song.cover} subtitle={song.creator} />
+                    {/* Figma node 1351:28869 (1367:34073) — this rail's rows
+                        match the community-style item everywhere else in the
+                        app (avatar + username + plays/likes/share), not the
+                        plain title+creator-text row it had before. */}
+                    <ListItem
+                      variant="community"
+                      title={song.title}
+                      coverImage={song.cover}
+                      username={song.creator}
+                      plays={song.plays}
+                      likes={song.likes}
+                      shares={song.shares}
+                    />
                   </Link>
                 ))}
           </div>

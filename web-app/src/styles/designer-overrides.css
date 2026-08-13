@@ -535,3 +535,253 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Product owner request, 2026-08-13 — HeroBannerSectionV3's card padding
+   should be 16px, matching Figma node 1875:34094 (`p-[var(--spacing/16,16px)]`
+   on "Top Hero Banner"'s cards) — DP ships 24px verbatim (confirmed against
+   `designer-prototype/src/pages/HomePage/HeroBannerSectionV3.css:129`, so this
+   is an upstream inconsistency, not a WA copy error. Tightens the title/
+   subtitle/CTA inset on every card; the new mute button (see
+   HeroBannerSectionV3.tsx) is unaffected since it's already positioned at a
+   fixed 16px via inline style, independent of this padding.
+   DELETE THIS when a drop ships HeroBannerSectionV3.css with 16px. */
+.hero-banner-v3__card {
+  padding: 16px;
+}
+
+/* Product owner request, 2026-08-13 — Figma node 2330:64177's Volume/Like/
+   Share icons render white (`--neutral-dark-100`), not DP's own dimmer
+   `--neutral-dark-74`. The Close button already matches on its own (it uses
+   the shared `IconButton` component's white `--tertiary` color), so it's not
+   part of this rule. `--active` is new: the bar's Like button didn't exist in
+   this file at all until this session added it (SongPlayBar.tsx), and it
+   follows the same liked-state color `MobileNowPlaying`'s own Like button
+   (`song-detail-mobile-player__icon-btn--active`, SongDetailPage.css) and
+   Song Result's (`song-result__icon-btn--active`, SongCreatePage.css) already
+   use — not a new design decision, just this bar catching up to both.
+   DELETE the first rule when a drop ships SongPlayBar.css with these icons
+   white; the second is WA-only (this bar's Like button isn't in DP at all)
+   and has no upstream to converge on. */
+.song-bar__icon-btn {
+  color: var(--neutral-dark-100);
+}
+
+.song-bar__icon-btn--active {
+  color: var(--color-accent-purple);
+}
+
+/* Product owner request, 2026-08-13 — a song's title turns purple
+   (`--color-accent-purple`) while it's the one playing, on `/song/play`'s
+   /`/explore/songs`' row list (`.top-song__title`, `TopSongListItem.tsx`)
+   and everywhere `ListItem`'s shared title renders (`.list-item__title`) —
+   Home's "Newly Released Songs" (`NewSongsSection.tsx`) and Song Result's
+   "My Creations"/"Newly Released Songs" rail (`SongResultView.tsx`), both of
+   which already pipe an `isActive`/`isPlaying`-derived `isPlaying` prop into
+   `ListItem` for the album-art play/pause icon — this reuses that same prop
+   rather than adding a new one. WA-only: neither modifier exists in DP at
+   all, so there's no upstream drop to converge on. */
+.top-song__title--playing,
+.list-item__title--playing {
+  color: var(--color-accent-purple);
+}
+
+/* Product owner request, 2026-08-13 — AI Song page's two-column row: the
+   form panel becomes a fixed 660px (was `flex: 700 1 0; max-width: 700px`,
+   proportionally shrinking against the side rail). `:not(--full)` guards the
+   Processing state's full-width panel (no side rail next to it, see
+   SongCreatePage.css's own comment above `.song-create__panel--full`) — a
+   bare `.song-create__panel` here would have the same specificity as DP's
+   own `--full` rule and, loading after it, silently win and undo the
+   full-width layout.
+
+   Follow-up, 2026-08-13: the side rail itself is now a fixed 372px (was
+   `flex: 1 1 auto`, filling whatever the row had left) — the two-column row
+   no longer fills 1440px edge-to-edge, and that's intentional per this
+   request, not a leftover gap to close. */
+@media (min-width: 1024px) {
+  .song-create__panel:not(.song-create__panel--full) {
+    flex: 0 0 660px;
+    width: 660px;
+    max-width: 660px;
+  }
+
+  .song-create__side {
+    flex: 0 0 372px;
+    width: 372px;
+    max-width: 372px;
+  }
+}
+
+/* Product owner request, 2026-08-13 — the side rail's scrollable list box
+   (DP's own `.song-create__side-list`, verbatim height: 599px) becomes
+   500px. This is the element Figma node 1367:34073 ("My Creations - Song")
+   itself sizes to 500px (its `.List` box, `h-[500px]`) — the header above it
+   ("Trending Songs"/"My Creations" + "See all") is a SIBLING outside that
+   box in both Figma and this file's own `.song-create__side` (flex column,
+   no height of its own), so it stays fixed above the list rather than
+   scrolling with it. Already `overflow-y: auto` in the verbatim rule, so
+   rows beyond 500px are still reachable by scrolling, not clipped — Figma's
+   own `overflow-clip` on that node is a static-mockup artifact of its box,
+   not a "these rows are unreachable" product intent. */
+.song-create__side-list {
+  height: 500px;
+}
+
+/* Bug fix, 2026-08-13 — see the comment beside this class's use in
+   SongResultView.tsx. `visibility: hidden` (not `display: none`) keeps the
+   line's box — and so `.song-result`'s height — in place while switching to
+   any playlist entry other than the generated song, and also drops it from
+   the accessibility tree same as `display: none` would (unlike `opacity: 0`,
+   which does not). WA-only: DP has no such line in the first place. */
+.song-create__title-hint--hidden {
+  visibility: hidden;
+}
+
+/* Product owner request, 2026-08-13 — the gap between a field's own label
+   row and its input box drops from 24px to 8px on AI Song: Simple's
+   "DESCRIBE YOUR SONG" and Custom's "LYRICS" (both rely on
+   `.song-create__section`'s shared gap between `.song-create__row-header`
+   and `.song-create__input-box`) and Custom's "SONG TITLE" (its own
+   `.song-create__title-field`, verbatim 12px).
+
+   `.song-create__section`'s gap is shared by EVERY stacked piece in Custom
+   mode, not just the label/input pair — row-header, input-box, the STYLE
+   chips block, and the title field are all siblings in the same flex
+   column. Shrinking it outright would also shrink input-box -> STYLE and
+   STYLE -> title-field, which nothing here asked for. The compensating
+   `margin-top` on those two LATER pieces restores their original 24px gap
+   from the sibling above them (8px new gap + 16px margin = 24px, unchanged).
+   Simple mode's section has no such tail (`.song-create__section--grow` is
+   just row-header + input-box), so its gap shrinks with no compensation
+   needed. */
+.song-create__section {
+  gap: 8px;
+}
+
+.song-create__style,
+.song-create__title-field {
+  margin-top: 16px;
+}
+
+.song-create__title-field {
+  gap: 8px;
+}
+
+/* Product owner request, 2026-08-13 — hide the "Trending Songs"/"My
+   Creations" and "Trending MVs"/"My Creations" side rails on both phone AND
+   tablet, `.song-create__side` (AI Song) and `.mv-create__side` (AI MV).
+
+   1023px: below 1024 the row already stacks to one column
+   (`.song-create`/`.mv-create`'s own `flex-direction: row` is itself a
+   `@media (min-width: 1024px)` rule) — this now hides the rail everywhere
+   that single-column stack applies, tablet (768-1023px) included, not just
+   below 768px (`PHONE_QUERY` in `src/lib/ssr.ts`, this app's actual phone
+   breakpoint — the FIRST version of this rule used that instead, until the
+   product owner asked to extend it to tablet too).
+
+   `SongCreatePage.css` already ships an unused `.song-create__side--hide-
+   mobile` modifier at exactly this breakpoint (`@media max-width: 1023px`),
+   shipped for a DIFFERENT screen (Song Result's mobile takeover) — same
+   number, different original purpose. Not reused as a className here
+   because `.mv-create__side` has no equivalent modifier to reuse at all;
+   keeping both rails under one rule, in one place, matches instead. */
+@media (max-width: 1023px) {
+  .song-create__side,
+  .mv-create__side {
+    display: none;
+  }
+}
+
+/* Product owner request, 2026-08-13 — AI MV page's two-column row on
+   desktop, matching the same request already applied to AI Song
+   (`.song-create__panel`/`.song-create__side`/`.song-create__side-list`
+   above): the form panel becomes a fixed 660px (was `flex: 700 1 0;
+   max-width: 700px`), and the side rail (`.mv-create__side`) becomes a
+   fixed 372px (was `flex: 332 1 0; max-width: 332px`) with its scrollable
+   list box (`.mv-create__side-list`, verbatim height: 599px) at 500px.
+   No `--full`-style full-width panel state exists on this page (unlike AI
+   Song's Processing stage), so no guard is needed here. */
+@media (min-width: 1024px) {
+  .mv-create__panel {
+    flex: 0 0 660px;
+    width: 660px;
+    max-width: 660px;
+  }
+
+  .mv-create__side {
+    flex: 0 0 372px;
+    width: 372px;
+    max-width: 372px;
+  }
+}
+
+.mv-create__side-list {
+  height: 500px;
+}
+
+/* Product owner request, 2026-08-13 — Choose Song popup (Figma node
+   2333:120323) redesign. `.mv-song-picker__*` is verbatim DP CSS
+   (MVCreatePage.css), so the fixes for its existing classes live here, and
+   the one genuinely new element (`.mv-song-picker__next-icon`) is WA-only. */
+
+/* Title/S (17px/22/bold) — was Body/M (14px) semibold. A noticeably bigger,
+   bolder row title than the ported class shipped. */
+.mv-song-picker__title {
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-s);
+}
+
+/* Body/M (14px/20) — was Body/S (12px). */
+.mv-song-picker__duration {
+  font-size: var(--font-body-m);
+  line-height: var(--line-height-body-m);
+}
+
+/* Figma's tab pill: 13px bold (was 11px medium), 60% white for the inactive
+   label (was 40%), 16/8 padding (was 10/5), and a fixed 20px radius rather
+   than the full pill the ported class used — close at this height (~17px)
+   but not identical, and Figma states 20 explicitly. */
+.mv-song-picker__tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+}
+
+/* Figma's "Use" pill: 5px/6px padding (was 6px/12px) and a 16px radius
+   (was a full pill) — a visibly tighter, less rounded chip than shipped. */
+.mv-song-picker__use {
+  padding: 5px 6px;
+  border-radius: 16px;
+  font-weight: var(--font-weight-medium);
+}
+
+/* New: a trailing chevron on every row that isn't the active one (Figma's
+   "Next Indicator") — DP's vendored CSS has no such element at all. Fades
+   out exactly as `.mv-song-picker__use` fades in (both keyed off the same
+   `--active`/`:hover` triggers), so the two are never visible together. */
+.mv-song-picker__next-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background-color: var(--neutral-dark-64);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  transition: opacity 0.15s ease;
+}
+
+.mv-song-picker__row--active .mv-song-picker__next-icon {
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  .mv-song-picker__row:hover .mv-song-picker__next-icon {
+    opacity: 0;
+  }
+}

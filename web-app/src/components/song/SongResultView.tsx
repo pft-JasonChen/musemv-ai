@@ -313,8 +313,12 @@ export function SongResultView() {
         is the one stage of `SongCreatePage` that gets a back control, and it
         points at History. WA keeps Q6's `router.back()` and uses `/history` as
         the fallback for a cold entry.
+
+        Product owner decided 2026-08-13: retitled "Now Playing" — this screen
+        IS the player (`.song-result__creations` below it is other tracks, not
+        a list this title describes), matching `MobileNowPlaying`'s own header.
       */}
-      <DetailNavbar title="AI Song" fallbackPath="/history" />
+      <DetailNavbar title="Now Playing" fallbackPath="/history" />
 
       <div className="song-create">
         <div className="song-create__panel song-create__panel--full">
@@ -349,12 +353,28 @@ export function SongResultView() {
                             generated — dropping it is the A14 information loss.
                             Typography borrowed from the same stylesheet rather
                             than a class no rule defines. */}
-                        {activeIndex === 0 && songResult.genre && songResult.mood && (
-                          <p className="song-create__title-hint">
-                            {songResult.genre} · {songResult.mood}
-                            {songResult.instrumental ? " · Instrumental" : ""}
-                          </p>
-                        )}
+                        {/* Bug fix, 2026-08-13 — this line only ever applies to
+                            the generated song (`activeIndex === 0`), so
+                            switching to any other playlist/rail entry removed
+                            the whole `<p>` and shrank `.song-result`'s height
+                            (measured: 581.5px -> 568.5px switching to the
+                            first "Newly Released Songs" row) — visible because
+                            `.song-result` has no fixed height of its own, only
+                            `.song-result__lyrics-inline` does. Always
+                            rendering the line and hiding it with `visibility`
+                            (not `display: none`) keeps its box in the flex
+                            column, so the panel's height stays constant
+                            regardless of which entry is active. */}
+                        <p
+                          className={`song-create__title-hint${
+                            activeIndex === 0 && songResult.genre && songResult.mood
+                              ? ""
+                              : " song-create__title-hint--hidden"
+                          }`}
+                        >
+                          {songResult.genre} · {songResult.mood}
+                          {songResult.instrumental ? " · Instrumental" : ""}
+                        </p>
                       </div>
 
                       <div className="song-result__actions">

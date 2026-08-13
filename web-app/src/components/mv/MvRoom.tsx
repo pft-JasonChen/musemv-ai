@@ -624,7 +624,21 @@ export function MvRoom() {
                       });
                     }}
                   >
-                    <ListItem title={mv.title} coverImage={mv.thumb} subtitle={MOCK_USER.name} />
+                    {/* Figma node 1762:38446 (2311:58208, "My Creations") —
+                        same community-style row as Trending MVs below.
+                        `HistoryItem` has no plays/likes/shares (see
+                        HistoryProvider.tsx), so these are genuinely 0 for a
+                        just-created, unpublished MV — not a fabricated
+                        stand-in for real data. */}
+                    <ListItem
+                      variant="community"
+                      title={mv.title}
+                      coverImage={mv.thumb}
+                      username={MOCK_USER.name}
+                      plays={0}
+                      likes={0}
+                      shares={0}
+                    />
                   </Link>
                 ))
               : NEW_MVS.slice(0, 7).map((mv) => (
@@ -633,7 +647,15 @@ export function MvRoom() {
                     href={localePath(locale, `/watch?id=${mv.id}`)}
                     className="mv-create__side-item"
                   >
-                    <ListItem title={mv.title} coverImage={mv.thumb} subtitle={mv.creator} />
+                    <ListItem
+                      variant="community"
+                      title={mv.title}
+                      coverImage={mv.thumb}
+                      username={mv.creator}
+                      plays={mv.plays}
+                      likes={mv.likes}
+                      shares={mv.shares}
+                    />
                   </Link>
                 ))}
           </div>

@@ -59,6 +59,11 @@ export function HeroBannerSectionV3() {
   // Mirrors domIndexRef as real state (a ref alone does not re-render) so the
   // centered card can swap its poster for its video — only ever one at a time.
   const [activeDomIndex, setActiveDomIndex] = useState(1);
+  // Starts muted (required for autoplay to be allowed at all); the button
+  // below unmutes on a real user gesture, so browsers permit it. Shared
+  // across cards on purpose — only one card is ever mounted with a
+  // `<video>` at a time, so this is "the hero's sound", not per-card state.
+  const [muted, setMuted] = useState(true);
 
   function measureStep() {
     const firstCard = trackRef.current?.firstElementChild;
@@ -163,13 +168,32 @@ export function HeroBannerSectionV3() {
                   poster={item.thumbnail}
                   autoPlay
                   loop
-                  muted
+                  muted={muted}
                   playsInline
                 />
               ) : (
                 <img src={item.thumbnail} alt="" className="hero-banner-v3__bg" draggable={false} />
               )}
               <div className="hero-banner-v3__scrim" aria-hidden="true" />
+              {isActive && (
+                // Figma node 1875:34094 (2311:63472) — glass circular button,
+                // top-right of the card. No DP-native class for this control
+                // exists (it's new UI, not a ported one), so position is set
+                // inline rather than adding a rule to a verbatim-copied
+                // stylesheet; the button itself is the shared `IconButton` in
+                // its existing "small/tertiary" preset, which already matches
+                // the Figma spec pixel-for-pixel (28px, 16px icon, white-15
+                // glass).
+                <div style={{ position: "absolute", top: 16, right: 16, zIndex: 2 }}>
+                  <IconButton
+                    size="small"
+                    variant="tertiary"
+                    icon={muted ? "ic_speaker_off" : "ic_speaker_on"}
+                    label={muted ? "Unmute" : "Mute"}
+                    onClick={() => setMuted((current) => !current)}
+                  />
+                </div>
+              )}
               <div className="hero-banner-v3__bottom">
                 <div className="hero-banner-v3__text">
                   <p className="hero-banner-v3__title">{item.title}</p>

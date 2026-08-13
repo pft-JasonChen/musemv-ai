@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+
+// `useLayoutEffect` warns during SSR; fall back to `useEffect` there. Same
+// local-copy convention as `SongPlayBar.tsx`'s own — `src/lib/ssr.ts` only
+// exports `useMediaQuery`/`useIsMounted`/`PHONE_QUERY`, not this helper.
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
  * DP's `FloatingCTA` — the bottom-docked primary action on the create screens.
@@ -18,17 +23,65 @@ import { useEffect, useRef } from "react";
  *
  * `ResizeObserver` and `getBoundingClientRect` are DOM reads, so this whole
  * component is client-only and never runs during SSR.
+ *
+ * ── `adaptive` (2026-08-13) ──────────────────────────────────────────────────
+ *
+ * Product owner request: Custom mode's CTA should only float when the page
+ * actually needs scrolling to reach it — otherwise render it as the panel's
+ * own last row (Figma node 1367:33182, the non-floating state). `adaptive`
+ * defaults to `false`, so every other caller (`MvRoom`, `StoryboardEditor`,
+ * `MvEditor`) keeps the old always-floating behavior untouched.
+ *
+ * The fit check measures an inline copy of `children` that is ALWAYS
+ * rendered in normal flow — hidden with `visibility` (not unmounted) while
+ * floating, so it keeps reserving its own real height instead of a separate
+ * approximate spacer number, and so the same element is what gets measured
+ * in both states. `rect.bottom + window.scrollY` converts the viewport-
+ * relative measurement into a document-relative one before comparing to
+ * `window.innerHeight` — comparing the raw (viewport-relative) `rect.bottom`
+ * would make the check answer "is this scrolled into view right now",
+ * which trivially flips to "fits" the moment the user scrolls down to it,
+ * defeating the entire point of floating for constant reachability.
  */
 export function FloatingCTA({
   children,
   alignToParent = false,
+  adaptive = false,
 }: {
   children: React.ReactNode;
   alignToParent?: boolean;
+  adaptive?: boolean;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const inlineRef = useRef<HTMLDivElement>(null);
+  // SSR-safe constant (matches every other measured-layout value in this
+  // app, e.g. SongPlayBar's own `sidebarWidth`) — server and first client
+  // render agree on "floating" before the layout effect below corrects it,
+  // pre-paint, once the real height is knowable.
+  const [floating, setFloating] = useState(true);
+
+  useIsomorphicLayoutEffect(() => {
+    if (!adaptive) return;
+    const inline = inlineRef.current;
+    if (!inline) return;
+
+    function checkFit() {
+      const rect = inline!.getBoundingClientRect();
+      setFloating(rect.bottom + window.scrollY > window.innerHeight);
+    }
+
+    checkFit();
+    const resizeObserver = new ResizeObserver(checkFit);
+    resizeObserver.observe(document.body);
+    window.addEventListener("resize", checkFit);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", checkFit);
+    };
+  }, [adaptive]);
 
   useEffect(() => {
+    if (adaptive && !floating) return;
     const element = rootRef.current;
     if (!element) return;
 
@@ -69,17 +122,44 @@ export function FloatingCTA({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition);
     };
-  }, [alignToParent]);
+  }, [alignToParent, adaptive, floating]);
+
+  if (!adaptive) {
+    return (
+      <>
+        <div className="floating-cta__spacer" aria-hidden="true" />
+        <div
+          ref={rootRef}
+          className={`floating-cta${alignToParent ? " floating-cta--parent-aligned" : ""}`}
+        >
+          {children}
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
-      <div className="floating-cta__spacer" aria-hidden="true" />
       <div
-        ref={rootRef}
-        className={`floating-cta${alignToParent ? " floating-cta--parent-aligned" : ""}`}
+        ref={inlineRef}
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          width: "100%",
+          ...(floating ? { visibility: "hidden" } : undefined),
+        }}
+        {...(floating ? { "aria-hidden": true, inert: true } : undefined)}
       >
         {children}
       </div>
+      {floating && (
+        <div
+          ref={rootRef}
+          className={`floating-cta${alignToParent ? " floating-cta--parent-aligned" : ""}`}
+        >
+          {children}
+        </div>
+      )}
     </>
   );
 }

@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { NEW_SONGS, songAudioUrl, type CommunitySong } from "@/lib/mv/community";
+import {
+  NEW_SONGS,
+  songAudioUrl,
+  getCommunitySong,
+  songResultFromCommunity,
+  type CommunitySong,
+} from "@/lib/mv/community";
 import { buildShareUrl } from "@/lib/share";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -63,7 +69,7 @@ export function NewSongsSection() {
   const router = useRouter();
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
-  const { patchSongCompose } = useSongFlow();
+  const { patchSongCompose, setSongResult } = useSongFlow();
   const isPhone = useMediaQuery(PHONE_QUERY);
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -71,6 +77,10 @@ export function NewSongsSection() {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  // Same `Set<string>` + `requireLogin` shape as SongDetailView's own
+  // `likedIds`/`toggleLike` — this section has no other like affordance to
+  // share it with, so it's local rather than lifted.
+  const [likedIds, setLikedIds] = useState<ReadonlySet<string>>(() => new Set());
 
   const previewSong = PREVIEW_SONGS.find((s) => s.id === previewId) ?? null;
 
@@ -93,8 +103,24 @@ export function NewSongsSection() {
     void audio.play().catch(() => {});
   }, [previewSong]);
 
+  /**
+   * Product owner request, 2026-08-13 — was an unconditional
+   * `/song/play?id=`, which on desktop lands back on this same list/preview
+   * UI (`SongDetailView` renders both `/song/play` and `/explore/songs`)
+   * rather than the dedicated single-song player. Now mirrors
+   * `SongDetailView.tsx`'s own `selectSong`: desktop seeds SongFlow and goes
+   * straight to `/song/result`; phones keep `/song/play`, which is where
+   * `MobileNowPlaying`'s full-screen takeover lives.
+   */
   function openSong(songId: string) {
-    router.push(localePath(locale, `/song/play?id=${songId}`));
+    if (isPhone) {
+      router.push(localePath(locale, `/song/play?id=${songId}`));
+      return;
+    }
+    const song = getCommunitySong(songId);
+    if (!song) return;
+    setSongResult(songResultFromCommunity(song));
+    router.push(localePath(locale, `/song/result?id=${songId}&from=home`));
   }
 
   function handlePlay(songId: string) {
@@ -119,6 +145,17 @@ export function NewSongsSection() {
     if (index < 0) return;
     const next = (index + delta + PREVIEW_SONGS.length) % PREVIEW_SONGS.length;
     setPreviewId(PREVIEW_SONGS[next].id);
+  }
+
+  function toggleLike(songId: string) {
+    requireLogin(() =>
+      setLikedIds((current) => {
+        const next = new Set(current);
+        if (next.has(songId)) next.delete(songId);
+        else next.add(songId);
+        return next;
+      }),
+    );
   }
 
   function createFromSong(song: CommunitySong) {
@@ -186,6 +223,8 @@ export function NewSongsSection() {
           currentTime={currentTime}
           duration={duration}
           audioRef={audioRef}
+          liked={likedIds.has(previewSong.id)}
+          onToggleLike={() => toggleLike(previewSong.id)}
           onTogglePlay={() => handlePlay(previewSong.id)}
           onPrev={() => stepPreview(-1)}
           onNext={() => stepPreview(1)}

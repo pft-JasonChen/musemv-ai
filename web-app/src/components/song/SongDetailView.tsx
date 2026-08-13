@@ -492,12 +492,30 @@ export function SongDetailView() {
    * arrive (designer-reported, 2026-08-10). Resetting synchronously with the
    * track change means it always starts clean at 0.
    */
+  /**
+   * Product owner request, 2026-08-13 — landing on this view with no `?id=`
+   * at all (e.g. "See all" from the Trending Songs rail, a plain
+   * `/explore/songs` visit) must NOT autoplay the list's default first song.
+   * A cold load WITH an explicit `?id=` (a direct song link) still should —
+   * that's a real request for that song, not "just browsing the list".
+   * `activeSong` changes on every later user-driven selection too (clicking
+   * any row's album art goes through `previewSong`/`selectSong`, which
+   * update `activeId`), and those must keep autoplaying as before — so this
+   * only ever skips the SINGLE very first run of this effect, never a later
+   * one, regardless of which branch that first run took.
+   */
+  const skipFirstAutoplayRef = useRef(!requestedSong);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !activeSong) return;
     setCurrentTime(0);
     setDuration(0);
     audio.src = songAudioUrl(activeSong.id);
+    if (skipFirstAutoplayRef.current) {
+      skipFirstAutoplayRef.current = false;
+      return;
+    }
     void audio.play().catch(() => {});
   }, [activeSong]);
 
@@ -549,6 +567,20 @@ export function SongDetailView() {
   function previewSong(songId: string) {
     if (isPhone) {
       selectSong(songId);
+      return;
+    }
+    // A second click on the row that is already the open preview toggles
+    // play/pause instead of re-selecting it — same shape as
+    // `NewSongsSection.tsx`'s `handlePlay`. Pausing/resuming the shared
+    // `audioRef` fires the `<audio>`'s own onPlay/onPause, which is what
+    // `playing` state (and so `isPlaying` on this row AND on `SongPlayBar`)
+    // is derived from — so the two stay in sync for free, not via a second
+    // flag to keep in step.
+    if (previewOpen && songId === activeId) {
+      const audio = audioRef.current;
+      if (!audio) return;
+      if (audio.paused) void audio.play().catch(() => {});
+      else audio.pause();
       return;
     }
     setSelectedId(songId);
@@ -684,6 +716,8 @@ export function SongDetailView() {
               currentTime={currentTime}
               duration={duration}
               audioRef={audioRef}
+              liked={likedIds.has(activeSong.id)}
+              onToggleLike={() => toggleLike(activeSong.id)}
               onTogglePlay={togglePlay}
               onPrev={() => step(-1)}
               onNext={() => step(1)}
