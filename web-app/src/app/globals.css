@@ -67,6 +67,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Product owner request, 2026-08-13 — the page's content was visibly
+   shifting sideways whenever a navigation crossed from "short page, no
+   scrollbar" to "tall page, scrollbar" (or back), because a classic
+   (non-overlay) scrollbar removes ~15-17px from the viewport's content
+   width only once it's actually needed. Reserving that gutter unconditionally
+   makes the available width constant regardless of whether a scrollbar is
+   currently showing, so nothing reflows when one appears or disappears. */
+html {
+  scrollbar-gutter: stable;
+}
+
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;

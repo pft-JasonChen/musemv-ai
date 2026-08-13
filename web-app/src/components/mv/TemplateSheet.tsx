@@ -3,13 +3,17 @@
 
 import { useState } from "react";
 import { MvSheet } from "./MvSheet";
-import { TEMPLATES } from "@/lib/mv/mock";
+import { TEMPLATES, type TemplateOption } from "@/lib/mv/mock";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** Applies the chosen template's prompt to the description field. */
-  onApply: (prompt: string) => void;
+  /**
+   * Hands back the whole chosen template, not just its `prompt` — the
+   * caller needs `cover`/`name` too, to show it on the Templates button
+   * (product owner request, 2026-08-13; see MvRoom.tsx).
+   */
+  onApply: (template: TemplateOption) => void;
 }
 
 /**
@@ -51,7 +55,7 @@ export function TemplateSheet({ open, onClose, onApply }: Props) {
       label="Select a Template"
       title="Select a Template"
       variant="mv-template-sheet"
-      confirm={{ onConfirm: () => onApply(selected.prompt), ariaLabel: "Apply" }}
+      confirm={{ onConfirm: () => onApply(selected), ariaLabel: "Apply" }}
     >
       <div className="mv-template-sheet__preview">
         <img

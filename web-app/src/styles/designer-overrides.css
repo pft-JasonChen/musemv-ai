@@ -271,23 +271,28 @@
    inside verbatim stylesheets:
      .toggle-switch__track       36x20 -> +4px height (both routes that use it)
      .song-create__idea-btn      51x20 -> +4px height
-     .mv-create__idea-btn        79x20 -> +4px height
+     .mv-create__idea-btn        79x20 -> +4px height (REMOVED 2026-08-13,
+       see below)
      .mv-result__control-btn     20x20 -> +4px both axes
      .history-card__copy > a     wx18  -> +6px height
    The sixth (AccountPage's edit-profile icon-button, 20x20) is NOT here — it
    is a JSX size prop (`size="XSmall"`), already fixed by switching it to
    `size="small"` (28x28) directly in the component, see AccountPage.tsx.
-   DELETE each rule below when a drop ships that file at >=24x24 natively. */
+   DELETE each rule below when a drop ships that file at >=24x24 natively.
+
+   `.mv-create__idea-btn` dropped out of this list 2026-08-13: the product
+   owner's circular-thumbnail redesign (see below) makes it naturally
+   20px-thumb + 4px/4px padding = 28px tall on its own, already past the
+   24px minimum with no hit-area patch needed — padding an already-sufficient
+   box is dead weight, not a fix. */
 .song-create__idea-btn,
-.mv-create__idea-btn,
 .mv-result__control-btn,
 .history-card__copy > a {
   position: relative;
 }
 
 .toggle-switch__track::after,
-.song-create__idea-btn::after,
-.mv-create__idea-btn::after {
+.song-create__idea-btn::after {
   content: '';
   position: absolute;
   inset: -2px 0;
@@ -721,8 +726,10 @@
 
 /* Product owner request, 2026-08-13 — Choose Song popup (Figma node
    2333:120323) redesign. `.mv-song-picker__*` is verbatim DP CSS
-   (MVCreatePage.css), so the fixes for its existing classes live here, and
-   the one genuinely new element (`.mv-song-picker__next-icon`) is WA-only. */
+   (MVCreatePage.css), so the fixes live here. (The trailing chevron this
+   block first added — Figma's "Next Indicator" — was reverted the same day
+   on product owner request; ChooseSongModal.tsx no longer renders it and
+   this file no longer styles it.) */
 
 /* Title/S (17px/22/bold) — was Body/M (14px) semibold. A noticeably bigger,
    bolder row title than the ported class shipped. */
@@ -750,38 +757,162 @@
   font-weight: var(--font-weight-bold);
 }
 
-/* Figma's "Use" pill: 5px/6px padding (was 6px/12px) and a 16px radius
-   (was a full pill) — a visibly tighter, less rounded chip than shipped. */
+/* Figma's "Use" pill: 5px/6px padding (was 6px/12px), a 16px radius (was a
+   full pill), and a 48px min-width so the label doesn't hug the padding on
+   its own — a visibly tighter, less rounded chip than shipped. */
 .mv-song-picker__use {
+  min-width: 48px;
   padding: 5px 6px;
   border-radius: 16px;
   font-weight: var(--font-weight-medium);
 }
 
-/* New: a trailing chevron on every row that isn't the active one (Figma's
-   "Next Indicator") — DP's vendored CSS has no such element at all. Fades
-   out exactly as `.mv-song-picker__use` fades in (both keyed off the same
-   `--active`/`:hover` triggers), so the two are never visible together. */
-.mv-song-picker__next-icon {
+/* Product owner request, 2026-08-13 — REPLACES three earlier same-day
+   attempts (position: sticky + an opaque/translucent/blurred/no background
+   on `.tabs`, in that order) with the mechanism Figma actually specifies:
+   node 1961:41878 ("Community User Profile — MV - Scrolled") shows the list
+   as a genuinely CLIPPED viewport (`overflow-clip` on its own "List" frame,
+   1961:41954), not a sticky bar with a background hiding what scrolls
+   behind it. `get_design_context` on 1961:41952 confirms the exact numbers:
+   the tabs+list wrapper is `flex-col gap-[20px]` (DP's own
+   `.community-profile__main > .tabs { margin-bottom: 20px }`, already
+   verbatim-shipped and unchanged by this rule), and the inner "List" box
+   that clips is a fixed height in that frame (808px in a 960px-tall Figma
+   frame: 960 − 80 navbar − 20 section-top-padding − 34 tabs − 20 gap ≈ 806,
+   i.e. "whatever's left of the viewport"). `calc(100vh - 154px)` below is
+   that same subtraction done in real viewport units (80 + 20 + 34 + 20).
+
+   With the list itself bounded and internally scrollable, the page around
+   it never grows taller than the viewport, so nothing needs `position:
+   sticky` at all — there's nothing left to scroll past. This is why v1-v3
+   fought the background: they were patching the SYMPTOM (content visible
+   where it shouldn't be) instead of the actual cause (nothing was clipping
+   it). `align-self: start` on the summary is unrelated cleanup carried over
+   from v1 — still needed so it doesn't stretch to the grid row's full
+   height (CommunityProfilePage.css sets no `align-items`, so the grid
+   default is `stretch`).
+
+   Scoped to `min-width: 768px` — below that the page's own layout switches
+   to a stacked single column (`display: flex; flex-direction: column`),
+   where a fixed-height clipped list doesn't fit the phone-sized viewport
+   DP designed for there; phones keep the whole page scrolling normally. */
+@media (min-width: 768px) {
+  .community-profile__summary {
+    align-self: start;
+  }
+
+  .community-profile__list {
+    height: calc(100vh - 154px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .community-profile__list::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Product owner request, 2026-08-13 — AI Song's Simple-mode "DESCRIBE YOUR
+   SONG" label reads "DESCRIBE IDEA OF YOUR SONG" on desktop/tablet, where
+   the wider column has room for it; phones keep the original, shorter copy.
+   767px matches `PHONE_QUERY` (src/lib/ssr.ts), this app's own phone
+   breakpoint. Both `<span>`s are always in SongCompose.tsx's markup — this
+   toggles which one is visible rather than swapping text via JS, so there's
+   no hydration-mismatch flash on a phone's first paint. */
+.song-create__describe-label--wide {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .song-create__describe-label--phone {
+    display: none;
+  }
+
+  .song-create__describe-label--wide {
+    display: inline;
+  }
+}
+
+/* Product owner request, 2026-08-13 — AI MV's "Templates" button (Figma
+   node 1762:38446 unselected / 1344:25723 selected, "Templates_Thumb_btn")
+   gets circular thumbnail(s) instead of the ported `ic_video` icon.
+   `.mv-create__idea-btn` itself moves from a full pill (`--radius-pill`,
+   symmetric 4px/8px padding) to Figma's 14px radius with asymmetric
+   4px/8px/4px/4px (left/right/top/bottom) padding — tighter on the left
+   where the thumb stack already fills the corner. New classes
+   (`.mv-create__idea-thumbs`/`__idea-thumb`) since none of this exists in
+   DP's vendored CSS at all. */
+.mv-create__idea-btn {
+  padding: 4px 8px 4px 4px;
+  border-radius: 14px;
+}
+
+.mv-create__idea-thumbs {
+  display: flex;
+  align-items: baseline;
+  isolation: isolate;
   flex-shrink: 0;
+}
+
+.mv-create__idea-thumb {
+  display: block;
   width: 20px;
   height: 20px;
-  background-color: var(--neutral-dark-64);
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: contain;
-  transition: opacity 0.15s ease;
+  border-radius: 50%;
+  /* 50%, not a fixed 20px — Figma's own spec value only matches "fully
+     round" because the box is exactly 20x20; 50% keeps that true if the
+     thumb size ever changes, same reasoning as this file's other circular
+     avatars. */
+  border: 0.8px solid var(--neutral-dark-100);
+  /* `box-sizing: border-box` is global (globals.css's `* { box-sizing:
+     border-box }`), so this stroke draws INSET and the box stays 20x20 —
+     it doesn't grow the button or throw off the -7px overlap math below. */
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
-.mv-song-picker__row--active .mv-song-picker__next-icon {
-  opacity: 0;
+/* Stacked (unselected) state only has 3 of these — a lone selected-template
+   thumb is simply the 1st-child rule below (z-index 3, no negative margin,
+   identical to a single-item stack). Figma stacks the FIRST thumb on top;
+   plain DOM order paints LATER siblings on top by default, so this needs
+   explicit z-index, not just negative margins. */
+.mv-create__idea-thumbs > .mv-create__idea-thumb {
+  position: relative;
 }
 
-@media (hover: hover) {
-  .mv-song-picker__row:hover .mv-song-picker__next-icon {
-    opacity: 0;
-  }
+.mv-create__idea-thumbs > .mv-create__idea-thumb:nth-child(1) {
+  z-index: 3;
+}
+
+.mv-create__idea-thumbs > .mv-create__idea-thumb:nth-child(2) {
+  z-index: 2;
+  margin-left: -7px;
+}
+
+.mv-create__idea-thumbs > .mv-create__idea-thumb:nth-child(3) {
+  z-index: 1;
+  margin-left: -7px;
+}
+
+/* Product owner request, 2026-08-13 — AI MV's CTA gets its own gradient
+   instead of reusing AI Song's. `.mv-create__cta--active` and
+   `.song-create__cta--active` shipped byte-for-byte identical
+   (`linear-gradient(135deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%)`, an
+   orange-to-pink-to-purple diagonal) — MVCreatePage.css even says so in a
+   comment directly above the rule ("same pattern as Song Create's CTA").
+   That was a deliberate shared value, not a mismatch, but the product
+   owner now wants MV visually distinct from Song: a horizontal
+   pink-to-purple-to-indigo sweep. `--gradient-mv` already exists in
+   tokens.css (`Gradient tokens`, synced from the designer prototype) with
+   this EXACT value — it was vendored but never wired to anything; `.color-
+   gradient-mv` is the only other consumer, an unused utility class. Using
+   the token here rather than repeating the raw value also means it tracks
+   any future designer update automatically. `.song-create__cta--active` is
+   UNCHANGED; only MV's own rule moves (tokens.css also has a matching
+   `--gradient-song`, closer to but not identical to Song's current
+   135deg value — not switched over here since that wasn't asked for). */
+.mv-create__cta--active {
+  background: var(--gradient-mv);
 }

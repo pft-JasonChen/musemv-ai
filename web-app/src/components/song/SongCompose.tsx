@@ -152,7 +152,21 @@ export function SongCompose() {
           {s.mode === "simple" ? (
             <div className="song-create__section song-create__section--grow">
               <div className="song-create__row-header">
-                <p className="song-create__label">DESCRIBE YOUR SONG</p>
+                <p className="song-create__label">
+                  {/* Product owner request, 2026-08-13: the longer copy is
+                      desktop/tablet only ("as the screens are wider" there)
+                      — phones keep the shorter original. Both spans are
+                      always in the DOM and toggled by CSS (see
+                      designer-overrides.css), not a `useMediaQuery` read, so
+                      there's no hydration-mismatch flash of the wrong text
+                      on a phone's first paint. */}
+                  <span className="song-create__describe-label--phone">
+                    DESCRIBE YOUR SONG
+                  </span>
+                  <span className="song-create__describe-label--wide">
+                    DESCRIBE IDEA OF YOUR SONG
+                  </span>
+                </p>
                 <ToggleSwitch
                   label="Instrumental"
                   checked={s.instrumental}

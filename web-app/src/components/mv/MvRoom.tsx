@@ -25,7 +25,7 @@ import { MOCK_USER } from "@/lib/user";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
-import { MV_TYPES, SAMPLE_FACES, formatDuration } from "@/lib/mv/mock";
+import { MV_TYPES, SAMPLE_FACES, TEMPLATES, formatDuration, type TemplateOption } from "@/lib/mv/mock";
 import { NEW_MVS } from "@/lib/mv/community";
 import {
   COST_RENDER,
@@ -105,6 +105,12 @@ export function MvRoom() {
   const [songOpen, setSongOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  // Product owner request, 2026-08-13 (Figma node 1344:25723) — the
+  // Templates button shows the applied template's own cover + name once
+  // one's been picked, instead of always reading "Templates". Local to
+  // this component: `TemplateSheet` only ever hands back the FULL template
+  // (see its own onApply type), never persists a choice itself.
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateOption | null>(null);
   const [modeOpen, setModeOpen] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -387,13 +393,28 @@ export function MvRoom() {
               />
               <div className="mv-create__input-footer">
                 <div className="mv-create__input-actions">
+                  {/* Product owner request, 2026-08-13 (Figma node 1762:38446
+                      unselected / 1344:25723 selected) — circular thumbnail(s)
+                      replace the old `ic_video` icon. Unselected: a stack of
+                      3 (the first 3 catalog entries, standing in for "these
+                      are templates" the same way Figma's own mockup uses 3
+                      generic covers — not a specific selection). Selected:
+                      just the applied template's own cover + its name. */}
                   <button
                     type="button"
                     className="mv-create__idea-btn"
                     onClick={() => setTemplatesOpen(true)}
                   >
-                    <DpIcon name="ic_video" className="mv-create__idea-icon" />
-                    Templates
+                    <span className="mv-create__idea-thumbs">
+                      {selectedTemplate ? (
+                        <img src={selectedTemplate.cover} alt="" className="mv-create__idea-thumb" />
+                      ) : (
+                        TEMPLATES.slice(0, 3).map((t) => (
+                          <img key={t.id} src={t.cover} alt="" className="mv-create__idea-thumb" />
+                        ))
+                      )}
+                    </span>
+                    {selectedTemplate ? selectedTemplate.name : "Templates"}
                   </button>
                   {/* The "Ideas" button was REMOVED 2026-08-06 — V1 ships no
                       canned-sample fillers (product owner). Note this is a
@@ -697,8 +718,9 @@ export function MvRoom() {
       <TemplateSheet
         open={templatesOpen}
         onClose={() => setTemplatesOpen(false)}
-        onApply={(prompt) => {
-          patchCompose({ description: prompt });
+        onApply={(template) => {
+          patchCompose({ description: template.prompt });
+          setSelectedTemplate(template);
           setTemplatesOpen(false);
         }}
       />
