@@ -204,7 +204,11 @@ export function StoryboardEditor() {
             )}
           </div>
 
-          <FloatingCTA alignToParent>
+          {/* Product owner request, 2026-08-14 — match AI Song's two-state CTA
+              (float only when the page needs scrolling to reach it, otherwise
+              render as the panel's own last row); see MvRoom.tsx's identical
+              comment on the same change. */}
+          <FloatingCTA alignToParent adaptive>
             <button type="button" className="mv-storyboard__cta" onClick={generateMv}>
               <span>Create MV</span>
               {/* Designer fix, 2026-08-11: this was plain "· 200 Credits" text —

@@ -575,7 +575,13 @@ export function MvRoom() {
             </button>
           </div>
 
-          <FloatingCTA alignToParent>
+          {/* Product owner request, 2026-08-14 — match AI Song's two-state CTA
+              (float only when the page needs scrolling to reach it, otherwise
+              render as the panel's own last row). This was one of the three
+              callers FloatingCTA's own header comment names as intentionally
+              still always-floating; `adaptive` already does everything else,
+              it just wasn't opted into here. */}
+          <FloatingCTA alignToParent adaptive>
             <button
               type="button"
               className={`mv-create__cta${ready ? " mv-create__cta--active" : ""}`}

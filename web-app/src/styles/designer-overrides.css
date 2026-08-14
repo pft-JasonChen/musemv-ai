@@ -191,6 +191,116 @@
   background: var(--white-15);
 }
 
+/* Product owner request, 2026-08-14 — the History "⋯" menu's CTA row (newly
+   wired to real DP classes in HistoryView.tsx's Menu()) rendered "Edit MV"
+   as an invisible pill: `.history-card__menu-primary`'s own white-bg/dark-
+   text declaration (specificity 0,1,0) loses to the grouped base rule
+   `.history-card__menu > button { background: transparent; color:
+   var(--neutral-dark-100); }` (specificity 0,1,1), because this CTA has to
+   be a real `<button>` — one of its three states, "Unpublish to edit", has
+   no href to navigate to. The `--gradient` "Create MV" variant is unaffected
+   (two classes, 0,2,0, already beats the base rule). Re-stating both
+   declarations (default and hover) at a specificity the base rule can't beat
+   fixes only the plain-white state; delete if a future drop gives this CTA
+   an `<a>` tag the way `.community-profile__menu-primary` already does.
+   `:not(--gradient)` because "Create MV" renders BOTH classes at once
+   (`history-card__menu-primary history-card__menu-primary--gradient`, see
+   CtaBtn) — without it this rule's higher specificity would win over the
+   gradient variant's own background too, repainting it solid white. Same
+   base-class-bleeds-into-modifier shape as the `.mv-song-picker__tab` fix
+   elsewhere in this file. */
+.history-card__menu > button.history-card__menu-primary:not(.history-card__menu-primary--gradient) {
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}
+
+.history-card__menu > button.history-card__menu-primary:not(.history-card__menu-primary--gradient):hover {
+  background: var(--neutral-dark-100);
+  color: var(--color-accent-purple);
+}
+
+/* Product owner request, 2026-08-14 — Figma's "Create MV" CTA (nodes
+   2383:123083 / 1961:40696) is the same horizontal pink-purple-indigo sweep
+   already used for `.mv-create__cta--active` (see that rule's own comment
+   above), but HistoryPage.css's `--gradient` modifier ships a flat
+   `var(--color-accent-purple)` instead — a solid-colour placeholder, not
+   the gradient its own name promises. `--gradient-mv` is byte-for-byte
+   Figma's stops (#ff6bce/#a855f7/#4338ca). DP's own hover rule already wraps
+   the solid colour in `linear-gradient(x, x)` so it can sit in the same
+   background-image layer list as the dark overlay — the wrap is no longer
+   needed once the base value is a real gradient, so hover swaps straight to
+   `var(--gradient-mv)` as its second layer. */
+.history-card__menu > .history-card__menu-primary--gradient {
+  background: var(--gradient-mv);
+}
+
+.history-card__menu > .history-card__menu-primary--gradient:hover {
+  background:
+    linear-gradient(var(--overlay-hover-dark), var(--overlay-hover-dark)),
+    var(--gradient-mv);
+}
+
+/* Product owner request, 2026-08-14 — Delete should read the same white as
+   every other row (Like/Share/Publish/Download), not DP's red
+   `var(--color-action-danger)`. Same selector as HistoryPage.css's own rule
+   (`.history-card__menu .history-card__menu-delete`, specificity 0,2,0) so
+   this wins purely on source order rather than needing a higher-specificity
+   selector. The icon picks this up for free — it paints via `currentColor`
+   (HistoryPage.css's `.history-card__menu > button > span` rule), so there's
+   nothing to change on the icon side. */
+.history-card__menu .history-card__menu-delete {
+  color: var(--neutral-dark-100);
+}
+
+/* Product owner request, 2026-08-14 — Like's ICON should turn purple once
+   liked, text stays white (refined from an earlier pass that coloured the
+   whole row, text included). Matches the same `--color-accent-purple`
+   treatment DP already uses for this exact icon elsewhere
+   (`.list-item__like--active`, ListItem.css; `.song-bar__icon-btn--active`,
+   SongPlayBar.css) — this menu's Like row had no such state at all, always
+   plain white regardless of `liked`. Scoped to the icon `<span>` itself
+   (OptRow's `DpIcon`), not the row `<button>`: the span has no `color` of
+   its own in HistoryPage.css (only the button does, which the text
+   inherits), so setting `color` here needs no specificity fight — it just
+   changes what THIS element's own `background: currentColor` mask paints,
+   leaving the text's colour (inherited from the button) untouched.
+   `.history-card__menu-item-icon--active` is net-new, not an override of a
+   shipped rule. */
+.history-card__menu-item-icon--active {
+  color: var(--color-accent-purple);
+}
+
+/* Product owner request, 2026-08-14 — open/close fade, 0.2s. HistoryView.tsx's
+   Menu() keeps the portal ALWAYS mounted (the "always-mounted + inert"
+   convention this codebase already uses instead of a JS-timed unmount — see
+   the component's own comment) so the transition has something to animate
+   from/to in both directions; `--visible` is the class that drives it.
+   `pointer-events: none` while hidden stops the invisible menu from
+   swallowing clicks meant for whatever is underneath it.
+
+   `z-index: 91` is a SEPARATE bug this same always-mounted rewrite caused:
+   HistoryPage.css's own `.history-card__menu` is `z-index: 20`, but the
+   menu's sibling backdrop (`.fixed.inset-0` in HistoryView.tsx, the
+   invisible click-outside-to-close catcher) is `z-[90]`. Both are direct,
+   `position: fixed` children of the same portal-into-`body` fragment, so
+   their z-indexes are compared directly regardless of DOM order — 90 beat
+   20, so EVERY click landed on the invisible backdrop (closing the menu)
+   instead of reaching a button underneath it. The pre-rewrite menu carried
+   its own `z-[91]` Tailwind utility, which is what made this work before;
+   converting to the real DP class dropped it silently. 91 restores exactly
+   that relationship — one above the backdrop, nothing more. */
+.history-card__menu {
+  z-index: 91;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.history-card__menu--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* DESIGNER-TODO A8 — TopSongListItem.css has no media queries at all.
    Drawn once for the 1440/1920 Figma frames; `.top-song__actions` (like +
    share + Create) is `flex-shrink: 0`, so at 320-375px all the squeeze lands
@@ -515,6 +625,37 @@
 
 .credits-page__balance .button--primary-payg:hover:not(:disabled) {
   background-image: linear-gradient(var(--overlay-hover-dark), var(--overlay-hover-dark));
+}
+
+/* Product owner request, 2026-08-14 — Credit Detail: keep .credits-page__balance
+   and .credits-page__tabs fixed on top; only .credits-page__list scrolls. Neither
+   CreditsPage.css rule has any overflow/height today, so the whole page scrolls as
+   one block — the balance card and tabs drag off-screen with the list, and list
+   rows scroll up behind .detail-navbar's sticky, translucent gradient background,
+   reading as list content overlaying the balance card. Same root cause and same
+   fix as the Community Profile masked-scroll rule below: bound the list itself to
+   "whatever's left of the viewport" so it scrolls internally and nothing above it
+   ever moves — no `position: sticky` needed on the balance/tabs, since there's
+   nothing left to scroll past. 285px measured live at 1440px (no Figma link for
+   this request, only screenshots): 80 navbar + 20 .credits-page padding-top + 121
+   .credits-page__balance + 20 .credits-page__tabs margin-top + 34 tab height
+   (Tabs.css) + 10 .credits-page__tabs margin-bottom.
+   Scoped to desktop for the same reason as Community Profile: below 768px
+   CreditsPage.css shrinks the balance card/tabs to different sizes and there's no
+   phone-sized clipped-list spec to measure against, so phones keep the whole page
+   scrolling normally. */
+@media (min-width: 768px) {
+  .credits-page__list {
+    height: calc(100vh - 285px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .credits-page__list::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Designer request, 2026-08-11 — the Buy Credits dialog's "Buy Now" CTA
@@ -930,4 +1071,18 @@
    135deg value — not switched over here since that wasn't asked for). */
 .mv-create__cta--active {
   background: var(--gradient-mv);
+}
+
+/* Product owner request, 2026-08-14 — Figma's "Upload Character Photo" circle
+   buttons (node 1344:25769, the Delete-photo / Edit-name pills on a filled
+   slot) are a LIGHT glass pill — `background: var(--white-15)` plus a
+   matching `0.6px` border — same recipe already used for
+   `.detail-navbar__back-button`. MVCreatePage.css instead paints these DARK
+   (`rgba(9, 9, 11, 0.4)`, no border), which reads as a dim smudge on the
+   photo rather than the frosted-glass control Figma shows. Size/padding/
+   icon (20x20 content-box + 4px padding, 12px icon) already match Figma and
+   are untouched — only the fill and the missing border move. */
+.mv-create__photo-circle-btn {
+  border: 0.6px solid var(--white-15);
+  background: var(--white-15);
 }

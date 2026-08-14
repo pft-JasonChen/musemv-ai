@@ -29,8 +29,10 @@ const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : us
  * Product owner request: Custom mode's CTA should only float when the page
  * actually needs scrolling to reach it — otherwise render it as the panel's
  * own last row (Figma node 1367:33182, the non-floating state). `adaptive`
- * defaults to `false`, so every other caller (`MvRoom`, `StoryboardEditor`,
- * `MvEditor`) keeps the old always-floating behavior untouched.
+ * defaults to `false`, so a caller has to opt in explicitly. `MvEditor` still
+ * doesn't (2026-08-14: `MvRoom` and `StoryboardEditor` both opted in, to
+ * match Song Create's CTA — `MvEditor` wasn't asked for, so it keeps the old
+ * always-floating behavior untouched).
  *
  * The fit check measures an inline copy of `children` that is ALWAYS
  * rendered in normal flow — hidden with `visibility` (not unmounted) while

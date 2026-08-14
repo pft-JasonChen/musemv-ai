@@ -56,6 +56,7 @@ export const en = {
   "profile.name": "Name",
   "profile.email": "Email",
   "profile.save": "Save",
+  "profile.cancel": "Cancel",
 
   // Profile — feedback dialog
   "profile.feedbackPlaceholder": "Tell us what you think…",

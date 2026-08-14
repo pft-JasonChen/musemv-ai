@@ -2,9 +2,12 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
+import { DpIcon } from "@/components/ui/DpIcon";
 
 interface Props {
   kind: "storyboard" | "render" | "song";
@@ -19,6 +22,21 @@ interface Props {
   alreadyDone: boolean;
 }
 
+/**
+ * Product owner request, 2026-08-14 — match `StoryboardGenerationScreen`'s
+ * DP-styled processing card (`.mv-storyboard-processing__*`,
+ * MVStoryboardPage.css). That screen stopped using this shared component in
+ * slice 3h specifically because DP never designed `/mv/creating` or
+ * `/song/creating` (its own header note said so) — but the classes
+ * themselves are generic ("processing card with icon/percent/caption, title/
+ * subtitle, progress bar, ETA, View Later"), not storyboard-specific, so
+ * reusing them here is the same "borrow DP's classes for an undesigned
+ * screen" move already made for `.song-create__cta-credits` on this file's
+ * own MV Storyboard CTA. `song`'s branch is otherwise dead — `/song/creating`
+ * has had its own independently-migrated `SongGenerationScreen` since before
+ * this change and no longer renders through here — so only the copy/prop
+ * plumbing for it is kept, not a duplicate style path.
+ */
 export function GenerationView({
   kind,
   title,
@@ -29,6 +47,7 @@ export function GenerationView({
   alreadyDone,
 }: Props) {
   const router = useRouter();
+  const { locale } = useLocale();
   // MV and Song generations each own their progress; pick by what this screen shows.
   const mvGen = useMvFlow().gen;
   const songGen = useSongFlow().gen;
@@ -61,102 +80,75 @@ export function GenerationView({
   }, [alreadyDone, gen.status, nextHref, router]);
 
   const backHref = kind === "song" ? "/song/create" : "/mv/room";
-
-  if (gen.status === "failed") {
-    return (
-      <div
-        className="mx-auto flex max-w-[520px] flex-col items-center px-6 py-16 text-center"
-        role="alert"
-      >
-        <div
-          className="grid h-[88px] w-[88px] place-items-center rounded-full"
-          style={{ background: "var(--card-2)" }}
-        >
-          <svg
-            width="36"
-            height="36"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#FF4E50"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
-          </svg>
-        </div>
-        <h1 className="mt-7 text-[22px] font-extrabold">Generation Failed</h1>
-        <p className="mt-2 text-[14px]" style={{ color: "var(--text-2)" }}>
-          Something went wrong while generating. Your credits were not charged — you can retry now
-          or adjust your input and try again.
-        </p>
-        <div className="mt-8 flex gap-2">
-          <Button variant="ghost" onClick={() => router.push(backHref)}>
-            Back
-          </Button>
-          <Button onClick={start}>Retry</Button>
-        </div>
-      </div>
-    );
-  }
-
-  const r = 52;
-  const circ = 2 * Math.PI * r;
-  const dash = (gen.progress / 100) * circ;
+  const failed = gen.status === "failed";
 
   return (
-    <div className="mx-auto flex max-w-[520px] flex-col items-center px-6 py-16 text-center">
-      <div className="relative grid place-items-center" style={{ width: 140, height: 140 }}>
-        <svg width="140" height="140" viewBox="0 0 140 140" className="-rotate-90">
-          <circle cx="70" cy="70" r={r} fill="none" stroke="var(--card-2)" strokeWidth="8" />
-          <circle
-            cx="70"
-            cy="70"
-            r={r}
-            fill="none"
-            stroke="var(--accent)"
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={`${dash} ${circ}`}
-            style={{ transition: "stroke-dasharray .15s linear" }}
+    <div className="mv-storyboard mv-storyboard--processing">
+      <div className="mv-storyboard-processing" role={failed ? "alert" : undefined}>
+        <div className="mv-storyboard-processing__card">
+          <DpIcon
+            name={failed ? "ic_alert" : "ic_video_ai"}
+            className="mv-storyboard-processing__icon"
           />
-        </svg>
-        <span className="absolute text-[24px] font-extrabold">{gen.progress}%</span>
-      </div>
+          {!failed && (
+            <p className="mv-storyboard-processing__percent">{Math.round(gen.progress)}%</p>
+          )}
+          <p className="mv-storyboard-processing__caption">
+            {failed ? "Generation stopped" : gen.step}
+          </p>
+        </div>
 
-      <h1 className="mt-7 text-[22px] font-extrabold">{title}</h1>
-      <p className="mt-2 text-[14px]" style={{ color: "var(--text-2)" }}>
-        {subtitle}
-      </p>
-      <p className="mt-4 text-[13px] font-semibold" style={{ color: "var(--accent)" }}>
-        {gen.step}
-      </p>
+        <div className="mv-storyboard-processing__message">
+          <p className="mv-storyboard-processing__title">
+            {failed ? "Generation Failed" : title}
+          </p>
+          <p className="mv-storyboard-processing__subtitle">
+            {failed
+              ? "Something went wrong while generating. Your credits were not charged — you can retry now or adjust your input and try again."
+              : subtitle}
+          </p>
+        </div>
 
-      <div className="mt-6 w-full rounded-full" style={{ background: "var(--card-2)", height: 6 }}>
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${gen.progress}%`,
-            background: "var(--mv-grad)",
-            transition: "width .15s linear",
-          }}
-        />
-      </div>
+        {failed ? (
+          <div className="mv-storyboard-processing__progress">
+            <button
+              type="button"
+              className="button button--medium button--primary"
+              onClick={start}
+            >
+              <span className="button__label">Retry</span>
+            </button>
+            <Link
+              href={localePath(locale, backHref)}
+              className="mv-storyboard-processing__view-later"
+            >
+              Back
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="mv-storyboard-processing__progress">
+              <div className="mv-storyboard-processing__progress-track">
+                <div
+                  className="mv-storyboard-processing__progress-fill"
+                  style={{ width: `${gen.progress}%` }}
+                />
+              </div>
+              <p className="mv-storyboard-processing__eta-label">Estimated time remaining</p>
+              <p className="mv-storyboard-processing__eta-value">{estimate}</p>
+            </div>
 
-      <div className="mt-5 text-[12px]" style={{ color: "var(--text-2)" }}>
-        Estimated time remaining
-        <br />
-        <span className="text-[14px] font-bold" style={{ color: "var(--text)" }}>
-          {estimate}
-        </span>
-      </div>
+            <Link
+              href={localePath(locale, "/history")}
+              className="mv-storyboard-processing__view-later"
+            >
+              View Later
+            </Link>
+          </>
+        )}
 
-      <div className="mt-8">
-        <Button variant="ghost" onClick={() => router.push("/history")}>
-          View Later
-        </Button>
+        <p className="sr-only">{kind} generation in progress</p>
       </div>
-      <p className="sr-only">{kind} generation in progress</p>
     </div>
   );
 }

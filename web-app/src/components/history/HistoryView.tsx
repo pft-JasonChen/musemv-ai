@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useHistory } from "@/components/providers/HistoryProvider";
@@ -21,12 +21,9 @@ import {
   type HistorySample,
 } from "@/lib/mv/mock";
 import { formatCount } from "@/lib/mv/community";
-// Heart/Share are still WA's inline-SVG icons because the ⋯ menu is NOT migrated
-// in this spike — D4 says convert only the screen you are migrating, and the menu
-// is still Tailwind. The card itself uses DP's mask icons via DpIcon.
-import { Heart, Share } from "@/components/community/ui";
 import { RoomNavbar, Tabs } from "@/components/shell/RoomNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 
 type Filter = "all" | "mv" | "song" | "liked";
 const FILTERS: { id: Filter; label: string }[] = [
@@ -67,49 +64,6 @@ function rowHref(locale: Locale, r: HistorySample): string {
         ? `/mv/storyboard?id=${r.id}`
         : creationHref({ id: r.id, kind: r.kind });
   return localePath(locale, path);
-}
-
-function I({ d, size = 18 }: { d: string; size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d={d} />
-    </svg>
-  );
-}
-const ICON = {
-  edit: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
-  video: "M15 10l4.5-2.5v9L15 14M3 7h12v10H3z",
-  publish: "M12 3v12m0-12 4 4m-4-4-4 4M5 21h14",
-  timer: "M12 8v4l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
-  download: "M12 3v12m0 0 4-4m-4 4-4-4M4 21h16",
-  trash: "M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6",
-  more: "M12 5h.01M12 12h.01M12 19h.01",
-  alert:
-    "M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z",
-};
-
-function Toggle({ on }: { on: boolean }) {
-  return (
-    <span
-      className="relative inline-block h-5 w-9 rounded-full transition-colors"
-      style={{ background: on ? "var(--accent)" : "var(--card-3)" }}
-    >
-      <span
-        className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
-        style={{ left: on ? "18px" : "2px" }}
-      />
-    </span>
-  );
 }
 
 export function HistoryView() {
@@ -536,17 +490,57 @@ function Menu(p: MenuProps) {
   const hideDelete = (isMv && (p.published || p.reviewing)) || (isSong && p.published);
 
   const btnRef = useRef<HTMLButtonElement>(null);
-  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  // Fade in/out, 0.2s (2026-08-14): the portal is now ALWAYS mounted (see the
+  // render below) rather than conditionally on `p.open` — same "always-
+  // mounted + inert instead of a timed unmount" convention already used for
+  // WA's other overlays (`useMountTransition` was deliberately NOT ported,
+  // per AGENTS.md). It plays the transition in both directions for free and
+  // needs no JS timer to keep the closing menu around long enough to fade
+  // out: the element is already in the DOM before `p.open` ever flips, so
+  // toggling its class in the SAME click handler that flips `p.open` is
+  // enough for the browser to animate from the resting (opacity: 0) state.
+  // A start position of `{0, 0}` is fine — it's `inert` and invisible until
+  // the first open, at which point `toggle()` below computes the real one.
+  const [pos, setPos] = useState({ top: 0, right: 0 });
 
   function toggle() {
-    if (p.open) {
-      p.setOpen(false);
-      return;
+    if (!p.open) {
+      const rect = btnRef.current?.getBoundingClientRect();
+      if (rect) {
+        // `document.documentElement.getBoundingClientRect().width`, NOT
+        // `window.innerWidth` NOR `clientWidth` — measured live, both of
+        // those report 1440 on a page whose actual rendered viewport (same
+        // coordinate space `getBoundingClientRect()` and `position: fixed`
+        // both use) is 1425: `clientWidth` disagreed with its own element's
+        // rect. That 15px mismatch alone was the entire "menu is too far
+        // from the button" drift — the gap itself was only ever the
+        // intended few px. Product owner request, 2026-08-14 ("much closer
+        // to the menu button") also drops the vertical gap 6px -> 4px.
+        const viewportWidth = document.documentElement.getBoundingClientRect().width;
+        setPos({
+          top: rect.bottom + 4,
+          right: Math.max(8, viewportWidth - rect.right),
+        });
+      }
     }
-    const rect = btnRef.current?.getBoundingClientRect();
-    if (rect) setPos({ top: rect.bottom + 6, right: Math.max(8, window.innerWidth - rect.right) });
-    p.setOpen(true);
+    p.setOpen(!p.open);
   }
+
+  // Product owner request, 2026-08-14 — close on scroll rather than tracking
+  // the card (an earlier version of this fix recomputed `pos` on scroll to
+  // follow the card; replaced by this simpler close-on-scroll per updated
+  // direction). `capture: true` catches scrolling on any nested scrollable
+  // ancestor too, not just the window — scroll events don't bubble, so a
+  // plain bubble-phase listener would miss those.
+  useEffect(() => {
+    if (!p.open) return;
+    function close() {
+      p.setOpen(false);
+    }
+    window.addEventListener("scroll", close, { passive: true, capture: true });
+    return () => window.removeEventListener("scroll", close, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.open]);
 
   return (
     <div className="shrink-0">
@@ -564,29 +558,34 @@ function Menu(p: MenuProps) {
         <DpIcon name="ic_more" />
       </button>
 
-      {p.open &&
-        pos &&
-        createPortal(
-          <>
-            <div className="fixed inset-0 z-[90]" onClick={() => p.setOpen(false)} />
-            <div
-              className="fixed z-[91] w-60 overflow-hidden rounded-2xl border p-2 shadow-2xl"
-              style={{
-                top: pos.top,
-                right: pos.right,
-                background: "var(--card)",
-                borderColor: "var(--border-2)",
-              }}
-            >
+      {createPortal(
+        <>
+          {p.open && <div className="fixed inset-0 z-[90]" onClick={() => p.setOpen(false)} />}
+          {/* Product owner request, 2026-08-14 — this popup was still raw Tailwind
+              (see the file header note this replaces): a generic dark card with
+              inline-SVG icons instead of DP's real `.history-card__menu` system
+              (HistoryPage.css lines 320-436), which already has both CTA looks
+              built (`--gradient` for "Create MV", plain white for "Edit MV") plus
+              colour-correct row icons and a red `.history-card__menu-delete`. The
+              portal + JS-computed fixed position is kept (proven to escape the
+              grid card's stacking context); only the visual classes change. */}
+          <div
+            className={`history-card__menu${p.open ? " history-card__menu--visible" : ""}`}
+            role="menu"
+            inert={!p.open}
+            style={{ position: "fixed", top: pos.top, right: pos.right }}
+          >
               {!community && !failed && (
-                <div className="mb-1 flex gap-2 p-1">
+                <>
                   {/* MV-13: a published / in-review MV must be unpublished before editing;
-                    the Edit MV entry becomes a neutral "Unpublish to edit MV" that unpublishes. */}
+                    the Edit MV entry becomes a neutral "Unpublish to edit MV" that unpublishes.
+                    Figma has no separate look for this corrective action, so it shares
+                    Edit MV's plain white pill rather than inventing an undesigned variant. */}
                   {isMv &&
                     (p.published || p.reviewing ? (
                       <CtaBtn
                         label="Unpublish to edit"
-                        icon={ICON.edit}
+                        icon="ic_edit"
                         onClick={() => {
                           p.setOpen(false);
                           p.onPublish();
@@ -595,8 +594,7 @@ function Menu(p: MenuProps) {
                     ) : (
                       <CtaBtn
                         label="Edit MV"
-                        primary
-                        icon={ICON.edit}
+                        icon="ic_edit"
                         onClick={() => {
                           p.setOpen(false);
                           p.onEditMv();
@@ -606,52 +604,52 @@ function Menu(p: MenuProps) {
                   {(isSong || isStoryboard) && (
                     <CtaBtn
                       label="Create MV"
-                      primary
-                      icon={ICON.video}
+                      gradient
+                      icon="ic_video_ai"
                       onClick={() => {
                         p.setOpen(false);
                         p.onCreateMv();
                       }}
                     />
                   )}
-                </div>
+                </>
               )}
 
               {/* HIST-06: a failed creation is Delete-only — no Like / Share. */}
               {!failed && (community || isMv || isSong) && (
                 <OptRow
-                  icon={<Heart size={18} filled={p.liked} />}
+                  icon={p.liked ? "ic_favorite_on" : "ic_favorite_off"}
                   label={p.liked ? "Unlike" : "Like"}
-                  active={p.liked}
                   onClick={p.onLike}
+                  active={p.liked}
                 />
               )}
               {!failed && (community || isMv || isSong) && (
-                <OptRow icon={<Share size={18} />} label="Share" onClick={p.onShare} />
+                <OptRow icon="ic_share" label="Share" onClick={p.onShare} />
               )}
 
               {!community && !failed && (isMv || isSong) && (
                 <>
-                  <OptRow
-                    icon={<I d={isMv && p.reviewing ? ICON.timer : ICON.publish} />}
-                    label={isMv && p.reviewing ? "Publish (Review)" : "Publish"}
-                    trailing={<Toggle on={p.published || p.reviewing} />}
-                    onClick={p.onPublish}
-                  />
-                  <OptRow icon={<I d={ICON.download} />} label="Download" onClick={p.onDownload} />
-                  {!hideDelete && (
-                    <OptRow
-                      icon={<I d={ICON.trash} />}
-                      label="Delete"
-                      danger
-                      onClick={p.onDelete}
+                  <div className="history-card__menu-publish">
+                    <span>
+                      <DpIcon as="i" name={isMv && p.reviewing ? "ic_timer" : "ic_publish"} />
+                      {isMv && p.reviewing ? "Publish (Review)" : "Publish"}
+                    </span>
+                    <ToggleSwitch
+                      checked={p.published || p.reviewing}
+                      onChange={() => p.onPublish()}
+                      ariaLabel={isMv && p.reviewing ? "Publish (Review)" : "Publish"}
                     />
+                  </div>
+                  <OptRow icon="ic_download" label="Download" onClick={p.onDownload} />
+                  {!hideDelete && (
+                    <OptRow icon="ic_delete" label="Delete" danger onClick={p.onDelete} />
                   )}
                 </>
               )}
 
               {(failed || isStoryboard) && (
-                <OptRow icon={<I d={ICON.trash} />} label="Delete" danger onClick={p.onDelete} />
+                <OptRow icon="ic_delete" label="Delete" danger onClick={p.onDelete} />
               )}
             </div>
           </>,
@@ -664,28 +662,23 @@ function Menu(p: MenuProps) {
 function CtaBtn({
   label,
   icon,
-  primary,
+  gradient,
   onClick,
 }: {
   label: string;
   icon: string;
-  primary?: boolean;
+  gradient?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
+      type="button"
+      role="menuitem"
       onClick={onClick}
-      // Designer request, 2026-08-11: pill, not rounded-xl — same filled
-      // button rule as `Button.tsx`. Matches DP's own analogous filled
-      // action row, `.community-profile__menu-primary` (`--radius-pill`).
-      className="flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[12px] font-bold transition-all hover:brightness-110 active:scale-[0.97]"
-      style={
-        primary
-          ? { background: "var(--accent)", color: "#fff" }
-          : { background: "var(--card-2)", color: "var(--text)" }
-      }
+      className={`history-card__menu-primary${gradient ? " history-card__menu-primary--gradient" : ""}`}
     >
-      <I d={icon} size={15} /> {label}
+      <DpIcon name={icon} />
+      {label}
     </button>
   );
 }
@@ -693,27 +686,25 @@ function CtaBtn({
 function OptRow({
   icon,
   label,
-  trailing,
   onClick,
-  active,
   danger,
+  active,
 }: {
-  icon: React.ReactNode;
+  icon: string;
   label: string;
-  trailing?: React.ReactNode;
   onClick: () => void;
-  active?: boolean;
   danger?: boolean;
+  active?: boolean;
 }) {
   return (
     <button
+      type="button"
+      role="menuitem"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[13px] font-semibold transition-colors hover:bg-[var(--card-2)]"
-      style={{ color: danger ? "#FF4E50" : active ? "var(--accent)" : "var(--text)" }}
+      className={danger ? "history-card__menu-delete" : undefined}
     >
-      <span className="grid w-5 place-items-center">{icon}</span>
-      <span className="flex-1">{label}</span>
-      {trailing}
+      <DpIcon name={icon} className={active ? "history-card__menu-item-icon--active" : undefined} />
+      {label}
     </button>
   );
 }

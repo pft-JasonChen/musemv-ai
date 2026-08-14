@@ -84,25 +84,6 @@ function AccountRow({
   );
 }
 
-function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-label={label}
-      onClick={onToggle}
-      className="relative h-6 w-10 shrink-0 rounded-full transition-colors"
-      style={{ background: on ? "var(--color-accent-purple)" : "var(--neutral-dark-14)" }}
-    >
-      <span
-        className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all"
-        style={{ left: on ? 18 : 2 }}
-      />
-    </button>
-  );
-}
-
 export function ProfileView() {
   const router = useRouter();
   const { credits } = useCredits();
@@ -117,7 +98,6 @@ export function ProfileView() {
   // Edit-profile draft state (committed to the provider on Save).
   const [nameDraft, setNameDraft] = useState(profile.name);
   const [avatarDraft, setAvatarDraft] = useState<string | null>(profile.avatar);
-  const [notif, setNotif] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [fbOpen, setFbOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -171,7 +151,6 @@ export function ProfileView() {
                 <strong>{profile.name}</strong>
                 <span>{profile.email}</span>
               </span>
-              {subscribed && <span className="badge badge--purple">{t("profile.musePro")}</span>}
               <button
                 type="button"
                 onClick={openEdit}
@@ -228,19 +207,25 @@ export function ProfileView() {
                   ? `${planName ?? t("profile.musePro")} · ${t("profile.validity")}: 2026-08-10`
                   : t("profile.proSubtitle")
               }
-              // G7 finding 1: DP's row ends in a bare chevron, which makes the only
-              // purchase entry point on this screen look identical to Notifications
-              // and Language. WA had an explicit Subscribe/Manage pill before the
-              // migration; the click target survived the port but the affordance
-              // did not, and nothing would have gone red. Kept, same as the
-              // /settings back control — a working affordance is not decoration.
+              // Product owner request, 2026-08-14 — supersedes G7 finding 1's
+              // Subscribe/Manage pill (kept 2026-08-05 so the row's only purchase
+              // entry point wasn't a bare chevron indistinguishable from
+              // Notifications/Language). For a subscribed user "Manage" is gone
+              // entirely — the row itself is still the click target below, so
+              // nothing is lost, only the redundant label — and the pill is now
+              // reserved for the one case that sells something: not-yet-subscribed
+              // users get a solid button-styled "Upgrade" pill (`.button--secondary`,
+              // same white-pill/dark-text look as Sidebar's own Upgrade button) in
+              // place of the old subtle `badge--purple` treatment. A `<span>`, not a
+              // `<button>`, because the whole row is already a `<button>` below —
+              // nesting would be invalid HTML; `.button--secondary` is class-based
+              // (not an element selector) so it renders identically either way.
               right={
-                // `badge--purple` / `badge--processing` are real modifiers in
-                // Badge.css. An invented one (badge--brand) would not error — it
-                // would just render an unstyled pill, which is A2's failure mode.
-                <span className={`badge ${subscribed ? "badge--processing" : "badge--purple"}`}>
-                  {subscribed ? t("profile.manage") : t("profile.subscribe")}
-                </span>
+                subscribed ? undefined : (
+                  <span className="button button--small button--secondary">
+                    <span className="button__label">{t("profile.upgrade")}</span>
+                  </span>
+                )
               }
               onClick={() =>
                 subscribed
@@ -249,18 +234,9 @@ export function ProfileView() {
               }
             />
             <div className="account-page__divider" />
-            <AccountRow
-              icon="ic_notification"
-              title={t("profile.notifications")}
-              subtitle={notif ? t("profile.on") : t("profile.off")}
-              right={
-                <Toggle
-                  label={t("profile.notifications")}
-                  on={notif}
-                  onToggle={() => setNotif((v) => !v)}
-                />
-              }
-            />
+            {/* Product owner request, 2026-08-14 — removed: notifications aren't a
+                feature this webpage can deliver (no browser push/permission flow
+                behind it, just local demo state that toggled a subtitle). */}
             <AccountRow
               icon="ic_language"
               title={t("profile.language")}
@@ -351,9 +327,11 @@ export function ProfileView() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatarDraft} alt="" className="h-full w-full rounded-full object-cover" />
             ) : (
-              <span className="grid h-full w-full place-items-center text-[26px] font-bold text-white">
-                {nameDraft.charAt(0) || profile.name.charAt(0)}
-              </span>
+              // Matches the identity row's own fallback one section up (both read
+              // from the same `.account-page__avatar > span:first-child` 31×31 mask
+              // rule) instead of the initial-letter span this used before — that
+              // was a third, inconsistent fallback style with its own inline sizing.
+              <DpIcon name="ic_user" />
             )}
             <span className="account-edit__camera">
               <DpIcon name="ic_camera" />
@@ -371,9 +349,24 @@ export function ProfileView() {
           {t("profile.email")}
           <input value={profile.email} readOnly />
         </label>
-        <Button className="mt-4 w-full" onClick={saveProfile}>
-          {t("profile.save")}
-        </Button>
+        {/* `.account-edit__actions`/`.button` come from AccountPage.css — a 50/50
+            grid + gray/white pill pair that already existed for exactly this
+            Cancel/Save shape (account-confirm's delete dialog) but had zero .tsx
+            consumers until now. Cancel just closes; openEdit() re-seeds the drafts
+            from the live profile next time the dialog opens, so there's nothing to
+            roll back here. */}
+        <div className="account-edit__actions mt-4">
+          <button
+            type="button"
+            className="button button--medium button--tertiary"
+            onClick={() => setEditOpen(false)}
+          >
+            <span className="button__label">{t("profile.cancel")}</span>
+          </button>
+          <button type="button" className="button button--medium button--secondary" onClick={saveProfile}>
+            <span className="button__label">{t("profile.save")}</span>
+          </button>
+        </div>
       </Modal>
 
       <Modal
