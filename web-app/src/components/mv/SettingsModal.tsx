@@ -40,11 +40,14 @@ interface Props {
  *    designer stylesheet is forbidden (it is gated byte-for-byte).
  *
  * 2. MV-04's Muse Pro gate on High quality. DP's segmented control has no
- *    locked state at all. The lock is carried by a crown in the option (a
- *    `currentColor` mask, so it inherits the segment's own dim white and
- *    brightens with it) and by BEHAVIOUR: a locked option routes to the
- *    upgrade dialog instead of changing the setting. Guarded by
- *    `e2e/behaviour-regressions.spec.ts` "G5-d#7 Pro gate".
+ *    locked state at all. The lock is carried by a crown in the option — a
+ *    fixed `var(--premium)` gold (Figma node 1724:43946 shows it gold
+ *    regardless of the segment's own dim/active white, not tinted by
+ *    `currentColor` the way the ratio/resolution icons are — see
+ *    `.mv-settings__seg-icon--premium` in designer-overrides.css) — and by
+ *    BEHAVIOUR: a locked option routes to the upgrade dialog instead of
+ *    changing the setting. Guarded by `e2e/behaviour-regressions.spec.ts`
+ *    "G5-d#7 Pro gate".
  *
  * ── AND ONE THING DP HAS THAT WA DID NOT ────────────────────────────────────
  *
@@ -80,6 +83,7 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
         }}
         label="Settings"
         title="Settings"
+        variant="mv-settings"
         confirm={{ onConfirm: onClose, ariaLabel: "Apply" }}
       >
         <div className="mv-sheet__body">
@@ -129,7 +133,12 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
                       className="mv-settings__seg-icon"
                     />
                     {resolution}
-                    {locked && <DpIcon name="ic_crown" className="mv-settings__seg-icon" />}
+                    {locked && (
+                      <DpIcon
+                        name="ic_crown"
+                        className="mv-settings__seg-icon mv-settings__seg-icon--premium"
+                      />
+                    )}
                   </button>
                 );
               })}

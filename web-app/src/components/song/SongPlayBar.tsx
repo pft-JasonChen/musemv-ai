@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useLayoutEffect, useState } from "react";
+import Link from "next/link";
 import { SeekBar } from "@/components/ui/SeekBar";
 import type { RefObject } from "react";
 import { DpIcon } from "@/components/ui/DpIcon";
@@ -9,6 +10,8 @@ import { IconButton } from "@/components/ui/IconButton";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { formatTime } from "@/components/ui/LyricsSheet";
 import { buildShareUrl } from "@/lib/share";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
 import type { CommunitySong } from "@/lib/mv/community";
 
 /**
@@ -47,6 +50,17 @@ import type { CommunitySong } from "@/lib/mv/community";
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 export interface SongPlayBarProps {
+  /**
+   * Product owner request, 2026-08-14 — the bar is now always mounted (its
+   * parent renders it whenever there's an `activeSong`, not just while a
+   * preview is open) so a slide transition has something to animate to/from
+   * in both directions, same "always-mounted + inert" convention already
+   * used for `MvSheet`/`DpDialog` instead of a JS-timed unmount. `open`
+   * replaces the old mount/unmount gate; `false` slides the bar down off-
+   * screen via `transform: translateY(100%)` (designer-overrides.css) and
+   * marks it `inert`.
+   */
+  open: boolean;
   song: CommunitySong;
   playing: boolean;
   currentTime: number;
@@ -61,6 +75,7 @@ export interface SongPlayBarProps {
 }
 
 export function SongPlayBar({
+  open,
   song,
   playing,
   currentTime,
@@ -73,6 +88,7 @@ export function SongPlayBar({
   onNext,
   onClose,
 }: SongPlayBarProps) {
+  const { locale } = useLocale();
   const [shareOpen, setShareOpen] = useState(false);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
@@ -144,11 +160,33 @@ export function SongPlayBar({
   }
 
 
+  // Product owner request, 2026-08-14 — album art + title open the song's own
+  // detail page; username + avatar open the community profile. `/song/result`
+  // already cold-resolves from a bare `?id=` (no flow state needed, see its
+  // own header comment), so a plain `Link` is enough — no callback back to
+  // the parent the way play/pause etc. need. `/creator` takes no id: same
+  // single-mock-creator limitation `TopSongListItem`/`ListItem`/this file's
+  // own `MobileNowPlaying`/`CommunityMvPlayer` already live with —
+  // `CommunitySong.creator` is a display name, not an id (schemas.ts), so
+  // there is no per-creator profile to route to yet. `display: contents` on
+  // the two wraps around `.song-bar__cover`/`.song-bar__title` keeps each
+  // element as the actual flex item its own class sizes — the `Link` itself
+  // takes no part in the layout, only in the click.
+  const songHref = localePath(locale, `/song/result?id=${song.id}&from=song-bar`);
+
   return (
-    <div className="song-bar" style={{ left: sidebarWidth }}>
-      <img src={song.cover} alt="" className="song-bar__cover" />
+    <div
+      className={`song-bar${open ? " song-bar--visible" : ""}`}
+      style={{ left: sidebarWidth }}
+      inert={!open}
+    >
+      <Link href={songHref} aria-label={`Open ${song.title}`} style={{ display: "contents" }}>
+        <img src={song.cover} alt="" className="song-bar__cover" />
+      </Link>
       <div className="song-bar__meta">
-        <p className="song-bar__title">{song.title}</p>
+        <Link href={songHref} style={{ display: "contents" }}>
+          <p className="song-bar__title">{song.title}</p>
+        </Link>
         {/* Figma node 2330:63547 (2311:62919) — a circular profile picture
             next to the creator name. `CommunitySong` has no avatar field
             (only `creator: string`, see schemas.ts), so — same as Figma's
@@ -156,7 +194,10 @@ export function SongPlayBar({
             per-user photo. No DP-native class covers this new element, so
             it's styled inline rather than adding a rule to a
             verbatim-copied stylesheet. */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <Link
+          href={localePath(locale, "/creator")}
+          style={{ display: "flex", alignItems: "center", gap: 4 }}
+        >
           <span
             aria-hidden="true"
             style={{
@@ -189,7 +230,7 @@ export function SongPlayBar({
             />
           </span>
           <p className="song-bar__username">{song.creator}</p>
-        </div>
+        </Link>
       </div>
 
       <div className="song-bar__transport">

@@ -109,23 +109,32 @@ export function MvSheet({
             <img src="/assets/icons/ui/ic_close.svg" alt="" className="mv-sheet__close-icon" />
           </button>
           {title && <p className="mv-sheet__title">{title}</p>}
-          {confirm
-            ? isPhone && (
-                <button
-                  type="button"
-                  className="mv-sheet__confirm"
-                  onClick={confirm.onConfirm}
-                  disabled={confirm.disabled}
-                  aria-label={confirm.ariaLabel ?? "Confirm"}
-                >
-                  <img
-                    src="/assets/icons/ui/ic_check.svg"
-                    alt=""
-                    className="mv-sheet__confirm-icon"
-                  />
-                </button>
-              )
-            : title && <div className="mv-sheet__header-spacer" aria-hidden="true" />}
+          {/*
+            Product owner request, 2026-08-14 — "Settings" was reading
+            shifted left of centre. Desktop centres the title with a
+            symmetric pair: `.mv-sheet__close` (right) and an equal-width,
+            `opacity: 0` counterweight (left) — but `confirm ? isPhone && (…)
+            : …` evaluated to the boolean `false` on desktop for any sheet
+            WITH a confirm (Settings included), and React renders `false` as
+            nothing — not the intended present-but-invisible box. Only sheets
+            with no `confirm` at all (rendering the `header-spacer` branch
+            unconditionally) were actually centred. Rendering the spacer
+            whenever the phone check isn't true — confirm or not — restores
+            the counterweight for every `MvSheet` caller, not just Settings.
+          */}
+          {confirm && isPhone ? (
+            <button
+              type="button"
+              className="mv-sheet__confirm"
+              onClick={confirm.onConfirm}
+              disabled={confirm.disabled}
+              aria-label={confirm.ariaLabel ?? "Confirm"}
+            >
+              <img src="/assets/icons/ui/ic_check.svg" alt="" className="mv-sheet__confirm-icon" />
+            </button>
+          ) : (
+            title && <div className="mv-sheet__header-spacer" aria-hidden="true" />
+          )}
         </div>
 
         {children}

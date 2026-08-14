@@ -1086,3 +1086,111 @@
   border: 0.6px solid var(--white-15);
   background: var(--white-15);
 }
+
+/* Product owner request, 2026-08-14 — AI MV Create Room's Settings sheet
+   (Figma node 1724:43946): two fixes.
+
+   1. The "High" resolution lock crown is gold in Figma regardless of the
+      segment's own dim/active white — SettingsModal.tsx previously reused
+      `.mv-settings__seg-icon` bare, which paints via `currentColor` like the
+      ratio/resolution icons, so the crown was always some shade of white,
+      never gold. `--premium` is the same token AccountRow already uses for
+      its own crown (`iconColor="var(--premium)"`).
+
+   2. The Confirm button is a solid white pill with dark text in Figma, not
+      the shared `.mv-sheet__footer-btn--confirm` default
+      (`var(--color-accent-purple)`, MVCreatePage.css line ~1576) every OTHER
+      sheet caller either uses as-is or overrides via its own `variant` (see
+      `.mv-template-sheet .mv-sheet__footer-btn--confirm` below in this same
+      file). Settings was the one caller with no `variant` prop at all — added
+      in SettingsModal.tsx (`variant="mv-settings"`) purely as a scoping hook,
+      matching the pattern the other three sheets already use; `.mv-settings`
+      has no rule of its own in MVCreatePage.css, so this changes nothing else.
+      Hover mirrors `.button--secondary:hover` (Button.css): background stays
+      white, text tints purple. */
+.mv-settings__seg-icon--premium {
+  color: var(--premium);
+}
+
+.mv-settings .mv-sheet__footer-btn--confirm {
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}
+
+.mv-settings .mv-sheet__footer-btn--confirm:hover:not(:disabled) {
+  color: var(--color-accent-purple);
+}
+
+/* Product owner request, 2026-08-14 — Settings sheet, the gap between an
+   input group's title+toggle row and the input box below it should be 8px.
+   Figma (node 1724:43946) draws these two groups ("List/Input", MV Title /
+   Author Name) with `gap: var(--spacing/8, 8px)`, distinct from the
+   Aspect Ratio / Resolution groups' own `gap: var(--spacing/6, 6px)` —
+   MVCreatePage.css's single shared `.mv-settings__group { gap: 6px; }`
+   collapsed that distinction. `:has()` scopes this to only the groups that
+   actually contain an input, leaving Aspect Ratio/Resolution at the
+   already-correct 6px untouched — same pattern as this file's other
+   `:has()` scoping (`.app-layout--mobile-app .room-navbar:has(...)`,
+   `.community-profile__list:has(.mv-preview)`). */
+.mv-settings__group:has(.mv-settings__input) {
+  gap: 8px;
+}
+
+/* Product owner request, 2026-08-14 — `.mv-settings__row` (the title+toggle
+   row in every Settings sheet group: MV Title, Author Name, Show Subtitle,
+   Show Watermark) drops its own vertical padding, MVCreatePage.css's
+   `padding: 8px 0` -> `0 0`. Applies to all four rows the class is shared
+   by — the request named the class itself, not one instance of it. */
+.mv-settings__row {
+  padding: 0 0;
+}
+
+/* Product owner request, 2026-08-14 — the Settings sheet's "Settings" title
+   was reading shifted left of centre. `MvSheet.tsx`'s desktop header layout
+   centres the title by giving the CLOSE button (right) and an equal-width
+   invisible counterweight (left) the same 28px box, via flex `order` +
+   `opacity: 0` — but for any sheet that passes `confirm` (Settings included),
+   the counterweight slot literally rendered nothing on desktop instead of an
+   invisible box: `{confirm ? isPhone && (<button .../>) : ...}` evaluates
+   `isPhone && (<button/>)` to the boolean `false` when `isPhone` is false,
+   and React renders `false` as nothing at all — not the intended "present
+   but invisible" `.mv-sheet__confirm`. Fixed at the source in MvSheet.tsx
+   (render the header-spacer whenever the phone check isn't true, confirm or
+   not); nothing to add here, kept as a note since the fix lives in a shared
+   component used by every `MvSheet` caller, not just Settings. */
+
+/* Product owner request, 2026-08-14 — Song-bar, three fixes.
+
+   1. Slide up/down, 0.3s ease-in-out. The bar is now ALWAYS mounted (see
+      SongPlayBar.tsx's `open` prop) so this has an actual element to animate
+      in both directions instead of an instant mount/unmount. Hidden state
+      is off-screen via `translateY(100%)` — the bar is `position: fixed;
+      bottom: 0;`, so this pushes it fully below the viewport rather than
+      just fading it in place. `inert` (SongPlayBar.tsx) keeps it out of the
+      tab order and a11y tree while hidden, same convention as `MvSheet`.
+
+   2. `.song-bar__time` (the elapsed/remaining labels flanking the seek bar)
+      has no width of its own in SongPlayBar.css — `flex-shrink: 0` only
+      stops it shrinking, so its rendered width is whatever "0:05" vs
+      "12:34" happen to measure. Every song switch changes `duration`'s
+      digit count at least sometimes, and since `.song-bar` is
+      `justify-content: center` with `.song-bar__progress` a `flex: 1;
+      max-width: 320px` neighbour, that width change shifted where the
+      centred row sits AND how much of its 320px cap the seek bar actually
+      claims — measured live: up to a ~9px swing between "1:23" and
+      "59:59". A fixed `min-width` (sized for up to two-digit minutes, more
+      than this catalog's clips need) removes the dependency on content
+      length entirely. */
+.song-bar {
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.song-bar--visible {
+  transform: translateY(0);
+}
+
+.song-bar__time {
+  min-width: 32px;
+  text-align: center;
+}

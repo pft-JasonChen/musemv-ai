@@ -217,7 +217,14 @@ export function NewSongsSection() {
       </div>
 
       {previewSong && (
+        // `open` is a new required prop (2026-08-14, see SongPlayBar.tsx) for
+        // its slide transition — this section's own mount is still gated on
+        // `previewSong` truthiness rather than adopting that transition
+        // itself (out of scope here; the request was about the Song see-all
+        // page's bar), so it's always mounted-means-open from this caller's
+        // side, same behaviour as before.
         <SongPlayBar
+          open
           song={previewSong}
           playing={playing}
           currentTime={currentTime}

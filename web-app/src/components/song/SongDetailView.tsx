@@ -22,8 +22,6 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useMediaQuery, useIsMounted, PHONE_QUERY } from "@/lib/ssr";
 import {
-  TOP_PICKS_SONGS,
-  NEW_SONGS,
   ALL_COMMUNITY_SONGS,
   CREATOR_SONGS,
   getCommunitySong,
@@ -93,10 +91,17 @@ import { SongPlayBar } from "@/components/song/SongPlayBar";
  *    three places instead of just done. Do NOT "restore" it to match an older
  *    copy of the spec; the divergence is the decision.
  *  · `Trending` IS NOT BUILT. DP has four tabs and its own comment admits three
- *    are fake ("no real per-tab data exists to actually filter by"). WA has two
- *    real catalogs, so: All <- both, Top Picks <- TOP_PICKS_SONGS, New Releases
- *    <- NEW_SONGS. Same judgement 3a made for its two sections; `DESIGNER-TODO`
- *    A6 asks what Trending should be fed.
+ *    are fake ("no real per-tab data exists to actually filter by"). Product
+ *    owner request, 2026-08-14, replaces the earlier Top Picks / New Releases
+ *    split (itself WA's stand-in for DP's fake tabs) with genre tabs — one per
+ *    distinct `CommunitySong.genre` value actually present in the catalog data,
+ *    derived rather than hardcoded so a new genre in `community.ts` gets its
+ *    own tab for free. Every song already carries a real `genre` (used
+ *    elsewhere only to seed the Create flow); this is its first use for
+ *    filtering. "Hip-Hop" — one of the examples given alongside Pop/R&B/Jazz/
+ *    Acoustic — has no song in the mock catalog tagged with it, so it isn't
+ *    one of the derived tabs; adding it would mean inventing catalog content
+ *    rather than fixing the tab bar.
  *
  * ── WHAT DID NOT CHANGE ──────────────────────────────────────────────────────
  * EXP-09 (an id resolves to the playlist it belongs to), EXP-06 (not-found and
@@ -104,20 +109,20 @@ import { SongPlayBar } from "@/components/song/SongPlayBar";
  * lyrics, and share.
  */
 
-const TABS = [
+const GENRES = Array.from(new Set(ALL_COMMUNITY_SONGS.map((s) => s.genre))).sort();
+
+const TABS: { id: string; label: string }[] = [
   { id: "All", label: "All" },
-  { id: "Top Picks", label: "Top Picks" },
-  { id: "New Releases", label: "New Releases" },
-] as const;
+  ...GENRES.map((genre) => ({ id: genre, label: genre })),
+];
 
-type Tab = (typeof TABS)[number]["id"];
+type Tab = string;
 
-const isTab = (v: string | null): v is Tab => TABS.some((t) => t.id === v);
+const isTab = (v: string | null): v is Tab => v !== null && TABS.some((t) => t.id === v);
 
 function songsForTab(tab: Tab): readonly CommunitySong[] {
-  if (tab === "Top Picks") return TOP_PICKS_SONGS;
-  if (tab === "New Releases") return NEW_SONGS;
-  return ALL_COMMUNITY_SONGS;
+  if (tab === "All") return ALL_COMMUNITY_SONGS;
+  return ALL_COMMUNITY_SONGS.filter((s) => s.genre === tab);
 }
 
 const FALLBACK_LYRICS = ["♪ No lyrics available for this one yet ♪"];
@@ -709,8 +714,13 @@ export function SongDetailView() {
             </div>
           </div>
 
-          {previewOpen && activeSong && (
+          {/* Product owner request, 2026-08-14 — always mounted (whenever there's
+              an `activeSong`, not gated on `previewOpen`) so `SongPlayBar`'s own
+              slide transition has something to animate to/from in both
+              directions; `open` now carries what this conditional used to. */}
+          {activeSong && (
             <SongPlayBar
+              open={previewOpen}
               song={activeSong}
               playing={playing}
               currentTime={currentTime}
