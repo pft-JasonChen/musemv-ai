@@ -1,7 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialogTransition";
@@ -63,11 +64,20 @@ async function cropToDataUrl(src: string, r: FaceRegion): Promise<string> {
  * disabled treatment, wrapped around WA's real crop.
  *
  * Consequences worth naming rather than hiding, for G7 to rule on:
- * · DP's `.face-picker__preview` is `aspect-ratio: 1009/519`, sized for its
- *   landscape demo photo. A portrait upload inside a letterbox with
- *   `object-fit: cover` would push the face out of the visible area, so the
- *   preview keeps WA's square. Overridden inline; the designer stylesheets are
- *   gated byte-for-byte and must not gain a rule.
+ * · DP's `.face-picker__preview` was `aspect-ratio: 1009/519` (a wide
+ *   letterbox), then briefly a fixed 420x315 (4:3) box (2026-08-14, matching
+ *   Figma node 2404:124513 as it stood that day). Product owner request,
+ *   same day, follow-up: the box must show the WHOLE image (DP's own
+ *   `object-fit: cover` box, and WA's earlier square/4:3 versions alike,
+ *   both crop whatever doesn't fit the box's fixed ratio) and stay within
+ *   300-400px on both axes — no aspect ratio is fixed anymore. `boxRatio`
+ *   (measured live via `ResizeObserver`, same pattern as `SongPlayBar.tsx`'s
+ *   `sidebarWidth`) is what makes THAT work: the box's own rendered
+ *   width/height now come from the image's intrinsic ratio via
+ *   `designer-overrides.css`'s `object-fit: contain` + min/max rules on
+ *   `.face-picker__preview > img`, not a fixed number here, so the crop
+ *   square's on-screen height has to be corrected by whatever that ratio
+ *   turns out to be for THIS image — see the crop handle's `height` below.
  * · DP's scan line, four face boxes and `.face-picker__faces` strip are only
  *   meaningful with detection data. They render from the existing
  *   `suggestions` prop, which nothing passes today — so the strip is absent,
@@ -75,7 +85,19 @@ async function cropToDataUrl(src: string, r: FaceRegion): Promise<string> {
  *   it never existed here.
  * · The crop square and the size slider have no DP class. Inline styles, for
  *   the same reason as the trim playhead: a class no stylesheet defines paints
- *   nothing and never errors.
+ *   nothing and never errors. The slider's track/thumb ARE now styled (2026-
+ *   08-14, `designer-overrides.css`, matching Figma's "Control/Media
+ *   Controller/Dt") via `::-webkit-slider-thumb`/`::-moz-range-thumb` on the
+ *   plain `<input type="range">` — no new component needed for that part.
+ * · `crop.size` is documented (see `FaceRegion`) as "% of width", and
+ *   `cropToDataUrl` below was ALREADY correct under that contract — it always
+ *   draws a source-pixel-square `s x s` region regardless of how the box is
+ *   displayed. The bug this same-day follow-up fixes is purely visual: the
+ *   ON-SCREEN overlay reused `crop.size` for both width% and height%, which
+ *   is only a square in PIXELS when the box itself is square. Once the box's
+ *   width and height can differ (this request), that stopped being true, so
+ *   the overlay's `height` is now `crop.size * boxRatio` — same width in
+ *   pixels, expressed as whatever percentage-of-height that takes to match.
  */
 export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onConfirm }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -87,16 +109,43 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
   const { mounted, visible } = useDialogTransition(open);
   useEscapeToClose(open, onClose);
 
+  // Product owner request, 2026-08-14 — the box now sizes itself to the
+  // image's own ratio (see the header note), so it isn't square/4:3 anymore
+  // and `crop.size` (a single "% of width" value) can no longer be reused
+  // directly for the overlay's height. `width / height`, measured live —
+  // same `ResizeObserver` pattern as `SongPlayBar.tsx`'s `sidebarWidth` —
+  // rather than computed from `naturalWidth`/`naturalHeight` directly,
+  // because the RENDERED box is what the overlay actually sits inside; that
+  // box's ratio matches the image's natural one once loaded, but reading the
+  // element itself avoids the two ever being able to disagree.
+  const [boxRatio, setBoxRatio] = useState(1);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    function measure() {
+      const r = el!.getBoundingClientRect();
+      if (r.height > 0) setBoxRatio(r.width / r.height);
+    }
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [imageUrl]);
+
   function onMove(e: React.PointerEvent) {
     if (drag.current !== "move" || !wrapRef.current) return;
     const r = wrapRef.current.getBoundingClientRect();
     const px = ((e.clientX - r.left) / r.width) * 100;
     const py = ((e.clientY - r.top) / r.height) * 100;
-    setCrop((c) => ({
-      ...c,
-      x: Math.min(100 - c.size, Math.max(0, px - c.size / 2)),
-      y: Math.min(100 - c.size, Math.max(0, py - c.size / 2)),
-    }));
+    setCrop((c) => {
+      const h = c.size * boxRatio;
+      return {
+        ...c,
+        x: Math.min(100 - c.size, Math.max(0, px - c.size / 2)),
+        y: Math.min(100 - h, Math.max(0, py - h / 2)),
+      };
+    });
   }
 
   async function confirm() {
@@ -170,14 +219,13 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
           <div
             ref={wrapRef}
             className="face-picker__preview"
-            // Square, not DP's 1009/519 letterbox — see the header note. The
-            // 340px cap is WA's own pre-migration size and is load-bearing at
-            // desktop: DP's `max-width: 656px` on a 16/9-ish box is 337px tall,
-            // but square it is 656px, which pushes "Use This Face" below the
-            // fold of `max-height: calc(100dvh - 64px)`.
+            // No fixed size here — the box now shrink-wraps to whatever size
+            // `designer-overrides.css` computes for the `<img>` itself
+            // (intrinsic ratio, clamped to 300-400px both axes, `object-fit:
+            // contain` so the whole image is always visible). `margin: 0
+            // auto` only matters once the box is narrower than its flex
+            // column parent.
             style={{
-              aspectRatio: "1 / 1",
-              maxWidth: 340,
               margin: "0 auto",
               touchAction: "none",
               userSelect: "none",
@@ -202,10 +250,15 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
                 left: `${crop.x}%`,
                 top: `${crop.y}%`,
                 width: `${crop.size}%`,
-                height: `${crop.size}%`,
-                borderRadius: 6,
+                // `boxRatio` correction (2026-08-14) — see the header note.
+                // Same pixel size as `width` above, expressed as whatever
+                // %-of-height that takes once the box isn't square/4:3.
+                height: `${crop.size * boxRatio}%`,
+                // 12px radius / ~2.6px border — Figma's exact values
+                // (`--radius/sm`, 2.625px), 2026-08-14.
+                borderRadius: 12,
                 boxShadow: "0 0 0 9999px rgba(0,0,0,.45)",
-                border: "2px solid var(--color-accent-purple)",
+                border: "2.6px solid var(--color-accent-purple)",
               }}
             />
           </div>
@@ -227,11 +280,19 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
               onChange={(e) =>
                 setCrop((c) => {
                   const size = Number(e.target.value);
-                  return { size, x: Math.min(c.x, 100 - size), y: Math.min(c.y, 100 - size) };
+                  const h = size * boxRatio;
+                  return { size, x: Math.min(c.x, 100 - size), y: Math.min(c.y, 100 - h) };
                 })
               }
               aria-label="Crop size"
-              style={{ flex: 1 }}
+              // `--range-progress` drives the filled-track effect in
+              // designer-overrides.css (Figma's "Juice" — the purple portion
+              // up to the thumb) — plain CSS can't read an <input>'s own
+              // value, so the percentage is computed here and read back via
+              // `var(--range-progress)`.
+              style={
+                { flex: 1, "--range-progress": `${((crop.size - 20) / 60) * 100}%` } as CSSProperties
+              }
             />
           </div>
 

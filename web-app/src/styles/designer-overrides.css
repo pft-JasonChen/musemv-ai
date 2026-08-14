@@ -1194,3 +1194,167 @@
   min-width: 32px;
   text-align: center;
 }
+
+/* Product owner request, 2026-08-14 — Face Picker popup ("Select a Face"),
+   updated to match Figma node 1805:42386 / dialog 2404:124364 exactly. DP's
+   own reference moved since this screen was migrated (slice 3g-2): a wider
+   letterbox photo box and a 720px-wide dialog then, a compact 420x315 (4:3)
+   box in a 484px dialog now. Six fixes, all scoped to `.face-picker*` so
+   nothing outside this one dialog is touched:
+
+   1. Photo box: sized to the image's OWN intrinsic ratio (not a fixed
+      420x315) — same-day follow-up request: the box must show the ENTIRE
+      image, and 300-400px is the allowed range on both axes. `object-fit:
+      contain` on the `<img>` (not `cover`, which would still crop whatever
+      doesn't fit) with `width/height: auto` + independent min/max per axis
+      lets the browser's own replaced-element sizing algorithm do this —
+      no JS math needed for the box's OWN size. `.face-picker__preview`
+      itself gets no size at all; it shrink-wraps to the `<img>` via
+      `align-self: center` overriding the flex column parent's default
+      `stretch`, which is what keeps `wrapRef`'s measured box (FacePickerModal
+      .tsx's `onMove`/`boxRatio`) equal to the image's own rendered box —
+      required for the crop square's percentage math to mean what it says.
+   2. Dialog: 484px wide at desktop (was 720px) with uniform 32px padding
+      (Figma's `p-[var(--spacing/32,32px)]`; the old value was
+      asymmetric — 24px top, 32px sides/bottom).
+   3. Title: Figma's "Title/M" (20px/24) at desktop — `--font-title-m`, not
+      the smaller `--font-title-s` (17px/22) the base rule uses.
+   4. Body gap: 12px (Figma's `gap-[var(--spacing/12,12px)]`), replacing
+      16px/18px (mobile/desktop).
+   5. Close button: a translucent `white-15` glass pill with blur, matching
+      Figma — the base rule painted it as a flat `--neutral-dark-24` dark
+      circle instead. Scoped to the bare class only; `.face-picker__done`'s
+      own `--ready` modifier (a different, higher-specificity rule) still
+      wins for the phone-only purple Done button, unaffected.
+   6. Confirm button: solid white pill / dark text (Figma), not
+      `--gradient-mv` — same "confirm button is white, not DP's default"
+      defect already fixed once for the Settings sheet (see
+      `.mv-settings .mv-sheet__footer-btn--confirm` above); this dialog's
+      `.face-picker__confirm` needed the identical fix independently, since
+      it's a different class with its own gated rule. */
+@media (min-width: 768px) {
+  .face-picker {
+    max-width: 484px;
+    padding: 32px;
+  }
+
+  .face-picker__title {
+    font-size: var(--font-title-m);
+    line-height: var(--line-height-title-m);
+  }
+}
+
+.face-picker__preview {
+  width: auto;
+  /* The base rule's `aspect-ratio: 1009/519` (DP's old letterbox) is still in
+     effect otherwise — it doesn't stop applying just because `width` is now
+     `auto`; it forces height FROM whatever width the img shrinks to, which
+     measured live as a 300x154 wrapper around a 300x400 <img>. `auto` hands
+     height back to content (the img). */
+  aspect-ratio: auto;
+  align-self: center;
+}
+
+.face-picker__preview > img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 400px;
+  max-height: 400px;
+  min-width: 300px;
+  min-height: 300px;
+  object-fit: contain;
+}
+
+.face-picker__body {
+  gap: 12px;
+}
+
+.face-picker__icon-button {
+  background: var(--white-15);
+  border: 0.6px solid var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.face-picker__confirm {
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}
+
+.face-picker__confirm:hover:not(:disabled) {
+  color: var(--color-accent-purple);
+  filter: none;
+}
+
+/* Product owner request, 2026-08-14 — the "Size" label matches Figma's small
+   grey right-aligned style here (10px, `--neutral-dark-64`, hugging a fixed
+   28px column) instead of `.mv-settings__row-title`'s normal look (white,
+   bold, body-m) — that class is reused here (see FacePickerModal.tsx's own
+   comment on why NOT `.mv-settings__row-text`) but Settings' own instances
+   of `.mv-settings__row-title` must keep their real style, hence scoping
+   this to only the copy inside `.face-picker`. */
+.face-picker .mv-settings__row-title {
+  flex: 0 0 28px;
+  width: 28px;
+  color: var(--neutral-dark-64);
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+}
+
+/* Product owner request, 2026-08-14 — Figma's "Control/Media Controller/Dt"
+   custom slider look (a purple "Juice" fill up to a white "Oval" thumb, on a
+   thin grey "bar" track), replacing the plain unstyled native range input.
+   `-webkit-appearance`/`appearance: none` opts out of the browser's own
+   slider chrome so these rules can paint it instead; Firefox needs the
+   equivalent `-moz` pseudo-elements since it has no shared syntax with
+   WebKit/Blink for either the track or the thumb. `--range-progress`
+   (FacePickerModal.tsx) is the one piece plain CSS can't derive itself — an
+   `<input>`'s current value — so the fill-to-thumb gradient reads it back as
+   a custom property instead of hardcoding 50%. */
+.face-picker input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--color-accent-purple) var(--range-progress, 50%),
+    var(--white-15) var(--range-progress, 50%)
+  );
+  outline: none;
+}
+
+.face-picker input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--neutral-dark-100);
+  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.25);
+  cursor: pointer;
+}
+
+.face-picker input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+}
+
+.face-picker input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-purple);
+}
+
+.face-picker input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: var(--neutral-dark-100);
+  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.25);
+  cursor: pointer;
+}
