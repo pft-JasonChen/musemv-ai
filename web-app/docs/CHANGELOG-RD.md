@@ -23,6 +23,46 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-17 — **C1 + C2 ADDITION** — `submitFeedback` (support ticket)
+
+> **LANDED.** `submitFeedback` exists on `MuseApi`, is implemented in `mock.ts`, and the C1/C2
+> snapshots in `contract.surface.test.ts` were re-recorded to include it. The recorded wire shape is
+> `attachment · email · language · prodVerId · q · questionTypeId · title` — i.e. the CSB params
+> themselves. (This entry was written a few hours ahead of the code, banner-flagged as unlanded;
+> the banner is now replaced rather than the entry rewritten.)
+
+**Surfaces:** **C1** (`contract.ts`) and **C2** (`schemas.ts`) — both **additive**, nothing existing
+moves or is removed.
+
+`/profile`'s **Send Feedback** stops discarding its input and becomes a real **CS support ticket**,
+submitted through the **same CSB endpoint as the CS Chatbot**. Spec: `specs/areas/06-profile-account.md`
+**§3.1** (field→param mapping, states, error behaviour) and §10 (the twelve decisions).
+
+- **C2** — new `FeedbackTicket` schema whose **field names ARE the CSB params**: `email`,
+  `questionTypeId`, `title`, `q`, `language`, `attachment`. The Zod type is the wire contract, so
+  there is no mapping layer to keep in sync.
+- **C1** — `submitFeedback(input): Promise<{ ticketId: string }>`, mocked in `mock.ts` (validate →
+  short delay → fake id). **This is the whole swap point.**
+- `Profile` / `useAuth` are **unchanged** — no `id` field. The ticket's **User ID is injected
+  server-side**, deliberately diverging from the CS spec's §T3 where the frontend composes it into `q`.
+- `q` carries the **description text alone** — no User ID, no Order ID (Order ID / Invoice # is not
+  collected on web at all).
+- `language` is the **product locale code** (`enu`…`ptg`), not BCP-47.
+
+**RD must do:** point `submitFeedback` at the endpoint in the
+[Feedback API document](https://ecl.cyberlink.com/dc/DocView.aspx?d=4828) (verify params against the
+[API test tool](https://stage2.cyberlink.com/prog/support/app/feedback-test.htm)); send `attachment`
+as `multipart/form-data` (any type, 10 MB total, enforced client-side too); inject the User ID from
+the session; and supply the **two ids the spec cannot fill** — `prodVerId` for YouCam Muse Web (YCO's
+is `504`) and the `questionTypeId` for **Community Report** (the other four are Purchase and Payment
+`313` · Account `348` · Feature Issue `204` · Others `211`). Tracked as `TBD-PROF-06`.
+
+**Real-client note:** the mock never reaches a network, so `grep -rn 'fetch(' src` stays empty. When
+the real client lands, use the documented relaxation `YCM_REAL_API=1` (fetch allowed inside
+`src/lib/api/` only) — see `DEVELOPER-HANDOVER` §4.
+
+---
+
 ## 2026-08-12 (c) — **C4 REMOVAL** (AI Enhance is free) + **C8 repriced** (TBD-CC-05)
 
 **Surfaces:** **C4** (`useCredits`) — a **removal**, which C4 normally forbids. **C8**
@@ -43,16 +83,16 @@ action for Enhance at all**, so billing it was never part of the approved credit
 
 ### C8 — song costs repriced, cover cost corrected
 
-| before | after | why |
-| --- | --- | --- |
-| `COST_SONG = 10` | **`COST_SONG_VOCAL = 6`** + **`COST_SONG_INSTRUMENTAL = 12`** + `songCost(instrumental)` | spec 11 §3.1 bills on the Instrumental toggle; one constant could not express it |
-| `COST_SONG_RECREATE = 50` | **`songRecreateCost` = `songCost`** | the flat 50 had **no counterpart anywhere** in spec 11 or the cloud config. A Recreate is just another generation |
-| `COST_COVER = 10` | **`COST_COVER = 4`** | `edit_poster`, added in the 2026-08-12 cloud-config drop (closes TBD-CC-02) |
+| before                    | after                                                                                    | why                                                                                                               |
+| ------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `COST_SONG = 10`          | **`COST_SONG_VOCAL = 6`** + **`COST_SONG_INSTRUMENTAL = 12`** + `songCost(instrumental)` | spec 11 §3.1 bills on the Instrumental toggle; one constant could not express it                                  |
+| `COST_SONG_RECREATE = 50` | **`songRecreateCost` = `songCost`**                                                      | the flat 50 had **no counterpart anywhere** in spec 11 or the cloud config. A Recreate is just another generation |
+| `COST_COVER = 10`         | **`COST_COVER = 4`**                                                                     | `edit_poster`, added in the 2026-08-12 cloud-config drop (closes TBD-CC-02)                                       |
 
 `COST_STORYBOARD` (20), `COST_RENDER` (200) and `COST_REGEN` (20) are **unchanged and still
 placeholders** — they are `base + rate × seconds` in spec 11, so no constant is correct. Their real
-formulas are recorded in `types.ts`'s header. TBD-CC-05's own resolution is *"由後端回傳而非
-hardcode"*, so a client-side calculator was deliberately NOT built.
+formulas are recorded in `types.ts`'s header. TBD-CC-05's own resolution is _"由後端回傳而非
+hardcode"_, so a client-side calculator was deliberately NOT built.
 
 Side effect worth knowing: `SongFlowProvider`'s `nextCost` ref is gone — it existed only to make one
 Recreate charge a different amount.
@@ -61,7 +101,7 @@ Recreate charge a different amount.
 
 **`DEFAULT_CREDITS` 390 → 10** (`TBD-CR-06a`), plus a demo escape hatch. 10 is the free-tier rule and
 **does not cover any MV** (cheapest MV path is 220), so a free account generates one vocal song and
-then meets the paywall — intended. Because `AGENTS.md` also calls this a *CEO-demoable* prototype,
+then meets the paywall — intended. Because `AGENTS.md` also calls this a _CEO-demoable_ prototype,
 `startingCredits()` reads **`NEXT_PUBLIC_DEMO_CREDITS`** and falls back to the rule. Set it to 1000
 for a demo build; leave it unset everywhere else. No UI branch, nothing in the URL.
 
@@ -100,10 +140,10 @@ existed.
 cloud-config rules and `TBD-CC-05` owns the revaluation. For the record, the authoritative mapping
 now that the 2026-08-12 cloud-config update landed:
 
-| constant | cloud-config rule | authoritative cost | prototype placeholder |
-| --- | --- | --- | --- |
-| `COST_REGEN` | `edit_mv` + `recreate` + `sing_<res>`\|`story_<res>` | fixed + per-second | 20 |
-| `COST_COVER` | **`edit_poster`** (new in this config drop) | 4 per result | 10 |
+| constant     | cloud-config rule                                    | authoritative cost | prototype placeholder |
+| ------------ | ---------------------------------------------------- | ------------------ | --------------------- |
+| `COST_REGEN` | `edit_mv` + `recreate` + `sing_<res>`\|`story_<res>` | fixed + per-second | 20                    |
+| `COST_COVER` | **`edit_poster`** (new in this config drop)          | 4 per result       | 10                    |
 
 `edit_poster` also closes **TBD-CC-02** ("Edit MV cover Recreate — backend action missing").
 

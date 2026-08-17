@@ -12,7 +12,15 @@
 // exact shape over REST, or an implementation may bridge WebSocket/SSE pushes
 // into the same polling contract.
 
-import type { MvCreateRequest, MvJob, SongCompose, SongJob, Storyboard } from "./schemas";
+import type {
+  FeedbackReceipt,
+  FeedbackTicket,
+  MvCreateRequest,
+  MvJob,
+  SongCompose,
+  SongJob,
+  Storyboard,
+} from "./schemas";
 
 /** Context that selects the tone/format of an AI prompt enhancement. */
 export type EnhanceKind = "mv" | "song" | "lyrics" | "storyboard" | "scene" | "cover";
@@ -46,4 +54,18 @@ export interface MuseApi {
    * polish, storyboard/scene description, cover-image brief).
    */
   enhancePrompt(input: { text: string; kind: EnhanceKind }): Promise<string>;
+
+  /**
+   * File a CS support ticket from `/profile` → Send Feedback.
+   *
+   * **This is the whole swap point for the feature** (spec areas/06 §3.1): the
+   * input's field names ARE the CSB params, so a real implementation posts it
+   * and needs no UI change. Not a job — it resolves once, and the UI shows its
+   * success step on resolve and keeps the user's draft on reject.
+   *
+   * RD: send `attachment` as `multipart/form-data`, inject the User ID from the
+   * session (the frontend deliberately does not put it in `q`), and supply the
+   * two ids in `@/lib/feedback` that are still `null` (TBD-PROF-06).
+   */
+  submitFeedback(input: FeedbackTicket): Promise<FeedbackReceipt>;
 }

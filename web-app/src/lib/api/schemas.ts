@@ -4,6 +4,7 @@
 // a real backend client should do the same with response payloads.
 
 import { z } from "zod";
+import { FEEDBACK_DESCRIPTION_MAX, FEEDBACK_SUBJECT_MAX } from "@/lib/feedback";
 
 // ── AI MV ────────────────────────────────────────────────────────────────
 
@@ -205,3 +206,52 @@ export const CommunitySongSchema = z.object({
   lyrics: z.string().optional(),
 });
 export type CommunitySong = z.infer<typeof CommunitySongSchema>;
+
+// ── Support ticket (Send Feedback) ────────────────────────────────────────
+//
+// Field names ARE the CSB params (spec areas/06 §3.1), so there is no mapping
+// layer between this type and the wire — RD points `submitFeedback` at the real
+// endpoint and sends this object as-is.
+
+/**
+ * A picked attachment. Structural rather than `v instanceof File` on purpose:
+ * this module is imported during SSR/prerender and by vitest, where the `File`
+ * global may not be the same class (or present at all), and a `instanceof`
+ * against a missing global throws at parse time instead of failing validation.
+ */
+const FileLikeSchema = z.custom<File>(
+  (v) =>
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as File).name === "string" &&
+    typeof (v as File).size === "number",
+  { message: "Expected a File" },
+);
+
+export const FeedbackTicketSchema = z.object({
+  /** Reply address. Prefilled from the account but user-editable. */
+  email: z.string().min(3),
+  /**
+   * CSB issue type. **Nullable** because "Community Report" has no id yet
+   * (TBD-PROF-06) — the label ships, the id does not.
+   */
+  questionTypeId: z.number().int().nullable(),
+  /** Subject line. */
+  title: z.string().min(1).max(FEEDBACK_SUBJECT_MAX),
+  /**
+   * The description text ALONE. §T3 composes User ID and Order ID into `q`;
+   * Muse Web deliberately does not — the User ID is injected server-side from
+   * the session, and Order ID is not collected at all (§3.1 divergences 2 & 3).
+   */
+  q: z.string().min(1).max(FEEDBACK_DESCRIPTION_MAX),
+  /** Active product locale code (`enu`…`ptg`), not BCP-47. */
+  language: z.string(),
+  /** `null` until TBD-PROF-06 supplies Muse Web's own id (YCO's is 504). */
+  prodVerId: z.number().int().nullable(),
+  /** Any file type, 10 MB across all of them. RD sends as multipart/form-data. */
+  attachment: z.array(FileLikeSchema),
+});
+export type FeedbackTicket = z.infer<typeof FeedbackTicketSchema>;
+
+export const FeedbackReceiptSchema = z.object({ ticketId: z.string() });
+export type FeedbackReceipt = z.infer<typeof FeedbackReceiptSchema>;

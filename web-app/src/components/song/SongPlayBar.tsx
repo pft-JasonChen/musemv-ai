@@ -159,7 +159,6 @@ export function SongPlayBar({
     setMuted(next);
   }
 
-
   // Product owner request, 2026-08-14 — album art + title open the song's own
   // detail page; username + avatar open the community profile. `/song/result`
   // already cold-resolves from a bare `?id=` (no flow state needed, see its
@@ -217,7 +216,7 @@ export function SongPlayBar({
                 display: "block",
                 width: 7,
                 height: 7,
-                backgroundColor: "#fff",
+                backgroundColor: "var(--neutral-dark-100)",
                 WebkitMaskImage: 'url("/assets/icons/ui/ic_user.svg")',
                 maskImage: 'url("/assets/icons/ui/ic_user.svg")',
                 WebkitMaskRepeat: "no-repeat",
@@ -326,7 +325,13 @@ export function SongPlayBar({
           glass pill, not the bare/transparent `.song-bar__icon-btn` the other
           icons here use. Reuses the shared `IconButton` (same component the
           hero mute button above now uses) instead of a new CSS rule. */}
-      <IconButton size="xsmall" variant="tertiary" icon="ic_close" label="Close player" onClick={onClose} />
+      <IconButton
+        size="xsmall"
+        variant="tertiary"
+        icon="ic_close"
+        label="Close player"
+        onClick={onClose}
+      />
 
       <ShareDialog
         open={shareOpen}

@@ -167,6 +167,15 @@ spec's §8 (e.g. `TBD-MV-*`).
 | **TBD-GL-04** | 🔧 **Backend (RD)** — production persistence (history, storyboard, credits, subscription, profile all reset today).                                                                                                  |
 | **TBD-GL-05** | 📄 **Spec-only, ongoing** — Community / Curation ranking + moderation (Explore PRD). Do **not** change the codebase from this; backend integration is a later RD track. Applies to every Curation item across areas. |
 
+**Support ticket / Send Feedback (area 06 §3.1, `TBD-PROF-02` + `TBD-PROF-06`).** `/profile`'s Send
+Feedback submits a **CS support ticket through the same CSB endpoint as the CS Chatbot** — the form,
+payload and states are **built** (2026-08-17, `FeedbackDialog` + `MuseApi.submitFeedback`); the
+endpoint, auth and multipart upload are RD's.
+Reference: [Feedback API document](https://ecl.cyberlink.com/dc/DocView.aspx?d=4828) ·
+[API test tool](https://stage2.cyberlink.com/prog/support/app/feedback-test.htm) · field mapping
+derived from `CS Chatbot — Support ticket spec` §T3. **Two ids are still missing:** `prodVerId` for
+YouCam Muse Web (YCO's is `504`) and the `questionTypeId` for "Community Report".
+
 ---
 
 ## 10. Glossary

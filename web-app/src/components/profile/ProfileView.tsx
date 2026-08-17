@@ -11,7 +11,7 @@ import { LOCALE_NAMES, LOCALES, localePath } from "@/lib/i18n/config";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import { FeedbackDialog } from "./FeedbackDialog";
 import { SAMPLE_CREATIONS } from "@/lib/mv/mock";
 import { AVATAR_SAMPLES, SUBSCRIPTION_PLANS } from "@/lib/user";
 
@@ -21,8 +21,11 @@ import { AVATAR_SAMPLES, SUBSCRIPTION_PLANS } from "@/lib/user";
  * Structure and classes come from `src/styles/designer/AccountPage.css`; every
  * behaviour below is WA's and predates the migration. Two things DP does NOT
  * have, kept deliberately (they are real product behaviour, not decoration):
- * the notification toggle is a real switch over local state, and Language opens
- * WA's 9-locale picker rather than being a static "English" subtitle.
+ * Language opens WA's 9-locale picker rather than being a static "English"
+ * subtitle, and Send Feedback opens a real support-ticket form (`FeedbackDialog`,
+ * spec areas/06 §3.1) rather than a dead row.
+ * (The notification toggle this comment used to cite is gone — the row was
+ * removed 2026-08-14 because the web has no push flow behind it.)
  *
  * R-8: this screen is one of only two real `useT()` consumers. Every visible
  * string stays on `t()` — DP hardcodes English, and copying that across is the
@@ -363,33 +366,21 @@ export function ProfileView() {
           >
             <span className="button__label">{t("profile.cancel")}</span>
           </button>
-          <button type="button" className="button button--medium button--secondary" onClick={saveProfile}>
+          <button
+            type="button"
+            className="button button--medium button--secondary"
+            onClick={saveProfile}
+          >
             <span className="button__label">{t("profile.save")}</span>
           </button>
         </div>
       </Modal>
 
-      <Modal
-        open={fbOpen}
-        onClose={() => setFbOpen(false)}
-        title={t("profile.sendFeedback")}
-        maxWidth={420}
-      >
-        <textarea
-          placeholder={t("profile.feedbackPlaceholder")}
-          className="mb-4 min-h-[100px] w-full resize-none rounded-lg p-3 text-[14px] outline-none"
-          style={{ background: "var(--neutral-dark-14)", color: "var(--neutral-dark-100)" }}
-        />
-        <Button
-          className="w-full"
-          onClick={() => {
-            setFbOpen(false);
-            flash(t("profile.toast.feedback"));
-          }}
-        >
-          {t("common.send")}
-        </Button>
-      </Modal>
+      {/* Conditionally mounted, unlike the two Modals above: unmounting IS the
+          form reset, so re-opening never shows a stale draft (PROF-P5-S6).
+          There is no toast on success — the dialog's own "Feedback Sent" step
+          replaces it (spec §3.1 / AC-PROF-13). */}
+      {fbOpen && <FeedbackDialog onClose={() => setFbOpen(false)} />}
 
       {toast && (
         <div

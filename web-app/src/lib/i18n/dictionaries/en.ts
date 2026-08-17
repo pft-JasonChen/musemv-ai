@@ -58,8 +58,33 @@ export const en = {
   "profile.save": "Save",
   "profile.cancel": "Cancel",
 
-  // Profile — feedback dialog
+  // Profile — feedback dialog (a CS support ticket; spec areas/06 §3.1).
+  // "Ticket" never appears in the copy — the user-facing word stays "Feedback"
+  // (§10 decision 12), so no e2e selector or dictionary value had to churn.
   "profile.feedbackPlaceholder": "Tell us what you think…",
+  "profile.feedback.type": "Type",
+  "profile.feedback.typePlaceholder": "Select an issue type",
+  "profile.feedback.typePurchase": "Purchase and Payment",
+  "profile.feedback.typeAccount": "Account",
+  "profile.feedback.typeFeature": "Feature Issue",
+  "profile.feedback.typeCommunity": "Community Report",
+  "profile.feedback.typeOthers": "Others",
+  "profile.feedback.subject": "Subject",
+  "profile.feedback.subjectPlaceholder": "What's this about?",
+  "profile.feedback.description": "Description",
+  "profile.feedback.attachment": "Attachment",
+  "profile.feedback.addFile": "Add file",
+  "profile.feedback.attachmentHint": "Any file type · 10 MB total",
+  "profile.feedback.attachmentTotal": "used of 10 MB",
+  "profile.feedback.attachmentTooLarge": "File too large — 10 MB total.",
+  "profile.feedback.removeFile": "Remove file",
+  "profile.feedback.emailPlaceholder": "Enter your email",
+  "profile.feedback.sendError": "Couldn't send. Please try again.",
+  "profile.feedback.sending": "Sending…",
+  "profile.feedback.sentTitle": "Feedback Sent",
+  // `{email}` is substituted at render time — the only interpolated string here.
+  "profile.feedback.sentBody": "Thanks — we'll reply to {email}.",
+  "profile.feedback.done": "Done",
   "common.send": "Send",
 
   // Language picker
@@ -68,7 +93,9 @@ export const en = {
 
   // Profile toasts
   "profile.toast.updated": "Profile updated",
-  "profile.toast.feedback": "Thanks for your feedback!",
+  // `profile.toast.feedback` was removed 2026-08-17: the feedback dialog now
+  // confirms in place with its own "Feedback Sent" step (AC-PROF-13), so a toast
+  // would be a second, redundant acknowledgement of the same submit.
   "profile.toast.signedOut": "Signed out",
 } as const;
 

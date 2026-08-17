@@ -820,6 +820,14 @@ spec's §8 (e.g. <code>TBD-MV-*</code>).</p>
 </tr>
 </tbody>
 </table>
+<p><strong>Support ticket / Send Feedback (area 06 §3.1, <code>TBD-PROF-02</code> + <code>TBD-PROF-06</code>).</strong> <code>/profile</code>'s Send<br>
+Feedback submits a <strong>CS support ticket through the same CSB endpoint as the CS Chatbot</strong> — the form,<br>
+payload and states are <strong>built</strong> (2026-08-17, <code>FeedbackDialog</code> + <code>MuseApi.submitFeedback</code>); the<br>
+endpoint, auth and multipart upload are RD's.<br>
+Reference: <a href="https://ecl.cyberlink.com/dc/DocView.aspx?d=4828">Feedback API document</a> ·<br>
+<a href="https://stage2.cyberlink.com/prog/support/app/feedback-test.htm">API test tool</a> · field mapping<br>
+derived from <code>CS Chatbot — Support ticket spec</code> §T3. <strong>Two ids are still missing:</strong> <code>prodVerId</code> for<br>
+YouCam Muse Web (YCO's is <code>504</code>) and the <code>questionTypeId</code> for "Community Report".</p>
 <hr>
 <h2 id="10-glossary">10. Glossary</h2>
 <table>
@@ -2398,16 +2406,19 @@ are local overrides; downloads use fixture media; grid layout (not the app's ver
 <h1 id="area-06-profile-account-settings">Area 06 — Profile, Account &amp; Settings</h1>
 <blockquote>
 <p>Read <code>../00-overview.md</code> first (conventions, ID scheme, global auth/credits/i18n models).<br>
-<strong>As-built</strong>; ⚠️ = divergence from App v3.0, ❓ = a tracked <code>TBD-*</code>, 🔒 = mock/in-memory.</p>
+<strong>As-built</strong>; ⚠️ = divergence from App v3.0, ❓ = a tracked <code>TBD-*</code>, 🔒 = mock/in-memory.<br>
+<strong>§3.1 Send Feedback</strong> was specified and shipped on 2026-08-17; what remains open there is the<br>
+backend (<code>TBD-PROF-02</code>) and two ids (<code>TBD-PROF-06</code>), not the frontend.</p>
 </blockquote>
 <hr>
 <h2 id="1-overview-scope">1. Overview &amp; scope</h2>
 <p>The account hub. <code>/profile</code> is a <strong>settings-style hub</strong> (avatar/name/PRO, credits+MVs+Songs stats,<br>
-Muse Pro, Notifications, Language, Feedback, Settings) with an inline Edit-Profile modal. <strong>Sign Out<br>
+Muse Pro, Language, History, Send Feedback, Settings) with an inline Edit-Profile modal. <strong>Sign Out<br>
 now lives in <code>/settings</code></strong> (PROF-03), not on the profile screen. <code>/settings</code> (auth-gated) holds legal<br>
 links + Sign Out + subscription cancel + account delete.</p>
 <p><strong>In scope:</strong> <code>profile/ProfileView</code> (<code>/profile</code>, 🔒 <strong>Auth</strong>), <code>profile/SettingsView</code> (<code>/settings</code>),<br>
-the Edit-Profile / Language / Feedback modals.<br>
+the Edit-Profile / Language / Feedback modals. <strong>Send Feedback is a real support ticket</strong> — see<br>
+<strong>§3.1</strong> for the form and its CSB param mapping.<br>
 <strong>Out of scope (cross-referenced):</strong> the account dropdown (area 01 <code>AccountMenu</code>); the credits/IAP<br>
 the Credits Detail route + modals reached from here (area 07 — <code>/profile/credits</code>, <code>BuyCreditsModal</code>, <code>SubscribeModal</code>); the<br>
 <strong>community profile content grid</strong> at <code>/creator?self=1</code> that the stat tiles link to (area 04);<br>
@@ -2416,10 +2427,35 @@ sign-in (area 09).</p>
 row-based hub — <strong>not</strong> the App's <em>My Community Profile</em> (F16), whose tabbed content grid lives at<br>
 <code>/creator?self=1</code> (area 04). The stat tiles bridge the two. ⚠️ The overview parity matrix lists<br>
 F16→06 for convenience; the content-grid half is actually area 04.</p>
-<p><strong>Other key divergences:</strong> Notifications is a <strong>local toggle with no effect</strong> ⚠️; Unsubscribe /<br>
-Delete Account are <strong>demo toasts</strong> (Unsubscribe does not actually downgrade; Delete does not delete)<br>
-⚠️. <strong>Synced to App F19 (2026-07-23):</strong> <strong>Sign Out moved into Settings</strong> (PROF-03) and <strong><code>/settings</code> is<br>
-now auth-gated</strong> (<code>AuthGuard</code>); Terms of Use / Privacy Policy are <strong>real links</strong> (PROF-06).</p>
+<p><strong>Other key divergences:</strong> the <strong>Notifications row is removed</strong> (product owner, 2026-08-14 — the web<br>
+has no push/permission flow behind it, so it was an inert local toggle; <code>TBD-PROF-01</code> is moot on web)<br>
+⚠️; Unsubscribe / Delete Account are <strong>demo toasts</strong> (Unsubscribe does not actually downgrade; Delete<br>
+does not delete) ⚠️. <strong>Synced to App F19 (2026-07-23):</strong> <strong>Sign Out moved into Settings</strong> (PROF-03)<br>
+and <strong><code>/settings</code> is now auth-gated</strong> (<code>AuthGuard</code>); Terms of Use / Privacy Policy are <strong>real links</strong><br>
+(PROF-06).</p>
+<p><strong>Related docs (Send Feedback / support ticket):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Doc</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://ecl.cyberlink.com/dc/DocView.aspx?d=4828">Feedback API document</a></td>
+<td>The CSB feedback endpoint RD wires <code>submitFeedback</code> to — params, auth, limits.</td>
+</tr>
+<tr>
+<td><a href="https://stage2.cyberlink.com/prog/support/app/feedback-test.htm">API test tool</a></td>
+<td>Stage form for firing a ticket by hand; use it to confirm ids before wiring.</td>
+</tr>
+<tr>
+<td><code>CS Chatbot — Support ticket spec</code> §T3 (source of the mapping in <strong>§3.1</strong>)</td>
+<td>The YCO ticket form this reuses. Muse Web ships a 5-field subset of it.</td>
+</tr>
+</tbody>
+</table>
 <hr>
 <h2 id="2-route-component-state-api-map-rd">2. Route / component / state / API map (RD)</h2>
 <table>
@@ -2434,9 +2470,15 @@ now auth-gated</strong> (<code>AuthGuard</code>); Terms of Use / Privacy Policy 
 <tbody>
 <tr>
 <td><code>/profile</code> → <code>profile/ProfileView</code> (🔒 <strong>Auth</strong>)</td>
-<td>header (avatar/name/PRO/email + edit), stat tiles (Credits/MVs/Songs), rows (Muse Pro, Notifications, Language, Feedback, Settings), Edit-Profile/Language/Feedback modals</td>
+<td>header (avatar/name/PRO/email + edit), stat tiles (Credits/MVs/Songs), rows (Muse Pro, Language, History, Send Feedback, Settings), Edit-Profile/Language modals</td>
 <td><code>useAuth().{profile,subscribed,subscribedPlan,updateProfile}</code>, <code>useCredits().credits</code>, <code>useLocale().{locale,setLocale}</code>, <code>useT()</code></td>
 <td><strong>none</strong></td>
+</tr>
+<tr>
+<td><code>FeedbackDialog</code> (opened from <code>/profile</code>)</td>
+<td>the 5-field support-ticket form, its inline validation, the pending/success/error steps (<strong>§3.1</strong>)</td>
+<td><code>useAuth().profile.email</code> (prefill), <code>useLocale().locale</code> (<code>language</code> param), <code>useT()</code>, local form state</td>
+<td><strong><code>submitFeedback</code></strong></td>
 </tr>
 <tr>
 <td><code>/settings</code> → <code>profile/SettingsView</code> (🔒 <strong>Auth</strong>, PROF-03)</td>
@@ -2453,13 +2495,15 @@ localized surfaces (nav + Profile). <code>/settings</code> copy is hardcoded Eng
 <p><strong>Profile header</strong> (<code>ProfileView.tsx</code>): avatar (image or name-initial), name, <strong>PRO</strong> pill when<br>
 <code>subscribed</code>, email; edit-pencil → Edit-Profile modal.<br>
 <strong>Stat tiles</strong> (<code>:116-127</code>): <strong>Credits</strong> → <code>router.push('/profile/credits')</code> (area 07; its <strong>Buy More</strong> opens <code>BuyCreditsModal</code>, now mounted on that route); <strong>MVs</strong> → <code>/creator?self=1&amp;tab=mv</code>; <strong>Songs</strong> → <code>/creator?self=1&amp;tab=songs</code> (area 04). Counts derive from the <strong>static</strong> <code>SAMPLE_CREATIONS</code> (not the user's real creations) ⚠️.<br>
-<strong>Rows</strong> (<code>:129-146</code>):<br>
-- <strong>Muse Pro</strong> — not subscribed → <strong>Subscribe</strong> → <code>SubscribeModal</code> (area 07); subscribed → shows plan name + hardcoded "validity 2026-08-10" + <strong>Manage</strong> → <code>/profile/credits</code>.<br>
-- <strong>Notifications</strong> — local <code>useState(true)</code> toggle; <strong>no effect</strong> 🔒 (→ <code>TBD-PROF-01</code>).<br>
-- <strong>Language</strong> — opens a 9-locale picker → <code>setLocale(code)</code> (i18n, area-wide).<br>
-- <strong>Send Feedback</strong> — opens a textarea modal; submit → toast, <strong>content discarded</strong> 🔒 (→ <code>TBD-PROF-02</code>).<br>
-- <strong>Settings</strong> — navigates to <code>/settings</code> (via <code>localePath</code>). Sign Out is no longer on this screen (PROF-03 moved it into Settings).<br>
-<strong>Edit-Profile modal</strong> (<code>:176-197</code>): avatar <strong>cycles <code>AVATAR_SAMPLES</code></strong> (mock "Change Photo", no real upload) 🔒; name (max 30); email <strong>read-only</strong>; Save → <code>updateProfile({name,avatar})</code> (in-memory; lost on reload → <code>TBD-GL-04</code>).</p>
+<strong>Rows</strong> (<code>:129-146</code>):</p>
+<ul>
+<li><strong>Muse Pro</strong> — not subscribed → an <strong>Upgrade</strong> pill (<code>.button--secondary</code>) + row click → <code>SubscribeModal</code> (area 07); subscribed → plan name + hardcoded "validity 2026-08-10", <strong>no pill</strong>, row click → <code>/profile/credits</code> (product owner, 2026-08-14).</li>
+<li><strong>Language</strong> — opens a 9-locale picker → <code>setLocale(code)</code> (i18n, area-wide).</li>
+<li><strong>History</strong> — navigates to <code>/history</code> (area 05).</li>
+<li><strong>Send Feedback</strong> — opens <code>FeedbackDialog</code>: a <strong>5-field support ticket</strong> submitted through <code>MuseApi.submitFeedback</code> → <strong>§3.1</strong>. <em>(Replaced the one-textarea modal whose content was discarded, 2026-08-17. <code>TBD-PROF-02</code>'s frontend half is closed; the endpoint itself stays RD's.)</em></li>
+<li><strong>Settings</strong> — navigates to <code>/settings</code> (via <code>localePath</code>). Sign Out is no longer on this screen (PROF-03 moved it into Settings).<br>
+<strong>Edit-Profile modal</strong> (<code>:176-197</code>): avatar <strong>cycles <code>AVATAR_SAMPLES</code></strong> (mock "Change Photo", no real upload) 🔒; name (max 30); email <strong>read-only</strong>; Save → <code>updateProfile({name,avatar})</code> (in-memory; lost on reload → <code>TBD-GL-04</code>).</li>
+</ul>
 <p><strong>Settings</strong> (<code>SettingsView.tsx</code>): <strong>Terms of Use</strong> / <strong>Privacy Policy</strong> now <strong>open the real legal<br>
 pages</strong> (<code>lib/legal.ts</code> <code>TERMS_URL</code>/<code>PRIVACY_URL</code>, new tab — PROF-06, same set as the sign-in modal<br>
 AUTH-03) — the old placeholder modals are removed; <strong>Unsubscribe</strong> → confirm → toast "Unsubscribed<br>
@@ -2467,6 +2511,237 @@ AUTH-03) — the old placeholder modals are removed; <strong>Unsubscribe</strong
 deleted (demo)" → redirect Home — <strong>no real deletion</strong> 🔒; <strong>Sign Out</strong> (PROF-03) → <code>signOut()</code> →<br>
 redirect Home. <strong>Auth-gated route</strong> (<code>AuthGuard</code>, PROF-03).</p>
 <p>🔒 Everything here is in-memory (profile/subscription) or static (stat counts, legal text).</p>
+<hr>
+<h2 id="31-send-feedback-support-ticket-form">3.1 Send Feedback — support-ticket form</h2>
+<blockquote>
+<p><strong>Status: as-built</strong> (specified and shipped 2026-08-17). <code>src/components/profile/FeedbackDialog.tsx</code></p>
+<ul>
+<li><code>src/lib/feedback.ts</code> + <code>MuseApi.submitFeedback</code>. Guarded by <code>src/lib/feedback.test.ts</code> (13 unit<br>
+  tests) and four <code>e2e/behaviour-regressions.spec.ts</code> tests — field order/gating, the whole-batch<br>
+  attachment refusal, keyboard-only Type, and axe at 1440 + 375. The two attachment/keyboard guards<br>
+  were mutation-tested in both directions.</li>
+</ul>
+</blockquote>
+<p>Send Feedback creates a <strong>CS support ticket</strong> through the <strong>same CSB endpoint as the CS Chatbot</strong>, so<br>
+the field mapping below is a deliberate subset of that spec's <strong>§T3</strong> (<code>CS Chatbot — Support ticket
+spec</code>). <strong>The word "ticket" never appears in the UI</strong> — the row and the dialog both stay<br>
+<strong>"Send Feedback"</strong>; ticketing is an implementation detail (see the naming decision in §10).</p>
+<h3 id="field-csb-param-mapping">Field → CSB param mapping</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Shown?</th>
+<th>Placeholder / prefill</th>
+<th>Required</th>
+<th>CSB param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Product (YouCam Muse Web)</td>
+<td>No</td>
+<td>—</td>
+<td>—</td>
+<td><code>prodVerId</code> = ❓ <strong><code>TBD-PROF-06</code></strong> (YCO's is <code>504</code>; Muse Web needs its own)</td>
+</tr>
+<tr>
+<td>Type</td>
+<td><strong>Yes</strong></td>
+<td>"Select an issue type"</td>
+<td><strong>Yes</strong></td>
+<td><code>questionTypeId</code> — Purchase and Payment <code>313</code> · Account <code>348</code> · Feature Issue <code>204</code> · Community Report ❓ · Others <code>211</code></td>
+</tr>
+<tr>
+<td>Subject</td>
+<td><strong>Yes</strong></td>
+<td>"What's this about?" · max <strong>100</strong> chars</td>
+<td><strong>Yes</strong></td>
+<td><code>title</code></td>
+</tr>
+<tr>
+<td>Description</td>
+<td><strong>Yes</strong></td>
+<td>"Tell us what you think…" · max <strong>1000</strong> chars + counter</td>
+<td><strong>Yes</strong></td>
+<td><code>q</code> — the <strong>raw description only</strong> ⚠️ (see divergences)</td>
+</tr>
+<tr>
+<td>Attachment</td>
+<td><strong>Yes</strong></td>
+<td>any file type, <strong>10 MB total</strong> across all files</td>
+<td>No</td>
+<td><code>attachment</code> (multipart)</td>
+</tr>
+<tr>
+<td>Email</td>
+<td><strong>Yes</strong></td>
+<td>autofill from <code>profile.email</code>, else "Enter your email"</td>
+<td><strong>Yes</strong></td>
+<td><code>email</code></td>
+</tr>
+<tr>
+<td>UI language</td>
+<td>No</td>
+<td>—</td>
+<td>—</td>
+<td><code>language</code> — the <strong>active product locale code</strong> (<code>enu</code>…<code>ptg</code> from <code>LOCALES</code>), <strong>not</strong> BCP-47; RD maps if CSB differs</td>
+</tr>
+<tr>
+<td>User ID</td>
+<td>No</td>
+<td>—</td>
+<td>—</td>
+<td>injected <strong>server-side</strong> from the session ⚠️ — WA's <code>Profile</code> has no id field</td>
+</tr>
+<tr>
+<td>Order ID / Invoice #</td>
+<td><strong>No</strong> ⚠️</td>
+<td>—</td>
+<td>—</td>
+<td><strong>dropped</strong> from T3 (product owner, 2026-08-17)</td>
+</tr>
+<tr>
+<td>RD log · chat history</td>
+<td>No</td>
+<td>—</td>
+<td>—</td>
+<td>out of scope — there is no chatbot on web</td>
+</tr>
+</tbody>
+</table>
+<p><strong>On-screen order</strong> (product owner, 2026-08-17 — differs from T3): <strong>Type → Subject → Description →<br>
+Attachment → Email</strong>. Classification first, then what happened, then evidence; the prefilled contact<br>
+detail sits last so a field the user rarely touches never separates two they must fill.</p>
+<h3 id="type-control">Type control</h3>
+<p>A <strong>custom listbox</strong> (not a native <code>&lt;select&gt;</code>) so it matches the DP surfaces around it — there is no<br>
+DP select in <code>AccountPage.css</code>, so this is new styling either way. Because it is hand-built, its<br>
+keyboard and ARIA contract is <strong>part of the spec, not an implementation detail</strong> (same lesson as<br>
+<code>ui/SeekBar</code>, <code>TODO.md</code> #5):</p>
+<ul>
+<li>trigger: <code>aria-haspopup="listbox"</code>, <code>aria-expanded</code>, shows the placeholder until a type is chosen</li>
+<li>list: <code>role="listbox"</code>, options <code>role="option"</code> + <code>aria-selected</code></li>
+<li>keys: <strong>↑ ↓</strong> move, <strong>Home/End</strong> jump, <strong>Enter/Space</strong> select, <strong>Esc</strong> closes and returns focus to<br>
+  the trigger; focus returns to the trigger on select too</li>
+<li>the five labels are <code>useT()</code> strings; the id sent is the mapping above</li>
+</ul>
+<h3 id="attachment-rules">Attachment rules</h3>
+<ul>
+<li>hidden <code>&lt;input type="file" multiple&gt;</code> + a styled "Add file" trigger (the <code>MvRoom.tsx:368</code> pattern)</li>
+<li><strong>any</strong> file type; <strong>10 MB cumulative</strong> across all picked files, with the running total shown</li>
+<li>picked files render as removable chips (name + size)</li>
+<li>a pick that would exceed 10 MB is <strong>refused whole</strong> — nothing is added — with <strong>one</strong> message under<br>
+  the field, never a toast (CS spec AC-22)</li>
+<li>files are held in memory only; the mock does not upload. RD sends them as <code>multipart/form-data</code></li>
+</ul>
+<h3 id="states">States</h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Entry</th>
+<th>Visible / enabled</th>
+<th>Exit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FORM</code></td>
+<td>Send Feedback tapped</td>
+<td>5 fields; <strong>Send disabled</strong> while any required field is empty or the email is malformed</td>
+<td>on valid input → <code>FORM_VALID</code></td>
+</tr>
+<tr>
+<td><code>FORM_VALID</code></td>
+<td>Type + Subject + Description + valid Email</td>
+<td>Send enabled</td>
+<td>on Send → <code>SUBMITTING</code></td>
+</tr>
+<tr>
+<td><code>SUBMITTING</code></td>
+<td>Send pressed</td>
+<td>Send disabled + pending state; fields read-only</td>
+<td>on resolve → <code>SUCCESS</code>; on reject → <code>ERROR</code></td>
+</tr>
+<tr>
+<td><code>SUCCESS</code></td>
+<td><code>submitFeedback</code> resolved</td>
+<td>Form and actions <strong>replaced</strong> by "Feedback Sent" + one line ("We'll reply to <code>&lt;email&gt;</code>.") + <strong>Done</strong></td>
+<td>Done closes the dialog</td>
+</tr>
+<tr>
+<td><code>ERROR</code></td>
+<td><code>submitFeedback</code> rejected</td>
+<td>Form <strong>intact</strong> — every field and attachment preserved — one error line above the actions, Send re-enabled</td>
+<td>on Send → <code>SUBMITTING</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>No toast.</strong> The existing <code>profile.toast.feedback</code> ("Thanks for your feedback!") is <strong>removed</strong> —<br>
+the in-dialog <code>SUCCESS</code> step replaces it (CS spec AC-23). Cancel / Esc / backdrop close the dialog<br>
+and discard the draft with <strong>no confirm</strong> (prototype scope).</p>
+<h3 id="contract-surface-rd">Contract surface (RD)</h3>
+<p>This touched two <strong>frozen</strong> surfaces; the <code>docs/CHANGELOG-RD.md</code> entry Gate G4-g requires is in<br>
+place, and <code>contract.surface.test.ts</code>'s C1/C2 snapshots were re-recorded to include them:</p>
+<ul>
+<li><strong>C2</strong> <code>src/lib/api/schemas.ts</code> — a <code>FeedbackTicket</code> schema whose <strong>field names are the CSB params</strong><br>
+  (<code>email</code>, <code>questionTypeId</code>, <code>title</code>, <code>q</code>, <code>language</code>, <code>attachment</code>), so the wire shape is the type.</li>
+<li><strong>C1</strong> <code>src/lib/api/contract.ts</code> — <code>submitFeedback(input): Promise&lt;{ ticketId: string }&gt;</code>, mocked in<br>
+<code>mock.ts</code> (validate → short delay → fake id). <strong>This is the single swap point</strong>: RD points that one<br>
+  function at the endpoint in the Feedback API doc and the UI needs no change.</li>
+<li><code>grep -rn 'fetch(' src</code> stays empty — the mock never reaches a network (<code>YCM_REAL_API=1</code> is the<br>
+  documented relaxation for when the real client lands).</li>
+<li><code>useAuth</code>/<code>Profile</code> are <strong>unchanged</strong> — no <code>id</code> field is added, because the User ID is injected<br>
+  server-side.</li>
+</ul>
+<h3 id="i18n">i18n</h3>
+<p>New keys under <strong><code>profile.feedback.*</code></strong> in <code>src/lib/i18n/dictionaries/en.ts</code> (labels, placeholders,<br>
+the five type names, the attachment refusal, the success/error copy). <code>/profile</code> is one of only two<br>
+<code>useT()</code> surfaces, so this is inside the existing R-8 boundary — not a widening. The 8 non-English<br>
+dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠️ These strings are e2e-visible.</p>
+<h3 id="deliberate-divergences-from-t3">Deliberate divergences from T3</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>T3 says</th>
+<th>Muse Web does</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>4 types (Purchase and Payment · Account · Feature Issue · Others)</td>
+<td><strong>5</strong> — adds <strong>Community Report</strong></td>
+<td>Muse has a community surface YCO does not. Its id is ❓ <code>TBD-PROF-06</code>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Order ID / Invoice # shown, optional, prefilled</td>
+<td><strong>not shown</strong></td>
+<td>CS asks in the reply when needed; keeps a payment field off a UI-bug report.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>q</code> carries Description <strong>+ User ID + Order ID</strong></td>
+<td><code>q</code> = <strong>description only</strong></td>
+<td>No id in WA's model; the session already identifies the user server-side.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Subject/Description prefilled from the AI summary</td>
+<td>user-typed, real placeholders</td>
+<td>There is no chatbot on web, so there is no summary to prefill.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Email autofill "else placeholder"</td>
+<td>same, but the placeholder path is <strong>unreachable today</strong></td>
+<td>Both entry points are signed-in only; kept so a signed-out entry point can use it.</td>
+</tr>
+</tbody>
+</table>
 <hr>
 <h2 id="4-journeys">4. Journeys</h2>
 <p>Screens to capture later: <code>/profile</code>, Edit-Profile modal, Language picker, <code>/settings</code>, delete confirm.</p>
@@ -2482,7 +2757,16 @@ redirect Home. <strong>Auth-gated route</strong> (<code>AuthGuard</code>, PROF-0
 </ul>
 <h3 id="prof-p3-rows">PROF-P3 — Rows</h3>
 <ul>
-<li><strong>PROF-P3-S1</strong> <strong>Muse Pro</strong> → Subscribe modal (area 07) or Manage (if subscribed). <strong>Notifications</strong> → local toggle. <strong>Language</strong> → locale picker → <code>setLocale</code>. <strong>Send Feedback</strong> → textarea → submit toast. <strong>Settings</strong> → <code>/settings</code> (Sign Out lives there now, PROF-03).</li>
+<li><strong>PROF-P3-S1</strong> <strong>Muse Pro</strong> → Upgrade pill / Subscribe modal (area 07), or Credits detail if subscribed. <strong>Language</strong> → locale picker → <code>setLocale</code>. <strong>History</strong> → <code>/history</code>. <strong>Send Feedback</strong> → <code>FeedbackDialog</code> (PROF-P5). <strong>Settings</strong> → <code>/settings</code> (Sign Out lives there now, PROF-03).</li>
+</ul>
+<h3 id="prof-p5-send-feedback-support-ticket">PROF-P5 — Send Feedback (support ticket)</h3>
+<ul>
+<li><strong>PROF-P5-S1</strong> Tap <strong>Send Feedback</strong> → <code>FeedbackDialog</code> opens on <code>FORM</code>: Type (placeholder "Select an issue type"), Subject, Description, Attachment, Email <strong>prefilled from the account</strong>. <strong>Send is disabled.</strong></li>
+<li><strong>PROF-P5-S2</strong> Open <strong>Type</strong> → 5 options; pick one with mouse or ↑/↓ + Enter → the trigger shows the label, focus returns to the trigger.</li>
+<li><strong>PROF-P5-S3</strong> Type a Subject (≤100) and a Description (≤1000, counter updates). With a valid Email present, <strong>Send enables</strong>.</li>
+<li><strong>PROF-P5-S4</strong> <em>(optional)</em> <strong>Add file</strong> → pick one or more files of any type → chips with name + size + remove; the running total is shown.</li>
+<li><strong>PROF-P5-S5</strong> <strong>Send</strong> → <code>SUBMITTING</code> (Send disabled, fields read-only) → <code>submitFeedback</code> resolves → the form is replaced by <strong>"Feedback Sent"</strong> + "We'll reply to <code>&lt;email&gt;</code>." + <strong>Done</strong>.</li>
+<li><strong>PROF-P5-S6</strong> <strong>Done</strong> closes the dialog. No toast. Re-opening Send Feedback gives a <strong>fresh empty form</strong> (Email re-prefilled).</li>
 </ul>
 <h3 id="prof-p4-settings">PROF-P4 — Settings</h3>
 <ul>
@@ -2521,6 +2805,21 @@ redirect Home. <strong>Auth-gated route</strong> (<code>AuthGuard</code>, PROF-0
 <td>Unsubscribe while subscribed</td>
 <td>Toast only; <code>subscribed</code> stays true (no state change). 🔒</td>
 </tr>
+<tr>
+<td><strong>PROF-E5</strong></td>
+<td>Attachment pick would exceed 10 MB total</td>
+<td><strong>Nothing is added</strong> (the pick is refused whole, not truncated) and <strong>one</strong> message appears under the Attachment field — never a toast. Already-picked files are untouched.</td>
+</tr>
+<tr>
+<td><strong>PROF-E6</strong></td>
+<td><code>submitFeedback</code> rejects (network / 500 / oversized multipart)</td>
+<td>Dialog <strong>stays open with every field and attachment preserved</strong>; one error line above the actions ("Couldn't send. Please try again."); Send re-enabled. Nothing is discarded.</td>
+</tr>
+<tr>
+<td><strong>PROF-E7</strong></td>
+<td>Dialog closed mid-draft (Cancel / Esc / backdrop)</td>
+<td>Draft is discarded with <strong>no confirm</strong>; the next open starts empty with Email re-prefilled.</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -2532,19 +2831,30 @@ redirect Home. <strong>Auth-gated route</strong> (<code>AuthGuard</code>, PROF-0
 <li><strong>AC-PROF-04</strong> — WHEN the Muse Pro row is tapped, THE SYSTEM SHALL open the Subscribe modal (not subscribed) or the Credits detail (subscribed).</li>
 <li><strong>AC-PROF-05</strong> — WHEN Language is changed, THE SYSTEM SHALL switch locale via <code>setLocale</code> and reflect it in localized surfaces.</li>
 <li><strong>AC-PROF-06</strong> — WHEN Sign Out is invoked (from Settings — PROF-03 — or the account menu), THE SYSTEM SHALL clear auth and redirect Home. It SHALL NOT appear on <code>/profile</code>.</li>
-<li><strong>AC-PROF-08</strong> — <code>/settings</code> SHALL be auth-gated (<code>AuthGuard</code>); WHEN logged out, it opens the sign-in modal (PROF-03).</li>
+<li><strong>AC-PROF-17</strong> — <code>/settings</code> SHALL be auth-gated (<code>AuthGuard</code>); WHEN logged out, it opens the sign-in modal (PROF-03). <em>(was a second <code>AC-PROF-08</code>; renumbered 2026-08-17 — the visual criterion below keeps <code>08</code>, which is what §7's "AC-08" and areas 01/04 mean by it.)</em></li>
 <li><strong>AC-PROF-09</strong> — WHEN Terms of Use / Privacy Policy is tapped (Settings or the sign-in modal), THE SYSTEM SHALL open the shared real legal URL in a new tab (PROF-06 / AUTH-03).</li>
 <li><strong>AC-PROF-07</strong> — WHEN Unsubscribe or Delete Account is confirmed in <code>/settings</code>, THE SYSTEM SHALL show a demo toast (and Delete redirects Home) <strong>without</strong> actually cancelling or deleting anything. <em>(as-built placeholder — pending <code>TBD-PROF-04</code>.)</em></li>
 <li><strong>AC-PROF-08</strong> — THE SYSTEM SHALL render <code>/profile</code> and <code>/settings</code> at 390/768/1024/1440px with no overflow. <em>(visual)</em></li>
+</ul>
+<p><strong>Send Feedback (§3.1):</strong></p>
+<ul>
+<li><strong>AC-PROF-10</strong> — WHEN Send Feedback is opened, THE SYSTEM SHALL show exactly five fields in the order Type → Subject → Description → Attachment → Email, with Email prefilled from <code>profile.email</code> and Send <strong>disabled</strong>.</li>
+<li><strong>AC-PROF-11</strong> — THE SYSTEM SHALL keep Send disabled until Type, Subject, Description are non-empty AND Email is a well-formed address; and SHALL NOT show a field-level error for the merely-incomplete case.</li>
+<li><strong>AC-PROF-12</strong> — WHEN a valid form is submitted, THE SYSTEM SHALL call <code>MuseApi.submitFeedback</code> with <code>questionTypeId</code> from the §3.1 mapping, <code>title</code> = Subject, <code>q</code> = the Description text alone, <code>email</code> = the Email field, and <code>language</code> = the active product locale code — and SHALL NOT include a User ID or an Order ID.</li>
+<li><strong>AC-PROF-13</strong> — WHEN the submit resolves, THE SYSTEM SHALL replace the form with a "Feedback Sent" confirmation carrying one line of copy and a <strong>Done</strong> control that closes the dialog, and SHALL NOT show a toast.</li>
+<li><strong>AC-PROF-14</strong> — WHEN the submit rejects, THE SYSTEM SHALL keep the dialog open with every entered value and attachment intact, show one inline error, and re-enable Send (PROF-E6).</li>
+<li><strong>AC-PROF-15</strong> — THE SYSTEM SHALL accept attachments of any type up to <strong>10 MB in total</strong>, and WHEN a pick would exceed that, SHALL add nothing and show one message inside the form, not a toast (PROF-E5).</li>
+<li><strong>AC-PROF-16</strong> — THE Type control SHALL be operable by keyboard alone (↑/↓, Home/End, Enter/Space, Esc) with <code>role="listbox"</code>/<code>role="option"</code> semantics and focus returning to its trigger, and SHALL pass axe at 375 and 1440. <em>(a11y — mutation-test it in both directions)</em></li>
 </ul>
 <hr>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
 <ul>
 <li>[ ] <strong>PROF-P1</strong>: header/tiles/rows render; PRO pill only when subscribed; tiles route correctly (AC-01/02).</li>
 <li>[ ] <strong>PROF-P2</strong>: edit → change photo cycles, name ≤30, email read-only, Save reflects in shell (AC-03).</li>
-<li>[ ] <strong>PROF-P3</strong>: Muse Pro → subscribe/manage; Notifications toggles (no effect); Language switches; Feedback toast; Settings nav; Sign Out → Home (AC-04/05/06).</li>
+<li>[ ] <strong>PROF-P3</strong>: Muse Pro → subscribe/credits (Upgrade pill only when not subscribed); Language switches; History nav; Send Feedback opens the form; Settings nav; Sign Out → Home (AC-04/05/06).</li>
+<li>[ ] <strong>PROF-P5</strong>: five fields in order, Email prefilled, Send disabled → enabled (AC-10/11); payload has no User ID / Order ID (AC-12); success step + Done, <strong>no toast</strong> (AC-13); forced reject keeps the draft (AC-14, PROF-E6); 11 MB pick refused inline (AC-15, PROF-E5); Type control driven by keyboard only, axe clean at <strong>375 and 1440</strong> (AC-16).</li>
 <li>[ ] <strong>PROF-P4</strong>: Terms/Privacy placeholder; Unsubscribe demo toast (still subscribed); Delete demo toast → Home (AC-07, E4).</li>
-<li>[ ] <strong>PROF-E1</strong>: logged-out /profile → sign-in. <strong>PROF-E3</strong>: reload loses edits/subscription.</li>
+<li>[ ] <strong>PROF-E1</strong>: logged-out /profile → sign-in (<strong>AC-17</strong> for <code>/settings</code>). <strong>PROF-E3</strong>: reload loses edits/subscription.</li>
 <li>[ ] <strong>AC-08</strong>: both screens clean at 4 widths <em>(visual)</em>.</li>
 </ul>
 <hr>
@@ -2559,11 +2869,15 @@ redirect Home. <strong>Auth-gated route</strong> (<code>AuthGuard</code>, PROF-0
 <tbody>
 <tr>
 <td><strong>TBD-PROF-01</strong></td>
-<td>🔧 <strong>Backend (RD)</strong> — real push/notification wiring (App F18 toggles creation-complete/like alerts); today it's an inert local toggle.</td>
+<td>✅ <strong>Moot on web (2026-08-14)</strong> — the Notifications row is removed; there is no browser push/permission flow behind it. Kept as an id so nothing dangles.</td>
 </tr>
 <tr>
 <td><strong>TBD-PROF-02</strong></td>
-<td>🔧 <strong>Backend (RD)</strong> — Send Feedback destination/endpoint. App opens an in-app form (WebView) with device metadata; web discards the input.</td>
+<td>🔧 <strong>Backend (RD)</strong> — wire <code>MuseApi.submitFeedback</code> to the CSB feedback endpoint per the <a href="https://ecl.cyberlink.com/dc/DocView.aspx?d=4828">Feedback API document</a> (verify params with the <a href="https://stage2.cyberlink.com/prog/support/app/feedback-test.htm">API test tool</a>). The <strong>form, validation, payload shape and states are BUILT</strong> (§3.1, 2026-08-17) and the mock resolves — what is left is the endpoint, auth, the multipart upload, and injecting the User ID server-side.</td>
+</tr>
+<tr>
+<td><strong>TBD-PROF-06</strong></td>
+<td>🔧 <strong>Backend / CS</strong> — two ids §3.1 cannot fill: <strong><code>prodVerId</code> for YouCam Muse Web</strong> (YCO's is <code>504</code>) and the <strong><code>questionTypeId</code> for "Community Report"</strong> (the other four are <code>313</code>/<code>348</code>/<code>204</code>/<code>211</code>). Until both land, the prototype ships the five labels and sends <code>null</code> for Community Report. <strong>Blocks:</strong> a real submit for that type.</td>
 </tr>
 <tr>
 <td><strong>TBD-PROF-04</strong></td>
@@ -2583,6 +2897,13 @@ redirect Home. <strong>Auth-gated route</strong> (<code>AuthGuard</code>, PROF-0
   Profile --&gt; Edit[&quot;Edit Profile (name/avatar, in-memory)&quot;]
   Profile --&gt; Pro[&quot;Muse Pro → SubscribeModal / Manage (area 07)&quot;]
   Profile --&gt; Lang[&quot;Language → setLocale&quot;]
+  Profile --&gt; Hist[&quot;History → /history (area 05)&quot;]
+  Profile --&gt; FB[&quot;Send Feedback → FeedbackDialog&quot;]
+  FB --&gt; FBForm[&quot;FORM: Type · Subject · Description · Attachment · Email&quot;]
+  FBForm --&gt;|&quot;valid + Send&quot;| FBSend[&quot;SUBMITTING → MuseApi.submitFeedback&quot;]
+  FBSend --&gt;|resolved| FBOk[&quot;Feedback Sent + Done (no toast)&quot;]
+  FBSend --&gt;|rejected| FBErr[&quot;inline error, draft preserved (PROF-E6)&quot;]
+  FBErr --&gt;|Send| FBSend
   Profile --&gt; Settings[&quot;/settings&quot;]
   Profile --&gt; Out[&quot;Sign Out → Home&quot;]
   Settings --&gt; Legal[&quot;Terms / Privacy (placeholder)&quot;]
@@ -2591,8 +2912,86 @@ redirect Home. <strong>Auth-gated route</strong> (<code>AuthGuard</code>, PROF-0
 </code></pre>
 <hr>
 <p><strong>Decisions (as-built):</strong> <code>/profile</code> = Account-style hub (rows), community grid split to <code>/creator?self=1</code>;<br>
-edits/subscription in-memory; Notifications/Feedback/Unsubscribe/Delete are demo-only; <code>/settings</code> is<br>
-auth-gated with Sign Out (not on <code>/profile</code>); Terms/Privacy are real links.</p>
+edits/subscription in-memory; Unsubscribe/Delete are demo-only; Notifications is removed (2026-08-14);<br>
+<code>/settings</code> is auth-gated with Sign Out (not on <code>/profile</code>); Terms/Privacy are real links.</p>
+<h2 id="10-decisions-send-feedback-2026-08-17">10. Decisions — Send Feedback (2026-08-17)</h2>
+<p>Twelve questions put to the product owner; the answers are the spec above. Recorded so the next<br>
+session does not re-open them, and because four of them <strong>deviate from the referenced T3 spec</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Ship the 4 known <code>questionTypeId</code>s verbatim; Community Report's id + Muse's <code>prodVerId</code> become <code>TBD-PROF-06</code></td>
+<td>UI shows all 5 labels</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Order ID / Invoice # dropped</strong> entirely</td>
+<td>divergence 2</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>q</code> = the description alone; <strong>RD injects the User ID server-side</strong></td>
+<td>divergence 3 — <code>Profile</code> gains no <code>id</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Full mock endpoint on <code>MuseApi</code> (<code>submitFeedback</code>) + a Zod schema whose names are the CSB params</td>
+<td>C1 + C2 additions; no <code>[fail]</code> demo trigger</td>
+</tr>
+<tr>
+<td>5</td>
+<td>In-dialog "Feedback Sent" + Done; the <strong>toast is removed</strong></td>
+<td>CS AC-23</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Multiple attachments, <strong>10 MB cumulative</strong>, refusal shown inline</td>
+<td>CS AC-22</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Email prefilled, <strong>editable</strong>, format-validated</td>
+<td>not read-only, unlike Edit-Profile's email</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Send disabled until valid</strong> (no per-field error text for the incomplete case)</td>
+<td>matches the MV/Song create CTAs</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Legacy Tailwind <code>Modal</code>, body scrolls at 375 — <strong>not</strong> <code>DpDialog</code>, <strong>not</strong> a full-screen phone sheet</td>
+<td>matches the two sibling modals on the same screen</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Failure keeps the dialog open with the draft intact</td>
+<td>PROF-E6</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>Custom listbox</strong> for Type, not a native <code>&lt;select&gt;</code></td>
+<td>so its keyboard/ARIA contract is spec'd — AC-PROF-16</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Naming stays <strong>"Send Feedback"</strong>; "ticket" never appears in the UI</td>
+<td>no dictionary or e2e churn</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Scope note:</strong> <code>/profile</code> is the only entry point. The account dropdown's own inert "Send Feedback"<br>
+row (<code>AccountMenu.tsx:118-126</code>) is <strong>left as-is</strong> — <code>AccountMenu</code> renders only inside <code>TopBar</code>, which<br>
+after the 17/17 migration is reached by exactly one route (<code>/mv/creating</code>, a transient generation<br>
+screen), so it is vestigial rather than a live surface. Not wired, not deleted, recorded here.</p>
 </article>
 <article class="doc" id="doc-07" data-name="Credits &amp; IAP" data-file="areas/07-credits-iap.md">
 <h1 id="area-07-credits-iap">Area 07 — Credits &amp; IAP</h1>

@@ -26,6 +26,7 @@
 // this file checks the app actually applies them.
 
 import { expect, test, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { COST_REGEN, COST_RENDER, COST_STORYBOARD } from "../src/lib/mv/types";
 import { DEFAULT_CREDITS } from "../src/lib/user";
 import { DEFAULT_LOCALE, HTML_LANG, LOCALES, localePath } from "../src/lib/i18n/config";
@@ -2656,7 +2657,10 @@ test("3k / GL-01: Recreate routes to IAP when the balance cannot cover it", asyn
   // scene would spend COST_REGEN on a result the edit did not drive). The test
   // predates that rule and clicked the disabled button, so it could not pass in
   // either branch; edit the prompt first. Found 2026-08-12.
-  await page.getByRole("textbox", { name: /^Scene / }).first().fill("A neon alley in the rain.");
+  await page
+    .getByRole("textbox", { name: /^Scene / })
+    .first()
+    .fill("A neon alley in the rain.");
   const recreate = page.locator(".mv-edit__recreate-scene");
   await expect(recreate).toBeEnabled();
 
@@ -3076,4 +3080,159 @@ test("landing page: New Songs' Create requires login", async ({ page }) => {
   await page.goto("/");
   await page.locator(".new-songs__item").first().getByRole("button", { name: "Create" }).click();
   await expect(page.getByRole("dialog", { name: /sign in/i })).toBeVisible();
+});
+
+// ── Send Feedback = a CS support ticket (spec areas/06 §3.1, AC-PROF-10…16) ──
+//
+// Three of these guard failures that a screenshot cannot see: a Send button that
+// enables on an incomplete form, an attachment refusal that silently truncates
+// the pick, and a hand-built combobox that only works with a mouse.
+
+async function openFeedback(page: Page) {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/profile");
+  await page.getByRole("button", { name: "Send Feedback" }).click();
+  return page.getByRole("dialog", { name: "Send Feedback" });
+}
+
+test("PROF-P5: five fields in spec order, Email prefilled, Send gated until valid", async ({
+  page,
+}) => {
+  const dialog = await openFeedback(page);
+
+  // AC-PROF-10 — the product owner's order, not T3's. Asserted as positions so a
+  // reshuffle fails here rather than passing on "all five exist".
+  const text = (await dialog.innerText()).replace(/\s+/g, " ");
+  const order = ["Type", "Subject", "Description", "Attachment", "Email"].map((l) =>
+    text.indexOf(l),
+  );
+  expect(order, text).toEqual([...order].sort((a, b) => a - b));
+  expect(Math.min(...order)).toBeGreaterThanOrEqual(0);
+
+  const send = dialog.getByRole("button", { name: "Send", exact: true });
+  const email = dialog.getByRole("textbox", { name: "Email" });
+  await expect(email).not.toHaveValue(""); // prefilled from the account
+  await expect(send).toBeDisabled();
+
+  // AC-PROF-11 — each required field alone is not enough.
+  await dialog.getByRole("combobox").click();
+  await dialog.getByRole("option", { name: "Feature Issue" }).click();
+  await expect(send).toBeDisabled();
+  await dialog.getByRole("textbox", { name: "Subject" }).fill("Playback stalls at 12s");
+  await expect(send).toBeDisabled();
+  await dialog.getByRole("textbox", { name: "Description" }).fill("Every MV I open stalls.");
+  await expect(send).toBeEnabled();
+
+  // A malformed email must re-disable it — the one required field that can be
+  // non-empty and still invalid.
+  await email.fill("not-an-email");
+  await expect(send).toBeDisabled();
+  await email.fill("jason@example.com");
+  await expect(send).toBeEnabled();
+
+  // AC-PROF-13 — confirmation in place, and NO toast (the old behaviour).
+  await send.click();
+  await expect(dialog.getByText("Feedback Sent")).toBeVisible();
+  await expect(dialog.getByText(/we'll reply to jason@example\.com/i)).toBeVisible();
+  await expect(page.locator(".anim-toast")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(dialog).toBeHidden();
+
+  // PROF-P5-S6 — re-opening starts clean. The dialog is conditionally mounted
+  // precisely so this is true without a reset effect.
+  await page.getByRole("button", { name: "Send Feedback" }).click();
+  const reopened = page.getByRole("dialog", { name: "Send Feedback" });
+  await expect(reopened.getByRole("textbox", { name: "Subject" })).toHaveValue("");
+  await expect(reopened.getByRole("combobox")).toContainText("Select an issue type");
+});
+
+test("PROF-E5: an oversized attachment is refused WHOLE and explained inline", async ({ page }) => {
+  const dialog = await openFeedback(page);
+  const file = (name: string, mb: number) => ({
+    name,
+    mimeType: "application/octet-stream",
+    buffer: Buffer.alloc(Math.round(mb * 1024 * 1024)),
+  });
+  const input = dialog.locator('input[type="file"]');
+
+  // Under the cap: accepted, chip shown.
+  await input.setInputFiles([file("small.log", 1)]);
+  await expect(dialog.getByText("small.log")).toBeVisible();
+  await expect(dialog.getByText("File too large — 10 MB total.")).toBeHidden();
+
+  // A batch that would cross 10 MB in total is refused ENTIRELY — the 0.5 MB
+  // file must not sneak in alongside the 9.8 MB one. A partial add is the
+  // failure mode that reads as success (AC-PROF-15).
+  await input.setInputFiles([file("huge.bin", 9.8), file("tiny.txt", 0.5)]);
+  await expect(dialog.getByText("File too large — 10 MB total.")).toBeVisible();
+  await expect(dialog.getByText("huge.bin")).toBeHidden();
+  await expect(dialog.getByText("tiny.txt")).toBeHidden();
+  await expect(dialog.getByText("small.log")).toBeVisible(); // the earlier pick survives
+
+  // Inline, never a toast — the CS spec is explicit about this (AC-22).
+  await expect(page.locator(".anim-toast")).toHaveCount(0);
+
+  // Removing a chip clears the refusal and the chip.
+  await dialog.getByRole("button", { name: /Remove file: small\.log/ }).click();
+  await expect(dialog.getByText("small.log")).toBeHidden();
+  await expect(dialog.getByText("File too large — 10 MB total.")).toBeHidden();
+});
+
+test("AC-PROF-16: the Type combobox is fully operable by keyboard alone", async ({ page }) => {
+  // The reason a custom listbox needed spec'ing at all (§10 decision 11): a
+  // native <select> gets this for free, a hand-built one gets it only if someone
+  // writes it. Mutation-tested by deleting the keydown handler — this goes red.
+  const dialog = await openFeedback(page);
+  const combo = dialog.getByRole("combobox");
+
+  await combo.focus();
+  await expect(combo).toHaveAttribute("aria-expanded", "false");
+
+  await page.keyboard.press("ArrowDown"); // opens
+  await expect(combo).toHaveAttribute("aria-expanded", "true");
+  await expect(dialog.getByRole("listbox")).toBeVisible();
+
+  // Focus stays on the trigger; the active option moves via aria-activedescendant.
+  await expect(combo).toBeFocused();
+  const active = async () => (await combo.getAttribute("aria-activedescendant")) ?? "";
+  const first = await active();
+  await page.keyboard.press("ArrowDown");
+  expect(await active()).not.toBe(first);
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await expect(combo).toContainText("Others"); // End -> last option
+  await expect(combo).toHaveAttribute("aria-expanded", "false");
+  await expect(combo).toBeFocused(); // focus returned, not lost to the body
+
+  // Escape closes the list WITHOUT closing the dialog and losing the draft.
+  await dialog.getByRole("textbox", { name: "Subject" }).fill("keep me");
+  await combo.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(dialog.getByRole("listbox")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog.getByRole("listbox")).toBeHidden();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("textbox", { name: "Subject" })).toHaveValue("keep me");
+});
+
+test("AC-PROF-16: the open feedback dialog is axe-clean at 1440 and 375", async ({ page }) => {
+  // `a11y.spec.ts` cannot cover this surface for two documented reasons: it does
+  // not seed auth (so /profile renders only the sign-in modal to axe) and it sets
+  // no viewport (so it never sees a phone). Both widths are scanned here because
+  // the dialog scrolls its body at 375 — a different layout, not a smaller one.
+  const dialog = await openFeedback(page);
+  await dialog.getByRole("combobox").click(); // scan the listbox open, too
+
+  for (const width of [1440, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .include('[role="dialog"]')
+      .analyze();
+    expect(
+      results.violations.map((v) => `${v.id}: ${v.nodes.length}`),
+      `axe violations at ${width}px`,
+    ).toEqual([]);
+  }
 });

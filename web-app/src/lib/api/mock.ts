@@ -8,11 +8,15 @@
 
 import type { EnhanceKind, MuseApi } from "./contract";
 import {
+  FeedbackReceiptSchema,
+  FeedbackTicketSchema,
   MvCreateRequestSchema,
   MvJobSchema,
   SongComposeSchema,
   SongJobSchema,
   StoryboardSchema,
+  type FeedbackReceipt,
+  type FeedbackTicket,
   type MvCreateRequest,
   type MvJob,
   type SongCompose,
@@ -20,7 +24,13 @@ import {
   type SongResult,
   type Storyboard,
 } from "./schemas";
-import { ENHANCE_SAMPLES, mockSongResult, mockStoryboard, SAMPLE_RESULT_VIDEO } from "@/lib/mv/mock";
+import {
+  ENHANCE_SAMPLES,
+  mockSongResult,
+  mockStoryboard,
+  SAMPLE_RESULT_VIDEO,
+} from "@/lib/mv/mock";
+import { FEEDBACK_MAX_TOTAL_BYTES, totalBytes } from "@/lib/feedback";
 
 const STORYBOARD_MS = 7000;
 const RENDER_MS = 11000;
@@ -151,6 +161,23 @@ export class MockMuseApi implements MuseApi {
     const pick = pool[Math.floor(Math.random() * pool.length)];
     await new Promise((resolve) => setTimeout(resolve, 900)); // simulate model latency
     return pick;
+  }
+
+  async submitFeedback(input: FeedbackTicket): Promise<FeedbackReceipt> {
+    const ticket = FeedbackTicketSchema.parse(input);
+    // The UI refuses an oversized pick before it is ever added (PROF-E5); this
+    // is the boundary check a real backend would also do, kept here so the
+    // rule lives with the contract rather than only in a component.
+    if (totalBytes(ticket.attachment) > FEEDBACK_MAX_TOTAL_BYTES) {
+      throw new Error("Attachments exceed the 10 MB total");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 900)); // simulate the round-trip
+    // The real ticket id comes from CSB; nothing in the UI displays this one
+    // (the success step shows the reply address, not an id), so a timestamp is
+    // enough to make the resolve value real rather than empty.
+    return FeedbackReceiptSchema.parse({
+      ticketId: `MOCK-${Date.now().toString(36).toUpperCase()}`,
+    });
   }
 
   private mustGet<T>(map: Map<string, T>, id: string, label: string): T {
