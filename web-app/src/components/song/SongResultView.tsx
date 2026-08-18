@@ -20,7 +20,6 @@ import { localePath } from "@/lib/i18n/config";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { songRecreateCost } from "@/lib/mv/types";
 import { buildShareUrl } from "@/lib/share";
-import { downloadFile } from "@/lib/download";
 import {
   NEW_SONGS,
   getCommunitySong,
@@ -118,7 +117,8 @@ function formatTime(seconds: number): string {
  * 3. **Recreate and Publish are dropped**, which DP does NOT do. Following DP
  *    exactly would have offered a paid `COST_SONG_RECREATE` re-roll and a
  *    publish toggle on someone else's track. Product owner decided 2026-08-07;
- *    Download and "Use in Music Video" stay.
+ *    "Use in Music Video" stays. (Download itself was removed entirely,
+ *    2026-08-14 — see the `.song-result__actions` comment below.)
  *
  * Every icon on this screen is a mask (`.song-result__icon`,
  * `__play-icon`, `__transport-icon`, `__publish-icon`, `__cta-primary-icon` all
@@ -377,6 +377,11 @@ export function SongResultView() {
                         </p>
                       </div>
 
+                      {/* Product owner request, 2026-08-14 — the Download icon
+                          button that used to sit between Share and the volume
+                          control is removed. Row is a plain flex (no fixed
+                          column count anywhere in SongCreatePage.css), so the
+                          remaining icons just close the gap. */}
                       <div className="song-result__actions">
                         <button
                           type="button"
@@ -397,16 +402,6 @@ export function SongResultView() {
                           aria-label="Share"
                         >
                           <DpIcon name="ic_share" className="song-result__icon" />
-                        </button>
-                        <button
-                          type="button"
-                          className="song-result__icon-btn song-result__icon-btn--desktop"
-                          onClick={() =>
-                            active.audioUrl && downloadFile(active.audioUrl, `${active.title}.mp3`)
-                          }
-                          aria-label="Download"
-                        >
-                          <DpIcon name="ic_download" className="song-result__icon" />
                         </button>
                         <div className="song-result__volume song-result__icon-btn--desktop">
                           <div className="song-result__volume-slider">
@@ -522,9 +517,11 @@ export function SongResultView() {
                         have offered a paid SONG-03 re-roll of a track the user
                         does not own — charging COST_SONG_RECREATE to fork a
                         stranger's song into their History. Product owner decided
-                        2026-08-07 to drop the two rather than port them. Download
-                        and "Use in Music Video" deliberately STAY: both are what
-                        a community song is for. */}
+                        2026-08-07 to drop the two rather than port them.
+                        "Use in Music Video" deliberately STAYS: it's what a
+                        community song is for. (Download used to stay here too;
+                        removed entirely 2026-08-14, see `.song-result__actions`
+                        above — it no longer exists to be owner-gated.) */}
                     {!communityOrigin && (
                       <button
                         type="button"

@@ -129,7 +129,6 @@ export function CreatorProfile() {
 
   const creator = DEFAULT_CREATOR;
   const name = self ? MOCK_USER.name : creator.name;
-  const email = self ? MOCK_USER.email : creator.email;
   // Only your own items are yours to edit, publish or delete — DP gates the menu
   // the same way (`isOwnProfile`). Logged out, there is no "own" to speak of.
   const ownerMenu = self && loggedIn;
@@ -252,9 +251,13 @@ export function CreatorProfile() {
             ) : (
               <img src={creator.avatar} alt="" />
             )}
+            {/* Product owner request, 2026-08-14 — DP's `<p>` under the name used
+                to render the creator's email. This page is intentionally public
+                (see the route doc comment above), so an email address is private
+                info that has no business being shown to every visitor; removed
+                rather than gated behind `self`. */}
             <div>
               <h1>{name}</h1>
-              <p>{email}</p>
             </div>
           </div>
           <div className="community-profile__stats">

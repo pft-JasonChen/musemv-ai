@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
 import { HeroBannerSection } from "./HeroBannerSection";
 import { HeroBannerSectionV3 } from "./HeroBannerSectionV3";
@@ -72,9 +73,28 @@ import { NewSongsSection } from "./NewSongsSection";
  * to this screen: CH3/CH4 put the marketing Navbar and Footer out of scope, and
  * `AppShell` has never rendered `.app-layout__background` on any route. Neither
  * is a loss introduced here, and neither is this slice's to add.
+ *
+ * ── ARBITRATING TWO `SongPlayBar` OWNERS, ADDED 2026-08-18 ─────────────────
+ *
+ * `TopPicksSection` and `NewSongsSection` each own an independent desktop
+ * song preview (state, `<audio>`, `SongPlayBar` — see either file's header
+ * for why the state isn't shared). Rendered on the same page, that would let
+ * both open at once: two `position: fixed` bars stacked on each other and two
+ * `<audio>` elements playing simultaneously. `activeSongSection` is the one
+ * bit of arbitration that prevents it — whichever section's Play button was
+ * pressed most recently tells this component via `onPreviewOpen`, and that
+ * section's sibling is told via `suspend` to close whatever it had open.
+ *
+ * The same state also answers "is any bar open at all"
+ * (`activeSongSection !== null`), passed to `NewSongsSection` as
+ * `barVisible` — see its own header comment for why it, not `TopPicksSection`,
+ * needs to know that regardless of which section's bar is actually showing.
  */
 export function HomeView() {
   const isPhone = useMediaQuery(PHONE_QUERY);
+  const [activeSongSection, setActiveSongSection] = useState<"top-picks" | "new-songs" | null>(
+    null,
+  );
 
   return (
     <div className="home-page">
@@ -90,8 +110,21 @@ export function HomeView() {
         </>
       )}
       <NewMVsSection />
-      <TopPicksSection />
-      <NewSongsSection />
+      <TopPicksSection
+        suspend={activeSongSection === "new-songs"}
+        onPreviewOpen={() => setActiveSongSection("top-picks")}
+        onPreviewClose={() =>
+          setActiveSongSection((current) => (current === "top-picks" ? null : current))
+        }
+      />
+      <NewSongsSection
+        suspend={activeSongSection === "top-picks"}
+        onPreviewOpen={() => setActiveSongSection("new-songs")}
+        onPreviewClose={() =>
+          setActiveSongSection((current) => (current === "new-songs" ? null : current))
+        }
+        barVisible={activeSongSection !== null}
+      />
     </div>
   );
 }

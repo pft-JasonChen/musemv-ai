@@ -58,6 +58,31 @@ import { SongPlayBar } from "@/components/song/SongPlayBar";
  * the song's genre/mood/title/lyrics before routing — the behaviour the
  * pre-migration home already had on its own Create button. DP's Create is a bare
  * href to its create page, because DP has neither auth nor a compose store.
+ *
+ * ── SUSPEND / ONPREVIEWOPEN, ADDED 2026-08-18 ──────────────────────────────
+ *
+ * `TopPicksSection` gained its own `SongPlayBar` the same day (product owner
+ * request: its Play button should open the bar "as Newly released song"
+ * does). `.song-bar` is `position: fixed`, so two sections each owning an
+ * independent preview would be able to mount TWO bars on top of each other —
+ * and two `<audio>` elements playing at once. Rather than merge the two
+ * sections' state (the exact "two sources for what is playing" problem the
+ * header above already rejects), `HomeView` holds one bit of arbitration:
+ * which section is currently active. `suspend` tells this section someone
+ * else won that race, so it closes its own preview; `onPreviewOpen` /
+ * `onPreviewClose` tell `HomeView` when to update that bit. All three are
+ * optional so this section still works standalone (Storybook, tests).
+ *
+ * `barVisible` (2026-08-19) is the fourth piece of that same arbitration —
+ * this section is the LAST thing on the page, so it (not `TopPicksSection`)
+ * is what should keep its bottom rows clear of the fixed bar, regardless of
+ * WHICH section's Play button opened it. Product owner report: after
+ * `TopPicksSection` got its own bar, playing a Top Picks song left this
+ * section's own bottom-padding condition (`previewSong`, local to THIS
+ * section, and null whenever Top Picks is the one playing) never true, so
+ * the last row sat flush against the bar. `HomeView` passes
+ * `activeSongSection !== null` here — true whenever either section has a
+ * bar open — instead of this section guessing from its own local state.
  */
 
 const COLUMN_1 = NEW_SONGS.slice(0, 3);
@@ -65,7 +90,22 @@ const COLUMN_2 = NEW_SONGS.slice(3, 6);
 /** The six rows the preview bar's prev/next step through. */
 const PREVIEW_SONGS = [...COLUMN_1, ...COLUMN_2];
 
-export function NewSongsSection() {
+export interface NewSongsSectionProps {
+  /** True when another home-page section's preview bar has taken over. */
+  suspend?: boolean;
+  onPreviewOpen?: () => void;
+  onPreviewClose?: () => void;
+  /** True whenever ANY home-page section's bar is open — this section's own
+   *  preview or a sibling's. Drives the bottom-clearance padding below. */
+  barVisible?: boolean;
+}
+
+export function NewSongsSection({
+  suspend,
+  onPreviewOpen,
+  onPreviewClose,
+  barVisible,
+}: NewSongsSectionProps = {}) {
   const router = useRouter();
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
@@ -81,6 +121,22 @@ export function NewSongsSection() {
   // `likedIds`/`toggleLike` — this section has no other like affordance to
   // share it with, so it's local rather than lifted.
   const [likedIds, setLikedIds] = useState<ReadonlySet<string>>(() => new Set());
+
+  /**
+   * `TopPicksSection` won the arbitration in `HomeView` — close ours rather
+   * than let two `.song-bar`s (and two `<audio>`s) run at once. Cleared
+   * during render (React's own documented pattern for resetting state when
+   * a prop changes: react.dev/learn/you-might-not-need-an-effect#adjusting-
+   * some-state-when-a-prop-changes), not in a `useEffect`, because
+   * `react-hooks/set-state-in-effect` flags a `setState` called
+   * synchronously inside an effect body — this both avoids that and skips
+   * the wasted extra render an effect-based reset would cost.
+   */
+  const [wasSuspended, setWasSuspended] = useState(Boolean(suspend));
+  if (Boolean(suspend) !== wasSuspended) {
+    setWasSuspended(Boolean(suspend));
+    if (suspend) setPreviewId(null);
+  }
 
   const previewSong = PREVIEW_SONGS.find((s) => s.id === previewId) ?? null;
 
@@ -102,6 +158,13 @@ export function NewSongsSection() {
     audio.src = songAudioUrl(previewSong.id);
     void audio.play().catch(() => {});
   }, [previewSong]);
+
+  // The render-time reset above clears `previewId`, but pausing the actual
+  // `<audio>` element is a real side effect (not derivable during render),
+  // so it stays in an effect — it just never calls setState.
+  useEffect(() => {
+    if (suspend) audioRef.current?.pause();
+  }, [suspend]);
 
   /**
    * Product owner request, 2026-08-13 — was an unconditional
@@ -137,6 +200,7 @@ export function NewSongsSection() {
       else audio.pause();
       return;
     }
+    onPreviewOpen?.();
     setPreviewId(songId);
   }
 
@@ -193,9 +257,10 @@ export function NewSongsSection() {
   }
 
   return (
-    // Keeps the section's own bottom padding clear of the fixed bar once it is
-    // open — the same fix `SongDetailView`'s list container makes.
-    <section className="new-songs" style={previewSong ? { paddingBottom: 96 } : undefined}>
+    // Keeps the section's own bottom padding clear of the fixed bar once ANY
+    // bar is open (this section's own or Top Picks') — the same fix
+    // `SongDetailView`'s list container makes for its one bar.
+    <section className="new-songs" style={barVisible ? { paddingBottom: 96 } : undefined}>
       <SectionHeader
         title="Newly Released Songs"
         mobileTitle="New Songs"
@@ -238,6 +303,7 @@ export function NewSongsSection() {
           onClose={() => {
             audioRef.current?.pause();
             setPreviewId(null);
+            onPreviewClose?.();
           }}
         />
       )}

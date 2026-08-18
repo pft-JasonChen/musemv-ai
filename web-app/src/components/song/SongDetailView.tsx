@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { SeekBar } from "@/components/ui/SeekBar";
 import type { RefObject } from "react";
 import { createPortal } from "react-dom";
@@ -14,6 +14,9 @@ import { LyricsSheet, formatTime } from "@/components/ui/LyricsSheet";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { buildShareUrl } from "@/lib/share";
 import { CommunityEmpty, useOnline } from "@/components/community/EmptyState";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
@@ -24,6 +27,7 @@ import { useMediaQuery, useIsMounted, PHONE_QUERY } from "@/lib/ssr";
 import {
   ALL_COMMUNITY_SONGS,
   CREATOR_SONGS,
+  TOP_PICKS_SONGS,
   getCommunitySong,
   songAudioUrl,
   songResultFromCommunity,
@@ -107,6 +111,41 @@ import { SongPlayBar } from "@/components/song/SongPlayBar";
  * EXP-09 (an id resolves to the playlist it belongs to), EXP-06 (not-found and
  * offline states), the `requireLogin` gate on Create and Like (GL-02/EXP-02),
  * lyrics, and share.
+ *
+ * ── TOP PICKS RAIL + MOVED TABS, 2026-08-18 (same node, newer Figma pass) ────
+ *
+ * `SongDetailPage.css`'s own header comment already named this screen after
+ * Figma node 1409:34847 — a later pass of that SAME node added a "Top Picks
+ * Songs" rail above the list and moved the genre tab bar out of
+ * `DetailNavbar`'s sticky `tabsSlot` down into the page body, under a new
+ * "Newly Released Songs" heading. Product owner request: both Home's "See
+ * all" links (`TopPicksSection` and `NewSongsSection`, which already point
+ * here) land on one page that now leads with Top Picks, then the tabbed
+ * catalog — instead of the old bare list with tabs pinned to the navbar.
+ *
+ * The rail reuses `TOP_PICKS_SONGS` and `Card` (same fixture and component
+ * Home's own `TopPicksSection` renders) but does NOT reuse that section's
+ * standalone `SongPlayBar`/`<audio>` — this view already owns exactly one of
+ * each for the list below, and routing the rail's Play button through the
+ * same `previewSong`/`selectSong` this file already has keeps it that way
+ * (one audio element, one bar, matching this file's own "why the active
+ * song is state" note above rather than opening a second source of truth).
+ * The scroll-arrow bookkeeping (`updateTopPicksScrollState`,
+ * `scrollTopPicksByCard`) IS its own small copy of `TopPicksSection.tsx`'s —
+ * kept local rather than extracted, since the two call sites' click/preview
+ * wiring differs enough that a shared component would need as many
+ * indirection props as the logic it saves.
+ *
+ * Tabs moving out of `DetailNavbar` does not change `tabsSlot`'s own mobile
+ * rule: `DetailNavbar.css` hides it below 768px "not designed for mobile
+ * yet" (product owner), and that reasoning didn't change just because the
+ * tabs changed address — `designer-overrides.css` hides both the rail and
+ * the heading+tabs block at the same breakpoint, so a phone still sees
+ * exactly today's plain single-column list with no header and no filter.
+ * (2026-08-19: those two used to share one wrapper div `designer-overrides.css`
+ * could hide in one rule; the wrapper is gone — see that file's own comment
+ * on why the sticky heading needed `.song-detail-page` as its direct parent
+ * instead — so the mobile rule now names both elements separately.)
  */
 
 const GENRES = Array.from(new Set(ALL_COMMUNITY_SONGS.map((s) => s.genre))).sort();
@@ -124,6 +163,11 @@ function songsForTab(tab: Tab): readonly CommunitySong[] {
   if (tab === "All") return ALL_COMMUNITY_SONGS;
   return ALL_COMMUNITY_SONGS.filter((s) => s.genre === tab);
 }
+
+// `useLayoutEffect` warns during SSR; fall back to `useEffect` there. Local
+// copy, not shared via `src/lib/ssr.ts` — same convention `SongPlayBar.tsx`
+// and `Sidebar.tsx` each already follow for this exact helper.
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 const FALLBACK_LYRICS = ["♪ No lyrics available for this one yet ♪"];
 
@@ -211,7 +255,6 @@ function MobileNowPlaying({
   const mounted = useIsMounted();
   const { locale } = useLocale();
   const { seek } = useSeek(audioRef);
-
 
   if (!mounted) return null;
 
@@ -407,6 +450,74 @@ export function SongDetailView() {
   const [likedIds, setLikedIds] = useState<ReadonlySet<string>>(() => new Set());
   /** Desktop preview bar. Never true on a phone — see `previewSong`. */
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  /** Top Picks rail's own scroll-arrow state — see this file's own header
+   *  comment for why it isn't shared with `TopPicksSection.tsx`. */
+  const topPicksRowRef = useRef<HTMLDivElement>(null);
+  const [canScrollTopPicksBack, setCanScrollTopPicksBack] = useState(false);
+  const [canScrollTopPicksForward, setCanScrollTopPicksForward] = useState(false);
+
+  function updateTopPicksScrollState() {
+    const row = topPicksRowRef.current;
+    if (!row) return;
+    setCanScrollTopPicksBack(row.scrollLeft > 1);
+    setCanScrollTopPicksForward(row.scrollLeft + row.clientWidth < row.scrollWidth - 1);
+  }
+
+  useEffect(() => {
+    updateTopPicksScrollState();
+    window.addEventListener("resize", updateTopPicksScrollState);
+    return () => window.removeEventListener("resize", updateTopPicksScrollState);
+  }, []);
+
+  function scrollTopPicksByCard(direction: -1 | 1) {
+    const row = topPicksRowRef.current;
+    const firstItem = row?.querySelector<HTMLElement>(".top-picks__item");
+    if (!row || !firstItem) return;
+    const gap = Number.parseFloat(window.getComputedStyle(row).columnGap) || 0;
+    row.scrollBy({ left: direction * (firstItem.offsetWidth + gap), behavior: "smooth" });
+  }
+
+  /**
+   * Product owner request, 2026-08-19 — "Newly Released Songs" + its genre
+   * tabs should stick to the top and overlay the list while scrolling,
+   * rather than scrolling away with it. `position: sticky` alone isn't
+   * enough: `.detail-navbar` above it is ALSO sticky at `top: 0` with no
+   * fixed height (it sizes to its own content, which varies by breakpoint —
+   * see DetailNavbar.css), so a hardcoded `top` would either leave a gap
+   * under the navbar or tuck the heading behind it. Measuring the navbar's
+   * real height and feeding it in as `top` is the same fix `SongPlayBar.tsx`
+   * uses for its own `left` offset (there: the Sidebar's measured width, not
+   * a CSS constant, for the identical reason — a runtime value, not a
+   * breakpoint one).
+   *
+   * Measures `.mobile-header` too, not just `.detail-navbar` — this view
+   * passes `hideMobileBar`, so below 768px `.detail-navbar` itself is
+   * `display: none` (0 height) and `AppShell`'s own sticky `.mobile-header`
+   * (also `top: 0`, also `z-index: 20`) is what actually occupies that top
+   * edge instead. Only one of the two is ever visible at a given width
+   * (their own CSS is the switch), so taking whichever is currently taller
+   * always tracks the real one without needing a breakpoint check here.
+   */
+  const [navbarHeight, setNavbarHeight] = useState(0);
+
+  useIsomorphicLayoutEffect(() => {
+    const navbar = document.querySelector(".detail-navbar");
+    const mobileHeader = document.querySelector(".mobile-header");
+    if (!navbar && !mobileHeader) return;
+
+    function measure() {
+      const navbarH = navbar?.getBoundingClientRect().height ?? 0;
+      const mobileH = mobileHeader?.getBoundingClientRect().height ?? 0;
+      setNavbarHeight(Math.max(navbarH, mobileH));
+    }
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (navbar) observer.observe(navbar);
+    if (mobileHeader) observer.observe(mobileHeader);
+    return () => observer.disconnect();
+  }, []);
 
   const requestedSong = getCommunitySong(idParam);
 
@@ -634,8 +745,6 @@ export function SongDetailView() {
     );
   }
 
-  const tabsSlot = <Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />;
-
   // EXP-06: an id that resolves to nothing is a not-found state, not a silent
   // fall back to the first song. Still WA's Tailwind component — it REPLACES the
   // DP subtree rather than nesting inside it, so the two systems never meet on
@@ -664,12 +773,36 @@ export function SongDetailView() {
           entry, and it is what the mobile player's back control uses too. */}
       {/* A5: no phone back — the list half is an Explore tab-bar destination. The
           full-screen mobile player has its own back (that is why 3b was safe). */}
-      <DetailNavbar fallbackPath="/explore/songs" tabsSlot={tabsSlot} hideMobileBar />
+      {/* No more `tabsSlot` — the genre tabs moved into the page body below,
+          see this file's own header comment ("TOP PICKS RAIL + MOVED TABS"). */}
+      <DetailNavbar fallbackPath="/explore/songs" hideMobileBar />
 
       {!online ? (
         <CommunityEmpty variant="offline" />
       ) : (
         <>
+          {/* Product owner request, 2026-08-19 — the list must not be visible
+              underneath the navbar while scrolling. `.detail-navbar`'s own
+              background is a top-to-bottom fade to transparent (by design —
+              elsewhere it sits over a hero image), and `.song-detail-page__
+              list-heading` only takes over BELOW it (`top: navbarHeight`), so
+              the navbar's own translucent lower edge had nothing opaque
+              behind it. This is a solid backdrop sized to the navbar's own
+              measured height, stacked BELOW the navbar's own z-index (20) but
+              ABOVE the plain scrolling list, so scrolled rows are fully
+              masked out the instant they reach the navbar — same measured-
+              height source as the heading's `top`, so the two edges align.
+              `position: fixed` in the CSS, not `sticky` — `sticky` still
+              reserves its own space in normal flow before it starts
+              sticking, which pushed the rail down by a second navbar's
+              worth of empty space even before any scrolling (product owner
+              screenshot). `fixed` takes it out of flow entirely. */}
+          <div
+            className="song-detail-page__navbar-mask"
+            style={{ height: navbarHeight }}
+            aria-hidden="true"
+          />
+
           <audio
             ref={audioRef}
             onPlay={() => setPlaying(true)}
@@ -679,38 +812,113 @@ export function SongDetailView() {
             onEnded={() => step(1)}
           />
 
-          {/* `.song-detail__lists` is GONE, not tidied away: drop 2 deleted the
+          {/* New wrapper (designer-overrides.css) giving the rail, the moved
+              heading+tabs, and the list one shared page rhythm — see this
+              file's header comment ("TOP PICKS RAIL + MOVED TABS"). All
+              three are DIRECT children of this wrapper — the heading needs
+              to be, not just nested somewhere below it, for its
+              `position: sticky` to have anywhere to stick: sticky's stuck
+              range is bounded by its own PARENT's box, and a parent that
+              ends right after the heading (e.g. one wrapping only the rail
+              + heading) gives it zero room to stay pinned while the list
+              scrolls underneath — it would stick for a single frame and
+              immediately get pushed off. `.song-detail-page` spans the
+              whole page, so nesting the heading there instead is what
+              actually gives the sticky effect somewhere to run. */}
+          <div className="song-detail-page">
+            {/* Hidden below 768px, same breakpoint `tabsSlot` was always
+                hidden at (designer-overrides.css). */}
+            <section className="top-picks">
+              <SectionHeader title="Top Picks Songs" />
+              <div className="top-picks__row-wrapper">
+                <div
+                  className="top-picks__row"
+                  ref={topPicksRowRef}
+                  onScroll={updateTopPicksScrollState}
+                >
+                  {TOP_PICKS_SONGS.map((song) => (
+                    <div
+                      key={song.id}
+                      className="top-picks__item"
+                      onClick={() => selectSong(song.id)}
+                    >
+                      <Card
+                        type="Song"
+                        title={song.title}
+                        subtitle="AI Song"
+                        badge={song.badge ?? undefined}
+                        coverImage={song.cover}
+                        isPlaying={song.id === activeId && playing}
+                        onPlayClick={() => previewSong(song.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {canScrollTopPicksBack && (
+                  <div className="top-picks__previous">
+                    <IconButton
+                      size="large"
+                      variant="ghost"
+                      icon="ic_arrow_left"
+                      label="Previous"
+                      onClick={() => scrollTopPicksByCard(-1)}
+                    />
+                  </div>
+                )}
+
+                {canScrollTopPicksForward && (
+                  <div className="top-picks__next">
+                    <IconButton
+                      size="large"
+                      variant="ghost"
+                      icon="ic_arrow_right"
+                      label="Next"
+                      onClick={() => scrollTopPicksByCard(1)}
+                    />
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <div className="song-detail-page__list-heading" style={{ top: navbarHeight }}>
+              <SectionHeader title="Newly Released Songs" />
+              <Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
+            </div>
+
+            {/* `.song-detail__lists` is GONE, not tidied away: drop 2 deleted the
               rule, so the wrapper now matches nothing and would only add a
               stray block box between `.song-detail` and its grid. The list is
               `.song-detail`'s direct child, which is what makes the ≥1024px
               two-column grid resolve. */}
-          <div
-            className={`song-detail${mobilePlayerOpen ? " song-detail--mobile-player-open" : ""}`}
-            /* Keeps the last rows clear of the fixed preview bar. DP's own
+            <div
+              className={`song-detail${mobilePlayerOpen ? " song-detail--mobile-player-open" : ""}`}
+              /* Keeps the last rows clear of the fixed preview bar. DP's own
                inline style — its height plus breathing room, not its bare
                content height. */
-            style={previewOpen ? { paddingBottom: 96 } : undefined}
-          >
-            <div className="song-detail__list">
-              {displayedSongs.map((song) => (
-                <div key={song.id} className="song-detail__list-item">
-                  <TopSongListItem
-                    songId={song.id}
-                    title={song.title}
-                    username={song.creator}
-                    plays={song.plays}
-                    likes={song.likes + (likedIds.has(song.id) ? 1 : 0)}
-                    shares={song.shares}
-                    coverImage={song.cover}
-                    isPlaying={song.id === activeId && playing}
-                    onSelect={() => selectSong(song.id)}
-                    onPlay={() => previewSong(song.id)}
-                    onCreate={() => createFromSong(song)}
-                    onToggleLike={() => toggleLike(song.id)}
-                    liked={likedIds.has(song.id)}
-                  />
-                </div>
-              ))}
+              style={previewOpen ? { paddingBottom: 96 } : undefined}
+            >
+              <div className="song-detail__list">
+                {displayedSongs.map((song) => (
+                  <div key={song.id} className="song-detail__list-item">
+                    <TopSongListItem
+                      songId={song.id}
+                      title={song.title}
+                      username={song.creator}
+                      plays={song.plays}
+                      likes={song.likes + (likedIds.has(song.id) ? 1 : 0)}
+                      shares={song.shares}
+                      coverImage={song.cover}
+                      isPlaying={song.id === activeId && playing}
+                      onSelect={() => selectSong(song.id)}
+                      onPlay={() => previewSong(song.id)}
+                      onCreate={() => createFromSong(song)}
+                      onToggleLike={() => toggleLike(song.id)}
+                      liked={likedIds.has(song.id)}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 

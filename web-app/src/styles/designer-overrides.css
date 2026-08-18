@@ -1349,6 +1349,76 @@
   background: var(--color-accent-purple);
 }
 
+/* Product owner request, 2026-08-14 — Edit Storyboard: Character Image moved
+   into the Visual Style section (StoryboardEditor.tsx), sitting next to the
+   prompt's `.mv-storyboard__input-box` under one "VISUAL STYLE" label,
+   matching a newer pass on Figma node 1344:26880 (Frame 75580: a 332px image
+   + a flex-1 input box, 12px gap). No DP class covers "two boxes side by
+   side" here — `.mv-storyboard__char-image` was always the SOLE content of
+   the 332px-constrained `.mv-storyboard__side` column, so it only ever
+   needed `width: 100%`; now that it's a flex sibling of the input box, it
+   needs its own fixed width instead of filling a parent that isn't 332px
+   anymore. Scoped to `.mv-storyboard__visual-style-row` specifically so this
+   doesn't touch `.mv-storyboard__input-box` reused elsewhere (every Story
+   Line scene's own textarea uses the same class, unrelated to this row).
+   `align-items: stretch` (flex default, stated for clarity) is what makes
+   the input box match the image's height without an explicit number. Below
+   768px the row stacks — 332px fixed-width image next to a shrinking prompt
+   box has nowhere good to go at phone widths, and no mobile Figma frame was
+   given for this specific pairing to match instead. */
+.mv-storyboard__visual-style-row {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+
+.mv-storyboard__visual-style-row .mv-storyboard__char-image {
+  width: 332px;
+  flex-shrink: 0;
+}
+
+.mv-storyboard__visual-style-row .mv-storyboard__input-box {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Product owner request, 2026-08-18 — Enhance + the char count should sit at
+   the BOTTOM of the input box, not float wherever the textarea's own content
+   height happens to end. `align-items: stretch` above already gives
+   `.mv-storyboard__input-box` the row's full height (matched to the char
+   image's `aspect-ratio: 16/9` box, MVStoryboardPage.css), but the textarea
+   inside it has no `flex`, so it only ever grows to fit its own text —
+   leaving dead space below `.mv-storyboard__input-footer` instead of pushing
+   it down. `flex: 1` on the textarea makes it (not empty space) absorb the
+   difference, so the footer lands flush against the box's bottom edge. Scoped
+   to this row, not the bare `.mv-storyboard__textarea` class: every Story
+   Line scene reuses that class in an unstretched box, where forcing flex:1
+   would change nothing useful and cost the min-height's own sizing role. */
+.mv-storyboard__visual-style-row .mv-storyboard__textarea {
+  flex: 1;
+}
+
+@media (max-width: 767px) {
+  .mv-storyboard__visual-style-row {
+    flex-direction: column;
+  }
+
+  .mv-storyboard__visual-style-row .mv-storyboard__char-image {
+    width: 100%;
+  }
+}
+
+/* Product owner request, 2026-08-18 — the creator name should be as bold as
+   the stats numbers next to it (`.community-profile__stats strong`). Neither
+   rule in CommunityProfilePage.css sets an explicit font-weight; `<strong>`
+   still renders bold from the UA stylesheet, but Tailwind's preflight resets
+   heading font-weight to `inherit`, so the `<h1>` name lost its native bold
+   and the two no longer matched. */
+.community-profile__identity h1 {
+  font-weight: var(--font-weight-bold);
+}
+
 .face-picker input[type="range"]::-moz-range-thumb {
   width: 16px;
   height: 16px;
@@ -1357,4 +1427,193 @@
   background: var(--neutral-dark-100);
   box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.25);
   cursor: pointer;
+}
+
+/*
+  SongDetailPage — Top Picks rail + moved tabs, 2026-08-18. SongDetailPage.css's
+  own header comment already names this screen after Figma node 1409:34847; a
+  later pass of that SAME node added a "Top Picks Songs" rail above the list
+  and moved the genre tab bar out of DetailNavbar's tabsSlot into the page
+  body under a new "Newly Released Songs" heading (product owner request —
+  see SongDetailView.tsx's own header comment). No DP class ever covered
+  stacking those three blocks; `.song-detail` only ever laid out the list
+  itself and keeps meaning exactly that. This wrapper mirrors `.home-page`'s
+  own flex-column/1440-max-width rhythm (HomePage.css) rather than inventing
+  a different one. Its gap went 24px (first draft, Home's own value, read as
+  too tight) -> 40px (2026-08-18 correction) -> 16px (2026-08-19, once the
+  40px between the rail and "Newly Released Songs" was split into its own
+  60px margin below — this outer gap is now only the heading-to-list-grid
+  distance, not the rail-to-heading one).
+
+  The rail, heading and list are this wrapper's three DIRECT children (no
+  intermediate wrapper around the first two) — that is load-bearing, not
+  incidental. `.song-detail-page__list-heading` is `position: sticky`
+  (2026-08-19), and sticky's "stuck" range is bounded by its own PARENT's
+  box. An earlier version wrapped just the rail + heading in their own div,
+  which put the heading's containing block right there too — a box that
+  ends immediately after the heading itself, giving the sticky effect
+  nowhere to run: it stuck for a single frame and was immediately pushed off
+  as the list (a sibling of that wrapper, not the heading) scrolled past.
+  Making `.song-detail-page` itself the heading's parent gives it the whole
+  page's height to stay pinned across, which is what makes it actually
+  overlay the list while scrolling.
+*/
+.song-detail-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 16px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 20px 0;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .song-detail-page {
+    padding: 20px 32px 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .song-detail-page {
+    padding: 20px 60px 0;
+  }
+}
+
+/* `.song-detail`'s own max-width/margin/horizontal-padding would double up
+   with the wrapper's now that it is nested here instead of being the page's
+   own top-level element — only its 40px bottom padding is still needed. */
+.song-detail-page .song-detail {
+  max-width: none;
+  margin: 0;
+  padding: 0 0 40px;
+}
+
+/* Product owner request, 2026-08-18 — the list's two columns should span the
+   full page width like Home's own Newly Released Songs (`.new-songs__layout`,
+   NewSongsSection.css: two equal-share flex columns, no cap), so it reads as
+   the same width as the Top Picks rail above it. `SongDetailPage.css`'s own
+   grid instead caps each column at 480px and centers the pair — a leftover
+   from when this list shared the row with a 50%-wide Now Playing panel (see
+   this file's own header comment, "DROP 2 DELETED THE DESKTOP NOW PLAYING
+   COLUMN"); nothing constrains it to that width anymore now that .song-detail
+   has exactly one child, so replacing the fixed 480px cap with 1fr is not
+   fighting the grid, just letting it use the room drop 2 already freed up. */
+@media (min-width: 1024px) {
+  .song-detail-page .song-detail__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+}
+
+/* Product owner request, 2026-08-19 — both axes down to 12px (was 40/16 at
+   >=1024px, 16px below it). Scoped to this page: `.song-detail__list` also
+   renders standalone on `/song/play`'s cold-`?id=`-only path, which this
+   request wasn't about. */
+.song-detail-page .song-detail__list {
+  gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .song-detail-page .song-detail__list {
+    column-gap: 12px;
+    row-gap: 12px;
+  }
+}
+
+/* Product owner request, 2026-08-19 — the Top Picks rail and the "Newly
+   Released Songs" heading+tabs block should sit 60px apart. `.song-detail-
+   page`'s own flex `gap` is 16px (the heading-to-list distance), uniform
+   across all its children, so the extra 44px here is what brings the FIRST
+   gap (rail-to-heading) up to the full 60px without changing the second
+   one. Margin, not gap, precisely because flexbox has no per-pair gap. */
+.song-detail-page > .top-picks {
+  margin-bottom: 44px;
+}
+
+/* `top` is set inline from SongDetailView.tsx's measured `.detail-navbar`
+   height (see its own comment) — a CSS constant here would either leave a
+   gap under the navbar or hide behind it, since the navbar's real height
+   varies by breakpoint and isn't fixed in DetailNavbar.css. The opaque
+   background is what makes this an OVERLAY rather than just "stops
+   scrolling": without it the list's own rows would show through/behind it
+   as they scroll underneath. `z-index: 5` only needs to clear this page's
+   own content (`.song-detail` has none set, i.e. 0) — `.detail-navbar`'s
+   own 20 stays well above it, so the navbar still wins when both are stuck
+   at the same time. No padding/margin trick here: the requested 16px gap
+   above it and the list's own spacing below are exact values from the
+   surrounding flex gaps, not something to blur with extra breathing room. */
+.song-detail-page__list-heading {
+  position: sticky;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  background: var(--color-bg-primary);
+}
+
+/* Product owner request, 2026-08-19 — 16px ADDED below the tab bar, on top
+   of the 16px already between it and the list from `.song-detail-page__list-
+   heading`'s own `gap` above (so 32px total). A margin on `.tabs` itself,
+   not a bigger `gap`, because `gap` is shared with the SectionHeader-to-tabs
+   distance too and this request was about the tabs' own bottom edge only. */
+.song-detail-page__list-heading .tabs {
+  margin-bottom: 16px;
+}
+
+/* See SongDetailView.tsx's own comment on this element for what it's for.
+   MUST be `position: fixed`, not `sticky` — sticky still reserves its own
+   box in normal document flow before it starts sticking, so at scroll 0 it
+   sat as an extra `navbarHeight`-tall block AFTER the (also `navbarHeight`-
+   tall) navbar, pushing "Top Picks Songs" down by a second navbar's worth
+   of space before any scrolling happened at all (product owner report,
+   screenshot showed the gap even unscrolled). `fixed` removes it from flow
+   entirely, so it can never push anything, while still painting at the same
+   `top: 0` edge `.detail-navbar` (itself sticky) occupies. Its own height is
+   set inline from the identical measured value the heading's `top` uses, so
+   the mask's bottom edge and the heading's top edge always meet exactly,
+   with neither a gap nor an overlap regardless of breakpoint. */
+.song-detail-page__navbar-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--color-bg-primary);
+}
+
+/* Product owner request, 2026-08-19 — the Top Picks rail and the heading+
+   tabs block are no longer mobile-hidden. `tabsSlot`'s own "not designed for
+   mobile yet" rule (DetailNavbar.css) was the reason they were hidden below
+   768px in the first draft of this page; the product owner has since asked
+   for the SAME structure (rail, heading, tabs, sticky behavior) at every
+   width, not just >=768px. `.top-picks` and `.tabs` already carry their own
+   `.app-layout--mobile-app` responsive rules from Home's identical usage
+   (TopPicksSection.css) — that class is on the shell root unconditionally
+   (AppShell.tsx), so those rules were always live, just unreachable while
+   this block stayed hidden. Nothing here un-hides them; there's simply no
+   longer a rule that hides them. */
+
+/* `.top-picks__item` is DP's `<a>` everywhere else (Home's TopPicksSection);
+   here it wraps a `<div onClick>` instead (this rail's click needs to run
+   selectSong's phone/desktop + SongFlow-seeding branch, not a plain link —
+   same reason TopSongListItem's whole-row wrapper is a div, not an anchor).
+   Anchors get a pointer cursor for free; this needs it spelled out. */
+.song-detail-page .top-picks__item {
+  cursor: pointer;
+}
+
+/* Product owner request, 2026-08-18 — the Lyrics panel in Edit Storyboard's
+   sticky sidebar should be taller on desktop. MVStoryboardPage.css caps it at
+   200px at every width; bumped to 360px at the same >=1024px breakpoint the
+   rest of this page's desktop-only rules use, leaving the mobile/tablet
+   height (where the sidebar isn't sticky and vertical space is tighter)
+   untouched. Still `overflow-y: auto` past that, unchanged. */
+@media (min-width: 1024px) {
+  .mv-storyboard__lyrics {
+    max-height: 360px;
+  }
 }

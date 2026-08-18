@@ -44,15 +44,32 @@ const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : us
  * would make the check answer "is this scrolled into view right now",
  * which trivially flips to "fits" the moment the user scrolls down to it,
  * defeating the entire point of floating for constant reachability.
+ *
+ * ── `mobileAlwaysFloat` (2026-08-18) ─────────────────────────────────────────
+ *
+ * Product owner request, `StoryboardEditor` only: below 1024px (this file's
+ * own mobile/tablet breakpoint — the same one `MVStoryboardPage.css` uses
+ * for its interleaved section order) the CTA should always float, instead of
+ * `adaptive`'s normal "only float if it doesn't fit" measurement. Implemented
+ * as an early return inside `checkFit` rather than a separate code path, so
+ * it still re-evaluates on every resize/ResizeObserver tick the existing
+ * effect already listens for — crossing the 1024px line while the page is
+ * open switches modes immediately, the same way `adaptive` already reacts to
+ * content height changing. Opt-in and off by default, so `MvRoom` and
+ * `SongCompose`'s existing `adaptive` behavior (float only when needed, at
+ * every width) is untouched.
  */
 export function FloatingCTA({
   children,
   alignToParent = false,
   adaptive = false,
+  mobileAlwaysFloat = false,
 }: {
   children: React.ReactNode;
   alignToParent?: boolean;
   adaptive?: boolean;
+  /** Only meaningful when `adaptive` is also set. */
+  mobileAlwaysFloat?: boolean;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const inlineRef = useRef<HTMLDivElement>(null);
@@ -68,6 +85,10 @@ export function FloatingCTA({
     if (!inline) return;
 
     function checkFit() {
+      if (mobileAlwaysFloat && window.innerWidth < 1024) {
+        setFloating(true);
+        return;
+      }
       const rect = inline!.getBoundingClientRect();
       setFloating(rect.bottom + window.scrollY > window.innerHeight);
     }
@@ -80,7 +101,7 @@ export function FloatingCTA({
       resizeObserver.disconnect();
       window.removeEventListener("resize", checkFit);
     };
-  }, [adaptive]);
+  }, [adaptive, mobileAlwaysFloat]);
 
   useEffect(() => {
     if (adaptive && !floating) return;

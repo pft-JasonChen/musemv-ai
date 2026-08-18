@@ -32,11 +32,30 @@ const fmtTs = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60))
  *
  * WA had one column with a 200px character rail. DP is a 700/332 two-column
  * desktop split that COLLAPSES INTO A SINGLE INTERLEAVED SEQUENCE below 1024px
- * (`display: contents` + per-section `order`): Character Image → MV Song →
- * Visual Style → Story → Story Line → Lyrics. That reorder is entirely in the
- * stylesheet, so the section CLASSES (`--char-image`, `--mv-song`, …) are
- * load-bearing markup, not decoration — drop one and its section silently
- * jumps to the end of the phone layout.
+ * (`display: contents` + per-section `order`): MV Song → Visual Style (now
+ * carrying Character Image, see below) → Story → Story Line → Lyrics. That
+ * reorder is entirely in the stylesheet, so the section CLASSES (`--mv-song`,
+ * `--visual-style`, …) are load-bearing markup, not decoration — drop one and
+ * its section silently jumps to the end of the phone layout.
+ *
+ * ── CHARACTER IMAGE MOVED INTO VISUAL STYLE, 2026-08-14 ─────────────────────
+ *
+ * Product owner request, matching a newer Figma pass on this same node
+ * (1344:26880): the character reference photo and the visual-style prompt
+ * are related — one seeds the AI's rendering of the other — so Figma now
+ * shows them side by side under ONE "VISUAL STYLE" label on the left, not as
+ * two separate sections split across both columns. `.mv-storyboard__section
+ * --char-image` is gone; `.mv-storyboard__char-image` (the photo box itself,
+ * unchanged) now lives inside `--visual-style`, next to the prompt's
+ * `.mv-storyboard__input-box`, wrapped in a new `.mv-storyboard__visual-
+ * style-row` (designer-overrides.css — no DP class covers "image + input box
+ * side by side" since this row didn't exist in the shipped, verbatim-copied
+ * stylesheet before this request). One side effect worth naming: the mobile
+ * interleave used to put Character Image FIRST (order: 1, ahead of MV Song);
+ * now that it travels with Visual Style, it lands wherever that section
+ * already sat (order: 3, after MV Song) — not preserved separately, since
+ * Figma gave no reason to keep the image's mobile position independent of
+ * the section it now belongs to.
  *
  * ── WHAT DP DOES NOT HAVE, AND IS KEPT ──────────────────────────────────────
  *
@@ -123,24 +142,52 @@ export function StoryboardEditor() {
         <div className="mv-storyboard__panel">
           <div className="mv-storyboard__section mv-storyboard__section--visual-style">
             <p className="mv-storyboard__label">VISUAL STYLE</p>
-            <div className="mv-storyboard__input-box">
-              <textarea
-                className="mv-storyboard__textarea"
-                maxLength={DESCRIPTION_MAX}
-                value={storyboard.visualStyle}
-                onChange={(e) => setVisualStyle(e.target.value)}
-                aria-label="Visual style"
-              />
-              <div className="mv-storyboard__input-footer">
-                <EnhanceButton
-                  value={storyboard.visualStyle}
-                  kind="storyboard"
-                  onEnhanced={setVisualStyle}
-                  bem="mv-storyboard"
+            <div className="mv-storyboard__visual-style-row">
+              <div className="mv-storyboard__char-image">
+                <img
+                  src={storyboard.characterImage}
+                  alt="Storyboard character"
+                  className="mv-storyboard__char-photo"
                 />
-                <span className="mv-storyboard__char-count">
-                  {storyboard.visualStyle.length}/{DESCRIPTION_MAX}
-                </span>
+                {/* A <button>, not DP's download anchor: `guard-greps.sh` bans a
+                    literal internal href, and this one is a real action anyway —
+                    the same `downloadFile` History and /creator call. */}
+                <button
+                  type="button"
+                  className="mv-storyboard__char-download"
+                  onClick={() => downloadFile(storyboard.characterImage, "character.jpg")}
+                  aria-label="Download character image"
+                >
+                  <img src="/assets/icons/ui/ic_download.svg" alt="" />
+                </button>
+                <button
+                  type="button"
+                  className="mv-storyboard__char-expand"
+                  onClick={() => setPreviewOpen(true)}
+                  aria-label="Expand character image"
+                >
+                  <img src="/assets/icons/ui/ic_expand.svg" alt="" />
+                </button>
+              </div>
+              <div className="mv-storyboard__input-box">
+                <textarea
+                  className="mv-storyboard__textarea"
+                  maxLength={DESCRIPTION_MAX}
+                  value={storyboard.visualStyle}
+                  onChange={(e) => setVisualStyle(e.target.value)}
+                  aria-label="Visual style"
+                />
+                <div className="mv-storyboard__input-footer">
+                  <EnhanceButton
+                    value={storyboard.visualStyle}
+                    kind="storyboard"
+                    onEnhanced={setVisualStyle}
+                    bem="mv-storyboard"
+                  />
+                  <span className="mv-storyboard__char-count">
+                    {storyboard.visualStyle.length}/{DESCRIPTION_MAX}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -207,8 +254,12 @@ export function StoryboardEditor() {
           {/* Product owner request, 2026-08-14 — match AI Song's two-state CTA
               (float only when the page needs scrolling to reach it, otherwise
               render as the panel's own last row); see MvRoom.tsx's identical
-              comment on the same change. */}
-          <FloatingCTA alignToParent adaptive>
+              comment on the same change.
+              `mobileAlwaysFloat` added 2026-08-18 — below 1024px the CTA
+              should always float at the bottom rather than only when content
+              overflows; see FloatingCTA.tsx's own header comment. Desktop
+              keeps the original adaptive (fits-check) behavior. */}
+          <FloatingCTA alignToParent adaptive mobileAlwaysFloat>
             <button type="button" className="mv-storyboard__cta" onClick={generateMv}>
               <span>Create MV</span>
               {/* Designer fix, 2026-08-11: this was plain "· 200 Credits" text —
@@ -233,36 +284,6 @@ export function StoryboardEditor() {
         </div>
 
         <div className="mv-storyboard__side">
-          <div className="mv-storyboard__section mv-storyboard__section--char-image">
-            <p className="mv-storyboard__label">CHARACTER IMAGE</p>
-            <div className="mv-storyboard__char-image">
-              <img
-                src={storyboard.characterImage}
-                alt="Storyboard character"
-                className="mv-storyboard__char-photo"
-              />
-              {/* A <button>, not DP's download anchor: `guard-greps.sh` bans a
-                  literal internal href, and this one is a real action anyway —
-                  the same `downloadFile` History and /creator call. */}
-              <button
-                type="button"
-                className="mv-storyboard__char-download"
-                onClick={() => downloadFile(storyboard.characterImage, "character.jpg")}
-                aria-label="Download character image"
-              >
-                <img src="/assets/icons/ui/ic_download.svg" alt="" />
-              </button>
-              <button
-                type="button"
-                className="mv-storyboard__char-expand"
-                onClick={() => setPreviewOpen(true)}
-                aria-label="Expand character image"
-              >
-                <img src="/assets/icons/ui/ic_expand.svg" alt="" />
-              </button>
-            </div>
-          </div>
-
           <div className="mv-storyboard__section mv-storyboard__section--mv-song">
             <p className="mv-storyboard__label">MV SONG</p>
             <div className="mv-storyboard__song">
