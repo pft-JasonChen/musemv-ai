@@ -248,6 +248,8 @@ export function NewSongsSection({
           shareUrl={buildShareUrl(song.id)}
           cta
           isPlaying={previewId === song.id && playing}
+          liked={likedIds.has(song.id)}
+          onToggleLike={() => toggleLike(song.id)}
           onSelect={() => openSong(song.id)}
           onPlay={() => handlePlay(song.id)}
           onCreate={() => createFromSong(song)}

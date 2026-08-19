@@ -196,18 +196,24 @@ export function mockStoryboard(opts?: {
         id: "sc1",
         index: 1,
         range: "00:00–00:09",
+        // Spec 11 §3.5 prices a Recreate by the SHOT's kind, not the MV's, which
+        // is why a Hybrid MV bills both rates. The real generator will label
+        // these; the fixture labels them by hand so the arithmetic is exercised.
+        kind: "story" as const,
         text: "In a softly lit, elegant dressing room, the woman stands before a grand mirror.",
       },
       {
         id: "sc2",
         index: 2,
         range: "00:09–00:12",
+        kind: "sing" as const,
         text: "Close-up on the vocalist as she begins to sing, her expression serene.",
       },
       {
         id: "sc3",
         index: 3,
         range: "00:12–00:15",
+        kind: "story" as const,
         text: "The camera follows her hands as she traces the intricate lace patterns on her dress.",
       },
     ],

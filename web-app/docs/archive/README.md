@@ -1,17 +1,32 @@
-# docs/archive — superseded documents
+# Archive
 
-Nothing in this folder is current. It is kept because the reasoning in it explains how the
-live documents got the shape they have, and deleting that makes the next person re-derive it.
+Superseded working documents, kept because they are the **record of how decisions were
+reached** — not because anything should be built from them. Archived 2026-08-19, when the
+designer-UI migration finished and the spec audit closed out its findings.
 
-**Do not cite anything here as the state of the code.** If a statement in an archived file
-disagrees with a live document or with the code, the archived file is wrong by definition.
+**If you are looking for what is true today, go up one level** — `docs/README.md` is the index.
 
-| File                                | What it was                                                                       | Superseded by                                                                                          |
-| ----------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `designer-todo-handover.html`       | A presentation-format view of the designer blocker list, built for one RD/BD read | `../DESIGNER-TODO.md` — the live list, entries A1–A16                                                  |
-| `prototype-coverage-checklist.html` | Screen-by-screen coverage checklist from before the designer-UI migration         | `../redesign-migration-plan.md` §2.1 route table + `OWN_CHROME` in `src/components/shell/AppShell.tsx` |
-| `rd-handover-todo.html`             | An earlier RD hand-off to-do list, written before Phase 3 existed                 | `../DEVELOPER-HANDOVER.md` + the migration plan's handoff sections                                     |
+Nothing in here is maintained. Where one of these files disagrees with a current document or
+with the code, it is wrong, and the current document wins.
 
-Archived 2026-08-06, at the point Phase 3's migration work finished (16 of 16 routes) and the
-project was prepared for hand-off to RD. All three had **zero inbound references** at that
-point — that is why they moved and other stale-looking files did not.
+| File                                    | What it was                                                                                        | Why it moved                                                                                                          |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `redesign-migration-plan.md`            | The plan of record for porting 17 routes onto the designer UI.                                     | **The migration is complete** (17/17 routes, 2026-08-07). Its phase/slice order describes work that no longer exists. |
+| `redesign-migration-plan-2026-08-01.md` | The earlier derivation of that plan.                                                               | Superseded the day after it was written. ⚠️ **Two of its sections are still in force** — see below.                   |
+| `PHASE-3-ACCEPTANCE.md`                 | Acceptance record for Phase 3, including the seven mismatches the product owner found after merge. | The phase is closed. Its lessons were folded into `AGENTS.md` and `CLAUDE.md`.                                        |
+| `UI-INTEGRATION-HANDOFF.md`             | Orientation to the three prototypes and the gate set.                                              | Its §5 decision queue is closed; the durable half lives in `DEVELOPER-HANDOVER.md`.                                   |
+| `NEXT-SESSION.md`                       | Handoff between working sessions during the migration.                                             | There is no next migration session. Its open-items-by-owner table was folded into the spec audit.                     |
+| `handoff-2026-07-23.md`                 | The first handoff, pre-migration.                                                                  | Two designer drops and a full migration out of date.                                                                  |
+
+## ⚠️ Two things in here are still binding
+
+`redesign-migration-plan-2026-08-01.md` is archived, but **§9 and §10 are still enforced by
+tooling and still bind any change under `web-app/`**:
+
+- **§9 — the RD contract surface `C1`–`C8`.** `scripts/check-rd-changelog.sh` reads this list;
+  touching any of those files without a `docs/CHANGELOG-RD.md` entry fails the Stop gate.
+- **§10 — gates `G1`–`G7`.** `guard-greps.sh` (G1-b), `build-token-map.mjs` (G2-a),
+  `check-designer-css.mjs`, and the e2e suite all cite section numbers from it.
+
+They were left in place rather than copied out: a copied rule is a rule that can go stale
+without anyone noticing, which is the failure this whole archive exists to document.

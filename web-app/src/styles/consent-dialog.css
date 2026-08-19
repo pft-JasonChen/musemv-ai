@@ -1,0 +1,170 @@
+/* ============================================================================
+   consent-dialog.css — the biometric data processing notice shown before the
+   FIRST character-photo upload on /mv/room (product owner, 2026-08-19).
+
+   WHY THIS ISN'T IN `src/styles/designer/`
+     Every file there is byte-identical to a DP source file (D1). This dialog
+     has no DP counterpart at all — it comes from YouCam Online Editor's live
+     consent popup, supplied as a screenshot, not from the designer prototype.
+     So it is WA-authored CSS, the same call `community-profile-mv-preview.css`
+     made for the same reason.
+
+   It still borrows DP's dialog SHELL: the component renders through
+   `DpDialog`, so the overlay/backdrop/header/close class names below are the
+   ones that shell requires, copied from `designer/CreditsDialog.css`'s shape.
+   Every colour, radius and type size comes from `tokens.css`, so this reads as
+   part of the same system rather than a second visual language.
+   ========================================================================== */
+
+.consent-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.consent-dialog-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.consent-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.consent-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+  /* The legal copy is long and 320px is the minimum supported width, so the
+     card is capped against the viewport and its body scrolls (see __body)
+     rather than the CONTINUE button falling off the bottom of the screen. */
+  max-height: calc(100vh - 40px);
+  box-sizing: border-box;
+  padding: 24px 24px 20px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-3xl);
+  background: var(--neutral-dark-09);
+  box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
+  transform: scale(0.96);
+  transition: transform 0.3s ease;
+}
+
+.consent-dialog-overlay--visible .consent-dialog {
+  transform: scale(1);
+}
+
+/* Header — DpDialog's spacer / title / close row. */
+
+.consent-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.consent-dialog__header-spacer,
+.consent-dialog__close {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.consent-dialog__title {
+  flex: 1;
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-title-m);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-m);
+  letter-spacing: -0.2px;
+  text-align: center;
+}
+
+.consent-dialog__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.consent-dialog__close-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Body — the two notice paragraphs plus the consent checkbox, scrollable as
+   one block so the title and CONTINUE stay pinned. */
+
+.consent-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.consent-dialog__para {
+  margin: 0;
+  color: var(--neutral-dark-74);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body-m);
+}
+
+.consent-dialog__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+  color: var(--neutral-dark-74);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-body-m);
+  cursor: pointer;
+}
+
+.consent-dialog__checkbox {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  /* Aligns the box optically with the first line of the label rather than the
+     top of its box (13px text on a 20px line). */
+  margin: 2px 0 0;
+  accent-color: var(--color-accent-purple);
+  cursor: pointer;
+}
+
+.consent-dialog__link {
+  color: var(--neutral-dark-100);
+  text-decoration: underline;
+}
+
+/* Footer */
+
+.consent-dialog__continue {
+  width: 100%;
+}

@@ -52,7 +52,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 
 - **Auth-gated** route (`AuthGuard`, area 09). Title "My Creations". **HIST-02 (2026-07-23): retention
   is PERMANENT** — once generated, a creation is **never auto-deleted**; the copy now reads "Your
-  creations are saved here permanently. Download anytime to keep a copy." (Share-**link** expiry,
+  creations are saved here permanently. Download anytime to keep a copy." — **this on-screen line was removed 2026-08-11 at the designer's request and no longer appears anywhere in the UI (spec corrected 2026-08-19); the underlying "kept indefinitely" behaviour is unchanged.** (Share-**link** expiry,
   `TBD-SHARE-01`, is a separate concept.)
 - **Rows** (`HistoryView.tsx:91-100`): live `useHistory` items mapped (status `generating→processing`,
   `failed→failed`, else `done`; failed rows drop the thumb and show a `meta` label) **prepended** to
@@ -62,6 +62,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
   community-liked content** (`community && liked(r)`), no longer any liked own row.
 - **Card** (`HistoryCard`): aspect-video thumb (or processing/failed placeholder), 20% scrim,
   hover-play (MV only), **status pill** (Generating…=gold / Failed=red / Done=green; community=none),
+  > _Corrected 2026-08-19: **Generating renders on DP's `.badge--processing`, a deliberate dark grey** (`background: var(--neutral-dark-14)` in `designer/Badge.css`), not gold. `.badge--gold` exists but belongs to other badges. Following DP; the code is right and this line was not._
   **kind badge** (MV / SONG / STORYBOARD icon), title, stats (plays/likes/shares for done mv/song) or
   `meta`, date.
 - **Open row** (`HistoryView.openRow`): `processing` → not clickable; community song → `/song/play?id=…` (id = `communitySongId`, area 04); `storyboard` → seed + `/mv/storyboard?id=…` (area 02); **done MV → seed + `/mv/result?id=…`; done song → seed + `/song/result?id=…`** (2026-08-06). Every card href is locale-prefixed (R-9) and matches where the click goes, so middle-click and copy-link agree with it.
@@ -134,7 +135,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - **AC-HIST-06** — WHEN **Delete** is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.
 - **AC-HIST-07** — WHEN **Edit MV / Create MV** is chosen, THE SYSTEM SHALL seed flow state and route to `/mv/edit` / `/mv/storyboard`|`/mv/room` respectively.
 - **AC-HIST-08** — WHEN **Share** / **Download** is invoked, THE SYSTEM SHALL open `ShareDialog` with `buildShareUrl(id)` / download the fixture media as `{title}.mp4`|`.mp3`. *(download uses fixture media, not the row's own render — 🔒)*
-- **AC-HIST-09** — THE SYSTEM SHALL render `/history` at 390/768/1024/1440px with no overflow (1/2/3-column grid). *(visual)*
+- **AC-HIST-09** — THE SYSTEM SHALL render `/history` at 320/375/768/1024/1440/1920px with no overflow (1/2/3-column grid). *(visual)* _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
 
 ---
 

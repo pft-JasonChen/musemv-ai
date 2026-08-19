@@ -22,7 +22,7 @@ session still hits web-app's tsc / greps / Stop gates — it is a safety net, no
 - `web-app/` — the only code in this repo. Next.js 16.2 / React 19 / TS strict.
   The @-imported `web-app/AGENTS.md` above is the contract for everything under it.
   Run npm commands from `web-app/`, never from this root.
-  In flight: `web-app/docs/redesign-migration-plan-2026-08-01.md` — the designer-UI migration.
+  In flight: `web-app/docs/archive/redesign-migration-plan-2026-08-01.md` — the designer-UI migration.
   Its §9 (RD contract surface C1–C8) and §10 (gates G1–G7) bind any change under `web-app/`.
 - `ycmuse-app-prototype/` — the mobile app prototype. READ-ONLY reference: it is the
   source of truth for user flow and UI, never a place to edit. Never reference it from

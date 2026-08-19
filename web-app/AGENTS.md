@@ -24,9 +24,15 @@ Next.js 16.2 (App Router) + React 19 + TypeScript strict + Tailwind v4. Package 
   hook fires its own run. The hook then dies on `http://localhost:3100 is already used` — which
   looks like a gate failure and is really just you racing yourself. This has now happened FIVE
   times (twice in the 2026-08-12 session alone, after the first three were already written up in
-  `docs/NEXT-SESSION.md` §A.1). Your job before stopping is: leave port 3100 free, leave a fresh
-  `npm run build`, and let the hook own the run. If you need a targeted answer while working, run
-  ONE spec file with `--grep` — that finishes in seconds and does not hold the port.
+  `docs/archive/NEXT-SESSION.md` §A.1). Your job before stopping is: leave port 3100 free, leave a fresh
+  `npm run build`, and let the hook own the run. If you need a targeted answer while working, run ONE
+  spec file with a `--grep` that NAMES the handful of tests you care about. **The boundary is
+  RUNTIME, not syntax** (occurrence 6, 2026-08-19): a `--grep` on one spec file is still a full run
+  if it selects most of the file — an inverted match took ~110 of that file's 141 tests, blew the
+  10-minute Bash cap, was auto-backgrounded, and held :3100 into the Stop hook exactly like
+  `npm run e2e` would have. If you cannot say in advance roughly how many tests match, and that it
+  lands inside a minute, it is the hook's run and not yours. Killing it to free the port also
+  discards its results, so it buys nothing.
   Two ways that bites (both measured 2026-08-05): a server already on :3100 makes the run abort
   immediately (`reuseExistingServer` is false on purpose — see `playwright.config.ts`); and CPU
   contention makes the long chained specs flake on a `.click()` timeout. `G5-d#2` failed that way
@@ -78,7 +84,7 @@ refactors so the project typechecks after each individual edit (add the new befo
   six screenshot widths — the old "review viewports are not code breakpoints" split is gone.
   _In flight:_ the shell's phone cutover moves `sm:` (640) → `md:` (768) as part of the Shell
   slice. Until that slice lands you will still see `sm:` doing that job — it is mid-migration,
-  not a rule violation. Check `docs/redesign-migration-plan.md` §4 for where it is up to.
+  not a rule violation. Check `docs/archive/redesign-migration-plan.md` §4 for where it is up to.
 - Raw `#fff`/`#000`, `rgba()` scrims, and gradient stops are existing tolerated practice — match
   the surrounding file; don't mass-convert. A NEW semantic color = add a token to `tokens.css`
   `:root` and consume it via `var()`.
@@ -92,7 +98,7 @@ refactors so the project typechecks after each individual edit (add the new befo
   those are gated verbatim. Guarded by `e2e/backdrop-filter.spec.ts`; the whole diagnosis is in
   `TODO.md` #4.
 
-### Migrating a screen to the designer UI (`docs/redesign-migration-plan.md`)
+### Migrating a screen to the designer UI (`docs/archive/redesign-migration-plan.md`)
 
 - **Which token names to write (R-5).** Migrated markup uses **DP's native names**
   (`var(--radius-lg)`, `var(--color-…)`). `token-aliases.css` exists only so components that

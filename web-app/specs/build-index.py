@@ -282,7 +282,7 @@ TEMPLATE = r"""<!doctype html>
 
       <div class="pills">
         <span class="pill">🗂️ 10 feature areas + overview</span>
-        <span class="pill">🛠️ <a href="../docs/handoff-2026-07-23.md">Codebase handoff</a></span>
+        <span class="pill">🛠️ <a href="../docs/archive/handoff-2026-07-23.md">Codebase handoff</a></span>
         <span class="pill">💳 Pricing synced to the Business Model (2026-07-24)</span>
       </div>
 

@@ -191,7 +191,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 
 ### PROF-P1 — View profile hub
 
-- **PROF-P1-S1** Open `/profile` (auth-gated). **System:** header + stat tiles + rows; PRO pill if subscribed.
+- **PROF-P1-S1** Open `/profile` (auth-gated). **System:** header + stat tiles + rows. _(The "PRO pill if subscribed" clause was removed 2026-08-19 — see `AC-PROF-01`.)_
 - **PROF-P1-S2** Tap **Credits** tile → navigates to `/profile/credits`; **MVs**/**Songs** tile → `/creator?self=1&tab=…` (area 04).
 
 ### PROF-P2 — Edit profile
@@ -236,7 +236,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 
 ## 6. Acceptance criteria (EARS)
 
-- **AC-PROF-01** — WHEN `/profile` loads for a signed-in user, THE SYSTEM SHALL show avatar/name/email, a PRO pill iff subscribed, the Credits/MVs/Songs tiles, and the row list.
+- **AC-PROF-01** — WHEN `/profile` loads for a signed-in user, THE SYSTEM SHALL show avatar/name/email, a ~~PRO pill~~ iff subscribed, the Credits/MVs/Songs tiles, and the row list. _(Corrected 2026-08-19 — the PRO pill is REMOVED from this criterion. DP's `AccountPage` identity block is avatar + name + email + Edit, with no plan badge, and `AccountPage.css` has no class for one; building it would mean inventing a visual with no design. Subscription state already surfaces in the account menu's PRO/FREE badge and in the Muse Pro row below. Product owner decision.)_
 - **AC-PROF-02** — WHEN a stat tile is tapped, THE SYSTEM SHALL navigate to `/profile/credits` (Credits) or to `/creator?self=1&tab=mv|songs` (MVs/Songs). _(rewritten 2026-08-12: Credits Detail became a route on 2026-08-11)_
 - **AC-PROF-03** — WHEN Edit-Profile is saved, THE SYSTEM SHALL commit name/avatar via `updateProfile` and reflect them in the shell (in-memory).
 - **AC-PROF-04** — WHEN the Muse Pro row is tapped, THE SYSTEM SHALL open the Subscribe modal (not subscribed) or the Credits detail (subscribed).
@@ -245,7 +245,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 - **AC-PROF-17** — `/settings` SHALL be auth-gated (`AuthGuard`); WHEN logged out, it opens the sign-in modal (PROF-03). _(was a second `AC-PROF-08`; renumbered 2026-08-17 — the visual criterion below keeps `08`, which is what §7's "AC-08" and areas 01/04 mean by it.)_
 - **AC-PROF-09** — WHEN Terms of Use / Privacy Policy is tapped (Settings or the sign-in modal), THE SYSTEM SHALL open the shared real legal URL in a new tab (PROF-06 / AUTH-03).
 - **AC-PROF-07** — WHEN Unsubscribe or Delete Account is confirmed in `/settings`, THE SYSTEM SHALL show a demo toast (and Delete redirects Home) **without** actually cancelling or deleting anything. _(as-built placeholder — pending `TBD-PROF-04`.)_
-- **AC-PROF-08** — THE SYSTEM SHALL render `/profile` and `/settings` at 390/768/1024/1440px with no overflow. _(visual)_
+- **AC-PROF-08** — THE SYSTEM SHALL render `/profile` and `/settings` at 320/375/768/1024/1440/1920px with no overflow. _(visual)_ _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
 
 **Send Feedback (§3.1):**
 
@@ -265,7 +265,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 - [ ] **PROF-P2**: edit → change photo cycles, name ≤30, email read-only, Save reflects in shell (AC-03).
 - [ ] **PROF-P3**: Muse Pro → subscribe/credits (Upgrade pill only when not subscribed); Language switches; History nav; Send Feedback opens the form; Settings nav; Sign Out → Home (AC-04/05/06).
 - [ ] **PROF-P5**: five fields in order, Email prefilled, Send disabled → enabled (AC-10/11); payload has no User ID / Order ID (AC-12); success step + Done, **no toast** (AC-13); forced reject keeps the draft (AC-14, PROF-E6); 11 MB pick refused inline (AC-15, PROF-E5); Type control driven by keyboard only, axe clean at **375 and 1440** (AC-16).
-- [ ] **PROF-P4**: Terms/Privacy placeholder; Unsubscribe demo toast (still subscribed); Delete demo toast → Home (AC-07, E4).
+- [ ] **PROF-P4**: Terms/Privacy open the **real** legal pages in a new tab (`lib/legal.ts`); Unsubscribe demo toast (still subscribed); Delete demo toast → Home (AC-07, AC-09, E4). _("placeholder" corrected 2026-08-19 — §3/§6 and the code have used real links since AUTH-03.)_
 - [ ] **PROF-E1**: logged-out /profile → sign-in (**AC-17** for `/settings`). **PROF-E3**: reload loses edits/subscription.
 - [ ] **AC-08**: both screens clean at 4 widths _(visual)_.
 
@@ -302,7 +302,7 @@ flowchart TD
   FBErr -->|Send| FBSend
   Profile --> Settings["/settings"]
   Profile --> Out["Sign Out → Home"]
-  Settings --> Legal["Terms / Privacy (placeholder)"]
+  Settings --> Legal["Terms / Privacy (real links)"]
   Settings --> Unsub["Unsubscribe (demo toast)"]
   Settings --> Del["Delete Account (demo toast → Home)"]
 ```

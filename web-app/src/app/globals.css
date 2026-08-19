@@ -16,6 +16,10 @@
    `mask-*` + `background-color` pair per icon), same reasoning as `designer/`
    just without a DP file to stay verbatim with — see the file's own header. */
 @import "../styles/community-profile-mv-preview.css";
+/* Same call, same reason: the MV character-photo consent notice has no DP
+   counterpart (it comes from YouCam Online Editor's live popup), but renders
+   through DP's `DpDialog` shell, so it needs that shell's class names. */
+@import "../styles/consent-dialog.css";
 
 /* Map design tokens -> Tailwind v4 theme so utilities resolve to our tokens. */
 @theme inline {

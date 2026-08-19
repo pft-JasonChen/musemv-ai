@@ -23,6 +23,94 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-19 — **C8 REMOVAL + C2 ADDITION** — credit costs now follow spec 11
+
+**Surfaces:** **C8** (`src/lib/mv/types.ts`) — a **removal**, which C8 normally forbids, plus
+additions. **C2** (`src/lib/api/schemas.ts`) — **additive**, one optional field and one new enum.
+
+The prototype was charging placeholder numbers that `specs/areas/11-credit-consumption.md` had
+already replaced. A 30s singing/1080p MV cost **200** here and **225** there; Merge MV cost **200**
+here and **10** there; the storyboard tier did not exist at all. Found by the 2026-08-19 spec audit
+and fixed against the spec, per the product owner.
+
+### C8 — removed
+
+| removed | why |
+| --- | --- |
+| `COST_STORYBOARD` (20) | §3.3 prices this in **tiers by song length** — 12 / 15 / 18. No single number is correct. |
+| `COST_RENDER` (200) | §3.2/§3.4 price this **per second**, and differently for Create MV vs Generate MV. |
+| `COST_REGEN` (20) | §3.5 prices this **per second of the shot**, at a rate that depends on the shot's kind. |
+
+These three are gone rather than deprecated: a wrong constant left exported is a constant something
+will keep importing. The old `TBD-CC-05` note argued the duration-dependent values should wait for
+the backend because the resolution is "由後端回傳而非 hardcode". That conflated **who owns the number
+at runtime** (the backend, still true) with **whether the prototype charges correctly today** (it
+did not). `TBD-CC-06` — the payload field names — is genuinely still open, but it only ever blocked
+the API *call*, never the arithmetic, and this prototype has no backend to call.
+
+### C8 — added
+
+`COST_UPLOAD_SONG` 45 · `COST_FROM_SCRIPT` 35 · `COST_RECREATE` 8 · `COST_MERGE` 10 ·
+`COST_COVER` 4 (unchanged) · `COST_SONG_VOCAL` 6 / `COST_SONG_INSTRUMENTAL` 12 (unchanged), plus the
+functions that combine them: `scriptCost(songSec)`, `createMvCost(mvType, res, sec)`,
+`generateMvCost(mvType, res, sec)`, `recreateShotCost(kind, res, sec)`, and the helpers
+`resolutionOf(settings)` (UI Standard/High → `720p`/`1080p`), `shotKind(scene, mvType)`,
+`sceneDurationSec(range)`.
+
+**These functions are the swap point.** When the backend returns prices, replace their bodies; every
+caller and every test already goes through them. `contract.surface.test.ts` asserts them against
+spec 11's own worked examples (225 / 95 / 28 / 12·15·18), so a rate-table edit that drifts from the
+spec fails in CI rather than in a user's balance.
+
+### C2 — added
+
+- `ShotKindSchema` = `"sing" | "story"`.
+- `SceneSchema.kind?: ShotKind` — **optional**, so a storyboard persisted before today still
+  `.parse()`s; `shotKind()` supplies the fallback.
+
+**Why the field exists:** §3.5 prices a Recreate by **the shot's own kind, not the MV's** — a Hybrid
+MV bills `sing_*` for its singing passages and `story_*` for its narrative ones, and there is no
+`hybrid_*` shot rate. Without this field a Hybrid MV's price is not computable. Decided by the
+product owner 2026-08-19 after the audit surfaced it.
+
+**RD must do:** have the storyboard generator populate `kind` per scene (the mock alternates for
+`hybrid` and is uniform for `singing`/`storytelling` — a placeholder, not a product rule). Then
+supply real prices through the seven functions above, and settle `TBD-CC-06` so the client can send
+quantities. Note §3.4's worked example in the spec said `15 + 95 = 110`; that predated §6.1 adding
+the `[1,40] = 12` tier, so a 30s song is **107**. The spec was corrected the same day.
+
+**Not changed:** no `fetch()` was added — the balance is still local (`CreditsProvider`), so
+`grep -rn 'fetch(' src` stays empty.
+
+---
+
+## 2026-08-19 — **NO CONTRACT CHANGE** — MV character-photo consent notice
+
+**Surfaces: none of C1–C8 moved.** I looked at each one; this is the explicit statement the gate
+asks for, not paperwork.
+
+G4-g fired on `web-app/src/app/globals.css`, which it watches through its `web-app/src/app/`
+prefix rule. That rule exists for **C7 (URL shapes)** and this is the documented false-positive
+case: the edit is **one `@import` line plus its comment**, pulling in a new stylesheet. No route
+was added, removed, or renamed; no `page.tsx` was touched.
+
+**What actually shipped (UI, out of scope for this file, recorded only for context):** the first
+character-photo upload on `/mv/room` now opens a biometric-data-processing consent notice
+(`FaceConsentDialog`), and the file picker opens only after the user ticks the box and presses
+CONTINUE. Product owner decisions, 2026-08-19: once per session · box mandatory · Sample Photos
+not gated.
+
+**RD must do — one thing, and it is not on any C-surface yet.**
+`src/lib/mv/faceConsent.ts` holds the "has consented" flag **in a module-scoped variable**, so it
+survives client-side navigation and resets on reload. That shape was chosen because this prototype
+has no backend, and it is **deliberately not** a `localStorage` key — a browser-local consent
+record is the wrong thing to inherit. A real consent record belongs on the **account**,
+server-side. When the backend lands, replace `hasFaceConsent()` / `grantFaceConsent()` with a
+profile field; that will be a **C4 addition** to `useAuth` (and possibly C1/C2 for the write), at
+which point it gets its own entry here. Nothing to implement against today.
+
+---
+
 ## 2026-08-17 — **C1 + C2 ADDITION** — `submitFeedback` (support ticket)
 
 > **LANDED.** `submitFeedback` exists on `MuseApi`, is implemented in `mock.ts`, and the C1/C2

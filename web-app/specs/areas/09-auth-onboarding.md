@@ -75,7 +75,7 @@ Like / publish call `requireLogin` at the action), synced to App F22 — `AuthGu
   the four gated routes (dismiss → Home) as a backstop; **the two create screens' own actions** —
   `/mv/room`'s **Song Library** and **Create Music Video**, `/song/create`'s **Create Song**; Home hero create CTAs / song-card create
   (`HomeView`, area 04); and — new — **Create MV / Create Song / Like** on community surfaces
-  (`CommunityMvPlayer`, `CommunitySongPlayer`, `SongExplore`) and **publish** on
+  (`CommunityMvPlayer`, `song/SongDetailView`, `song/SongDetailView`) and **publish** on
   an MV result (`MvResult`) all call
   `requireLogin` at the click. This resolves the former
   "community like/share ungated" divergence (synced to App F22).

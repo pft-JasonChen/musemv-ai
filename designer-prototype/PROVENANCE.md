@@ -1,7 +1,7 @@
 # designer-prototype/ — provenance
 
 **This is DP** (Designer Prototype) in the vocabulary of
-`web-app/docs/UI-INTEGRATION-HANDOFF.md` §0. It is the designer's **web** prototype and the
+`web-app/docs/archive/UI-INTEGRATION-HANDOFF.md` §0. It is the designer's **web** prototype and the
 **source of truth for the new UI** — and for nothing else.
 
 | | |

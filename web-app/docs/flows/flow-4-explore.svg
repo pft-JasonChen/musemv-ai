@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="910" viewBox="0 0 1120 910" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<title>4. Explore, Community &amp; Share &#8212; User Flowchart</title>
+<desc>Browsing other people's creations, and what a shared link does.</desc>
+<defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
+<rect width="1120" height="910" fill="#ffffff"/>
+<text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">4. Explore, Community &amp; Share &#8212; User Flowchart</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web (desktop 1440 / phone 375) &#183; matches spec V1, 2026-08-19</text>
+<text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; green = success / resolved &#183; red = error state</text>
+
+<g transform="translate(0,80)">
+<line x1="40" y1="2" x2="1080" y2="2" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="24" font-size="15" font-weight="700" fill="#0c1c22">Entry</text>
+<rect x="462" y="44" width="196" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="560" y="64" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/ Landing</text>
+<text x="560" y="82" font-size="12" fill="#5a6b78" text-anchor="middle">3 seed rails &#183; AC-EXP-01</text>
+<line x1="40" y1="98" x2="1080" y2="98" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="120" font-size="15" font-weight="700" fill="#0c1c22">Browse</text>
+<rect x="44" y="140" width="196" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="142" y="160" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/explore/mvs</text>
+<text x="142" y="178" font-size="12" fill="#5a6b78" text-anchor="middle">2 sections, justified grid</text>
+<rect x="870" y="140" width="196" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="968" y="160" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/explore/songs</text>
+<text x="968" y="178" font-size="12" fill="#5a6b78" text-anchor="middle">All + one tab per genre &#183;</text>
+<text x="968" y="193" font-size="12" fill="#5a6b78" text-anchor="middle">EXP-P3-S1</text>
+<line x1="462" y1="69" x2="142" y2="140" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="302" y="98.5" font-size="12" fill="#5a6b78" text-anchor="middle">See all</text>
+<line x1="658" y1="69" x2="968" y2="140" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="813" y="98.5" font-size="12" fill="#5a6b78" text-anchor="middle">See all</text>
+<line x1="40" y1="202" x2="1080" y2="202" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="224" font-size="15" font-weight="700" fill="#0c1c22">Play</text>
+<rect x="44" y="244" width="196" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="142" y="264" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/watch</text>
+<text x="142" y="282" font-size="12" fill="#5a6b78" text-anchor="middle">MV player, muted autoplay &#183;</text>
+<text x="142" y="297" font-size="12" fill="#5a6b78" text-anchor="middle">AC-EXP-04</text>
+<rect x="870" y="244" width="196" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="968" y="264" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/song/play</text>
+<text x="968" y="282" font-size="12" fill="#5a6b78" text-anchor="middle">real audio, prev/next &#183;</text>
+<text x="968" y="297" font-size="12" fill="#5a6b78" text-anchor="middle">AC-EXP-05</text>
+<line x1="142" y1="190" x2="142" y2="244" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="968" y1="205" x2="968" y2="244" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="980" y="218.5" font-size="12" fill="#5a6b78" text-anchor="start">album art</text>
+<rect x="462" y="244" width="196" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="560" y="264" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/song/result</text>
+<text x="560" y="282" font-size="12" fill="#5a6b78" text-anchor="middle">desktop: row TITLE opens this &#183;</text>
+<text x="560" y="297" font-size="12" fill="#5a6b78" text-anchor="middle">AC-EXP-03</text>
+<line x1="870" y1="172.5" x2="658" y2="276.5" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="764" y="218.5" font-size="12" fill="#5a6b78" text-anchor="middle">title</text>
+<line x1="40" y1="318" x2="1080" y2="318" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="340" font-size="15" font-weight="700" fill="#0c1c22">Act on someone else's work</text>
+<rect x="44" y="360" width="196" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="142" y="380" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/creator</text>
+<text x="142" y="398" font-size="12" fill="#5a6b78" text-anchor="middle">their profile + tabs &#183; EXP-P6</text>
+<rect x="462" y="360" width="196" height="50" rx="8" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="560" y="380" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Like</text>
+<text x="560" y="398" font-size="12" fill="#5a6b78" text-anchor="middle">signed-in only &#183; AC-EXP-08</text>
+<rect x="870" y="360" width="196" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="968" y="380" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Create from it</text>
+<text x="968" y="398" font-size="12" fill="#5a6b78" text-anchor="middle">pre-fills the create screen</text>
+<line x1="142" y1="309" x2="142" y2="360" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<line x1="240" y1="276.5" x2="462" y2="385" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<line x1="968" y1="309" x2="968" y2="360" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<line x1="40" y1="438" x2="1080" y2="438" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="460" font-size="15" font-weight="700" fill="#0c1c22">Share  &#183;  a public link, no account needed</text>
+<rect x="462" y="480" width="196" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="560" y="500" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Share dialog</text>
+<text x="560" y="518" font-size="12" fill="#5a6b78" text-anchor="middle">copy link only in V1 &#183;</text>
+<text x="560" y="533" font-size="12" fill="#5a6b78" text-anchor="middle">TBD-SHARE-02</text>
+<line x1="560" y1="410" x2="560" y2="480" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<rect x="462" y="560" width="196" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="560" y="580" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/share?id=</text>
+<text x="560" y="598" font-size="12" fill="#5a6b78" text-anchor="middle">bare page, public, never expires</text>
+<line x1="560" y1="545" x2="560" y2="560" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="870" y="560" width="196" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="968" y="580" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Can't be found</text>
+<text x="968" y="598" font-size="12" fill="#5a6b78" text-anchor="middle">unresolvable id &#183; SHARE-E1</text>
+<line x1="658" y1="585" x2="870" y2="585" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<rect x="44" y="560" width="196" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="142" y="580" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Download</text>
+<text x="142" y="598" font-size="12" fill="#5a6b78" text-anchor="middle">{title}.mp4 / .mp3 &#183;</text>
+<text x="142" y="613" font-size="12" fill="#5a6b78" text-anchor="middle">AC-SHARE-05</text>
+<line x1="462" y1="585" x2="240" y2="592.5" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="44" y="660" font-size="12" fill="#5a6b78">Community content is seed data &#8212; there is no backend behind Explore yet (TBD-EXP-11). Likes and play counts are local to the session.</text>
+<text x="44" y="678" font-size="12" fill="#5a6b78">Share links are fully public and do not expire (decided 2026-08-19); an own creation still needs its History row to resolve in this prototype.</text>
+<line x1="40" y1="706" x2="1080" y2="706" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="726" x2="74" y2="726" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="730" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="746" x2="74" y2="746" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="86" y="750" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
+<line x1="40" y1="766" x2="74" y2="766" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="770" font-size="12" fill="#5a6b78">Error branch</text>
+</g>
+</svg>

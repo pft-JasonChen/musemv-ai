@@ -51,9 +51,15 @@ export function ShareLinkView() {
           <div className="grid h-[80px] w-[80px] place-items-center rounded-full" style={{ background: "var(--card-2)" }}>
             <Icon d="M13.73 21a2 2 0 0 1-3.46 0M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M1 1l22 22" size={34} />
           </div>
-          <h1 className="mt-7 text-[22px] font-extrabold">This link has expired</h1>
+          {/* Product owner, 2026-08-19: share links DO NOT EXPIRE. The old copy
+              ("available for 30 days") described a rule that was never built and
+              is now decided against — creations are kept indefinitely, so a link
+              to one has no reason to lapse. This state is reached only when an id
+              cannot be resolved, so the wording says that instead of inventing a
+              deadline the product does not enforce. */}
+          <h1 className="mt-7 text-[22px] font-extrabold">This link isn&apos;t available</h1>
           <p className="mt-2 text-[14px]" style={{ color: "var(--text-2)" }}>
-            Shared links are available for 30 days. Ask the sender to share it again.
+            We couldn&apos;t find this creation. Ask the sender to share it again.
           </p>
         </main>
       </div>

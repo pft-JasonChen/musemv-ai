@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * build-token-map.mjs — Gate G2-a: generate docs/token-map.md + docs/token-map.json.
- * docs/redesign-migration-plan-2026-08-01.md §4, §10.0, G2-a.
+ * docs/archive/redesign-migration-plan-2026-08-01.md §4, §10.0, G2-a.
  *
  * WHY A GENERATOR AND NOT A HAND-WRITTEN TABLE
  *   The designer prototype (DP) is still moving — a final is expected 2026-08-04, and

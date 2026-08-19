@@ -227,7 +227,7 @@ with A9 in the exclusion list and a comment pointing at it — the same pattern 
 > `DESIGNER-TODO`. It is a decision, not a backlog that slipped.
 
 The G7 affordance review diffed every migrated component against `5296f1a` control-by-control.
-Five findings were plain losses and were fixed with guards (see `docs/PHASE-3-ACCEPTANCE.md`).
+Five findings were plain losses and were fixed with guards (see `docs/archive/PHASE-3-ACCEPTANCE.md`).
 These are the rest — each needs a designer or product answer first, so none was patched around.
 
 **7a. ANSWERED, AND DEFERRED IN FULL.** Decision (product owner, 2026-08-06): **±15s comes back
@@ -294,7 +294,7 @@ column is gone in favour of DP's model: the row title navigates to `/song/result
 starts the new `SongPlayBar`. `AC-EXP-03` / `AC-EXP-05` / `EXP-P3-S1` were rewritten with the code,
 and the 3b assertion that pinned the old decision was replaced rather than argued with. Two product
 decisions came with it — `DESIGNER-TODO` **A19** (phones reach 3 of 14 MVs) and "a community song
-gets no Recreate/Publish". Full record: `docs/NEXT-SESSION.md` §2.0.
+gets no Recreate/Publish". Full record: `docs/archive/NEXT-SESSION.md` §2.0.
 
 **7i. Two capabilities drop 2 (`2670ed2`) shipped and WA has not adopted.** Neither costs
 anything today — the current behaviour is unchanged and nothing is lost — but both are the
@@ -326,3 +326,35 @@ renders as nothing). **Done looks like:** the designer adds a hint class to `MVC
 after which this is a two-line change. Until then `/mv/room` disables the button and says
 nothing, while `/song/create` explains itself — an inconsistency, recorded rather than papered
 over.
+
+---
+
+## 8. ~~Two code defects found by the 2026-08-19 spec audit~~ ✅ BOTH FIXED 2026-08-19
+
+Both came out of the full spec↔code sweep (`docs/spec-audit-2026-08-19.html`). Recorded here
+rather than fixed in that pass because neither is a doc problem — the specs already say the right
+thing, so **the spec was deliberately left alone and the code is what has to move.**
+
+**8a. ~~The Home song rail's Like bypasses the login gate.~~ ✅ FIXED.** `ui/ListItem`'s Like is now CONTROLLED (`liked` + `onToggleLike`), matching `TopSongListItem`; omitting `onToggleLike` renders no like button at all, so there is no uncontrolled path back. Guarded by e2e "TODO#8a", mutation-tested. Original report: `ui/ListItem.tsx:222` flips its own
+`useState` directly:
+
+```tsx
+onClick={() => setLiked((current) => !current)}
+```
+
+No `requireLogin`. The component's own comment at `:89` says callers wrap **the Create pill** in
+`requireLogin` — which they do — so the Like button was simply never included in that contract.
+`SongPlayBar` and `TopSongListItem`, on the same screen, both gate correctly. This is the only
+community Like control in the app that violates **GL-02** (`AC-EXP-08`, `EXP-E2`).
+**Done looks like:** `ListItem` takes an `onLike` the caller supplies (as `TopSongListItem` does)
+rather than owning the state, plus an e2e that clicks Like as a guest and asserts the sign-in
+modal opens — mutation-tested both ways.
+
+**8b. ~~`/song/result` shows invented lyrics for songs that have none.~~ ✅ FIXED.** `FALLBACK_LYRICS` deleted; the Lyrics button, the inline panel and the sheet all render only when the song actually has lyrics. This reverses a 2026-08-11 designer request, so the missing empty-state is recorded as `DESIGNER-TODO` **A23**. Guarded by e2e "TODO#8b", mutation-tested. Original report: `SongResultView.tsx:233-236`
+falls back to `FALLBACK_LYRICS`, and the Lyrics button and sheet render unconditionally
+(`:450-457`, `:678-688`). So a **Simple-mode** song — which never had lyrics — opens a sheet of
+generic filler presented as its own words. `AC-SONG-06` and `SONG-P3-S2` both say the sheet appears
+**only when lyrics exist**; the product owner confirmed on 2026-08-19 that the spec is right and
+this is a bug, not a demo convenience. It is also the kind of thing a CEO demo gets caught on.
+**Done looks like:** no `FALLBACK_LYRICS`; the Lyrics affordance is absent when the song carries no
+lyrics, guarded by an e2e that creates a Simple-mode song and asserts the control is not rendered.

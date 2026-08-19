@@ -19,7 +19,7 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import { downloadFile } from "@/lib/download";
-import { COST_COVER, COST_REGEN, COST_RENDER, DESCRIPTION_MAX, type Scene } from "@/lib/mv/types";
+import { COST_COVER, COST_MERGE, recreateShotCost, resolutionOf, sceneDurationSec, shotKind, DESCRIPTION_MAX, type Scene } from "@/lib/mv/types";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
 
 function formatTime(seconds: number): string {
@@ -200,14 +200,23 @@ export function MvEditor() {
     );
   }
 
+  // Spec 11 §3.5 — `recreate` 8 + per-second at the rate for THIS shot's kind
+  // (sing 7 · story 2/4), not the MV's type: a Hybrid MV bills both. §5.4 says
+  // each shot is charged on its own, never batched.
+  const sceneCost = recreateShotCost(
+    shotKind(scene, compose.mvType),
+    resolutionOf(compose.settings),
+    sceneDurationSec(scene.range),
+  );
+
   function recreateScene() {
     if (regenBusy) return;
-    if (credits < COST_REGEN) {
+    if (credits < sceneCost) {
       setBuyOpen(true);
       return;
     }
     setRegenBusy(true);
-    addCredits(-COST_REGEN);
+    addCredits(-sceneCost);
     const others = pool.filter((v) => v !== activeVideo);
     const next = others[Math.floor(Math.random() * others.length)] ?? defaultPreview;
     window.setTimeout(() => {
@@ -238,14 +247,16 @@ export function MvEditor() {
     if (!dirty) return;
     // GL-01: the render cost is charged on generation start in the provider.
     // Block and route to IAP when the balance cannot cover it.
-    if (credits < COST_RENDER) {
+    if (credits < COST_MERGE) {
       setBuyOpen(true);
       return;
     }
     const committed = { ...storyboard!, coverImage: activeCover };
     setStoryboard(committed);
     saveStoryboard(committed);
-    resetForRerender(); // clear the prior render so the merge actually re-renders
+    // §3.6 — Merge is a FLAT 10 at any length, not a re-render price. Saying so
+    // explicitly is what lets the provider tell it apart from Generate MV.
+    resetForRerender("merge");
     router.push(localePath(locale, "/mv/creating"));
   }
 
@@ -344,7 +355,7 @@ export function MvEditor() {
             <span className="button__label">{regenBusy ? "Recreating…" : "Recreate"}</span>
             <span className="button__credits">
               <img className="button__icon" src="/assets/icons/ui/ic_credit.svg" alt="" />
-              <span className="button__credits-count">{COST_REGEN}</span>
+              <span className="button__credits-count">{sceneCost}</span>
             </span>
           </button>
         </div>
@@ -474,8 +485,8 @@ export function MvEditor() {
               own muted explanatory line, already used on this screen for
               "Select to edit storyboard"; no new class, no override. */}
           <p className="mv-edit__sublabel">
-            Recreate ({COST_REGEN} credits) replaces a scene directly. Edits aren&apos;t saved —
-            Merge MV ({COST_RENDER} credits) re-renders the video with your changes.
+            Recreate ({sceneCost} credits) replaces a scene directly. Edits aren&apos;t saved —
+            Merge MV ({COST_MERGE} credits) re-renders the video with your changes.
           </p>
 
           <div className="mv-edit__ctas">
@@ -494,7 +505,7 @@ export function MvEditor() {
               <span>Merge MV</span>
               <span className="mv-edit__merge-credits">
                 <img src="/assets/icons/ui/ic_credit.svg" alt="" />
-                {COST_RENDER}
+                {COST_MERGE}
               </span>
             </button>
           </FloatingCTA>

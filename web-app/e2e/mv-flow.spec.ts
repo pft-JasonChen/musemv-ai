@@ -9,6 +9,20 @@ test("MV creation: compose -> storyboard -> render -> result", async ({ page }) 
   await page.addInitScript(() => window.localStorage.setItem("muse_auth", "1"));
   await page.goto("/mv/room");
 
+  // Fund the account before driving a real generation. `DEFAULT_CREDITS` dropped
+  // 390 → 10 on 2026-08-12, which put every price out of reach for a fresh
+  // account, so this spec had been stopping at the IAP upsell instead of
+  // reaching `/mv/storyboard` — red since that day, independently of the
+  // 2026-08-19 credit-pricing work. Subscribing is how a user gets credits;
+  // Weekly Pro (the featured card) grants 1,000, comfortably above a per-second
+  // render of the fixture song.
+  await page.getByRole("button", { name: "Upgrade" }).first().click();
+  await page
+    .locator(".upgrade-dialog__card--featured")
+    .getByRole("button", { name: "Subscribe" })
+    .click();
+  await expect(page.getByRole("dialog", { name: "Upgrade Your Plan" })).toBeHidden();
+
   // AC1/AC4: CTA disabled until song + description present.
   const cta = page.getByRole("button", { name: "Create Music Video" });
   await expect(cta).toBeDisabled();

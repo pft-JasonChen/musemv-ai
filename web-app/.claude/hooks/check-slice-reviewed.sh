@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Gate G7 — independent verification, machine-checked.
-# docs/redesign-migration-plan-2026-08-01.md §10 G7.
+# docs/archive/redesign-migration-plan-2026-08-01.md §10 G7.
 #
 # THE PROBLEM THIS SOLVES
 #   G7 says: "建置的那個 session / agent 不得宣告 PASS" — the session that built the code

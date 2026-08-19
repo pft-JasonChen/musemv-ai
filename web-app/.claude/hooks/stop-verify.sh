@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Gate G1-a + G1-b + G4-g from docs/redesign-migration-plan-2026-08-01.md §10.
+# Gate G1-a + G1-b + G4-g from docs/archive/redesign-migration-plan-2026-08-01.md §10.
 #
 # The plan lists G1-a as "npm run typecheck && lint && test:run && build, 四支全
 # exit 0" and files it under "每一次 edit 之後". That placement is not viable —

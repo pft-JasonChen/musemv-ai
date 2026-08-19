@@ -61,7 +61,8 @@ export function ListItem({
   plays = 0,
   likes = 0,
   shares = 0,
-  defaultLiked = false,
+  liked = false,
+  onToggleLike,
   shareUrl,
   onCreate,
   onSelect,
@@ -83,7 +84,20 @@ export function ListItem({
   plays?: number;
   likes?: number;
   shares?: number;
-  defaultLiked?: boolean;
+  /**
+   * Like is CONTROLLED — the caller owns the state and the login gate, exactly
+   * as `TopSongListItem` already did.
+   *
+   * It used to be a `defaultLiked` prop over an internal `useState`, which made
+   * this the ONLY community like control in the app that never called
+   * `requireLogin` (GL-02 / `AC-EXP-08` / `EXP-E2`). A guest could like a song
+   * on Home and the app silently pretended it worked. Found by the 2026-08-19
+   * spec audit; the fix is to give a presentational row no say in a product
+   * rule. **Omit `onToggleLike` and the like button is not rendered at all** —
+   * there is deliberately no uncontrolled path back.
+   */
+  liked?: boolean;
+  onToggleLike?: () => void;
   /** Where Share copies from. Omit and the share button is not rendered. */
   shareUrl?: string;
   /** The Create pill. Callers wrap this in `requireLogin` themselves — the gate
@@ -104,7 +118,6 @@ export function ListItem({
 }) {
   const router = useRouter();
   const { locale } = useLocale();
-  const [liked, setLiked] = useState(defaultLiked);
   const [shareOpen, setShareOpen] = useState(false);
 
   const isSong = variant === "song";
@@ -216,17 +229,20 @@ export function ListItem({
               e.stopPropagation();
             }}
           >
-            <button
-              type="button"
-              className={`list-item__like${liked ? " list-item__like--active" : ""}`}
-              onClick={() => setLiked((current) => !current)}
-              aria-label={liked ? "Unlike" : "Like"}
-            >
-              <DpIcon
-                name={liked ? "ic_favorite_on" : "ic_favorite_off"}
-                className="list-item__like-icon"
-              />
-            </button>
+            {onToggleLike && (
+              <button
+                type="button"
+                className={`list-item__like${liked ? " list-item__like--active" : ""}`}
+                onClick={onToggleLike}
+                aria-label={liked ? "Unlike" : "Like"}
+                aria-pressed={liked}
+              >
+                <DpIcon
+                  name={liked ? "ic_favorite_on" : "ic_favorite_off"}
+                  className="list-item__like-icon"
+                />
+              </button>
+            )}
             {shareUrl && (
               <button
                 type="button"

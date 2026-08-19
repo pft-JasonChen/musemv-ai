@@ -21,7 +21,7 @@ import type { CommunitySong } from "@/lib/mv/community";
  * point of it, in DP's own words, is that browsing continues while a preview
  * plays. It is not the main player and it replaces nothing — an earlier reading
  * of the drop said it replaced `/song/play`'s Now Playing column, and that was
- * wrong (the correction is in `docs/NEXT-SESSION.md` §2.0).
+ * wrong (the correction is in `docs/archive/NEXT-SESSION.md` §2.0).
  *
  * `.song-bar` is `display: none` below 768px, so this is desktop-only by
  * stylesheet. Phones keep `MobileNowPlaying`, untouched.

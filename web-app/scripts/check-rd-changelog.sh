@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Gate G4-g — RD contract changes must be announced.
-# docs/redesign-migration-plan-2026-08-01.md §9 (C1–C8) + §10 G4-g:
+# docs/archive/redesign-migration-plan-2026-08-01.md §9 (C1–C8) + §10 G4-g:
 #   "若 PR 動到 C1–C8 的檔案,但沒有動 CHANGELOG-RD.md → 直接 fail."
 #
 # This is the one gate in §10 that no test can express, because the thing being

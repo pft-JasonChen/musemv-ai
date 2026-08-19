@@ -1,5 +1,5 @@
 // Gate G4-b — provider hook surface (C4).
-// docs/redesign-migration-plan-2026-08-01.md §9 C4 + §10 G4-b.
+// docs/archive/redesign-migration-plan-2026-08-01.md §9 C4 + §10 G4-b.
 //
 //   C4 rule: "⚠ 只可新增,不可改名/刪除" — RD patches these hooks to wire the real
 //   account, balance, and history, so a renamed or removed key breaks them.

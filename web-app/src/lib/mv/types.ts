@@ -7,6 +7,7 @@
 
 export type {
   MvType,
+  ShotKind,
   SongSource,
   Song,
   CharacterPhoto,
@@ -24,7 +25,15 @@ export type {
   SongJob,
 } from "@/lib/api/schemas";
 
-import type { ComposeState, MvSettings, Song, SongCompose } from "@/lib/api/schemas";
+import type {
+  ComposeState,
+  MvSettings,
+  MvType,
+  Scene,
+  ShotKind,
+  Song,
+  SongCompose,
+} from "@/lib/api/schemas";
 
 export const DESCRIPTION_MAX = 2500;
 
@@ -36,35 +45,123 @@ export const DESCRIPTION_MAX = 2500;
  * its numbers. **Four of the six costs below are NOT fixed values** — they are
  * `base + rate × seconds`, so no constant can express them correctly.
  *
- * Product decision 2026-08-12: fix the ones that ARE fixed, and leave the
- * duration-dependent ones as placeholders with their real formula recorded
- * here, because TBD-CC-05's own resolution is **"由後端回傳而非 hardcode"** —
- * the real value arrives with the backend, and inventing a client-side
- * calculator now would build the wrong thing.
+ * **REWRITTEN 2026-08-19 — the placeholders are gone; these ARE spec 11's rules.**
  *
- * | constant                | authoritative rule (spec 11)                    | fixed? |
- * | ----------------------- | ----------------------------------------------- | ------ |
- * | COST_STORYBOARD         | §3.3 tier by song length: 12 / 15 / 18          | NO     |
- * | COST_RENDER             | §3.2 `45 + N×sec` (N = mvType × resolution)     | NO     |
- * | COST_REGEN              | §3.5 `8 + N×sec` (sing 7 · story 2/4)           | NO     |
- * | COST_SONG_*             | §3.1 vocal 6 / instrumental 12                  | YES ✔ |
- * | COST_COVER              | `edit_poster` — 4 per result                    | YES ✔ |
+ * The 2026-08-12 note that used to sit here argued the duration-dependent costs
+ * should wait for the backend, because `TBD-CC-05`'s own wording is "由後端回傳
+ * 而非 hardcode". That reasoning conflated two different things and cost us a
+ * wrong price on every MV for a week:
  *
- * ⚠️ DP's `ModeModal` comp hardcodes "20 Credits" / "200 Credits", which happen
- * to match the two placeholders below. When the real values land they will
- * diverge from the comp — `DESIGNER-TODO` A22.
+ *   · WHO owns the number at runtime (the backend, eventually) — still true, and
+ *     these functions are the single place that swap gets made.
+ *   · WHETHER the prototype charges the RIGHT amount today — it did not. A 30s
+ *     singing/1080p MV cost 225 in the spec and 200 here, Merge cost 10 in the
+ *     spec and 200 here, and the storyboard tier did not exist at all.
+ *
+ * `TBD-CC-06` (the payload field names) genuinely IS unresolved, but it blocks
+ * only the API CALL. It never blocked the arithmetic, and this prototype has no
+ * backend to call anyway — the balance is local. So the formulas land now.
+ *
+ * | scenario           | spec  | rule                                              |
+ * | ------------------ | ----- | ------------------------------------------------- |
+ * | AI Song            | §3.1  | flat 6 vocal / 12 instrumental                    |
+ * | Create MV          | §3.2  | `upload_song` 45 + per-second by mvType × res     |
+ * | Create Script      | §3.3  | tier by song length: 12 / 15 / 18                 |
+ * | Generate MV        | §3.4  | `from_script` 35 + the same per-second table      |
+ * | Edit MV · Recreate | §3.5  | `recreate` 8 + per-second by SHOT kind × res      |
+ * | Edit MV · Merge    | §3.6  | flat 10, any length                               |
+ * | Edit MV · Cover    | §6.1  | `edit_poster` — flat 4 per result                 |
  */
 
-/** 🔒 PLACEHOLDER. Real rule: spec 11 §3.3 — 12 / 15 / 18 by song length. */
-export const COST_STORYBOARD = 20;
-/** 🔒 PLACEHOLDER. Real rule: spec 11 §3.2 — `45 + N×sec`; a 30s singing/1080p MV is 225. */
-export const COST_RENDER = 200;
+/** UI "Standard"/"High" are the cloud-config `720p`/`1080p` tiers. */
+export type Resolution = "720p" | "1080p";
+export function resolutionOf(settings: Pick<MvSettings, "resolution">): Resolution {
+  return settings.resolution === "High" ? "1080p" : "720p";
+}
 
-// MV Edit costs. Moved here from `components/mv/MvEditor.tsx` on 2026-08-12 so
-// that all six live on the C8 contract surface (two of them previously did not).
-/** 🔒 PLACEHOLDER. Real rule: spec 11 §3.5 — `8 + N×sec`; a 5s shot is 28. */
-export const COST_REGEN = 20;
-/** ✔ REAL VALUE (2026-08-12). `edit_poster`: 4 per result. Was a 10 placeholder. */
+/** §4 — per-song sub actions, charged once per job. */
+export const COST_UPLOAD_SONG = 45;
+export const COST_FROM_SCRIPT = 35;
+export const COST_RECREATE = 8;
+
+/** §4 — `<mvType>_<res>_seedance15`, charged per second of MV. */
+const RENDER_PER_SEC: Record<MvType, Record<Resolution, number>> = {
+  singing: { "720p": 5, "1080p": 6 },
+  storytelling: { "720p": 2, "1080p": 4 },
+  hybrid: { "720p": 4, "1080p": 5 },
+};
+
+/**
+ * §4 — `sing_<res>` / `story_<res>`, charged per second of the SHOT.
+ * Note `sing` is 7 at both resolutions; that is the spec's table, not a typo.
+ */
+const SHOT_PER_SEC: Record<ShotKind, Record<Resolution, number>> = {
+  sing: { "720p": 7, "1080p": 7 },
+  story: { "720p": 2, "1080p": 4 },
+};
+
+/** §3.3 + §6.1 — `create_script_upload_song`'s three `procUnitRange` tiers. */
+const SCRIPT_TIERS: ReadonlyArray<{ maxSec: number; credits: number }> = [
+  { maxSec: 40, credits: 12 },
+  { maxSec: 120, credits: 15 },
+  { maxSec: 240, credits: 18 },
+];
+
+/** §3.3 — Create Storyboard First. Priced off the song, before any MV exists. */
+export function scriptCost(songSec: number): number {
+  const tier = SCRIPT_TIERS.find((t) => songSec <= t.maxSec);
+  // Above 240s is out of product range (§2 caps length at 240) — charge the top
+  // tier rather than returning 0, which would silently give away a render.
+  return (tier ?? SCRIPT_TIERS[SCRIPT_TIERS.length - 1]).credits;
+}
+
+/** §3.2 — Create MV Directly: `upload_song` + per-second render. */
+export function createMvCost(mvType: MvType, res: Resolution, sec: number): number {
+  return COST_UPLOAD_SONG + RENDER_PER_SEC[mvType][res] * Math.round(sec);
+}
+
+/** §3.4 — Generate MV from a storyboard. Same render rate; the script was paid for. */
+export function generateMvCost(mvType: MvType, res: Resolution, sec: number): number {
+  return COST_FROM_SCRIPT + RENDER_PER_SEC[mvType][res] * Math.round(sec);
+}
+
+/** §3.5 — one shot's Recreate. Charged per shot, never batched (§5.4). */
+export function recreateShotCost(kind: ShotKind, res: Resolution, sec: number): number {
+  return COST_RECREATE + SHOT_PER_SEC[kind][res] * Math.round(sec);
+}
+
+/**
+ * A shot's billing kind, with the fallback for storyboards that predate the
+ * field. `singing`/`storytelling` MVs are uniform; a `hybrid` alternates, which
+ * is what the mock generator writes — the real answer will come from the model.
+ */
+export function shotKind(scene: Pick<Scene, "index" | "kind">, mvType: MvType): ShotKind {
+  if (scene.kind) return scene.kind;
+  if (mvType === "singing") return "sing";
+  if (mvType === "storytelling") return "story";
+  return scene.index % 2 === 0 ? "sing" : "story";
+}
+
+/**
+ * Seconds in a scene's `range` ("00:00–00:09" → 9). Returns 0 when the string
+ * is not in that shape, so an unparseable range charges the flat `recreate` 8
+ * rather than an invented duration.
+ */
+export function sceneDurationSec(range: string): number {
+  const parts = range.split(/[–-]/).map((t) => t.trim());
+  if (parts.length !== 2) return 0;
+  const toSec = (t: string) => {
+    const m = /^(\d+):(\d{1,2})$/.exec(t);
+    return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
+  };
+  const a = toSec(parts[0]);
+  const b = toSec(parts[1]);
+  return Number.isFinite(a) && Number.isFinite(b) && b > a ? b - a : 0;
+}
+
+/** §3.6 — Merge MV: flat, any length 1–240s. */
+export const COST_MERGE = 10;
+/** §6.1 — `edit_poster`: flat 4 per result. */
 export const COST_COVER = 4;
 
 export const DEFAULT_SETTINGS: MvSettings = {

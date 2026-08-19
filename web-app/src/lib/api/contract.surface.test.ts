@@ -1,5 +1,5 @@
 // Gate G4 — RD contract surface snapshot.
-// docs/redesign-migration-plan-2026-08-01.md §9 (C1–C8) + §10 G4.
+// docs/archive/redesign-migration-plan-2026-08-01.md §9 (C1–C8) + §10 G4.
 //
 // WHY THIS FILE EXISTS
 //   RD depends on interfaces, not screens. The designer-UI migration must be a
@@ -45,14 +45,19 @@ import {
 } from "@/lib/i18n/config";
 import {
   COST_COVER,
-  COST_REGEN,
-  COST_RENDER,
+  COST_FROM_SCRIPT,
+  COST_MERGE,
+  COST_RECREATE,
   COST_SONG_INSTRUMENTAL,
   COST_SONG_VOCAL,
-  COST_STORYBOARD,
+  COST_UPLOAD_SONG,
+  createMvCost,
   DEFAULT_SETTINGS,
   DESCRIPTION_MAX,
+  generateMvCost,
   isComposeReady,
+  recreateShotCost,
+  scriptCost,
 } from "@/lib/mv/types";
 
 const SRC = join(process.cwd(), "src");
@@ -233,15 +238,36 @@ describe("C8 — domain constants (src/lib/mv/types.ts) [additive only]", () => 
     // `COST_SONG_INSTRUMENTAL` (12), because spec 11 §3.1 bills on the
     // Instrumental toggle and a Recreate is just another generation. That is a
     // C8 REMOVAL as well as an addition — logged in `docs/CHANGELOG-RD.md`.
+    //
+    // 2026-08-19 — `COST_STORYBOARD` / `COST_RENDER` / `COST_REGEN` are GONE.
+    // They were flat placeholders for rules that spec 11 prices per second and
+    // per tier, so no single number could be right. A second C8 removal, again
+    // logged in `docs/CHANGELOG-RD.md`. What is frozen now is the per-song rates
+    // and the two flat costs.
     expect({
-      COST_STORYBOARD,
-      COST_RENDER,
+      COST_UPLOAD_SONG,
+      COST_FROM_SCRIPT,
+      COST_RECREATE,
       COST_SONG_VOCAL,
       COST_SONG_INSTRUMENTAL,
-      COST_REGEN,
+      COST_MERGE,
       COST_COVER,
       DESCRIPTION_MAX,
     }).toMatchSnapshot();
+  });
+
+  it("the duration-priced rules match spec 11's worked examples", () => {
+    // Every number below is quoted verbatim from `specs/areas/11-credit-consumption.md`,
+    // so a rate table edit that drifts from the spec fails here rather than in
+    // a user's balance.
+    expect(createMvCost("singing", "1080p", 30)).toBe(225); // §3.2 `45 + 6×30`
+    expect(generateMvCost("storytelling", "720p", 30)).toBe(95); // §3.4 `35 + 2×30`
+    expect(recreateShotCost("story", "1080p", 5)).toBe(28); // §3.5 `8 + 4×5`
+    expect([scriptCost(30), scriptCost(90), scriptCost(200)]).toEqual([12, 15, 18]); // §3.3 + §6.1
+    // §3.4's note: the storyboard route costs the script plus the render. Its
+    // worked example said 110, which was the pre-§6.1 arithmetic — a 30s song
+    // now falls in the `[1,40] = 12` tier, not `15`. Spec corrected 2026-08-19.
+    expect(scriptCost(30) + generateMvCost("storytelling", "720p", 30)).toBe(107);
   });
 
   it("DEFAULT_SETTINGS is unchanged", () => {

@@ -12,6 +12,7 @@ import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { ChooseSongModal } from "./ChooseSongModal";
 import { TrimAudioModal } from "./TrimAudioModal";
 import { FacePickerModal } from "./FacePickerModal";
+import { FaceConsentDialog } from "./FaceConsentDialog";
 import { SettingsModal } from "./SettingsModal";
 import { ModeModal } from "./ModeModal";
 import { TemplateSheet } from "./TemplateSheet";
@@ -27,9 +28,11 @@ import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import { MV_TYPES, SAMPLE_FACES, TEMPLATES, formatDuration, type TemplateOption } from "@/lib/mv/mock";
 import { NEW_MVS } from "@/lib/mv/community";
+import { grantFaceConsent, hasFaceConsent } from "@/lib/mv/faceConsent";
 import {
-  COST_RENDER,
-  COST_STORYBOARD,
+  createMvCost,
+  resolutionOf,
+  scriptCost,
   DESCRIPTION_MAX,
   effectiveDurationSec,
   isComposeReady,
@@ -126,10 +129,18 @@ export function MvRoom() {
   const [trimOpen, setTrimOpen] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [faceOpen, setFaceOpen] = useState(false);
+  const [consentOpen, setConsentOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioFileRef = useRef<HTMLInputElement>(null);
 
   const ready = isComposeReady(compose);
+
+  // Spec 11 §3.2/§3.3 — both prices depend on the song's TRIMMED length, so they
+  // change when the user re-trims or swaps the track. Zero-length (no song yet)
+  // is fine: the CTA that opens this dialog is disabled until a song is chosen.
+  const mvSeconds = compose.song ? effectiveDurationSec(compose.song) : 0;
+  const storyboardCost = scriptCost(mvSeconds);
+  const directCost = createMvCost(compose.mvType, resolutionOf(compose.settings), mvSeconds);
 
   const songPlayer = useAudioPlayer({
     src: compose.song?.url,
@@ -147,6 +158,18 @@ export function MvRoom() {
     songPlayer.pause();
     setPendingSong(compose.song);
     setTrimOpen(true);
+  }
+  /**
+   * The only way the character-photo picker opens. On the first upload of the
+   * session the biometric consent notice comes first (`FaceConsentDialog`);
+   * after that this is a straight passthrough to the hidden file input.
+   */
+  function openPhotoPicker() {
+    if (!hasFaceConsent()) {
+      setConsentOpen(true);
+      return;
+    }
+    fileRef.current?.click();
   }
   function addPhotoFromFile(file: File) {
     setPendingPhoto(URL.createObjectURL(file));
@@ -201,7 +224,7 @@ export function MvRoom() {
   function selectMode(mode: MvMode) {
     // GL-01: block generation when the balance can't cover the mode's cost and
     // route to IAP (buy credits) instead of starting a job that would go negative.
-    const cost = mode === "storyboard_first" ? COST_STORYBOARD : COST_RENDER;
+    const cost = mode === "storyboard_first" ? storyboardCost : directCost;
     setModeOpen(false);
     if (credits < cost) {
       setBuyOpen(true);
@@ -508,7 +531,7 @@ export function MvRoom() {
                       <button
                         type="button"
                         className={`mv-create__photo-add mv-create__photo-add--${slot === 0 ? "primary" : "tertiary"}`}
-                        onClick={() => fileRef.current?.click()}
+                        onClick={openPhotoPicker}
                       >
                         <span className="mv-create__photo-add-circle">
                           <DpIcon name="ic_add" className="mv-create__photo-add-icon" />
@@ -699,6 +722,17 @@ export function MvRoom() {
           setTrimOpen(false);
         }}
       />
+      <FaceConsentDialog
+        open={consentOpen}
+        onClose={() => setConsentOpen(false)}
+        onContinue={() => {
+          grantFaceConsent();
+          setConsentOpen(false);
+          // The picker is a trusted-activation API, so it has to be called
+          // from inside this click's own task — not after a state flush.
+          fileRef.current?.click();
+        }}
+      />
       <FacePickerModal
         open={faceOpen}
         imageUrl={pendingPhoto}
@@ -711,7 +745,13 @@ export function MvRoom() {
         settings={compose.settings}
         onChange={(settings) => patchCompose({ settings })}
       />
-      <ModeModal open={modeOpen} onClose={() => setModeOpen(false)} onSelect={selectMode} />
+      <ModeModal
+        open={modeOpen}
+        onClose={() => setModeOpen(false)}
+        onSelect={selectMode}
+        storyboardCost={storyboardCost}
+        directCost={directCost}
+      />
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
       {toast && (
         <div

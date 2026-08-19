@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# guard-greps.sh — Gate G1-b from docs/redesign-migration-plan-2026-08-01.md §10.0.
+# guard-greps.sh — Gate G1-b from docs/archive/redesign-migration-plan-2026-08-01.md §10.0.
 #
 # Run from web-app/. Blocks (exit 2) on any hard violation; prints and passes on
 # ratchet warnings. Called by post-edit-check.sh (per edit) and stop-verify.sh

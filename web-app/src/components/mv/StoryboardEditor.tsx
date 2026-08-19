@@ -13,7 +13,12 @@ import { useCredits } from "@/components/providers/CreditsProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
-import { COST_RENDER, DESCRIPTION_MAX } from "@/lib/mv/types";
+import {
+  DESCRIPTION_MAX,
+  effectiveDurationSec,
+  generateMvCost,
+  resolutionOf,
+} from "@/lib/mv/types";
 import { formatDuration, SAMPLE_AUDIO } from "@/lib/mv/mock";
 import { buildTimedLines } from "@/lib/mv/lyrics";
 import { downloadFile } from "@/lib/download";
@@ -96,14 +101,23 @@ export function StoryboardEditor() {
   // functional for library/sample songs that carry no local URL.
   const songPlayer = useAudioPlayer({ src: compose.song?.url ?? SAMPLE_AUDIO });
 
+  // Spec 11 §3.4 — `from_script` 35 + per-second, i.e. cheaper than §3.2's
+  // direct route by exactly the 10 the script already cost. Depends on the
+  // song's trimmed length and the chosen resolution, so it is not a constant.
+  const generateCost = generateMvCost(
+    compose.mvType,
+    resolutionOf(compose.settings),
+    compose.song ? effectiveDurationSec(compose.song) : 0,
+  );
+
   function generateMv() {
     // GL-01: block the render when the balance can't cover it; route to IAP.
-    if (credits < COST_RENDER) {
+    if (credits < generateCost) {
       setBuyOpen(true);
       return;
     }
     songPlayer.pause();
-    resetForRerender();
+    resetForRerender("generate");
     router.push(localePath(locale, "/mv/creating"));
   }
 
@@ -276,7 +290,7 @@ export function StoryboardEditor() {
                   alt=""
                   className="song-create__cta-credit-icon"
                 />
-                {COST_RENDER}
+                {generateCost}
               </span>
               <DpIcon name="ic_arrow_right" className="mv-storyboard__cta-icon" />
             </button>

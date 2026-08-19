@@ -12,7 +12,7 @@
 > `/share`, which were deliberately left on the old UI. Where a UI slice deliberately diverged from
 > a criterion below, the criterion is **annotated in place rather than rewritten away** — look for
 > ⚠️ in areas 02, 03 and 07. Change log for RD: `../docs/CHANGELOG-RD.md`; the migration's own
-> record: `../docs/redesign-migration-plan.md`.
+> record: `../docs/archive/redesign-migration-plan.md`.
 
 ---
 
@@ -84,12 +84,14 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 
 ## 2. App-shell & global chrome (detail → `areas/01-app-shell.md`)
 
-- Desktop (≥640px, `sm:`): **left sidebar** nav + top bar (credits badge + account). Below 640px: **bottom tab bar**.
+- Desktop (≥768px): **left sidebar** nav + top bar (credits badge + account). Below 768px: **bottom tab bar**.
+  _(Was 640px/`sm:`. The designer-UI migration moved the phone cutover to 767px — see `AppShell.tsx` and `designer/AppLayout.css:96`. Corrected 2026-08-19 from code.)_
 - Nav destinations, credits badge, and account menu are global; area specs assume the shell is present and don't re-describe it.
 
 ## 3. Responsive model
 
-- **Code breakpoints:** only `sm:` (640px — bottom-bar → sidebar switch) and `lg:` (1024px — two-column layouts). No `md:`/`xl:`.
+- **Code breakpoints:** six tiers — 320 / 375 / 768 / 1024 / 1440 / 1920. `md:` (768px) carries the sidebar switch, `lg:` (1024px) the two-column layouts. 320px is the minimum supported width and has no query of its own.
+  _(Corrected 2026-08-19 from code: `TopBar.tsx` and `designer-overrides.css` use 768px throughout; the old "only sm:/lg:" line predates the designer-UI migration.)_
 - **Review viewports (QA screenshots):** 390 / 768 / 1024 / 1440px.
 - Every area spec's responsive AC checks these four widths for no overflow / no broken layout.
 
@@ -97,20 +99,24 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 
 - 9 locales (product codes, not BCP-47): `enu jpn kor cht chs deu fra esp ptg`. `enu` default & unprefixed.
 - Dictionaries cover **~40 keys (nav + Profile only)**; the 8 non-English files are intentionally empty stubs (English fallback per key). Everything else is hardcoded English JSX by current convention.
-- Specs are authored in English; localization QA is out of scope here → `TBD-GL-06`.
+- Specs are authored in English; localization QA is out of scope here → `TBD-GL-06` _(registered in `OPEN-QUESTIONS.md` on 2026-08-19 — it had only ever existed in this sentence)_.
 
 ## 5. Auth model 🔒
 
 - `AuthProvider` + `authStore.ts`; logged-in boolean persists to `localStorage["muse_auth"]`. Subscription/plan/profile are **in-memory only** (reset on reload).
-- `<AuthGuard>` wraps **five route entries**: `/mv/room`, `/song/create`, `/history`, `/profile`, and (since PROF-03, 2026-07-23) `/settings`. Logged-out → opens `SignInModal`; dismiss → Home.
-- **Action-level gating (GL-02, 2026-07-23):** the primary create/social actions now call `requireLogin` **at the action** — Create MV / Create Song / Like on community surfaces and publish on an MV result — synced to App F22. The route `AuthGuard` is kept as a backstop, so gating exists at both layers.
-- `/share` is **intentionally public** (`ShareLinkView` is not guarded) — recipients of a share link aren't signed in. (Intended gating to confirm → `TBD-GL-07`.)
+- `<AuthGuard>` wraps **four route entries**: `/history`, `/profile`, `/profile/credits`, and (since PROF-03, 2026-07-23) `/settings`. Logged-out → opens `SignInModal`; dismiss → Home.
+  _(Corrected 2026-08-19 from code. `/mv/room` lost its guard 2026-08-07 and `/song/create` on 2026-08-12 — both `page.tsx` files carry an explicit "No `AuthGuard` here on purpose" comment. `/profile/credits` was guarded all along but never listed.)_
+- **Action-level gating (GL-02, 2026-07-23):** the primary create/social actions now call `requireLogin` **at the action** — Create MV / Create Song / Like on community surfaces and publish on an MV result — synced to App F22. For the two **create** routes this is now the ONLY layer — their route guards were deliberately removed so guests can see the screen and are gated at the Create button (`AC-AUTH-08`). The other four routes still gate at both layers.
+- `/share` is **intentionally public** (`ShareLinkView` is not guarded) — recipients of a share link aren't signed in. (Intended gating to confirm → `TBD-GL-07` — _registered in `OPEN-QUESTIONS.md` on 2026-08-19, same omission_.)
 - Downstream flow screens (`/mv/thinking…result`, `/song/creating…result`) are **not** individually guarded — they self-redirect to the flow entry when flow state is missing (flow-guard).
 
 ## 6. Credits model 🔒
 
-- `CreditsProvider`: single in-memory balance (`DEFAULT_CREDITS = 390`), `addCredits(n)`, plus `enhanceCost`/`consumeEnhance` (SONG-04). Resets on reload; the ledger on `/profile/credits` is a static seed, not live.
-- **Real charging (GL-01, 2026-07-23):** the MV/song **flow providers** decrement on generation start — `COST_STORYBOARD=20 / COST_RENDER=200 / COST_SONG=10` (`src/lib/mv/types.ts`; song recreate `COST_SONG_RECREATE=50`) — and **refund on failure**; Edit-MV still charges its micro-ops `COST_REGEN=20 / COST_COVER=10` (in `MvEditor.tsx`). The former `COST_MERGE` was removed — Merge MV is the re-render priced at `COST_RENDER` (see the handoff reconciliation note).
+- `CreditsProvider`: single in-memory balance (`DEFAULT_CREDITS = 10`, overridable for a demo via `NEXT_PUBLIC_DEMO_CREDITS`) and `addCredits(n)`. Resets on reload; the ledger on `/profile/credits` is a static seed, not live.
+  _(Corrected 2026-08-19 from code: the balance dropped 390→10 on 2026-08-12 (`TBD-CR-06a`), and `enhanceCost`/`consumeEnhance` were removed the same day when AI Enhance became free.)_
+- **Real charging (GL-01, 2026-07-23):** the MV/song **flow providers** decrement on generation start and **refund on failure**. Constants in `src/lib/mv/types.ts`: `COST_STORYBOARD=20`, `COST_RENDER=200`, `COST_SONG_VOCAL=6` / `COST_SONG_INSTRUMENTAL=12` (song recreate is priced the same as a first render, `songRecreateCost = songCost`); Edit-MV charges its micro-ops `COST_REGEN=20` / `COST_COVER=4` in `MvEditor.tsx`. The former `COST_MERGE` was removed — Merge MV is the re-render priced at `COST_RENDER`.
+  _(Corrected 2026-08-19 from code: `COST_SONG=10` was split into vocal 6 / instrumental 12, `COST_SONG_RECREATE=50` was replaced, and `COST_COVER` went 10→4 — all on 2026-08-12.)_
+  > ⚠️ **`COST_STORYBOARD` / `COST_RENDER` / `COST_REGEN` are still placeholders and do NOT match `areas/11-credit-consumption.md`**, which prices these per-second and per-tier (e.g. a 30s singing/1080p render should be 225, not a flat 200). **11 is the authority; the code has not been brought up to it**, blocked on `TBD-CC-06`. Do not "reconcile" spec 11 down to these three numbers.
 - **Backend charging contract → `areas/11-credit-consumption.md`.** The prototype's `COST_*` constants are
   **placeholders**; the real charge is the MSR Credit Consume Form (`credit_consume: 1.0`), where each
   generation posts a main action + `subActions` and the backend sums the matching rules. Area 11 is the

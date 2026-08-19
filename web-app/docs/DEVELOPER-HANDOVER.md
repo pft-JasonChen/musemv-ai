@@ -289,7 +289,7 @@ Highlights engineers most often trip on:
   `tokens.css`; sizes as Tailwind arbitrary px (`text-[14px]`); radii via the remapped
   `rounded-*` names. New semantic color = new token in `tokens.css` consumed via `var()`.
   **Breakpoints are six tiers — 320 / 375 / 768 / 1024 / 1440 / 1920** (changed 2026-08-04,
-  `docs/redesign-migration-plan.md` §1.2); they are both the code breakpoints and the six
+  `docs/archive/redesign-migration-plan.md` §1.2); they are both the code breakpoints and the six
   screenshot widths. This replaced the old "only `sm:` (640) and `lg:` (1024)" rule, and the
   shell's phone cutover moves 640 → 768 as part of the Shell slice — until that lands you
   will still see `sm:` doing that job.
@@ -329,9 +329,9 @@ all exit 0.
 | Design tokens                           | `src/styles/tokens.css` (synced from `designer-prototype/`)                                             |
 | **UI source of truth**                  | **`../designer-prototype/`** — the designer's WEB prototype (DP). Copy its DOM and CSS; never its state |
 | Flow reference (mobile)                 | `../ycmuse-app-prototype/` — source of truth for **flow only**, not UI. Reference; never import         |
-| UI migration plan of record             | `docs/redesign-migration-plan.md`                                                                       |
+| UI migration plan of record             | `docs/archive/redesign-migration-plan.md`                                                                       |
 
 > **Two prototypes, two jobs — confusing them has already produced one wrong conclusion here.**
 > The last row used to read "Source-of-truth mobile prototype", which was true when written and
 > became misleading on 2026-08-04: the mobile prototype still defines **flow**, but the new **UI**
-> now comes from the designer's web prototype. See `docs/UI-INTEGRATION-HANDOFF.md` §0.
+> now comes from the designer's web prototype. See `docs/archive/UI-INTEGRATION-HANDOFF.md` §0.

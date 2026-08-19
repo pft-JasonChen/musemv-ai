@@ -3,12 +3,16 @@
 
 import { MvSheet } from "./MvSheet";
 import { DpIcon } from "@/components/ui/DpIcon";
-import { COST_RENDER, COST_STORYBOARD, type MvMode } from "@/lib/mv/types";
+import type { MvMode } from "@/lib/mv/types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSelect: (mode: MvMode) => void;
+  /** Spec 11 §3.3 — tiered on the song's trimmed length. */
+  storyboardCost: number;
+  /** Spec 11 §3.2 — `45 + N×sec`, N from MV type × resolution. */
+  directCost: number;
 }
 
 /**
@@ -24,17 +28,23 @@ interface Props {
  *
  * ── S20: THE CREDIT COSTS COME FROM WA, NOT FROM DP'S MARKUP ────────────────
  *
- * DP hardcodes "20 Credits" and "200 Credits". They happen to agree with
- * `COST_STORYBOARD` / `COST_RENDER` today, which is exactly how a hardcoded
- * number survives a review and then silently diverges — the Credits IAP slice
- * (3f) found DP's prices already wrong in two places. Both numbers are
- * interpolated from the domain constants that the provider actually charges.
+ * DP hardcodes "20 Credits" and "200 Credits". They used to agree with the two
+ * placeholder constants, which is exactly how a hardcoded number survives a
+ * review and then silently diverges — the Credits IAP slice (3f) found DP's
+ * prices already wrong in two places.
+ *
+ * Since 2026-08-19 they are not constants at all: spec 11 prices both scenarios
+ * from the SONG's trimmed length (and the direct render also from MV type and
+ * resolution), so the same dialog shows different numbers for a 30s and a 60s
+ * track. The caller computes them and passes them in — this sheet stays
+ * presentational. DP's two literals are now wrong at essentially every length,
+ * which is `DESIGNER-TODO` A24.
  *
  * Both tag icons are real `<img>`: `.mv-mode-card__tag-icon` sets width and
  * height and nothing else, so a mask span there has no background to clip. The
  * card icons above them ARE masks (`background-color: currentColor`).
  */
-export function ModeModal({ open, onClose, onSelect }: Props) {
+export function ModeModal({ open, onClose, onSelect, storyboardCost, directCost }: Props) {
   return (
     <MvSheet
       open={open}
@@ -67,7 +77,7 @@ export function ModeModal({ open, onClose, onSelect }: Props) {
           </span>
           <span className="mv-mode-card__tag mv-mode-card__tag--credit">
             <img src="/assets/icons/ui/ic_credit.svg" alt="" className="mv-mode-card__tag-icon" />{" "}
-            {COST_STORYBOARD} Credits
+            {storyboardCost} Credits
           </span>
         </div>
       </button>
@@ -85,7 +95,7 @@ export function ModeModal({ open, onClose, onSelect }: Props) {
           </span>
           <span className="mv-mode-card__tag mv-mode-card__tag--credit">
             <img src="/assets/icons/ui/ic_credit.svg" alt="" className="mv-mode-card__tag-icon" />{" "}
-            {COST_RENDER} Credits
+            {directCost} Credits
           </span>
         </div>
       </button>

@@ -1,5 +1,5 @@
 // Gate G5-d — the 10 behaviour regressions.
-// docs/redesign-migration-plan-2026-08-01.md §10 G5-d.
+// docs/archive/redesign-migration-plan-2026-08-01.md §10 G5-d.
 //
 // WHY THIS FILE EXISTS
 //   The plan lists 10 behaviours the designer prototype (DP) has NONE of, and says
@@ -27,7 +27,7 @@
 
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { COST_REGEN, COST_RENDER, COST_STORYBOARD } from "../src/lib/mv/types";
+import { COST_MERGE, COST_RECREATE } from "../src/lib/mv/types";
 import { DEFAULT_CREDITS } from "../src/lib/user";
 import { DEFAULT_LOCALE, HTML_LANG, LOCALES, localePath } from "../src/lib/i18n/config";
 
@@ -115,16 +115,55 @@ function trimConfirm(page: Page) {
     .getByRole("button", { name: "Confirm", exact: true });
 }
 
+
+/** A locator's box once it has stopped moving — see the `.song-bar` note below. */
+async function settledBox(loc: ReturnType<Page["locator"]>) {
+  let prev = await loc.boundingBox();
+  for (let i = 0; i < 20; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+    const next = await loc.boundingBox();
+    if (prev && next && prev.x === next.x && prev.y === next.y && prev.width === next.width) {
+      return next;
+    }
+    prev = next;
+  }
+  expect(prev, "the bar never settled").not.toBeNull();
+  return prev!;
+}
+
 /** Kick off a storyboard-first generation from a composed MV room. */
 async function startStoryboard(page: Page) {
   await page.getByRole("button", { name: "Create Music Video" }).click();
   await page.getByText("Create Storyboard First").click();
 }
 
+/**
+ * The credit number a control is SHOWING, as an integer.
+ *
+ * Since 2026-08-19 none of the MV prices is a constant — spec 11 bills per
+ * second of the trimmed song and per resolution tier, so the same dialog says
+ * different things for different tracks. Tests therefore assert the invariant
+ * that actually matters, "you are charged exactly what the button said", rather
+ * than re-implementing the price table and drifting from it.
+ */
+async function shownCost(page: Page, selector: string): Promise<number> {
+  const loc = page.locator(selector);
+  await loc.first().waitFor({ state: "attached" });
+  // `textContent`, not `innerText`: some of these badges live inside a
+  // `FloatingCTA` that is not laid out at every width, and `innerText` returns
+  // "" for anything the layout engine skipped. The number is still the contract.
+  const texts = await loc.allTextContents();
+  for (const t of texts) {
+    const n = /(\d+)/.exec(t.replace(/[\s,]/g, ""));
+    if (n) return Number(n[1]);
+  }
+  throw new Error(`no credit number found in ${JSON.stringify(texts)} (${selector})`);
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // G5-d #1 — credits are charged, and refunded when the job fails
 // ════════════════════════════════════════════════════════════════════════════
-test("G5-d#1 charges COST_STORYBOARD then COST_RENDER at job start", async ({ page }) => {
+test("G5-d#1 charges the script then the render, exactly as displayed", async ({ page }) => {
   test.slow(); // two full mock generations
   await login(page);
   await page.goto("/mv/room");
@@ -132,18 +171,26 @@ test("G5-d#1 charges COST_STORYBOARD then COST_RENDER at job start", async ({ pa
   const before = await balance(page);
 
   await composeMv(page);
-  await startStoryboard(page);
+
+  // Read the price off the dialog BEFORE committing to it (spec 11 §3.3).
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  const scriptPrice = await shownCost(page, ".mv-mode-card__tag--credit");
+  await page.getByText("Create Storyboard First").click();
+
   await page.waitForURL("**/mv/storyboard");
   const afterStoryboard = await balance(page);
   expect(
     afterStoryboard,
-    `storyboard should charge exactly ${COST_STORYBOARD} (GL-01 charges at job start)`,
-  ).toBe(before - COST_STORYBOARD);
+    `storyboard should charge exactly the ${scriptPrice} it advertised (GL-01 charges at job start)`,
+  ).toBe(before - scriptPrice);
 
+  // …and again for Generate MV (§3.4), whose price is lower than a direct
+  // render by exactly the amount the script already cost.
+  const renderPrice = await shownCost(page, ".song-create__cta-credits");
   await page.getByRole("button", { name: /Create MV/ }).click();
   await page.waitForURL("**/mv/result");
-  expect(await balance(page), `render should charge exactly ${COST_RENDER}`).toBe(
-    before - COST_STORYBOARD - COST_RENDER,
+  expect(await balance(page), `render should charge exactly the ${renderPrice} it advertised`).toBe(
+    afterStoryboard - renderPrice,
   );
 });
 
@@ -160,7 +207,7 @@ test("G5-d#1 refunds the charge when the job fails", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
   await expect
     .poll(() => balance(page), {
-      message: `failed job must refund ${COST_STORYBOARD} so the "credits were not charged" copy stays true`,
+      message: 'a failed job must refund the full charge so the "credits were not charged" copy stays true',
     })
     .toBe(before);
 });
@@ -171,13 +218,17 @@ test("G5-d#1 refunds the charge when the job fails", async ({ page }) => {
 // GL-01, enforced in MvRoom.selectMode() — NOT in MvFlowProvider. The provider's
 // startStoryboard/startRender charge unconditionally; the balance check lives one
 // level up, at the point the user picks a mode:
-//     const cost = mode === "storyboard_first" ? COST_STORYBOARD : COST_RENDER;
+//     const cost = mode === "storyboard_first" ? storyboardCost : directCost;
 //     if (credits < cost) { setBuyOpen(true); return; }
 // Reading only the provider makes it look like there is no guard. There is.
 //
-// The arithmetic makes this cheap to reach: DEFAULT_CREDITS 390 − COST_STORYBOARD 20
-// − COST_RENDER 200 = 170, which is already under COST_RENDER, so the very next
-// render attempt must be refused. No draining loop needed.
+// REWRITTEN 2026-08-19, and it was already RED before that. The test drove two
+// full generations to drain the balance, on the arithmetic "DEFAULT_CREDITS 390
+// − 20 − 200 = 170". `DEFAULT_CREDITS` became **10** on 2026-08-12 and this test
+// never called `fundAccount`, so it could not afford the FIRST job and timed out
+// waiting for `/mv/storyboard`. Nothing about the drain was needed any more: a
+// free account is already below every price, so the test now asserts the refusal
+// directly. (Found by the spec audit's follow-up, after the two `3c` failures.)
 //
 // Every hop below is a CLIENT-SIDE click on purpose: CreditsProvider keeps the
 // balance in plain useState (DEVELOPER-HANDOVER §6 "Persistence asymmetry"), so any
@@ -190,19 +241,20 @@ test("G5-d#2 insufficient balance routes to IAP instead of generating", async ({
   const before = await balance(page);
 
   await composeMv(page);
-  await startStoryboard(page);
-  await page.waitForURL("**/mv/storyboard");
-  await page.getByRole("button", { name: /Create MV/ }).click();
-  await page.waitForURL("**/mv/result");
 
-  const left = await balance(page);
-  expect(left).toBe(before - COST_STORYBOARD - COST_RENDER);
-  expect(left, "precondition: the next render must be unaffordable").toBeLessThan(COST_RENDER);
-
-  // "Recreate" is router.push("/mv/room") — client-side, so the balance survives.
-  await page.getByRole("button", { name: "Recreate" }).click();
-  await page.waitForURL("**/mv/room");
+  // No draining run any more — a free account IS the low balance. Both prices on
+  // the dialog must exceed it, which is the precondition the old two-generation
+  // drain existed to manufacture.
   await page.getByRole("button", { name: "Create Music Video" }).click();
+  const prices = await page.locator(".mv-mode-card__tag--credit").allTextContents();
+  const numbers = prices.map((t) => Number(/(\d+)/.exec(t.replace(/[\s,]/g, ""))?.[1] ?? 0));
+  expect(numbers.length, "both mode cards must advertise a price").toBe(2);
+  for (const n of numbers) {
+    expect(n, `precondition: ${n} must be unaffordable on a ${before}-credit account`).toBeGreaterThan(
+      before,
+    );
+  }
+
   await page.getByText("Create MV Directly").click();
 
   // The point: no job starts, no navigation, and an IAP surface opens instead.
@@ -221,7 +273,7 @@ test("G5-d#2 insufficient balance routes to IAP instead of generating", async ({
     page.getByRole("dialog", { name: /Upgrade Your Plan|Muse Pro|Buy Credits/i }),
   ).toBeVisible();
   expect(new URL(page.url()).pathname).toBe("/mv/room");
-  expect(await balance(page), "a refused generation must not charge").toBe(left);
+  expect(await balance(page), "a refused generation must not charge").toBe(before);
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -344,6 +396,12 @@ test("G5-d#3 requireLogin: dismissing the sign-in modal returns Home", async ({ 
   // This dialog has no sticky title bar, so there is no Close button — Modal's own
   // Escape handler is the dismissal. AuthGuard passes onCancel, which router.replace()s
   // back to the locale home.
+  //
+  // Settle first (added 2026-08-19, after this flaked ~1 run in 3): `toBeVisible()`
+  // is true while the modal is still fading in, and Modal registers its `keydown`
+  // listener in an effect — so an Escape sent in that window is delivered to
+  // nothing and the test waits forever for a navigation that will never happen.
+  await page.waitForTimeout(300);
   await page.keyboard.press("Escape");
   await expect.poll(() => new URL(page.url()).pathname).toBe("/");
 });
@@ -366,6 +424,10 @@ test("G5-d#4 flow-guard: opening /mv/result with no flow state redirects to the 
 test("G5-d#5 [fail] path: job fails, Retry is offered, History shows Failed", async ({ page }) => {
   await login(page);
   await page.goto("/mv/room");
+  // Funding added 2026-08-19. `DEFAULT_CREDITS` dropped 390 → 10 on 2026-08-12
+  // and this test drives a real storyboard job, so it had been stopping at the
+  // IAP upsell ever since — red before the credit-pricing work, not because of it.
+  await fundAccount(page);
   await composeMv(page, `${MV_DESCRIPTION} ${FAIL_TRIGGER}`);
   await startStoryboard(page);
 
@@ -383,6 +445,10 @@ test("G5-d#5 [fail] path: job fails, Retry is offered, History shows Failed", as
 test("G5-d#6 polling: progress advances and reaches the storyboard", async ({ page }) => {
   await login(page);
   await page.goto("/mv/room");
+  // Funding added 2026-08-19. `DEFAULT_CREDITS` dropped 390 → 10 on 2026-08-12
+  // and this test drives a real storyboard job, so it had been stopping at the
+  // IAP upsell ever since — red before the credit-pricing work, not because of it.
+  await fundAccount(page);
   await composeMv(page);
   await startStoryboard(page);
 
@@ -472,9 +538,25 @@ test("S3 / G5-d#7 inverted: free playback is NOT capped at 30s", async ({ page }
     })
     .toBeGreaterThan(60);
 
+  // …and then for the BAR to have that duration too. Added 2026-08-19: waiting
+  // only on `audio.duration` was a race, and it failed in the one way that looks
+  // exactly like the bug this test guards. `SeekBar` computes its seek target as
+  // `pct × max`, so a click landing before `max` arrives seeks to `0 × 0.9 = 0`
+  // — a currentTime of 0, indistinguishable from "the 30s cap clamped me".
+  await expect
+    .poll(async () => Number((await bar.getAttribute("aria-valuemax")) ?? 0), {
+      message: "the seek bar itself must know the duration before it can be clicked",
+    })
+    .toBeGreaterThan(60);
+
   // Seek to ~90% by clicking the progress bar. The old player clamped this to
   // `maxPct` (30/125) and opened SubscribeModal instead.
-  const box = (await bar.boundingBox())!;
+  //
+  // `.song-bar` SLIDES IN, so a `boundingBox()` read the moment it becomes
+  // visible describes a bar that has already moved by the time the click lands —
+  // AGENTS.md's "never measure a DP overlay while it is still animating in", one
+  // component further along. Wait until two consecutive reads agree.
+  const box = await settledBox(bar);
   await page.mouse.click(box.x + box.width * 0.9, box.y + box.height / 2);
 
   await expect
@@ -492,9 +574,14 @@ test("G5-d#8 publish: MV publish confirms, then enters reviewing", async ({ page
   await login(page);
   await page.goto("/history");
 
-  // Open the row menu on the first MV entry and choose Publish.
+  // Open the row menu on the first MV entry and flip Publish.
+  //
+  // A `switch`, not a `button`: the menu row is a label plus a `ToggleSwitch`
+  // (`HistoryView.tsx:631-643`). The old `getByRole("button", …)` could never
+  // match, so this test had been red independently of anything the credit work
+  // touched — found while clearing the pre-existing failures on 2026-08-19.
   await page.getByRole("button", { name: "Options" }).first().click();
-  await page.getByRole("button", { name: /^Publish$/ }).click();
+  await page.getByRole("switch", { name: /^Publish$/ }).first().click();
 
   // HIST-04: a confirm dialog, NOT an instant toggle (DP made this instant).
   const confirm = page.getByRole("dialog", { name: "Ready to Go Public?" });
@@ -1315,15 +1402,32 @@ test("3c / A5: /settings still has a reachable back control on a phone", async (
   await expect.poll(() => new URL(page.url()).pathname).toBe("/profile");
 });
 
-test("3c: the Credits stat opens the balance breakdown instead of navigating", async ({ page }) => {
-  // DP's three stats are all <a>. WA has no /credits route — Credits is a modal —
-  // so that one is a <button>. If it ever becomes a link it would 404 silently.
+test("3c: the Credits stat reaches /profile/credits, locale prefix intact", async ({ page }) => {
+  // REWRITTEN 2026-08-19. The original assertion ("opens a dialog and stays on
+  // /profile") was written when Credits was a modal and WA had no /credits
+  // route. The designer request of 2026-08-11 made it a REAL route, and this
+  // test was never updated — so it sat red until the spec audit ran it.
+  //
+  // What is worth guarding now is not "button vs link" but the navigation
+  // itself, and specifically that it goes through `localePath()`. The tile is
+  // still a <button> doing `router.push(localePath(...))` while its two
+  // siblings are <Link>s, so it is the one stat that could silently lose the
+  // locale prefix — R-9's failure mode, invisible in English.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
+
+  // Scoped to the stats row: the header's credit pill carries aria-label
+  // "Credits" too, so an unscoped role query is a strict-mode violation.
+  const statCredits = page.locator(".account-page__stats").getByRole("button", { name: /Credits/ });
+
   await page.goto("/profile");
-  await page.getByRole("button", { name: /Credits/ }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page).toHaveURL(/\/profile$/);
+  await statCredits.click();
+  await page.waitForURL("**/profile/credits");
+
+  // The half a grep cannot see: same control, non-default locale.
+  await page.goto("/jpn/profile");
+  await statCredits.click();
+  await page.waitForURL("**/jpn/profile/credits");
 });
 
 test("3c / R-8: the migrated profile still renders through useT()", async ({ page }) => {
@@ -1343,17 +1447,24 @@ test("3c / R-8: the migrated profile still renders through useT()", async ({ pag
   await expect.poll(() => new URL(page.url()).pathname).toBe("/jpn/settings");
 });
 
-test("3c: the notification toggle survived the migration", async ({ page }) => {
-  // DP's Notifications row is a static "On" subtitle with a chevron; WA's is a
-  // real switch over real state. Copying DP verbatim would have silently
-  // downgraded a working control into decoration.
+test("3c: /profile has NO Notifications row — removed on purpose", async ({ page }) => {
+  // INVERTED 2026-08-19. This used to assert the notification switch survived
+  // the migration. The product owner then removed the row entirely on
+  // 2026-08-14 (`ProfileView.tsx:240` — the web has no push/permission flow
+  // behind it, so the control was local demo state that toggled a subtitle),
+  // and nobody updated the test, so it sat red until the spec audit ran it.
+  //
+  // Kept rather than deleted, and inverted, for the reason this repo keeps
+  // relearning: a deliberate ABSENCE that nothing asserts gets "fixed" back in
+  // by the next person who reads the old spec. Same pattern as A19/A20.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/profile");
-  const sw = page.getByRole("switch", { name: /Notifications/i });
-  await expect(sw).toHaveAttribute("aria-checked", "true");
-  await sw.click();
-  await expect(sw).toHaveAttribute("aria-checked", "false");
+
+  // The rows that ARE meant to be there, so this cannot pass on a blank page.
+  await expect(page.getByRole("button", { name: /Language/i })).toBeVisible();
+  await expect(page.getByRole("switch", { name: /Notifications/i })).toHaveCount(0);
+  await expect(page.getByText(/Notifications/i)).toHaveCount(0);
 });
 
 test("3c / G7-1: the Muse Pro row keeps a visible Subscribe CTA, not just a chevron", async ({
@@ -2548,10 +2659,14 @@ test("3j: the result still says what was generated, not just its title", async (
 /** Compose an MV, render it directly, and open the editor from the result. */
 async function openEditor(page: Page) {
   await page.goto("/mv/room");
-  // A direct render costs COST_RENDER (200) and a free account now starts on 10.
-  // Weekly (200), NOT Weekly Pro (1,000): 3k asserts the balance is UNDER the
-  // scene cost afterwards, so 210 − 200 = 10 keeps that precondition true.
-  await fundAccount(page, "weekly");
+  // Weekly Pro (1,000), not Weekly (200). Until 2026-08-19 a direct render was a
+  // flat 200 and Weekly's 210 was chosen so the leftover balance would sit UNDER
+  // the scene-recreate cost. Spec 11 §3.2 prices the render per second now — the
+  // fixture song is minutes long, so 200 no longer even covers the render and
+  // the flow stopped at the IAP instead of reaching the editor. The downstream
+  // test reads the recreate price off its own button rather than assuming a
+  // leftover, so overshooting here is safe.
+  await fundAccount(page, "weekly_pro");
   await composeMv(page);
   await page.getByRole("button", { name: "Create Music Video" }).click();
   await page.getByText("Create MV Directly").click();
@@ -2625,9 +2740,10 @@ test("3k: every mask icon on /mv/edit has something to clip", async ({ page }) =
 });
 
 test("3k / MV-08: Merge is inert until something is edited, then it costs", async ({ page }) => {
-  // DP's Merge is always live and free. WA charges COST_RENDER for a re-render,
-  // so an always-enabled Merge would let a user pay to re-render an unchanged
-  // video — the rule is WA-only and exactly the kind a reskin drops silently.
+  // DP's Merge is always live and free. WA charges for it, so an always-enabled
+  // Merge would let a user pay to re-render an unchanged video — the rule is
+  // WA-only and exactly the kind a reskin drops silently. The price is spec 11
+  // §3.6's flat `COST_MERGE`, no longer the full render cost.
   test.slow();
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
@@ -2635,7 +2751,7 @@ test("3k / MV-08: Merge is inert until something is edited, then it costs", asyn
 
   const merge = page.locator(".mv-edit__merge-btn");
   await expect(merge).toBeDisabled();
-  await expect(merge).toContainText("200");
+  await expect(merge).toContainText(String(COST_MERGE));
 
   // Any edit arms it — here, an output-settings change.
   await page.getByRole("switch", { name: "Show Watermark" }).click();
@@ -2643,14 +2759,15 @@ test("3k / MV-08: Merge is inert until something is edited, then it costs", asyn
 });
 
 test("3k / GL-01: Recreate routes to IAP when the balance cannot cover it", async ({ page }) => {
-  // Two Recreates on this screen (scene 20, cover 10) and DP charges for
-  // neither. Drain the balance with two full generations, then check the gate.
+  // Two Recreates on this screen and DP charges for neither. Drain the balance
+  // with two full generations, then check the gate. The scene price is now
+  // per-shot (spec 11 §3.5, `recreate` 8 + per-second by shot kind), so it is
+  // read off the button rather than compared to a constant.
   test.slow();
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await openEditor(page);
   const before = await balance(page);
-  expect(before, "precondition: the balance must be under the scene cost").toBeLessThan(200);
 
   // ⚠️ Recreate starts DISABLED and only enables once THIS scene's prompt has
   // actually been edited (designer request, 2026-08-11 — recreating an untouched
@@ -2664,18 +2781,22 @@ test("3k / GL-01: Recreate routes to IAP when the balance cannot cover it", asyn
   const recreate = page.locator(".mv-edit__recreate-scene");
   await expect(recreate).toBeEnabled();
 
-  // Cover recreate costs 10 and the balance is far above that, so use the
-  // scene recreate (20) only when it is genuinely unaffordable.
-  if (before < COST_REGEN) {
+  // Whatever the button says is what must happen — refused below it, charged
+  // exactly at or above it. Never less than the flat `recreate` component.
+  const scenePrice = await shownCost(page, ".mv-edit__recreate-scene .button__credits-count");
+  expect(scenePrice, "a shot recreate always includes the flat `recreate` 8").toBeGreaterThanOrEqual(
+    COST_RECREATE,
+  );
+
+  if (before < scenePrice) {
     await recreate.click();
     await expect(
       page.getByRole("dialog", { name: /Upgrade Your Plan|Muse Pro|Buy Credits/i }),
     ).toBeVisible();
     expect(await balance(page), "a refused recreate must not charge").toBe(before);
   } else {
-    // Affordable: it charges exactly COST_REGEN and records a version.
     await recreate.click();
-    await expect.poll(() => balance(page)).toBe(before - COST_REGEN);
+    await expect.poll(() => balance(page)).toBe(before - scenePrice);
   }
 });
 
@@ -3226,6 +3347,14 @@ test("AC-PROF-16: the open feedback dialog is axe-clean at 1440 and 375", async 
 
   for (const width of [1440, 375]) {
     await page.setViewportSize({ width, height: 900 });
+    // Let the mount animation finish before axe reads colours. `Modal` fades and
+    // pops in over ~.24s (`globals.css` `.anim-fade`/`.anim-pop`) and
+    // `toBeVisible()` is already true at opacity 0 — so a scan that lands mid-fade
+    // measures text against a BLENDED background and reports contrast violations
+    // that do not exist a frame later. This test passed alone and failed in a
+    // group for exactly that reason (2026-08-19); it is the same trap AGENTS.md
+    // records for the DP sheets, one component over.
+    await page.waitForTimeout(400);
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa"])
       .include('[role="dialog"]')
@@ -3235,4 +3364,202 @@ test("AC-PROF-16: the open feedback dialog is axe-clean at 1440 and 375", async 
       `axe violations at ${width}px`,
     ).toEqual([]);
   }
+});
+
+// ── MV character photo — biometric consent (product owner, 2026-08-19) ───────
+//
+// Guarded here rather than left to the visual baseline for the reason this file
+// keeps re-learning: `visual-baseline.spec.ts` captures with every overlay
+// closed, so it photographs `/mv/room` exactly the same whether this gate
+// exists or not. Every assertion below is about BEHAVIOUR the screenshots
+// cannot see.
+//
+// Mutation-tested both ways, 2026-08-19: making `openPhotoPicker` call the
+// input unconditionally reddens the first two; dropping `disabled={!checked}`
+// reddens the third; resetting `checked` on close instead of on open reddens
+// the fourth; gating `addSampleFace` reddens the fifth.
+
+/**
+ * Open `/mv/room` with a click-counter on the character-photo file input.
+ *
+ * Installed as a CAPTURING listener on `document` before first paint, not bound
+ * to the input node: leaving the route and coming back remounts that node, and
+ * a listener attached to the old one silently stops counting — which reads
+ * exactly like "the picker never opened". `preventDefault` stops the OS file
+ * dialog, which would otherwise hang the run.
+ */
+async function mvRoomWithPickerSpy(page: Page) {
+  await login(page);
+  await page.addInitScript(() => {
+    (window as unknown as { __picks: number }).__picks = 0;
+    document.addEventListener(
+      "click",
+      (e) => {
+        const t = e.target;
+        if (t instanceof HTMLInputElement && t.type === "file" && t.accept === "image/*") {
+          (window as unknown as { __picks: number }).__picks++;
+          e.preventDefault();
+        }
+      },
+      true,
+    );
+  });
+  await page.goto("/mv/room");
+  return {
+    add: page.locator(".mv-create__photo-add--primary"),
+    overlay: page.locator(".consent-dialog-overlay"),
+    picks: () => page.evaluate(() => (window as unknown as { __picks: number }).__picks),
+  };
+}
+
+test("consent: the first character-photo upload is gated, and dismissing opens nothing", async ({
+  page,
+}) => {
+  const { add, overlay, picks } = await mvRoomWithPickerSpy(page);
+
+  await add.click();
+  await expect(overlay).toHaveClass(/consent-dialog-overlay--visible/);
+  expect(await picks(), "the picker must not open behind the notice").toBe(0);
+
+  await page.keyboard.press("Escape");
+  await expect(overlay).toHaveCount(0);
+  expect(await picks(), "dismissing is not consent — still no picker").toBe(0);
+});
+
+test("consent: accepting opens the picker, and the rest of the session skips the notice", async ({
+  page,
+}) => {
+  const { add, overlay, picks } = await mvRoomWithPickerSpy(page);
+
+  await add.click();
+  await page.locator(".consent-dialog__checkbox").check();
+  await page.locator(".consent-dialog__continue").click();
+  await expect(overlay).toHaveCount(0);
+  expect(await picks()).toBe(1);
+
+  // Second upload, same session: straight through. `hasFaceConsent()` is
+  // module-scoped precisely so this survives leaving the route and coming back
+  // — but only via CLIENT-SIDE navigation. `page.goto` is a document load and
+  // resets it, which is the intended "once per session, not once per account"
+  // boundary, so this leaves and returns the way a user does.
+  await page.getByRole("link", { name: "History" }).click();
+  await page.waitForURL("**/history");
+  await page.getByRole("link", { name: "AI Music Video" }).click();
+  await page.waitForURL("**/mv/room");
+  await add.click();
+  await expect(overlay).toHaveCount(0);
+  expect(await picks()).toBe(2);
+});
+
+test("consent: CONTINUE is inert until the box is ticked", async ({ page }) => {
+  // The copy calls ticking the box "an express written consent". A CONTINUE that
+  // works without it would make that sentence describe something that never
+  // happened — so this is a product rule, not a form-validation nicety.
+  const { add } = await mvRoomWithPickerSpy(page);
+  await add.click();
+  const cont = page.locator(".consent-dialog__continue");
+  await expect(cont).toBeDisabled();
+  await page.locator(".consent-dialog__checkbox").check();
+  await expect(cont).toBeEnabled();
+});
+
+test("consent: re-opening after a dismissal starts from an unticked box", async ({ page }) => {
+  // A remembered tick would be a consent nobody gave on this showing.
+  const { add } = await mvRoomWithPickerSpy(page);
+  await add.click();
+  await page.locator(".consent-dialog__checkbox").check();
+  await page.locator(".consent-dialog__close").click();
+  await expect(page.locator(".consent-dialog-overlay")).toHaveCount(0);
+
+  await add.click();
+  await expect(page.locator(".consent-dialog__checkbox")).not.toBeChecked();
+});
+
+test("consent: Sample Photos are NOT gated — they are ours, not the user's face", async ({
+  page,
+}) => {
+  // Deliberate asymmetry (product owner, 2026-08-19). Bundled sample faces carry
+  // no Biometric Data of the user's, so there is nothing for the notice to be
+  // consent over. Asserted so nobody "fixes" the inconsistency without asking.
+  const { overlay, picks } = await mvRoomWithPickerSpy(page);
+  await page.locator(".mv-create__sample").first().click();
+  await expect(page.locator(".mv-create__photo-name")).toHaveCount(1);
+  await expect(overlay).toHaveCount(0);
+  expect(await picks(), "a sample never touches the file input").toBe(0);
+});
+
+test("consent: the open notice is axe-clean at 1440 and 375", async ({ page }) => {
+  // `a11y.spec.ts` cannot cover this: it seeds no auth and sets no viewport, and
+  // it only ever visits pages with every overlay closed. Both widths, because at
+  // 375 the card caps against the viewport and scrolls its body — a different
+  // layout, not a smaller one.
+  const { add } = await mvRoomWithPickerSpy(page);
+  await add.click();
+  await expect(page.locator(".consent-dialog-overlay")).toHaveClass(
+    /consent-dialog-overlay--visible/,
+  );
+
+  for (const width of [1440, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .include(".consent-dialog")
+      .analyze();
+    expect(
+      results.violations.map((v) => `${v.id}: ${v.nodes.length}`),
+      `axe violations at ${width}px`,
+    ).toEqual([]);
+  }
+});
+
+// ── TODO#8: two defects the 2026-08-19 spec audit found ─────────────────────
+//
+// Both are cases where the SPEC was already right and the CODE had drifted, so
+// neither was fixed by editing a document. Guards written the way this file
+// keeps learning to write them: assert the product rule, not the markup.
+
+test("TODO#8a: a guest liking a Home song rail row is gated, not silently accepted", async ({
+  page,
+}) => {
+  // GL-02 / AC-EXP-08 / EXP-E2. `ui/ListItem` used to own `liked` in its own
+  // `useState` and flip it directly — the only community like control in the
+  // app that never called `requireLogin`. A guest could like a song and the UI
+  // pretended it had worked. Like is controlled by the caller now.
+  //
+  // NO login() here on purpose — arriving as a guest is the whole test.
+  await page.goto("/");
+  const row = page.locator(".new-songs__item").first();
+  await row.scrollIntoViewIfNeeded();
+
+  const like = row.getByRole("button", { name: /^Like$/ });
+  await expect(like).toHaveAttribute("aria-pressed", "false");
+
+  await like.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  // and the like did NOT go through behind the modal
+  await expect(like).toHaveAttribute("aria-pressed", "false");
+});
+
+test("TODO#8b: a song with no lyrics offers no Lyrics affordance at all", async ({ page }) => {
+  // AC-SONG-06 / SONG-P3-S2 both say the sheet appears only WHEN LYRICS EXIST.
+  // `FALLBACK_LYRICS` meant a Simple-mode song — which has none — opened a sheet
+  // of generic filler presented as the user's own words.
+  //
+  // Drives the real create flow rather than seeding state: the point is a song
+  // that genuinely has no lyrics, and Simple mode is how a user makes one.
+  await login(page);
+  await page.goto("/song/create");
+  await page
+    .getByPlaceholder(/A bittersweet love song/)
+    .fill("An instrumental-feeling summer anthem about chasing dreams.");
+  await page.getByRole("button", { name: /Create Song/ }).click();
+  await page.waitForURL("**/song/result", { timeout: 20000 });
+
+  // The stage rendered — so a missing Lyrics button is absence, not a blank page.
+  await expect(page.getByRole("button", { name: "Use in Music Video" })).toBeVisible();
+
+  await expect(page.getByRole("button", { name: "Lyrics" })).toHaveCount(0);
+  await expect(page.locator(".song-result__lyrics-inline")).toHaveCount(0);
+  // and none of the retired filler survives anywhere on the page
+  await expect(page.getByText(/Hold this afterglow/i)).toHaveCount(0);
 });

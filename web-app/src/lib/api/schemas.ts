@@ -59,11 +59,26 @@ export type MvMode = z.infer<typeof MvModeSchema>;
 export const MvJobStatusSchema = z.enum(["idle", "queued", "processing", "done", "failed"]);
 export type MvJobStatus = z.infer<typeof MvJobStatusSchema>;
 
+/**
+ * Which per-second rate a shot's Recreate is charged at (spec 11 §3.5).
+ * Deliberately NOT `MvType`: the spec prices a shot by ITS OWN kind, not the
+ * MV's, which is why a Hybrid MV carries both — singing passages bill `sing_*`,
+ * narrative ones `story_*`. There is no `hybrid_*` shot rate.
+ */
+export const ShotKindSchema = z.enum(["sing", "story"]);
+export type ShotKind = z.infer<typeof ShotKindSchema>;
+
 export const SceneSchema = z.object({
   id: z.string(),
   index: z.number(),
   range: z.string(), // e.g. "00:00–00:09"
   text: z.string(),
+  /**
+   * Optional so a storyboard persisted before 2026-08-19 still `.parse()`s;
+   * `shotKind()` in `lib/mv/types.ts` supplies the fallback. New storyboards
+   * always carry it.
+   */
+  kind: ShotKindSchema.optional(),
 });
 export type Scene = z.infer<typeof SceneSchema>;
 

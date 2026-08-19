@@ -38,7 +38,7 @@ public `/share` page which renders bare.
 screens the shell links to (areas 05/06).
 
 **Key divergences from the app:** brand wordmark is now **"YouCam Muse"** everywhere (SHELL-01, synced
-to app, 2026-07-23); nav is a 5-item sidebar (Home · Create MV · Create Song · History · Profile) with
+to app, 2026-07-23); nav is a 4-item sidebar (Home · Create MV · Create Song · History) plus a signed-in profile footer, matching DP _(corrected 2026-08-19)_, with
 **no "＋ Create" FAB** (app F02 bottom bar = Explore · ＋Create · History) ⚠️; account is a **dropdown
 menu**, not the app's full-screen Account sheet — it now includes **Notifications** and **Send
 Feedback** rows (SHELL-03, UI-only) alongside Profile / My Creations / Sign Out.
@@ -96,7 +96,7 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
   with **Buy Credits**, and rows **Profile** (`/profile`), **My Creations** (`/history`),
   **Notifications** + **Send Feedback** (SHELL-03 — inert UI, wiring is backend `PROF-01/02`), and
   **Sign Out** (`signOut()`). Closes on outside-click / Escape.
-- **Responsive:** sidebar shown at `sm:` and up; bottom bar below `sm:`; `<main>` gets `pb-20` on
+- **Responsive:** sidebar shown at 768px and up; bottom bar below it. _(Corrected 2026-08-19: the cutover moved from `sm:`/640px to 767px in the designer-UI migration, and the bottom clearance is no longer a Tailwind `pb-20` on `<main>` — it comes from `.app-layout` in `styles/designer/AppLayout.css`.)_ `<main>` formerly got `pb-20` on
   mobile to clear the bottom bar (`AppShell.tsx:19`).
 - 🔒 All of `credits`, `profile`, `subscribed` are in-memory (reset on reload; see overview §5/§6).
 
@@ -143,15 +143,15 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 
 ## 6. Acceptance criteria (EARS)
 
-- **AC-SHELL-01** — WHILE viewport ≥768px, THE SYSTEM SHALL show the left sidebar with its five destinations; WHILE <768px, the bottom tab bar with **three** (Explore / Create / History). _(visual)_
+- **AC-SHELL-01** — WHILE viewport ≥768px, THE SYSTEM SHALL show the left sidebar with its five destinations; WHILE <768px, the bottom tab bar with **three** (Explore / Create / History). _(visual)_ _(Corrected 2026-08-19: **DP puts Profile in a sidebar FOOTER (`sidebar__bottom` → `/account`), not in the nav list**, and WA matches it — `Sidebar.tsx` renders four nav destinations plus a footer profile row that appears once signed in. WA's extra condition (hidden for guests) is deliberate: a guest already has Sign In in the header, so a second entry point that only opens the same modal is duplication. The "5-item sidebar" wording predates the designer migration.)_
   > **Rewritten 2026-08-12.** Was "≥640px … <640px … both with the same five destinations" — wrong on both counts after the designer migration. The cutover is `PHONE_QUERY = "(max-width: 767px)"`, and `MobileTabBar` carries three items, not five. Profile is not on the phone bar; it is reached from `MobileHeader`'s account button. Following DP, accepted 2026-08-12.
 - **AC-SHELL-02** — WHEN a nav item is clicked, THE SYSTEM SHALL navigate to that route under the active locale prefix and reflect the active item.
-- **AC-SHELL-03** — WHEN a logged-out user clicks a gated nav item (`/mv/room`, `/song/create`, `/history`, `/profile`), THE SYSTEM SHALL open the sign-in modal and, on success, proceed to the queued route.
+- **AC-SHELL-03** — WHEN a logged-out user clicks a gated nav item (`/mv/room`, `/song/create`, `/history`, `/profile`), THE SYSTEM SHALL open the sign-in modal and, on success, proceed to the queued route. _(Corrected 2026-08-19: `/mv/room` and `/song/create` are NOT in `Sidebar`'s `GATED` set — their route guards were removed 2026-08-07 / 2026-08-12 and the gate moved to the Create button. §3's "Corrected 2026-08-12" note already said so; this criterion did not.)_
 - **AC-SHELL-04** — WHILE logged out, THE SYSTEM SHALL show a **Sign In** button in the top bar and no credits badge/avatar.
 - **AC-SHELL-05** — WHILE logged in, THE SYSTEM SHALL show the credits badge (current balance) and the avatar; and WHEN `subscribed`, render the avatar with the gold ring and a **PRO** badge in the menu.
 - **AC-SHELL-06** — WHEN the avatar is clicked, THE SYSTEM SHALL open the account menu exposing Buy Credits, Profile, My Creations, Notifications, Send Feedback, and Sign Out; and close it on outside-click or Escape.
 - **AC-SHELL-07** — WHEN the path starts with `/share`, THE SYSTEM SHALL render the page bare (no sidebar/top bar).
-- **AC-SHELL-08** — THE SYSTEM SHALL render the shell at 390/768/1024/1440px with no overflow and the correct bar (bottom vs side) at the **767px** switch. _(visual)_
+- **AC-SHELL-08** — THE SYSTEM SHALL render the shell at 320/375/768/1024/1440/1920px with no overflow and the correct bar (bottom vs side) at the **767px** switch. _(visual)_ _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
   > **Corrected 2026-08-12** — was "640px". Note 768 is both a review viewport and the first width on the sidebar side of the cutover, so it exercises the boundary directly.
 
 ---

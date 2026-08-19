@@ -184,7 +184,11 @@ Sub-action 機制的設計理由（避免組合爆炸、子服務可獨立複用
 
 **計算：** `35 + 2 × x sec`　→ 30 秒 MV = **95 點**
 
-> **走 storyboard 路線的總花費** = 3.3 + 3.4（例：15 + 95 = 110），比 3.2 直接生成多出腳本費用。
+> **走 storyboard 路線的總花費** = 3.3 + 3.4。以 30 秒 storytelling/720p 為例：
+> 腳本 **12**（30s 落在 §6.1 新增的 `[1,40]` 級距）+ 生成 **95** = **107**。
+>
+> _修正 2026-08-19：原本寫「15 + 95 = 110」，那是 §6.1 補上 `[1,40] = 12` 之前的算法 ——
+> 30 秒的歌現在是 12 不是 15，所以這份文件的兩節互相矛盾。以級距表為準。_
 
 ---
 
@@ -270,8 +274,8 @@ Sub-action 機制的設計理由（避免組合爆炸、子服務可獨立複用
 4. 每個 shot 的 Recreate 是**獨立一次扣點**，不合併計算。
 5. **AI Enhance / Refine prompt 不扣點** — description、visual style、scene prompt、cover description、
    歌詞 Refine 等 prompt 優化操作皆為免費，**不呼叫本 API**。
-   ⚠️ web prototype 目前實作為「每 session 首次免費、之後 1 點」（`enhanceCost`/`consumeEnhance`），
-   與此決議不符，需移除（`TBD-CC-05`）。
+   ~~⚠️ web prototype 目前實作為「每 session 首次免費、之後 1 點」~~ ✅ **已於 2026-08-12 移除**
+   （`enhanceCost`/`consumeEnhance` 已自 `useCredits` 刪除，`EnhanceButton` 也不再顯示點數）。
 
 ---
 
@@ -299,9 +303,8 @@ ai_song_custom_vocal_refine                                          ← 移除
 | **`create_script_upload_song`（新增級距）** | 原本 `[1,120] = 15` / `[121,240] = 18`；現在多一段 **`[1,40] = 12`**，即 40 秒以內的短歌從 15 降為 12。 |
 | **`consumedType`** | 23 個 action 全部 `"duration"` → `"credit"`。見 §「數量由誰提供」。 |
 
-**prototype 對照：** `COST_COVER`（`src/lib/mv/types.ts`，2026-08-12 從 `MvEditor.tsx` 搬入 C8）
-目前寫死 **10**，而 `edit_poster` 的權威值是 **4**。與其他五個 `COST_*` 一樣屬於
-`TBD-CC-05` 要重算的 placeholder，**本次不改數值**——搬移只是把它納入 C8 契約面。
+**prototype 對照（更新 2026-08-19）：** `COST_COVER` 已是權威值 **4**。所有 placeholder
+都已依本規格重算，見 §7 的 `TBD-CC-05`。
 
 ---
 
@@ -311,8 +314,8 @@ ai_song_custom_vocal_refine                                          ← 移除
 |---|---|
 | ~~**TBD-CC-01**~~ | ✅ **2026-08-12 結案** — config 已補回 `[1,40] = 12` 那一階，三階與 PDF 一致（12 / 15 / 18）。 |
 | ~~**TBD-CC-02**~~ | ✅ **2026-08-12 結案** — 後端補上了 **`edit_poster`**，就是 Edit MV 封面 Recreate 的 action（每次 4 點）。仍待後台修正規則形狀，見 §6.1。 |
-| **TBD-CC-06** | 🔴 **前端要帶數量／秒數，但欄位名與格式未定。** `consumedType` 改為 `"credit"` 後，產品負責人確認前端須自行在 payload 帶數量／秒數（原本由後端從 task 取得）。**這是介面契約變更**：需要 RD 給出欄位名、單位（秒?幀?結果數?）、以及委派型 action（`create_mv`/`generate_mv`/`edit_mv`）的數量要對應到哪一個 sub action。在定案前前端無法實作扣點呼叫。 |
-| **TBD-CC-05** | Prototype 目前的 placeholder 點數（`COST_STORYBOARD=20` / `COST_RENDER=200` / `COST_SONG=10` / `COST_SONG_RECREATE=50` / `COST_REGEN=20` / `COST_COVER=10`）與本規格不符 — 需依本文重算，並改為由後端回傳而非 hardcode；同時移除 AI Enhance 的 1 點收費（`enhanceCost`/`consumeEnhance`，見 §5.5）。 |
+| **TBD-CC-06** | 🔴 **前端要帶數量／秒數，但欄位名與格式未定。**（2026-08-19 註：此項**只擋 API 呼叫**，不擋計價。prototype 的餘額是本機的，四個計價函式已依本規格算出正確點數；待定的是送給後端時的欄位名。） `consumedType` 改為 `"credit"` 後，產品負責人確認前端須自行在 payload 帶數量／秒數（原本由後端從 task 取得）。**這是介面契約變更**：需要 RD 給出欄位名、單位（秒?幀?結果數?）、以及委派型 action（`create_mv`/`generate_mv`/`edit_mv`）的數量要對應到哪一個 sub action。在定案前前端無法實作扣點呼叫。 |
+| ~~**TBD-CC-05**~~ | ✅ **2026-08-19 結案。** 六個 placeholder 已全數依本規格重算：`COST_SONG` → 6/12（2026-08-12）· `COST_SONG_RECREATE` → 與首次生成同價（2026-08-12）· `COST_COVER` → 4（2026-08-12）· `COST_STORYBOARD` / `COST_RENDER` / `COST_REGEN` → **刪除**，改為 `scriptCost()` / `createMvCost()` / `generateMvCost()` / `recreateShotCost()` 四個依本規格計算的函式（2026-08-19）。AI Enhance 的 1 點收費也已移除。**「改為由後端回傳」仍未做，但那四個函式就是唯一的替換點**——`contract.surface.test.ts` 用本文的計算範例（225 / 95 / 28 / 12·15·18）鎖住它們。詳見 `docs/CHANGELOG-RD.md` 2026-08-19。 |
 
 **已結案：** ~~TBD-CC-03~~（AI Enhance 不扣點，見 §5.5）·
 ~~TBD-CC-04~~（產品上限 240s，級距已完整涵蓋，見 §2）· ~~`simpe` 拼字~~（後端已修正，見 §3.1）。

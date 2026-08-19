@@ -1,5 +1,5 @@
 // Gate G2-c / G5-a — six-width visual baseline.
-// docs/redesign-migration-plan-2026-08-01.md §10.0, §11 Phase 0 step 2, G2-c, G5-a.
+// docs/archive/redesign-migration-plan-2026-08-01.md §10.0, §11 Phase 0 step 2, G2-c, G5-a.
 //
 // WHAT THIS IS
 //   Phase 0 step 2: "WA 現況在 320/375/768/1024/1440/1920 截圖存檔 → Phase 0 baseline."

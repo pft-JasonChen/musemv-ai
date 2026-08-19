@@ -2,7 +2,7 @@
 
 ## In flight — read before starting
 
-> ## → START WITH `docs/NEXT-SESSION.md`
+> ## → START WITH `docs/archive/NEXT-SESSION.md`
 >
 > Rewritten 2026-08-07 so a fresh session does not have to re-derive anything. It carries the
 > state of play, the standing scope rule, the recommended order of the remaining work, and — in
@@ -54,7 +54,7 @@ decisions, not slipped work.
 byte-identical to drop 1; 13 of 33 gated stylesheets moved and are re-copied, and `SongPlayBar.css`
 joined the set (**34/34 verbatim**). Two of those 13 assumed DOM WA did not have and broke a screen
 each — `/explore/mvs` blank on phones, `/song/play`'s desktop player unstyled. **Both are fixed;
-`docs/NEXT-SESSION.md` §2.0 is the record.** Three things from it are worth carrying:
+`docs/archive/NEXT-SESSION.md` §2.0 is the record.** Three things from it are worth carrying:
 
 - **The desktop song row now NAVIGATES**, reversing slice 3b one day after it shipped.
   `AC-EXP-03` and its e2e assertion moved together — a passing test had pinned the old decision.
@@ -78,17 +78,17 @@ measured a 375×50 bar with neither tabs nor a way back — typecheck, lint, vit
 guard-greps and designer-css were all green through it. **When a drop lands, re-read every entry
 in `designer-overrides.css` against the new CSS, not just the diff of the copied files.**
 A5 is closed by this drop and WA's `phoneBack` workaround is deleted; details in
-`docs/DESIGNER-TODO.md` A5 and `docs/NEXT-SESSION.md` §2.
+`docs/DESIGNER-TODO.md` A5 and `docs/archive/NEXT-SESSION.md` §2.
 
 **The designer-UI migration is live.** The package landed 2026-08-04 and is vendored at
 `../designer-prototype/` (DP). Read in this order:
 
-1. **`docs/redesign-migration-plan.md`** — the **plan of record**. §1 is what was decided and
+1. **`docs/archive/redesign-migration-plan.md`** — the **plan of record**. §1 is what was decided and
    why; §2 is scope; §3 is the nine open items; §4 is the phase/slice order. R-1…R-9 and the
    S1–S20 spec differences are **answered here** — earlier documents state them as open.
-2. **`docs/UI-INTEGRATION-HANDOFF.md`** — still the best orientation to what the gates catch
+2. **`docs/archive/UI-INTEGRATION-HANDOFF.md`** — still the best orientation to what the gates catch
    and how the three prototypes differ (§0 and §2). Its §5 decision queue is now closed.
-3. `docs/redesign-migration-plan-2026-08-01.md` — background and derivation only. Its §9
+3. `docs/archive/redesign-migration-plan-2026-08-01.md` — background and derivation only. Its §9
    (RD contract C1–C8) and §10 (gates G1–G7) remain in force; its judgements do not.
 
 **Where it is up to (2026-08-07, seventh handoff).** Phases 0 / 1 / 1.5 / 2a / 2b are done and
@@ -112,7 +112,7 @@ eager glob — **a glob that matches nothing does not throw, it yields `[]`**, s
 Supply both and all six widths render. The upstream fix is to ship the assets (DESIGNER-TODO A12).
 
 **SEVEN DP MISMATCHES CAME BACK FROM THE PRODUCT OWNER AFTER PHASE 3 MERGED (2026-08-06), AND
-ALL SEVEN WERE INVISIBLE TO EVERY GATE.** The full table is `docs/PHASE-3-ACCEPTANCE.md` §8. Three
+ALL SEVEN WERE INVISIBLE TO EVERY GATE.** The full table is `docs/archive/PHASE-3-ACCEPTANCE.md` §8. Three
 lessons are worth carrying into the next slice rather than re-deriving:
 
 - **A scope decision that changes what the user sees is a product decision.** Four of the seven
@@ -149,7 +149,7 @@ detail that looks like leftover but is not: the Simple describe box now renders 
 `.song-create__input-actions` div, because `.song-create__input-footer` is
 `justify-content: space-between` and with one child the Enhance/count group slides left.
 
-**ACCEPTANCE IS PART-DONE. The full record is `docs/PHASE-3-ACCEPTANCE.md` — read it before
+**ACCEPTANCE IS PART-DONE. The full record is `docs/archive/PHASE-3-ACCEPTANCE.md` — read it before
 re-running anything.** Two of the three reviews are complete and their verdicts are in that file:
 
 - **G5-b design (V1–V6): PASS except V3** (`/creator` rows collide at 768 → DESIGNER-TODO **A17**)
@@ -365,6 +365,16 @@ a detail screen:**
   migrating a screen, diff it against its `AC-*` acceptance criteria, not just against DP.
 
 ## Error log (one line per user correction; fold recurring lessons into an AGENTS.md rule)
+
+- 2026-08-19: blocked Stop with "port 3100 is already used" — occurrence SIX. I did not run
+  `npm run e2e`, so I thought I was inside the rule; I ran ONE spec file with `--grep`, which the
+  rule explicitly permits. But the grep was an inverted match that selected ~110 of the file's 141
+  tests, so it behaved exactly like a full run: it blew past the 10-minute Bash cap, was
+  auto-backgrounded, and was still holding the port when the hook fired. **The rule's real
+  boundary is RUNTIME, not the shape of the command.** Rule sharpened in `AGENTS.md`: a targeted
+  run must name the tests it wants and finish in about a minute; if you cannot predict the count,
+  it is a full run and belongs to the hook. Also: killing the run to free the port throws its
+  results away, so it never bought anything.
 
 - 2026-08-12: ran `npm run e2e` from the session twice; both times it was auto-backgrounded at the
   10-minute Bash cap and its `next start -p 3100` was still holding the port when the Stop hook fired

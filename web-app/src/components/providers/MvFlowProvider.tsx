@@ -9,8 +9,12 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { api, pollJob } from "@/lib/api";
 import { StoryboardSchema } from "@/lib/api/schemas";
 import {
-  COST_RENDER,
-  COST_STORYBOARD,
+  createMvCost,
+  effectiveDurationSec,
+  generateMvCost,
+  resolutionOf,
+  scriptCost,
+  COST_MERGE,
   DEFAULT_COMPOSE,
   type ComposeState,
   type MvJob,
@@ -44,8 +48,16 @@ interface MvFlowValue {
   /** Discard any prior storyboard/result before generating a brand-new MV (keeps the compose form). */
   resetForNewMv: () => void;
   /** Discard the prior rendered video before re-rendering the current storyboard. */
-  resetForRerender: () => void;
+  /**
+   * Which of spec 11's three render prices the next `/mv/creating` run pays.
+   * `startRender` used to infer this from `jobId.current && storyboard`, which
+   * cannot separate Generate MV (§3.4, `35 + N×sec`) from Merge MV (§3.6, flat
+   * 10) — both arrive with a job id and a storyboard. So the caller states it.
+   */
+  resetForRerender: (intent: RenderIntent) => void;
 }
+
+export type RenderIntent = "create" | "generate" | "merge";
 
 const Ctx = createContext<MvFlowValue | null>(null);
 
@@ -57,6 +69,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
   const [compose, setCompose] = useState<ComposeState>(DEFAULT_COMPOSE);
   const [gen, setGen] = useState<Gen>(IDLE_GEN);
   const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
+  const renderIntent = useRef<RenderIntent>("create");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [savedJson, setSavedJson] = useState<string | null>(null);
   const jobId = useRef<string | null>(null);
@@ -123,8 +136,10 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
     setResultUrl(null);
     // GL-01: charge on generation start; refund if the job fails so the "credits
     // were not charged" failure copy stays true.
-    addCredits(-COST_STORYBOARD);
-    const refund = () => addCredits(COST_STORYBOARD);
+    // §3.3 — priced off the SONG, in tiers, before any MV exists.
+    const cost = scriptCost(compose.song ? effectiveDurationSec(compose.song) : 0);
+    addCredits(-cost);
+    const refund = () => addCredits(cost);
     void api
       .createMvJob({ mode: "storyboard_first", compose })
       .then((job) => {
@@ -151,9 +166,18 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
   }, [compose, track, upsertGenerating, addCredits]);
 
   const startRender = useCallback(() => {
-    // GL-01: rendering the MV charges the render cost; refund on failure.
-    addCredits(-COST_RENDER);
-    const refund = () => addCredits(COST_RENDER);
+    // GL-01: charge on start, refund on failure. WHICH price depends on how we
+    // got here — see `RenderIntent`.
+    const sec = compose.song ? effectiveDurationSec(compose.song) : 0;
+    const res = resolutionOf(compose.settings);
+    const cost =
+      renderIntent.current === "merge"
+        ? COST_MERGE
+        : renderIntent.current === "generate"
+          ? generateMvCost(compose.mvType, res, sec)
+          : createMvCost(compose.mvType, res, sec);
+    addCredits(-cost);
+    const refund = () => addCredits(cost);
     const start =
       jobId.current && storyboard
         ? api.renderMvJob(jobId.current, storyboard)
@@ -186,6 +210,9 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
   // previous flow, otherwise the generation screens' `alreadyDone` guard sees
   // stale state and skips generation (bouncing to the old result).
   const resetForNewMv = useCallback(() => {
+    // A fresh MV always starts on the Create MV price (§3.2); the storyboard
+    // route overwrites this when it reaches Generate MV.
+    renderIntent.current = "create";
     cancelPoll.current?.();
     jobId.current = null;
     setGen(IDLE_GEN);
@@ -195,7 +222,8 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
 
   // Re-rendering keeps the current storyboard + job id but must clear the prior
   // rendered video so the render screen starts fresh instead of bouncing back.
-  const resetForRerender = useCallback(() => {
+  const resetForRerender = useCallback((intent: RenderIntent) => {
+    renderIntent.current = intent;
     cancelPoll.current?.();
     setGen(IDLE_GEN);
     setResultUrl(null);

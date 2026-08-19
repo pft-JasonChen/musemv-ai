@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 
@@ -30,6 +31,7 @@ export function AccountMenu({ open, onClose, onBuyCredits, onSubscribe }: Props)
   const { credits } = useCredits();
   const { signOut, profile, subscribed } = useAuth();
   const { locale } = useLocale();
+  const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -125,7 +127,7 @@ export function AccountMenu({ open, onClose, onBuyCredits, onSubscribe }: Props)
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
           Send Feedback
         </button>
-        <button onClick={() => { onClose(); signOut(); }} className={`${item} w-full`} style={{ color: "var(--red)" }} role="menuitem">
+        <button onClick={() => { onClose(); signOut(); router.push(localePath(locale, "/")); }} className={`${item} w-full`} style={{ color: "var(--red)" }} role="menuitem">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
           Sign Out
         </button>

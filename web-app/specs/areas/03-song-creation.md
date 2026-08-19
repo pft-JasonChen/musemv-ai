@@ -47,7 +47,7 @@ credit pill shows the **live balance** (SONG-05). Generation itself charges **6 
 
 | Route            | View                                           | Owns UI                                                                                                                                                                                   | Reads/writes state                                                                                                     | `MuseApi`                            |
 | ---------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `/song/create`   | `song/SongCompose` (🔒 **Auth**)               | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, Lyrics sample + Enhance (no Idea buttons — removed for V1), **Create Song** CTA, **two-mode side rail** | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}`; `useAuth().loggedIn`, `useHistory().history` (rail)    | `enhancePrompt` (song/lyrics)        |
+| `/song/create`   | `song/SongCompose` (guest-reachable)          | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, Lyrics sample + Enhance (no Idea buttons — removed for V1), **Create Song** CTA, **two-mode side rail** | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}`; `useAuth().loggedIn`, `useHistory().history` (rail)    | `enhancePrompt` (song/lyrics)        |
 | `/song/creating` | `song/SongGenerationScreen` → `GenerationView` | progress ring/step, View Later                                                                                                                                                            | `startSong`, `gen`, `songResult`                                                                                       | `createSongJob`, `getSongJob` (poll) |
 | `/song/result`   | `song/SongResultView` (self-contained)         | **Back (→ History)**, player + progress/seek, prev/next transport, volume/mute, Like, Share, Download, Lyrics sheet, Publish toggle, Use-in-MV, Recreate, **My Creations** playlist       | `songResult`, `useHistory` (earlier songs + share id), `useMvFlow().patchCompose` (Use-in-MV), `useCredits` (Recreate) | —                                    |
 
@@ -109,6 +109,8 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
   and local-only (no API, no History write). The spec's long-standing rule was **no Like on an own
   creation** — flagged, not resolved. Product owner / designer call: keep DP's control, or drop it
   as WA did. Until then AC-SONG-06's "and no Like" is a KNOWN divergence.
+  > **RESOLVED 2026-08-19: the Like stays.** Product owner — a user may like their own creation.
+  > It remains local state until `TBD-EXP-08` gives likes a real backing store.
 - ⚠️ **±15s nudge is gone** — DP's transport spends those two slots on prev/next through the
   playlist. Seek by dragging the progress bar is unaffected.
 
@@ -128,10 +130,10 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 ### SONG-P1 — Compose
 
 - **SONG-P1-S0 (side rail, 2026-08-06)** Same two-mode aside as `/mv/room` (area 02 MV-P1-S0): **"Trending Songs"** over `TOP_PICKS_SONGS` with a "See all" → `/explore/songs`, or **"My Creations"** over the user's own finished songs from `useHistory()`, no "See all", each row opening `/song/result?id=`. Requires `loggedIn` **and** at least one completed song.
-- **SONG-P1-S1** Arrive `/song/create` (auth-gated); **Simple** tab default; **Create Song** disabled until `describe` non-empty. Hint "Describe your song to continue."
+- **SONG-P1-S1** Arrive `/song/create` (**guest-reachable** — the route guard was removed 2026-08-12, the gate is on the Create Song button; see `SONG-E3` / `AC-AUTH-08`); **Simple** tab default; **Create Song** disabled until `describe` non-empty. Hint "Describe your song to continue."
 - **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + Enhance.
 - **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics** textarea (or "No lyrics needed" when Instrumental) + Lyrics sample/Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
-- **SONG-P1-S4** Tap **Create Song** (`10`) → `resetForNewSong()` → `/song/creating`.
+- **SONG-P1-S4** Tap **Create Song** (`songCost(instrumental)` — **6** vocal / **12** instrumental) → `resetForNewSong()` → `/song/creating`. _(Was a flat `10`; repriced 2026-08-12, journey text corrected 2026-08-19.)_
 
 ### SONG-P2 — Generation
 
@@ -168,14 +170,16 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **AC-SONG-05** — WHILE the song job is `processing`, THE SYSTEM SHALL show progress, step, an estimate, and View Later → `/history`; on `done` navigate to `/song/result`.
 - **AC-SONG-11** — WHEN `/song/result` is reached from a `/history` row, THE SYSTEM SHALL show that row's song (flow state is seeded by `useOpenCreation`, area 05) and carry the row id in `?id=` so Share builds that row's link. THE SYSTEM SHALL expose a **Back** control on this stage — DP switches it from `RoomNavbar` to `DetailNavbar backHref="/history"` — going `router.back()` with `/history` as the fallback. _(An earlier song has no stored genre/mood, so the genre · mood line is omitted rather than invented.)_
 - **AC-SONG-06** — WHEN `/song/result` loads, THE SYSTEM SHALL expose drag-to-seek, prev/next across My Creations, Share, Download, a Lyrics sheet (when lyrics exist), a Publish toggle, Use in Music Video, and Recreate. Playback SHALL NOT be capped for any account.
-  - ⚠️ **Two clauses of the original AC-SONG-06 are now knowingly untrue and are NOT rewritten away.** _(a)_ "**±15s**" — removed in 3j; DP's transport uses those slots for prev/next. _(b)_ "**and no Like**" — DP's player has a Like and it was ported (local state only). _(c)_ the 30s cap it required is cancelled by S3 (§1). (a) and (b) need a product/designer decision; (c) is already decided.
-- **AC-SONG-11** — ⚠️ **SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.** It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and `songCompose.{bpm,key}` persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident.
+  - _(a)_ "**±15s**" — removed in 3j; DP's transport uses those slots for prev/next. **Still open** (`TBD-SONG-09`), blocked on a ±15s glyph that neither icon set contains.
+  - _(b)_ ~~"**and no Like**"~~ — **WITHDRAWN 2026-08-19.** The product owner decided a user MAY like their own work, so the ported Like is correct and this clause was the mistake. `TBD-SONG-08` closed.
+  - _(c)_ the 30s cap it required is cancelled by S3 (§1) — already decided.
+- **AC-SONG-11b** — ⚠️ **SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.** It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and `songCompose.{bpm,key}` persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident. _(Renumbered from a second `AC-SONG-11` on 2026-08-19; the history-entry criterion above keeps the plain id.)_
 - **AC-SONG-12** — WHEN Recreate is invoked with a balance covering one generation (`songRecreateCost` — 6 vocal / 12 instrumental), THE SYSTEM SHALL charge that amount and regenerate while keeping the prior song in History; otherwise it SHALL open the buy-credits IAP (SONG-03). _(repriced 2026-08-12; was a flat 50)_
-- **AC-SONG-13** — WHEN AI Enhance is used, THE SYSTEM SHALL charge nothing the first time per session and 1 credit each time after (SONG-04).
+- **AC-SONG-13** — WHEN AI Enhance is used, THE SYSTEM SHALL charge **nothing, ever** (SONG-04). _(Corrected 2026-08-19. The old "free first, then 1 credit" rule was removed on 2026-08-12 — §1 and §3 of this same file already said so, and `enhanceCost`/`consumeEnhance` are gone from `useCredits`. This AC was the last place the withdrawn rule survived.)_
 - **AC-SONG-07** — WHEN **Use in Music Video** is tapped, THE SYSTEM SHALL pre-load the song (incl. lyrics) into MV compose and navigate to `/mv/room`.
 - **AC-SONG-08** — IF the song job fails, THEN THE SYSTEM SHALL show the shared error state with Back + Retry.
-- **AC-SONG-09** — WHEN a song job starts, THE SYSTEM SHALL NOT change the credit balance. _(pending `TBD-GL-01`.)_
-- **AC-SONG-10** — THE SYSTEM SHALL render `/song/create`, `/song/creating`, `/song/result` at 390/768/1024/1440px with no overflow. _(visual)_
+- **AC-SONG-09** — WHEN a song job starts, THE SYSTEM SHALL charge `songCost(instrumental)` (6 vocal / 12 instrumental) immediately and refund it if the job fails. _(Corrected 2026-08-19 — this previously said the balance must NOT change, which is the opposite of `SongFlowProvider.tsx:62-67` and of the same rule for MV in `AC-MV-19`. It was the song-side twin of the withdrawn `AC-MV-15`.)_
+- **AC-SONG-10** — THE SYSTEM SHALL render `/song/create`, `/song/creating`, `/song/result` at 320/375/768/1024/1440/1920px with no overflow. _(visual)_ _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
 
 ---
 
@@ -195,11 +199,11 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **TBD-SONG-06** | 🔧 **Backend (RD)** — the production song-generation failure trigger is undefined (the mock's `[fail]`-in-description behaviour needs a real equivalent).                                                                                                   |
 | **TBD-SONG-07** | ⏳ **TBD** — the Custom info popover lists 11 languages; confirm the real supported-language set for lyric generation.                                                                                                                                      |
-| **TBD-SONG-08** | 🎨 **Designer/PO (from 3j)** — `/song/result` gained a **Like** on the user's own creation (DP's control, local state only). Keep it and give it a backing action, or drop it? See AC-SONG-06 (b).                                                          |
+| ~~**TBD-SONG-08**~~ | ✅ **2026-08-19 結案 — KEEP.** 產品負責人決定：**使用者可以 like 自己的作品**，`/song/result` 的 Like 保留。目前是 local state；接後端時它需要和社群的 like 走同一條寫入路徑（`TBD-EXP-08`）。`AC-SONG-06` 的 "and no Like" 子句已撤回。 |
 | **TBD-SONG-09** | 🎨 **Designer/PO (from 3j)** — **±15s** was dropped for prev/next. Confirm, or find room for both. See AC-SONG-06 (a).                                                                                                                                      |
 | **TBD-SONG-10** | 🔧 **RD (from 3j / S4)** — `bpm` / `key` are now unreachable from the UI but still on `SongComposeSchema` and still sent. Deleting them is the C8 PR plan §11 requires; leaving them is also a valid answer. Decide before backend integration, not during. |
 
-See also global: `TBD-GL-01` (credit charging — incl. `COST_SONG=10` vs app 50).
+See also global: `TBD-GL-01` (credit charging). _(The old "`COST_SONG=10` vs app 50" note is obsolete — song pricing was resolved to 6/12 on 2026-08-12 per area 11 §3.1.)_
 
 ---
 

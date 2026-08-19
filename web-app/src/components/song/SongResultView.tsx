@@ -28,30 +28,15 @@ import {
   songResultFromCommunity,
 } from "@/lib/mv/community";
 
-// Designer request, 2026-08-11 — same reasoning as community.ts's LYRICS
-// expansion: a single placeholder line left `.song-result__lyrics-inline`'s
-// 426px panel mostly empty for any freshly-created song with no catalog
-// match (e.g. a custom title like "Afterglow"). A generic verse/chorus,
-// not tied to any specific title, so it reads as plausible filler rather
-// than a "missing data" message.
-const FALLBACK_LYRICS = [
-  "Close my eyes and let the moment glow",
-  "Everything is soft and letting go",
-  "Colors fading into gold and blue",
-  "This whole feeling starts and ends with you",
-  "Hold this afterglow, don't let it fade",
-  "Every heartbeat, every promise made",
-  "Nothing else could ever feel this true",
-  "This whole feeling starts and ends with you",
-  "Quiet moments, nowhere left to be",
-  "Just this warmth, just you and me",
-  "Time stands still, the night is ours to keep",
-  "Holding on to something soft and deep",
-  "Hold this afterglow, don't let it fade",
-  "Every heartbeat, every promise made",
-  "Nothing else could ever feel this true",
-  "This whole feeling starts and ends with you",
-];
+// NOTE — the `FALLBACK_LYRICS` block that used to live here was REMOVED
+// 2026-08-19 (product owner), and it reverses a designer request from
+// 2026-08-11. The designer asked for generic filler so the 426px side panel
+// would not look empty for a freshly-created song with no catalog match. The
+// cost of that was worse than the empty panel: a Simple-mode song has no lyrics
+// at all, so the app presented a stranger's verse as the user's own words, and
+// both `AC-SONG-06` and `SONG-P3-S2` say the sheet appears only WHEN LYRICS
+// EXIST. Recorded for the designer as `DESIGNER-TODO` A23 — an empty-state for
+// that panel is the thing actually missing.
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds)) return "0:00";
@@ -153,6 +138,21 @@ export function SongResultView() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [liked, setLiked] = useState(false);
+  // The rail below this stage lists OTHER people's songs, so its like is a
+  // community like and takes the GL-02 gate. Same `Set<string>` + `requireLogin`
+  // shape as `NewSongsSection` / `SongDetailView`; `liked` above stays separate
+  // because it belongs to the user's own finished song (TBD-SONG-08).
+  const [likedIds, setLikedIds] = useState<ReadonlySet<string>>(() => new Set());
+  function toggleRailLike(songId: string) {
+    requireLogin(() =>
+      setLikedIds((current) => {
+        const next = new Set(current);
+        if (next.has(songId)) next.delete(songId);
+        else next.add(songId);
+        return next;
+      }),
+    );
+  }
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(1);
   const [shareOpen, setShareOpen] = useState(false);
@@ -230,15 +230,19 @@ export function SongResultView() {
     void audio.play().catch(() => {});
   }, [active?.id]);
 
-  const lyricLines = useMemo(() => {
-    const raw = (songResult?.lyrics ?? "").split("\n").filter((l) => l.trim().length > 0);
-    return raw.length ? raw : FALLBACK_LYRICS;
-  }, [songResult?.lyrics]);
-
-  const activeLine = Math.min(
-    lyricLines.length - 1,
-    Math.floor((duration ? currentTime / duration : 0) * lyricLines.length),
+  const lyricLines = useMemo(
+    () => (songResult?.lyrics ?? "").split("\n").filter((l) => l.trim().length > 0),
+    [songResult?.lyrics],
   );
+  /** Instrumental and Simple-mode songs genuinely have none — see the note above. */
+  const hasLyrics = lyricLines.length > 0;
+
+  const activeLine = hasLyrics
+    ? Math.min(
+        lyricLines.length - 1,
+        Math.floor((duration ? currentTime / duration : 0) * lyricLines.length),
+      )
+    : -1;
 
   useEffect(() => {
     activeLineRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -447,14 +451,16 @@ export function SongResultView() {
                             />
                           </button>
                         </div>
-                        <button
-                          type="button"
-                          className="song-result__icon-btn song-result__icon-btn--lyrics"
-                          onClick={() => setLyricsOpen(true)}
-                          aria-label="Lyrics"
-                        >
-                          <DpIcon name="ic_singing_mic" className="song-result__icon" />
-                        </button>
+                        {hasLyrics && (
+                          <button
+                            type="button"
+                            className="song-result__icon-btn song-result__icon-btn--lyrics"
+                            onClick={() => setLyricsOpen(true)}
+                            aria-label="Lyrics"
+                          >
+                            <DpIcon name="ic_singing_mic" className="song-result__icon" />
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -508,6 +514,7 @@ export function SongResultView() {
                 </div>
 
                 <div className="song-result__side-panel">
+                  {hasLyrics && (
                   <div className="song-result__lyrics-inline">
                     <div className="song-result__lyrics-inline-lines">
                       {lyricLines.map((line, i) => (
@@ -524,6 +531,7 @@ export function SongResultView() {
                     </div>
                     <div className="song-result__lyrics-inline-fade" aria-hidden="true" />
                   </div>
+                  )}
 
                   <div className="song-result__ctas">
                     {/* A <button>, not DP's anchor: R-9 (locale prefix) and this
@@ -635,6 +643,8 @@ export function SongResultView() {
                           shareUrl={buildShareUrl(item.id)}
                           cta
                           isPlaying={isActive && playing}
+                          liked={likedIds.has(item.id)}
+                          onToggleLike={() => toggleRailLike(item.id)}
                           onSelect={select}
                           onPlay={select}
                           onCreate={() =>
@@ -662,6 +672,8 @@ export function SongResultView() {
                           shareUrl={buildShareUrl(item.id)}
                           cta
                           isPlaying={isActive && playing}
+                          liked={likedIds.has(item.id)}
+                          onToggleLike={() => toggleRailLike(item.id)}
                           onSelect={select}
                           onPlay={select}
                         />
@@ -676,7 +688,7 @@ export function SongResultView() {
       </div>
 
       <LyricsSheet
-        isOpen={lyricsOpen}
+        isOpen={lyricsOpen && hasLyrics}
         title={active.title}
         cover={active.cover}
         lyricLines={lyricLines}

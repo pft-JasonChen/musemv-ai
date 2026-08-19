@@ -55,9 +55,11 @@ Renders **bare** (no shell) — `AppShell` treats any `/share…` path as chrome
   derives from the aspect ratio instead of always filling the 520px column (2026-07-24); song = cover
   image + `<audio controls>`) + a **Download** button (only if a media URL exists). No Share action,
   title/creator, or Try CTA (simplified 2026-07-23).
-- **Expired/invalid (`null`):** logo header (→ home), bell-off icon, "This link has expired", copy
-  "*Shared links are available for 30 days…*". ⚠️ The 30-day window is **copy only** — there is no
-  expiry logic; only an unresolvable id triggers this state. (The former "Go to YouCam Muse" button was
+- **Unavailable/invalid (`null`):** logo header (→ home), bell-off icon, "This link isn't available",
+  copy "*We couldn't find this creation. Ask the sender to share it again.*".
+  **Share links DO NOT EXPIRE (product owner, 2026-08-19).** The previous copy advertised a 30-day
+  window that was never implemented and is now decided against — creations are kept indefinitely, so
+  a link to one has no reason to lapse. This state is reached only when an id cannot be resolved. (The former "Go to YouCam Muse" button was
   removed 2026-07-23; the header logo is the way home.)
 - 🔒 **Prototype limit** (`lib/share.ts`): community items **and** the static History samples resolve
   from fixtures (survive reload + cross-tab). A user's **live** own creation still lives only in the
@@ -109,7 +111,7 @@ Screens to capture later: `/share?id=…` (valid MV + valid song), `/share?type=
 - **AC-SHARE-03** — WHEN `/share/mv/{id}` is opened, THE SYSTEM SHALL redirect to `/share?id={id}` preserving the locale.
 - **AC-SHARE-04** — WHEN Share is invoked, THE SYSTEM SHALL open `ShareDialog` exposing a copyable `buildShareUrl` link and a Copy button — and **no** social-platform targets or native-share button (MVP).
 - **AC-SHARE-05** — WHEN Download is tapped on a valid link, THE SYSTEM SHALL download the media as `{title}.mp4` (MV) or `{title}.mp3` (song).
-- **AC-SHARE-06** — THE SYSTEM SHALL render `/share` (valid + expired) and `ShareDialog` at 390/768/1024/1440px. *(visual)*
+- **AC-SHARE-06** — THE SYSTEM SHALL render `/share` (valid + expired) and `ShareDialog` at 320/375/768/1024/1440/1920px. *(visual)* _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
 
 ---
 
@@ -129,9 +131,9 @@ Screens to capture later: `/share?id=…` (valid MV + valid song), `/share?type=
 
 | ID | Open item |
 |---|---|
-| **TBD-SHARE-01** | 🔧 **Backend (RD)** — server-side share resolution + real link expiry. Production must resolve any id (incl. the sharer's own live creations) server-side, and implement the advertised 30-day expiry (copy-only today). |
-| **TBD-SHARE-02** | ⏳ **TBD** — social sharing is removed for MVP (`ShareDialog` is copy-link only); the final web social-channel set (App lists Instagram/TikTok/WhatsApp/X; the removed web set was Facebook/X/Pinterest/Reddit) is undefined and to be re-added later. |
-| **TBD-SHARE-03** | ⏳ **Decided to build, details TBD** — share links should carry analytics tracking, but which recipient data (if any) is captured is undefined. |
+| **TBD-SHARE-01** | 🔧 **Backend (RD)** — server-side share resolution. Production must resolve any id (incl. the sharer's own live creations) server-side. **The 30-day expiry requirement was REMOVED 2026-08-19** — links do not expire, so there is nothing to implement beyond resolution. |
+| ~~**TBD-SHARE-02**~~ | ✅ **2026-08-19 結案 — V1 只做複製連結。** 社群分享管道（IG / TikTok / WhatsApp / X）移到下一階段 roadmap；web 適用的管道與手機 app 不同，需要另外定義。 |
+| **TBD-SHARE-03** | 📋 **BA 待設計（產品負責人 2026-08-19）** — 分享連結需要**完整的成效追蹤**，但要收集哪些欄位由 BA 定義。前端刻意保持空白直到欄位規格到位；不要先猜著埋參數。 |
 
 See also global: `TBD-GL-04` (persistence), `TBD-GL-07` (`/share` gating), `TBD-SHELL-01` (brand).
 
@@ -152,4 +154,4 @@ flowchart TD
 
 **Decisions (as-built):** dedicated public share page (web-only) + shared `ShareDialog`; bare (no
 shell); community ids **and static History samples** resolve from fixtures, live own creations from
-in-memory History only; 30-day expiry is copy, not enforced; the video frame is capped at 80vh.
+in-memory History only; links do not expire (the 30-day copy was removed 2026-08-19); the video frame is capped at 80vh.

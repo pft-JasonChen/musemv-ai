@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * computed-style-diff.mjs — Gate G2-b.
- * docs/redesign-migration-plan-2026-08-01.md §10.0 + G2-b.
+ * docs/archive/redesign-migration-plan-2026-08-01.md §10.0 + G2-b.
  *
  * WHAT IT IS FOR
  *   Phase 1 swaps the token layer to DP's while claiming "舊畫面零變化". A pixel diff

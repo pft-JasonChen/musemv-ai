@@ -30,17 +30,22 @@ const mask = (name: string) => {
 };
 
 export function MobileHeader() {
-  const { loggedIn, subscribed } = useAuth();
+  const { loggedIn, subscribed, hydrated } = useAuth();
   const { credits } = useCredits();
   const { locale } = useLocale();
   const t = useT();
   const profilePath = localePath(locale, "/profile");
 
+  // SHELL-E1, phone half. `HeaderActions` has always reserved space until the
+  // persisted flag is read; this component did not, so on a signed-in reload it
+  // painted the logged-OUT header for a frame and then flipped. Same fix, same
+  // reason — `useSyncExternalStore` narrows the window but does not close it.
+  // (Found by the 2026-08-19 spec audit; the spec never covered this component.)
   return (
     <header className="mobile-header">
       <p className="mobile-header__title">YouCam Muse</p>
-      {loggedIn && <CreditPill credits={credits} />}
-      {!subscribed && (
+      {hydrated && loggedIn && <CreditPill credits={credits} />}
+      {hydrated && !subscribed && (
         <Link
           href={profilePath}
           className="mobile-header__subscribe"

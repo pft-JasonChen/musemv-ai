@@ -49,7 +49,7 @@ will hit immediately if you don't know them:
   `/mv/creating` (the designer has no MV-render progress screen at all) and `/share`
   (no share landing page in the drop). Both are recorded in `docs/DESIGNER-TODO.md` §B.
 
-Where the migration's decisions live: `docs/redesign-migration-plan.md` (plan of record),
+Where the migration's decisions live: `docs/archive/redesign-migration-plan.md` (plan of record),
 `docs/DESIGNER-TODO.md` (what the designer still owes), `docs/CHANGELOG-RD.md` (contract
 surface — the migration changed none of it, and the entry shows you how to verify that).
 
@@ -109,7 +109,7 @@ Read in this order:
 | `docs/CHANGELOG-RD.md` | The contract surface C1–C8 and every change to it. |
 | `specs/` | Product behaviour per area, with `AC-*` acceptance criteria. `specs/OPEN-QUESTIONS.md` is the cross-area register of what is still undecided. |
 | `AGENTS.md` | The working contract — conventions, gates, and the traps that have actually bitten. |
-| `docs/redesign-migration-plan.md` | Why the UI looks the way it does. |
+| `docs/archive/redesign-migration-plan.md` | Why the UI looks the way it does. |
 | `docs/DESIGNER-TODO.md` | What the designer still owes (A1–A16). |
 | `TODO.md` | Deferred product/engineering work. |
 | `docs/archive/` | Superseded — never cite as current. |
