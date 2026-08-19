@@ -20,6 +20,7 @@ import { localePath } from "@/lib/i18n/config";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { songRecreateCost } from "@/lib/mv/types";
 import { buildShareUrl } from "@/lib/share";
+import { downloadFile } from "@/lib/download";
 import {
   NEW_SONGS,
   getCommunitySong,
@@ -114,11 +115,13 @@ function formatTime(seconds: number): string {
  *    this, because its id names an in-memory job and nothing can resurrect it.
  * 2. **The rail becomes "Newly Released Songs"** over `NEW_SONGS`, which is
  *    DP's own `fromSongDetail` behaviour — the one thing DP does vary by origin.
- * 3. **Recreate and Publish are dropped**, which DP does NOT do. Following DP
- *    exactly would have offered a paid `COST_SONG_RECREATE` re-roll and a
- *    publish toggle on someone else's track. Product owner decided 2026-08-07;
- *    "Use in Music Video" stays. (Download itself was removed entirely,
- *    2026-08-14 — see the `.song-result__actions` comment below.)
+ * 3. **Recreate, Publish, and Download are all dropped**, which DP does NOT do.
+ *    Following DP exactly would have offered a paid `COST_SONG_RECREATE`
+ *    re-roll, a publish toggle, and a save-to-disk of someone else's track.
+ *    Product owner decided 2026-08-07 (Recreate/Publish) and again on
+ *    2026-08-19 (Download, correcting an over-broad 2026-08-14 removal that
+ *    had taken Download away from the OWNER's own result too — see the
+ *    `.song-result__actions` comment below); "Use in Music Video" stays.
  *
  * Every icon on this screen is a mask (`.song-result__icon`,
  * `__play-icon`, `__transport-icon`, `__publish-icon`, `__cta-primary-icon` all
@@ -377,11 +380,16 @@ export function SongResultView() {
                         </p>
                       </div>
 
-                      {/* Product owner request, 2026-08-14 — the Download icon
-                          button that used to sit between Share and the volume
-                          control is removed. Row is a plain flex (no fixed
-                          column count anywhere in SongCreatePage.css), so the
-                          remaining icons just close the gap. */}
+                      {/* Product owner correction, 2026-08-19 — reverses the
+                          2026-08-14 removal below `.song-result__actions`
+                          used to describe. Download is owner-only, same gate
+                          as Recreate/Publish (`!communityOrigin`): the
+                          user's own result still needs it, a community song
+                          just isn't the user's file to download. Row is a
+                          plain flex (no fixed column count anywhere in
+                          SongCreatePage.css), so hiding it on a community
+                          song just closes the gap the same way it always did
+                          while this button was gone entirely. */}
                       <div className="song-result__actions">
                         <button
                           type="button"
@@ -403,6 +411,18 @@ export function SongResultView() {
                         >
                           <DpIcon name="ic_share" className="song-result__icon" />
                         </button>
+                        {!communityOrigin && (
+                          <button
+                            type="button"
+                            className="song-result__icon-btn song-result__icon-btn--desktop"
+                            onClick={() =>
+                              active.audioUrl && downloadFile(active.audioUrl, `${active.title}.mp3`)
+                            }
+                            aria-label="Download"
+                          >
+                            <DpIcon name="ic_download" className="song-result__icon" />
+                          </button>
+                        )}
                         <div className="song-result__volume song-result__icon-btn--desktop">
                           <div className="song-result__volume-slider">
                             <input
@@ -519,9 +539,9 @@ export function SongResultView() {
                         stranger's song into their History. Product owner decided
                         2026-08-07 to drop the two rather than port them.
                         "Use in Music Video" deliberately STAYS: it's what a
-                        community song is for. (Download used to stay here too;
-                        removed entirely 2026-08-14, see `.song-result__actions`
-                        above — it no longer exists to be owner-gated.) */}
+                        community song is for. Download is the same shape —
+                        owner-only, same `!communityOrigin` gate — see
+                        `.song-result__actions` above. */}
                     {!communityOrigin && (
                       <button
                         type="button"
