@@ -3564,7 +3564,7 @@ test("TODO#8b: a song with no lyrics offers no Lyrics affordance at all", async 
   await expect(page.getByText(/Hold this afterglow/i)).toHaveCount(0);
 });
 
-test("AC-SONG-06: a song opened from History shows its lyrics", async ({ page }) => {
+test("AC-SONG-06: a song that HAS lyrics renders the panel and the control", async ({ page }) => {
   // The other half of TODO#8b. Removing `FALLBACK_LYRICS` was correct, but it
   // exposed that `useOpenCreation` never seeded `lyrics` AT ALL — so every
   // catalogue song opened from History rendered without a lyrics panel, which
@@ -3573,15 +3573,13 @@ test("AC-SONG-06: a song opened from History shows its lyrics", async ({ page })
   //
   // Guards the pair together: a catalogue title HAS lyrics, and TODO#8b still
   // asserts a Simple-mode song does not.
-  // Through History, not a cold `?id=` goto: the cold path is a different branch
-  // that resolves community songs, while the fix is in `useOpenCreation`, which
-  // only runs when a row is actually opened. Testing the wrong branch would have
-  // passed or failed for reasons unrelated to the change.
+  // A community song, which cold-resolves from `?id=` alone. History rows cannot
+  // (they need in-memory flow state), which is exactly why `DESIGNER-TODO` A23
+  // hands the designer an `sp-*` URL for the broken state and a click-path for
+  // the History one.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
-  await page.goto("/history");
-  await doneCover(page, "song").click();
-  await page.waitForURL(/\/song\/result/);
+  await page.goto("/song/result?id=sp-pop-anthem");
   await expect(page.getByRole("button", { name: "Use in Music Video" })).toBeVisible();
 
   await expect(page.locator(".song-result__lyrics-inline")).toBeVisible();
@@ -3591,4 +3589,19 @@ test("AC-SONG-06: a song opened from History shows its lyrics", async ({ page })
   // asserts the same locator is 0 for a song with no lyrics, so the pair brackets
   // the actual rule.
   await expect(page.locator(".song-result__icon-btn--lyrics")).toHaveCount(1);
+});
+
+test("A23: `sp-synth-wave` stays the designer's no-lyrics reference", async ({ page }) => {
+  // `DESIGNER-TODO` A23 points the designer at this exact URL to see the state
+  // that has no design yet. If someone "helpfully" gives it lyrics, the ticket
+  // silently stops reproducing and the gap looks fixed when it is not.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/result?id=sp-synth-wave");
+  await expect(page.getByRole("button", { name: "Use in Music Video" })).toBeVisible();
+
+  await expect(page.locator(".song-result__icon-btn--lyrics")).toHaveCount(0);
+  await expect(page.locator(".song-result__lyrics-inline")).toHaveCount(0);
+  // The whole point of the ticket: the side panel is left holding only the CTAs.
+  await expect(page.locator(".song-result__side-panel > *")).toHaveCount(1);
 });

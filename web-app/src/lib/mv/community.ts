@@ -283,10 +283,13 @@ const LYRICS: Record<string, string> = {
     "Turn it up, we're living for tonight\nEvery sound and every beat feels right\nRaise your hands up to the sky\nThis is our moment, you and I\n\nThis is our anthem, sing it loud\nHands up high, we own this crowd\nTonight we're living without fear\nThis is the moment, this is here\n\nLights flashing, bass so strong\nEverybody sing along\nNothing's gonna bring us down\nWe're the loudest in this town\n\nThis is our anthem, sing it loud\nHands up high, we own this crowd\nTonight we're living without fear\nThis is the moment, this is here",
   "Chill R&B":
     "Late night, dim lights, just you and me\nSmooth sounds, slow vibes, feeling free\nYour heartbeat matching mine so right\nWe can stay like this all night\n\nStay with me a little while\nLost inside your easy smile\nNothing's rushed, we take it slow\nThis is all we need to know\n\nCity hums outside the glass\nEvery worry starts to pass\nJust your voice and gentle sound\nBest place that I've ever found\n\nStay with me a little while\nLost inside your easy smile\nNothing's rushed, we take it slow\nThis is all we need to know",
-  // Added 2026-08-20 so every "done" song in HISTORY_SAMPLES resolves lyrics —
-  // this was the last title that opened to an empty panel.
-  "Whispers of the Past":
-    "Whispers of the past still call my name\nEchoes in the hallway sound the same\nOld letters tucked inside a drawer\nSaying things we don't say anymore\n\nOh, the whispers won't let go\nSofter than the wind but I still know\nEvery word we left behind\nStill is playing on my mind\n\nDust is settling on the frame\nNothing here is quite the same\nFootsteps fading down the hall\nMemory keeps them after all\n\nOh, the whispers won't let go\nSofter than the wind but I still know\nEvery word we left behind\nStill is playing on my mind",
+  // NOTE — "Whispers of the Past" is DELIBERATELY ABSENT from this map.
+  // `h-whispers-past` is the one History sample kept WITHOUT lyrics, so the
+  // "this song has no lyrics" state is reachable from a real own-creation row
+  // and not only from the community catalogue. See `DESIGNER-TODO` A23: that
+  // state currently has no design at all — the whole lyrics area just vanishes.
+  // Do not "fix" this by adding an entry; the gap is the point until a design
+  // for the empty state exists.
   "Acoustic Folk":
     "Picking up my guitar by the fire\nSinging songs that lift me higher\nSimple words and honest chords\nThis is all I need, no more\n\nEvery chord I strum for you\nSimple, honest, always true\nNothing fancy, nothing grand\nJust this music, just this hand\n\nWooden porch and evening air\nSongs I've carried everywhere\nEvery story that I hold\nTurns to music, turns to gold\n\nEvery chord I strum for you\nSimple, honest, always true\nNothing fancy, nothing grand\nJust this music, just this hand",
 };
