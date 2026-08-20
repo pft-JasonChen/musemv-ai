@@ -654,28 +654,40 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
 
 ---
 
-### A23. `/song/result` 沒有「這首歌沒有歌詞」的 UI —— **整個右半邊會變成空白**
+### A23. ~~`/song/result` 沒有「這首歌沒有歌詞」的 UI —— 整個右半邊會變成空白~~ ✅ **2026-08-20 結案 —— 空狀態已上線,完全比照設計稿**
 
-**新增於:** 2026-08-19。**不擋開發(已上線),但這是我們主動退掉一個設計師要求的地方,請看一下。**
+**新增於:** 2026-08-19。
 
 2026-08-11 設計師要求:剛生成、比對不到目錄的歌,`.song-result__lyrics-inline`(426px 的側欄)
 只有一行佔位會顯得很空,所以請我們放一段**通用假歌詞**當墊底。
 
 **產品負責人 2026-08-19 決定拿掉它**,理由是:Simple 模式產生的歌**本來就沒有歌詞**,
 於是畫面把一段陌生的詞當成使用者自己的作品呈現;而規格 `AC-SONG-06` 與 `SONG-P3-S2`
-兩處都寫明歌詞面板**只在有歌詞時出現**。所以現在沒有歌詞時:Lyrics 按鈕不渲染、
-側欄歌詞區不渲染、歌詞 sheet 也打不開。
+兩處都寫明歌詞面板**只在有歌詞時出現**。所以那之後一段時間:Lyrics 按鈕不渲染、
+側欄歌詞區不渲染、歌詞 sheet 也打不開 —— 這才是這張票真正要修的洞(見下方截圖對照)。
 
-**更新 2026-08-20:** History 的 sample 歌曲**已經補上歌詞資料**(`lyricsForTitle()`),所以 demo
-畫面不再是空的 —— 但這只解決了 fixture。**Simple 模式產生的歌永遠沒有歌詞**,空狀態仍然需要。
+**更新 2026-08-20(a):** History 的 sample 歌曲一度補上歌詞資料(`lyricsForTitle()`),
+但隨即決定保留 `h-whispers-past` 為**刻意沒有歌詞**的樣本(見 `community.ts` 註解),
+確保這個狀態除了 `sp-*` 社群歌曲外,也能從使用者自己的作品路徑重現。
+
+**更新 2026-08-20(b)——結案:** 空狀態已實作並比對 Figma 確認,**只改側欄本身**:
+
+- 依 Figma **"Song Result_no Lyrics_L"**(node `2695:116795`,其 "Text" 子節點
+  `2695:116838`)還原:`ic_song` icon(54×54)+「No lyrics available for this one yet」,
+  文字樣式與 `.song-result__lyrics-inline-line`(滿 opacity)相同。
+- **只有** `.song-result__lyrics-inline` 這塊改成「一律渲染,依有無歌詞切換內容」——
+  Lyrics 按鈕與歌詞 sheet **維持原規則不變**,沒有歌詞時仍然不渲染 / 打不開,
+  `AC-SONG-06`(b) / `SONG-P3-S2` 因此完全沒有被打破。
+- `sp-synth-wave` 不再是「刻意留著重現 bug」的參考網址,e2e 測項改成反向斷言
+  (空狀態必須渲染、side-panel 恢復兩個子元素),避免將來又悄悄退回空白。
 
 ## 🔗 直接打開來看(不用跑任何指令,貼上網址即可)
 
 | 狀態 | 網址 | 說明 |
 | --- | --- | --- |
-| ❌ **沒有歌詞(要設計的就是這個)** | **`/song/result?id=sp-synth-wave`** | 可直接貼網址開啟。右半邊完全空白,`Use in Music Video` 被擠到卡片最上緣。 |
+| ✅ 沒有歌詞(空狀態) | **`/song/result?id=sp-synth-wave`** | 可直接貼網址開啟。右半邊是 `ic_song` icon + 「No lyrics available for this one yet」,CTA 位置不變。 |
 | ✅ 有歌詞(對照組) | `/song/result?id=sp-pop-anthem` | 同一個元件,右半邊是歌詞欄,CTA 錨在歌詞下方。 |
-| ❌ 沒有歌詞・**自己的作品**(真實情境) | `/history` → 點 **「Whispers of the Past」** | 使用者自己的創作路徑。這一筆是**刻意保留沒有歌詞的** sample,見 `community.ts` 的註解。 |
+| ✅ 沒有歌詞・**自己的作品**(真實情境) | `/history` → 點 **「Whispers of the Past」** | 使用者自己的創作路徑,同一套空狀態。這一筆**刻意保留沒有歌詞**,見 `community.ts` 的註解。 |
 
 > ⚠️ `h-*` 開頭的 History id **不能直接貼網址開啟** —— 那條路徑需要 in-memory flow state,
 > 冷開會被導走。所以上表第三列請從 `/history` 點進去。第一列的 `sp-*` 社群歌曲則可以直接開。
@@ -683,7 +695,7 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
 **截圖對照:** [`designer-refs/song-result-nolyrics-1440.png`](designer-refs/song-result-nolyrics-1440.png)
 · [`designer-refs/song-result-haslyrics-1440.png`](designer-refs/song-result-haslyrics-1440.png)
 
-## 現在實際發生什麼事
+## 曾經實際發生什麼事(2026-08-19 ~ 2026-08-20 結案前)
 
 不是「歌詞區留白」,是**整塊不渲染**:
 
@@ -695,9 +707,12 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
 
 **這不是空狀態,是一個洞。** 我們之所以會走到這裡,是因為 2026-08-11 設計師要求用一段
 通用假歌詞把版面填滿,而產品負責人 2026-08-19 判定那是 bug(把陌生的詞當成使用者自己的作品呈現)
-並要求移除。移除是對的,但那之後**就沒有任何東西頂替**。
+並要求移除。移除是對的,但那之後**一度沒有任何東西頂替**。
 
-**需要設計師給的:** 那個側欄在「沒有歌詞」時要長什麼樣子。
+~~**需要設計師給的:**~~ **不需要了。** 2026-08-20 已依 Figma "Song Result_no Lyrics_L"
+(node `2695:116795`)實作並比對確認 —— 見上方「結案」段落。`.song-result__lyrics-inline`
+現在一律渲染,`.song-result__side-panel` 也恢復兩個子元素;Lyrics 按鈕與 sheet 的
+「只在有歌詞時出現」規則完全沒動。
 
 ### A24. `ModeModal` 的兩個點數不再是固定值 —— 稿面的「20 / 200」現在幾乎永遠是錯的
 

@@ -1617,3 +1617,48 @@
     max-height: 360px;
   }
 }
+
+/* Product owner request, 2026-08-20 (DESIGNER-TODO A23), matched to Figma
+   2026-08-20 — an honest empty-state for `.song-result__lyrics-inline` when
+   a song genuinely has no lyrics (Simple mode, or instrumental), instead of
+   the panel silently going blank. No DP class covers this (the shipped
+   stylesheet only ever drew real lyric lines) — built from Figma "Song
+   Result_no Lyrics_L" (node 2695:116795, its "Text" sub-frame 2695:116838):
+   a 54px `ic_song` glyph over the message, 10px gap, centered in the SAME
+   426px box real lines occupy so the panel's height doesn't jump between a
+   lyrics-song and a no-lyrics one. */
+.song-result__lyrics-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.song-result__lyrics-empty-icon {
+  width: 54px;
+  height: 54px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* Figma's text style here is identical to `.song-result__lyrics-inline-line`
+   (SongCreatePage.css) at full opacity — the request's "same text style as
+   song-result__lyrics-inline" — so these four properties are that rule's,
+   not a new tone. */
+.song-result__lyrics-empty-text {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  line-height: 26px;
+}

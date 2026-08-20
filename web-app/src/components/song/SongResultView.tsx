@@ -28,15 +28,30 @@ import {
   songResultFromCommunity,
 } from "@/lib/mv/community";
 
-// NOTE — the `FALLBACK_LYRICS` block that used to live here was REMOVED
-// 2026-08-19 (product owner), and it reverses a designer request from
-// 2026-08-11. The designer asked for generic filler so the 426px side panel
-// would not look empty for a freshly-created song with no catalog match. The
-// cost of that was worse than the empty panel: a Simple-mode song has no lyrics
-// at all, so the app presented a stranger's verse as the user's own words, and
-// both `AC-SONG-06` and `SONG-P3-S2` say the sheet appears only WHEN LYRICS
-// EXIST. Recorded for the designer as `DESIGNER-TODO` A23 — an empty-state for
-// that panel is the thing actually missing.
+// NOTE — a `FALLBACK_LYRICS` block used to live here, REMOVED 2026-08-19
+// (product owner), reversing a 2026-08-11 designer request for generic
+// filler so the 426px side panel would not look empty for a freshly-created
+// song with no catalog match. That was worse than the empty panel: a
+// Simple-mode song has no lyrics at all, so the app presented a stranger's
+// verse as the user's own words. `DESIGNER-TODO` A23 recorded the panel
+// going blank as the real gap still needing a fix — an HONEST empty-state
+// message, not borrowed content.
+//
+// `LYRICS_EMPTY_MESSAGE` below (2026-08-20) is that fix, scoped narrowly:
+// it only ever appears inside `.song-result__lyrics-inline`, the DESKTOP
+// panel that shows passively with no click — never inside `LyricsSheet` or
+// behind the Lyrics icon button, both of which stay exactly as strict as
+// `AC-SONG-06`(b) / `SONG-P3-S2` require ("a Lyrics sheet — only when
+// lyrics exist"): still `hasLyrics`-gated, still absent entirely for a
+// no-lyrics song.
+//
+// Copy and icon match Figma "Song Result_no Lyrics_L" (node 2695:116795,
+// its "Text" sub-frame 2695:116838) exactly, given 2026-08-20 — the plain
+// "No lyrics available for this one yet" wording there, not the decorative
+// "♪ … ♪" `SongDetailView.tsx`'s own `FALLBACK_LYRICS` uses. That file has
+// no matching Figma spec of its own; this one now does, so the two diverge
+// on purpose rather than needing to agree.
+const LYRICS_EMPTY_MESSAGE = "No lyrics available for this one yet";
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds)) return "0:00";
@@ -514,24 +529,39 @@ export function SongResultView() {
                 </div>
 
                 <div className="song-result__side-panel">
-                  {hasLyrics && (
+                  {/* Product owner request, 2026-08-20 (DESIGNER-TODO A23) —
+                      always rendered now, not `hasLyrics &&`-gated: a
+                      Simple-mode song's side panel used to just go blank,
+                      the exact gap A23 recorded. Branches internally instead
+                      — real lines when they exist, one honest empty-state
+                      message when they don't — so the 426px slot (and the
+                      rest of `.song-result__side-panel`'s layout below it)
+                      stays the same shape either way. */}
                   <div className="song-result__lyrics-inline">
-                    <div className="song-result__lyrics-inline-lines">
-                      {lyricLines.map((line, i) => (
-                        <p
-                          key={i}
-                          ref={i === activeLine ? activeLineRef : undefined}
-                          className={`song-result__lyrics-inline-line${
-                            i === activeLine ? " song-result__lyrics-inline-line--active" : ""
-                          }`}
-                        >
-                          {line}
-                        </p>
-                      ))}
-                    </div>
-                    <div className="song-result__lyrics-inline-fade" aria-hidden="true" />
+                    {hasLyrics ? (
+                      <>
+                        <div className="song-result__lyrics-inline-lines">
+                          {lyricLines.map((line, i) => (
+                            <p
+                              key={i}
+                              ref={i === activeLine ? activeLineRef : undefined}
+                              className={`song-result__lyrics-inline-line${
+                                i === activeLine ? " song-result__lyrics-inline-line--active" : ""
+                              }`}
+                            >
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                        <div className="song-result__lyrics-inline-fade" aria-hidden="true" />
+                      </>
+                    ) : (
+                      <div className="song-result__lyrics-empty">
+                        <DpIcon name="ic_song" className="song-result__lyrics-empty-icon" />
+                        <p className="song-result__lyrics-empty-text">{LYRICS_EMPTY_MESSAGE}</p>
+                      </div>
+                    )}
                   </div>
-                  )}
 
                   <div className="song-result__ctas">
                     {/* A <button>, not DP's anchor: R-9 (locale prefix) and this

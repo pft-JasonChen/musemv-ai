@@ -3559,7 +3559,16 @@ test("TODO#8b: a song with no lyrics offers no Lyrics affordance at all", async 
   await expect(page.getByRole("button", { name: "Use in Music Video" })).toBeVisible();
 
   await expect(page.getByRole("button", { name: "Lyrics" })).toHaveCount(0);
-  await expect(page.locator(".song-result__lyrics-inline")).toHaveCount(0);
+  // DESIGNER-TODO A23, closed 2026-08-20: the 426px panel itself is no longer
+  // absent — it now renders an honest empty-state (icon + message) instead of
+  // vanishing. The Lyrics BUTTON and sheet stay exactly as strict as AC-SONG-06
+  // (b) / SONG-P3-S2 require ("only when lyrics exist"); only the passive
+  // desktop panel changed.
+  await expect(page.locator(".song-result__lyrics-inline")).toBeVisible();
+  await expect(page.locator(".song-result__lyrics-empty-icon")).toBeVisible();
+  await expect(page.locator(".song-result__lyrics-empty-text")).toHaveText(
+    "No lyrics available for this one yet",
+  );
   // and none of the retired filler survives anywhere on the page
   await expect(page.getByText(/Hold this afterglow/i)).toHaveCount(0);
 });
@@ -3591,17 +3600,33 @@ test("AC-SONG-06: a song that HAS lyrics renders the panel and the control", asy
   await expect(page.locator(".song-result__icon-btn--lyrics")).toHaveCount(1);
 });
 
-test("A23: `sp-synth-wave` stays the designer's no-lyrics reference", async ({ page }) => {
-  // `DESIGNER-TODO` A23 points the designer at this exact URL to see the state
-  // that has no design yet. If someone "helpfully" gives it lyrics, the ticket
-  // silently stops reproducing and the gap looks fixed when it is not.
+test("A23: `sp-synth-wave`'s no-lyrics panel shows the empty-state, not a blank one", async ({
+  page,
+}) => {
+  // DESIGNER-TODO A23, closed 2026-08-20. This test used to guard the OPPOSITE
+  // thing — that `sp-synth-wave` kept reproducing the bug (zero panels, side
+  // panel down to one child) so the ticket wouldn't silently look fixed while
+  // the design still didn't exist. The design landed (Figma "Song Result_no
+  // Lyrics_L", node 2695:116795: a 54px `ic_song` glyph + "No lyrics available
+  // for this one yet", matched exactly), so the guard now points the other way:
+  // the empty-state must actually render, and the side panel must be back to
+  // its normal two children.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/song/result?id=sp-synth-wave");
   await expect(page.getByRole("button", { name: "Use in Music Video" })).toBeVisible();
 
+  // The Lyrics BUTTON and sheet are unaffected — still absent, per AC-SONG-06
+  // (b) / SONG-P3-S2 ("a Lyrics sheet — only when lyrics exist").
   await expect(page.locator(".song-result__icon-btn--lyrics")).toHaveCount(0);
-  await expect(page.locator(".song-result__lyrics-inline")).toHaveCount(0);
-  // The whole point of the ticket: the side panel is left holding only the CTAs.
-  await expect(page.locator(".song-result__side-panel > *")).toHaveCount(1);
+
+  await expect(page.locator(".song-result__lyrics-inline")).toBeVisible();
+  await expect(page.locator(".song-result__lyrics-empty-icon")).toBeVisible();
+  await expect(page.locator(".song-result__lyrics-empty-text")).toHaveText(
+    "No lyrics available for this one yet",
+  );
+  // The side panel is back to its normal two children (the lyrics-inline
+  // block, now showing the empty-state, and the CTAs) — not the one-child
+  // collapse A23 originally reported.
+  await expect(page.locator(".song-result__side-panel > *")).toHaveCount(2);
 });
