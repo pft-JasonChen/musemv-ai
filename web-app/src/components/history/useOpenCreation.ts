@@ -7,6 +7,7 @@ import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
+import { lyricsForTitle } from "@/lib/mv/community";
 import { SAMPLE_AUDIO, SAMPLE_RESULT_VIDEO, mockStoryboard } from "@/lib/mv/mock";
 
 /**
@@ -75,6 +76,12 @@ export function useOpenCreation() {
           durationSec: 0,
           audioUrl: c.resultUrl ?? SAMPLE_AUDIO,
           instrumental: false,
+          // Looked up by title from the mock catalogue. This was missing entirely,
+          // so every song opened from History rendered without a lyrics panel —
+          // invisible while `FALLBACK_LYRICS` papered over it, obvious once that
+          // was removed (2026-08-19). A title with no entry stays undefined on
+          // purpose: a Simple-mode song genuinely has no lyrics.
+          lyrics: lyricsForTitle(c.title),
         });
         router.push(localePath(locale, creationHref(c)));
         return;

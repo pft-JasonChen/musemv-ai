@@ -317,7 +317,7 @@ designer's answer to A5 and WA is only using half of it.
 `localePath`-and-intercept treatment `DetailNavbar` uses (R-9), and either the two mobile headers
 ported or a recorded decision that DetailNavbar's bar is good enough for WA.
 
-**7h. `/mv/room`'s disabled CTA lost its reason line** ("Add a song and a description to
+**7h. ~~`/mv/room`'s disabled CTA lost its reason line~~ ✅ CLOSED 2026-08-20 — the requirement was withdrawn, not satisfied.** The product owner directed that DP is the reference here, and DP's `MVCreatePage` has no hint line and no class for one. `MV-P1-S1` no longer asks for it, so there is nothing for the designer to add. Original note: ("Add a song and a description to
 continue."). Not a DP-fidelity constraint — `/song/create` KEPT its equivalent inside migrated
 markup, using `.song-create__title-hint`. `MVCreatePage.css` simply has no counterpart class,
 and inventing one, borrowing `song-create__`'s, or adding an override all break a rule

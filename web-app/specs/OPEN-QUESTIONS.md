@@ -33,7 +33,7 @@ section」,不是「小的 UI 問題」。**
 
 | # | 缺什麼 | 風險 |
 | --- | --- | --- |
-| ~~**3**~~ | ✅ **2026-08-12 部分結案** — 固定值已修正:`COST_COVER` 10→**4**、`COST_SONG` 拆成 vocal **6** / instrumental **12**、`COST_SONG_RECREATE` 50→比照一般生成。**四個隨長度變動的(storyboard / render / regen)維持 placeholder**,權威公式寫進 `types.ts` 檔頭 —— TBD-CC-05 自己的結論就是「由後端回傳而非 hardcode」,不自建 client 計算器。 |
+| ~~**3**~~ | ✅ **2026-08-19 全部結案** — 六個 placeholder 已全數依 `areas/11` 重算。`COST_STORYBOARD` / `COST_RENDER` / `COST_REGEN` **已刪除**,改為 `scriptCost()` / `createMvCost()` / `generateMvCost()` / `recreateShotCost()` 四個依規格計算的函式;Merge 改為固定 10。**這四個函式就是接後端時唯一的替換點**,`contract.surface.test.ts` 用規格自己的計算範例(225 / 95 / 28 / 12·15·18)鎖住它們。詳見 `docs/CHANGELOG-RD.md` 2026-08-19。 |
 | ~~**4**~~ | ✅ **2026-08-12 結案** — `enhanceCost` / `consumeEnhance` 已從 `useCredits` 移除,費用徽章也拿掉。⚠️ 這是 **C4 的刪除**(C4 原則只可新增),刻意為之並記在 `CHANGELOG-RD.md`。 |
 | ~~**5**~~ | ✅ **2026-08-12 結案** — `DEFAULT_CREDITS = 10`。⚠️ 10 **做不出任何 MV**(最便宜 220),免費帳號生一首人聲歌就撞到付費牆 —— 這是刻意的漏斗。demo 另有 `NEXT_PUBLIC_DEMO_CREDITS` 環境變數可覆寫。 |
 
@@ -43,7 +43,7 @@ section」,不是「小的 UI 問題」。**
   這是品質缺口,不是契約缺口。
 - **`e2e/a11y.spec.ts` 三個盲點**:不 seed 登入(4 條 guarded route 只掃到登入牆)、只有桌機寬度、
   只掃英文未加前綴的路由。
-- **`DESIGNER-TODO` A1–A21 幾乎全開** —— 依 2026-08-06 的 scope rule 刻意保留給下一版設計稿,
+- **`DESIGNER-TODO` A1–A26 多數仍開** —— 依 2026-08-06 的 scope rule 刻意保留給下一版設計稿,
   **不是漏做的工**。
 
 ---
@@ -81,23 +81,23 @@ section」,不是「小的 UI 問題」。**
 | TBD-PROF-02   | Profile            | 意見回饋送出的目的地。                                                                                                                                                                                                                                                                                      |
 | TBD-PROF-04   | Profile            | 真的取消訂閱 + 真的刪除帳號。                                                                                                                                                                                                                                                                               |
 | TBD-PROF-05   | Profile            | 真實統計資料來源(目前是靜態 `SAMPLE_CREATIONS`)。                                                                                                                                                                                                                                                           |
-| TBD-SHARE-01  | Share              | 伺服器端分享連結解析 + 真的到期。                                                                                                                                                                                                                                                                           |
+| TBD-SHARE-01  | Share              | 伺服器端分享連結解析。**「真的到期」已於 2026-08-19 移除** —— 連結永不過期,只需要能解析。 |
 | TBD-EXP-08    | Explore            | 真實 like/share/play 計數持久化(登入門檻已完成)。                                                                                                                                                                                                                                                           |
 | TBD-SONG-06   | Song               | 正式環境的歌曲失敗觸發機制。                                                                                                                                                                                                                                                                                |
-| TBD-EXP-10    | Explore            | Publish/feed 的 **language code 格式(2 碼 vs 3 碼)由 RD 討論後給答案**;前端只負責傳遞並向後端要已排序資料。                                                                                                                                                                                                 |
+| TBD-EXP-10    | Explore            | **完全由 RD 負責(產品負責人 2026-08-20)。** Publish/feed 的語系排序與 language code 格式由 RD 端到端決定與實作,**前端不處理、也不預期要傳**。刻意不列為前端缺口,以免 RD 誤以為在等我們。 |
 
 ## ⏳ 仍待議 / 待設計 — 這 7 項還需要你或設計師後續拍板
 
 | ID           | 領域    | 待處理                                                                            |
 | ------------ | ------- | --------------------------------------------------------------------------------- |
-| TBD-MV-07    | MV      | MV 類型介紹 / Style-Picker → **等設計師出 guideline + UX flow**。                 |
-| TBD-MV-11    | MV      | Choose Song 的空狀態("尚未建立歌曲" + 建立捷徑)尚未實作,seed 目前一律有資料。     |
+| ~~TBD-MV-07~~ | MV      | ✅ **2026-08-20 結案 — 不需要 carousel。** DP 的三張類型卡各自播放 `feature_intro_*` 影片,那就是類型介紹;carousel 是遷移前的舊描述。 |
+| TBD-MV-11    | MV      | ⚠️ **描述已過時(2026-08-19 查證)** — 空狀態 UI **已經實作**(`ChooseSongModal.tsx:116-131`,含 Create Song CTA),只是 `MY_SONGS` 固定兩筆讓它永遠碰不到。是「已建但死碼」,不是「未實作」。 |
 | TBD-SONG-07  | Song    | 歌詞生成支援的語言清單。                                                          |
-| TBD-EXP-03   | Explore | MV 播放器 9:16↔3:4 切換 + 上滑看下一支。                                          |
+| TBD-EXP-03   | Explore | 🎨 **V1 要做,等設計稿(2026-08-19)** — MV 播放器 9:16↔3:4 切換 + 上滑看下一支。桌機上「上滑」對應什麼互動尚未設計,見 `DESIGNER-TODO` **A26**。 |
 | TBD-EXP-05   | Explore | 真實多元創作者 + 檢舉/封鎖。                                                      |
 | TBD-AUTH-04  | Auth    | **Web 專屬**的訪客瀏覽/門檻規範(需詳細訂,不能直接照 App)。                        |
-| TBD-SHARE-02 | Share   | Web 適合的社群分享平台(和 App 不同,細節待補);社群分享目前 MVP 移除,只剩複製連結。 |
-| TBD-SHARE-03 | Share   | 已決定分享連結要帶分析追蹤,但追蹤哪些收件者資料仍未定義。                         |
+| ~~TBD-SHARE-02~~ | Share   | ✅ **2026-08-19 結案 — V1 只做複製連結。** 社群分享管道移到下一階段 roadmap。 |
+| TBD-SHARE-03 | Share   | 📋 **BA 待設計(2026-08-19)** — 需要完整的成效追蹤,但收集哪些欄位由 BA 定義。前端刻意留空,不先猜著埋參數。 |
 | ~~TBD-CR-06a~~ | Credits | ✅ **2026-08-19 結案** — 免費用戶起始額度定為 **10 credits**（產品負責人）。 |
 
 ---

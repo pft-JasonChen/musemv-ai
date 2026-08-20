@@ -3563,3 +3563,32 @@ test("TODO#8b: a song with no lyrics offers no Lyrics affordance at all", async 
   // and none of the retired filler survives anywhere on the page
   await expect(page.getByText(/Hold this afterglow/i)).toHaveCount(0);
 });
+
+test("AC-SONG-06: a song opened from History shows its lyrics", async ({ page }) => {
+  // The other half of TODO#8b. Removing `FALLBACK_LYRICS` was correct, but it
+  // exposed that `useOpenCreation` never seeded `lyrics` AT ALL — so every
+  // catalogue song opened from History rendered without a lyrics panel, which
+  // looks exactly like the bug rather than the fix. The data existed in
+  // `community.ts` the whole time; only the wiring was missing (2026-08-20).
+  //
+  // Guards the pair together: a catalogue title HAS lyrics, and TODO#8b still
+  // asserts a Simple-mode song does not.
+  // Through History, not a cold `?id=` goto: the cold path is a different branch
+  // that resolves community songs, while the fix is in `useOpenCreation`, which
+  // only runs when a row is actually opened. Testing the wrong branch would have
+  // passed or failed for reasons unrelated to the change.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+  await doneCover(page, "song").click();
+  await page.waitForURL(/\/song\/result/);
+  await expect(page.getByRole("button", { name: "Use in Music Video" })).toBeVisible();
+
+  await expect(page.locator(".song-result__lyrics-inline")).toBeVisible();
+  // The control is asserted by COUNT, not visibility: `/song/result` renders the
+  // transport twice and lets CSS pick which copy is laid out at each width, so a
+  // `toBeVisible()` here would be testing the layout, not the wiring. TODO#8b
+  // asserts the same locator is 0 for a song with no lyrics, so the pair brackets
+  // the actual rule.
+  await expect(page.locator(".song-result__icon-btn--lyrics")).toHaveCount(1);
+});
