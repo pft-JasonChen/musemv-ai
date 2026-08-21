@@ -131,7 +131,7 @@ export function SongCompose() {
 
   return (
     <>
-      <RoomNavbar title="AI Song" />
+      <RoomNavbar title="AI Song" mobileBackHref="/" />
 
       <div className="song-create">
         <div className="song-create__panel">

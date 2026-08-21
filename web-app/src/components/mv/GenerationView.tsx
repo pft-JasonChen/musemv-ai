@@ -8,6 +8,7 @@ import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { DetailNavbar } from "@/components/shell/DetailNavbar";
 
 interface Props {
   kind: "storyboard" | "render" | "song";
@@ -36,6 +37,19 @@ interface Props {
  * has had its own independently-migrated `SongGenerationScreen` since before
  * this change and no longer renders through here — so only the copy/prop
  * plumbing for it is kept, not a duplicate style path.
+ *
+ * ── `DetailNavbar` ADDED, 2026-08-22 (product owner, "layer 1 vs everything
+ *    else" — AppShell.tsx's own comment) ────────────────────────────────
+ *
+ * `/mv/creating` was the one route with NEITHER a migrated navbar NOR a
+ * phone back/title bar at all — DP never designed a render-progress screen,
+ * so it had stayed on the legacy `TopBar` and was not in `OWN_CHROME`. Once
+ * `AppShell` stopped mounting its own `MobileHeader` outside Home/History,
+ * this screen would have had NO header whatsoever on a phone. Adding
+ * `DetailNavbar` (now also added to `OWN_CHROME`) gives it the exact same
+ * back+title bar every sibling generation-adjacent screen already has,
+ * without needing DP to ever design one — `title`/`backHref` were already
+ * computed here for the in-body copy and the failed-state Back link.
  */
 export function GenerationView({
   kind,
@@ -83,8 +97,10 @@ export function GenerationView({
   const failed = gen.status === "failed";
 
   return (
-    <div className="mv-storyboard mv-storyboard--processing">
-      <div className="mv-storyboard-processing" role={failed ? "alert" : undefined}>
+    <>
+      <DetailNavbar title={title} fallbackPath={backHref} />
+      <div className="mv-storyboard mv-storyboard--processing">
+        <div className="mv-storyboard-processing" role={failed ? "alert" : undefined}>
         <div className="mv-storyboard-processing__card">
           <DpIcon
             name={failed ? "ic_alert" : "ic_video_ai"}
@@ -148,7 +164,8 @@ export function GenerationView({
         )}
 
         <p className="sr-only">{kind} generation in progress</p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

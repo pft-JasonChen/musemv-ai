@@ -85,7 +85,17 @@
    and HIST-03 is spec'd behaviour.
 
    DELETE THIS when a drop ships an AppLayout.css that keeps History's tabs row
-   visible below 767px. */
+   visible below 767px.
+
+   ── "REVERSED IN PART" (2026-08-23) ITSELF REVERSED, SAME DAY (product
+   owner) ─────────────────────────────────────────────────────────────────
+   That change un-hid `.room-navbar__top` so "My Creations" would show on
+   mobile — but the product owner's actual preference is simpler: don't grow
+   a SECOND header for one string. `MobileHeader.tsx` now carries the page
+   title itself (`mobile-header__title`, route-aware: "My Creations" on
+   `/history`, "YouCam Muse" elsewhere) instead. So `__top` goes back to
+   fully hidden, exactly as the original A4 override left it — only the tabs
+   row is the exception here, unchanged from the start. */
 @media (max-width: 767px) {
   .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs) {
     display: flex;
@@ -1663,38 +1673,16 @@
   line-height: 26px;
 }
 
-/* Product owner request, 2026-08-20 — `/explore/mvs` ("Trending MV") and
-   `/watch` (the MV player) each grew their own DP-styled mobile header
-   (`.mv-detail__mobile-header` / `.mv-player__mobile-header`, see
-   MvExplore.tsx / CommunityMvPlayer.tsx). `AppShell`'s `MobileHeader` and
-   `MobileTabBar` are mounted unconditionally for every route — DP has no
-   equivalent shell chrome to hide, only WA does — so without this they'd
-   stack a second header above DP's, and the tab bar would sit on top of
-   (or behind, depending on paint order) the bottom CTA/controls these two
-   pages now render in that same space. Same `:has()` technique
-   CreditsPage.css already uses for its own (header-only) hide; both
-   `.mv-detail`-rooted screens share one rule since both need the same fix. */
-@media (max-width: 767px) {
-  .app-layout__main:has(.mv-detail) > .mobile-header,
-  .app-layout__main:has(.mv-detail) > .mobile-tabbar {
-    display: none;
-  }
-}
-
-/* Product owner request, 2026-08-21 — `/creator` (`CreatorProfile.tsx`)
-   renders its own `DetailNavbar` (back + the creator's name, unhidden —
-   no `hideMobileBar` here, unlike `/watch`/`/explore/mvs`) but had no rule
-   suppressing the shell's always-mounted `MobileHeader`/`MobileTabBar`, so a
-   phone stacked THREE bars: the shell's generic top bar, DetailNavbar's own
-   back+title bar, and the bottom tab bar. Same `:has()` technique as the
-   `.mv-detail` rule above; scoped to `.community-profile` since this is the
-   only screen rooted in that class. */
-@media (max-width: 767px) {
-  .app-layout__main:has(.community-profile) > .mobile-header,
-  .app-layout__main:has(.community-profile) > .mobile-tabbar {
-    display: none;
-  }
-}
+/* Product owner request, 2026-08-22 — SUPERSEDED by the general "layer 1"
+   rule in `AppShell.tsx` (`MOBILE_TAB_ROUTES`): the shell's `MobileHeader`/
+   `MobileTabBar` are now only MOUNTED (not just hidden) on Home and History,
+   so this page-by-page `:has()` approach — one rule per page that grew its
+   own mobile header (`/explore/mvs`, `/watch`, then `/creator`) — is no
+   longer needed for any of the three and was deleted here. Left as a pointer
+   in case a future page ever needs to hide shell chrome for a reason
+   AppShell's route-based rule can't express (it couldn't before `/creator`'s
+   own fix either, hence three near-identical rules accumulating) —
+   `AppShell.tsx`'s own comment is the one to read first now. */
 
 /* Product owner request, 2026-08-21 — on `/watch`, `.mv-player__like-share
    .icon-button` (MVDetailPage.css, mobile query) gives Like/Share a
@@ -1785,4 +1773,36 @@
     height: 100%;
     object-fit: cover;
   }
+}
+
+/* Product owner request, 2026-08-23 — `FloatingCTA.css`'s mobile rule floats
+   the button at `bottom: calc(66px + var(--floating-cta-footer-offset,0px))`,
+   permanently reserving room for the shell's `.mobile-tabbar` (also 66px,
+   MobileTabBar.css). Since `AppShell` now only mounts that tab bar on
+   Home/History ("layer 1 vs everything else" — AppShell.tsx's own comment),
+   and NONE of FloatingCTA's four callers (`/mv/room`, `/song/create`,
+   `/mv/storyboard`, `/mv/edit`) are layer 1, the 66px is now empty space
+   between the button and the actual bottom edge on every page that uses it.
+   Same selector list as the rule it overrides, so the tie (equal specificity,
+   later source) resolves to this value. */
+@media (max-width: 767px) {
+  .floating-cta,
+  body:has(.sidebar--collapsed) .floating-cta,
+  body:has(.sidebar:not(.sidebar--collapsed)) .floating-cta {
+    bottom: var(--floating-cta-footer-offset, 0px);
+  }
+}
+
+/* Product owner request, 2026-08-23 — every OTHER dialog/sheet backdrop in
+   this app blurs the page behind it (`LoginModal`, `UpgradeDialog`,
+   `CreditsDialog`, `PublishDialog`, `LyricsSheet`, the `MvSheet` family,
+   History's own card-menu sheet, …), all at the same literal `blur(2px)`
+   (see `Modal.tsx`'s own comment for the full inventory). These two were
+   the only gaps — plain dim scrims, no blur at all, in DP-gated files this
+   can't edit directly. Not scoped to any breakpoint: neither source rule
+   has one, and the request was "desktop, tablet, and mobile" alike. */
+.mobile-tabbar-sheet-overlay,
+.mv-edit__lightbox-overlay {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }

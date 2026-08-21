@@ -65,7 +65,39 @@ const OWN_CHROME = [
   "/song/creating",
   "/song/result",
   "/mv/edit",
+  // `/mv/creating` joined 2026-08-22 (see MOBILE_TAB_ROUTES below) — it now
+  // carries its own DetailNavbar (GenerationView.tsx) instead of the legacy
+  // TopBar, matching every other generation-adjacent screen.
+  "/mv/creating",
 ];
+
+/**
+ * ── "LAYER 1" VS EVERYTHING ELSE, 2026-08-22 (product owner) ────────────────
+ *
+ * `MobileHeader`/`MobileTabBar` used to mount unconditionally on every route
+ * (only `/share` opted out, via the early return below), and per-page CSS
+ * `:has()` overrides in `designer-overrides.css` hid them one page at a time
+ * as each screen grew its own back+title bar (`/explore/mvs`, `/watch`,
+ * `/creator`). The product owner's request generalizes that: the tab bar and
+ * the generic header should ONLY show on the pages `MobileTabBar` actually
+ * links to — Home and History, "layer 1" — and every other route should hide
+ * both and show a back button + page title instead.
+ *
+ * This is the general rule now; the three page-specific `:has()` overrides it
+ * replaces were removed from `designer-overrides.css` in the same change.
+ * Every OTHER route already renders its own back+title bar on mobile
+ * (`DetailNavbar` without `hideMobileBar`, or a page's own custom header like
+ * `.mv-player__mobile-header`) — those bars were previously stacking UNDER
+ * the shell's own `MobileHeader` (same `position: sticky; top: 0; z-index:
+ * 20`, see `DetailNavbar.tsx`'s own note); hiding `MobileHeader` here fixes
+ * that double-header for all of them at once. The exceptions that had NO
+ * mobile back/title mechanism at all (`/mv/room`, `/song/create`,
+ * `/song/creating`, `/profile` — all `RoomNavbar`, which never had a back
+ * button; `/explore/songs`'s list view) each gained one in this same change —
+ * see `RoomNavbar.tsx`'s `mobileBackHref` and `SongDetailView.tsx`'s own
+ * `.mv-detail__mobile-header` (reused from `/explore/mvs`, not duplicated).
+ */
+const MOBILE_TAB_ROUTES = ["/history"];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
@@ -82,6 +114,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const ownChrome = OWN_CHROME.some((r) => path === r || path.startsWith(`${r}/`));
   const isHome = path === "/";
+  const isMobileTabPage =
+    isHome || MOBILE_TAB_ROUTES.some((r) => path === r || path.startsWith(`${r}/`));
 
   return (
     <div className="app-layout app-layout--mobile-app">
@@ -89,10 +123,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="app-layout__main">
         {isHome && <HomeBackground />}
         {!ownChrome && (isHome ? <Navbar /> : <TopBar />)}
-        <MobileHeader />
+        {isMobileTabPage && <MobileHeader />}
         <main className="app-layout__content">{children}</main>
         {isHome && <Footer />}
-        <MobileTabBar />
+        {isMobileTabPage && <MobileTabBar />}
       </div>
     </div>
   );

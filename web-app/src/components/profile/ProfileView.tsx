@@ -133,7 +133,7 @@ export function ProfileView() {
     <>
       {/* Rendered here, not in AppShell — App Router has no per-route slot, so a
           migrated screen owns its chrome and `OWN_CHROME` keeps TopBar away. */}
-      <RoomNavbar title={t("nav.account")} />
+      <RoomNavbar title={t("nav.account")} mobileBackHref="/" />
       <section className="account-page">
         <div className="account-page__content">
           <div className="account-page__profile">

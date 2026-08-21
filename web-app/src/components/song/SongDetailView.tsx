@@ -426,6 +426,9 @@ export function SongDetailView() {
   const online = useOnline();
   const isPhone = useMediaQuery(PHONE_QUERY);
   const goBack = useBackNavigation("/explore/songs");
+  // See this file's "LIST-VIEW MOBILE HEADER" note near the render below —
+  // the list's OWN back goes Home, not to itself.
+  const goBackHome = useBackNavigation("/");
 
   /**
    * `useSearchParams`, not a render-time read of the document's query string —
@@ -491,31 +494,37 @@ export function SongDetailView() {
    * a CSS constant, for the identical reason — a runtime value, not a
    * breakpoint one).
    *
-   * Measures `.mobile-header` too, not just `.detail-navbar` — this view
-   * passes `hideMobileBar`, so below 768px `.detail-navbar` itself is
-   * `display: none` (0 height) and `AppShell`'s own sticky `.mobile-header`
-   * (also `top: 0`, also `z-index: 20`) is what actually occupies that top
-   * edge instead. Only one of the two is ever visible at a given width
-   * (their own CSS is the switch), so taking whichever is currently taller
-   * always tracks the real one without needing a breakpoint check here.
+   * Measured THREE candidates, not two, since 2026-08-22. It used to be
+   * `.mobile-header` too (this view passes `hideMobileBar`, so below 768px
+   * `.detail-navbar` itself is 0 height and `AppShell`'s shell header used to
+   * occupy that edge instead) — but `AppShell` now only mounts `.mobile-
+   * header` on Home/History ("layer 1 vs everything else", see its own
+   * comment), so on this route it no longer exists to measure. The THIRD
+   * candidate, `.mv-detail__mobile-header` (this file's own new list-view
+   * back+title bar, see the render below), is what actually occupies that
+   * edge on mobile now. Still just "whichever is currently taller" — no
+   * breakpoint check needed, each one's own CSS is the switch.
    */
   const [navbarHeight, setNavbarHeight] = useState(0);
 
   useIsomorphicLayoutEffect(() => {
     const navbar = document.querySelector(".detail-navbar");
     const mobileHeader = document.querySelector(".mobile-header");
-    if (!navbar && !mobileHeader) return;
+    const listMobileHeader = document.querySelector(".mv-detail__mobile-header");
+    if (!navbar && !mobileHeader && !listMobileHeader) return;
 
     function measure() {
       const navbarH = navbar?.getBoundingClientRect().height ?? 0;
       const mobileH = mobileHeader?.getBoundingClientRect().height ?? 0;
-      setNavbarHeight(Math.max(navbarH, mobileH));
+      const listH = listMobileHeader?.getBoundingClientRect().height ?? 0;
+      setNavbarHeight(Math.max(navbarH, mobileH, listH));
     }
 
     measure();
     const observer = new ResizeObserver(measure);
     if (navbar) observer.observe(navbar);
     if (mobileHeader) observer.observe(mobileHeader);
+    if (listMobileHeader) observer.observe(listMobileHeader);
     return () => observer.disconnect();
   }, []);
 
@@ -771,8 +780,15 @@ export function SongDetailView() {
           App Router cannot use DP's navbar-as-a-prop arrangement. Back falls back
           to /explore/songs: on a cold `?id=` deep link that is this section's
           entry, and it is what the mobile player's back control uses too. */}
-      {/* A5: no phone back — the list half is an Explore tab-bar destination. The
-          full-screen mobile player has its own back (that is why 3b was safe). */}
+      {/* A5, reversed 2026-08-22: `/explore/songs` is NOT actually a tab-bar
+          destination (only Home and History are — MobileTabBar.tsx), so
+          "the list needs no phone back" was wrong on its own terms even
+          before the "layer 1" rule; it now gets one via this file's own
+          `.mv-detail__mobile-header` (see the render below), same as
+          `/explore/mvs`. `hideMobileBar` stays: that header replaces
+          DetailNavbar's compact bar, it doesn't stack with it. The full-
+          screen mobile player still has its own separate back (unchanged,
+          why 3b was safe regardless of this). */}
       {/* No more `tabsSlot` — the genre tabs moved into the page body below,
           see this file's own header comment ("TOP PICKS RAIL + MOVED TABS"). */}
       <DetailNavbar fallbackPath="/explore/songs" hideMobileBar />
@@ -826,6 +842,42 @@ export function SongDetailView() {
               whole page, so nesting the heading there instead is what
               actually gives the sticky effect somewhere to run. */}
           <div className="song-detail-page">
+            {/* ── LIST-VIEW MOBILE HEADER, 2026-08-22 (product owner,
+                "layer 1 vs everything else" — AppShell.tsx's own comment)
+                Phone-only (`display: none` until 767px), same compact
+                back bar `/explore/mvs` already has —
+                `.mv-detail__mobile-header` (MVDetailPage.css), REUSED here
+                rather than duplicated: it's a generic H50 bar, not visually
+                MV-specific, and its `margin: 0 -16px; padding: 10px 16px 0`
+                cancels to a net-zero shift regardless of the parent's own
+                padding (verified: `.song-detail-page`'s 20px here vs
+                `.mv-detail`'s 16px both land the content flush with this
+                page's own 20px list/rail inset — same reason it had to be
+                nested INSIDE the padded parent, not a sibling before it, the
+                first time this bar was built for `/explore/mvs`). Must stay
+                this element's FIRST CHILD for exactly that reason.
+                `/song/play` (a song selected, `mobilePlayerOpen`) covers this
+                with its own full-screen `.song-detail-mobile-player` (z-index
+                150 vs this bar's 10), so it never needs hiding separately.
+                No `<h1>` here (product owner, 2026-08-23) — unlike
+                `/explore/mvs`, this list's own body already opens with a
+                "Top Picks Songs" `SectionHeader` right below, so a second
+                copy of the same string in the bar itself was a pure
+                duplicate, not a page title the body lacks. */}
+            <div className="mv-detail__mobile-header">
+              <a
+                href={localePath(locale, "/")}
+                onClick={(e) => {
+                  e.preventDefault();
+                  goBackHome();
+                }}
+                className="mv-detail__mobile-back"
+                aria-label="Back"
+              >
+                <DpIcon name="ic_arrow_left" />
+              </a>
+            </div>
+
             {/* Hidden below 768px, same breakpoint `tabsSlot` was always
                 hidden at (designer-overrides.css). */}
             <section className="top-picks">

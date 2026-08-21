@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useHistory } from "@/components/providers/HistoryProvider";
@@ -24,6 +24,7 @@ import { formatCount } from "@/lib/mv/community";
 import { RoomNavbar, Tabs } from "@/components/shell/RoomNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
+import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
 
 type Filter = "all" | "mv" | "song" | "liked";
 const FILTERS: { id: Filter; label: string }[] = [
@@ -38,6 +39,10 @@ interface Override {
   published?: boolean;
   reviewing?: boolean;
 }
+
+/** `useLayoutEffect` warns during SSR; fall back to `useEffect` there. Same
+ *  pattern `SongDetailView.tsx` uses for its own navbar-height measurement. */
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
  * The card's title and cover are `<a>` elements because DP's CSS styles them via
@@ -80,6 +85,36 @@ export function HistoryView() {
   const [del, setDel] = useState<HistorySample | null>(null);
   const [pubConfirm, setPubConfirm] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  // ── ROOM-NAVBAR STICKY OFFSET, 2026-08-23 (product owner) ────────────────
+  // `.room-navbar` is `position: sticky; top: 0` (RoomNavbar.css) — correct
+  // everywhere else RoomNavbar is used, but on THIS route `.mobile-header` is
+  // ALSO sticky at `top: 0, z-index: 20` (same z-index), rendered by
+  // `AppShell` just above it in the DOM (History is one of the two "layer 1"
+  // routes that keep the shell header — see AppShell.tsx's own comment). Two
+  // sticky elements both pinned to the exact same `top: 0` land on top of
+  // each other rather than stacking — `.room-navbar` was sticking, just
+  // directly UNDERNEATH `.mobile-header`, invisible for the entire scroll.
+  // Measuring `.mobile-header`'s real height and feeding it in as `top` is
+  // the same fix (same reason: a runtime value, not a breakpoint one) as
+  // `SongDetailView.tsx`'s own navbar-height measurement. On desktop
+  // `.mobile-header` is DP's own `display: none`, so `getBoundingClientRect()`
+  // reports 0 and `top` resolves back to 0 — no breakpoint check needed here.
+  const [navbarTop, setNavbarTop] = useState(0);
+
+  useIsomorphicLayoutEffect(() => {
+    const header = document.querySelector(".mobile-header");
+    if (!header) return;
+
+    function measure() {
+      setNavbarTop(document.querySelector(".mobile-header")?.getBoundingClientRect().height ?? 0);
+    }
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -212,6 +247,7 @@ export function HistoryView() {
       <RoomNavbar
         title="My Creations"
         tabsSlot={<Tabs tabs={FILTERS} active={filter} onChange={setFilter} />}
+        style={{ top: navbarTop }}
       />
 
       <div className="history-page">
@@ -490,6 +526,8 @@ function Menu(p: MenuProps) {
   const hideDelete = (isMv && (p.published || p.reviewing)) || (isSong && p.published);
 
   const btnRef = useRef<HTMLButtonElement>(null);
+  // See this component's render below ("MOBILE BOTTOM SHEET, 2026-08-23").
+  const isPhone = useMediaQuery(PHONE_QUERY);
   // Fade in/out, 0.2s (2026-08-14): the portal is now ALWAYS mounted (see the
   // render below) rather than conditionally on `p.open` — same "always-
   // mounted + inert instead of a timed unmount" convention already used for
@@ -560,7 +598,28 @@ function Menu(p: MenuProps) {
 
       {createPortal(
         <>
-          {p.open && <div className="fixed inset-0 z-[90]" onClick={() => p.setOpen(false)} />}
+          {/* ── MOBILE BOTTOM SHEET, 2026-08-23 (product owner) ────────────
+              `.history-card__menu`'s own mobile rule (HistoryPage.css,
+              `@media (max-width: 767px)`) already makes it a full-width,
+              rounded-top bottom sheet (`left:0; right:0; bottom:0; top:auto`)
+              with a matching dim `.history-card__menu-backdrop` and a
+              `.history-card__menu-handle` drag bar — both fully styled but
+              never rendered until now, the same "CSS ahead of the port"
+              shape this codebase keeps hitting. The reason it never fit the
+              screen width on phones: the desktop dropdown-positioning
+              `style={{ top, right }}` below is INLINE, so it always wins
+              over the stylesheet's `left/right/bottom/top` regardless of
+              specificity — with all four insets effectively set, the box
+              stretched between the inline `right` (a few px from the ⋯
+              button) and the CSS `left: 0` instead of spanning edge to
+              edge. Skipping the inline positioning on phone lets the
+              stylesheet's bottom-sheet rule fully own the box. */}
+          {p.open &&
+            (isPhone ? (
+              <div className="history-card__menu-backdrop" onClick={() => p.setOpen(false)} />
+            ) : (
+              <div className="fixed inset-0 z-[90]" onClick={() => p.setOpen(false)} />
+            ))}
           {/* Product owner request, 2026-08-14 — this popup was still raw Tailwind
               (see the file header note this replaces): a generic dark card with
               inline-SVG icons instead of DP's real `.history-card__menu` system
@@ -573,8 +632,9 @@ function Menu(p: MenuProps) {
             className={`history-card__menu${p.open ? " history-card__menu--visible" : ""}`}
             role="menu"
             inert={!p.open}
-            style={{ position: "fixed", top: pos.top, right: pos.right }}
+            style={isPhone ? undefined : { position: "fixed", top: pos.top, right: pos.right }}
           >
+              {isPhone && <div className="history-card__menu-handle" aria-hidden="true" />}
               {!community && !failed && (
                 <>
                   {/* MV-13: a published / in-review MV must be unpublished before editing;

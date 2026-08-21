@@ -3,7 +3,10 @@
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
-import { useT } from "@/components/providers/LocaleProvider";
+import { useT, useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
+import { DpIcon } from "@/components/ui/DpIcon";
+import { useBackNavigation } from "@/components/shell/DetailNavbar";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 2, Slice 2b / CH2) ──────────────
@@ -24,16 +27,66 @@ import { useT } from "@/components/providers/LocaleProvider";
  * actions route to /profile, where WA's real credits and subscribe surfaces
  * already live — porting a second IAP stack inside a shell slice would duplicate
  * them, not migrate them.
+ *
+ * ── `mobileBackHref`, 2026-08-22 (product owner, "layer 1 vs everything
+ *    else" — see AppShell.tsx's own comment) ─────────────────────────────
+ *
+ * "No back button" above was true only because every RoomNavbar caller used
+ * to be reachable straight from the shell's own always-on `MobileHeader` —
+ * once AppShell stopped mounting that outside Home/History, `/mv/room`,
+ * `/song/create`, `/song/creating` and `/profile` had NO way back on a phone
+ * at all. `RoomNavbar.css` already had a `.room-navbar--mobile-back` compact
+ * bar sitting unused for exactly this ("Feature Room pages that opted in via
+ * mobileBackHref", per its own comment) — this is that missing prop, wired
+ * up rather than re-derived. Reuses `DetailNavbar`'s own `useBackNavigation`
+ * (Q6) instead of a second copy. Pages that don't pass it (History, the one
+ * RoomNavbar caller that IS layer 1) keep today's behaviour exactly: RoomNavbar
+ * stays hidden on mobile per `AppLayout.css`'s `:not(.room-navbar--mobile-back)`.
  */
-export function RoomNavbar({ title, tabsSlot }: { title: string; tabsSlot?: React.ReactNode }) {
+export function RoomNavbar({
+  title,
+  tabsSlot,
+  mobileBackHref,
+  style,
+}: {
+  title: string;
+  tabsSlot?: React.ReactNode;
+  mobileBackHref?: string;
+  /** Escape hatch for a caller that needs to override this component's own
+   *  `top` (see History's own use — `.room-navbar` is `position: sticky;
+   *  top: 0`, which is correct everywhere EXCEPT the one page where it sits
+   *  below the shell's OWN sticky `.mobile-header` rather than at the very
+   *  top of the viewport). */
+  style?: React.CSSProperties;
+}) {
   const { loggedIn, subscribed, openSignIn } = useAuth();
   const { openSubscribe, openBuyCredits } = useSubscribe();
   const { credits } = useCredits();
+  const { locale } = useLocale();
   const t = useT();
+  // Hooks can't be called conditionally — harmless to always create this,
+  // since the back link below only renders when `mobileBackHref` is set.
+  const goBack = useBackNavigation(mobileBackHref ?? "/");
 
   return (
-    <header className="room-navbar">
+    <header
+      className={`room-navbar${mobileBackHref ? " room-navbar--mobile-back" : ""}`}
+      style={style}
+    >
       <div className="room-navbar__top">
+        {mobileBackHref && (
+          <a
+            href={localePath(locale, mobileBackHref)}
+            onClick={(e) => {
+              e.preventDefault();
+              goBack();
+            }}
+            className="room-navbar__mobile-back"
+            aria-label="Back"
+          >
+            <DpIcon name="ic_arrow_left" className="room-navbar__mobile-back-icon" />
+          </a>
+        )}
         <p className="room-navbar__title">{title}</p>
         {loggedIn ? (
           <div className="room-navbar__actions">

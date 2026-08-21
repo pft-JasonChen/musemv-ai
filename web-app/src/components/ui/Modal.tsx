@@ -16,6 +16,20 @@ interface Props {
   maxWidth?: number;
 }
 
+/**
+ * Product owner request, 2026-08-23 — every DP-designed dialog/sheet backdrop
+ * in this app (`LoginModal`, `UpgradeDialog`, `CreditsDialog`,
+ * `PublishDialog`, `LyricsSheet`, the `MvSheet` family, …) already blurs the
+ * page behind it at the same literal `blur(2px)`; this component (the
+ * generic WA-authored Delete/Share/Feedback dialog, used at 9+ call sites)
+ * was the one gap, with a plain dim scrim and no blur. Matched to the
+ * existing value rather than inventing a new one — `--blur-glass` (3px,
+ * `tokens.css`) is a different token, for small glass-chrome buttons, not
+ * this. Note: `next dev` (Turbopack) drops `backdrop-filter` entirely; only
+ * a production build restores it (`postcss-restore-backdrop-filter.mjs`,
+ * `AGENTS.md`) — check this in `npm run build`, not dev.
+ */
+
 export function Modal({ open, onClose, title, ariaLabel, children, maxWidth = 460 }: Props) {
   useEffect(() => {
     if (!open) return;
@@ -30,7 +44,16 @@ export function Modal({ open, onClose, title, ariaLabel, children, maxWidth = 46
 
   return createPortal(
     <div role="dialog" aria-modal="true" aria-label={title ?? ariaLabel} className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 anim-fade" style={{ background: "rgba(0,0,0,.6)" }} onClick={onClose} aria-hidden />
+      <div
+        className="absolute inset-0 anim-fade"
+        style={{
+          background: "rgba(0,0,0,.6)",
+          backdropFilter: "blur(2px)",
+          WebkitBackdropFilter: "blur(2px)",
+        }}
+        onClick={onClose}
+        aria-hidden
+      />
       <div
         className="anim-pop relative max-h-[88vh] w-full overflow-y-auto no-scrollbar rounded-t-2xl border sm:w-auto sm:rounded-2xl"
         style={{ background: "var(--card)", borderColor: "var(--border-2)", width: "100%", maxWidth }}
