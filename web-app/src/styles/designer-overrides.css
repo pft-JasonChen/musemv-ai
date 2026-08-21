@@ -1662,3 +1662,127 @@
   font-weight: var(--font-weight-bold);
   line-height: 26px;
 }
+
+/* Product owner request, 2026-08-20 — `/explore/mvs` ("Trending MV") and
+   `/watch` (the MV player) each grew their own DP-styled mobile header
+   (`.mv-detail__mobile-header` / `.mv-player__mobile-header`, see
+   MvExplore.tsx / CommunityMvPlayer.tsx). `AppShell`'s `MobileHeader` and
+   `MobileTabBar` are mounted unconditionally for every route — DP has no
+   equivalent shell chrome to hide, only WA does — so without this they'd
+   stack a second header above DP's, and the tab bar would sit on top of
+   (or behind, depending on paint order) the bottom CTA/controls these two
+   pages now render in that same space. Same `:has()` technique
+   CreditsPage.css already uses for its own (header-only) hide; both
+   `.mv-detail`-rooted screens share one rule since both need the same fix. */
+@media (max-width: 767px) {
+  .app-layout__main:has(.mv-detail) > .mobile-header,
+  .app-layout__main:has(.mv-detail) > .mobile-tabbar {
+    display: none;
+  }
+}
+
+/* Product owner request, 2026-08-21 — `/creator` (`CreatorProfile.tsx`)
+   renders its own `DetailNavbar` (back + the creator's name, unhidden —
+   no `hideMobileBar` here, unlike `/watch`/`/explore/mvs`) but had no rule
+   suppressing the shell's always-mounted `MobileHeader`/`MobileTabBar`, so a
+   phone stacked THREE bars: the shell's generic top bar, DetailNavbar's own
+   back+title bar, and the bottom tab bar. Same `:has()` technique as the
+   `.mv-detail` rule above; scoped to `.community-profile` since this is the
+   only screen rooted in that class. */
+@media (max-width: 767px) {
+  .app-layout__main:has(.community-profile) > .mobile-header,
+  .app-layout__main:has(.community-profile) > .mobile-tabbar {
+    display: none;
+  }
+}
+
+/* Product owner request, 2026-08-21 — on `/watch`, `.mv-player__like-share
+   .icon-button` (MVDetailPage.css, mobile query) gives Like/Share a
+   permanent `rgba(9, 9, 11, 0.8)` pill — by design, at every state, ONLY
+   below 767px (desktop has no such pill at rest and its ghost hover wash is
+   unaffected — kept in the same media query on purpose). But IconButton's
+   shared Ghost/Medium hover rule (`background-color: var(--white-15)`) also
+   matches these buttons and OUTRANKS that pill at equal specificity (loads
+   later in designer.css), so tapping either button lightened its circle —
+   and on touch, `:hover` has nothing to leave after a tap, so the lighter
+   circle stuck behind the icon until the user tapped elsewhere.
+   Re-asserting the SAME pill color on hover/active (not `background: none`
+   — that would drop the pill itself during the stuck-hover window) keeps
+   the circle visually constant through every interaction state. Scoped to
+   these two controls only — other Ghost icon buttons may rely on the shared
+   hover wash. */
+@media (max-width: 767px) {
+  .mv-player__action-icon.icon-button--ghost:hover:not(:disabled),
+  .mv-player__action-icon.icon-button--ghost:active {
+    background: rgba(9, 9, 11, 0.8);
+  }
+}
+
+/* Product owner request, 2026-08-21 — `.mv-player__mobile-header`'s DP padding
+   is `54px 16px 22px`, reserving room above the title for a status bar this
+   web app doesn't have (same reasoning already applied to
+   `.mv-detail__mobile-header`'s own 90px-minus-40px Figma frame, see that
+   rule's comment). Requested value: `10px 16px 22px`. */
+@media (max-width: 767px) {
+  .mv-player__mobile-header {
+    padding: 10px 16px 22px;
+  }
+}
+
+/* Product owner request, 2026-08-21 — `/watch`'s drag-to-switch-MV gesture was
+   rewritten to match `code-snippets/mv-drag-preview.snippet.html`'s reference
+   implementation (see CommunityMvPlayer.tsx's own header comment): three
+   permanent video slots whose ROLE (prev/curr/next) rotates on commit instead
+   of reloading `src` into the same slot, so switching plays continuously with
+   no reload/black-flash. There is no DP reference for this feature at all
+   (documented in CommunityMvPlayer.tsx since the first cut), so these rules
+   are new, not a patch on a DP defect — kept here rather than a new file only
+   to keep every `/watch`-related override in one place.
+
+   Each slot is now the flex/object-fit container `.mv-player__stage` used to
+   be for its single video (that class stays on the outer viewport for
+   backward-compat clipping/z-index and the `e2e` `.mv-player__stage` visibility
+   check, but no longer sizes a video directly — see the component). These
+   rules are DP's own `.mv-player__stage`/`.mv-player__video` declarations,
+   copied under a new name because a descendant selector keyed on
+   `.mv-player__stage` would ALSO match every slot's video through the outer
+   wrapper it's nested in, fighting these at equal specificity. */
+.mv-player__preview-slot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.mv-player__preview-slot:not(.mv-player__preview-slot--portrait) .mv-player__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mv-player__preview-slot--portrait .mv-player__video {
+  height: 100%;
+  width: auto;
+}
+
+@media (max-width: 767px) {
+  .mv-player__preview-slot {
+    align-items: center;
+    background: #09090b;
+  }
+
+  .mv-player__preview-slot:not(.mv-player__preview-slot--portrait) .mv-player__video {
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+
+  .mv-player__preview-slot--portrait .mv-player__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}

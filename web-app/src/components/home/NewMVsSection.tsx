@@ -72,7 +72,7 @@ export function NewMVsSection() {
     <section className="new-mvs">
       <SectionHeader
         title="Trending Music Videos"
-        mobileTitle="Trending MVs"
+        mobileTitle="Trending MV"
         seeAllHref="/explore/mvs"
       />
 

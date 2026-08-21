@@ -2,8 +2,11 @@
 
 import { NEW_MVS, TRENDING_MVS } from "@/lib/mv/community";
 import { CommunityEmpty, useOnline } from "@/components/community/EmptyState";
-import { DetailNavbar } from "@/components/shell/DetailNavbar";
+import { DetailNavbar, useBackNavigation } from "@/components/shell/DetailNavbar";
 import { MvGridSections } from "@/components/community/MvGridSections";
+import { DpIcon } from "@/components/ui/DpIcon";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, first screen after /history) ──
@@ -54,22 +57,76 @@ import { MvGridSections } from "@/components/community/MvGridSections";
  * lives in `MvGridSections` — extracted 2026-08-07 on its second consumer,
  * `CommunityMvPlayer` (`/watch`), which needed the exact same two sections
  * below the player to match DP. See that file for the full reasoning.
+ *
+ * ── MOBILE HEADER + HIDDEN TAB BAR, 2026-08-20 (product owner, reverses A5's
+ *    "no phone back" call for this screen) ─────────────────────────────────
+ *
+ * A5's original reasoning — "Explore is a mobile tab-bar destination, so a
+ * back control solves nothing" — assumed the bottom tab bar stays visible
+ * here. Product owner decided it should not: below 767px (A19: the only MV
+ * catalog a phone can reach is this screen's PRIMARY section, i.e. Trending),
+ * this becomes its own full "Trending MV" screen with a real back control,
+ * not a tab-bar destination browsed in place.
+ *
+ * `.mv-detail__mobile-header` / `.mv-detail__mobile-back` are DP's own
+ * classes (`MVDetailPage.css`), already verbatim-gated and already fully
+ * styled (sticky 50px bar, 28px/1fr/28px grid) — they were simply unused
+ * markup until now, the same "CSS is ahead of the port" shape this codebase
+ * has hit repeatedly. `AppShell`'s always-mounted `MobileHeader` /
+ * `MobileTabBar` are hidden for this route via `designer-overrides.css`
+ * (`:has(.mv-detail)`, same technique `CreditsPage.css` already uses for its
+ * own header-only hide) — DP's CSS has no rule for that because DP has no
+ * separate shell component to hide in the first place.
+ *
+ * ── MUST BE `.mv-detail`'s FIRST CHILD, not a sibling before it (fixed
+ *    2026-08-21) ────────────────────────────────────────────────────────────
+ * `.mv-detail__mobile-header`'s own rule is `margin: 0 -16px; padding: 10px
+ * 16px 0` — a full-bleed bar that only lands back at a 16px inset because it
+ * is meant to cancel `.mv-detail`'s OWN 16px mobile padding (`.mv-detail {
+ * padding: 0 16px 24px }` at 767px). Rendered as a sibling BEFORE `.mv-detail`
+ * instead, there is no 16px padding for the negative margin to cancel — the
+ * -16px pulls it 16px past the (unpadded) viewport edge and the +16px
+ * padding only walks it back to exactly 0, so Back and the title sat flush
+ * against the screen edges with no inset at all. Nesting it as the first
+ * flex child restores the pairing DP's CSS assumes.
  */
 
 export function MvExplore() {
   const online = useOnline();
   const isEmpty = TRENDING_MVS.length === 0 && NEW_MVS.length === 0;
+  const { locale } = useLocale();
+  const goBack = useBackNavigation("/");
 
   return (
     <>
       {/* Sticky, rendered as the view's own first child — see DetailNavbar for
           why App Router can't use DP's navbar-as-a-prop arrangement. Back falls
           back to Home, since this page IS its section's entry point. */}
-      {/* A5: no phone back — Explore is a mobile tab-bar destination, so there is
-          nothing to be trapped in and the row would only cost vertical space. */}
+      {/* Suppresses DetailNavbar's OWN compact mobile bar so it doesn't stack
+          with `.mv-detail__mobile-header` below — desktop is unaffected, this
+          modifier only does anything under 767px (DetailNavbar.css). */}
       <DetailNavbar fallbackPath="/" hideMobileBar />
 
       <div className="mv-detail">
+        {/* Phone-only (`.mv-detail__mobile-header` is `display: none` until
+            767px — MVDetailPage.css) — Back + the page title, since this is
+            the one MV catalog a phone can reach (A19). Must be `.mv-detail`'s
+            first child, see this file's header comment. */}
+        <div className="mv-detail__mobile-header">
+          <a
+            href={localePath(locale, "/")}
+            onClick={(e) => {
+              e.preventDefault();
+              goBack();
+            }}
+            className="mv-detail__mobile-back"
+            aria-label="Back"
+          >
+            <DpIcon name="ic_arrow_left" />
+          </a>
+          <h1>Trending MV</h1>
+        </div>
+
         {/* EXP-06's offline/empty states are still WA's Tailwind component. It
             replaces the grid rather than sitting inside it, so the two systems
             never meet on one element — same arrangement /history uses for its
