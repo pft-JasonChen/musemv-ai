@@ -100,75 +100,85 @@ export function MobileTabBar() {
 
       {/* DP portals this to document.body. Rendering it inline instead keeps it
           out of the SSR/portal hazard class entirely (R-2) — the sheet is
-          position-fixed, so the DOM parent does not affect where it appears. */}
-      {createOpen && (
+          position-fixed, so the DOM parent does not affect where it appears.
+
+          Product owner request, 2026-08-23 — always mounted now (was
+          `{createOpen && (...)}`), toggled by the `--visible` class instead of
+          React conditional rendering, the same "always-mounted + inert"
+          convention `MvSheet`'s own overlays use (`useDialogTransition`) —
+          see `.mobile-tabbar-sheet-overlay`'s own comment in
+          designer-overrides.css. A conditionally-rendered element is removed
+          from the DOM the instant `createOpen` flips false, before a CSS
+          transition ever gets a frame to run, so there was no closing
+          animation to update — this is what gives the slide-up/down
+          something to animate to and from in both directions. */}
+      <div
+        className={`mobile-tabbar-sheet-overlay${createOpen ? " mobile-tabbar-sheet-overlay--visible" : ""}`}
+        role="presentation"
+        onClick={() => setCreateOpen(false)}
+        inert={!createOpen}
+      >
         <div
-          className="mobile-tabbar-sheet-overlay"
-          role="presentation"
-          onClick={() => setCreateOpen(false)}
+          className="mobile-tabbar-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-label="What would you like to create?"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="mobile-tabbar-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label="What would you like to create?"
-            onClick={(e) => e.stopPropagation()}
+          <div className="mobile-tabbar-sheet__handle" aria-hidden="true" />
+          <p className="mobile-tabbar-sheet__title">What would you like to create?</p>
+
+          <Link
+            href={localePath(locale, "/mv/room")}
+            onClick={(e) => go(e, "/mv/room")}
+            className="mobile-tabbar-sheet__option"
           >
-            <div className="mobile-tabbar-sheet__handle" aria-hidden="true" />
-            <p className="mobile-tabbar-sheet__title">What would you like to create?</p>
-
-            <Link
-              href={localePath(locale, "/mv/room")}
-              onClick={(e) => go(e, "/mv/room")}
-              className="mobile-tabbar-sheet__option"
-            >
-              <span className="mobile-tabbar-sheet__badge mobile-tabbar-sheet__badge--mv">
-                <span
-                  className="mobile-tabbar-sheet__badge-icon"
-                  style={mask("ic_video_ai")}
-                  aria-hidden="true"
-                />
-              </span>
-              <span className="mobile-tabbar-sheet__option-info">
-                <span className="mobile-tabbar-sheet__option-title">{t("nav.createMv")}</span>
-                <span className="mobile-tabbar-sheet__option-subtitle">
-                  Selfie + music → cinematic MV
-                </span>
-              </span>
+            <span className="mobile-tabbar-sheet__badge mobile-tabbar-sheet__badge--mv">
               <span
-                className="mobile-tabbar-sheet__chevron"
-                style={mask("ic_chevron-right")}
+                className="mobile-tabbar-sheet__badge-icon"
+                style={mask("ic_video_ai")}
                 aria-hidden="true"
               />
-            </Link>
+            </span>
+            <span className="mobile-tabbar-sheet__option-info">
+              <span className="mobile-tabbar-sheet__option-title">{t("nav.createMv")}</span>
+              <span className="mobile-tabbar-sheet__option-subtitle">
+                Selfie + music → cinematic MV
+              </span>
+            </span>
+            <span
+              className="mobile-tabbar-sheet__chevron"
+              style={mask("ic_chevron-right")}
+              aria-hidden="true"
+            />
+          </Link>
 
-            <Link
-              href={localePath(locale, "/song/create")}
-              onClick={(e) => go(e, "/song/create")}
-              className="mobile-tabbar-sheet__option"
-            >
-              <span className="mobile-tabbar-sheet__badge mobile-tabbar-sheet__badge--song">
-                <span
-                  className="mobile-tabbar-sheet__badge-icon"
-                  style={mask("ic_song_ai")}
-                  aria-hidden="true"
-                />
-              </span>
-              <span className="mobile-tabbar-sheet__option-info">
-                <span className="mobile-tabbar-sheet__option-title">{t("nav.createSong")}</span>
-                <span className="mobile-tabbar-sheet__option-subtitle">
-                  Lyrics + style → original track
-                </span>
-              </span>
+          <Link
+            href={localePath(locale, "/song/create")}
+            onClick={(e) => go(e, "/song/create")}
+            className="mobile-tabbar-sheet__option"
+          >
+            <span className="mobile-tabbar-sheet__badge mobile-tabbar-sheet__badge--song">
               <span
-                className="mobile-tabbar-sheet__chevron"
-                style={mask("ic_chevron-right")}
+                className="mobile-tabbar-sheet__badge-icon"
+                style={mask("ic_song_ai")}
                 aria-hidden="true"
               />
-            </Link>
-          </div>
+            </span>
+            <span className="mobile-tabbar-sheet__option-info">
+              <span className="mobile-tabbar-sheet__option-title">{t("nav.createSong")}</span>
+              <span className="mobile-tabbar-sheet__option-subtitle">
+                Lyrics + style → original track
+              </span>
+            </span>
+            <span
+              className="mobile-tabbar-sheet__chevron"
+              style={mask("ic_chevron-right")}
+              aria-hidden="true"
+            />
+          </Link>
         </div>
-      )}
+      </div>
     </>
   );
 }

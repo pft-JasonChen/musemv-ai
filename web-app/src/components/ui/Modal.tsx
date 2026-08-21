@@ -28,6 +28,22 @@ interface Props {
  * this. Note: `next dev` (Turbopack) drops `backdrop-filter` entirely; only
  * a production build restores it (`postcss-restore-backdrop-filter.mjs`,
  * `AGENTS.md`) — check this in `npm run build`, not dev.
+ *
+ * ── `z-[100]` -> `z-[1300]`, 2026-08-23 (product owner: "the share button
+ *    is missing the function") ────────────────────────────────────────────
+ *
+ * The button worked exactly as coded — `ShareDialog` (built on this
+ * component) opened, mounted, and rendered its real content — but from
+ * `/song/play`'s mobile full-screen player it opened invisibly BEHIND that
+ * player's own `.song-detail-mobile-player--open` overlay, which is
+ * `position: fixed; z-index: 150` (SongDetailPage.css) and, like this
+ * component, portals to `document.body` — so the two compete directly on
+ * z-index, and 150 beat 100. This component is DP's generic "final action"
+ * dialog (Delete/Share/Feedback/Settings' Unsubscribe, 9+ call sites) and
+ * has no reason to ever sit below anything else in the app; `1300` clears
+ * the highest z-index anywhere in the gated stylesheets
+ * (`.face-picker-overlay`, `MVCreatePage.css`, `1200`) rather than just this
+ * one 150.
  */
 
 export function Modal({ open, onClose, title, ariaLabel, children, maxWidth = 460 }: Props) {
@@ -43,7 +59,7 @@ export function Modal({ open, onClose, title, ariaLabel, children, maxWidth = 46
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={title ?? ariaLabel} className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
+    <div role="dialog" aria-modal="true" aria-label={title ?? ariaLabel} className="fixed inset-0 z-[1300] flex items-end justify-center sm:items-center">
       <div
         className="absolute inset-0 anim-fade"
         style={{

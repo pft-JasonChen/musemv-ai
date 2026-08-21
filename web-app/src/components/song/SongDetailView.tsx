@@ -202,12 +202,14 @@ function useSeek(audioRef: RefObject<HTMLAudioElement | null>) {
 interface PlayerProps {
   song: CommunitySong;
   playing: boolean;
+  muted: boolean;
   currentTime: number;
   duration: number;
   audioRef: RefObject<HTMLAudioElement | null>;
   liked: boolean;
   onToggleLike: () => void;
   onTogglePlay: () => void;
+  onToggleMute: () => void;
   onPrev: () => void;
   onNext: () => void;
   onCreate: () => void;
@@ -238,12 +240,14 @@ interface PlayerProps {
 function MobileNowPlaying({
   song,
   playing,
+  muted,
   currentTime,
   duration,
   audioRef,
   liked,
   onToggleLike,
   onTogglePlay,
+  onToggleMute,
   onPrev,
   onNext,
   onCreate,
@@ -331,6 +335,22 @@ function MobileNowPlaying({
               aria-label="Show lyrics"
             >
               <DpIcon name="ic_singing_mic" className="song-detail-mobile-player__icon" />
+            </button>
+            {/* No dedicated "mute" variant exists in SongDetailPage.css (unlike
+                Like's `--active`) — this screen never had one to reuse, so it's
+                the plain icon-btn class with the same on/off `DpIcon` pair
+                `CommunityMvPlayer.tsx`/`SongResultView.tsx` already use for
+                their own mute buttons. */}
+            <button
+              type="button"
+              className="song-detail-mobile-player__icon-btn"
+              onClick={onToggleMute}
+              aria-label={muted ? "Unmute" : "Mute"}
+            >
+              <DpIcon
+                name={muted ? "ic_speaker_off" : "ic_speaker_on"}
+                className="song-detail-mobile-player__icon"
+              />
             </button>
           </div>
         </div>
@@ -441,6 +461,12 @@ export function SongDetailView() {
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
+  // Product owner request, 2026-08-23 — `MobileNowPlaying` had no mute
+  // control at all (not a missing onClick, the button itself didn't exist).
+  // Mirrors `playing`/`togglePlay` above: state here, real toggle against
+  // the one shared `<audio>` element, same pattern `CommunityMvPlayer.tsx`'s
+  // `toggleMute` already uses for its own player.
+  const [muted, setMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   /**
@@ -649,6 +675,13 @@ export function SongDetailView() {
     if (!audio) return;
     if (audio.paused) void audio.play().catch(() => {});
     else audio.pause();
+  }
+
+  function toggleMute() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.muted = !audio.muted;
+    setMuted(audio.muted);
   }
 
   /**
@@ -999,12 +1032,14 @@ export function SongDetailView() {
             <MobileNowPlaying
               song={activeSong}
               playing={playing}
+              muted={muted}
               currentTime={currentTime}
               duration={duration}
               audioRef={audioRef}
               liked={likedIds.has(activeSong.id)}
               onToggleLike={() => toggleLike(activeSong.id)}
               onTogglePlay={togglePlay}
+              onToggleMute={toggleMute}
               onPrev={() => step(-1)}
               onNext={() => step(1)}
               onCreate={() => createFromSong(activeSong)}

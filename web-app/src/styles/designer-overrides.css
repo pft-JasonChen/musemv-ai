@@ -1877,6 +1877,35 @@
   -webkit-backdrop-filter: blur(2px);
 }
 
+/* Product owner request, 2026-08-23 — open/close slide, matching
+   `.mv-sheet-overlay`'s own mobile treatment (`MVCreatePage.css`: overlay
+   fades opacity, its sheet slides `translateY(100%) -> translateY(0)`,
+   both 0.3s ease). `MobileTabBar.css` had neither — `MobileTabBar.tsx`
+   used to conditionally RENDER this sheet (`{createOpen && (...)}`), so it
+   was removed from the DOM the instant it closed, before any transition
+   could run even if the CSS had one. The component now always mounts it and
+   toggles `--visible` instead (see its own comment) — this is the other
+   half, the CSS those two states actually animate between. */
+.mobile-tabbar-sheet-overlay {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-tabbar-sheet-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-tabbar-sheet {
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.mobile-tabbar-sheet-overlay--visible .mobile-tabbar-sheet {
+  transform: translateY(0);
+}
+
 /* Product owner request, 2026-08-23 — `.history-page`'s mobile padding
    (`HistoryPage.css`: `padding: 24px 16px 80px`) put 24px of empty space
    above the first card, on top of whatever gap `RoomNavbar`'s own `__top`/
@@ -1886,5 +1915,50 @@
 @media (max-width: 767px) {
   .history-page {
     padding-top: 0;
+  }
+}
+
+/* Product owner request, 2026-08-23 — `/song/result`'s "other tracks" rail
+   (`.song-result__creations`, `SongCreatePage.css`) is content the "Now
+   Playing" title doesn't describe (see this file's own comment above
+   `.song-result__player`... actually SongResultView.tsx's header comment,
+   2026-08-13) — on mobile this screen is meant to read as a single full-
+   screen player, matching `MobileNowPlaying`'s own full-screen treatment on
+   `/song/play`, so the rail is hidden there. Desktop/tablet unchanged. */
+@media (max-width: 767px) {
+  .song-result__creations {
+    display: none;
+  }
+}
+
+/* Product owner request, 2026-08-23 — `.song-result__bg`/`__bg-overlay`
+   (the blurred cover-art background) were desktop-only (`SongCreatePage.css`:
+   `display: none` until `min-width: 1024px`) — its own comment calls this a
+   deliberate desktop-only choice, not an oversight, but the product owner
+   now wants the same treatment `/song/play`'s mobile full-screen player
+   already has (`.song-detail-mobile-player__bg`/`__scrim`, `SongDetailPage.
+   css`) on THIS screen's mobile view too, since both are meant to read as
+   the same "Now Playing" experience. Mirrors the desktop rule's own values
+   exactly (not the oversized `inset: -10%` variant `/song/play`'s full-
+   screen portal uses) — `.song-result` has no `overflow: hidden`, so an
+   oversized image here would bleed past the card instead of the viewport
+   edge the other screen relies on. */
+@media (max-width: 767px) {
+  .song-result__bg {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: blur(20px);
+  }
+
+  .song-result__bg-overlay {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(9, 9, 11, 0.6) 0%, rgba(9, 9, 11, 0.9) 100%);
   }
 }
