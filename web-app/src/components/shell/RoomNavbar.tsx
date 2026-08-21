@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
@@ -7,6 +8,11 @@ import { useT, useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { useBackNavigation } from "@/components/shell/DetailNavbar";
+
+const mask = (name: string) => {
+  const url = `url("/assets/icons/ui/${name}.svg")`;
+  return { maskImage: url, WebkitMaskImage: url };
+};
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 2, Slice 2b / CH2) ──────────────
@@ -47,11 +53,16 @@ export function RoomNavbar({
   title,
   tabsSlot,
   mobileBackHref,
+  mobileHeaderActions,
   style,
 }: {
   title: string;
   tabsSlot?: React.ReactNode;
   mobileBackHref?: string;
+  /** Phone-only: render MobileHeader's subscribe-crown + account-link pair
+   *  inside this component's own header instead of a separate shell element.
+   *  Mutually exclusive with mobileBackHref in practice. */
+  mobileHeaderActions?: boolean;
   /** Escape hatch for a caller that needs to override this component's own
    *  `top` (see History's own use — `.room-navbar` is `position: sticky;
    *  top: 0`, which is correct everywhere EXCEPT the one page where it sits
@@ -59,7 +70,7 @@ export function RoomNavbar({
    *  top of the viewport). */
   style?: React.CSSProperties;
 }) {
-  const { loggedIn, subscribed, openSignIn } = useAuth();
+  const { loggedIn, subscribed, hydrated, openSignIn } = useAuth();
   const { openSubscribe, openBuyCredits } = useSubscribe();
   const { credits } = useCredits();
   const { locale } = useLocale();
@@ -88,6 +99,35 @@ export function RoomNavbar({
           </a>
         )}
         <p className="room-navbar__title">{title}</p>
+        {mobileHeaderActions && (
+          <div className="room-navbar__mobile-actions">
+            {hydrated && !subscribed && (
+              <button
+                type="button"
+                className="mobile-header__subscribe"
+                onClick={() => openSubscribe()}
+                aria-label={t("profile.upgrade")}
+              >
+                <span
+                  className="mobile-header__subscribe-icon"
+                  style={mask("ic_crown")}
+                  aria-hidden="true"
+                />
+              </button>
+            )}
+            <Link
+              href={localePath(locale, "/profile")}
+              className="mobile-header__account"
+              aria-label={t("nav.account")}
+            >
+              <span
+                className="mobile-header__account-icon"
+                style={mask("ic_account")}
+                aria-hidden="true"
+              />
+            </Link>
+          </div>
+        )}
         {loggedIn ? (
           <div className="room-navbar__actions">
             {/* Designer fix, 2026-08-11: was `<Link href="/profile">`, then

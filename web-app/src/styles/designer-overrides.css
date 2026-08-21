@@ -87,22 +87,71 @@
    DELETE THIS when a drop ships an AppLayout.css that keeps History's tabs row
    visible below 767px.
 
-   ── "REVERSED IN PART" (2026-08-23) ITSELF REVERSED, SAME DAY (product
-   owner) ─────────────────────────────────────────────────────────────────
-   That change un-hid `.room-navbar__top` so "My Creations" would show on
-   mobile — but the product owner's actual preference is simpler: don't grow
-   a SECOND header for one string. `MobileHeader.tsx` now carries the page
-   title itself (`mobile-header__title`, route-aware: "My Creations" on
-   `/history`, "YouCam Muse" elsewhere) instead. So `__top` goes back to
-   fully hidden, exactly as the original A4 override left it — only the tabs
-   row is the exception here, unchanged from the start. */
+   ── `__top` UN-HIDDEN AGAIN, THIS TIME FOR GOOD (2026-08-23, product owner:
+   "same div on both desktop and mobile") ────────────────────────────────────
+   Two earlier attempts at showing History's title on mobile both reversed
+   the same day: first un-hiding `__top` wholesale (grew a redundant credits/
+   Upgrade row `MobileHeader` already covered), then moving the title into
+   `MobileHeader.tsx` instead (grew a SECOND header element where desktop has
+   one). This is the version that stuck: `__top` is visible on mobile again,
+   but `.room-navbar__actions`/`__login` (credits pill, Upgrade, Login) stay
+   hidden — `RoomNavbar.tsx`'s `mobileHeaderActions` prop renders the mobile-
+   only replacement for those (subscribe crown + account link, see
+   `.room-navbar__mobile-actions` below) directly inside `__top` instead. */
 @media (max-width: 767px) {
   .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs) {
     display: flex;
   }
 
-  .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs) .room-navbar__top {
+  .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs) .room-navbar__actions,
+  .app-layout--mobile-app .room-navbar:has(.room-navbar__tabs) .room-navbar__login {
     display: none;
+  }
+}
+
+/* `RoomNavbar.tsx`'s `mobileHeaderActions` — the mobile-only stand-in for
+   `.room-navbar__actions`/`__login` on History (see the override above).
+   Reuses `MobileHeader.css`'s own `.mobile-header__subscribe`/`__account`
+   classes verbatim for the two buttons themselves (their CSS is generic,
+   not scoped to `.mobile-header` as an ancestor); this wrapper just needs to
+   sit at `__top`'s far right, same `margin-left: auto` trick
+   `.room-navbar__actions` uses for the same reason (`RoomNavbar.css`'s own
+   comment: "`.room-navbar__top` has no space-between of its own"). Hidden
+   above the phone cutover — desktop keeps the credits/Upgrade/Login block. */
+.room-navbar__mobile-actions {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .room-navbar__mobile-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+  }
+}
+
+/* Product owner request, 2026-08-23 — now that `.room-navbar__top` plays
+   `.mobile-header`'s old role on History (mobile), its title and container
+   should match that element's own sizing: `MobileHeader.css`'s base rules
+   are `.mobile-header { padding: 12px 16px }` /
+   `.mobile-header__title { font-size: 20px }`, vs `RoomNavbar.css`'s own
+   desktop-sized `.room-navbar__title { font-size: 26px }` and mobile
+   `.room-navbar__top { padding: 20px 16px }`. Bare class selectors, so this
+   only affects `.room-navbar__top`/`__title` where NEITHER of
+   `RoomNavbar.css`'s own higher-specificity modifiers applies — i.e. exactly
+   History, the one caller with `mobileHeaderActions` and no
+   `--mobile-back`; the four `mobileBackHref` pages keep their own compact-
+   bar sizing (`.room-navbar--mobile-back .room-navbar__title`, etc.)
+   unaffected, and desktop is untouched (this is `max-width: 767px` only). */
+@media (max-width: 767px) {
+  .room-navbar__title {
+    font-size: 20px;
+  }
+
+  .room-navbar__top {
+    padding: 12px 16px;
   }
 }
 
@@ -309,6 +358,27 @@
 .history-card__menu--visible {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Product owner request, 2026-08-23 — the mobile bottom sheet (see this
+   file's own "MOBILE BOTTOM SHEET" note on `.history-card__menu-backdrop`/
+   `-handle`) faded in/out in place like the desktop dropdown above, with no
+   sense of sliding up from the bottom edge it's actually anchored to.
+   Re-declares `transition` rather than adding to it — same selector, same
+   specificity, this rule loads later, so it fully replaces the base
+   `opacity`-only one for anyone matching the media query; the opacity half
+   is repeated here so the fade isn't lost, not because it changed. */
+@media (max-width: 767px) {
+  .history-card__menu {
+    transform: translateY(100%);
+    transition:
+      opacity 0.2s ease,
+      transform 0.25s ease;
+  }
+
+  .history-card__menu--visible {
+    transform: translateY(0);
+  }
 }
 
 /* DESIGNER-TODO A8 — TopSongListItem.css has no media queries at all.
@@ -1805,4 +1875,16 @@
 .mv-edit__lightbox-overlay {
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
+}
+
+/* Product owner request, 2026-08-23 — `.history-page`'s mobile padding
+   (`HistoryPage.css`: `padding: 24px 16px 80px`) put 24px of empty space
+   above the first card, on top of whatever gap `RoomNavbar`'s own `__top`/
+   tabs rows already leave — reduced to 0 so the cards start right after the
+   sticky tabs, matching the tighter spacing the product owner wants here.
+   Left/right (16px) and bottom (80px, clearance for the FAB) are unchanged. */
+@media (max-width: 767px) {
+  .history-page {
+    padding-top: 0;
+  }
 }

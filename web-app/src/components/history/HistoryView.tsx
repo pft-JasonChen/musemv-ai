@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useHistory } from "@/components/providers/HistoryProvider";
@@ -39,10 +39,6 @@ interface Override {
   published?: boolean;
   reviewing?: boolean;
 }
-
-/** `useLayoutEffect` warns during SSR; fall back to `useEffect` there. Same
- *  pattern `SongDetailView.tsx` uses for its own navbar-height measurement. */
-const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
  * The card's title and cover are `<a>` elements because DP's CSS styles them via
@@ -85,36 +81,6 @@ export function HistoryView() {
   const [del, setDel] = useState<HistorySample | null>(null);
   const [pubConfirm, setPubConfirm] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-
-  // ── ROOM-NAVBAR STICKY OFFSET, 2026-08-23 (product owner) ────────────────
-  // `.room-navbar` is `position: sticky; top: 0` (RoomNavbar.css) — correct
-  // everywhere else RoomNavbar is used, but on THIS route `.mobile-header` is
-  // ALSO sticky at `top: 0, z-index: 20` (same z-index), rendered by
-  // `AppShell` just above it in the DOM (History is one of the two "layer 1"
-  // routes that keep the shell header — see AppShell.tsx's own comment). Two
-  // sticky elements both pinned to the exact same `top: 0` land on top of
-  // each other rather than stacking — `.room-navbar` was sticking, just
-  // directly UNDERNEATH `.mobile-header`, invisible for the entire scroll.
-  // Measuring `.mobile-header`'s real height and feeding it in as `top` is
-  // the same fix (same reason: a runtime value, not a breakpoint one) as
-  // `SongDetailView.tsx`'s own navbar-height measurement. On desktop
-  // `.mobile-header` is DP's own `display: none`, so `getBoundingClientRect()`
-  // reports 0 and `top` resolves back to 0 — no breakpoint check needed here.
-  const [navbarTop, setNavbarTop] = useState(0);
-
-  useIsomorphicLayoutEffect(() => {
-    const header = document.querySelector(".mobile-header");
-    if (!header) return;
-
-    function measure() {
-      setNavbarTop(document.querySelector(".mobile-header")?.getBoundingClientRect().height ?? 0);
-    }
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(header);
-    return () => observer.disconnect();
-  }, []);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -243,11 +209,18 @@ export function HistoryView() {
 
         The title and the filter tabs both move up into it, which is where DP puts
         them: the tabs stop scrolling away with the page body.
+
+        `mobileHeaderActions` (2026-08-23): on mobile this also carries the
+        subscribe-crown/account-link pair the shell's `MobileHeader` used to
+        render as a SEPARATE sticky bar above this one — `AppShell.tsx` no
+        longer mounts that on `/history`, so this is now the only header, on
+        both desktop and mobile, matching how every other RoomNavbar/
+        DetailNavbar page already works.
       */}
       <RoomNavbar
         title="My Creations"
         tabsSlot={<Tabs tabs={FILTERS} active={filter} onChange={setFilter} />}
-        style={{ top: navbarTop }}
+        mobileHeaderActions
       />
 
       <div className="history-page">

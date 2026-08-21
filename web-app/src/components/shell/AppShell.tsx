@@ -99,6 +99,23 @@ const OWN_CHROME = [
  */
 const MOBILE_TAB_ROUTES = ["/history"];
 
+/**
+ * ── HISTORY STOPS MOUNTING `MobileHeader` TOO, 2026-08-23 (product owner:
+ *    "same div on both desktop and mobile") ─────────────────────────────────
+ *
+ * History is still "layer 1" for the TAB BAR — it's one of the two places
+ * `MobileTabBar` links to, so it keeps that. But it no longer also mounts the
+ * generic `MobileHeader`: that page already renders its own `RoomNavbar`
+ * (title + tabs), and on desktop that's the ONLY header — the shell draws no
+ * second one there. Mobile used to differ for no real reason: `MobileHeader`
+ * sat above `RoomNavbar`, so a phone saw two stacked bars where desktop saw
+ * one. `RoomNavbar` now absorbs `MobileHeader`'s job itself on mobile
+ * (`mobileHeaderActions`: subscribe crown + account link, shown inside
+ * `.room-navbar__top` instead of a separate element) — so header-mounting is
+ * split from tab-bar-mounting here: `isHome` alone decides `MobileHeader`,
+ * `isMobileTabRoute` (Home + History) still decides `MobileTabBar`.
+ */
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
   const path = stripLocalePrefix(pathname);
@@ -114,7 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const ownChrome = OWN_CHROME.some((r) => path === r || path.startsWith(`${r}/`));
   const isHome = path === "/";
-  const isMobileTabPage =
+  const isMobileTabBarRoute =
     isHome || MOBILE_TAB_ROUTES.some((r) => path === r || path.startsWith(`${r}/`));
 
   return (
@@ -123,10 +140,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="app-layout__main">
         {isHome && <HomeBackground />}
         {!ownChrome && (isHome ? <Navbar /> : <TopBar />)}
-        {isMobileTabPage && <MobileHeader />}
+        {isHome && <MobileHeader />}
         <main className="app-layout__content">{children}</main>
         {isHome && <Footer />}
-        {isMobileTabPage && <MobileTabBar />}
+        {isMobileTabBarRoute && <MobileTabBar />}
       </div>
     </div>
   );

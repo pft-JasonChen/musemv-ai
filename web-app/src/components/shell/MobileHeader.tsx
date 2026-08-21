@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useLocale, useT } from "@/components/providers/LocaleProvider";
-import { localePath, stripLocalePrefix } from "@/lib/i18n/config";
+import { localePath } from "@/lib/i18n/config";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 2, Slice 2a / CH5) ──────────────
@@ -33,18 +32,17 @@ import { localePath, stripLocalePrefix } from "@/lib/i18n/config";
  * (DP's own `display: none` until that breakpoint), so a mobile-only
  * component has no "desktop" case where the balance would still be wanted.
  *
- * ── ROUTE-AWARE TITLE, 2026-08-23 (product owner, same day, reversing the
- *    earlier "un-hide `.room-navbar__top`" attempt) ─────────────────────────
+ * ── HISTORY'S TITLE MOVED OUT AGAIN, SAME DAY (product owner: "same div on
+ *    both desktop and mobile") ───────────────────────────────────────────────
  *
- * History wanted its own "My Creations" title visible on mobile. The first
- * cut gave `RoomNavbar` a second, page-specific header row for it
- * (`designer-overrides.css`) — the simpler fix the product owner actually
- * wanted is for THIS component (mobile's only header, mounted on exactly
- * Home and History — see `AppShell.tsx`'s "layer 1" comment) to carry the
- * page's own title instead of a hardcoded wordmark. `usePathname()` +
- * `stripLocalePrefix` is the same check `AppShell.tsx` already does to
- * decide `isHome`; this component just needed its own copy since it isn't
- * handed the route as a prop.
+ * This component briefly went route-aware (title = "My Creations" on
+ * `/history`, "YouCam Muse" elsewhere) so History's title would show on
+ * mobile without growing a second header row. That is reversed too: this
+ * component is now Home-only (`AppShell.tsx` mounts it on `isHome` alone),
+ * and History's title lives in `RoomNavbar` itself — the SAME element that
+ * already carries it on desktop — via `mobileHeaderActions`, which also
+ * moves the subscribe-crown/account-link markup below into `RoomNavbar.tsx`
+ * for that one page. Kept here, unchanged, for Home.
  */
 
 const mask = (name: string) => {
@@ -58,8 +56,6 @@ export function MobileHeader() {
   const { locale } = useLocale();
   const t = useT();
   const profilePath = localePath(locale, "/profile");
-  const path = stripLocalePrefix(usePathname() || "/");
-  const title = path === "/history" || path.startsWith("/history/") ? "My Creations" : "YouCam Muse";
 
   // SHELL-E1, phone half. `HeaderActions` has always reserved space until the
   // persisted flag is read; this component did not, so on a signed-in reload it
@@ -68,7 +64,7 @@ export function MobileHeader() {
   // (Found by the 2026-08-19 spec audit; the spec never covered this component.)
   return (
     <header className="mobile-header">
-      <p className="mobile-header__title">{title}</p>
+      <p className="mobile-header__title">YouCam Muse</p>
       {hydrated && !subscribed && (
         <button
           type="button"
