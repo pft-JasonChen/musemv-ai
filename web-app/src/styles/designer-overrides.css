@@ -1962,3 +1962,639 @@
     background: linear-gradient(to bottom, rgba(9, 9, 11, 0.6) 0%, rgba(9, 9, 11, 0.9) 100%);
   }
 }
+
+/* Product owner, 2026-08-24 — Figma "IAP — Subscribe {Plan} - List_M" (nodes
+   2881:54660 / 55450 / 56030). Below 1024px `SubscribeModal`'s three
+   self-contained plan cards (`.upgrade-dialog__cards--plans`, gated CSS in
+   `UpgradeDialog.css`) are replaced by this hand-authored list: one credits/
+   features summary for whichever plan is selected, above a tappable list of
+   slim plan rows, with a single shared Subscribe button. New markup/classes,
+   so it lives here rather than in the gated stylesheet (Style purity, AGENTS.md).
+   `.upgrade-dialog__cards` with NO `--plans` modifier is the separate
+   already-subscribed confirmation card (`SubscribeModal.tsx`) — deliberately
+   NOT matched by the selector below, since it has no plan to pick from and
+   stays a single card at every width. */
+.upgrade-dialog__mobile {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .upgrade-dialog__cards--plans {
+    display: none;
+  }
+
+  /* `gap: 0` + explicit margins below, rather than a uniform flex `gap`,
+     because the four junctions inside this block want three different
+     values (product owner, 2026-08-24): details→list and list→note stay
+     20px, note→CTA tightens to 12px. */
+  .upgrade-dialog__mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    /* `.upgrade-dialog`'s own 32px gap (`UpgradeDialog.css`) is the
+       desktop three-card spacing; below the plan list it wants 20px above
+       and (via `.upgrade-dialog__footer` below) 12px below instead. */
+    margin-top: -12px; /* 32 - 12 = 20 */
+  }
+
+  .upgrade-dialog__mobile .upgrade-dialog__details {
+    margin-bottom: 20px;
+  }
+
+  .upgrade-dialog__list {
+    margin-bottom: 20px;
+  }
+
+  /* `.upgrade-dialog__renew-note`'s own margin-bottom (below) already
+     supplies the 12px to the CTA. */
+  .upgrade-dialog__footer {
+    margin-top: -20px; /* 32 - 20 = 12 */
+  }
+}
+
+.upgrade-dialog__mobile .upgrade-dialog__credits-number {
+  font-size: 30px;
+}
+
+/* Figma's mobile frame carries tighter dialog padding (20px) than the
+   three-card desktop/tablet frame (32px, `UpgradeDialog.css`) — applies to
+   both branches, not just the plan list, since it is just a spacing
+   tightening, not new layout. */
+@media (max-width: 767px) {
+  .upgrade-dialog {
+    padding: 20px;
+  }
+}
+
+.upgrade-dialog__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* The badge is `position: absolute`, not in-flow, so it contributes no
+   height to `.upgrade-dialog__list-item` — otherwise a badged row is 13px
+   taller than a plain one (its own height minus the overlap that pulls it
+   down onto the card), and the 12px `.upgrade-dialog__list` gap becomes an
+   inconsistent ~25px before any badged row. This keeps card-to-card spacing
+   a flat 12px regardless of which rows carry a badge (product owner,
+   2026-08-24), while the badge still visually pokes above the same 13px it
+   did before. */
+.upgrade-dialog__list-item {
+  position: relative;
+  width: 100%;
+}
+
+.upgrade-dialog__list-badge-row {
+  position: absolute;
+  top: -13px;
+  right: 12px;
+  z-index: 2;
+}
+
+.upgrade-dialog__list-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: 100%;
+  height: 54px;
+  padding: 16px 12px;
+  border: 1px solid var(--white-15);
+  border-radius: 12px;
+  background: rgba(9, 9, 11, 0.8);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Same purple-gradient stroke the Figma list uses for the selected row — a
+   different treatment from `.upgrade-dialog__card--featured`'s orange/pink/
+   purple border, since here it marks the user's CHOICE, not a fixed plan
+   property (that's still `.upgrade-dialog__tag`/`__pro-badge`, unaffected by
+   selection). */
+.upgrade-dialog__list-card--active {
+  border: 1.5px solid var(--color-accent-purple);
+  background: linear-gradient(to right, #36055b 0%, var(--neutral-dark-14) 64.904%);
+}
+
+.upgrade-dialog__list-name-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.upgrade-dialog__list-name {
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.13px;
+}
+
+.upgrade-dialog__list-price {
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.17px;
+}
+
+.upgrade-dialog__renew-note {
+  /* 12px to the CTA below it (product owner, 2026-08-24) — set directly here
+     rather than in the `max-width: 1023px` block above, since this class is
+     only ever used inside `.upgrade-dialog__mobile` and a same-specificity
+     rule later in the file would otherwise win regardless of viewport. */
+  margin: 0 0 12px;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.11px;
+  text-align: center;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Share Link Page (`/share`) — product owner, 2026-08-24, Figma "Share Page
+   - MV" (2906:61191) / the song equivalent (2881:57358).
+   `src/components/share/ShareLinkView.tsx`. No DP drop has vendored a Share
+   Page stylesheet yet (nothing under `src/styles/designer/` to copy), so
+   this whole page's CSS is hand-authored here rather than split between a
+   gated file and an override. Reuses DP's existing icon/token vocabulary
+   (`DpIcon`, `SeekBar`, `--gradient-mv`/`--gradient-song`) so it matches the
+   rest of the app's player chrome instead of inventing new visual language.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.share-page {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background: var(--neutral-dark-04, #09090b);
+}
+
+.share-page__header {
+  display: flex;
+  align-items: center;
+  padding: 20px 60px;
+}
+
+.share-page__logo-link {
+  display: inline-flex;
+}
+
+.share-page__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.share-page__logo-badge {
+  /* `ic_app_ycm.png` already bakes in its own rounded-square corners — no
+     border-radius here, or a large one clips those corners into a circle
+     (product owner, 2026-08-24). */
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.share-page__logo-text {
+  color: var(--neutral-dark-100, #fff);
+  font-family: var(--font-family-primary);
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.18px;
+}
+
+.share-page__logo-text-accent {
+  color: var(--accent, #a855f7);
+}
+
+.share-page__main {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 20px 60px 60px;
+}
+
+.share-page__list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.share-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  width: 100%;
+}
+
+.share-page__pill {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 200px;
+  min-width: 180px;
+  height: 46px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 34px;
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+.share-page__pill--dark {
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-14, #212127);
+  color: var(--neutral-dark-84, #d3d3d9);
+}
+
+.share-page__pill--gradient-song {
+  background: var(--gradient-song);
+  color: var(--neutral-dark-100, #fff);
+}
+
+.share-page__pill--gradient-mv {
+  background: var(--gradient-mv);
+  color: var(--neutral-dark-100, #fff);
+}
+
+.share-page__pill-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* ── Expired / invalid state ──────────────────────────────────────────── */
+
+.share-page__expired {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 0 24px 96px;
+  text-align: center;
+}
+
+.share-page__expired-icon {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--neutral-dark-14, #212127);
+}
+
+.share-page__expired-icon-glyph {
+  width: 34px;
+  height: 34px;
+  background-color: var(--neutral-dark-64, #9c9cab);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.share-page__expired-title {
+  margin: 28px 0 0;
+  color: var(--neutral-dark-100, #fff);
+  font-family: var(--font-family-primary);
+  font-size: 22px;
+  font-weight: var(--font-weight-bold);
+}
+
+.share-page__expired-body {
+  margin: 8px 0 0;
+  color: var(--neutral-dark-64, #9c9cab);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+}
+
+/* ── Shared controller pieces (song + MV) ─────────────────────────────── */
+
+.share-song__icon-btn,
+.share-mv__icon-btn {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--neutral-dark-100, #fff);
+  cursor: pointer;
+}
+
+.share-song__icon,
+.share-mv__icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.share-song__timeline,
+.share-mv__timeline {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.share-song__time,
+.share-mv__time {
+  flex-shrink: 0;
+  color: var(--neutral-dark-64, #9c9cab);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.share-song__time-current,
+.share-mv__time-current {
+  color: var(--neutral-dark-100, #fff);
+}
+
+.share-song__progress,
+.share-mv__progress {
+  position: relative;
+  flex: 1;
+  height: 12px;
+  cursor: pointer;
+}
+
+.share-song__progress-track,
+.share-mv__progress-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.share-song__progress-fill,
+.share-mv__progress-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100, #fff);
+}
+
+.share-song__progress-thumb,
+.share-mv__progress-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--neutral-dark-100, #fff);
+}
+
+/* ── Song panel ────────────────────────────────────────────────────────── */
+
+.share-song {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-3xl, 26px);
+  background: var(--neutral-dark-09, #151519);
+}
+
+.share-song__native-audio {
+  display: none;
+}
+
+.share-song__art {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  border-radius: 30px;
+  object-fit: cover;
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.45);
+}
+
+.share-song__meta {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.share-song__title {
+  margin: 0;
+  width: 100%;
+  color: var(--neutral-dark-100, #fff);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 26px;
+  letter-spacing: -0.2px;
+  text-align: center;
+}
+
+.share-song__creator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.share-song__creator-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #ff6bce 14.639%, #a855f7 50%, #4338ca 85.361%);
+}
+
+.share-song__creator-avatar-icon {
+  width: 9px;
+  height: 9px;
+  background-color: var(--neutral-dark-100, #fff);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.share-song__creator-name {
+  color: var(--neutral-dark-64, #9c9cab);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.14px;
+}
+
+.share-song__controller {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  height: 60px;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 40px;
+  background: var(--white-15);
+}
+
+/* ── MV panel ──────────────────────────────────────────────────────────── */
+
+.share-mv {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 441px;
+  aspect-ratio: 9 / 16;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-3xl, 26px);
+  background: var(--neutral-dark-09, #151519);
+}
+
+.share-mv__video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.share-mv__controller {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 20px 20px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(7, 7, 7, 0.8) 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Product owner, 2026-08-24 — the controller's last icon opens a menu
+   (Download / Playback Speed / Picture in Picture) instead of downloading
+   directly. `--visible` isn't needed: this is conditionally rendered, not
+   always-mounted, since it has no exit transition. Matches this app's other
+   small dropdown menus (e.g. History's per-card "⋯" menu) in spirit — a full
+   backdrop for outside-click-to-close, a positioned panel above the trigger. */
+.share-mv__menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.share-mv__menu {
+  position: absolute;
+  right: 20px;
+  bottom: 68px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 200px;
+  border: 1px solid var(--white-15);
+  border-radius: 14px;
+  background: var(--neutral-dark-09, #151519);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.share-mv__menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: var(--neutral-dark-100, #fff);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+}
+
+.share-mv__menu-item:hover {
+  background: var(--white-15);
+}
+
+.share-mv__menu-item-value {
+  color: var(--neutral-dark-64, #9c9cab);
+  font-size: 13px;
+}
+
+@media (max-width: 767px) {
+  .share-page__header {
+    padding: 16px 20px;
+  }
+
+  .share-page__main {
+    padding: 16px 20px 40px;
+  }
+
+  .share-page__pill {
+    width: 100%;
+  }
+
+  .share-song {
+    padding: 20px;
+  }
+}

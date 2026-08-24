@@ -7,9 +7,11 @@ import { useCredits } from "@/components/providers/CreditsProvider";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { DpDialog } from "@/components/ui/DpDialog";
 import {
+  DEFAULT_PLAN_ID,
   MUSE_PRO_FEATURES,
   SUBSCRIPTION_PLANS,
   YEARLY_EXTRA_FEATURES,
+  type PlanId,
   type ProFeature,
   type SubscriptionPlan,
 } from "@/lib/user";
@@ -64,9 +66,46 @@ function FeatureRow({ feature }: { feature: ProFeature }) {
   );
 }
 
-function PlanCard({ plan, onSubscribe }: { plan: SubscriptionPlan; onSubscribe: () => void }) {
+/** The credits row + feature list — identical content whether it's one plan's
+ *  own card (desktop) or the summary panel above the mobile/tablet list (the
+ *  plan currently selected there). Extracted so the two can't drift.
+ *  `showDivider` defaults to true for the desktop card (`UpgradeDialog.css`'s
+ *  own rule); the mobile/tablet summary panel drops it (product owner,
+ *  2026-08-24 — Figma's List_M frames have no rule between credits and
+ *  features there). */
+function PlanCreditsAndFeatures({
+  plan,
+  showDivider = true,
+}: {
+  plan: SubscriptionPlan;
+  showDivider?: boolean;
+}) {
   const extras: ProFeature[] = plan.cadence === "Yearly" ? YEARLY_EXTRA_FEATURES : [];
 
+  return (
+    <div className="upgrade-dialog__details">
+      <p className="upgrade-dialog__credits">
+        {/* Plain <img>: the coin keeps its gold, as on the balance row. */}
+        <img src="/assets/icons/ui/ic_credit.svg" alt="" className="upgrade-dialog__credits-icon" />
+        <span className="upgrade-dialog__credits-number">{plan.credits.toLocaleString()}</span>
+        <span className="upgrade-dialog__credits-label">{plan.cadence} Credits</span>
+      </p>
+      {showDivider && <div className="upgrade-dialog__divider" />}
+      <ul className="upgrade-dialog__features">
+        {MUSE_PRO_FEATURES.map((f) => (
+          <FeatureRow key={f.label} feature={f} />
+        ))}
+        {extras.map((f) => (
+          <FeatureRow key={f.label} feature={f} />
+        ))}
+        {/* CR-03, derived from the plan rather than hardcoded per card. */}
+        <FeatureRow feature={{ label: `Credits Expire ${plan.cadence}`, icon: "ic_clock" }} />
+      </ul>
+    </div>
+  );
+}
+
+function PlanCard({ plan, onSubscribe }: { plan: SubscriptionPlan; onSubscribe: () => void }) {
   return (
     <div
       className={`upgrade-dialog__card${plan.featured ? " upgrade-dialog__card--featured" : ""}`}
@@ -102,29 +141,63 @@ function PlanCard({ plan, onSubscribe }: { plan: SubscriptionPlan; onSubscribe: 
         Subscribe
       </button>
 
-      <div className="upgrade-dialog__details">
-        <p className="upgrade-dialog__credits">
-          {/* Plain <img>: the coin keeps its gold, as on the balance row. */}
-          <img
-            src="/assets/icons/ui/ic_credit.svg"
-            alt=""
-            className="upgrade-dialog__credits-icon"
-          />
-          <span className="upgrade-dialog__credits-number">{plan.credits.toLocaleString()}</span>
-          <span className="upgrade-dialog__credits-label">{plan.cadence} Credits</span>
-        </p>
-        <div className="upgrade-dialog__divider" />
-        <ul className="upgrade-dialog__features">
-          {MUSE_PRO_FEATURES.map((f) => (
-            <FeatureRow key={f.label} feature={f} />
-          ))}
-          {extras.map((f) => (
-            <FeatureRow key={f.label} feature={f} />
-          ))}
-          {/* CR-03, derived from the plan rather than hardcoded per card. */}
-          <FeatureRow feature={{ label: `Credits Expire ${plan.cadence}`, icon: "ic_clock" }} />
-        </ul>
-      </div>
+      <PlanCreditsAndFeatures plan={plan} />
+    </div>
+  );
+}
+
+/**
+ * ── TABLET/MOBILE: LIST INSTEAD OF THREE STACKED CARDS ───────────────────────
+ *
+ * Product owner, 2026-08-24 (Figma "IAP — Subscribe {Weekly,Wkly Pro,Yr} Plan
+ * - List_M", nodes 2881:54660 / 55450 / 56030). Below 1024px the three
+ * self-contained cards are replaced by ONE credits/features summary — for
+ * whichever plan is currently selected — above a tappable list of slim plan
+ * rows; a single shared Subscribe button buys the selection. Desktop keeps
+ * the three-card grid unchanged (`PlanCard`, above).
+ *
+ * Each row's badge (`plan.badge`) is a fixed property of that plan and stays
+ * put regardless of selection — only the border/background highlight moves.
+ * The "PRO" pill reuses `.upgrade-dialog__pro-badge`, defined in the gated
+ * `UpgradeDialog.css` but never applied by the three-card layout — the CSS
+ * was already ahead of the port.
+ */
+function PlanListRow({
+  plan,
+  active,
+  onSelect,
+}: {
+  plan: SubscriptionPlan;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <div className="upgrade-dialog__list-item">
+      {plan.badge && (
+        <div className="upgrade-dialog__list-badge-row">
+          <span
+            className={`upgrade-dialog__tag upgrade-dialog__tag--${
+              plan.badge === "BEST VALUE" ? "purple" : "green"
+            }`}
+          >
+            {plan.badge}
+          </span>
+        </div>
+      )}
+      <button
+        type="button"
+        className={`upgrade-dialog__list-card${active ? " upgrade-dialog__list-card--active" : ""}`}
+        onClick={onSelect}
+        aria-pressed={active}
+      >
+        <span className="upgrade-dialog__list-name-group">
+          <span className="upgrade-dialog__list-name">
+            {plan.featured ? plan.name.replace(" Pro", "") : plan.name}
+          </span>
+          {plan.featured && <span className="upgrade-dialog__pro-badge">PRO</span>}
+        </span>
+        <span className="upgrade-dialog__list-price">{plan.price}</span>
+      </button>
     </div>
   );
 }
@@ -133,6 +206,11 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
   const { subscribe, subscribed, subscribedPlan } = useAuth();
   const { addCredits } = useCredits();
   const [restored, setRestored] = useState(false);
+  // Only read by the mobile/tablet list below — the three-card layout has no
+  // selection concept, each card subscribes to its own plan directly.
+  const [selectedPlanId, setSelectedPlanId] = useState<PlanId>(DEFAULT_PLAN_ID);
+  const selectedPlan =
+    SUBSCRIPTION_PLANS.find((p) => p.id === selectedPlanId) ?? SUBSCRIPTION_PLANS[0];
 
   function confirm(plan: SubscriptionPlan) {
     subscribe(plan.id);
@@ -195,10 +273,35 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
       label="Upgrade Your Plan"
       title="Upgrade Your Plan"
     >
-      <div className="upgrade-dialog__cards">
+      {/* `--plans` distinguishes this grid from the already-subscribed branch's
+          own (single-card) `.upgrade-dialog__cards` above — only THIS one is
+          hidden below 1024px in favour of `.upgrade-dialog__mobile`. */}
+      <div className="upgrade-dialog__cards upgrade-dialog__cards--plans">
         {SUBSCRIPTION_PLANS.map((plan) => (
           <PlanCard key={plan.id} plan={plan} onSubscribe={() => confirm(plan)} />
         ))}
+      </div>
+
+      <div className="upgrade-dialog__mobile">
+        <PlanCreditsAndFeatures plan={selectedPlan} showDivider={false} />
+        <div className="upgrade-dialog__list">
+          {SUBSCRIPTION_PLANS.map((plan) => (
+            <PlanListRow
+              key={plan.id}
+              plan={plan}
+              active={plan.id === selectedPlanId}
+              onSelect={() => setSelectedPlanId(plan.id)}
+            />
+          ))}
+        </div>
+        <p className="upgrade-dialog__renew-note">Automatically renew and cancel at any time</p>
+        <button
+          type="button"
+          className="upgrade-dialog__cta upgrade-dialog__cta--gradient"
+          onClick={() => confirm(selectedPlan)}
+        >
+          Subscribe
+        </button>
       </div>
 
       {/* CR-05. DP's footer is two dead `#` links; this is the one real action

@@ -84,10 +84,19 @@ const CASES: Array<{
     open: async (page) => {
       await page.goto("/profile", { waitUntil: "networkidle" });
       await page.getByRole("button", { name: "Upgrade" }).first().click();
-      await page
-        .locator(".upgrade-dialog__card--featured")
-        .getByRole("button", { name: "Subscribe" })
-        .click();
+      // Below 1024px the three self-contained cards become a single
+      // selectable list (Weekly Pro pre-selected, matching `DEFAULT_PLAN_ID`)
+      // with one shared Subscribe button — there is no per-card button to
+      // scope to, and `.upgrade-dialog__card--featured` is `display: none`.
+      const width = page.viewportSize()?.width ?? 0;
+      if (width < 1024) {
+        await page.getByRole("button", { name: "Subscribe" }).click();
+      } else {
+        await page
+          .locator(".upgrade-dialog__card--featured")
+          .getByRole("button", { name: "Subscribe" })
+          .click();
+      }
       await expect(page.getByRole("dialog", { name: "Upgrade Your Plan" })).toBeHidden();
       // Via the credits page, not the header pill: `.credit-balance` is the DESKTOP
       // header control and does not exist at 320. Its CTA reads "Buy More" once

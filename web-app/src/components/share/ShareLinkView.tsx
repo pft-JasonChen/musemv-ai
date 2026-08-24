@@ -1,24 +1,368 @@
 "use client";
 
 // Public, unauthenticated Share Link Page.
-// Simplified chrome (2026-07-23): only a logo header (→ home), the media
-// (MV video / song), and a Download button. No share action, title/creator, or
-// "Try" CTA. An unresolvable id — or ?type=expired — renders the expired state.
+// Redesigned 2026-08-24 (product owner, Figma "Share Page - MV" / song
+// equivalent, node 2906:61191 / 2881:57358) — this REVERSES the 2026-07-23
+// "simplified chrome" decision below: title/creator and a two-button footer
+// are back, and the native `<audio>`/`<video controls>` are replaced by a
+// custom controller matching the one already shipped for `/watch`
+// (`CommunityMvPlayer.tsx`) and `/song/play` (`SongPlayBar.tsx`) — same
+// `DpIcon` names and the shared `SeekBar`, new BEM classes in
+// `designer-overrides.css` since DP has not vendored a Share Page stylesheet
+// yet (there is nothing in `src/styles/designer/` to copy from).
 // This route renders WITHOUT the app shell (see AppShell) and is not behind AuthGuard.
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useHistory } from "@/components/providers/HistoryProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
-import { resolveShare } from "@/lib/share";
+import { resolveShare, type SharedMedia } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
+import { DpIcon } from "@/components/ui/DpIcon";
+import { SeekBar } from "@/components/ui/SeekBar";
 
-function Icon({ d, size = 20 }: { d: string; size?: number }) {
+function formatTime(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+const PLAYBACK_RATES = [1, 1.5, 2, 0.5] as const;
+
+/** The MV controller's "more" menu (product owner, 2026-08-24): Download,
+ *  Playback Speed (cycles through `PLAYBACK_RATES` on each click, so the
+ *  menu stays open for repeated adjustment), and Picture-in-Picture — closes
+ *  on Escape, an outside click, or picking Download/PiP (one-shot actions). */
+function MvMoreMenu({
+  open,
+  onClose,
+  rate,
+  onCycleRate,
+  onDownload,
+  onPictureInPicture,
+}: {
+  open: boolean;
+  onClose: () => void;
+  rate: number;
+  onCycleRate: () => void;
+  onDownload: () => void;
+  onPictureInPicture: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
+    <>
+      <div className="share-mv__menu-backdrop" onClick={onClose} aria-hidden="true" />
+      <div className="share-mv__menu" role="menu">
+        <button
+          type="button"
+          role="menuitem"
+          className="share-mv__menu-item"
+          onClick={() => {
+            onDownload();
+            onClose();
+          }}
+        >
+          Download
+        </button>
+        <button type="button" role="menuitem" className="share-mv__menu-item" onClick={onCycleRate}>
+          Playback Speed
+          <span className="share-mv__menu-item-value">{rate}x</span>
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className="share-mv__menu-item"
+          onClick={() => {
+            onPictureInPicture();
+            onClose();
+          }}
+        >
+          Picture in Picture
+        </button>
+      </div>
+    </>
+  );
+}
+
+/** Product owner, 2026-08-24: the app-icon badge was rendering as a circle —
+ *  `ic_app_ycm.png` already bakes in its own rounded-SQUARE corners (a proper
+ *  superellipse, not 50%), so clipping it with a large `border-radius` cut
+ *  those corners off into a circle instead of just being redundant. And the
+ *  wordmark switches from an image (`muse_wordmark_logo_white.png`) to real
+ *  text, matching this page's own pre-redesign convention and every other
+ *  header in the app (`MobileHeader.tsx`, the original `ShareLinkView`). */
+function Logo() {
+  return (
+    <span className="share-page__logo">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/assets/icons/app/ic_app_ycm.png" alt="" className="share-page__logo-badge" />
+      <span className="share-page__logo-text">
+        YouCam <span className="share-page__logo-text-accent">Muse</span>
+      </span>
+    </span>
+  );
+}
+
+/** Song panel: album art + title/creator + a pill-shaped media controller
+ *  (play/pause, combined time, seek, mute, download) — matches
+ *  `SongPlayBar.tsx`'s icon vocabulary, laid out per the Figma "Song Panel". */
+function SongPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => void }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  function togglePlay() {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) {
+      // A cold load has no user activation, so play() can reject — catch it
+      // rather than letting it surface as an unhandled rejection (R-2).
+      void a.play().then(
+        () => setPlaying(true),
+        () => setPlaying(false),
+      );
+    } else {
+      a.pause();
+      setPlaying(false);
+    }
+  }
+
+  function toggleMute() {
+    const a = audioRef.current;
+    if (!a) return;
+    a.muted = !a.muted;
+    setMuted(a.muted);
+  }
+
+  function seek(next: number) {
+    const a = audioRef.current;
+    if (!a) return;
+    a.currentTime = next;
+    setCurrentTime(next);
+  }
+
+  return (
+    <div className="share-song">
+      {/* Hidden native element — the visible controls below drive it, same
+          split as CommunityMvPlayer's <video> + custom control row. */}
+      <audio
+        ref={audioRef}
+        src={media.audioUrl}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
+        className="share-song__native-audio"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={media.posterUrl} alt="" className="share-song__art" />
+      <div className="share-song__meta">
+        <p className="share-song__title">{media.title}</p>
+        {media.creator && (
+          <div className="share-song__creator">
+            <span className="share-song__creator-avatar">
+              <DpIcon name="ic_user" className="share-song__creator-avatar-icon" />
+            </span>
+            <span className="share-song__creator-name">{media.creator}</span>
+          </div>
+        )}
+      </div>
+      <div className="share-song__controller">
+        <button
+          type="button"
+          className="share-song__icon-btn"
+          onClick={togglePlay}
+          aria-label={playing ? "Pause" : "Play"}
+        >
+          <DpIcon name={playing ? "ic_pause" : "ic_play"} className="share-song__icon" />
+        </button>
+        <div className="share-song__timeline">
+          <span className="share-song__time">
+            <span className="share-song__time-current">{formatTime(currentTime)}</span>
+            {` / ${formatTime(duration)}`}
+          </span>
+          <SeekBar
+            value={currentTime}
+            max={duration}
+            onSeek={seek}
+            label="Seek"
+            className="share-song__progress"
+            trackClassName="share-song__progress-track"
+            fillClassName="share-song__progress-fill"
+            thumbClassName="share-song__progress-thumb"
+          />
+        </div>
+        <button
+          type="button"
+          className="share-song__icon-btn"
+          onClick={toggleMute}
+          aria-label={muted ? "Unmute" : "Mute"}
+        >
+          <DpIcon name={muted ? "ic_speaker_off" : "ic_speaker_on"} className="share-song__icon" />
+        </button>
+        <button
+          type="button"
+          className="share-song__icon-btn"
+          onClick={onDownload}
+          aria-label="Download"
+        >
+          <DpIcon name="ic_download" className="share-song__icon" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** MV panel: portrait video + a bottom gradient-scrim controller (play/pause,
+ *  combined time, seek, mute, fullscreen, download) — same control row as
+ *  `/watch`'s `CommunityMvPlayer.tsx`, plus the download icon Figma adds. */
+function MvPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [rateIndex, setRateIndex] = useState(0);
+
+  function togglePlay() {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      void v.play().then(
+        () => setPlaying(true),
+        () => setPlaying(false),
+      );
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
+  }
+
+  function cycleRate() {
+    const v = videoRef.current;
+    if (!v) return;
+    const next = (rateIndex + 1) % PLAYBACK_RATES.length;
+    v.playbackRate = PLAYBACK_RATES[next];
+    setRateIndex(next);
+  }
+
+  function requestPip() {
+    const v = videoRef.current;
+    if (!v || !document.pictureInPictureEnabled) return;
+    void v.requestPictureInPicture().catch(() => {});
+  }
+
+  function toggleMute() {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+  }
+
+  function toggleFullscreen() {
+    const el = panelRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void el.requestFullscreen?.().catch(() => {});
+  }
+
+  function seek(next: number) {
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = next;
+    setCurrentTime(next);
+  }
+
+  return (
+    <div className="share-mv" ref={panelRef}>
+      <video
+        ref={videoRef}
+        src={media.videoUrl}
+        poster={media.posterUrl}
+        playsInline
+        className="share-mv__video"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
+      />
+      <div className="share-mv__controller">
+        <button
+          type="button"
+          className="share-mv__icon-btn"
+          onClick={togglePlay}
+          aria-label={playing ? "Pause" : "Play"}
+        >
+          <DpIcon name={playing ? "ic_pause" : "ic_play"} className="share-mv__icon" />
+        </button>
+        <div className="share-mv__timeline">
+          <span className="share-mv__time">
+            <span className="share-mv__time-current">{formatTime(currentTime)}</span>
+            {` / ${formatTime(duration)}`}
+          </span>
+          <SeekBar
+            value={currentTime}
+            max={duration}
+            onSeek={seek}
+            label="Seek"
+            className="share-mv__progress"
+            trackClassName="share-mv__progress-track"
+            fillClassName="share-mv__progress-fill"
+            thumbClassName="share-mv__progress-thumb"
+          />
+        </div>
+        <button
+          type="button"
+          className="share-mv__icon-btn"
+          onClick={toggleMute}
+          aria-label={muted ? "Unmute" : "Mute"}
+        >
+          <DpIcon name={muted ? "ic_speaker_off" : "ic_speaker_on"} className="share-mv__icon" />
+        </button>
+        <button
+          type="button"
+          className="share-mv__icon-btn"
+          onClick={toggleFullscreen}
+          aria-label="Fullscreen"
+        >
+          <DpIcon name="ic_expand" className="share-mv__icon" />
+        </button>
+        <button
+          type="button"
+          className="share-mv__icon-btn"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="More"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+        >
+          <DpIcon name="ic_more" className="share-mv__icon" />
+        </button>
+        <MvMoreMenu
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          rate={PLAYBACK_RATES[rateIndex]}
+          onCycleRate={cycleRate}
+          onDownload={onDownload}
+          onPictureInPicture={requestPip}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -33,11 +377,10 @@ export function ShareLinkView() {
 
   const home = localePath(locale, "/");
 
-  // Header — logo only; clicking it goes to the home page.
   const Header = (
-    <header className="flex items-center px-6 py-4">
-      <Link href={home} className="text-[18px] font-extrabold tracking-tight" aria-label="YouCam Muse home">
-        YouCam <span style={{ color: "var(--accent)" }}>Muse</span>
+    <header className="share-page__header">
+      <Link href={home} className="share-page__logo-link" aria-label="YouCam Muse home">
+        <Logo />
       </Link>
     </header>
   );
@@ -45,11 +388,11 @@ export function ShareLinkView() {
   // ── Expired / invalid ───────────────────────────────────────────────────────
   if (!media) {
     return (
-      <div className="flex min-h-screen flex-col" style={{ background: "var(--bg)" }}>
+      <div className="share-page">
         {Header}
-        <main className="mx-auto flex w-full max-w-[440px] flex-1 flex-col items-center justify-center px-6 pb-24 text-center">
-          <div className="grid h-[80px] w-[80px] place-items-center rounded-full" style={{ background: "var(--card-2)" }}>
-            <Icon d="M13.73 21a2 2 0 0 1-3.46 0M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M1 1l22 22" size={34} />
+        <main className="share-page__expired">
+          <div className="share-page__expired-icon">
+            <DpIcon name="ic_alert" className="share-page__expired-icon-glyph" />
           </div>
           {/* Product owner, 2026-08-19: share links DO NOT EXPIRE. The old copy
               ("available for 30 days") described a rule that was never built and
@@ -57,8 +400,8 @@ export function ShareLinkView() {
               to one has no reason to lapse. This state is reached only when an id
               cannot be resolved, so the wording says that instead of inventing a
               deadline the product does not enforce. */}
-          <h1 className="mt-7 text-[22px] font-extrabold">This link isn&apos;t available</h1>
-          <p className="mt-2 text-[14px]" style={{ color: "var(--text-2)" }}>
+          <h1 className="share-page__expired-title">This link isn&apos;t available</h1>
+          <p className="share-page__expired-body">
             We couldn&apos;t find this creation. Ask the sender to share it again.
           </p>
         </main>
@@ -66,58 +409,44 @@ export function ShareLinkView() {
     );
   }
 
-  // ── Valid link — media + download only ──────────────────────────────────────
+  // ── Valid link — panel + two actions ────────────────────────────────────────
   const downloadName = media.kind === "mv" ? `${media.title}.mp4` : `${media.title}.mp3`;
   const downloadUrl = media.videoUrl ?? media.audioUrl;
+  const download = () => {
+    if (downloadUrl) downloadFile(downloadUrl, downloadName);
+  };
+  // Product owner, 2026-08-24: this page is unauthenticated and mostly reached
+  // by people with no account — dropping them straight into a creation flow
+  // skips the product entirely. Both CTAs go to the home page instead, so a
+  // new visitor sees the hero/tool selector first; the label stays kind-
+  // specific to signal intent even though the destination doesn't.
+  const createHref = home;
+  const createLabel = media.kind === "mv" ? "Create MV" : "Create Song";
 
   return (
-    <div className="flex min-h-screen flex-col" style={{ background: "var(--bg)" }}>
+    <div className="share-page">
       {Header}
-
-      <main className="mx-auto flex w-full max-w-[520px] flex-1 flex-col items-center px-6 pb-24 pt-4">
-        {/* Media */}
-        <div
-          className={media.kind === "mv" ? "overflow-hidden rounded-2xl" : "w-full overflow-hidden rounded-2xl"}
-          style={{
-            background: "var(--card)",
-            border: "1px solid var(--border-2)",
-            // Cap the portrait (9:16) video to 80% of the viewport height so it
-            // never overflows on wide/short viewports; width derives from the
-            // aspect ratio instead of always filling the 520px column.
-            ...(media.kind === "mv" ? { aspectRatio: "9 / 16", maxHeight: "80vh", width: "auto", maxWidth: "100%" } : {}),
-          }}
-        >
+      <main className="share-page__main">
+        <div className="share-page__list">
           {media.kind === "mv" ? (
-            <video
-              src={media.videoUrl}
-              poster={media.posterUrl}
-              controls
-              playsInline
-              className="block h-full w-full"
-              style={{ objectFit: "cover", background: "#000" }}
-            />
+            <MvPanel media={media} onDownload={download} />
           ) : (
-            <div className="flex flex-col items-center gap-4 p-6">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={media.posterUrl} alt={media.title} className="w-full max-w-[300px] rounded-xl object-cover" style={{ aspectRatio: "1" }} />
-              <audio src={media.audioUrl} controls className="w-full" />
-            </div>
+            <SongPanel media={media} onDownload={download} />
           )}
+          <div className="share-page__actions">
+            <button type="button" className="share-page__pill share-page__pill--dark" onClick={download}>
+              Download
+              <DpIcon name="ic_download" className="share-page__pill-icon" />
+            </button>
+            <Link
+              href={createHref}
+              className={`share-page__pill share-page__pill--gradient-${media.kind}`}
+            >
+              {createLabel}
+              <DpIcon name="ic_arrow_right" className="share-page__pill-icon" />
+            </Link>
+          </div>
         </div>
-
-        {/* Download button */}
-        {downloadUrl && (
-          <button
-            onClick={() => downloadFile(downloadUrl, downloadName)}
-            /* Designer request, 2026-08-11: pill, not rounded-xl — same
-               filled-button rule as `Button.tsx`. */
-            className="mt-6 inline-flex h-[50px] items-center gap-2 rounded-full px-7 text-[16px] font-bold text-white"
-            style={{ background: "var(--accent)" }}
-          >
-            <Icon d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
-            Download
-          </button>
-        )}
       </main>
     </div>
   );
