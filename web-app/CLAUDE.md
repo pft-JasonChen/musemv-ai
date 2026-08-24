@@ -140,14 +140,27 @@ killing it killed `MvDetail` and `SongDetail`, and `SongDetail` was `LyricsPanel
 (`/watch`, `/mv/result`, `/song/result`, `ui/LyricsSheet`). The only logic that went with them is
 `FREE_PREVIEW_SEC`, already cancelled by S3. **There is no dead component left in `src/`.**
 
-**The `Idea` / `Ideas` buttons are removed, and this is the one deviation that DECAYS.** V1 ships
-no canned-sample fillers, so three buttons went: `/mv/room`'s Ideas and both of `/song/create`'s
-Idea. DP **has** all three (`MVCreatePage.tsx:1182`, `SongCreatePage.tsx:598/703`), so this is a
-subtraction FROM DP, and **every future drop will bring them back** — re-remove them each time.
-`Templates` (`/mv/room`) and `Lyrics` (Custom mode) are different controls and stay. One layout
-detail that looks like leftover but is not: the Simple describe box now renders an EMPTY
-`.song-create__input-actions` div, because `.song-create__input-footer` is
-`justify-content: space-between` and with one child the Enhance/count group slides left.
+**`/song/create`'s two `Idea` buttons are BACK (2026-08-24); `/mv/room`'s `Ideas` is still gone.**
+The 2026-08-06 removal ("V1 ships no canned-sample fillers") took three buttons. The product owner
+reversed it for the Song screen and supplied the copy to put behind it — 12 idea briefs and 10
+lyric sheets, transcribed verbatim into `src/lib/mv/songIdeas.ts` from the two
+`[YCM] AI Song Ideas & Lyrics` CSVs. So:
+
+- **Only ONE deviation-that-decays is left**: `/mv/room`'s `Ideas` (`MVCreatePage.tsx:1182`).
+  Re-remove that one on every drop. DP's `.song-create__idea-btn` on the Song screen is now
+  WANTED — a drop that ships it is the drop agreeing with us, so do not "re-apply the removal"
+  there out of habit.
+- **Both Song boxes get one** (Simple fills `describe`, Custom fills `lyrics`), and `Lyrics` keeps
+  its own pill beside Custom's: same skin, different pool. Idea stays visible under Instrumental
+  where `Lyrics` hides — an idea brief is exactly what that box asks for, and it is what DP and the
+  app prototype both do. Fills are random-but-never-the-current-value (`pickIdea`), because a
+  repeat on a 10-item pool reads as a dead button.
+- The Simple box's `.song-create__input-actions` div is no longer empty, but it is still
+  **load-bearing**: `.song-create__input-footer` is `justify-content: space-between`, so the left
+  group has to exist or the Enhance/count group slides left. DP puts its Simple button bare in the
+  footer; the wrapper is kept for that reason and matches the Custom box.
+- Guarded by `e2e/behaviour-regressions.spec.ts` → `3j / 2026-08-24`, and by
+  `src/lib/mv/songIdeas.test.ts`. `Templates` (`/mv/room`) was never part of this.
 
 **ACCEPTANCE IS PART-DONE. The full record is `docs/archive/PHASE-3-ACCEPTANCE.md` — read it before
 re-running anything.** Two of the three reviews are complete and their verdicts are in that file:

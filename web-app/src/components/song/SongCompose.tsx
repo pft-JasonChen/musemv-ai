@@ -19,11 +19,10 @@ import { creationHref, useOpenCreation } from "@/components/history/useOpenCreat
 import { MOCK_USER } from "@/lib/user";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
-import { GENRES, MOODS, VOCALS, ENHANCE_SAMPLES } from "@/lib/mv/mock";
+import { GENRES, MOODS, VOCALS } from "@/lib/mv/mock";
+import { SONG_IDEA_PROMPTS, LYRIC_PRESETS, pickIdea } from "@/lib/mv/songIdeas";
 import { TOP_PICKS_SONGS } from "@/lib/mv/community";
 import { DESCRIPTION_MAX, isSongReady, songCost, type SongMode } from "@/lib/mv/types";
-
-const pick = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3j) ────────────────────
@@ -60,13 +59,24 @@ const pick = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.lengt
  *   custom-lyrics box, which DP has no equivalent for.
  * · The disabled-CTA reason line. DP disables the button and says nothing.
  *
- * ── AND ONE THING WE DELIBERATELY DO NOT HAVE (2026-08-06) ──────────────────
+ * ── THE "IDEA" BUTTONS ARE BACK (2026-08-24) ────────────────────────────────
  *
- * DP's "Idea" buttons — one on the describe box, one on the lyrics box — are
- * REMOVED. V1 ships no canned-sample fillers (product owner). This is the rare
- * case of diverging from DP by SUBTRACTION, so it will come back on every drop
- * and has to be re-removed; `Lyrics` and `/mv/room`'s `Templates` are different
- * controls and stay.
+ * They were removed on 2026-08-06 ("V1 ships no canned-sample fillers") and
+ * RESTORED at the product owner's request, now backed by their own copy — see
+ * `src/lib/mv/songIdeas.ts` for the provenance. Three consequences:
+ *
+ * · The standing "re-remove DP's Idea buttons on every drop" instruction is
+ *   WITHDRAWN for this screen. DP's `.song-create__idea-btn` is wanted here;
+ *   only `/mv/room`'s `Ideas` is still a deliberate subtraction.
+ * · Simple gets one (fills `describe`), Custom gets one (fills `lyrics` — DP
+ *   labels that box "LYRICS / IDEA" and it takes either). `Lyrics` keeps its
+ *   own button beside it: same skin, different pool, and it hides under
+ *   Instrumental where a lyric sheet makes no sense. Idea does not hide —
+ *   an idea line is exactly what an instrumental brief wants, and it is what
+ *   both DP and the app prototype do.
+ * · The UI is DP's `.song-create__idea-btn` verbatim (lightbulb mask + label,
+ *   the same pill the Lyrics button uses) and is EXPECTED to be adjusted by the
+ *   designer later — the product owner asked for a working button first.
  *
  * ── ONE DP BEHAVIOUR THAT NEEDED A DECISION ─────────────────────────────────
  *
@@ -184,17 +194,24 @@ export function SongCompose() {
                   aria-label="Describe your song"
                 />
                 <div className="song-create__input-footer">
-                  {/* The "Idea" button was REMOVED 2026-08-06 — V1 ships no
-                      canned-sample fillers (product owner). A deviation FROM
-                      DP, which has `.song-create__idea-btn` here
-                      (`SongCreatePage.tsx:598`), so the next drop brings it
-                      back and the removal must be re-applied.
-
-                      The empty left group is load-bearing, not leftover:
-                      `.song-create__input-footer` is `justify-content:
-                      space-between`, so with one child the Enhance/count group
-                      would slide to the LEFT edge. DP's own class, no override. */}
-                  <div className="song-create__input-actions" />
+                  {/* Restored 2026-08-24 (see the header note). The wrapper is
+                      DP's own `.song-create__input-actions` rather than DP's
+                      bare button, because `.song-create__input-footer` is
+                      `justify-content: space-between` and the left group has to
+                      exist for the Enhance/count group to stay right-aligned —
+                      it used to be an empty div for exactly that reason. */}
+                  <div className="song-create__input-actions">
+                    <button
+                      type="button"
+                      className="song-create__idea-btn"
+                      onClick={() => patch({ describe: pickIdea(SONG_IDEA_PROMPTS, s.describe) })}
+                    >
+                      {/* `background: currentColor` + `mask-*` on
+                          `.song-create__idea-icon` ⇒ a mask, not an <img>. */}
+                      <DpIcon name="ic_lightbulb" className="song-create__idea-icon" />
+                      Idea
+                    </button>
+                  </div>
                   <div className="song-create__footer-right">
                     <EnhanceButton
                       value={s.describe}
@@ -264,15 +281,26 @@ export function SongCompose() {
                   aria-label={s.instrumental ? "Describe your instrumental" : "Lyrics"}
                 />
                 <div className="song-create__input-footer">
-                  {/* Same removal as the Simple box. `Lyrics` STAYS: it is a
-                      different control with a different label, and it shows the
-                      lyric FORMAT rather than filling in a prompt. */}
+                  {/* Two fills, one box (DP calls it "LYRICS / IDEA"): Idea
+                      writes a style/scene/tempo/mood brief, Lyrics writes a
+                      whole lyric sheet. Same pill, different pool. Idea stays
+                      visible under Instrumental — a brief is what that box asks
+                      for there — while Lyrics hides with the rest of the
+                      lyric-only controls. */}
                   <div className="song-create__input-actions">
+                    <button
+                      type="button"
+                      className="song-create__idea-btn"
+                      onClick={() => patch({ lyrics: pickIdea(SONG_IDEA_PROMPTS, s.lyrics) })}
+                    >
+                      <DpIcon name="ic_lightbulb" className="song-create__idea-icon" />
+                      Idea
+                    </button>
                     {!s.instrumental && (
                       <button
                         type="button"
                         className="song-create__idea-btn"
-                        onClick={() => patch({ lyrics: pick(ENHANCE_SAMPLES.lyrics) })}
+                        onClick={() => patch({ lyrics: pickIdea(LYRIC_PRESETS, s.lyrics) })}
                       >
                         <DpIcon name="ic_singing_mic" className="song-create__idea-icon" />
                         Lyrics

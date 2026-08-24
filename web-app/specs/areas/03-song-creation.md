@@ -18,8 +18,9 @@ result (disc player + synced Lyrics sheet) → use the song in an MV or recreate
 
 **As-built vs App F11–F13 (SONG-01…05 landed 2026-07-23; amended 2026-08-06 by the designer-UI
 migration, slice 3j):** Custom mode has Genre / Mood / Vocal chips + Title; the **Lyrics**
-input is a free-form textarea (app-style — Lyrics sample + Enhance; the Idea fills were removed
-for V1 on 2026-08-06), matching the app
+input is a free-form textarea (app-style — **Idea** + **Lyrics** sample fills + Enhance; the Idea
+fills were removed for V1 on 2026-08-06 and **restored 2026-08-24** with the product owner's own
+copy, see §3), matching the app
 prototype; **Recreate charges a normal generation (6 / 12) and keeps the prior song in History**
 (SONG-03); **AI Enhance is FREE** (SONG-04 — the old free-first-then-1-credit rule was removed 2026-08-12, spec area 11 §5.5, closing TBD-CC-03); the compose
 credit pill shows the **live balance** (SONG-05). Generation itself charges **6 (vocal) / 12
@@ -47,7 +48,7 @@ credit pill shows the **live balance** (SONG-05). Generation itself charges **6 
 
 | Route            | View                                           | Owns UI                                                                                                                                                                                   | Reads/writes state                                                                                                     | `MuseApi`                            |
 | ---------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `/song/create`   | `song/SongCompose` (guest-reachable)          | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, Lyrics sample + Enhance (no Idea buttons — removed for V1), **Create Song** CTA, **two-mode side rail** | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}`; `useAuth().loggedIn`, `useHistory().history` (rail)    | `enhancePrompt` (song/lyrics)        |
+| `/song/create`   | `song/SongCompose` (guest-reachable)          | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, **Idea** + **Lyrics** sample fills + Enhance, **Create Song** CTA, **two-mode side rail** | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}`; `useAuth().loggedIn`, `useHistory().history` (rail)    | `enhancePrompt` (song/lyrics)        |
 | `/song/creating` | `song/SongGenerationScreen` → `GenerationView` | progress ring/step, View Later                                                                                                                                                            | `startSong`, `gen`, `songResult`                                                                                       | `createSongJob`, `getSongJob` (poll) |
 | `/song/result`   | `song/SongResultView` (self-contained)         | **Back (→ History)**, player + progress/seek, prev/next transport, volume/mute, Like, Share, Download, Lyrics sheet, Publish toggle, Use-in-MV, Recreate, **My Creations** playlist       | `songResult`, `useHistory` (earlier songs + share id), `useMvFlow().patchCompose` (Use-in-MV), `useCredits` (Recreate) | —                                    |
 
@@ -84,9 +85,31 @@ History alone.
   exported from `src/lib/mv/types.ts` for the same reason.
 - DP's **Song Length** slider is not ported: DP ships it behind `SHOW_SONG_LENGTH = false`, and
   whether that is a temporary hide or a removal is open question U1 for the designer.
-- Compose helpers (**2026-08-06: the "Idea" buttons are REMOVED — V1 ships no canned-sample
-  fillers. Custom mode keeps **Lyrics**, a sample fill with a different purpose. This is a
-  deliberate subtraction from DP, which still ships both Idea buttons**):
+- **Sample fills — the two `Idea` buttons and `Lyrics` (restored 2026-08-24).** Removed on
+  2026-08-06 ("V1 ships no canned-sample fillers"), reinstated at the product owner's request with
+  their own copy behind them. The strings live in `src/lib/mv/songIdeas.ts`, transcribed verbatim
+  from the two `[YCM] AI Song Ideas & Lyrics` CSVs (2026-08-24): **`SONG_IDEA_PROMPTS` — 12** briefs
+  in a _style + scene + tempo + mood_ shape, and **`LYRIC_PRESETS` — 10** complete lyric sheets with
+  `[intro]`/`[verse]`/`[chorus]` markers (one of them Japanese). Neither pool is a mock fixture: RD
+  keeps them as content, and they are NOT `ENHANCE_SAMPLES` (that array is the mock `enhancePrompt`
+  response — a different feature).
+  - **Simple** — one **Idea** pill, fills `describe` from `SONG_IDEA_PROMPTS`. The fill satisfies
+    AC-SONG-01, so it enables **Create Song** on its own.
+  - **Custom** — **Idea** fills `lyrics` from `SONG_IDEA_PROMPTS`; **Lyrics** fills the same field
+    from `LYRIC_PRESETS`. Same pill skin, different pool: DP labels that box "LYRICS / IDEA" and it
+    accepts either a brief or a finished sheet.
+  - **Under Instrumental, `Lyrics` hides and `Idea` does not** — a brief is what the instrumental
+    box asks for, and it is what both DP and the app prototype do. ⚠️ This gives SONG-E4 /
+    `TBD-SONG-01` one more way to leave a non-lyric string in `lyrics` while Instrumental is on;
+    the field is still sent, so RD must not read `lyrics` as "the user wrote lyrics" (read
+    `instrumental` for that).
+  - `pickIdea(pool, current)` is **random but never the string already in the box** — a repeat on a
+    10-item pool would read as a dead button. Fills are set programmatically, so `maxLength` does
+    not clip them; every preset is inside `DESCRIPTION_MAX` and a unit test holds that.
+  - ⚠️ **UI pending designer polish.** The control is DP's `.song-create__idea-btn` verbatim
+    (lightbulb mask + label, the pill the Lyrics button already used). The product owner asked for a
+    working button first and for the designer to adjust it later.
+- Other compose helpers:
   **Enhance** (`enhancePrompt`; Custom lyrics offers Refine Idea vs Refine Lyrics; **FREE — no charge
   at all** since 2026-08-12. `enhanceCost` / `consumeEnhance` were removed from `useCredits` and the
   cost badge from `EnhanceButton`; there is no cloud-config action for Enhance, so billing it was
@@ -131,8 +154,8 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 - **SONG-P1-S0 (side rail, 2026-08-06)** Same two-mode aside as `/mv/room` (area 02 MV-P1-S0): **"Trending Songs"** over `TOP_PICKS_SONGS` with a "See all" → `/explore/songs`, or **"My Creations"** over the user's own finished songs from `useHistory()`, no "See all", each row opening `/song/result?id=`. Requires `loggedIn` **and** at least one completed song.
 - **SONG-P1-S1** Arrive `/song/create` (**guest-reachable** — the route guard was removed 2026-08-12, the gate is on the Create Song button; see `SONG-E3` / `AC-AUTH-08`); **Simple** tab default; **Create Song** disabled until `describe` non-empty. Hint "Describe your song to continue."
-- **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + Enhance.
-- **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics** textarea (or "No lyrics needed" when Instrumental) + Lyrics sample/Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
+- **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + **Idea** fill + Enhance.
+- **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics** textarea (or "No lyrics needed" when Instrumental) + **Idea**/**Lyrics** sample fills (Idea survives Instrumental, Lyrics does not) / Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
 - **SONG-P1-S4** Tap **Create Song** (`songCost(instrumental)` — **6** vocal / **12** instrumental) → `resetForNewSong()` → `/song/creating`. _(Was a flat `10`; repriced 2026-08-12, journey text corrected 2026-08-19.)_
 
 ### SONG-P2 — Generation
@@ -165,7 +188,8 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **AC-SONG-01** — WHEN `/song/create` loads, THE SYSTEM SHALL default to **Simple** and keep **Create Song** disabled until `describe.trim() !== ""`; in **Custom**, it SHALL be enabled by default.
 - **AC-SONG-01b** — WHILE logged out, WHEN `/song/create` is opened, THE SYSTEM SHALL render the full compose screen with no sign-in modal; and THE SYSTEM SHALL open the sign-in modal only when the user activates **Create Song**. THE SYSTEM SHALL NOT show the insufficient-credit upsell to a logged-out user — `requireLogin` wraps the GL-01 balance check, so sign-in always comes first. _(new 2026-08-12; see area 09 AC-AUTH-08)_
 - **AC-SONG-02** — WHEN Instrumental is ON in Custom, THE SYSTEM SHALL hide the lyrics editor and typically generate without lyrics (no Lyrics sheet). _(Note: toggling does not clear previously-typed lyrics — see SONG-E4 / `TBD-SONG-01`.)_
-- **AC-SONG-03** — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Enhance and the Lyrics sample fill are not capped.)
+- **AC-SONG-02b** — WHEN the user activates **Idea**, THE SYSTEM SHALL replace the active box's contents with a randomly chosen `SONG_IDEA_PROMPTS` entry other than the one already there; and WHEN the user activates **Lyrics** (Custom, non-instrumental), THE SYSTEM SHALL do the same from `LYRIC_PRESETS`. **Idea** SHALL be present in both tabs and SHALL remain available while Instrumental is ON; **Lyrics** SHALL NOT be rendered while Instrumental is ON. _(new 2026-08-24 — the buttons were removed 2026-08-06 and restored with the product owner's copy; guarded by `e2e/behaviour-regressions.spec.ts` → `3j / 2026-08-24`.)_
+- **AC-SONG-03** — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Enhance and the Idea / Lyrics sample fills are not capped by `maxLength` — every shipped preset is inside 2500 by construction, held by `src/lib/mv/songIdeas.test.ts`.)
 - **AC-SONG-04** — WHEN **Create Song** is tapped, THE SYSTEM SHALL `resetForNewSong()`, insert a Generating History row, and navigate to `/song/creating`.
 - **AC-SONG-05** — WHILE the song job is `processing`, THE SYSTEM SHALL show progress, step, an estimate, and View Later → `/history`; on `done` navigate to `/song/result`.
 - **AC-SONG-11** — WHEN `/song/result` is reached from a `/history` row, THE SYSTEM SHALL show that row's song (flow state is seeded by `useOpenCreation`, area 05) and carry the row id in `?id=` so Share builds that row's link. THE SYSTEM SHALL expose a **Back** control on this stage — DP switches it from `RoomNavbar` to `DetailNavbar backHref="/history"` — going `router.back()` with `/history` as the fallback. _(An earlier song has no stored genre/mood, so the genre · mood line is omitted rather than invented.)_
@@ -185,7 +209,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 ## 7. Per-path QA checklist
 
-- [ ] **SONG-P1**: Simple CTA gated by describe; Custom CTA always on; Instrumental hides lyrics (AC-01/02).
+- [ ] **SONG-P1**: Simple CTA gated by describe; Custom CTA always on; Instrumental hides lyrics (AC-01/02); **Idea** fills in both tabs and **Lyrics** in Custom, neither repeating the current value (AC-02b).
 - [ ] **SONG-P2**: Generate → Generating row + progress → result (AC-04/05).
 - [ ] **SONG-P3**: full playback (no 30s lock); drag-to-seek; prev/next across My Creations; Lyrics sheet when lyrics; Share; Download; Publish toggle; Use-in-MV pre-loads song in `/mv/room`; Recreate → compose (AC-06/07).
 - [ ] **SONG-E1**: failure → Back + Retry (AC-08). **SONG-E2**: reload → redirect compose. **SONG-E3**: logged-out → sign-in.

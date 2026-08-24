@@ -28,6 +28,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { COST_MERGE, COST_RECREATE } from "../src/lib/mv/types";
+import { SONG_IDEA_PROMPTS, LYRIC_PRESETS } from "../src/lib/mv/songIdeas";
 import { DEFAULT_CREDITS } from "../src/lib/user";
 import { DEFAULT_LOCALE, HTML_LANG, LOCALES, localePath } from "../src/lib/i18n/config";
 
@@ -2598,6 +2599,48 @@ test("3j / S4: the Tempo and Key CONTROLS are gone; the contract fields are not"
   await expect(page.getByText(/\d+ BPM/)).toHaveCount(0);
   // Genre / Mood / Vocal are the three chip groups that DO survive.
   await expect(page.locator(".song-create__chip-group")).toHaveCount(3);
+});
+
+test("3j / 2026-08-24: an Idea fill in both tabs, and Custom keeps a separate Lyrics fill", async ({
+  page,
+}) => {
+  // These buttons were REMOVED on 2026-08-06 and restored on 2026-08-24 with the
+  // product owner's own copy behind them (`src/lib/mv/songIdeas.ts`). Both halves
+  // are worth pinning: a drop that re-applies the old "re-remove Idea" note would
+  // delete a requested control, and a fill that silently repeats what is already in
+  // the box looks like a dead button.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+
+  const describe = page.getByPlaceholder(/A bittersweet love song/);
+  const idea = page.getByRole("button", { name: "Idea", exact: true });
+
+  await idea.click();
+  const first = await describe.inputValue();
+  expect(SONG_IDEA_PROMPTS).toContain(first);
+  // Simple's CTA is gated on `describe`, so the fill has to unlock it (AC-SONG-01).
+  await expect(page.getByRole("button", { name: /Create Song/ })).toBeEnabled();
+  // Random, but never the string already there — a no-op click reads as broken.
+  await idea.click();
+  expect(await describe.inputValue()).not.toBe(first);
+
+  await page.getByRole("button", { name: "Custom", exact: true }).click();
+  const lyrics = page.getByRole("textbox", { name: "Lyrics" });
+
+  await page.getByRole("button", { name: "Lyrics", exact: true }).click();
+  const sheet = await lyrics.inputValue();
+  expect(LYRIC_PRESETS).toContain(sheet);
+  expect(sheet).toContain("[chorus]"); // the format is the point of that control
+
+  // Same box, other pool: Custom's Idea writes a brief, not a lyric sheet.
+  await page.getByRole("button", { name: "Idea", exact: true }).click();
+  expect(SONG_IDEA_PROMPTS).toContain(await lyrics.inputValue());
+
+  // Instrumental: Lyrics goes with the other lyric-only controls, Idea stays.
+  await page.getByRole("switch", { name: "Instrumental" }).click();
+  await expect(page.getByRole("button", { name: "Lyrics", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Idea", exact: true })).toBeVisible();
 });
 
 test("3j / SONG-03: Recreate names its price and gates on the balance", async ({ page }) => {
