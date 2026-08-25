@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
@@ -68,8 +68,19 @@ export function GenerationView({
   const gen = kind === "song" ? songGen : mvGen;
 
   // Start the mock generation once on mount.
+  //
+  // GL-01: `start` CHARGES credits, so this must be idempotent. React Strict
+  // Mode (on by default in `next dev`) deliberately invokes every mount effect
+  // twice to expose exactly this class of bug, and without a guard that billed
+  // one generation twice — measured on the song flow, where a 10-credit balance
+  // went to -2 for a 6-credit vocal song. A ref survives Strict Mode's
+  // simulated remount (the component instance is reused), so the second
+  // invocation is skipped. Retry calls `start` directly and is not gated here.
+  const started = useRef(false);
   useEffect(() => {
-    if (!alreadyDone) start();
+    if (alreadyDone || started.current) return;
+    started.current = true;
+    start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -101,69 +112,69 @@ export function GenerationView({
       <DetailNavbar title={title} fallbackPath={backHref} />
       <div className="mv-storyboard mv-storyboard--processing">
         <div className="mv-storyboard-processing" role={failed ? "alert" : undefined}>
-        <div className="mv-storyboard-processing__card">
-          <DpIcon
-            name={failed ? "ic_alert" : "ic_video_ai"}
-            className="mv-storyboard-processing__icon"
-          />
-          {!failed && (
-            <p className="mv-storyboard-processing__percent">{Math.round(gen.progress)}%</p>
-          )}
-          <p className="mv-storyboard-processing__caption">
-            {failed ? "Generation stopped" : gen.step}
-          </p>
-        </div>
-
-        <div className="mv-storyboard-processing__message">
-          <p className="mv-storyboard-processing__title">
-            {failed ? "Generation Failed" : title}
-          </p>
-          <p className="mv-storyboard-processing__subtitle">
-            {failed
-              ? "Something went wrong while generating. Your credits were not charged — you can retry now or adjust your input and try again."
-              : subtitle}
-          </p>
-        </div>
-
-        {failed ? (
-          <div className="mv-storyboard-processing__progress">
-            <button
-              type="button"
-              className="button button--medium button--primary"
-              onClick={start}
-            >
-              <span className="button__label">Retry</span>
-            </button>
-            <Link
-              href={localePath(locale, backHref)}
-              className="mv-storyboard-processing__view-later"
-            >
-              Back
-            </Link>
+          <div className="mv-storyboard-processing__card">
+            <DpIcon
+              name={failed ? "ic_alert" : "ic_video_ai"}
+              className="mv-storyboard-processing__icon"
+            />
+            {!failed && (
+              <p className="mv-storyboard-processing__percent">{Math.round(gen.progress)}%</p>
+            )}
+            <p className="mv-storyboard-processing__caption">
+              {failed ? "Generation stopped" : gen.step}
+            </p>
           </div>
-        ) : (
-          <>
+
+          <div className="mv-storyboard-processing__message">
+            <p className="mv-storyboard-processing__title">
+              {failed ? "Generation Failed" : title}
+            </p>
+            <p className="mv-storyboard-processing__subtitle">
+              {failed
+                ? "Something went wrong while generating. Your credits were not charged — you can retry now or adjust your input and try again."
+                : subtitle}
+            </p>
+          </div>
+
+          {failed ? (
             <div className="mv-storyboard-processing__progress">
-              <div className="mv-storyboard-processing__progress-track">
-                <div
-                  className="mv-storyboard-processing__progress-fill"
-                  style={{ width: `${gen.progress}%` }}
-                />
-              </div>
-              <p className="mv-storyboard-processing__eta-label">Estimated time remaining</p>
-              <p className="mv-storyboard-processing__eta-value">{estimate}</p>
+              <button
+                type="button"
+                className="button button--medium button--primary"
+                onClick={start}
+              >
+                <span className="button__label">Retry</span>
+              </button>
+              <Link
+                href={localePath(locale, backHref)}
+                className="mv-storyboard-processing__view-later"
+              >
+                Back
+              </Link>
             </div>
+          ) : (
+            <>
+              <div className="mv-storyboard-processing__progress">
+                <div className="mv-storyboard-processing__progress-track">
+                  <div
+                    className="mv-storyboard-processing__progress-fill"
+                    style={{ width: `${gen.progress}%` }}
+                  />
+                </div>
+                <p className="mv-storyboard-processing__eta-label">Estimated time remaining</p>
+                <p className="mv-storyboard-processing__eta-value">{estimate}</p>
+              </div>
 
-            <Link
-              href={localePath(locale, "/history")}
-              className="mv-storyboard-processing__view-later"
-            >
-              View Later
-            </Link>
-          </>
-        )}
+              <Link
+                href={localePath(locale, "/history")}
+                className="mv-storyboard-processing__view-later"
+              >
+                View Later
+              </Link>
+            </>
+          )}
 
-        <p className="sr-only">{kind} generation in progress</p>
+          <p className="sr-only">{kind} generation in progress</p>
         </div>
       </div>
     </>
