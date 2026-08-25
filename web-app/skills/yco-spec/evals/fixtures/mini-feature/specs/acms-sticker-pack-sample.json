@@ -1,0 +1,46 @@
+{
+  "id": "pack_9182",
+  "guid": "sticker_pack_cat_01",
+  "groupId": 887123400991,
+  "order": 3,
+  "info": {
+    "i18n": [
+      {
+        "data": {
+          "title": "Office Cat"
+        }
+      }
+    ],
+    "stickerCount": 8,
+    "srcInputType": "person",
+    "styleList": [
+      "flat",
+      "sketch",
+      "3d"
+    ],
+    "presets": [
+      {
+        "quality": "high",
+        "aspect_ratio": "1024x1024"
+      }
+    ],
+    "previewImgs": [
+      "https://cdn.example.com/pack/9182/a.png"
+    ]
+  },
+  "meta": {
+    "count": 8,
+    "prompt": [
+      {
+        "model": "gpt-image-2",
+        "style_prompt": "A cheerful office cat sticker, thick white outline, flat vector shading",
+        "negative_prompt": "blurry, watermark",
+        "srcKeys": [
+          "src0"
+        ]
+      }
+    ]
+  },
+  "createdTime": 1751500000000,
+  "lastModified": 1751600000000
+}
