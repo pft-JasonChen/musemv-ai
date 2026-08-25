@@ -1,0 +1,18 @@
+# Feature folders whose user-flowchart.svg predates the version stamp.
+#
+# Seeded 2026-08-09 from the 7 specs that were already building. For these, a
+# missing stamp WARNs; for anything not listed, it FAILs. Same ratchet as
+# .claude/tier-a-baseline.txt: the list only ever shrinks.
+#
+# To drop a line: add "matches spec <version>, <date>" to the diagram's subtitle,
+# rebuild, then delete the line. Never add a new one — a spec created after this
+# date ships the stamp from its first build.
+#
+# 2026-07-03-template-spec is deliberately absent: it is the spec whose stale v1
+# stamp motivated this gate, and it now carries a correct one.
+
+2026-05-30-ai-hairstyle-product-page
+2026-05-30-photo-enhancer-product-page
+2026-06-02-v2v-ai-agent
+2026-07-08-share-link-page
+agent-skincare-report-flow
