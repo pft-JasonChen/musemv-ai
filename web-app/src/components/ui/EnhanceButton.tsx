@@ -79,17 +79,63 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
     else void run(kind);
   }
 
+  /**
+   * The two-direction menu. Shared by both renderings — see the `bem` branch.
+   *
+   * Not styled from `src/styles/designer/`: DP has NO enhance menu at all, so
+   * there is no class to reuse and inventing one in a gated stylesheet is not
+   * allowed. It is a WA-authored overlay, the same call `consent-dialog.css` and
+   * `community-profile-mv-preview.css` made. A designed version is `DESIGNER-TODO`
+   * A28.
+   */
+  const menu =
+    menuOpen && directions && directions.length ? (
+      <div
+        className="absolute right-0 z-30 mt-1 w-60 overflow-hidden rounded-xl p-1 shadow-xl"
+        style={{ background: "var(--card-3)", border: "1px solid var(--border-2)" }}
+        role="menu"
+      >
+        <div className="px-3 py-2 text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>
+          What would you like to enhance?
+        </div>
+        {directions.map((d) => (
+          <button
+            key={d.kind}
+            type="button"
+            role="menuitem"
+            onClick={() => run(d.kind)}
+            className="block w-full rounded-lg px-3 py-2 text-left transition-all hover:brightness-125"
+            style={{ background: "transparent" }}
+          >
+            <div className="text-[13px] font-semibold">{d.label}</div>
+            <div className="text-[11px]" style={{ color: "var(--text-3)" }}>
+              {d.sub}
+            </div>
+          </button>
+        ))}
+      </div>
+    ) : null;
+
   if (bem) {
     // DP's shape: one button, a mask icon that spins while working, and the
     // word "Enhance". `ic_refresh` while busy is DP's own choice of spinner.
+    //
+    // ⚠️ This branch used to return the button ALONE. `onClick` still set
+    // `menuOpen`, and nothing rendered it — so on `/song/create`'s Custom tab,
+    // the only caller that passes `directions`, **Enhance was a dead button**:
+    // it toggled invisible state and did nothing else. The menu existed in the
+    // legacy (non-`bem`) rendering and was simply not carried across in the DP
+    // migration. Found 2026-08-25; the wrapper below is what makes it reachable.
     const url = `url("/assets/icons/ui/${busy ? "ic_refresh" : "ic_edit_ai"}.svg")`;
-    return (
+    const button = (
       <button
         type="button"
         className={`${bem}__enhance-btn`}
         onClick={onClick}
         disabled={busy}
         aria-label="Enhance"
+        aria-haspopup={directions && directions.length ? "menu" : undefined}
+        aria-expanded={directions && directions.length ? menuOpen : undefined}
       >
         <span
           className={`${bem}__enhance-icon${busy ? ` ${bem}__enhance-icon--spinning` : ""}`}
@@ -98,6 +144,15 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
         />
         Enhance
       </button>
+    );
+    // Callers WITHOUT directions keep the bare button, so the migrated markup is
+    // byte-for-byte what it was for them; only the two-mode caller gains a wrapper.
+    if (!directions || !directions.length) return button;
+    return (
+      <div ref={wrapRef} className="relative">
+        {button}
+        {menu}
+      </div>
     );
   }
 
@@ -131,30 +186,7 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
         {busy ? "Enhancing…" : "Enhance"}
       </button>
 
-      {menuOpen && directions && (
-        <div
-          className="absolute right-0 z-30 mt-1 w-60 overflow-hidden rounded-xl p-1 shadow-xl"
-          style={{ background: "var(--card-3)", border: "1px solid var(--border-2)" }}
-        >
-          <div className="px-3 py-2 text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>
-            What would you like to enhance?
-          </div>
-          {directions.map((d) => (
-            <button
-              key={d.kind}
-              type="button"
-              onClick={() => run(d.kind)}
-              className="block w-full rounded-lg px-3 py-2 text-left transition-all hover:brightness-125"
-              style={{ background: "transparent" }}
-            >
-              <div className="text-[13px] font-semibold">{d.label}</div>
-              <div className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                {d.sub}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+      {menu}
     </div>
   );
 }

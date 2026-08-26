@@ -46,11 +46,11 @@ credit pill shows the **live balance** (SONG-05). Generation itself charges **6 
 
 ## 2. Route / component / state / API map (RD)
 
-| Route            | View                                           | Owns UI                                                                                                                                                                                   | Reads/writes state                                                                                                     | `MuseApi`                            |
-| ---------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `/song/create`   | `song/SongCompose` (guest-reachable)          | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, **Idea** + **Lyrics** sample fills + Enhance, **Create Song** CTA, **two-mode side rail** | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}`; `useAuth().loggedIn`, `useHistory().history` (rail)    | `enhancePrompt` (song/lyrics)        |
-| `/song/creating` | `song/SongGenerationScreen` → `GenerationView` | progress ring/step, View Later                                                                                                                                                            | `startSong`, `gen`, `songResult`                                                                                       | `createSongJob`, `getSongJob` (poll) |
-| `/song/result`   | `song/SongResultView` (self-contained)         | **Back (→ History)**, player + progress/seek, prev/next transport, volume/mute, Like, Share, Download, Lyrics sheet, Publish toggle, Use-in-MV, Recreate, **My Creations** playlist       | `songResult`, `useHistory` (earlier songs + share id), `useMvFlow().patchCompose` (Use-in-MV), `useCredits` (Recreate) | —                                    |
+| Route            | View                                           | Owns UI                                                                                                                                                                             | Reads/writes state                                                                                                     | `MuseApi`                            |
+| ---------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `/song/create`   | `song/SongCompose` (guest-reachable)           | Simple/Custom tabs, describe/lyrics, Instrumental, Genre/Mood/Vocal chips, Title, **Idea** + **Lyrics** sample fills + Enhance, **Create Song** CTA, **two-mode side rail**         | `useSongFlow().{songCompose,patchSongCompose,resetForNewSong}`; `useAuth().loggedIn`, `useHistory().history` (rail)    | `enhancePrompt` (song/lyrics)        |
+| `/song/creating` | `song/SongGenerationScreen` → `GenerationView` | progress ring/step, View Later                                                                                                                                                      | `startSong`, `gen`, `songResult`                                                                                       | `createSongJob`, `getSongJob` (poll) |
+| `/song/result`   | `song/SongResultView` (self-contained)         | **Back (→ History)**, player + progress/seek, prev/next transport, volume/mute, Like, Share, Download, Lyrics sheet, Publish toggle, Use-in-MV, Recreate, **My Creations** playlist | `songResult`, `useHistory` (earlier songs + share id), `useMvFlow().patchCompose` (Use-in-MV), `useCredits` (Recreate) | —                                    |
 
 **Provider:** `SongFlowProvider` (`useSongFlow`) — compose form, job polling, result; feeds
 `HistoryProvider` on start/complete/fail. 🔒 mock generation (`GenerationView` shared with MV).
@@ -69,7 +69,7 @@ History alone.
 
 - `mode`: `simple` (default) | `custom`.
 - `describe`: string (Simple), max 2500 (`DESCRIPTION_MAX`).
-- `instrumental`: boolean (both modes) — when ON in Custom, the Lyrics field is replaced by "No lyrics needed…".
+- `instrumental`: boolean (both modes) — when ON in Custom, the Lyrics box is **cleared** and shows the instrumental placeholder; the typed lyrics are held aside and restored when it goes OFF again (see `AC-SONG-02`).
 - `lyrics`: string (Custom), max 2500.
 - `genre` (default "Pop"), `mood` (default "Uplifting"), `vocal` (nullable, optional), `title` (optional).
 - **CTA-ready** (`isSongReady`): **Custom → always ready**; **Simple → `describe.trim() !== ""`**.
@@ -109,12 +109,47 @@ History alone.
   - ⚠️ **UI pending designer polish.** The control is DP's `.song-create__idea-btn` verbatim
     (lightbulb mask + label, the pill the Lyrics button already used). The product owner asked for a
     working button first and for the designer to adjust it later.
+  - **RESOLVED 2026-08-25: build-in, not MSR cloud config.** A candidate MSR (cloud-config) JSON
+    for these two pools — same shape as the sample handed to RD, i18n block for 9 target-market
+    locales (`en de es hi id ja ko pt-BR zh-TW`) with only `en` filled — was drafted and given to
+    RD to weigh against keeping the content in `src/lib/mv/songIdeas.ts`. **RD decided build-in.**
+    The draft is archived at `docs/archive/song-idea-lyrics-msr.json` for the record, not as a
+    spec to implement against. `src/lib/mv/songIdeas.ts` stays the one source of truth; a future
+    localization pass (if any) translates the two exported arrays in place rather than adding a
+    cloud-config layer.
 - Other compose helpers:
-  **Enhance** (`enhancePrompt`; Custom lyrics offers Refine Idea vs Refine Lyrics; **FREE — no charge
+  **Enhance** (`enhancePrompt`; **FREE — no charge
   at all** since 2026-08-12. `enhanceCost` / `consumeEnhance` were removed from `useCredits` and the
   cost badge from `EnhanceButton`; there is no cloud-config action for Enhance, so billing it was
   never in the approved model — SONG-04, spec area 11 §5.5), a supported-languages info
   popover (Custom). The inline **`CreditPill` shows the live balance** (SONG-05).
+
+### Enhance on the Custom tab opens a two-mode chooser (`AC-SONG-14`)
+
+On **Custom**, `Enhance` does not run immediately. It opens a small menu titled
+**"What would you like to enhance?"** with two choices:
+
+| Choice | Sub-label | `enhancePrompt` `kind` |
+| --- | --- | --- |
+| **Refine Idea** | Sharpen the mood, tone, and detail | `song` |
+| **Refine Lyrics** | Polish wording, rhythm, and flow | `lyrics` |
+
+**The engine has two refine modes, so each choice is its own API call — RD owns both**
+(product owner, 2026-08-25). The front end only picks the `kind`; it does not decide what
+"refine" means for either.
+
+On **Simple** there is no chooser: `Enhance` runs the `song` kind directly, because a Simple
+song has only the one field.
+
+> ⚠️ **This menu had been unreachable since the DP migration and was restored 2026-08-25.**
+> `EnhanceButton`'s DP-skinned branch returned the button alone while its click handler set
+> the open state, so on Custom **Enhance was a dead button** — it did nothing at all. The
+> two modes, their copy and the `kind` split had been in the code the whole time; only the
+> rendering was missing. Guarded by `e2e/behaviour-regressions.spec.ts` →
+> "Custom Enhance opens the two-mode menu".
+>
+> 🎨 **The menu has no design.** DP ships no enhance chooser, so the current visual is
+> WA-authored. See `docs/DESIGNER-TODO.md` **A28**.
 
 **Job (`SongJob` → `SongResult`)**: `createSongJob(compose)` → poll `getSongJob` → on done sets
 `songResult` ({title, cover, genre, mood, durationSec, audioUrl?, instrumental, lyrics?}) and marks
@@ -154,7 +189,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 - **SONG-P1-S0 (side rail, 2026-08-06)** Same two-mode aside as `/mv/room` (area 02 MV-P1-S0): **"Trending Songs"** over `TOP_PICKS_SONGS` with a "See all" → `/explore/songs`, or **"My Creations"** over the user's own finished songs from `useHistory()`, no "See all", each row opening `/song/result?id=`. Requires `loggedIn` **and** at least one completed song.
 - **SONG-P1-S1** Arrive `/song/create` (**guest-reachable** — the route guard was removed 2026-08-12, the gate is on the Create Song button; see `SONG-E3` / `AC-AUTH-08`); **Simple** tab default; **Create Song** disabled until `describe` non-empty. Hint "Describe your song to continue."
-- **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + **Idea** fill + Enhance.
+- **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + **Idea** fill + Enhance. Toggling **swaps** the Lyrics draft rather than carrying it across — see `AC-SONG-02`.
 - **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics** textarea (or "No lyrics needed" when Instrumental) + **Idea**/**Lyrics** sample fills (Idea survives Instrumental, Lyrics does not) / Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
 - **SONG-P1-S4** Tap **Create Song** (`songCost(instrumental)` — **6** vocal / **12** instrumental) → `resetForNewSong()` → `/song/creating`. _(Was a flat `10`; repriced 2026-08-12, journey text corrected 2026-08-19.)_
 
@@ -187,7 +222,10 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 - **AC-SONG-01** — WHEN `/song/create` loads, THE SYSTEM SHALL default to **Simple** and keep **Create Song** disabled until `describe.trim() !== ""`; in **Custom**, it SHALL be enabled by default.
 - **AC-SONG-01b** — WHILE logged out, WHEN `/song/create` is opened, THE SYSTEM SHALL render the full compose screen with no sign-in modal; and THE SYSTEM SHALL open the sign-in modal only when the user activates **Create Song**. THE SYSTEM SHALL NOT show the insufficient-credit upsell to a logged-out user — `requireLogin` wraps the GL-01 balance check, so sign-in always comes first. _(new 2026-08-12; see area 09 AC-AUTH-08)_
-- **AC-SONG-02** — WHEN Instrumental is ON in Custom, THE SYSTEM SHALL hide the lyrics editor and typically generate without lyrics (no Lyrics sheet). _(Note: toggling does not clear previously-typed lyrics — see SONG-E4 / `TBD-SONG-01`.)_
+- **AC-SONG-02** — WHEN Instrumental is turned **ON**, THE SYSTEM SHALL **clear** the Lyrics box so its instrumental placeholder is visible, and SHALL hold the typed lyrics aside; WHEN it is turned **OFF** again, THE SYSTEM SHALL restore them. A brief written while Instrumental is ON is likewise held aside and restored on the next ON. THE SYSTEM SHALL also hide the **Lyrics** fill and **Enhance** while Instrumental is ON, and generate without lyrics (no Lyrics sheet).
+  > _Rewritten 2026-08-25 (product owner). The previous rule was the opposite — "toggling does not clear previously-typed lyrics" — which left the old prompt sitting under an instrumental placeholder that contradicted it. The two drafts are swapped, so neither piece of text is lost. Closes the clearing half of `TBD-SONG-01`._
+- **AC-SONG-02c** — WHILE Instrumental is ON, the Lyrics box placeholder SHALL read exactly:
+  `No lyrics needed - AI will create a pure instrumental track.` / newline / `Describe the mood or vibe of your instrumental...` _(copy fixed by the product owner 2026-08-25; the previous text put the two sentences in the opposite order.)_
 - **AC-SONG-02b** — WHEN the user activates **Idea**, THE SYSTEM SHALL replace the active box's contents with a randomly chosen `SONG_IDEA_PROMPTS` entry other than the one already there; and WHEN the user activates **Lyrics** (Custom, non-instrumental), THE SYSTEM SHALL do the same from `LYRIC_PRESETS`. **Idea** SHALL be present in both tabs and SHALL remain available while Instrumental is ON; **Lyrics** SHALL NOT be rendered while Instrumental is ON. _(new 2026-08-24 — the buttons were removed 2026-08-06 and restored with the product owner's copy; guarded by `e2e/behaviour-regressions.spec.ts` → `3j / 2026-08-24`.)_
 - **AC-SONG-03** — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Enhance and the Idea / Lyrics sample fills are not capped by `maxLength` — every shipped preset is inside 2500 by construction, held by `src/lib/mv/songIdeas.test.ts`.)
 - **AC-SONG-04** — WHEN **Create Song** is tapped, THE SYSTEM SHALL `resetForNewSong()`, insert a Generating History row, and navigate to `/song/creating`.
@@ -200,6 +238,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **AC-SONG-11b** — ⚠️ **SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.** It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and `songCompose.{bpm,key}` persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident. _(Renumbered from a second `AC-SONG-11` on 2026-08-19; the history-entry criterion above keeps the plain id.)_
 - **AC-SONG-12** — WHEN Recreate is invoked with a balance covering one generation (`songRecreateCost` — 6 vocal / 12 instrumental), THE SYSTEM SHALL charge that amount and regenerate while keeping the prior song in History; otherwise it SHALL open the buy-credits IAP (SONG-03). _(repriced 2026-08-12; was a flat 50)_
 - **AC-SONG-13** — WHEN AI Enhance is used, THE SYSTEM SHALL charge **nothing, ever** (SONG-04). _(Corrected 2026-08-19. The old "free first, then 1 credit" rule was removed on 2026-08-12 — §1 and §3 of this same file already said so, and `enhanceCost`/`consumeEnhance` are gone from `useCredits`. This AC was the last place the withdrawn rule survived.)_
+- **AC-SONG-14** — WHEN **Enhance** is activated on the **Custom** tab, THE SYSTEM SHALL open a chooser offering **Refine Idea** (`kind: "song"`) and **Refine Lyrics** (`kind: "lyrics"`), and SHALL call `enhancePrompt` only after one is picked. WHEN it is activated on **Simple**, THE SYSTEM SHALL call `enhancePrompt` with `kind: "song"` directly, with no chooser. _(new 2026-08-25 — the behaviour existed in code but the menu was unreachable on the migrated skin; see §3.)_
 - **AC-SONG-07** — WHEN **Use in Music Video** is tapped, THE SYSTEM SHALL pre-load the song (incl. lyrics) into MV compose and navigate to `/mv/room`.
 - **AC-SONG-08** — IF the song job fails, THEN THE SYSTEM SHALL show the shared error state with Back + Retry.
 - **AC-SONG-09** — WHEN a song job starts, THE SYSTEM SHALL charge `songCost(instrumental)` (6 vocal / 12 instrumental) immediately and refund it if the job fails. _(Corrected 2026-08-19 — this previously said the balance must NOT change, which is the opposite of `SongFlowProvider.tsx:62-67` and of the same rule for MV in `AC-MV-19`. It was the song-side twin of the withdrawn `AC-MV-15`.)_
@@ -219,13 +258,13 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 ## 8. Open items for RD
 
-| ID              | Open item                                                                                                                                                                                                                                                   |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **TBD-SONG-06** | 🔧 **Backend (RD)** — the production song-generation failure trigger is undefined (the mock's `[fail]`-in-description behaviour needs a real equivalent).                                                                                                   |
-| **TBD-SONG-07** | ⏳ **TBD** — the Custom info popover lists 11 languages; confirm the real supported-language set for lyric generation.                                                                                                                                      |
-| ~~**TBD-SONG-08**~~ | ✅ **2026-08-19 結案 — KEEP.** 產品負責人決定：**使用者可以 like 自己的作品**，`/song/result` 的 Like 保留。目前是 local state；接後端時它需要和社群的 like 走同一條寫入路徑（`TBD-EXP-08`）。`AC-SONG-06` 的 "and no Like" 子句已撤回。 |
-| ~~**TBD-SONG-09**~~ | ✅ **2026-08-20 結案 — 不做 ±15s，完全依照 DP。** transport 就是 prev / play / next。此項不再需要 glyph，也不再是缺口。 |
-| **TBD-SONG-10** | 🔧 **RD (from 3j / S4)** — `bpm` / `key` are now unreachable from the UI but still on `SongComposeSchema` and still sent. Deleting them is the C8 PR plan §11 requires; leaving them is also a valid answer. Decide before backend integration, not during. |
+| ID                  | Open item                                                                                                                                                                                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TBD-SONG-06**     | 🔧 **Backend (RD)** — the production song-generation failure trigger is undefined (the mock's `[fail]`-in-description behaviour needs a real equivalent).                                                                                                   |
+| **TBD-SONG-07**     | ⏳ **TBD** — the Custom info popover lists 11 languages; confirm the real supported-language set for lyric generation.                                                                                                                                      |
+| ~~**TBD-SONG-08**~~ | ✅ **2026-08-19 結案 — KEEP.** 產品負責人決定：**使用者可以 like 自己的作品**，`/song/result` 的 Like 保留。目前是 local state；接後端時它需要和社群的 like 走同一條寫入路徑（`TBD-EXP-08`）。`AC-SONG-06` 的 "and no Like" 子句已撤回。                    |
+| ~~**TBD-SONG-09**~~ | ✅ **2026-08-20 結案 — 不做 ±15s，完全依照 DP。** transport 就是 prev / play / next。此項不再需要 glyph，也不再是缺口。                                                                                                                                     |
+| **TBD-SONG-10**     | 🔧 **RD (from 3j / S4)** — `bpm` / `key` are now unreachable from the UI but still on `SongComposeSchema` and still sent. Deleting them is the C8 PR plan §11 requires; leaving them is also a valid answer. Decide before backend integration, not during. |
 
 See also global: `TBD-GL-01` (credit charging). _(The old "`COST_SONG=10` vs app 50" note is obsolete — song pricing was resolved to 6/12 on 2026-08-12 per area 11 §3.1.)_
 

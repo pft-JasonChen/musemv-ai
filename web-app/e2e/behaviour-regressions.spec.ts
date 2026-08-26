@@ -3673,3 +3673,73 @@ test("A23: `sp-synth-wave`'s no-lyrics panel shows the empty-state, not a blank 
   // collapse A23 originally reported.
   await expect(page.locator(".song-result__side-panel > *")).toHaveCount(2);
 });
+
+// ── /song/create Custom tab + Create MV description (product owner, 2026-08-25) ──
+
+test("Custom Enhance opens the two-mode menu, and is not a dead button", async ({ page }) => {
+  // It WAS a dead button. `EnhanceButton`'s `bem` branch returned the button
+  // alone while `onClick` set `menuOpen`, so the only caller that passes
+  // `directions` — this one — toggled invisible state and did nothing. The menu
+  // lived in the legacy rendering and was not carried across in the DP migration.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.getByText("Custom", { exact: true }).first().click();
+
+  // Enhance only appears once there is something to enhance (`!value.trim()`).
+  const box = page.locator(".song-create__textarea").first();
+  await box.fill("a hopeful song about leaving home");
+  const enhance = page.locator(".song-create__enhance-btn").first();
+  await expect(enhance).toBeVisible();
+  await expect(enhance).toHaveAttribute("aria-expanded", "false");
+
+  await enhance.click();
+  await expect(enhance).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByText("What would you like to enhance?")).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: /Refine Idea/ })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: /Refine Lyrics/ })).toBeVisible();
+});
+
+test("Instrumental swaps the lyric draft instead of carrying it across", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.getByText("Custom", { exact: true }).first().click();
+
+  const box = page.locator(".song-create__textarea").first();
+  const original = "Verse one, the city lights are low";
+  await box.fill(original);
+
+  // ON: cleared, and the instrumental placeholder is what the user now sees.
+  await page.getByRole("switch", { name: "Instrumental" }).first().click();
+  await expect(box).toHaveValue("");
+  await expect(box).toHaveAttribute("placeholder", /No lyrics needed - AI will create/);
+  await expect(box).toHaveAttribute("placeholder", /Describe the mood or vibe/);
+
+  // A brief written in instrumental mode is its own draft…
+  await box.fill("warm analogue synths at dusk");
+
+  // OFF: the original lyrics come back, not the brief.
+  await page.getByRole("switch", { name: "Instrumental" }).first().click();
+  await expect(box).toHaveValue(original);
+
+  // …and ON again restores the brief rather than losing it.
+  await page.getByRole("switch", { name: "Instrumental" }).first().click();
+  await expect(box).toHaveValue("warm analogue synths at dusk");
+});
+
+test("Create MV's description box has no Enhance control", async ({ page }) => {
+  // Removed 2026-08-25: the engine has no refine mode for an MV description.
+  // A deviation FROM DP, so this asserts the absence — a future drop restores
+  // the control and the removal has to be re-applied.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+  await page
+    .getByPlaceholder("Describe your video to help AI create a more compelling story.")
+    .fill("A neon-lit night drive through the city.");
+
+  await expect(page.locator(".mv-create__enhance-btn")).toHaveCount(0);
+  // The rest of the footer is untouched, so this cannot pass on a broken page.
+  await expect(page.locator(".mv-create__char-count")).toBeVisible();
+});
