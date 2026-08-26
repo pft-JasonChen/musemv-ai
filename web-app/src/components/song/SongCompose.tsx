@@ -260,7 +260,14 @@ export function SongCompose() {
             <div className="song-create__section">
               <div className="song-create__row-header">
                 <div className="song-create__label-group">
-                  <p className="song-create__label">LYRICS</p>
+                  {/* "LYRICS / IDEA" — DP's own name for this box, and the
+                      honest one: it takes either kind of input and has a fill
+                      button for each (see the footer note below). It read just
+                      "LYRICS" until 2026-08-25, which under-described a box that
+                      also accepts a style/scene brief — and contradicted this
+                      file's own comments, which had said DP calls it
+                      "LYRICS / IDEA" all along. */}
+                  <p className="song-create__label">LYRICS / IDEA</p>
                   <button
                     type="button"
                     className="song-create__info-btn"
