@@ -865,7 +865,7 @@
 
 /* Product owner request, 2026-08-13 — the gap between a field's own label
    row and its input box drops from 24px to 8px on AI Song: Simple's
-   "DESCRIBE YOUR SONG" and Custom's "LYRICS" (both rely on
+   "DESCRIBE YOUR SONG" and Custom's "LYRICS / IDEA" (both rely on
    `.song-create__section`'s shared gap between `.song-create__row-header`
    and `.song-create__input-box`) and Custom's "SONG TITLE" (its own
    `.song-create__title-field`, verbatim 12px).

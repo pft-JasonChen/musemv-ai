@@ -3743,3 +3743,22 @@ test("Create MV's description box has no Enhance control", async ({ page }) => {
   // The rest of the footer is untouched, so this cannot pass on a broken page.
   await expect(page.locator(".mv-create__char-count")).toBeVisible();
 });
+
+test("Custom's box is labelled LYRICS / IDEA, matching what it accepts", async ({ page }) => {
+  // It read just "LYRICS" until 2026-08-25, which under-described a box that
+  // also takes a style/scene brief and has an `Idea` fill sitting inside it.
+  // The spec (§3) and this component's own comments had said DP calls it
+  // "LYRICS / IDEA" the whole time — the label was the piece that never caught up.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.getByText("Custom", { exact: true }).first().click();
+
+  const label = page.locator(".song-create__label").filter({ hasText: /LYRICS/ }).first();
+  await expect(label).toHaveText("LYRICS / IDEA");
+  // Both fills live under it — and they SHARE the pill class, which is why the
+  // label has to name both rather than just the one the field is called after.
+  await expect(page.locator(".song-create__idea-btn")).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Idea", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Lyrics", exact: true })).toBeVisible();
+});
