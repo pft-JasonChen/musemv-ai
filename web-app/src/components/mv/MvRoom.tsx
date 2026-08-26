@@ -4,7 +4,6 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { ListItem } from "@/components/ui/ListItem";
@@ -70,10 +69,11 @@ import {
  * · `resetForNewMv()` before a new generation, so a previous storyboard or
  *   result cannot leak into the next one.
  * · MV-02 import validation (format allow-list + 50MB ceiling).
- * · `EnhanceButton`, which goes through `api.enhancePrompt` (G5-d #10). DP
- *   picks a random string from a local `ENHANCED_SUGGESTIONS` array.
- * · (The Ideas button was here until 2026-08-06. It is GONE now — V1 ships no
- *   canned-sample fillers — and that is a deviation FROM DP, which has one.)
+ * · (The Ideas button was here until 2026-08-06, and `EnhanceButton` until
+ *   2026-08-25. Both are GONE now — V1 ships neither canned-sample fillers
+ *   nor Enhance on this screen — and both are deviations FROM DP, which has
+ *   both. `EnhanceButton` itself, and the `api.enhancePrompt` round-trip it
+ *   goes through, are untouched — this screen just no longer renders it.)
  *
  * ── AND ONE THING DP HAS THAT WA DID NOT ────────────────────────────────────
  *
@@ -449,14 +449,12 @@ export function MvRoom() {
                       mock-data filler. */}
                 </div>
                 <div className="mv-create__footer-right">
-                  {/* G5-d #10: this goes through `api.enhancePrompt`. DP's
-                      equivalent picks a random local string. */}
-                  <EnhanceButton
-                    value={compose.description}
-                    kind="mv"
-                    onEnhanced={(t) => patchCompose({ description: t })}
-                    bem="mv-create"
-                  />
+                  {/* Enhance HIDDEN 2026-08-25 — not available in V1 (product
+                      owner). Same shape as the "Ideas" removal above: a
+                      deliberate deviation, not a fidelity fix, so re-apply on
+                      every drop. `EnhanceButton` itself is untouched — Song's
+                      two boxes and MV's other three (StoryboardEditor x2,
+                      MvEditor x2) keep it. */}
                   <span className="mv-create__char-count">
                     {compose.description.length}/{DESCRIPTION_MAX}
                   </span>
