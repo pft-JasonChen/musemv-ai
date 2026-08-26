@@ -4,11 +4,26 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { EnhanceKind } from "@/lib/api/contract";
+import { DpDialog } from "@/components/ui/DpDialog";
+import { DpIcon } from "@/components/ui/DpIcon";
 
 export interface EnhanceDirection {
   kind: EnhanceKind;
   label: string;
   sub: string;
+}
+
+/** Icon + gradient modifier per direction (product owner, 2026-08-25, Figma
+ *  "AI Song — Feature Room - Enhance Sheet", node 3075:62879). No DP source
+ *  exists for this dialog — WA's own addition (see the `bem` doc below) — so
+ *  there's no `kind` → visual mapping to inherit; `lyrics` gets the pen
+ *  glyph, every other direction (today just `song`, for "Refine Idea") gets
+ *  the bulb. The gradients themselves are CSS (`.enhance-dialog__option-icon--*`
+ *  in `designer-overrides.css`), not inline hex here — this file had none. */
+function enhanceDirectionVisual(kind: EnhanceKind) {
+  return kind === "lyrics"
+    ? { icon: "ic_refine_lyrics", modifier: "lyrics" }
+    : { icon: "ic_refine_idea", modifier: "idea" };
 }
 
 interface Props {
@@ -84,20 +99,74 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
     // word "Enhance". `ic_refresh` while busy is DP's own choice of spinner.
     const url = `url("/assets/icons/ui/${busy ? "ic_refresh" : "ic_edit_ai"}.svg")`;
     return (
-      <button
-        type="button"
-        className={`${bem}__enhance-btn`}
-        onClick={onClick}
-        disabled={busy}
-        aria-label="Enhance"
-      >
-        <span
-          className={`${bem}__enhance-icon${busy ? ` ${bem}__enhance-icon--spinning` : ""}`}
-          style={{ maskImage: url, WebkitMaskImage: url }}
-          aria-hidden="true"
-        />
-        Enhance
-      </button>
+      <>
+        <button
+          type="button"
+          className={`${bem}__enhance-btn${busy ? ` ${bem}__enhance-btn--busy` : ""}`}
+          onClick={onClick}
+          disabled={busy}
+          aria-label="Enhance"
+        >
+          <span
+            className={`${bem}__enhance-icon${busy ? ` ${bem}__enhance-icon--spinning` : ""}`}
+            style={{ maskImage: url, WebkitMaskImage: url }}
+            aria-hidden="true"
+          />
+          Enhance
+        </button>
+        {/* Product owner, 2026-08-25 — this was previously dead: `directions`
+            drove `menuOpen`, but the `bem` branch above had no markup that
+            read it (every real caller passes `bem`, so the Tailwind popup
+            further down never rendered anywhere). `DpDialog` gives it the
+            same centred/dimmed shell as Upgrade/Credits — matches the desktop
+            Figma reference. No `title` prop: DpDialog always renders its
+            header BEFORE `children`, but the mobile Figma reference (product
+            owner, 2026-08-25 — same "mobile-tabbar-sheet" style as the
+            create sheet) needs a drag handle ABOVE the title, so the header
+            is built here instead, in the order this needs. */}
+        {directions && directions.length > 0 && (
+          <DpDialog
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            block="enhance-dialog"
+            label="What would you like to enhance?"
+          >
+            <div className="enhance-dialog__handle" aria-hidden="true" />
+            <div className="enhance-dialog__header">
+              <p className="enhance-dialog__title">What would you like to enhance?</p>
+              <button
+                type="button"
+                className="enhance-dialog__close"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Close"
+              >
+                <img src="/assets/icons/ui/ic_close.svg" alt="" className="enhance-dialog__close-icon" />
+              </button>
+            </div>
+            <div className="enhance-dialog__options">
+              {directions.map((d) => {
+                const visual = enhanceDirectionVisual(d.kind);
+                return (
+                  <button
+                    key={d.kind}
+                    type="button"
+                    className="enhance-dialog__option"
+                    onClick={() => void run(d.kind)}
+                  >
+                    <span className={`enhance-dialog__option-icon enhance-dialog__option-icon--${visual.modifier}`}>
+                      <DpIcon name={visual.icon} className="enhance-dialog__option-icon-glyph" />
+                    </span>
+                    <span className="enhance-dialog__option-info">
+                      <span className="enhance-dialog__option-label">{d.label}</span>
+                      <span className="enhance-dialog__option-sub">{d.sub}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </DpDialog>
+        )}
+      </>
     );
   }
 

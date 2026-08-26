@@ -2598,3 +2598,248 @@
     padding: 20px;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Enhance dialog ("What would you like to enhance?") — product owner,
+   2026-08-25, Figma "AI Song — Feature Room - Enhance Sheet" (node
+   3075:62879). `src/components/ui/EnhanceButton.tsx`. This popup previously
+   existed only as unreachable Tailwind JSX (every real caller passes `bem`,
+   which took the OTHER branch, one with no menu markup at all) — no DP
+   source ever shipped it, so — like the Share Page — this is hand-authored
+   here rather than split between a gated file and an override. Shares
+   `DpDialog`'s shell (`.enhance-dialog-overlay`/`-backdrop`, `.enhance-dialog`,
+   `.enhance-dialog__header*`), same shape as `.upgrade-dialog`'s but its own
+   independent block name and this dialog's own 380px/12px-gap proportions. */
+.enhance-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.enhance-dialog-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.enhance-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.enhance-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 380px;
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-3xl, 26px);
+  background: var(--neutral-dark-09, #151519);
+  box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
+  transform: scale(0.96);
+  transition: transform 0.3s ease;
+}
+
+.enhance-dialog-overlay--visible .enhance-dialog {
+  transform: scale(1);
+}
+
+.enhance-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.enhance-dialog__title {
+  flex: 1;
+  margin: 0;
+  color: var(--neutral-dark-100, #fff);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 24px;
+  letter-spacing: -0.2px;
+}
+
+.enhance-dialog__close {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.enhance-dialog__close-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.enhance-dialog__options {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.enhance-dialog__option {
+  /* No `width: 100%` — with an explicit width, negative margins only shift
+     the box (left edge moves left by 8px, right edge does NOT correspondingly
+     move right), so the hover padding was 8px on the left and 16px on the
+     right. Letting the flex item's default `stretch` cross-size apply
+     instead makes the negative margins expand it symmetrically. */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  margin: -8px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.enhance-dialog__option:hover {
+  background: var(--white-15);
+}
+
+/* Product owner, 2026-08-25 — while `EnhanceButton` is busy (any of its 4
+   `bem` skins: SongCompose's two boxes, MvRoom, StoryboardEditor's two boxes,
+   MvEditor's two boxes), the pill should read purple with white icon/text,
+   not stay the idle white-pill/dark-text look. Each screen's own gated CSS
+   (`SongCreatePage.css`, `MVCreatePage.css`, `MVStoryboardPage.css`,
+   `MVEditPage.css`) never defined a busy state for the button itself — only
+   `SongCreatePage.css` has an (unwired) `--processing` ancestor modifier —
+   so this is new, one rule per skin since `bem` is a runtime string CSS
+   can't template. Setting `color` here turns the icon white for free
+   (`.{bem}__enhance-icon` already paints from `currentColor`). */
+.song-create__enhance-btn--busy,
+.mv-create__enhance-btn--busy,
+.mv-storyboard__enhance-btn--busy,
+.mv-edit__enhance-btn--busy {
+  background: var(--color-accent-purple);
+  color: var(--neutral-dark-100);
+}
+
+.enhance-dialog__option-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+
+.enhance-dialog__option-icon--idea {
+  background-image: linear-gradient(135deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+}
+
+.enhance-dialog__option-icon--lyrics {
+  background-image: linear-gradient(135deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+}
+
+.enhance-dialog__option-icon-glyph {
+  width: 20px;
+  height: 20px;
+  background-color: var(--neutral-dark-100, #fff);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.enhance-dialog__option-info {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.enhance-dialog__option-label {
+  overflow: hidden;
+  color: var(--neutral-dark-100, #fff);
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enhance-dialog__option-sub {
+  color: var(--neutral-dark-64, #9c9cab);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Only meaningful once the dialog becomes a bottom sheet below — hidden on
+   the centred desktop/tablet dialog, where a drag handle has nothing to
+   affordance. */
+.enhance-dialog__handle {
+  display: none;
+}
+
+/* Product owner, 2026-08-25 — on phones this becomes a bottom sheet in the
+   same style as the home tab bar's own create sheet (`.mobile-tabbar-sheet`,
+   `MobileTabBar.css`): anchored to the bottom, full width, rounded top
+   corners only, a drag handle, and a slide-up transition instead of the
+   desktop scale-in. Values (radius, handle size, bottom safe-area padding)
+   match that sheet's exactly for visual consistency between the app's two
+   bottom sheets. */
+@media (max-width: 767px) {
+  .enhance-dialog-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .enhance-dialog {
+    max-width: 100%;
+    padding: 12px 20px max(env(safe-area-inset-bottom), 20px);
+    border-radius: 26px 26px 0 0;
+    transform: translateY(100%);
+  }
+
+  .enhance-dialog-overlay--visible .enhance-dialog {
+    transform: translateY(0);
+  }
+
+  .enhance-dialog__handle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    flex-shrink: 0;
+    margin: 0 auto;
+    border-radius: 2px;
+    background: var(--white-15);
+  }
+}
+
