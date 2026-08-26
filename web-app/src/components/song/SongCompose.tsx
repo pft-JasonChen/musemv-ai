@@ -100,7 +100,27 @@ export function SongCompose() {
   const showMine = loggedIn && mySongs.length > 0;
   const [buyOpen, setBuyOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
+  /**
+   * The OTHER mode's lyrics draft (product owner, 2026-08-25).
+   *
+   * Turning Instrumental on must NOT carry the lyrics across — the box is
+   * cleared so its "describe the mood" placeholder shows — and turning it off
+   * again must bring the original words back. Keeping the inactive draft here
+   * satisfies both with one swap, and means a user who toggles on, writes a
+   * mood brief, and toggles off does not silently lose either piece of text.
+   *
+   * Component state, not `songCompose`: it is an editing convenience, not part
+   * of the request. It resets on leaving the screen, like the rest of the
+   * in-memory flow.
+   */
+  const [otherModeLyrics, setOtherModeLyrics] = useState("");
   const ready = isSongReady(s);
+
+  /** Swap the active and inactive lyric drafts as the mode flips. */
+  function toggleInstrumental(instrumental: boolean) {
+    setOtherModeLyrics(s.lyrics);
+    patch({ instrumental, lyrics: otherModeLyrics });
+  }
   // Spec 11 §3.1: vocal 6 / instrumental 12. One constant could not express this.
   const cost = songCost(s.instrumental);
 
@@ -180,7 +200,7 @@ export function SongCompose() {
                 <ToggleSwitch
                   label="Instrumental"
                   checked={s.instrumental}
-                  onChange={(instrumental) => patch({ instrumental })}
+                  onChange={toggleInstrumental}
                 />
               </div>
 
@@ -263,7 +283,7 @@ export function SongCompose() {
                 <ToggleSwitch
                   label="Instrumental"
                   checked={s.instrumental}
-                  onChange={(instrumental) => patch({ instrumental })}
+                  onChange={toggleInstrumental}
                 />
               </div>
 
@@ -272,7 +292,7 @@ export function SongCompose() {
                   className="song-create__textarea"
                   placeholder={
                     s.instrumental
-                      ? "Describe the mood or vibe of your instrumental…\n\nNo lyrics needed — AI will create a pure instrumental track."
+                      ? "No lyrics needed - AI will create a pure instrumental track.\nDescribe the mood or vibe of your instrumental..."
                       : "Write your lyrics here... Or leave blank — AI will generate them based on your chosen style and mood."
                   }
                   maxLength={DESCRIPTION_MAX}
