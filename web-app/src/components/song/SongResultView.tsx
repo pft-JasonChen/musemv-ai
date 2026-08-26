@@ -219,12 +219,25 @@ export function SongResultView() {
   const active = playlist[activeIndex] ?? playlist[0];
 
   /**
+   * Recreate clears `songResult` (via `resetForRecreate`) in the same handler
+   * that pushes to `/song/creating`. Next's client navigation isn't atomic with
+   * that state update — this component can re-render with `songResult` already
+   * null while it is STILL the mounted route, one tick before the route swap
+   * lands. Without this flag, the self-guard below reads that as a cold load
+   * with no flow state and calls `router.replace("/song/create")`, which wins
+   * the race against the pending push — so Recreate silently never regenerated
+   * anything. Set synchronously in `recreate()`, before `resetForRecreate()`.
+   */
+  const recreatingRef = useRef(false);
+
+  /**
    * The self-guard, with the community escape hatch in front of it. Without the
    * first branch a community id bounces straight back to `/song/create`, which
    * is exactly what made "adopt DP's routing" look bigger than it is.
    */
   useEffect(() => {
     if (songResult) return;
+    if (recreatingRef.current) return;
     if (communitySong) {
       setSongResult(songResultFromCommunity(communitySong));
       return;
@@ -315,6 +328,7 @@ export function SongResultView() {
       setBuyOpen(true);
       return;
     }
+    recreatingRef.current = true;
     resetForRecreate();
     router.push(localePath(locale, "/song/creating"));
   }
@@ -435,7 +449,8 @@ export function SongResultView() {
                             type="button"
                             className="song-result__icon-btn song-result__icon-btn--desktop"
                             onClick={() =>
-                              active.audioUrl && downloadFile(active.audioUrl, `${active.title}.mp3`)
+                              active.audioUrl &&
+                              downloadFile(active.audioUrl, `${active.title}.mp3`)
                             }
                             aria-label="Download"
                           >

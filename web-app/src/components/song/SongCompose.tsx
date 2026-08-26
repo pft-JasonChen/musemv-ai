@@ -84,7 +84,22 @@ import { DESCRIPTION_MAX, isSongReady, songCost, type SongMode } from "@/lib/mv/
  * (`instrumentalText`), separate from lyrics, so toggling Instrumental swaps
  * which string the box holds. WA has one `lyrics` field on the contract, so the
  * toggle changes the box's placeholder and its footer, not its backing store —
- * turning Instrumental on and off no longer silently discards what was typed.
+ * turning Instrumental on and off never discards what was typed.
+ *
+ * ── ENHANCE IS TWO CONTROLS WEARING ONE PILL (product owner, 2026-08-26) ────
+ *
+ * The box holds a lyric sheet OR a brief, and Instrumental is what says which:
+ *
+ * · Instrumental OFF — the box may hold either, so Enhance cannot know what the
+ *   user meant. It opens the two-mode chooser (Refine Idea / Refine Lyrics) and
+ *   calls `enhancePrompt` only after a pick. See `EnhanceButton`'s `directions`.
+ * · Instrumental ON — lyrics are not supported at all, so there is nothing to
+ *   choose between. Enhance runs Refine Idea (`kind: "song"`) on the first tap.
+ *
+ * Which is why `directions` is passed CONDITIONALLY below: `EnhanceButton`
+ * branches on its presence, so withholding it is what turns the chooser off.
+ * Enhance itself renders in BOTH states — only the `Lyrics` fill hides under
+ * Instrumental (`AC-SONG-02`, `AC-SONG-14`).
  */
 export function SongCompose() {
   const router = useRouter();
@@ -100,27 +115,7 @@ export function SongCompose() {
   const showMine = loggedIn && mySongs.length > 0;
   const [buyOpen, setBuyOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
-  /**
-   * The OTHER mode's lyrics draft (product owner, 2026-08-25).
-   *
-   * Turning Instrumental on must NOT carry the lyrics across — the box is
-   * cleared so its "describe the mood" placeholder shows — and turning it off
-   * again must bring the original words back. Keeping the inactive draft here
-   * satisfies both with one swap, and means a user who toggles on, writes a
-   * mood brief, and toggles off does not silently lose either piece of text.
-   *
-   * Component state, not `songCompose`: it is an editing convenience, not part
-   * of the request. It resets on leaving the screen, like the rest of the
-   * in-memory flow.
-   */
-  const [otherModeLyrics, setOtherModeLyrics] = useState("");
   const ready = isSongReady(s);
-
-  /** Swap the active and inactive lyric drafts as the mode flips. */
-  function toggleInstrumental(instrumental: boolean) {
-    setOtherModeLyrics(s.lyrics);
-    patch({ instrumental, lyrics: otherModeLyrics });
-  }
   // Spec 11 §3.1: vocal 6 / instrumental 12. One constant could not express this.
   const cost = songCost(s.instrumental);
 
@@ -200,7 +195,7 @@ export function SongCompose() {
                 <ToggleSwitch
                   label="Instrumental"
                   checked={s.instrumental}
-                  onChange={toggleInstrumental}
+                  onChange={(instrumental) => patch({ instrumental })}
                 />
               </div>
 
@@ -290,7 +285,7 @@ export function SongCompose() {
                 <ToggleSwitch
                   label="Instrumental"
                   checked={s.instrumental}
-                  onChange={toggleInstrumental}
+                  onChange={(instrumental) => patch({ instrumental })}
                 />
               </div>
 
@@ -312,8 +307,10 @@ export function SongCompose() {
                       writes a style/scene/tempo/mood brief, Lyrics writes a
                       whole lyric sheet. Same pill, different pool. Idea stays
                       visible under Instrumental — a brief is what that box asks
-                      for there — while Lyrics hides with the rest of the
-                      lyric-only controls. */}
+                      for there — and `Lyrics` is the ONLY control that hides
+                      there: a lyric sheet is the one thing an instrumental
+                      track cannot use. Enhance stays (see the footer-right
+                      note); the toggle does not touch the text either way. */}
                   <div className="song-create__input-actions">
                     <button
                       type="button"
@@ -335,26 +332,39 @@ export function SongCompose() {
                     )}
                   </div>
                   <div className="song-create__footer-right">
-                    {!s.instrumental && (
-                      <EnhanceButton
-                        value={s.lyrics}
-                        kind="lyrics"
-                        onEnhanced={(t) => patch({ lyrics: t })}
-                        bem="song-create"
-                        directions={[
-                          {
-                            kind: "song",
-                            label: "Refine Idea",
-                            sub: "Sharpen the mood, tone, and detail",
-                          },
-                          {
-                            kind: "lyrics",
-                            label: "Refine Lyrics",
-                            sub: "Polish wording, rhythm, and flow",
-                          },
-                        ]}
-                      />
-                    )}
+                    {/* Enhance renders in BOTH toggle states; what changes is
+                        whether it asks first. Instrumental OFF the box may hold
+                        a lyric sheet or a brief, so `directions` opens the
+                        chooser; Instrumental ON lyrics are not supported, so
+                        the pill runs Refine Idea (`kind: "song"`) on the first
+                        tap. Withholding `directions` is what disables the
+                        chooser — see `EnhanceButton`. (AC-SONG-14.) */}
+                    <EnhanceButton
+                      value={s.lyrics}
+                      kind="song"
+                      onEnhanced={(t) => patch({ lyrics: t })}
+                      bem="song-create"
+                      directions={
+                        s.instrumental
+                          ? undefined
+                          : [
+                              {
+                                kind: "song",
+                                label: "Refine Idea",
+                                sub: "Sharpen the mood, tone, and detail",
+                                tile: "idea",
+                                icon: "ic_lightbulb",
+                              },
+                              {
+                                kind: "lyrics",
+                                label: "Refine Lyrics",
+                                sub: "Polish wording, rhythm, and flow",
+                                tile: "lyrics",
+                                icon: "ic_singing_mic",
+                              },
+                            ]
+                      }
+                    />
                     <span className="song-create__char-count">
                       {s.lyrics.length}/{DESCRIPTION_MAX}
                     </span>

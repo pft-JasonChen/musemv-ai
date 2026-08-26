@@ -5,7 +5,9 @@
  * ── PROVENANCE ──────────────────────────────────────────────────────────────
  *
  * Both lists are the product owner's own copy, handed over on 2026-08-24 as
- * `[YCM] AI Song Ideas & Lyrics` (two CSV sheets: `Ideas`, `Lyrics`), and
+ * `[YCM] AI Song Ideas & Lyrics` (two CSV sheets: `Ideas`, `Lyrics`) —
+ * https://docs.google.com/spreadsheets/d/1768iG99Kdz7wFdP8maemE5zkeghxP4SKAazxkUOIKEQ/edit?gid=1249424592#gid=1249424592
+ * — and
  * transcribed here verbatim — line breaks, `[intro]`/`[verse]` markers and the
  * one Japanese sheet included. They are CONTENT, not fixtures invented to fill
  * a screen: don't reword them, don't "improve" the phrasing, and don't fold

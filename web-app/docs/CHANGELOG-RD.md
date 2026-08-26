@@ -23,6 +23,31 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-27 — **NO CONTRACT CHANGE** — `globals.css` matched the C7 prefix, nothing RD codes against moved
+
+**Surface touched:** `web-app/src/app/globals.css`, which G4-g watches because `WATCH_PREFIX`
+covers **all** of `web-app/src/app/` in order to catch **C7** (the route map, `src/app/**/page.tsx`).
+`globals.css` is not a route and is not itself any of C1–C8.
+
+**I looked, and this is not a contract change.** The whole diff is one added `@import`:
+
+```css
+@import "../styles/enhance-dialog.css";
+```
+
+It pulls in a new WA-authored stylesheet for the `/song/create` Enhance direction chooser, next to
+the two `@import`s already there for the same reason (`community-profile-mv-preview.css`,
+`consent-dialog.css`).
+
+**C7 specifically:** no route added, removed, renamed, or re-parameterised. `src/app/**/page.tsx`
+is untouched — `git diff --name-only` over `src/app/` returns `globals.css` and nothing else.
+
+**What RD must do:** nothing. No interface, hook return key, URL shape, schema, or domain constant
+changed. The only new surface is a set of CSS class names (`.enhance-dialog*`) consumed by exactly
+one component, `src/components/ui/EnhanceButton.tsx`.
+
+---
+
 ## 2026-08-19 — **C8 REMOVAL + C2 ADDITION** — credit costs now follow spec 11
 
 **Surfaces:** **C8** (`src/lib/mv/types.ts`) — a **removal**, which C8 normally forbids, plus

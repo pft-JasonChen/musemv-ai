@@ -69,7 +69,7 @@ History alone.
 
 - `mode`: `simple` (default) | `custom`.
 - `describe`: string (Simple), max 2500 (`DESCRIPTION_MAX`).
-- `instrumental`: boolean (both modes) — when ON in Custom, the Lyrics box is **cleared** and shows the instrumental placeholder; the typed lyrics are held aside and restored when it goes OFF again (see `AC-SONG-02`).
+- `instrumental`: boolean (both modes) — when ON in Custom, the box **keeps whatever is in it** and only the **Lyrics** sample-fill hides; the placeholder (visible only while the box is empty) swaps to the instrumental copy (see `AC-SONG-02` / `AC-SONG-02c`).
 - `lyrics`: string (Custom), max 2500.
 - `genre` (default "Pop"), `mood` (default "Uplifting"), `vocal` (nullable, optional), `title` (optional).
 - **CTA-ready** (`isSongReady`): **Custom → always ready**; **Simple → `describe.trim() !== ""`**.
@@ -124,10 +124,17 @@ History alone.
   never in the approved model — SONG-04, spec area 11 §5.5), a supported-languages info
   popover (Custom). The inline **`CreditPill` shows the live balance** (SONG-05).
 
-### Enhance on the Custom tab opens a two-mode chooser (`AC-SONG-14`)
+### Enhance asks first only when there is something to ask about (`AC-SONG-14`)
 
-On **Custom**, `Enhance` does not run immediately. It opens a small menu titled
-**"What would you like to enhance?"** with two choices:
+`Enhance` is one pill with two behaviours, and **Instrumental is what selects between them**:
+
+| Where | Instrumental | Behaviour |
+| --- | --- | --- |
+| **Custom** | OFF | Opens a menu titled **"What would you like to enhance?"** — the box may hold a lyric sheet or a brief, so the front end cannot know which the user meant |
+| **Custom** | ON | **No menu.** Runs **Refine Idea** (`kind: "song"`) on the first tap — lyrics are not supported in this mode, so there is nothing to choose between |
+| **Simple** | either | **No menu.** Runs `kind: "song"` directly — Simple has only the one field |
+
+The chooser's two entries:
 
 | Choice | Sub-label | `enhancePrompt` `kind` |
 | --- | --- | --- |
@@ -138,9 +145,19 @@ On **Custom**, `Enhance` does not run immediately. It opens a small menu titled
 (product owner, 2026-08-25). The front end only picks the `kind`; it does not decide what
 "refine" means for either.
 
-On **Simple** there is no chooser: `Enhance` runs the `song` kind directly, because a Simple
-song has only the one field.
+Implementation note: `EnhanceButton` branches on whether it was given `directions`, so
+`SongCompose` passes them **conditionally** — withholding them under Instrumental is what
+turns the chooser off. `Enhance` itself renders in both toggle states; the only control that
+hides under Instrumental is the **Lyrics** sample-fill (`AC-SONG-02`).
 
+> 🎨 **The chooser is a CENTRED DIALOG as of 2026-08-27.** It was an anchored `w-60` popover
+> for two days — a WA placeholder for a design DP does not ship. The real one comes from the
+> mobile app prototype's "Enhance Direction Sheet" (`muse-prototype-v2.html:5726`): a centred
+> card, a gradient icon tile per direction (`ic_lightbulb` / `ic_singing_mic`), label over
+> sub-label. It renders through `DpDialog`, so Escape and the backdrop both close it, and its
+> styling is `src/styles/enhance-dialog.css` (WA-authored — there is no DP file to be verbatim
+> with). **This closes the first half of `DESIGNER-TODO` A28**; the phone question is still open.
+>
 > ⚠️ **This menu had been unreachable since the DP migration and was restored 2026-08-25.**
 > `EnhanceButton`'s DP-skinned branch returned the button alone while its click handler set
 > the open state, so on Custom **Enhance was a dead button** — it did nothing at all. The
@@ -148,8 +165,8 @@ song has only the one field.
 > rendering was missing. Guarded by `e2e/behaviour-regressions.spec.ts` →
 > "Custom Enhance opens the two-mode menu".
 >
-> 🎨 **The menu has no design.** DP ships no enhance chooser, so the current visual is
-> WA-authored. See `docs/DESIGNER-TODO.md` **A28**.
+> The remaining A28 question is what this does at 375px: the app prototype is a phone and
+> draws it as a bottom SHEET, while the web build shows the same centred card at every width.
 
 **Job (`SongJob` → `SongResult`)**: `createSongJob(compose)` → poll `getSongJob` → on done sets
 `songResult` ({title, cover, genre, mood, durationSec, audioUrl?, instrumental, lyrics?}) and marks
@@ -189,8 +206,8 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 - **SONG-P1-S0 (side rail, 2026-08-06)** Same two-mode aside as `/mv/room` (area 02 MV-P1-S0): **"Trending Songs"** over `TOP_PICKS_SONGS` with a "See all" → `/explore/songs`, or **"My Creations"** over the user's own finished songs from `useHistory()`, no "See all", each row opening `/song/result?id=`. Requires `loggedIn` **and** at least one completed song.
 - **SONG-P1-S1** Arrive `/song/create` (**guest-reachable** — the route guard was removed 2026-08-12, the gate is on the Create Song button; see `SONG-E3` / `AC-AUTH-08`); **Simple** tab default; **Create Song** disabled until `describe` non-empty. Hint "Describe your song to continue."
-- **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + **Idea** fill + Enhance. Toggling **swaps** the Lyrics draft rather than carrying it across — see `AC-SONG-02`.
-- **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics** textarea (or "No lyrics needed" when Instrumental) + **Idea**/**Lyrics** sample fills (Idea survives Instrumental, Lyrics does not) / Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
+- **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + **Idea** fill + Enhance. Toggling **never changes the text** in either box — see `AC-SONG-02`.
+- **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics** textarea (or "No lyrics needed" when Instrumental) + **Idea**/**Lyrics** sample fills (Idea survives Instrumental, Lyrics does not) / **Enhance** (survives Instrumental, but drops its chooser there — `AC-SONG-14`); Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
 - **SONG-P1-S4** Tap **Create Song** (`songCost(instrumental)` — **6** vocal / **12** instrumental) → `resetForNewSong()` → `/song/creating`. _(Was a flat `10`; repriced 2026-08-12, journey text corrected 2026-08-19.)_
 
 ### SONG-P2 — Generation
@@ -214,7 +231,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 | **SONG-E1** | Song job fails                                                              | Shared `GenerationView` failure state: "Generation Failed" + **Back** (`/song/create`) + **Retry**, "credits were not charged". **`[fail]` in the Simple-mode `describe` triggers a mock failure at ~60% (`mock.ts:137`); `lyrics` does not — so a Custom-mode song cannot be failed via the UI.** Production trigger → `TBD-SONG-06`.                                                                                                                                                                                                                       |
 | **SONG-E2** | Reload/deep-link `/song/creating` or `/song/result` with no in-memory state | Flow-guard → `router.replace("/song/create")`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | **SONG-E3** | Logged-out user opens `/song/create`                                        | **The page renders — no route guard.** ⚠️ **Corrected 2026-08-12:** this row said "`AuthGuard` → sign-in modal". `/song/create` lost its `AuthGuard` by product decision so a guest can compose before signing in, matching `/mv/room`. The gate moved to **Create Song**: `SongCompose.generate()` wraps the whole action in `requireLogin`, and the GL-01 balance check runs INSIDE that callback so a guest is never shown the credits upsell for an account they do not have. Dismissing the modal leaves the draft intact. See area 09 §3 / AC-AUTH-08. |
-| **SONG-E4** | Instrumental ON (Custom)                                                    | Lyrics field replaced with an instrumental note; result typically has no Lyrics sheet. ⚠️ Toggling Instrumental does **not** clear already-typed lyrics, so an atypical path (type lyrics → enable Instrumental) can still carry lyrics into the result (→ `TBD-SONG-01`).                                                                                                                                                                                                                                                                                   |
+| **SONG-E4** | Instrumental ON (Custom)                                                    | Lyrics field keeps its contents and only the **Lyrics** sample-fill hides; result typically has no Lyrics sheet. ⚠️ Because the toggle never clears the box, a path of type lyrics → enable Instrumental can still carry lyrics into the result (→ `TBD-SONG-01`). |
 
 ---
 
@@ -222,7 +239,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 - **AC-SONG-01** — WHEN `/song/create` loads, THE SYSTEM SHALL default to **Simple** and keep **Create Song** disabled until `describe.trim() !== ""`; in **Custom**, it SHALL be enabled by default.
 - **AC-SONG-01b** — WHILE logged out, WHEN `/song/create` is opened, THE SYSTEM SHALL render the full compose screen with no sign-in modal; and THE SYSTEM SHALL open the sign-in modal only when the user activates **Create Song**. THE SYSTEM SHALL NOT show the insufficient-credit upsell to a logged-out user — `requireLogin` wraps the GL-01 balance check, so sign-in always comes first. _(new 2026-08-12; see area 09 AC-AUTH-08)_
-- **AC-SONG-02** — WHEN Instrumental is turned **ON**, THE SYSTEM SHALL **clear** the Lyrics box so its instrumental placeholder is visible, and SHALL hold the typed lyrics aside; WHEN it is turned **OFF** again, THE SYSTEM SHALL restore them. A brief written while Instrumental is ON is likewise held aside and restored on the next ON. THE SYSTEM SHALL also hide the **Lyrics** fill and **Enhance** while Instrumental is ON, and generate without lyrics (no Lyrics sheet).
+- **AC-SONG-02** — WHEN Instrumental is toggled in Custom, THE SYSTEM SHALL leave the Lyrics box contents **unchanged** in both directions, and SHALL hide only the **Lyrics** sample-fill while it is ON. THE **Idea** fill and **Enhance** SHALL remain available while Instrumental is ON, and the song SHALL generate without a Lyrics sheet. _(Rewritten 2026-08-26: a rule that cleared the box on toggle-on was in place for one day and is withdrawn — the toggle is not a destructive control.)_
   > _Rewritten 2026-08-25 (product owner). The previous rule was the opposite — "toggling does not clear previously-typed lyrics" — which left the old prompt sitting under an instrumental placeholder that contradicted it. The two drafts are swapped, so neither piece of text is lost. Closes the clearing half of `TBD-SONG-01`._
 - **AC-SONG-02c** — WHILE Instrumental is ON, the Lyrics box placeholder SHALL read exactly:
   `No lyrics needed - AI will create a pure instrumental track.` / newline / `Describe the mood or vibe of your instrumental...` _(copy fixed by the product owner 2026-08-25; the previous text put the two sentences in the opposite order.)_
@@ -238,7 +255,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **AC-SONG-11b** — ⚠️ **SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.** It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and `songCompose.{bpm,key}` persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident. _(Renumbered from a second `AC-SONG-11` on 2026-08-19; the history-entry criterion above keeps the plain id.)_
 - **AC-SONG-12** — WHEN Recreate is invoked with a balance covering one generation (`songRecreateCost` — 6 vocal / 12 instrumental), THE SYSTEM SHALL charge that amount and regenerate while keeping the prior song in History; otherwise it SHALL open the buy-credits IAP (SONG-03). _(repriced 2026-08-12; was a flat 50)_
 - **AC-SONG-13** — WHEN AI Enhance is used, THE SYSTEM SHALL charge **nothing, ever** (SONG-04). _(Corrected 2026-08-19. The old "free first, then 1 credit" rule was removed on 2026-08-12 — §1 and §3 of this same file already said so, and `enhanceCost`/`consumeEnhance` are gone from `useCredits`. This AC was the last place the withdrawn rule survived.)_
-- **AC-SONG-14** — WHEN **Enhance** is activated on the **Custom** tab, THE SYSTEM SHALL open a chooser offering **Refine Idea** (`kind: "song"`) and **Refine Lyrics** (`kind: "lyrics"`), and SHALL call `enhancePrompt` only after one is picked. WHEN it is activated on **Simple**, THE SYSTEM SHALL call `enhancePrompt` with `kind: "song"` directly, with no chooser. _(new 2026-08-25 — the behaviour existed in code but the menu was unreachable on the migrated skin; see §3.)_
+- **AC-SONG-14** — WHEN **Enhance** is activated on the **Custom** tab WHILE Instrumental is **OFF**, THE SYSTEM SHALL open a chooser offering **Refine Idea** (`kind: "song"`) and **Refine Lyrics** (`kind: "lyrics"`), and SHALL call `enhancePrompt` only after one is picked. WHILE Instrumental is **ON**, THE SYSTEM SHALL call `enhancePrompt` with `kind: "song"` **directly, with no chooser** — lyrics are not supported in that mode, so there is nothing to choose between. WHEN it is activated on **Simple**, THE SYSTEM SHALL likewise call `kind: "song"` directly. _(new 2026-08-25; the Instrumental branch added 2026-08-26.)_
 - **AC-SONG-07** — WHEN **Use in Music Video** is tapped, THE SYSTEM SHALL pre-load the song (incl. lyrics) into MV compose and navigate to `/mv/room`.
 - **AC-SONG-08** — IF the song job fails, THEN THE SYSTEM SHALL show the shared error state with Back + Retry.
 - **AC-SONG-09** — WHEN a song job starts, THE SYSTEM SHALL charge `songCost(instrumental)` (6 vocal / 12 instrumental) immediately and refund it if the job fails. _(Corrected 2026-08-19 — this previously said the balance must NOT change, which is the opposite of `SongFlowProvider.tsx:62-67` and of the same rule for MV in `AC-MV-19`. It was the song-side twin of the withdrawn `AC-MV-15`.)_

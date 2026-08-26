@@ -3674,7 +3674,13 @@ test("A23: `sp-synth-wave`'s no-lyrics panel shows the empty-state, not a blank 
   await expect(page.locator(".song-result__side-panel > *")).toHaveCount(2);
 });
 
-// ── /song/create Custom tab + Create MV description (product owner, 2026-08-25) ──
+// ── /song/create Custom tab: Enhance and Instrumental (product owner, 2026-08-26) ──
+//
+// One pill, two behaviours, and Instrumental selects between them (AC-SONG-14):
+// OFF the box may hold a lyric sheet or a brief, so Enhance asks first; ON
+// lyrics are unsupported, so it runs Refine Idea on the first tap. The toggle
+// itself never edits the text (AC-SONG-02) — a rule that cleared the box on
+// toggle-on stood for one day and was withdrawn.
 
 test("Custom Enhance opens the two-mode menu, and is not a dead button", async ({ page }) => {
   // It WAS a dead button. `EnhanceButton`'s `bem` branch returned the button
@@ -3695,12 +3701,62 @@ test("Custom Enhance opens the two-mode menu, and is not a dead button", async (
 
   await enhance.click();
   await expect(enhance).toHaveAttribute("aria-expanded", "true");
-  await expect(page.getByText("What would you like to enhance?")).toBeVisible();
-  await expect(page.getByRole("menuitem", { name: /Refine Idea/ })).toBeVisible();
-  await expect(page.getByRole("menuitem", { name: /Refine Lyrics/ })).toBeVisible();
+  const dialog = page.getByRole("dialog", { name: "What would you like to enhance?" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("Refine Idea")).toBeVisible();
+  await expect(dialog.getByText("Refine Lyrics")).toBeVisible();
+
+  // The gradient tiles are the design's whole point, and a mask glyph with no
+  // background to clip is the repo's recurring invisible-icon bug — so assert
+  // both tiles actually paint (2026-08-26, app prototype's Enhance sheet).
+  await expect(dialog.locator(".enhance-dialog__opt-ico--idea")).toBeVisible();
+  await expect(dialog.locator(".enhance-dialog__opt-ico--lyrics")).toBeVisible();
+  for (const g of await dialog.locator(".enhance-dialog__opt-glyph").all()) {
+    const bg = await g.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg).not.toBe("rgba(0, 0, 0, 0)");
+    const box = await g.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThan(0);
+  }
+
+  // Picking a direction closes the chooser and rewrites the field.
+  await dialog.getByText("Refine Idea").click();
+  await expect(dialog).toBeHidden();
+  await expect.poll(async () => box.inputValue(), { timeout: 15000 }).not.toBe(
+    "a hopeful song about leaving home",
+  );
 });
 
-test("Instrumental swaps the lyric draft instead of carrying it across", async ({ page }) => {
+test("Under Instrumental, Enhance runs Refine Idea directly with no chooser", async ({ page }) => {
+  // AC-SONG-14's second branch. `SongCompose` withholds `directions` while
+  // Instrumental is ON, and that is what turns the chooser off — so this asserts
+  // BOTH that no menu appears and that the field is still rewritten. Asserting
+  // only the absence would also pass on a button that did nothing at all, which
+  // is precisely the defect the test above exists for.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.getByText("Custom", { exact: true }).first().click();
+
+  const box = page.locator(".song-create__textarea").first();
+  const original = "warm analogue synths at dusk";
+  await box.fill(original);
+  await page.getByRole("switch", { name: "Instrumental" }).first().click();
+
+  const enhance = page.locator(".song-create__enhance-btn").first();
+  await expect(enhance).toBeVisible();
+  // No `directions` ⇒ no popup semantics at all, not merely a closed dialog.
+  await expect(enhance).not.toHaveAttribute("aria-haspopup", "dialog");
+
+  await enhance.click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText("What would you like to enhance?")).toHaveCount(0);
+
+  // …and it really ran: the mock awaits ~900ms, then replaces the text.
+  await expect(enhance).toBeDisabled();
+  await expect.poll(async () => box.inputValue(), { timeout: 15000 }).not.toBe(original);
+});
+
+test("Toggling Instrumental never edits the box; only the Lyrics fill hides", async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/song/create");
@@ -3710,39 +3766,27 @@ test("Instrumental swaps the lyric draft instead of carrying it across", async (
   const original = "Verse one, the city lights are low";
   await box.fill(original);
 
-  // ON: cleared, and the instrumental placeholder is what the user now sees.
+  const lyricsFill = page.getByRole("button", { name: "Lyrics", exact: true });
+  const ideaFill = page.getByRole("button", { name: "Idea", exact: true });
+  await expect(lyricsFill).toBeVisible();
+
+  // ON: text untouched; Lyrics gone; Idea and Enhance both stay.
   await page.getByRole("switch", { name: "Instrumental" }).first().click();
-  await expect(box).toHaveValue("");
+  await expect(box).toHaveValue(original);
+  await expect(lyricsFill).toHaveCount(0);
+  await expect(ideaFill).toBeVisible();
+  await expect(page.locator(".song-create__enhance-btn")).toBeVisible();
+
+  // The placeholder still swaps — it is simply not visible behind text.
   await expect(box).toHaveAttribute("placeholder", /No lyrics needed - AI will create/);
   await expect(box).toHaveAttribute("placeholder", /Describe the mood or vibe/);
 
-  // A brief written in instrumental mode is its own draft…
-  await box.fill("warm analogue synths at dusk");
-
-  // OFF: the original lyrics come back, not the brief.
+  // OFF: still untouched, and Lyrics comes back.
   await page.getByRole("switch", { name: "Instrumental" }).first().click();
   await expect(box).toHaveValue(original);
-
-  // …and ON again restores the brief rather than losing it.
-  await page.getByRole("switch", { name: "Instrumental" }).first().click();
-  await expect(box).toHaveValue("warm analogue synths at dusk");
+  await expect(lyricsFill).toBeVisible();
 });
 
-test("Create MV's description box has no Enhance control", async ({ page }) => {
-  // Removed 2026-08-25: the engine has no refine mode for an MV description.
-  // A deviation FROM DP, so this asserts the absence — a future drop restores
-  // the control and the removal has to be re-applied.
-  await login(page);
-  await page.setViewportSize({ width: 1440, height: 950 });
-  await page.goto("/mv/room");
-  await page
-    .getByPlaceholder("Describe your video to help AI create a more compelling story.")
-    .fill("A neon-lit night drive through the city.");
-
-  await expect(page.locator(".mv-create__enhance-btn")).toHaveCount(0);
-  // The rest of the footer is untouched, so this cannot pass on a broken page.
-  await expect(page.locator(".mv-create__char-count")).toBeVisible();
-});
 
 test("Custom's box is labelled LYRICS / IDEA, matching what it accepts", async ({ page }) => {
   // It read just "LYRICS" until 2026-08-25, which under-described a box that

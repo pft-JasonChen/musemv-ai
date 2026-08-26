@@ -1635,6 +1635,14 @@ History alone.</p>
 <li>⚠️ <strong>UI pending designer polish.</strong> The control is DP's <code>.song-create__idea-btn</code> verbatim<br>
     (lightbulb mask + label, the pill the Lyrics button already used). The product owner asked for a<br>
     working button first and for the designer to adjust it later.</li>
+<li><strong>RESOLVED 2026-08-25: build-in, not MSR cloud config.</strong> A candidate MSR (cloud-config) JSON<br>
+    for these two pools — same shape as the sample handed to RD, i18n block for 9 target-market<br>
+    locales (<code>en de es hi id ja ko pt-BR zh-TW</code>) with only <code>en</code> filled — was drafted and given to<br>
+    RD to weigh against keeping the content in <code>src/lib/mv/songIdeas.ts</code>. <strong>RD decided build-in.</strong><br>
+    The draft is archived at <code>docs/archive/song-idea-lyrics-msr.json</code> for the record, not as a<br>
+    spec to implement against. <code>src/lib/mv/songIdeas.ts</code> stays the one source of truth; a future<br>
+    localization pass (if any) translates the two exported arrays in place rather than adding a<br>
+    cloud-config layer.</li>
 <li>Other compose helpers:<br>
 <strong>Enhance</strong> (<code>enhancePrompt</code>; Custom lyrics offers Refine Idea vs Refine Lyrics; <strong>FREE — no charge<br>
   at all</strong> since 2026-08-12. <code>enhanceCost</code> / <code>consumeEnhance</code> were removed from <code>useCredits</code> and the<br>

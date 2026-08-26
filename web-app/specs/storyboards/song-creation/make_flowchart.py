@@ -20,8 +20,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v1'
-DATE = '2026-08-24'
+VERSION = 'v2'
+DATE = '2026-08-25'
 
 f = Flow('AI Song Creation', 'YouCam Muse Web — desktop 1440',
           version=VERSION, date=DATE, width=1100)
@@ -35,12 +35,12 @@ entry = f.node(S, 100, 'Sidebar "AI Song"', kind='entry')
 mode = f.decision(CX, 210, 'Compose mode?')
 f.edge(entry, mode)
 
-simple = f.node(S - 220, 300, 'Compose — Simple', 'Idea fill · P1-S1, P1-S2')
-custom = f.node(S + 220, 300, 'Compose — Custom', 'Lyrics fill · P2-S1, P2-S2')
+simple = f.node(S - 220, 300, 'Compose — Simple', 'Idea, Enhance, char cap · P1-S1..S4')
+custom = f.node(S + 220, 300, 'Compose — Custom', 'Lyrics, chips, Instrumental, Enhance · P2-S1..S8')
 f.edge(mode, simple, 'Simple')
 f.edge(mode, custom, 'Custom')
 
-create = f.node(S, 410, 'Tap Create Song', 'Charges generation cost · P1-S3, P2-S3')
+create = f.node(S, 410, 'Tap Create Song', 'Charges generation cost · P1-S5, P2-S9')
 f.edge(simple, create)
 f.edge(custom, create)
 
@@ -57,16 +57,19 @@ f.elbow(create, low_balance, 'insufficient credits', kind='deferred', out='right
 # left of x=240 on this row.
 f.node(30, 300, 'Side rail', 'Trending Songs, or My Creations · P6-S1', kind='aside')
 
-creating = f.node(S, 500, '/song/creating', 'Progress ring + estimate · P1-S4, P2-S4')
+creating = f.node(S, 500, '/song/creating', 'Progress ring + estimate · P1-S6, P2-S10')
 f.edge(create, creating)
 
 outcome = f.decision(CX, 610, 'Job outcome', 'mock timing')
 f.edge(creating, outcome)
 
-result = f.node(S, 700, '/song/result', 'Player; Lyrics panel on Custom only · P1-S5, P2-S5', kind='success')
+result = f.node(S, 700, '/song/result', 'Player; Lyrics panel on Custom only · P1-S7, P2-S11', kind='success')
 f.edge(outcome, result, 'done')
 
-history = f.node(S, 800, '/history', 'New row, Done pill · P1-S6, P2-S6', kind='success')
+result_controls = f.node(S + 340, 700, 'Result screen controls', 'Like, Share, Lyrics sheet, Publish, Recreate, from History, Use in MV · P7-S1..S7', kind='aside')
+f.elbow(result, result_controls, 'once already on the result screen', kind='deferred', out='right', into='left', gap=90)
+
+history = f.node(S, 800, '/history', 'New row, Done pill · P1-S8, P2-S12', kind='success')
 f.edge(result, history)
 
 failed = f.node(S - 320, 700, 'Generation Failed', 'Retry / Back · P3-E3', kind='error')
