@@ -70,7 +70,10 @@ Like / publish call `requireLogin` at the action), synced to App F22 — `AuthGu
   PROF-06); picking a provider shows a 1.8s success state ("Signed in successfully! Welcome back,
   {firstName} · via {provider}") then calls `onSignedIn` → `authStore.set(true)`. Dismissal is
   **blocked during** the success animation (`onClose` swallowed).
-- **Sign-in trigger points (action-level, GL-02):** header **Sign In** (`openSignIn`, area 01);
+- **Sign-in trigger points (action-level, GL-02):** header **Sign In** (`openSignIn`, area 01 — ⚠️
+  corrected there 2026-08-27: the live control reads **"Login"**, on each route's own
+  `RoomNavbar`/`DetailNavbar`/`Navbar`, not a single "top bar"; `HeaderActions`/`TopBar` is
+  unreachable dead code);
   **gated nav** click while logged out (`Sidebar` → `requireLogin(→push)`, area 01); **AuthGuard** on
   the four gated routes (dismiss → Home) as a backstop; **the two create screens' own actions** —
   `/mv/room`'s **Song Library** and **Create Music Video**, `/song/create`'s **Create Song**; Home hero create CTAs / song-card create
@@ -88,7 +91,7 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 
 ### AUTH-P1 — Sign in from the header (no queued action)
 
-- **AUTH-P1-S1** Logged-out user clicks **Sign In** (top bar) → `openSignIn()` opens the modal.
+- **AUTH-P1-S1** Logged-out user clicks **Login** (each route's own navbar) → `openSignIn()` opens the modal. _(Corrected 2026-08-27: was "Sign In (top bar)" — see area 01's correction; the control text is "Login" and there is no single top bar.)_
 - **AUTH-P1-S2** Pick Apple/Google → 1.8s success animation → `authStore.set(true)`; header swaps to logged-in chrome. No navigation.
 
 ### AUTH-P2 — Gated route entry (queued action)
@@ -102,7 +105,7 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 
 ### AUTH-P4 — Sign out
 
-- **AUTH-P4-S1** **Sign Out** — from the header account menu (area 01) or from **Settings** (area 06; PROF-03 moved it off the profile screen 2026-07-23) → `signOut()`: clears `muse_auth`, resets subscription + profile to guest defaults. Settings' Sign Out routes Home; on a guarded page, `AuthGuard` re-opens the sign-in gate, dismissing it → Home (see AUTH-E3).
+- **AUTH-P4-S1** **Sign Out** — from **Settings** (area 06; PROF-03 moved it off the profile screen 2026-07-23) → `signOut()`: clears `muse_auth`, resets subscription + profile to guest defaults. Settings' Sign Out routes Home; on a guarded page, `AuthGuard` re-opens the sign-in gate, dismissing it → Home (see AUTH-E3). _(Corrected 2026-08-27: "from the header account menu" removed — area 01's `AccountMenu` is unreachable dead code today, confirmed live; `SettingsView.tsx` is the only other `signOut()` call site in `src/`, so Settings is currently the sole entry point.)_
 
 ---
 
@@ -132,7 +135,7 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 
 ## 7. Per-path QA checklist
 
-- [ ] **AUTH-P1**: header Sign In → modal → provider pick → 1.8s success → logged-in chrome (AC-01/02).
+- [ ] **AUTH-P1**: Login button (each route's own navbar) → modal → provider pick → 1.8s success → logged-in chrome (AC-01/02).
 - [ ] **AUTH-P2**: open `/mv/room` logged out → no page content + modal; sign in → page renders; dismiss → Home (AC-01/03).
 - [ ] **AUTH-P3**: gated nav click → modal; sign in → target; dismiss → stay (AC-03).
 - [ ] **AUTH-P4/E1**: sign out resets to guest; reload keeps logged-in only, subscription lost (AC-05/06).

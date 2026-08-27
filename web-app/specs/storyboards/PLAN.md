@@ -39,7 +39,7 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | ~4 | ~18 | ⬜ postponed — shares `areas/02` with S2 |
 | **S4** | `history` | 6 | 05 | `/history` | 6 | 25 | ✅ v1, 2026-08-27 |
 | **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | ~4 | ~16 | ⬜ |
-| **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / top bar / `SignInModal` | 7 | ~28 | ⬜ scoped, ready to dispatch |
+| **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / route navbars / `SignInModal` | 7 | 24 | ✅ v1, 2026-08-27 |
 | **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, account menu, edit-profile | ~5 | ~20 | ⬜ |
 | **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | ~6 | ~30 | ⬜ |
 | **S9** | `share` | 4 | 10 | `/share`, `ShareDialog` | ~4 | ~12 | ⬜ |
@@ -151,6 +151,27 @@ the desktop shell, it is a **different component tree** (`MobileTabBar` / `Mobil
 1440-only shell spec would document half its own subject, and `e2e/a11y.spec.ts` is desktop-only
 too, so nothing else covers it. `areas/01` §4's own capture note already asked for both widths.
 **D8 stands unchanged for the other eight specs.**
+
+**Built 2026-08-27 — 24 captures (19 desktop / 5 phone), and TWO of the seven paths were reshaped
+by what the capture found, not dropped.** `TopBar` → `HeaderActions` → `AccountMenu` is a chain
+of **unreachable dead code**: `AppShell` renders `TopBar` only for a route that is neither in
+`OWN_CHROME` nor `/`, and `OWN_CHROME`'s prefix list now covers every non-home route the app
+serves (`/profile/credits` included, via prefix match), while `/` takes the marketing `Navbar` and
+`/share*` renders bare. So there is no account menu to walk: **P5 became "Account entry points"**
+(the credit pill, the Sidebar profile footer, `MobileHeader`'s account icon, plus one
+negative-result DOM sweep asserting no `[aria-label="Account menu"]` exists on five routes), and
+**P6 has one sign-out entry point, not two** — only `Settings`. Two more copy/mount facts came
+with it: the live logged-out control reads **"Login"**, not "Sign In" (that string lives only in
+the dead `HeaderActions`), and `MobileTabBar`/`MobileHeader` are **Layer-1 only** — Home and
+History, not every route under 768px. Areas 01 and 09 are corrected in place under **D11**
+(§1, §2's table, §3, SHELL-P2/P3/P4, AC-SHELL-01/03/04/05/06, AUTH-P1-S1, AUTH-P4-S1); the
+"wire it back or delete it" call is `open_questions` **Q-01** for the product owner, and the
+three files were left untouched — a build session has no `src/` authority.
+
+**Phone captures are scoped to where the component tree actually differs** (Home, History, the
+gated History tap) rather than duplicated across all seven paths: the Layer-1 finding means
+`/mv/room`, `/settings` and `/share` have no distinct phone chrome to photograph. That is the D8
+exception honoured, not narrowed — but it is why the count is 24 and not ~28.
 
 ### Why this order
 
