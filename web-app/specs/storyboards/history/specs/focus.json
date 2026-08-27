@@ -1,0 +1,170 @@
+{
+  "02_mv_filter.png": [
+    {
+      "box": [
+        25.3,
+        11.5,
+        8.3,
+        4.9
+      ],
+      "type": "action",
+      "label": "Music Videos"
+    }
+  ],
+  "03_songs_filter.png": [
+    {
+      "box": [
+        34.0,
+        11.5,
+        5.1,
+        4.9
+      ],
+      "type": "action",
+      "label": "Songs"
+    }
+  ],
+  "04_liked_filter.png": [
+    {
+      "box": [
+        39.5,
+        11.5,
+        4.7,
+        4.9
+      ],
+      "type": "action",
+      "label": "Liked"
+    }
+  ],
+  "11_menu_mv_done.png": [
+    {
+      "box": [
+        35.7,
+        42.9,
+        2.0,
+        3.8
+      ],
+      "type": "action",
+      "label": "Options (\u22ef)"
+    }
+  ],
+  "12_menu_song_done.png": [
+    {
+      "box": [
+        73.1,
+        42.9,
+        2.0,
+        3.8
+      ],
+      "type": "action",
+      "label": "Options (\u22ef)"
+    }
+  ],
+  "13_menu_storyboard.png": [
+    {
+      "box": [
+        91.7,
+        43.0,
+        2.0,
+        3.8
+      ],
+      "type": "action",
+      "label": "Options (\u22ef)"
+    }
+  ],
+  "14_menu_community.png": [
+    {
+      "box": [
+        35.7,
+        45.9,
+        2.0,
+        4.0
+      ],
+      "type": "action",
+      "label": "Options (\u22ef)"
+    }
+  ],
+  "15_menu_failed.png": [
+    {
+      "box": [
+        91.7,
+        45.9,
+        2.0,
+        4.0
+      ],
+      "type": "action",
+      "label": "Options (\u22ef)"
+    }
+  ],
+  "19_publish_mv_confirm.png": [
+    {
+      "box": [
+        49.9,
+        49.4,
+        10.8,
+        6.4
+      ],
+      "type": "action",
+      "label": "Confirm"
+    }
+  ],
+  "21_menu_mv_reviewing.png": [
+    {
+      "box": [
+        23.4,
+        65.8,
+        13.7,
+        7.5
+      ],
+      "type": "info",
+      "label": "Publish (Review)"
+    }
+  ],
+  "22_publish_song_toggle.png": [
+    {
+      "box": [
+        70.4,
+        72.0,
+        3.1,
+        2.9
+      ],
+      "type": "info",
+      "label": "Publish"
+    }
+  ],
+  "23_delete_confirm.png": [
+    {
+      "box": [
+        49.8,
+        55.8,
+        11.8,
+        6.6
+      ],
+      "type": "action",
+      "label": "Delete"
+    }
+  ],
+  "25_menu_editmv_focus.png": [
+    {
+      "box": [
+        23.4,
+        48.4,
+        13.7,
+        5.6
+      ],
+      "type": "action",
+      "label": "Edit MV"
+    }
+  ],
+  "26_menu_createmv_focus.png": [
+    {
+      "box": [
+        60.7,
+        48.4,
+        13.7,
+        5.6
+      ],
+      "type": "action",
+      "label": "Create MV"
+    }
+  ]
+}

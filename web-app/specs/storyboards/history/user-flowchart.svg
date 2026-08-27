@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1140" height="1160" viewBox="0 0 1140 1160" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<title>History (My Creations) &#8212; User Flowchart</title>
+<defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
+<rect width="1140" height="1160" fill="#ffffff"/>
+<text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">History (My Creations) &#8212; User Flowchart</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v1, 2026-08-27</text>
+<text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; green = success / resolved</text>
+
+<g transform="translate(0,80)">
+<text x="40" y="65" font-size="12" fill="#5a6b78">Filter chips (P1) and the ⋯ menu&#8217;s five row-type variants (P3) are each one decision here &#8212; see the step cards for each variant&#8217;s exact content.</text>
+<rect x="480" y="100" width="180" height="40" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="570" y="125" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Sidebar &quot;History&quot;</text>
+<rect x="480" y="190" width="180" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="570" y="210" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/history &#8212; All filter</text>
+<text x="570" y="228" font-size="12" fill="#5a6b78" text-anchor="middle">Live jobs + seed, community</text>
+<text x="570" y="243" font-size="12" fill="#5a6b78" text-anchor="middle">excluded &#183; P1-S1</text>
+<line x1="570" y1="140" x2="570" y2="190" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<polygon points="570,268 662.02,300 570,332 477.98,300" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="570" y="305" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Filter chip?</text>
+<line x1="570" y1="255" x2="570" y2="268" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="220" y="390" width="180" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="310" y="410" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Re-filtered rows</text>
+<text x="310" y="428" font-size="12" fill="#5a6b78" text-anchor="middle">Music Videos / Songs / Liked</text>
+<text x="310" y="443" font-size="12" fill="#5a6b78" text-anchor="middle">&#183; P1-S2..S4</text>
+<rect x="740" y="390" width="180" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="830" y="410" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Empty-state card</text>
+<text x="830" y="428" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;Nothing here yet…&quot; &#183; P1-S5</text>
+<line x1="570" y1="332" x2="310" y2="390" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="436.952" y="347.336" font-size="12" fill="#5a6b78" text-anchor="middle">MV / Songs / Liked</text>
+<line x1="570" y1="332" x2="830" y2="390" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="703.048" y="347.336" font-size="12" fill="#5a6b78" text-anchor="middle">nothing matches</text>
+<polygon points="570,468 663.578,500 570,532 476.422,500" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="570" y="505" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Tap a row?</text>
+<line x1="570" y1="255" x2="570" y2="468" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="30" y="500" width="180" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="120" y="520" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Processing row</text>
+<text x="120" y="538" font-size="12" fill="#5a6b78" text-anchor="middle">No menu, no navigation &#183;</text>
+<text x="120" y="553" font-size="12" fill="#5a6b78" text-anchor="middle">P2-S5</text>
+<path d="M476.422 500 L416.422 500 L416.422 532.5 L210 532.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="120" y="492" font-size="11" fill="#5a6b78" text-anchor="middle">processing</text>
+<rect x="810" y="500" width="180" height="95" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="900" y="520" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Row destinations</text>
+<text x="900" y="538" font-size="12" fill="#5a6b78" text-anchor="middle">mv result / song result /</text>
+<text x="900" y="553" font-size="12" fill="#5a6b78" text-anchor="middle">storyboard editor /</text>
+<text x="900" y="568" font-size="12" fill="#5a6b78" text-anchor="middle">community player &#183;</text>
+<text x="900" y="583" font-size="12" fill="#5a6b78" text-anchor="middle">P2-S1..S4 (areas 02&#8211;04)</text>
+<path d="M663.578 500 L736.789 500 L736.789 547.5 L810 547.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="900" y="492" font-size="11" fill="#5a6b78" text-anchor="middle">done mv / song / storyboard / community</text>
+<rect x="480" y="610" width="180" height="97" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="570" y="630" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">⋯ menu &#8212; 5 row-type</text>
+<text x="570" y="647" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">variants</text>
+<text x="570" y="665" font-size="12" fill="#5a6b78" text-anchor="middle">MV / song / storyboard /</text>
+<text x="570" y="680" font-size="12" fill="#5a6b78" text-anchor="middle">community / failed &#183;</text>
+<text x="570" y="695" font-size="12" fill="#5a6b78" text-anchor="middle">P3-S1..S5</text>
+<line x1="570" y1="255" x2="570" y2="610" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="30" y="610" width="180" height="67" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="120" y="630" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Like/Unlike &#183; Share &#183;</text>
+<text x="120" y="647" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Download</text>
+<text x="120" y="665" font-size="12" fill="#5a6b78" text-anchor="middle">P3-S6..S8</text>
+<path d="M480 658.5 L420 658.5 L420 643.5 L210 643.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="120" y="602" font-size="11" fill="#5a6b78" text-anchor="middle">quick actions</text>
+<polygon points="570,688 680.59,720 570,752 459.41,720" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="570" y="725" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Publish, kind?</text>
+<line x1="570" y1="707" x2="570" y2="688" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="220" y="810" width="180" height="67" rx="8" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="310" y="830" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&quot;Ready to Go Public?&quot;</text>
+<text x="310" y="847" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">confirm</text>
+<text x="310" y="865" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S1</text>
+<rect x="220" y="900" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="310" y="920" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">reviewing + published</text>
+<text x="310" y="938" font-size="12" fill="#5a6b78" text-anchor="middle">toast: Submitted for review &#183;</text>
+<text x="310" y="953" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S2..S3</text>
+<line x1="570" y1="752" x2="310" y2="810" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="436.952" y="767.336" font-size="12" fill="#5a6b78" text-anchor="middle">MV</text>
+<line x1="310" y1="877" x2="310" y2="900" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="740" y="810" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="830" y="830" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Immediate toggle</text>
+<text x="830" y="848" font-size="12" fill="#5a6b78" text-anchor="middle">toast: Published success &#183;</text>
+<text x="830" y="863" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S4</text>
+<line x1="570" y1="752" x2="830" y2="810" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="703.048" y="767.336" font-size="12" fill="#5a6b78" text-anchor="middle">song</text>
+<rect x="480" y="810" width="180" height="50" rx="8" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="570" y="830" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Delete confirm</text>
+<text x="570" y="848" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S1</text>
+<line x1="570" y1="707" x2="570" y2="810" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="480" y="900" width="180" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="570" y="920" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Row removed (local)</text>
+<text x="570" y="938" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S2</text>
+<line x1="570" y1="860" x2="570" y2="900" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="810" y="610" width="180" height="80" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="900" y="630" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Edit MV / Create MV</text>
+<text x="900" y="648" font-size="12" fill="#5a6b78" text-anchor="middle">/mv/edit or /mv/room or</text>
+<text x="900" y="663" font-size="12" fill="#5a6b78" text-anchor="middle">/mv/storyboard &#183; P6-S1..S2</text>
+<text x="900" y="678" font-size="12" fill="#5a6b78" text-anchor="middle">(area 02, S3)</text>
+<path d="M660 658.5 L735 658.5 L735 650 L810 650" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="900" y="602" font-size="11" fill="#5a6b78" text-anchor="middle">CTA row</text>
+<line x1="40" y1="976" x2="1100" y2="976" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="996" x2="74" y2="996" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1000" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="1016" x2="74" y2="1016" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="1020" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+</g>
+</svg>

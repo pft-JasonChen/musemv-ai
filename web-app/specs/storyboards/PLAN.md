@@ -37,7 +37,7 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | **S1** | `song-creation` | 3 | 03 (+05 glance) | `/song/create` `/song/creating` `/song/result` | 7 | 33 | ✅ v2, 2026-08-26 |
 | **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8 | 43 | ✅ v1, 2026-08-27 |
 | **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | ~4 | ~18 | ⬜ postponed — shares `areas/02` with S2 |
-| **S4** | `history` | 6 | 05 | `/history` | ~5 | ~20 | ⬜ was building in another session; that session has ended |
+| **S4** | `history` | 6 | 05 | `/history` | 6 | 25 | ✅ v1, 2026-08-27 |
 | **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | ~4 | ~16 | ⬜ |
 | **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / top bar / `SignInModal` | 7 | ~28 | ⬜ scoped, ready to dispatch |
 | **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, account menu, edit-profile | ~5 | ~20 | ⬜ |
@@ -92,7 +92,7 @@ of one screen.
 
 | Path | Covers |
 |---|---|
-| **P1** | Browse & filter: All / Music Videos / Songs / Liked, plus the empty state (reached via a live delete-to-empty on Liked, the cheapest tab to empty with 8 seed rows). |
+| **P1** | Browse & filter: All / Music Videos / Songs / Liked, plus the empty state (reached via **Unlike**, not delete — corrected during the build: community rows expose no Delete at all, so Unlike is the only way to empty Liked). |
 | **P2** | Open a creation: done MV → `/mv/result?id=`, done song → `/song/result?id=`, storyboard → `/mv/storyboard?id=`, community → `/song/play?id=`, processing → inert (not clickable, no menu). |
 | **P3** | The `⋯` menu, both its actions AND its five row-type variants — this is the highest-value coverage in the spec, the one place a content change could regress silently with no test catching it. One capture per variant (MV / song / storyboard / community / failed) showing the menu open, per the area spec's own "Net per type" table, plus Like/Unlike, Share (`ShareDialog`), and Download (toast, fixture media). |
 | **P4** | Publish: MV → live "Ready to Go Public?" confirm → "Submitted for review" toast → the menu now shows **Publish (Review)** and Edit MV becomes **"Unpublish to edit"** (MV-13). Song → immediate toggle, no confirm. |
