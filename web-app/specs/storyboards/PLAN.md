@@ -35,11 +35,11 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | # | Slug | Flow | Area source | Routes / surfaces | Paths | Shots | Status |
 |---|---|---|---|---|---|---|---|
 | **S1** | `song-creation` | 3 | 03 (+05 glance) | `/song/create` `/song/creating` `/song/result` | 7 | 33 | ✅ v2, 2026-08-26 |
-| **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | ~8 | ~45 | ▶ re-running — first run's 44 captures voided by the rebase |
+| **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8 | 43 | ✅ v1, 2026-08-27 |
 | **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | ~4 | ~18 | ⬜ postponed — shares `areas/02` with S2 |
-| **S4** | `history` | 6 | 05 | `/history` | ~5 | ~20 | ▶ building (session `web-app-bf`) |
+| **S4** | `history` | 6 | 05 | `/history` | ~5 | ~20 | ⬜ was building in another session; that session has ended |
 | **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | ~4 | ~16 | ⬜ |
-| **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / top bar / `SignInModal` | 7 | ~28 | ⬜ scoped, dispatch held (account session limit, 2026-08-27) |
+| **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / top bar / `SignInModal` | 7 | ~28 | ⬜ scoped, ready to dispatch |
 | **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, account menu, edit-profile | ~5 | ~20 | ⬜ |
 | **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | ~6 | ~30 | ⬜ |
 | **S9** | `share` | 4 | 10 | `/share`, `ShareDialog` | ~4 | ~12 | ⬜ |

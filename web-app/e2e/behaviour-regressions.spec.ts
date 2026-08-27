@@ -116,7 +116,6 @@ function trimConfirm(page: Page) {
     .getByRole("button", { name: "Confirm", exact: true });
 }
 
-
 /** A locator's box once it has stopped moving — see the `.song-bar` note below. */
 async function settledBox(loc: ReturnType<Page["locator"]>) {
   let prev = await loc.boundingBox();
@@ -130,6 +129,25 @@ async function settledBox(loc: ReturnType<Page["locator"]>) {
   }
   expect(prev, "the bar never settled").not.toBeNull();
   return prev!;
+}
+
+/**
+ * `.history-card` count once it has stopped changing between reads — the
+ * first navigation to any route under `next dev` can take a moment to
+ * compile, so an immediate `.count()` right after `goto`/a client nav can
+ * undercount a page that is still rendering. Mirrors `settledBox`'s
+ * poll-until-stable shape above.
+ */
+async function stableHistoryCardCount(page: Page): Promise<number> {
+  const loc = page.locator(".history-card");
+  let prev = -1;
+  for (let i = 0; i < 30; i++) {
+    const cur = await loc.count();
+    if (cur === prev) return cur;
+    prev = cur;
+    await page.waitForTimeout(300);
+  }
+  return prev;
 }
 
 /** Kick off a storyboard-first generation from a composed MV room. */
@@ -208,7 +226,8 @@ test("G5-d#1 refunds the charge when the job fails", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
   await expect
     .poll(() => balance(page), {
-      message: 'a failed job must refund the full charge so the "credits were not charged" copy stays true',
+      message:
+        'a failed job must refund the full charge so the "credits were not charged" copy stays true',
     })
     .toBe(before);
 });
@@ -251,9 +270,10 @@ test("G5-d#2 insufficient balance routes to IAP instead of generating", async ({
   const numbers = prices.map((t) => Number(/(\d+)/.exec(t.replace(/[\s,]/g, ""))?.[1] ?? 0));
   expect(numbers.length, "both mode cards must advertise a price").toBe(2);
   for (const n of numbers) {
-    expect(n, `precondition: ${n} must be unaffordable on a ${before}-credit account`).toBeGreaterThan(
-      before,
-    );
+    expect(
+      n,
+      `precondition: ${n} must be unaffordable on a ${before}-credit account`,
+    ).toBeGreaterThan(before);
   }
 
   await page.getByText("Create MV Directly").click();
@@ -582,7 +602,10 @@ test("G5-d#8 publish: MV publish confirms, then enters reviewing", async ({ page
   // match, so this test had been red independently of anything the credit work
   // touched — found while clearing the pre-existing failures on 2026-08-19.
   await page.getByRole("button", { name: "Options" }).first().click();
-  await page.getByRole("switch", { name: /^Publish$/ }).first().click();
+  await page
+    .getByRole("switch", { name: /^Publish$/ })
+    .first()
+    .click();
 
   // HIST-04: a confirm dialog, NOT an instant toggle (DP made this instant).
   const confirm = page.getByRole("dialog", { name: "Ready to Go Public?" });
@@ -2827,9 +2850,10 @@ test("3k / GL-01: Recreate routes to IAP when the balance cannot cover it", asyn
   // Whatever the button says is what must happen — refused below it, charged
   // exactly at or above it. Never less than the flat `recreate` component.
   const scenePrice = await shownCost(page, ".mv-edit__recreate-scene .button__credits-count");
-  expect(scenePrice, "a shot recreate always includes the flat `recreate` 8").toBeGreaterThanOrEqual(
-    COST_RECREATE,
-  );
+  expect(
+    scenePrice,
+    "a shot recreate always includes the flat `recreate` 8",
+  ).toBeGreaterThanOrEqual(COST_RECREATE);
 
   if (before < scenePrice) {
     await recreate.click();
@@ -3721,9 +3745,9 @@ test("Custom Enhance opens the two-mode menu, and is not a dead button", async (
   // Picking a direction closes the chooser and rewrites the field.
   await dialog.getByText("Refine Idea").click();
   await expect(dialog).toBeHidden();
-  await expect.poll(async () => box.inputValue(), { timeout: 15000 }).not.toBe(
-    "a hopeful song about leaving home",
-  );
+  await expect
+    .poll(async () => box.inputValue(), { timeout: 15000 })
+    .not.toBe("a hopeful song about leaving home");
 });
 
 test("Under Instrumental, Enhance runs Refine Idea directly with no chooser", async ({ page }) => {
@@ -3787,7 +3811,6 @@ test("Toggling Instrumental never edits the box; only the Lyrics fill hides", as
   await expect(lyricsFill).toBeVisible();
 });
 
-
 test("Custom's box is labelled LYRICS / IDEA, matching what it accepts", async ({ page }) => {
   // It read just "LYRICS" until 2026-08-25, which under-described a box that
   // also takes a style/scene brief and has an `Idea` fill sitting inside it.
@@ -3798,11 +3821,92 @@ test("Custom's box is labelled LYRICS / IDEA, matching what it accepts", async (
   await page.goto("/song/create");
   await page.getByText("Custom", { exact: true }).first().click();
 
-  const label = page.locator(".song-create__label").filter({ hasText: /LYRICS/ }).first();
+  const label = page
+    .locator(".song-create__label")
+    .filter({ hasText: /LYRICS/ })
+    .first();
   await expect(label).toHaveText("LYRICS / IDEA");
   // Both fills live under it — and they SHARE the pill class, which is why the
   // label has to name both rather than just the one the field is called after.
   await expect(page.locator(".song-create__idea-btn")).toHaveCount(2);
   await expect(page.getByRole("button", { name: "Idea", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Lyrics", exact: true })).toBeVisible();
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// e739c4e — /mv/thinking must not double-start the storyboard job under
+// React Strict Mode (found while capturing the S2 mv-creation storyboard spec)
+// ════════════════════════════════════════════════════════════════════════════
+// `StoryboardGenerationScreen` used to call `startStoryboard()` from a bare
+// mount effect. `next dev`'s React Strict Mode deliberately invokes every
+// mount effect twice, so it fired TWO separate storyboard jobs:
+//   - `startStoryboard` charges credits (GL-01), so the account was charged
+//     twice for one storyboard.
+//   - Each job gets its own History row (`upsertGenerating` keyed by job id).
+//     The FIRST job's poll is silently cancelled the instant the second job's
+//     `track()` call replaces `MvFlowProvider`'s shared `cancelPoll.current`,
+//     with no `markFailed`/`markCompleted` on the way out — so the first row
+//     is stuck reading "Generating..." forever.
+// Fixed with a `started` useRef guard, the same pattern `GenerationView.tsx`
+// already carries for `/mv/creating` and `/song/creating` (this screen split
+// off from `GenerationView` in slice 3h and the guard did not come along).
+//
+// Mutation-tested 2026-08-27 (both directions, against a fresh `npm run build`
+// each time — `next start` reads its manifest once at boot, so testing against
+// a stale build would not have exercised the mutated source):
+//   - RED: with `started.current` removed from StoryboardGenerationScreen's
+//     mount-effect guard, this test failed on both assertions — the balance
+//     dropped by 2x the advertised script price, and History gained 2 new
+//     rows (one of them stuck "Generating...") for a single storyboard start.
+//   - GREEN: with the guard restored, both assertions pass.
+// NOTE ON WHAT THIS DOES *NOT* GUARD. This suite boots `next start -p 3100`
+// (playwright.config.ts) — the PRODUCTION build, where React elides Strict
+// Mode's double-invoked mount effect entirely. So this test cannot observe the
+// e739c4e double-start regression: it passes with or without the `started` ref.
+// Verified by mutation, 2026-08-27. What it does assert, and usefully, is the
+// production invariant — one start, one charge, one new History row.
+// The real guard for the double-start lives where the mechanism exists, in
+// React's dev build: src/components/mv/StoryboardGenerationScreen.test.tsx.
+test("AC-MV-06/19: one storyboard start charges once and adds exactly one History row", async ({
+  page,
+}) => {
+  test.slow(); // a full mock generation
+  await login(page);
+
+  // Count History's starting rows BEFORE funding/composing — a full page load
+  // (`page.goto`) resets the in-memory balance and compose state (see
+  // `fundAccount`'s own warning above), so this has to happen first, not as a
+  // client-side hop later. `HISTORY_SAMPLES` is a static seed merged in
+  // alongside the live (in-memory) rows, so this is never actually 0 — but the
+  // very first navigation to any route in `next dev` can take a moment to
+  // compile, so wait for the count to settle rather than reading it the
+  // instant `goto` resolves (an early read undercounts and every assertion
+  // below it becomes a false failure, not a sign of the bug).
+  await page.goto("/history");
+  const rowsBefore = await stableHistoryCardCount(page);
+
+  await page.locator('.sidebar__nav-item[href="/mv/room"]').click();
+  await page.waitForURL("**/mv/room");
+  await fundAccount(page);
+  await composeMv(page);
+
+  const before = await balance(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  const scriptPrice = await shownCost(page, ".mv-mode-card__tag--credit");
+  await page.getByText("Create Storyboard First").click();
+  await page.waitForURL("**/mv/storyboard");
+
+  // Exactly one charge for one storyboard, not two.
+  expect(
+    await balance(page),
+    "a Strict-Mode double mount must not double-charge the storyboard (GL-01)",
+  ).toBe(before - scriptPrice);
+
+  // Exactly one new History row, not a stuck duplicate.
+  await page.locator('.sidebar__nav-item[href="/history"]').click();
+  await page.waitForURL("**/history");
+  expect(
+    await stableHistoryCardCount(page),
+    "one storyboard start must add exactly one History row, not a stuck duplicate",
+  ).toBe(rowsBefore + 1);
 });
