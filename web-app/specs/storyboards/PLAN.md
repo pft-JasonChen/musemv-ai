@@ -35,7 +35,7 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | # | Slug | Flow | Area source | Routes / surfaces | Paths | Shots | Status |
 |---|---|---|---|---|---|---|---|
 | **S1** | `song-creation` | 3 | 03 (+05 glance) | `/song/create` `/song/creating` `/song/result` | 7 | 33 | ✅ v2, 2026-08-26 |
-| **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | ~8 | ~45 | ▶ building — 27/~42 captured |
+| **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | ~8 | ~45 | ▶ re-running — first run's 44 captures voided by the rebase |
 | **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | ~4 | ~18 | ⬜ postponed — shares `areas/02` with S2 |
 | **S4** | `history` | 6 | 05 | `/history` | ~5 | ~20 | ▶ building (session `web-app-bf`) |
 | **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | ~4 | ~16 | ⬜ |
@@ -56,13 +56,21 @@ Eight paths, ~42 captures. `/mv/edit` is **not** in it (that is S3).
 | Path | Covers |
 |---|---|
 | **P1** | Storyboard-first, end to end: compose → `ModeModal` → `/mv/thinking` → `/mv/storyboard` (visual style + scene edits, Enhance) → Generate MV → `/mv/creating` → `/mv/result` → the new `/history` row. ~12 steps. |
-| **P2** | Direct generation: Templates + Enhance to fill the brief → **Create MV Directly** → `/mv/creating` → `/mv/result`. ~6 steps. |
+| **P2** | Direct generation: **Templates** fills the brief → **Create MV Directly** → `/mv/creating` → `/mv/result`. ~6 steps. ⚠️ **Enhance is not part of this path and must not appear in it** — `origin/main`'s `3bdff87` removed Enhance from `/mv/room` for V1 (product owner, 2026-08-25). |
 | **P3** | Generation failure, **both stages**: the `[fail]` marker is captured at `createMvJob` and reused by `renderMvJob`, so storyboard-first fails at **thinking** and direct fails at **creating**; Retry re-runs the same compose and re-fails deterministically. |
 | **P4** | The six sheets and their boundaries, kept together because `MV-01` / `MV-02` / `MV-04` are three app-synced numeric rules QA tests individually: Choose Song (My / Sample), Import reject on format **and** 50 MB, Trim's ≥30s floor, FacePicker crop, Settings' Pro-gated **High** crown → `SubscribeModal`, Templates. |
 | **P5** | Guest gate (`AC-MV-01b`): the screen renders with no modal; **Song Library** and **Create Music Video** gate; **Import Audio stays ungated**. |
 | **P6** | Insufficient credits at mode select → buy-credits IAP instead of generating. |
 | **P7** | The side rail's two modes — Trending MVs vs My Creations (needs `loggedIn` **and** ≥1 completed MV). |
 | **P8** | `/mv/result` controls tour: the hand-built transport, Like/Dislike, Share, Download, Publish → "Ready to Go Public?" → pending review, the **"Unpublish to edit"** neutral state (`MV-E7`), the info panel, and the opened-from-History variant. |
+
+**Capture run 1 was voided and re-run (2026-08-27).** Its 44 screenshots were taken against the
+pre-rebase branch, whose `/mv/room` still carried an **Enhance** button that `origin/main` had
+removed for V1 on 2026-08-25 (`3bdff87`, product owner). The spec was therefore about to document a
+control that does not ship, and P2's scope named it outright. The branch was rebased onto
+`origin/main` — app code for `EnhanceButton` / `MvRoom` / `globals.css` is now main's verbatim, the
+duplicate `enhance-dialog.css` is deleted, and the whole capture set is re-shot. **Nothing about a
+screenshot's age reveals this: the old captures are sharp, complete and wrong.**
 
 Two capture notes settled at the same gate:
 
