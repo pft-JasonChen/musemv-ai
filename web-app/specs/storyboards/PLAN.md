@@ -84,6 +84,34 @@ Two capture notes settled at the same gate:
   **paused and seeked to a fixed time before the shot**, or an autoplaying frame differs every run.
   Separately, the three MV-type cards ship **no `poster`**; worth raising with the app, not a blocker.
 
+### S4 scope — agreed at its Phase 0 gate, 2026-08-27
+
+Six paths, ~26 captures, 1:1 with area 05's own `HIST-P1`..`HIST-P6` journeys — each already
+covers meaningfully different mechanics, unlike S1's folded sub-steps which were minor variations
+of one screen.
+
+| Path | Covers |
+|---|---|
+| **P1** | Browse & filter: All / Music Videos / Songs / Liked, plus the empty state (reached via a live delete-to-empty on Liked, the cheapest tab to empty with 8 seed rows). |
+| **P2** | Open a creation: done MV → `/mv/result?id=`, done song → `/song/result?id=`, storyboard → `/mv/storyboard?id=`, community → `/song/play?id=`, processing → inert (not clickable, no menu). |
+| **P3** | The `⋯` menu, both its actions AND its five row-type variants — this is the highest-value coverage in the spec, the one place a content change could regress silently with no test catching it. One capture per variant (MV / song / storyboard / community / failed) showing the menu open, per the area spec's own "Net per type" table, plus Like/Unlike, Share (`ShareDialog`), and Download (toast, fixture media). |
+| **P4** | Publish: MV → live "Ready to Go Public?" confirm → "Submitted for review" toast → the menu now shows **Publish (Review)** and Edit MV becomes **"Unpublish to edit"** (MV-13). Song → immediate toggle, no confirm. |
+| **P5** | Delete: confirm modal ("cannot be undone") → row removed; hidden for published/reviewing rows. |
+| **P6** | Edit MV / Create MV: the `⋯` menu tap only — no follow-through capture of `/mv/edit` / `/mv/storyboard` / `/mv/room`, which S2/S3 already own in full. RULES cites the destination and cross-references the owning spec. |
+
+**One gap surfaced at this gate, not before it:** there is no review-REJECTED state anywhere in
+the app — `confirmPublishMv()` sets `reviewing`+`published` together and nothing ever clears
+`reviewing`. Flagged in `areas/05-history.md` as `TBD-HIST-05` and carried into S4 as an
+`open_questions` row; **not** simulated or invented for the capture.
+
+**D8 applies unchanged.** Desktop 1440 only — S6's 375 exception is scoped to the shell chrome
+alone and does not extend to History's own layout.
+
+**Execution:** running in an isolated worktree (`.claude/worktrees/history-storyboard`, branch
+`spec/history-storyboard`, based on `spec/song-creation-storyboard`'s tip) after the shared-checkout
+collision that reverted this section once already — see S2/S6's own note above and `db938e3`.
+Own dev server on :3220 (S2 has :3000, S6 has :3210).
+
 ### S6 scope — agreed at its Phase 0 gate, 2026-08-27
 
 Seven paths, ~28 captures. Scoped ahead of S3/S4/S5 because it is the only queued spec whose source
