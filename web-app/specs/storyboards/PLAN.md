@@ -35,11 +35,11 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | # | Slug | Flow | Area source | Routes / surfaces | Paths | Shots | Status |
 |---|---|---|---|---|---|---|---|
 | **S1** | `song-creation` | 3 | 03 (+05 glance) | `/song/create` `/song/creating` `/song/result` | 7 | 33 | ✅ v2, 2026-08-26 |
-| **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | ~8 | ~45 | ▶ **next** |
-| **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | ~4 | ~18 | ⬜ |
-| **S4** | `history` | 6 | 05 | `/history` | ~5 | ~20 | ⬜ |
+| **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | ~8 | ~45 | ▶ building — 27/~42 captured |
+| **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | ~4 | ~18 | ⬜ postponed — shares `areas/02` with S2 |
+| **S4** | `history` | 6 | 05 | `/history` | ~5 | ~20 | ▶ building (session `web-app-bf`) |
 | **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | ~4 | ~16 | ⬜ |
-| **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / top bar / `SignInModal` | ~5 | ~18 | ⬜ |
+| **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / top bar / `SignInModal` | 7 | ~28 | ⬜ scoped, dispatch held (account session limit, 2026-08-27) |
 | **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, account menu, edit-profile | ~5 | ~20 | ⬜ |
 | **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | ~6 | ~30 | ⬜ |
 | **S9** | `share` | 4 | 10 | `/share`, `ShareDialog` | ~4 | ~12 | ⬜ |
@@ -48,6 +48,62 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 
 **Coverage check.** Areas 01–07, 09, 10 are covered by S2–S9 plus the finished S1; area 08 is
 removed from scope; area 11 is S10 and is contract-shaped, not journey-shaped.
+
+### S2 scope — agreed at its Phase 0 gate, 2026-08-27
+
+Eight paths, ~42 captures. `/mv/edit` is **not** in it (that is S3).
+
+| Path | Covers |
+|---|---|
+| **P1** | Storyboard-first, end to end: compose → `ModeModal` → `/mv/thinking` → `/mv/storyboard` (visual style + scene edits, Enhance) → Generate MV → `/mv/creating` → `/mv/result` → the new `/history` row. ~12 steps. |
+| **P2** | Direct generation: Templates + Enhance to fill the brief → **Create MV Directly** → `/mv/creating` → `/mv/result`. ~6 steps. |
+| **P3** | Generation failure, **both stages**: the `[fail]` marker is captured at `createMvJob` and reused by `renderMvJob`, so storyboard-first fails at **thinking** and direct fails at **creating**; Retry re-runs the same compose and re-fails deterministically. |
+| **P4** | The six sheets and their boundaries, kept together because `MV-01` / `MV-02` / `MV-04` are three app-synced numeric rules QA tests individually: Choose Song (My / Sample), Import reject on format **and** 50 MB, Trim's ≥30s floor, FacePicker crop, Settings' Pro-gated **High** crown → `SubscribeModal`, Templates. |
+| **P5** | Guest gate (`AC-MV-01b`): the screen renders with no modal; **Song Library** and **Create Music Video** gate; **Import Audio stays ungated**. |
+| **P6** | Insufficient credits at mode select → buy-credits IAP instead of generating. |
+| **P7** | The side rail's two modes — Trending MVs vs My Creations (needs `loggedIn` **and** ≥1 completed MV). |
+| **P8** | `/mv/result` controls tour: the hand-built transport, Like/Dislike, Share, Download, Publish → "Ready to Go Public?" → pending review, the **"Unpublish to edit"** neutral state (`MV-E7`), the info panel, and the opened-from-History variant. |
+
+Two capture notes settled at the same gate:
+
+- **`/mv/creating` is captured as-is** with one RULES line sourced to `areas/02` §1 — it is the one
+  route in the area deliberately left on the pre-migration shared `GenerationView`, and QA would
+  otherwise file the visual mismatch as a bug. Not a `prototype_deltas` row: nothing is faked.
+- **`AGENTS.md`'s "Playwright's Chromium cannot decode H.264" does not apply to this capture run.**
+  Probed 2026-08-27 against `feature_intro_ai_mv_singing_480x640.mp4` over localhost on both the
+  bundled Chromium and installed Chrome: `videoWidth 480`, `currentTime` advancing, no `MediaError`.
+  That note was measured in the Linux CI sandbox. MV's videos photograph — but every `<video>` is
+  **paused and seeked to a fixed time before the shot**, or an autoplaying frame differs every run.
+  Separately, the three MV-type cards ship **no `poster`**; worth raising with the app, not a blocker.
+
+### S6 scope — agreed at its Phase 0 gate, 2026-08-27
+
+Seven paths, ~28 captures. Scoped ahead of S3/S4/S5 because it is the only queued spec whose source
+files collide with neither S2 (`areas/02`, `src/components/mv/*`) nor the separately-running S4
+(`areas/05`, `src/components/history/*`). **Dispatch is held** — its first run died on an
+account-level session limit before producing anything, so it restarts from this table.
+
+| Path | Covers |
+|---|---|
+| **P1** | Signed-in navigation: sidebar item → `next/link` through `localePath`, active styling, locale prefix preserved. |
+| **P2** | Gated **nav** while logged out (`GATED = /history, /profile, /settings`) → sign-in modal with the target queued → on success the queued navigation runs; **on dismiss the user stays put**. |
+| **P3** | Header **Sign In** with no queued action → 1.8s success animation → the header swaps to logged-in chrome, no navigation. |
+| **P4** | Gated **route** entry (arriving at `/history` etc. directly) → the guard renders nothing and opens the modal → **on dismiss `router.replace(home)`**. The contrast with P2's dismiss is the reason this is its own path. |
+| **P5** | Account menu, walked in place: credits badge, avatar with its PRO/FREE badge, the credits row, Profile / My Creations rows, the inert Notifications / Send Feedback rows (`SHELL-03`), Sign Out; outside-click and Esc close it. |
+| **P6** | Sign out from **both** entry points (the menu, and Settings) + `AUTH-E1`: a reload keeps `loggedIn` but drops subscription and profile, so the user is `free` again. |
+| **P7** | Bare page — `/share…` renders with no sidebar and no top bar. |
+
+**Neighbour boundary.** Where a control leads into another spec's territory, S6 captures one step
+showing it **opened** and stops: `BuyCreditsModal` → S5, Profile → S7, My Creations → S4, `/share`'s
+own content → S9. Restating their rules here would make S6 the contract for patterns it does not own.
+
+**D8 exception, scoped to S6 only: capture at 1440 *and* 375.** The phone chrome is not a reflow of
+the desktop shell, it is a **different component tree** (`MobileTabBar` / `MobileHeader` vs
+`Sidebar` / `TopBar`) carrying behaviour that exists nowhere else — the ＋ create sheet (un-gated
+2026-08-12) and its still-gated History entry. At 1440 all of it is `display:none`, so a
+1440-only shell spec would document half its own subject, and `e2e/a11y.spec.ts` is desktop-only
+too, so nothing else covers it. `areas/01` §4's own capture note already asked for both widths.
+**D8 stands unchanged for the other eight specs.**
 
 ### Why this order
 
