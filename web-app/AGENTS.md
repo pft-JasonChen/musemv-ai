@@ -196,7 +196,7 @@ House style in one line:
   norm — don't unilaterally wire a random component into `useT()` as a side quest, ask first if
   the scope is unclear.
 - **Navigation:** `localePath(locale, path)` (used in `AuthGuard.tsx`, `LocaleProvider.tsx`,
-  `Sidebar.tsx`, `ProfileView.tsx`, `AccountMenu.tsx`) preserves the active locale prefix. Most
+  `Sidebar.tsx`, `ProfileView.tsx`, `MobileHeader.tsx`) preserves the active locale prefix. Most
   in-app `router.push()` calls instead use raw unprefixed paths (e.g. `router.push("/mv/room")` in
   `HomeView.tsx`, `CreationDialog.tsx`, `MvResult.tsx`, …) — these still land on the right locale
   because `setLocale()` writes a `NEXT_LOCALE` cookie that `middleware.ts` reads on the next

@@ -11,7 +11,8 @@ import { localePath } from "@/lib/i18n/config";
  *
  * Classes from `src/styles/designer/MobileHeader.css`, verbatim from DP. Shown
  * only below the phone cutover (DP's own `@media (max-width: 767px)`), where it
- * replaces the wordmark WA used to render inside `TopBar`.
+ * replaces the wordmark WA used to render inside the legacy `TopBar` (deleted
+ * 2026-08-27).
  *
  * This is now the ONLY way to reach the account on a phone — Profile left the
  * bottom bar when it went 5 items → 3 (CH5), so the account button is load
@@ -57,8 +58,8 @@ export function MobileHeader() {
   const t = useT();
   const profilePath = localePath(locale, "/profile");
 
-  // SHELL-E1, phone half. `HeaderActions` has always reserved space until the
-  // persisted flag is read; this component did not, so on a signed-in reload it
+  // SHELL-E1, phone half. The since-deleted `HeaderActions` reserved space until
+  // the persisted flag was read; this component did not, so on a signed-in reload it
   // painted the logged-OUT header for a frame and then flipped. Same fix, same
   // reason — `useSyncExternalStore` narrows the window but does not close it.
   // (Found by the 2026-08-19 spec audit; the spec never covered this component.)

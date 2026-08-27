@@ -344,7 +344,7 @@ cfg = {
                     'user': 'A sweep of five signed-in routes (/, /history, /profile, /watch, /settings) for any account-menu trigger.',
                     'system': 'None found &mdash; no [aria-label=&ldquo;Account menu&rdquo;] anywhere, at desktop width.',
                     'summary': 'Confirms the account MENU itself has no live entry point on any route (not just the two walked above).',
-                    'limits': [('AccountMenu/HeaderActions/TopBar are unreachable dead code.', 'See the Feature block finding 1 and the D11 correction in specs/areas/01-app-shell.md &sect;1/&sect;2/&sect;3/AC-SHELL-06.')],
+                    'limits': [('There is no account menu in the product &mdash; AccountMenu/HeaderActions/TopBar were unreachable dead code and were DELETED on 2026-08-27 (D-10).', 'This sweep was the evidence that raised it. It still holds, now by construction: see the D11 corrections in specs/areas/01-app-shell.md &sect;1 point 5 / &sect;2 / &sect;3, and AC-SHELL-06 (retired).')],
                 },
                 {
                     'shot': '24_mobile_history_chrome.png', 'num': 4,
@@ -463,14 +463,10 @@ cfg = {
         'forcing a step reference that does not exist.'
     ),
 
-    'open_questions': [
-        (
-            'Q-01',
-            'Is AccountMenu meant to be wired back in (give it a trigger again), or is it meant to be deleted now that every route&rsquo;s own inline cluster covers its destinations? Right now it is neither &mdash; live dead code with no test coverage.',
-            'AC-SHELL-06 and SHELL-P4-S2/S3 in specs/areas/01-app-shell.md, and the &ldquo;dropdown menu&rdquo; framing in that area&rsquo;s &sect;1',
-            'Product owner / RD',
-        ),
-    ],
+    # Q-01 (&ldquo;wire AccountMenu back in, or delete it?&rdquo;) was raised by this build and
+    # ANSWERED the same day &mdash; product owner: delete. It is therefore a decision
+    # (D-10), not an open question. Nothing else in this spec is undecided.
+    'open_questions': [],
 
     'criteria': [
         ('AC-SHELL-01', 'Sidebar (&ge;768px, five destinations) vs. bottom tab bar (&lt;768px, on Home/History only, three items); every other route below 768px shows its own back-affordance instead.', ['P1-S1', 'P1-S5', 'P5-S4'], 'Full six-width sweep is e2e/visual-baseline.spec.ts&rsquo;s job (visual); these steps evidence the ROUTE-SCOPE half this build corrected (AC-SHELL-01, D11).'),
@@ -478,7 +474,7 @@ cfg = {
         ('AC-SHELL-03', 'A logged-out click on the gated History nav item opens SignInModal and proceeds to the queued route on success.', ['P2-S1', 'P2-S3', 'P2-S4']),
         ('AC-SHELL-04', 'Logged out: a Login button in each route&rsquo;s own navbar, no credits badge/avatar.', ['P3-S1']),
         ('AC-SHELL-05', 'Logged in: the credits pill; an additional Upgrade button while not subscribed.', ['P3-S2', 'P1-S4']),
-        ('AC-SHELL-06', 'No reachable control opens AccountMenu; its would-be destinations are each reachable another way.', ['P5-S3'], 'The criterion itself documents an unreachable component (D11 correction) &mdash; P5-S3 is the negative-result sweep proving it.'),
+        ('AC-SHELL-06', 'RETIRED 2026-08-27 (D-10): the account dropdown it described is deleted, so there is nothing left to assert. Its destinations are covered by AC-SHELL-05 (credits/Upgrade), AC-AUTH-05 (Sign Out, Settings-only) and area 06 (Send Feedback).', ['P5-S3'], 'Kept as a trace target rather than renumbered. P5-S3 remains the evidence: it sweeps five routes for an account menu and finds none.'),
         ('AC-SHELL-07', '/share renders bare, no sidebar/top bar.', ['P7-S1']),
         ('AC-SHELL-08', 'Renders at all six widths with no overflow.', [], 'Visual-only; six-width sweep is e2e/visual-baseline.spec.ts&rsquo;s job, not this per-path storyboard (D8: this spec captures 1403&times;697 and 375&times;812 only).'),
         ('AC-AUTH-01', 'A guarded route entered logged out renders no content and opens SignInModal.', ['P4-S1']),
@@ -514,6 +510,7 @@ cfg = {
         ('D-07', 'Which non-English locale demonstrates prefix preservation (P1-S3)?', 'jpn, picked arbitrarily from the 9 supported locales &mdash; reached by navigating directly to /jpn/&hellip; rather than through a UI language switcher, since a signed-in user has no in-app locale switcher (Navbar&rsquo;s LanguagePicker only renders logged-out, on Home).'),
         ('D-08', 'Phone viewport for the D8 exception?', '375&times;812 &mdash; well inside PHONE_QUERY (max-width: 767px) and the &ldquo;375&rdquo; tier of AGENTS.md&rsquo;s six-width scale. Documented in capture_screenshots.py&rsquo;s docstring so a later re-capture does not drift.'),
         ('D-09', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo yet, same as S1/S4.'),
+        ('D-10', 'Q-01 &mdash; the account dropdown (AccountMenu &larr; HeaderActions &larr; TopBar) was reachable from no route. Wire a trigger back in, or delete it?', '<b>Deleted</b> (product owner, 2026-08-27, same day this build raised it). All three files are removed from src/, and AppShell&rsquo;s OWN_CHROME list went with them &mdash; its only job was gating TopBar. The invariant that replaces it: below /, the shell draws NO header; every route renders its own, so a new route must bring one. This spec&rsquo;s steps are unchanged by the deletion &mdash; every one of them was already photographing the reachable surface, and P5-S3&rsquo;s negative sweep is now true by construction rather than by accident. Area 01&rsquo;s AC-SHELL-06 is retired (id kept and struck, not renumbered, so QA traces do not silently re-point).'),
     ],
 
     'references': [],
@@ -551,9 +548,6 @@ cfg = {
         os.path.join(WEB_APP, 'src', 'components', 'shell', 'MobileHeader.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'shell', 'RoomNavbar.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'shell', 'DetailNavbar.tsx'),
-        os.path.join(WEB_APP, 'src', 'components', 'shell', 'TopBar.tsx'),
-        os.path.join(WEB_APP, 'src', 'components', 'shell', 'HeaderActions.tsx'),
-        os.path.join(WEB_APP, 'src', 'components', 'account', 'AccountMenu.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'auth', 'AuthGuard.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'auth', 'SignInModal.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'home', 'Navbar.tsx'),

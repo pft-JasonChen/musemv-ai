@@ -26,7 +26,8 @@ const mask = (name: string) => {
  * App Router inverts that — the page renders INSIDE the layout, so it cannot hand
  * anything upward. `.room-navbar` is `position: sticky; top: 0`, so a migrated
  * view renders it as its own first child and it behaves identically. `AppShell`
- * only needs to know not to draw the legacy TopBar for that route (see OWN_CHROME).
+ * draws no header of its own below `/`, so nothing competes with it — the legacy
+ * TopBar and the OWN_CHROME list that gated it were deleted 2026-08-27.
  *
  * DP hardcodes `credits={390}` at all 19 of its call sites and opens its own
  * CreditsDialog / UpgradeDialog. Here the balance is `useCredits()` and both

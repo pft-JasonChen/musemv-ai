@@ -137,6 +137,19 @@ that is deliberate: it keeps the legacy `TopBar` because DP's marketing Navbar a
 CH3/CH4, still out of scope. (`"/"` could not be added to that list anyway — the check is
 `path.startsWith(r)`, which `"/"` matches for every route in the app.)
 
+> **UPDATE 2026-08-27 — `OWN_CHROME`, `TopBar`, `HeaderActions` and `AccountMenu` are all DELETED**
+> (product owner, S6 `Q-01`). Two paragraphs above are now history, not state: `/` never kept the
+> legacy `TopBar` in the end — DP's marketing `Navbar` replaced it there on 2026-08-07 — and with
+> the migration at 17/17 the `OWN_CHROME` list covered every remaining route, which made `TopBar`
+> (and through it `HeaderActions` → `AccountMenu`, the whole account dropdown) unreachable dead
+> code with no e2e coverage. The S6 storyboard build measured that and raised it; the answer was
+> delete. **The invariant that replaces the list: below `/`, the shell draws NO header — every
+> route renders its own, so a NEW route must bring its own navbar and there is no fallback to
+> inherit.** One consequence worth knowing: SHELL-E1's "fixed" pre-hydration placeholder lived in
+> `HeaderActions`, i.e. nowhere a user could see, and the reachable navbars guard only the Upgrade
+> crown — so the Login ↔ credit-pill swap can still flash on a signed-in reload. Recorded as
+> re-opened in `specs/areas/01-app-shell.md` §5, not fixed.
+
 **A12 is closed, and the four handoffs that recorded it were describing the wrong thing.** It was
 never "DP's `/mv-edit` page does not render". Run DP outside the repo and it is TWO batches of
 missing assets, neither page-specific: `src/assets/hero/*` is absent and `HeroBannerSection.tsx`

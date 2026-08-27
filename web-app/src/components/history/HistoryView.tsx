@@ -204,8 +204,8 @@ export function HistoryView() {
         The page renders its own navbar (plan CH2 / Slice 2b). DP passes it as a
         prop to AppLayout; App Router cannot, since the page lives inside the
         layout — but `.room-navbar` is `position: sticky`, so rendering it as the
-        first child here behaves identically. `AppShell.OWN_CHROME` lists this
-        route so the legacy TopBar stays out of the way.
+        first child here behaves identically. The shell draws no header of its own
+        on this route (or any route below `/`).
 
         The title and the filter tabs both move up into it, which is where DP puts
         them: the tabs stop scrolling away with the page body.

@@ -91,7 +91,7 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 ## 3. Responsive model
 
 - **Code breakpoints:** six tiers — 320 / 375 / 768 / 1024 / 1440 / 1920. `md:` (768px) carries the sidebar switch, `lg:` (1024px) the two-column layouts. 320px is the minimum supported width and has no query of its own.
-  _(Corrected 2026-08-19 from code: `TopBar.tsx` and `designer-overrides.css` use 768px throughout; the old "only sm:/lg:" line predates the designer-UI migration.)_
+  _(Corrected 2026-08-19 from code: `designer-overrides.css` uses 768px throughout; the old "only sm:/lg:" line predates the designer-UI migration. The other file this cited, `TopBar.tsx`, was deleted 2026-08-27 — see area 01 §1 point 5.)_
 - **Review viewports (QA screenshots):** 390 / 768 / 1024 / 1440px.
 - Every area spec's responsive AC checks these four widths for no overflow / no broken layout.
 

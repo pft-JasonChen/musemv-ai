@@ -72,8 +72,8 @@ Like / publish call `requireLogin` at the action), synced to App F22 — `AuthGu
   **blocked during** the success animation (`onClose` swallowed).
 - **Sign-in trigger points (action-level, GL-02):** header **Sign In** (`openSignIn`, area 01 — ⚠️
   corrected there 2026-08-27: the live control reads **"Login"**, on each route's own
-  `RoomNavbar`/`DetailNavbar`/`Navbar`, not a single "top bar"; `HeaderActions`/`TopBar` is
-  unreachable dead code);
+  `RoomNavbar`/`DetailNavbar`/`Navbar`, not a single "top bar"; `HeaderActions`/`TopBar` was
+  unreachable dead code and was **deleted 2026-08-27**);
   **gated nav** click while logged out (`Sidebar` → `requireLogin(→push)`, area 01); **AuthGuard** on
   the four gated routes (dismiss → Home) as a backstop; **the two create screens' own actions** —
   `/mv/room`'s **Song Library** and **Create Music Video**, `/song/create`'s **Create Song**; Home hero create CTAs / song-card create

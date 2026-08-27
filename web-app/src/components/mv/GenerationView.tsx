@@ -46,7 +46,8 @@ interface Props {
  * so it had stayed on the legacy `TopBar` and was not in `OWN_CHROME`. Once
  * `AppShell` stopped mounting its own `MobileHeader` outside Home/History,
  * this screen would have had NO header whatsoever on a phone. Adding
- * `DetailNavbar` (now also added to `OWN_CHROME`) gives it the exact same
+ * `DetailNavbar` (the `OWN_CHROME` list it joined has since been deleted along
+ * with `TopBar`, 2026-08-27) gives it the exact same
  * back+title bar every sibling generation-adjacent screen already has,
  * without needing DP to ever design one — `title`/`backHref` were already
  * computed here for the in-body copy and the failed-state Back link.

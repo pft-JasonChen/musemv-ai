@@ -36,8 +36,11 @@ npm run dev                      # http://localhost:3000
 
 ## The designer-UI migration is DONE (2026-08-06)
 
-Every screen you see is the designer prototype's UI, ported. `OWN_CHROME` in
-`src/components/shell/AppShell.tsx` is the ledger: **16 of 16 routes**. Two consequences you
+Every screen you see is the designer prototype's UI, ported — **17 of 17 routes**, counting the
+landing page. `OWN_CHROME` in `src/components/shell/AppShell.tsx` used to be the ledger; it was
+**deleted on 2026-08-27** along with the legacy `TopBar` it gated, because with every route
+migrated the list covered all of them and the fallback header was unreachable. The invariant now:
+below `/`, the shell draws no header — every route renders its own. Two consequences you
 will hit immediately if you don't know them:
 
 - **`src/styles/designer/` (33 files) is copied byte-for-byte from the designer drop.**
