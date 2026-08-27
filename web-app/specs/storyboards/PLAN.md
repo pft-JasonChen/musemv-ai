@@ -56,7 +56,7 @@ Eight paths, ~42 captures. `/mv/edit` is **not** in it (that is S3).
 | Path | Covers |
 |---|---|
 | **P1** | Storyboard-first, end to end: compose → `ModeModal` → `/mv/thinking` → `/mv/storyboard` (visual style + scene edits, Enhance) → Generate MV → `/mv/creating` → `/mv/result` → the new `/history` row. ~12 steps. |
-| **P2** | Direct generation: **Templates** fills the brief → **Create MV Directly** → `/mv/creating` → `/mv/result`. ~6 steps. ⚠️ **Enhance is not part of this path and must not appear in it** — `origin/main`'s `3bdff87` removed Enhance from `/mv/room` for V1 (product owner, 2026-08-25). |
+| **P2** | Direct generation: **Templates** (and, again, **Enhance**) fills the brief → **Create MV Directly** → `/mv/creating` → `/mv/result`. ~6 steps. |
 | **P3** | Generation failure, **both stages**: the `[fail]` marker is captured at `createMvJob` and reused by `renderMvJob`, so storyboard-first fails at **thinking** and direct fails at **creating**; Retry re-runs the same compose and re-fails deterministically. |
 | **P4** | The six sheets and their boundaries, kept together because `MV-01` / `MV-02` / `MV-04` are three app-synced numeric rules QA tests individually: Choose Song (My / Sample), Import reject on format **and** 50 MB, Trim's ≥30s floor, FacePicker crop, Settings' Pro-gated **High** crown → `SubscribeModal`, Templates. |
 | **P5** | Guest gate (`AC-MV-01b`): the screen renders with no modal; **Song Library** and **Create Music Video** gate; **Import Audio stays ungated**. |
@@ -100,6 +100,17 @@ account-level session limit before producing anything, so it restarts from this 
 | **P5** | Account menu, walked in place: credits badge, avatar with its PRO/FREE badge, the credits row, Profile / My Creations rows, the inert Notifications / Send Feedback rows (`SHELL-03`), Sign Out; outside-click and Esc close it. |
 | **P6** | Sign out from **both** entry points (the menu, and Settings) + `AUTH-E1`: a reload keeps `loggedIn` but drops subscription and profile, so the user is `free` again. |
 | **P7** | Bare page — `/share…` renders with no sidebar and no top bar. |
+
+**S2's captures are stale on one point (2026-08-27, same day as the build).** `origin/main`'s
+`3bdff87` had removed `/mv/room`'s Enhance shortcut for V1 (product owner: no supported backend API);
+S2 was captured during that window, so its 43 screenshots and P2's scope correctly showed Templates
+as the only Describe shortcut. **RD confirmed the API exists on 2026-08-26**, the product owner
+reversed the removal the same day S2 shipped, and `MvRoom.tsx` now renders `EnhanceButton` again
+(same `kind="mv"` call as before `3bdff87`). `specs/areas/02-mv-creation.md` MV-P1-S4 / `AC-MV-14`
+are corrected in place. **S2's screenshots of the Describe footer (at minimum `01_mv_room_empty`,
+`08_create_cta_ready`, `17_templates_applied`, `21_fail_description`) need a v2 re-shoot** to show
+the restored button; nothing else in the 8-path scope changes. Filed here rather than re-run
+immediately — S6 is the priority next spec.
 
 **Neighbour boundary.** Where a control leads into another spec's territory, S6 captures one step
 showing it **opened** and stops: `BuyCreditsModal` → S5, Profile → S7, My Creations → S4, `/share`'s
