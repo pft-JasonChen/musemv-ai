@@ -185,9 +185,7 @@ export function SongCompose() {
                       designer-overrides.css), not a `useMediaQuery` read, so
                       there's no hydration-mismatch flash of the wrong text
                       on a phone's first paint. */}
-                  <span className="song-create__describe-label--phone">
-                    DESCRIBE YOUR SONG
-                  </span>
+                  <span className="song-create__describe-label--phone">DESCRIBE YOUR SONG</span>
                   <span className="song-create__describe-label--wide">
                     DESCRIBE IDEA OF YOUR SONG
                   </span>
@@ -352,15 +350,11 @@ export function SongCompose() {
                                 kind: "song",
                                 label: "Refine Idea",
                                 sub: "Sharpen the mood, tone, and detail",
-                                tile: "idea",
-                                icon: "ic_lightbulb",
                               },
                               {
                                 kind: "lyrics",
                                 label: "Refine Lyrics",
                                 sub: "Polish wording, rhythm, and flow",
-                                tile: "lyrics",
-                                icon: "ic_singing_mic",
                               },
                             ]
                       }
