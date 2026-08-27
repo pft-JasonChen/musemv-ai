@@ -9,7 +9,6 @@ import { api } from "@/lib/api";
 import {
   acceptAttachments,
   FEEDBACK_DESCRIPTION_MAX,
-  FEEDBACK_SUBJECT_MAX,
   FEEDBACK_TYPES,
   formatBytes,
   isValidEmail,
@@ -23,10 +22,19 @@ import {
  * Send Feedback — a CS support ticket. Spec: `specs/areas/06-profile-account.md`
  * §3.1, decisions in its §10, acceptance AC-PROF-10…16.
  *
- * Five fields in the product owner's order (Type → Subject → Description →
- * Attachment → Email): classification first, the prefilled contact detail last.
- * The payload's field names ARE the CSB params, so `api.submitFeedback` is the
+ * FOUR fields in the product owner's order (Type → Description → Attachment →
+ * Email): classification first, the prefilled contact detail last. The
+ * payload's field names ARE the CSB params, so `api.submitFeedback` is the
  * only thing RD has to point at the real endpoint.
+ *
+ * ── SUBJECT WAS REMOVED (2026-08-27, product owner) ──────────────────────
+ *
+ * It used to be field 2 of five, and it fed CSB's `title` param. Both are
+ * gone: the payload now omits `title` altogether rather than substituting
+ * anything for it, which is a declared C2 contract change (see
+ * `FeedbackTicketSchema`, and TBD-PROF-07 for the RD question it opens).
+ * `AC-PROF-10`/`11`/`12` moved with it — a passing test asserting five fields
+ * in that order would otherwise have pinned the old shape.
  *
  * Mounted CONDITIONALLY by its parent (`{fbOpen && <FeedbackDialog …/>}`), which
  * is what makes "re-opening gives a fresh empty form" true without a reset
@@ -53,7 +61,6 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
   const { profile } = useAuth();
 
   const [type, setType] = useState<FeedbackTypeKey | null>(null);
-  const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [tooLarge, setTooLarge] = useState(false);
@@ -71,12 +78,7 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const sending = status === "sending";
-  const canSend =
-    type !== null &&
-    subject.trim() !== "" &&
-    description.trim() !== "" &&
-    isValidEmail(email) &&
-    !sending;
+  const canSend = type !== null && description.trim() !== "" && isValidEmail(email) && !sending;
 
   const used = totalBytes(files);
   const selectedLabel = type ? t(FEEDBACK_TYPES.find((x) => x.key === type)!.labelKey) : null;
@@ -151,7 +153,7 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
       await api.submitFeedback({
         email: email.trim(),
         questionTypeId: questionTypeIdOf(type!),
-        title: subject.trim(),
+        // No `title` — the Subject field is gone (see the header note).
         q: description.trim(), // description ALONE — no User ID, no Order ID
         language: locale, // product code (`enu`…`ptg`), not BCP-47
         prodVerId: MUSE_PROD_VER_ID,
@@ -267,18 +269,6 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* ── Subject ──────────────────────────────────────────────────────── */}
-      <label className="account-edit__field mt-3">
-        {t("profile.feedback.subject")}
-        <input
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder={t("profile.feedback.subjectPlaceholder")}
-          maxLength={FEEDBACK_SUBJECT_MAX}
-          readOnly={sending}
-        />
-      </label>
-
       {/* ── Description ──────────────────────────────────────────────────── */}
       <label className="account-edit__field mt-3">
         {t("profile.feedback.description")}
@@ -316,7 +306,7 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
           </span>
         </div>
         {/* Hidden input + styled trigger — the MvRoom.tsx pattern. `multiple`
-            because the 10 MB budget is cumulative, not per file. */}
+            because the attachment budget is cumulative, not per file. */}
         <input
           ref={fileRef}
           type="file"

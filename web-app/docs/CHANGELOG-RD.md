@@ -23,6 +23,67 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-08-27 — **C2 CHANGED** — `FeedbackTicketSchema.title` is REMOVED (Subject field deleted)
+
+**Surface touched:** **C2** — `src/lib/api/schemas.ts`, `FeedbackTicketSchema`.
+
+**This IS a contract change, and it is a removal, not an addition.** The frozen surface
+snapshot moved in the same commit (`contract.surface.test.ts.snap`), deliberately.
+
+### What moved
+
+```diff
+ FeedbackTicketSchema {
+   attachment: array
+   email: string
+   language: string
+   prodVerId: anyOf
+   q: string
+   questionTypeId: anyOf
+-  title: string          // was: z.string().min(1).max(100)
+ }
+```
+
+`FEEDBACK_SUBJECT_MAX` (was `100`) is deleted from `src/lib/feedback.ts` along with it.
+
+### Why
+
+Product owner, 2026-08-27: the **Subject** field is removed from the Send Feedback dialog.
+It was the only source of `title`, so rather than substitute a placeholder the payload now
+**omits `title` entirely**. Three alternatives were put to the product owner and explicitly
+rejected: the Type label, the first 60 chars of the description, and a fixed constant string.
+This reverses the old `AC-PROF-12` clause "`title` = Subject"; the spec moved too.
+
+The dialog is now **four** fields, in order: **Type → Description → Attachment → Email**.
+
+### What RD must do
+
+1. **Answer TBD-PROF-07 — and the first half of it is bigger than `title`.** The product owner
+   reconfirmed "don't send `title`" on 2026-08-27 with this reason: **Muse looks to be on a
+   DIFFERENT API from YCO's CSB.** If that is right, then every value this contract inherited
+   from the CSB/T3 documents is provisional, not just `title` — the four `questionTypeId`s
+   (`313`/`348`/`204`/`211`), `prodVerId` `504`, and the attachment cap. So:
+   **(a) name the endpoint Muse actually posts to.** (The CSB documents we worked from:
+   API doc <https://ecl.cyberlink.com/dc/DocView.aspx?d=4828> · test tool
+   <https://stage2.cyberlink.com/prog/support/app/feedback-test.htm>.)
+   **(b) confirm it does not require a title.** If it does, do NOT invent a value — that comes
+   back to the product owner; the Type label, a description excerpt and a fixed constant were
+   all weighed and rejected.
+2. Note that support agents lose the per-ticket subject line. Triage now has `questionTypeId`
+   (5 categories) plus the free-text `q`. If that is unworkable for the CS team, say so —
+   it is a product decision, not an implementation detail.
+
+### Also in the same change (NOT a contract change, recorded here for completeness)
+
+`FEEDBACK_MAX_TOTAL_BYTES` went **10 MB → 5 MB** (still cumulative across all attachments,
+still refused whole). This is a `src/lib/feedback.ts` constant, not C1–C8. **5 MB is the
+requirement**, product owner 2026-08-27. ⚠️ The old 10 MB came from YCO's CS spec AC-22 — a
+document that, per point 1 above, may not even describe the endpoint Muse uses. **Don't "fix" it
+back on the next read of that spec.** `MockMuseApi.submitFeedback`'s boundary check and its error
+string moved with it, and the spec (`06-profile-account.md`) plus `specs/index.html` are in step.
+
+---
+
 ## 2026-08-27 — **NO CONTRACT CHANGE** — `globals.css` matched the C7 prefix, nothing RD codes against moved
 
 **Surface touched:** `web-app/src/app/globals.css`, which G4-g watches because `WATCH_PREFIX`

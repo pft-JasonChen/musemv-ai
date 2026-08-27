@@ -10,13 +10,25 @@
  * The logo is `/assets/brand/Logo.svg` (Next's `public/` path, already used
  * by Sidebar) instead of DP's Vite asset import.
  *
- * "Blogs" is `href="#"` here, not DP's `/blog` — that route doesn't exist in
- * WA. "Pricing" and "Company" links are `href="#"` in DP too (`PROJECT_CONTEXT`
- * lists Footer's Pricing/FAQ as still-placeholder — no destination page yet),
- * so this isn't WA falling behind DP, it's the same placeholder state.
+ * ── THREE LINKS DP HAS THAT V1 DELIBERATELY DOES NOT ────────────────────
+ *
+ * Removed on product-owner request (2026-08-27): **Pricing**, **Blogs** and
+ * **Storybook Creator**. None of the three is a V1 surface — WA has no
+ * `/blog` route, no pricing page, and no Storybook Creator product at all —
+ * so DP shipping them as `href="#"` was three links advertising features
+ * that do not exist. A drop that re-adds them is DP being ahead of V1's
+ * scope, not DP correcting us: re-remove them rather than "restoring" them.
+ * (Same standing-deviation shape as `/mv/room`'s `Ideas` button, per
+ * `CLAUDE.md`.)
+ *
+ * **FAQ deliberately stays as a placeholder.** The product owner confirmed it
+ * IS a V1 link and will supply the destination later, so "Support" keeps its
+ * column with a single entry. Every remaining link is still `href="#"` —
+ * tracked as `DESIGNER-TODO` A29, since a footer of five dead controls is
+ * its own open item and not something this change introduced.
  */
-const STUDIO_LINKS = ["Music Video Creator", "Song Composer", "Storybook Creator"];
-const SUPPORT_LINKS = ["Pricing", "Blogs", "FAQ"];
+const STUDIO_LINKS = ["Music Video Creator", "Song Composer"];
+const SUPPORT_LINKS = ["FAQ"];
 const COMPANY_LINKS = ["Terms of Service", "Privacy Policy", "Contact"];
 
 export function Footer() {

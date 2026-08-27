@@ -861,6 +861,64 @@ Custom tab 按下 **Enhance** 會開一個小選單,標題「What would you like
 
 ---
 
+### A29. Footer 剩下的 5 條連結全部是 `href="#"` —— 不擋開發
+
+2026-08-27 依產品負責人指示移除 **Pricing / Blogs / Storybook Creator** 三條(V1 不做:WA 沒有
+`/blog`、沒有定價頁,也沒有 Storybook Creator 這個產品)。移除後 footer 剩下:
+
+| 欄位        | 連結                                          |
+| ----------- | --------------------------------------------- |
+| **Studio**  | Music Video Creator · Song Composer           |
+| **Support** | FAQ                                           |
+| **Company** | Terms of Service · Privacy Policy · Contact   |
+
+**FAQ 是刻意留下的佔位。** 產品負責人確認它「是 V1 的連結,頁面還沒準備好,之後會補」,所以
+Support 這一欄維持存在、只有一條連結。
+
+**需要的不是設計,是目的地。** 這 5 條**全部**還是 `href="#"` —— 也就是 footer 上每一顆都是死連結。
+DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以不是遷移弄丟的。但 V1 要上線,
+就需要:Terms of Service、Privacy Policy、Contact、FAQ 的真實網址,以及 Studio 兩條要指向站內哪裡
+(推測是 `/mv/room` 與 `/song/create`,但沒人拍板過)。
+
+> ⚠️ **這三條是「會隨版本回來」的偏移(deviation-that-decays)。** 下一次 DP 交稿如果又出現
+> Pricing / Blogs / Storybook Creator,那是 DP 走在 V1 範圍前面,不是 DP 在糾正我們 —— 請再移除一次。
+> 這與 `CLAUDE.md` 記的 `/mv/room` 的 `Ideas` 是同一類,現在共有兩則。
+
+---
+
+### A30. 七個空狀態 / 錯誤狀態 —— 🔴 **這是下一個 session 的主要工作,等稿**
+
+2026-08-27 產品負責人列出七個「沒有內容 / 沒有紀錄 / 出錯」的畫面。目前 **7 個裡有 6 個完全沒有 UI**,
+第 7 個(My Songs)有一版我們自撰的。
+
+已經做好的是**觸發機制**:左下角新增了一個 demo panel(`?demo=1` 開啟),RD/QA 可以隨時把任一狀態
+打開來看。
+
+**→ 給設計師的完整交接是 `docs/DESIGNER-HANDOFF-2026-08-27.md`** —— 15 張稿的清單、每一張可以
+直接打開的網址、要遵守的既有規則(六寬度 / token / 對比度 / 觸控尺寸)、交稿程序,以及 5 個需要
+設計師回答而不只是畫的問題。**請從那份開始,不要從這一則。**
+開發端的對應文件是 `docs/HANDOVER-2026-08-27-EMPTY-STATES.md`。
+
+| #   | 畫面                          | 要幾張稿                                          | 現況                                    |
+| --- | ----------------------------- | ------------------------------------------------- | --------------------------------------- |
+| 1   | History 無紀錄                | **4**(All · Music Videos · Songs · Liked）        | 一段通用文字,四個 tab 共用              |
+| 2   | Choose Song → My Songs 空     | 1                                                 | WA 自撰版已上線(MV-11),要不要換掉待答 |
+| 3   | Credits Detail 無紀錄         | **3**(All · Spend · Earn)                        | **完全空白**,連容器都沒有               |
+| 4   | Community profile 無作品      | **3**(自己 MV/Song · 別人 · `/profile` 兩個 tab） | **完全空白**                            |
+| 5   | 送審被 reject                 | 2 處(History 卡片 · `/mv/result`）+ 7 種原因文案  | 狀態機只有兩個 boolean,沒有第三態       |
+| 6   | 後端 API 錯誤                 | 1 整頁                                            | 全站沒有任何 `error.tsx`                 |
+| 7   | 手機訂閱者想在網頁取消        | 1 dialog                                          | `/settings` 的 Unsubscribe 只跳 toast    |
+
+**最需要設計師注意的兩件事:**
+
+1. **第 4 項的「自己」和「別人」不能共用一張。** 自己的空頁需要一顆「去建立」CTA,別人的空頁不能有
+   —— 叫使用者幫別人建立作品在邏輯上是錯的。`/creator` 用 `?self=1` 區分這兩種視角。
+2. **第 5 項只適用 MV,不適用歌曲。** 產品負責人 2026-08-27 確認:**MV 要送審,歌曲直接上架**。
+   所以歌曲不會有 reject 畫面 —— 即使七種原因裡的「音訊品質不佳」與「版權疑慮」對歌曲才最適用。
+   這是已拍板的產品決定,不是漏掉。
+
+---
+
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 
 | 畫面                           | 狀況                                                                                                                                                        | 影響                                              |

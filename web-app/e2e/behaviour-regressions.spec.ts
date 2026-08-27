@@ -3284,19 +3284,25 @@ async function openFeedback(page: Page) {
   return page.getByRole("dialog", { name: "Send Feedback" });
 }
 
-test("PROF-P5: five fields in spec order, Email prefilled, Send gated until valid", async ({
+test("PROF-P5: four fields in spec order, Email prefilled, Send gated until valid", async ({
   page,
 }) => {
   const dialog = await openFeedback(page);
 
   // AC-PROF-10 — the product owner's order, not T3's. Asserted as positions so a
-  // reshuffle fails here rather than passing on "all five exist".
+  // reshuffle fails here rather than passing on "all four exist".
   const text = (await dialog.innerText()).replace(/\s+/g, " ");
-  const order = ["Type", "Subject", "Description", "Attachment", "Email"].map((l) =>
-    text.indexOf(l),
-  );
+  const order = ["Type", "Description", "Attachment", "Email"].map((l) => text.indexOf(l));
   expect(order, text).toEqual([...order].sort((a, b) => a - b));
   expect(Math.min(...order)).toBeGreaterThanOrEqual(0);
+
+  // 2026-08-27: Subject is REMOVED, and its absence is asserted rather than
+  // merely un-asserted. Dropping a field is the mirror of the affordance
+  // regressions this file exists for: nothing would go red if it came back, and
+  // a returning Subject would silently re-open the `title` contract question
+  // (TBD-PROF-07). There must also be exactly ONE textbox before Email now.
+  await expect(dialog.getByRole("textbox", { name: "Subject" })).toHaveCount(0);
+  expect(text).not.toContain("What's this about?"); // the old placeholder
 
   const send = dialog.getByRole("button", { name: "Send", exact: true });
   const email = dialog.getByRole("textbox", { name: "Email" });
@@ -3306,8 +3312,6 @@ test("PROF-P5: five fields in spec order, Email prefilled, Send gated until vali
   // AC-PROF-11 — each required field alone is not enough.
   await dialog.getByRole("combobox").click();
   await dialog.getByRole("option", { name: "Feature Issue" }).click();
-  await expect(send).toBeDisabled();
-  await dialog.getByRole("textbox", { name: "Subject" }).fill("Playback stalls at 12s");
   await expect(send).toBeDisabled();
   await dialog.getByRole("textbox", { name: "Description" }).fill("Every MV I open stalls.");
   await expect(send).toBeEnabled();
@@ -3331,7 +3335,7 @@ test("PROF-P5: five fields in spec order, Email prefilled, Send gated until vali
   // precisely so this is true without a reset effect.
   await page.getByRole("button", { name: "Send Feedback" }).click();
   const reopened = page.getByRole("dialog", { name: "Send Feedback" });
-  await expect(reopened.getByRole("textbox", { name: "Subject" })).toHaveValue("");
+  await expect(reopened.getByRole("textbox", { name: "Description" })).toHaveValue("");
   await expect(reopened.getByRole("combobox")).toContainText("Select an issue type");
 });
 
@@ -3344,16 +3348,18 @@ test("PROF-E5: an oversized attachment is refused WHOLE and explained inline", a
   });
   const input = dialog.locator('input[type="file"]');
 
-  // Under the cap: accepted, chip shown.
+  // Under the cap: accepted, chip shown. The cap is 5 MB (product owner,
+  // 2026-08-27); it was 10 MB, inherited from YCO's CS spec. See
+  // FEEDBACK_MAX_TOTAL_BYTES.
   await input.setInputFiles([file("small.log", 1)]);
   await expect(dialog.getByText("small.log")).toBeVisible();
-  await expect(dialog.getByText("File too large — 10 MB total.")).toBeHidden();
+  await expect(dialog.getByText("File too large — 5 MB total.")).toBeHidden();
 
-  // A batch that would cross 10 MB in total is refused ENTIRELY — the 0.5 MB
-  // file must not sneak in alongside the 9.8 MB one. A partial add is the
+  // A batch that would cross 5 MB in total is refused ENTIRELY — the 0.5 MB
+  // file must not sneak in alongside the 4.4 MB one. A partial add is the
   // failure mode that reads as success (AC-PROF-15).
-  await input.setInputFiles([file("huge.bin", 9.8), file("tiny.txt", 0.5)]);
-  await expect(dialog.getByText("File too large — 10 MB total.")).toBeVisible();
+  await input.setInputFiles([file("huge.bin", 4.4), file("tiny.txt", 0.5)]);
+  await expect(dialog.getByText("File too large — 5 MB total.")).toBeVisible();
   await expect(dialog.getByText("huge.bin")).toBeHidden();
   await expect(dialog.getByText("tiny.txt")).toBeHidden();
   await expect(dialog.getByText("small.log")).toBeVisible(); // the earlier pick survives
@@ -3364,7 +3370,7 @@ test("PROF-E5: an oversized attachment is refused WHOLE and explained inline", a
   // Removing a chip clears the refusal and the chip.
   await dialog.getByRole("button", { name: /Remove file: small\.log/ }).click();
   await expect(dialog.getByText("small.log")).toBeHidden();
-  await expect(dialog.getByText("File too large — 10 MB total.")).toBeHidden();
+  await expect(dialog.getByText("File too large — 5 MB total.")).toBeHidden();
 });
 
 test("AC-PROF-16: the Type combobox is fully operable by keyboard alone", async ({ page }) => {
@@ -3394,14 +3400,14 @@ test("AC-PROF-16: the Type combobox is fully operable by keyboard alone", async 
   await expect(combo).toBeFocused(); // focus returned, not lost to the body
 
   // Escape closes the list WITHOUT closing the dialog and losing the draft.
-  await dialog.getByRole("textbox", { name: "Subject" }).fill("keep me");
+  await dialog.getByRole("textbox", { name: "Description" }).fill("keep me");
   await combo.focus();
   await page.keyboard.press("ArrowDown");
   await expect(dialog.getByRole("listbox")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog.getByRole("listbox")).toBeHidden();
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("textbox", { name: "Subject" })).toHaveValue("keep me");
+  await expect(dialog.getByRole("textbox", { name: "Description" })).toHaveValue("keep me");
 });
 
 test("AC-PROF-16: the open feedback dialog is axe-clean at 1440 and 375", async ({ page }) => {
@@ -3909,4 +3915,78 @@ test("AC-MV-06/19: one storyboard start charges once and adds exactly one Histor
     await stableHistoryCardCount(page),
     "one storyboard start must add exactly one History row, not a stuck duplicate",
   ).toBe(rowsBefore + 1);
+});
+
+// ── Demo/QA state panel (product owner, 2026-08-27) ─────────────────────────
+//
+// The panel's whole cost model rests on ONE property: it renders nothing until
+// `?demo=1` has armed it. If that breaks, a `position: fixed` card lands in all
+// 115 `visual-baseline.spec.ts` screenshots and in every `a11y.spec.ts` sweep —
+// and re-recording those baselines would ACCEPT whatever else had changed on 17
+// routes at the same time (the A4 lesson). So the default-hidden state is
+// asserted here rather than trusted.
+
+const DEMO_PANEL = '[aria-label="Demo state panel"]';
+const DEMO_HANDLE = 'button:text-is("DEMO")';
+
+test("demo panel: invisible by default on every kind of route, and writes nothing", async ({
+  page,
+}) => {
+  await login(page);
+  // One migrated route, the landing page (which branches its layout in JS), and
+  // /share (which AppShell renders bare through an early return).
+  for (const route of ["/history", "/", "/share"]) {
+    await page.goto(route);
+    await expect(page.locator(DEMO_PANEL)).toHaveCount(0);
+    await expect(page.locator(DEMO_HANDLE)).toHaveCount(0);
+    // Not merely hidden — nothing is persisted either, so an un-armed session
+    // cannot leave a flag behind for the next one.
+    expect(await page.evaluate(() => localStorage.getItem("muse_demo"))).toBeNull();
+  }
+});
+
+test("demo panel: ?demo=1 arms it collapsed, it survives navigation, [x] clears the flags", async ({
+  page,
+}) => {
+  await login(page);
+
+  // Arms COLLAPSED — expanded, the card covers the sidebar's nav links, and QA
+  // has to be able to navigate while driving these states.
+  await page.goto("/history?demo=1");
+  await expect(page.locator(DEMO_HANDLE)).toBeVisible();
+  await expect(page.locator(DEMO_PANEL)).toHaveCount(0);
+
+  // `?demo=1` is the ENABLER, not the display condition: the armed state lives
+  // in localStorage, which is why it survives a navigation that drops the query.
+  await page.goto("/profile");
+  await expect(page.locator(DEMO_HANDLE)).toBeVisible();
+  expect(page.url()).not.toContain("demo=1");
+
+  await page.locator(DEMO_HANDLE).click();
+  const panel = page.locator(DEMO_PANEL);
+  await expect(panel).toBeVisible();
+
+  // The reason picker is conditional on the reject flag, and carries exactly the
+  // seven reasons the product owner supplied — no more, no fewer.
+  await expect(panel.locator("select")).toHaveCount(0);
+  await panel.getByRole("switch", { name: /Publish review REJECTED/ }).click();
+  const reasons = panel.locator("select").first();
+  await expect(reasons).toBeVisible();
+  await expect(reasons.locator("option")).toHaveCount(7);
+  await expect(reasons.locator("option").first()).toHaveText("Platform Policy Violation");
+
+  // [x] must clear the flags as well as hide, or a fake state stays on screen
+  // with no visible control left to turn it off.
+  await panel.getByRole("button", { name: "Close demo panel" }).click();
+  await expect(panel).toHaveCount(0);
+  await expect(page.locator(DEMO_HANDLE)).toHaveCount(0);
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("muse_demo") ?? "{}"));
+  expect(stored.enabled).toBe(false);
+  expect(Object.values(stored.flags ?? {}).some(Boolean)).toBe(false);
+
+  // Dismissal is permanent across a reload; re-arming is `?demo=1` again.
+  await page.goto("/profile");
+  await expect(page.locator(DEMO_HANDLE)).toHaveCount(0);
+  await page.goto("/profile?demo=1");
+  await expect(page.locator(DEMO_HANDLE)).toBeVisible();
 });
