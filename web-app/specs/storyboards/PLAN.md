@@ -36,7 +36,7 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 |---|---|---|---|---|---|---|---|
 | **S1** | `song-creation` | 3 | 03 (+05 glance) | `/song/create` `/song/creating` `/song/result` | 7 | 33 | ✅ v2, 2026-08-26 |
 | **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8 | 43 | ✅ v1, 2026-08-27 |
-| **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | ~4 | ~18 | ⬜ postponed — shares `areas/02` with S2 |
+| **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | 5 | ~24 | ▶ scoped 2026-08-27, dispatched |
 | **S4** | `history` | 6 | 05 | `/history` | 6 | 25 | ✅ v1, 2026-08-27 |
 | **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | ~4 | ~16 | ⬜ |
 | **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / route navbars / `SignInModal` | 7 | 24 | ✅ v1, 2026-08-27 |
@@ -48,6 +48,46 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 
 **Coverage check.** Areas 01–07, 09, 10 are covered by S2–S9 plus the finished S1; area 08 is
 removed from scope; area 11 is S10 and is contract-shaped, not journey-shaped.
+
+### S3 scope — agreed at its Phase 0 gate, 2026-08-27
+
+Five paths, ~24 captures (~20 desktop + ~4 phone). Larger than the ~4/~18 estimate above, for two
+reasons recorded here so the growth is not mistaken for scope creep: the screen has **four**
+independently-priced micro-operations rather than one generation, and it is the second spec to earn
+the D8 exception.
+
+| Path | Covers |
+|---|---|
+| **P1** | Entry + screen tour: arriving from `/mv/result`'s **Edit MV**, `DetailNavbar` (back · "Edit Music Video" · credit balance) and the three sections — cover, storyboard + scene editor, output settings — plus the Merge footer and its cost pill. **Also the second entry**: arriving from History's **Edit MV**, which fabricates flow state (`mockStoryboard()` + a synthetic song, `durationSec: 145`) — captured here, with the fabrication as a `prototype_deltas` row. S4's P6 owns the menu tap and cross-references. |
+| **P2** | Cover: description + **Enhance**, **Expand** → lightbox + Download, **Recreate** cover — overwrites in place, no picker, no undo (`AC-MV-12`). |
+| **P3** | Scenes: the clip strip, the inline preview transport, the scene prompt (2500 max) + **Enhance**, the scene-version history row, **Recreate scene** — overwrites that scene's video in place, no take tray, no undo (`AC-MV-12`). |
+| **P4** | Output settings as inline rail sections, not a modal: MV title toggle+input, Author name toggle+input, Show Subtitle, Show Watermark — **the two switches are `MvSettingsSchema` fields (C2), not decoration** (`MV-P5-S4`) — and **Delete this Project**, which confirms with History's wording and then discards the in-memory flow and leaves. It calls no backend delete. |
+| **P5** | **Merge MV** → `resetForRerender()` → `/mv/creating` (stop at the destination's first frame; S2 owns that route), enabled by ANY pending edit incl. `storyboardDirty`; **insufficient balance opens `BuyCreditsModal` instead** (`AC-MV-13`/`AC-MV-19`); plus **MV-E5** — leaving the page loses every edit, there is no Save — and **MV-E2**, reload with no flow state → `router.replace("/mv/room")` after the 400ms hydrate wait. |
+
+Three capture notes settled at the same gate:
+
+- **D8 exception #2, scoped to the scene view alone.** Below 768px the inline scene editor **and**
+  the preview are both replaced by a full-screen `.mv-edit-mobile-scene` (inline in
+  `MvEditor.tsx:714`, not its own file) with its own back control — the same "different component
+  tree, behaviour that exists nowhere else" argument S6 won on, and the only way `DESIGNER-TODO`
+  **A16** (`display: contents` sorting `FloatingCTA`'s spacer to the top below 1024px) gets
+  photographed at all. ~4 captures at 375×812; **the rest of the screen stays desktop-only**, and
+  D8 still stands for S5 / S7 / S8 / S9.
+- **D2 holds, and this is the screen that tests it.** `/mv/edit` is the one place the product
+  **prints** its costs — `{COST_MERGE}`, `{COST_COVER}`, `{COST_REGEN}` render inside
+  `.mv-edit__merge-credits` / `.mv-edit__regen-credits`. Those pill values are quoted in `exact`,
+  as on-screen UI copy re-confirmed against the live app like any other string; every RULES cost
+  bullet still reads "charges on start, refunds on failure; cost per the Credit Consume MSR". D2
+  governs rules, not screen text — and the MSR link is still `TBD`, so the `open_questions` row
+  every spec carries applies here too.
+- **`MV-E7` is NOT S3's.** "Unpublish to edit" is asserted on `/mv/result` (S2's P8) and in
+  History's menu (S4's P4); S3 names the precondition in RULES and captures nothing. Same
+  neighbour rule S6 used: one step showing the boundary, then stop.
+
+**Watch for what 3k already learned the hard way** (`CLAUDE.md`): a section modifier here can be
+load-bearing for a phone-only rule, and `/mv/edit`'s scene **Recreate** is the shared `Button`
+(`variant="PrimaryPayg"`) whose coin is `.button__icon` **without** `--mask`. Both were invisible
+at 1440.
 
 ### S2 scope — agreed at its Phase 0 gate, 2026-08-27
 
