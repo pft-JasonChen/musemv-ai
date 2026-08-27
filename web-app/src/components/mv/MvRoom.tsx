@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { ListItem } from "@/components/ui/ListItem";
@@ -25,7 +26,13 @@ import { MOCK_USER } from "@/lib/user";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
-import { MV_TYPES, SAMPLE_FACES, TEMPLATES, formatDuration, type TemplateOption } from "@/lib/mv/mock";
+import {
+  MV_TYPES,
+  SAMPLE_FACES,
+  TEMPLATES,
+  formatDuration,
+  type TemplateOption,
+} from "@/lib/mv/mock";
 import { NEW_MVS } from "@/lib/mv/community";
 import { grantFaceConsent, hasFaceConsent } from "@/lib/mv/faceConsent";
 import {
@@ -69,11 +76,12 @@ import {
  * · `resetForNewMv()` before a new generation, so a previous storyboard or
  *   result cannot leak into the next one.
  * · MV-02 import validation (format allow-list + 50MB ceiling).
- * · (The Ideas button was here until 2026-08-06, and `EnhanceButton` until
- *   2026-08-25. Both are GONE now — V1 ships neither canned-sample fillers
- *   nor Enhance on this screen — and both are deviations FROM DP, which has
- *   both. `EnhanceButton` itself, and the `api.enhancePrompt` round-trip it
- *   goes through, are untouched — this screen just no longer renders it.)
+ * · `EnhanceButton`, which goes through `api.enhancePrompt` (G5-d #10). DP
+ *   picks a random string from a local `ENHANCED_SUGGESTIONS` array. Was
+ *   HIDDEN 2026-08-25 to 2026-08-27 (`3bdff87`) for having no supported
+ *   backend API; RESTORED 2026-08-27 once RD confirmed one exists.
+ * · (The Ideas button was here until 2026-08-06. It is GONE now — V1 ships no
+ *   canned-sample fillers — and that is a deviation FROM DP, which has one.)
  *
  * ── AND ONE THING DP HAS THAT WA DID NOT ────────────────────────────────────
  *
@@ -430,7 +438,11 @@ export function MvRoom() {
                   >
                     <span className="mv-create__idea-thumbs">
                       {selectedTemplate ? (
-                        <img src={selectedTemplate.cover} alt="" className="mv-create__idea-thumb" />
+                        <img
+                          src={selectedTemplate.cover}
+                          alt=""
+                          className="mv-create__idea-thumb"
+                        />
                       ) : (
                         TEMPLATES.slice(0, 3).map((t) => (
                           <img key={t.id} src={t.cover} alt="" className="mv-create__idea-thumb" />
@@ -449,12 +461,19 @@ export function MvRoom() {
                       mock-data filler. */}
                 </div>
                 <div className="mv-create__footer-right">
-                  {/* Enhance HIDDEN 2026-08-25 — not available in V1 (product
-                      owner). Same shape as the "Ideas" removal above: a
-                      deliberate deviation, not a fidelity fix, so re-apply on
-                      every drop. `EnhanceButton` itself is untouched — Song's
-                      two boxes and MV's other three (StoryboardEditor x2,
-                      MvEditor x2) keep it. */}
+                  {/* RESTORED 2026-08-27 (product owner) — RD confirmed the
+                      backend now supports this call. Was HIDDEN 2026-08-25
+                      to 2026-08-27 (`3bdff87`) for having no supported API;
+                      that blocker is gone, so the removal is not re-applied
+                      here on the next drop. G5-d #10: this goes through
+                      `api.enhancePrompt`. DP's equivalent picks a random
+                      local string. */}
+                  <EnhanceButton
+                    value={compose.description}
+                    kind="mv"
+                    onEnhanced={(t) => patchCompose({ description: t })}
+                    bem="mv-create"
+                  />
                   <span className="mv-create__char-count">
                     {compose.description.length}/{DESCRIPTION_MAX}
                   </span>

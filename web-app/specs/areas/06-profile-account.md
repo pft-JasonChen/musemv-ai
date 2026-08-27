@@ -3,7 +3,8 @@
 > Read `../00-overview.md` first (conventions, ID scheme, global auth/credits/i18n models).
 > **As-built**; ⚠️ = divergence from App v3.0, ❓ = a tracked `TBD-*`, 🔒 = mock/in-memory.
 > **§3.1 Send Feedback** was specified and shipped on 2026-08-17; what remains open there is the
-> backend (`TBD-PROF-02`) and two ids (`TBD-PROF-06`), not the frontend.
+> backend (`TBD-PROF-02`), two ids (`TBD-PROF-06`), and whether CSB still needs a `title`
+> (`TBD-PROF-07`) — not the frontend.
 
 ---
 
@@ -102,18 +103,32 @@ spec`). **The word "ticket" never appears in the UI** — the row and the dialog
 | ------------------------- | --------- | -------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Product (YouCam Muse Web) | No        | —                                                        | —        | `prodVerId` = ❓ **`TBD-PROF-06`** (YCO's is `504`; Muse Web needs its own)                                              |
 | Type                      | **Yes**   | "Select an issue type"                                   | **Yes**  | `questionTypeId` — Purchase and Payment `313` · Account `348` · Feature Issue `204` · Community Report ❓ · Others `211` |
-| Subject                   | **Yes**   | "What's this about?" · max **100** chars                 | **Yes**  | `title`                                                                                                                  |
+| Subject                   | **No** ⚠️ | —                                                        | —        | **REMOVED** (product owner, 2026-08-27) — and with it the `title` param; the payload omits it (see §11)                   |
 | Description               | **Yes**   | "Tell us what you think…" · max **1000** chars + counter | **Yes**  | `q` — the **raw description only** ⚠️ (see divergences)                                                                  |
-| Attachment                | **Yes**   | any file type, **10 MB total** across all files          | No       | `attachment` (multipart)                                                                                                 |
+| Attachment                | **Yes**   | any file type, **5 MB total** across all files           | No       | `attachment` (multipart)                                                                                                 |
 | Email                     | **Yes**   | autofill from `profile.email`, else "Enter your email"   | **Yes**  | `email`                                                                                                                  |
 | UI language               | No        | —                                                        | —        | `language` — the **active product locale code** (`enu`…`ptg` from `LOCALES`), **not** BCP-47; RD maps if CSB differs     |
 | User ID                   | No        | —                                                        | —        | injected **server-side** from the session ⚠️ — WA's `Profile` has no id field                                            |
 | Order ID / Invoice #      | **No** ⚠️ | —                                                        | —        | **dropped** from T3 (product owner, 2026-08-17)                                                                          |
 | RD log · chat history     | No        | —                                                        | —        | out of scope — there is no chatbot on web                                                                                |
 
-**On-screen order** (product owner, 2026-08-17 — differs from T3): **Type → Subject → Description →
-Attachment → Email**. Classification first, then what happened, then evidence; the prefilled contact
-detail sits last so a field the user rarely touches never separates two they must fill.
+**On-screen order** (product owner, 2026-08-27 — supersedes the 2026-08-17 five-field order, and
+still differs from T3): **Type → Description → Attachment → Email**. Classification first, then what
+happened, then evidence; the prefilled contact detail sits last so a field the user rarely touches
+never separates two they must fill.
+
+> ⚠️ **Subject was field 2 of five until 2026-08-27.** Removing it also removed the only source of
+> the `title` param, so the payload now omits `title` entirely rather than substituting anything.
+> Three substitutes were put to the product owner and explicitly rejected: the Type label, the
+> first 60 chars of the description, and a fixed constant. **`FeedbackTicketSchema.title` is
+> deleted — a C2 contract change, logged in `docs/CHANGELOG-RD.md`.**
+>
+> **The product owner confirmed "don't send it" a second time on 2026-08-27, with a reason that
+> changes the rest of this section: Muse looks to be on a DIFFERENT API from YCO's CSB.** If that
+> is right, then the whole CSB inheritance in this table is provisional — not just `title`, but the
+> four `questionTypeId` values, `prodVerId` 504, and AC-22's 10 MB. That is now ❓ **`TBD-PROF-07`**:
+> RD confirms **which endpoint Muse actually posts to**, and whether it wants a `title` at all.
+> Until it answers, `title` stays unsent. Do not pick a substitute unilaterally.
 
 ### Type control
 
@@ -131,18 +146,25 @@ keyboard and ARIA contract is **part of the spec, not an implementation detail**
 ### Attachment rules
 
 - hidden `<input type="file" multiple>` + a styled "Add file" trigger (the `MvRoom.tsx:368` pattern)
-- **any** file type; **10 MB cumulative** across all picked files, with the running total shown
+- **any** file type; **5 MB cumulative** across all picked files, with the running total shown
 - picked files render as removable chips (name + size)
-- a pick that would exceed 10 MB is **refused whole** — nothing is added — with **one** message under
+- a pick that would exceed 5 MB is **refused whole** — nothing is added — with **one** message under
   the field, never a toast (CS spec AC-22)
+
+> **5 MB is the requirement** (product owner, 2026-08-27). It was **10 MB** until then — a figure
+> inherited from YCO's CS spec (AC-22). ⚠️ **Do not "correct" it back on the next read of that
+> document**, and note the document may not even apply: the product owner's read is that Muse uses
+> a **different endpoint** from YCO's CSB (see `TBD-PROF-07`), which makes the old figure irrelevant
+> rather than merely overridden. Only the NUMBER changed — the budget is still cumulative and a
+> crossing pick is still refused whole.
 - files are held in memory only; the mock does not upload. RD sends them as `multipart/form-data`
 
 ### States
 
 | State        | Entry                                      | Visible / enabled                                                                                          | Exit                                        |
 | ------------ | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `FORM`       | Send Feedback tapped                       | 5 fields; **Send disabled** while any required field is empty or the email is malformed                    | on valid input → `FORM_VALID`               |
-| `FORM_VALID` | Type + Subject + Description + valid Email | Send enabled                                                                                               | on Send → `SUBMITTING`                      |
+| `FORM`       | Send Feedback tapped                       | 4 fields; **Send disabled** while any required field is empty or the email is malformed                    | on valid input → `FORM_VALID`               |
+| `FORM_VALID` | Type + Description + valid Email           | Send enabled                                                                                               | on Send → `SUBMITTING`                      |
 | `SUBMITTING` | Send pressed                               | Send disabled + pending state; fields read-only                                                            | on resolve → `SUCCESS`; on reject → `ERROR` |
 | `SUCCESS`    | `submitFeedback` resolved                  | Form and actions **replaced** by "Feedback Sent" + one line ("We'll reply to `<email>`.") + **Done**       | Done closes the dialog                      |
 | `ERROR`      | `submitFeedback` rejected                  | Form **intact** — every field and attachment preserved — one error line above the actions, Send re-enabled | on Send → `SUBMITTING`                      |
@@ -180,7 +202,7 @@ dictionaries stay **empty**; per-key English fallback applies. ⚠️ These stri
 | 1   | 4 types (Purchase and Payment · Account · Feature Issue · Others) | **5** — adds **Community Report**                       | Muse has a community surface YCO does not. Its id is ❓ `TBD-PROF-06`.             |
 | 2   | Order ID / Invoice # shown, optional, prefilled                   | **not shown**                                           | CS asks in the reply when needed; keeps a payment field off a UI-bug report.       |
 | 3   | `q` carries Description **+ User ID + Order ID**                  | `q` = **description only**                              | No id in WA's model; the session already identifies the user server-side.          |
-| 4   | Subject/Description prefilled from the AI summary                 | user-typed, real placeholders                           | There is no chatbot on web, so there is no summary to prefill.                     |
+| 4   | Subject/Description prefilled from the AI summary                 | user-typed Description, real placeholder (no Subject)   | There is no chatbot on web, so there is no summary to prefill.                     |
 | 5   | Email autofill "else placeholder"                                 | same, but the placeholder path is **unreachable today** | Both entry points are signed-in only; kept so a signed-out entry point can use it. |
 
 ---
@@ -205,9 +227,9 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 
 ### PROF-P5 — Send Feedback (support ticket)
 
-- **PROF-P5-S1** Tap **Send Feedback** → `FeedbackDialog` opens on `FORM`: Type (placeholder "Select an issue type"), Subject, Description, Attachment, Email **prefilled from the account**. **Send is disabled.**
+- **PROF-P5-S1** Tap **Send Feedback** → `FeedbackDialog` opens on `FORM`: Type (placeholder "Select an issue type"), Description, Attachment, Email **prefilled from the account**. **Send is disabled.** There is **no Subject field** (removed 2026-08-27).
 - **PROF-P5-S2** Open **Type** → 5 options; pick one with mouse or ↑/↓ + Enter → the trigger shows the label, focus returns to the trigger.
-- **PROF-P5-S3** Type a Subject (≤100) and a Description (≤1000, counter updates). With a valid Email present, **Send enables**.
+- **PROF-P5-S3** Type a Description (≤1000, counter updates). With a Type chosen and a valid Email present, **Send enables**.
 - **PROF-P5-S4** _(optional)_ **Add file** → pick one or more files of any type → chips with name + size + remove; the running total is shown.
 - **PROF-P5-S5** **Send** → `SUBMITTING` (Send disabled, fields read-only) → `submitFeedback` resolves → the form is replaced by **"Feedback Sent"** + "We'll reply to `<email>`." + **Done**.
 - **PROF-P5-S6** **Done** closes the dialog. No toast. Re-opening Send Feedback gives a **fresh empty form** (Email re-prefilled).
@@ -228,7 +250,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 | **PROF-E2** | Direct-navigate `/settings` logged out                         | **Auth-gated (PROF-03, 2026-07-23):** `AuthGuard` opens the sign-in modal; dismiss → Home.                                                                                     |
 | **PROF-E3** | Reload after edit/subscribe                                    | Name/avatar/subscription reset to defaults (in-memory; only logged-in boolean persists → `TBD-GL-04`).                                                                         |
 | **PROF-E4** | Unsubscribe while subscribed                                   | Toast only; `subscribed` stays true (no state change). 🔒                                                                                                                      |
-| **PROF-E5** | Attachment pick would exceed 10 MB total                       | **Nothing is added** (the pick is refused whole, not truncated) and **one** message appears under the Attachment field — never a toast. Already-picked files are untouched.    |
+| **PROF-E5** | Attachment pick would exceed 5 MB total                        | **Nothing is added** (the pick is refused whole, not truncated) and **one** message appears under the Attachment field — never a toast. Already-picked files are untouched.    |
 | **PROF-E6** | `submitFeedback` rejects (network / 500 / oversized multipart) | Dialog **stays open with every field and attachment preserved**; one error line above the actions ("Couldn't send. Please try again."); Send re-enabled. Nothing is discarded. |
 | **PROF-E7** | Dialog closed mid-draft (Cancel / Esc / backdrop)              | Draft is discarded with **no confirm**; the next open starts empty with Email re-prefilled.                                                                                    |
 
@@ -249,12 +271,12 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 
 **Send Feedback (§3.1):**
 
-- **AC-PROF-10** — WHEN Send Feedback is opened, THE SYSTEM SHALL show exactly five fields in the order Type → Subject → Description → Attachment → Email, with Email prefilled from `profile.email` and Send **disabled**.
-- **AC-PROF-11** — THE SYSTEM SHALL keep Send disabled until Type, Subject, Description are non-empty AND Email is a well-formed address; and SHALL NOT show a field-level error for the merely-incomplete case.
-- **AC-PROF-12** — WHEN a valid form is submitted, THE SYSTEM SHALL call `MuseApi.submitFeedback` with `questionTypeId` from the §3.1 mapping, `title` = Subject, `q` = the Description text alone, `email` = the Email field, and `language` = the active product locale code — and SHALL NOT include a User ID or an Order ID.
+- **AC-PROF-10** — WHEN Send Feedback is opened, THE SYSTEM SHALL show exactly **four** fields in the order Type → Description → Attachment → Email, with Email prefilled from `profile.email` and Send **disabled**, and SHALL NOT render a Subject field. _(the absence is asserted, not merely un-asserted — a returning Subject silently re-opens TBD-PROF-07)_
+- **AC-PROF-11** — THE SYSTEM SHALL keep Send disabled until Type and Description are non-empty AND Email is a well-formed address; and SHALL NOT show a field-level error for the merely-incomplete case.
+- **AC-PROF-12** — WHEN a valid form is submitted, THE SYSTEM SHALL call `MuseApi.submitFeedback` with `questionTypeId` from the §3.1 mapping, `q` = the Description text alone, `email` = the Email field, and `language` = the active product locale code — and SHALL NOT include `title`, a User ID, or an Order ID. _(the `title` = Subject clause was deleted 2026-08-27 with the field itself)_
 - **AC-PROF-13** — WHEN the submit resolves, THE SYSTEM SHALL replace the form with a "Feedback Sent" confirmation carrying one line of copy and a **Done** control that closes the dialog, and SHALL NOT show a toast.
 - **AC-PROF-14** — WHEN the submit rejects, THE SYSTEM SHALL keep the dialog open with every entered value and attachment intact, show one inline error, and re-enable Send (PROF-E6).
-- **AC-PROF-15** — THE SYSTEM SHALL accept attachments of any type up to **10 MB in total**, and WHEN a pick would exceed that, SHALL add nothing and show one message inside the form, not a toast (PROF-E5).
+- **AC-PROF-15** — THE SYSTEM SHALL accept attachments of any type up to **5 MB in total**, and WHEN a pick would exceed that, SHALL add nothing and show one message inside the form, not a toast (PROF-E5).
 - **AC-PROF-16** — THE Type control SHALL be operable by keyboard alone (↑/↓, Home/End, Enter/Space, Esc) with `role="listbox"`/`role="option"` semantics and focus returning to its trigger, and SHALL pass axe at 375 and 1440. _(a11y — mutation-test it in both directions)_
 
 ---
@@ -278,6 +300,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 | **TBD-PROF-01** | ✅ **Moot on web (2026-08-14)** — the Notifications row is removed; there is no browser push/permission flow behind it. Kept as an id so nothing dangles.                                                                                                                                                                                                                                                                                                                              |
 | **TBD-PROF-02** | 🔧 **Backend (RD)** — wire `MuseApi.submitFeedback` to the CSB feedback endpoint per the [Feedback API document](https://ecl.cyberlink.com/dc/DocView.aspx?d=4828) (verify params with the [API test tool](https://stage2.cyberlink.com/prog/support/app/feedback-test.htm)). The **form, validation, payload shape and states are BUILT** (§3.1, 2026-08-17) and the mock resolves — what is left is the endpoint, auth, the multipart upload, and injecting the User ID server-side. |
 | **TBD-PROF-06** | 🔧 **Backend / CS** — two ids §3.1 cannot fill: **`prodVerId` for YouCam Muse Web** (YCO's is `504`) and the **`questionTypeId` for "Community Report"** (the other four are `313`/`348`/`204`/`211`). Until both land, the prototype ships the five labels and sends `null` for Community Report. **Blocks:** a real submit for that type.                                                                                                                                            |
+| **TBD-PROF-07** | 🔧 **Backend / CS** — **which endpoint does Muse feedback actually post to, and does it want a `title`?** The product owner's read (2026-08-27) is that Muse is **not** on YCO's CSB. If so, everything this spec inherited from the CSB/T3 documents is provisional: the four `questionTypeId` values, `prodVerId` `504`, and AC-22's 10 MB attachment cap. Concretely: (a) name the endpoint; (b) confirm `title` is not required — the Subject field is gone and `FeedbackTicketSchema.title` was deleted with it (C2 change, see `docs/CHANGELOG-RD.md`), and if it IS required the decision returns to the product owner rather than to an invented value (the Type label, a description excerpt and a fixed constant were all considered and rejected); (c) confirm CS can triage on `questionTypeId` + `q` alone, having lost the per-ticket subject line. **Blocks:** every real submit. |
 | **TBD-PROF-04** | 🔧 **Backend (RD)** — real Unsubscribe (store deeplink per App F19, cancels subscription) and real account Delete (permanent data removal). Both are demo toasts today.                                                                                                                                                                                                                                                                                                                |
 | **TBD-PROF-05** | 🔧 **Backend (RD)** — real stats source. MVs/Songs counts come from static `SAMPLE_CREATIONS`; the Muse Pro row hardcodes "validity 2026-08-10".                                                                                                                                                                                                                                                                                                                                       |
 
@@ -295,7 +318,7 @@ flowchart TD
   Profile --> Lang["Language → setLocale"]
   Profile --> Hist["History → /history (area 05)"]
   Profile --> FB["Send Feedback → FeedbackDialog"]
-  FB --> FBForm["FORM: Type · Subject · Description · Attachment · Email"]
+  FB --> FBForm["FORM: Type · Description · Attachment · Email"]
   FBForm -->|"valid + Send"| FBSend["SUBMITTING → MuseApi.submitFeedback"]
   FBSend -->|resolved| FBOk["Feedback Sent + Done (no toast)"]
   FBSend -->|rejected| FBErr["inline error, draft preserved (PROF-E6)"]
@@ -325,7 +348,7 @@ session does not re-open them, and because four of them **deviate from the refer
 | 3   | `q` = the description alone; **RD injects the User ID server-side**                                          | divergence 3 — `Profile` gains no `id`               |
 | 4   | Full mock endpoint on `MuseApi` (`submitFeedback`) + a Zod schema whose names are the CSB params             | C1 + C2 additions; no `[fail]` demo trigger          |
 | 5   | In-dialog "Feedback Sent" + Done; the **toast is removed**                                                   | CS AC-23                                             |
-| 6   | Multiple attachments, **10 MB cumulative**, refusal shown inline                                             | CS AC-22                                             |
+| 6   | Multiple attachments, **5 MB cumulative**, refusal shown inline (5 MB is ours, not CS's 10)                  | CS AC-22 + product owner 2026-08-27                  |
 | 7   | Email prefilled, **editable**, format-validated                                                              | not read-only, unlike Edit-Profile's email           |
 | 8   | **Send disabled until valid** (no per-field error text for the incomplete case)                              | matches the MV/Song create CTAs                      |
 | 9   | Legacy Tailwind `Modal`, body scrolls at 375 — **not** `DpDialog`, **not** a full-screen phone sheet         | matches the two sibling modals on the same screen    |

@@ -818,6 +818,107 @@ DP 的 `MVCreatePage` 稿上寫死的 **20 / 200** 因此在幾乎任何長度�
 
 ---
 
+### A28. `/song/create` Custom 的 Enhance 兩模式選單 —— **設計已定案(桌機),手機版待答**
+
+**新增於:** 2026-08-25(產品負責人指出)。**不擋開發。**
+
+Custom tab 按下 **Enhance** 會開一個小選單,標題「What would you like to enhance?」,兩個選項:
+
+| 選項 | 副標 | API `kind` |
+| --- | --- | --- |
+| **Refine Idea** | Sharpen the mood, tone, and detail | `song` |
+| **Refine Lyrics** | Polish wording, rhythm, and flow | `lyrics` |
+
+引擎有兩種 refine 模式,所以**兩個選項各自對應一支 API,由 RD 負責**。前端只負責挑 `kind`。
+
+**⚠️ 2026-08-26 追加:這個選單只在 Instrumental 關閉時出現。** Instrumental 打開時歌詞根本不支援,
+沒有東西可選,同一顆 Enhance 會**直接執行 Refine Idea**(`kind: "song"`),不跳選單。
+所以設計稿要涵蓋的是「同一顆 pill 的兩種行為」,不只是選單本身 —— 尤其是:
+使用者要如何知道這次按下去會跳選單、還是會直接改寫?目前**沒有任何視覺差異**,兩種狀態的 pill 長得一模一樣。
+
+**兩件事要一起知道:**
+
+1. **這個選單在 DP 皮膚下曾經完全打不開。** `EnhanceButton` 的 `bem` 分支只回傳按鈕,
+   而點擊處理器設的是一個沒有人渲染的 state —— 所以 Custom tab 的 Enhance **是一顆死按鈕**,
+   點下去毫無反應。兩個模式、文案、`kind` 區分一直都在程式碼裡,只有渲染在遷移時掉了。
+   **2026-08-25 已接回來**,並有 e2e 守著。
+2. ~~**但 DP 沒有這個選單**,所以現在的視覺是 WA 自撰:一個 `w-60` 的圓角浮層。~~
+   **2026-08-27 已定案(桌機):** 產品負責人提供了正式 UI,和手機 app prototype 的
+   「Enhance Direction Sheet」(`muse-prototype-v2.html:5726`)一致 —— **置中 dialog**,
+   每個選項一塊漸層 icon 方塊(`ic_lightbulb` / `ic_singing_mic`),標題在上、副標在下。
+   兩組漸層與兩個 icon 檔名都是從那裡逐字抄過來的,寫在 `src/styles/enhance-dialog.css`。
+   走 `DpDialog`,所以 Escape 與點背景都會關。**DP 仍然沒有這個元件**,所以樣式依然是 WA 自撰。
+
+**需要設計師給的:** 這個選單的正式稿。特別是:
+
+- ~~它應該是**貼著按鈕的浮層**,還是**置中的 dialog**?~~ **已答:置中 dialog(2026-08-27)。**
+- ~~兩個選項的 icon —— 目前**沒有 icon**,只有文字。~~ **已答:兩塊漸層方塊 + 白色 glyph。**
+- **仍未答 —— 手機版**:app prototype 在手機上是**底部 sheet**,web 目前在所有寬度都是同一張置中卡(375px 以下只縮 padding 與 icon)。要不要在手機切成 sheet?
+- **Instrumental 開啟時的直接執行版本要不要有任何提示?**(目前是按下去就換字,沒有確認、沒有 undo。)
+
+> 這一則和 A22(生物特徵同意彈窗)是同一類:**功能先於設計上線的浮層**。差別在 A22 是法遵需求
+> 不得不先做,這一則是**原本就有、遷移時弄丟又補回來的**。
+
+---
+
+### A29. Footer 剩下的 5 條連結全部是 `href="#"` —— 不擋開發
+
+2026-08-27 依產品負責人指示移除 **Pricing / Blogs / Storybook Creator** 三條(V1 不做:WA 沒有
+`/blog`、沒有定價頁,也沒有 Storybook Creator 這個產品)。移除後 footer 剩下:
+
+| 欄位        | 連結                                          |
+| ----------- | --------------------------------------------- |
+| **Studio**  | Music Video Creator · Song Composer           |
+| **Support** | FAQ                                           |
+| **Company** | Terms of Service · Privacy Policy · Contact   |
+
+**FAQ 是刻意留下的佔位。** 產品負責人確認它「是 V1 的連結,頁面還沒準備好,之後會補」,所以
+Support 這一欄維持存在、只有一條連結。
+
+**需要的不是設計,是目的地。** 這 5 條**全部**還是 `href="#"` —— 也就是 footer 上每一顆都是死連結。
+DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以不是遷移弄丟的。但 V1 要上線,
+就需要:Terms of Service、Privacy Policy、Contact、FAQ 的真實網址,以及 Studio 兩條要指向站內哪裡
+(推測是 `/mv/room` 與 `/song/create`,但沒人拍板過)。
+
+> ⚠️ **這三條是「會隨版本回來」的偏移(deviation-that-decays)。** 下一次 DP 交稿如果又出現
+> Pricing / Blogs / Storybook Creator,那是 DP 走在 V1 範圍前面,不是 DP 在糾正我們 —— 請再移除一次。
+> 這與 `CLAUDE.md` 記的 `/mv/room` 的 `Ideas` 是同一類,現在共有兩則。
+
+---
+
+### A30. 七個空狀態 / 錯誤狀態 —— 🔴 **這是下一個 session 的主要工作,等稿**
+
+2026-08-27 產品負責人列出七個「沒有內容 / 沒有紀錄 / 出錯」的畫面。目前 **7 個裡有 6 個完全沒有 UI**,
+第 7 個(My Songs)有一版我們自撰的。
+
+已經做好的是**觸發機制**:左下角新增了一個 demo panel(`?demo=1` 開啟),RD/QA 可以隨時把任一狀態
+打開來看。
+
+**→ 給設計師的完整交接是 `docs/DESIGNER-HANDOFF-2026-08-27.md`** —— 15 張稿的清單、每一張可以
+直接打開的網址、要遵守的既有規則(六寬度 / token / 對比度 / 觸控尺寸)、交稿程序,以及 5 個需要
+設計師回答而不只是畫的問題。**請從那份開始,不要從這一則。**
+開發端的對應文件是 `docs/HANDOVER-2026-08-27-EMPTY-STATES.md`。
+
+| #   | 畫面                          | 要幾張稿                                          | 現況                                    |
+| --- | ----------------------------- | ------------------------------------------------- | --------------------------------------- |
+| 1   | History 無紀錄                | **4**(All · Music Videos · Songs · Liked）        | 一段通用文字,四個 tab 共用              |
+| 2   | Choose Song → My Songs 空     | 1                                                 | WA 自撰版已上線(MV-11),要不要換掉待答 |
+| 3   | Credits Detail 無紀錄         | **3**(All · Spend · Earn)                        | **完全空白**,連容器都沒有               |
+| 4   | Community profile 無作品      | **3**(自己 MV/Song · 別人 · `/profile` 兩個 tab） | **完全空白**                            |
+| 5   | 送審被 reject                 | 2 處(History 卡片 · `/mv/result`）+ 7 種原因文案  | 狀態機只有兩個 boolean,沒有第三態       |
+| 6   | 後端 API 錯誤                 | 1 整頁                                            | 全站沒有任何 `error.tsx`                 |
+| 7   | 手機訂閱者想在網頁取消        | 1 dialog                                          | `/settings` 的 Unsubscribe 只跳 toast    |
+
+**最需要設計師注意的兩件事:**
+
+1. **第 4 項的「自己」和「別人」不能共用一張。** 自己的空頁需要一顆「去建立」CTA,別人的空頁不能有
+   —— 叫使用者幫別人建立作品在邏輯上是錯的。`/creator` 用 `?self=1` 區分這兩種視角。
+2. **第 5 項只適用 MV,不適用歌曲。** 產品負責人 2026-08-27 確認:**MV 要送審,歌曲直接上架**。
+   所以歌曲不會有 reject 畫面 —— 即使七種原因裡的「音訊品質不佳」與「版權疑慮」對歌曲才最適用。
+   這是已拍板的產品決定,不是漏掉。
+
+---
+
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 
 | 畫面                           | 狀況                                                                                                                                                        | 影響                                              |

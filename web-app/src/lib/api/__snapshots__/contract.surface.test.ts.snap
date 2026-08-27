@@ -96,8 +96,7 @@ email: string
 language: string
 prodVerId: anyOf
 q: string
-questionTypeId: anyOf
-title: string"
+questionTypeId: anyOf"
 `;
 
 exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > MvCreateRequestSchema shape is unchanged 1`] = `

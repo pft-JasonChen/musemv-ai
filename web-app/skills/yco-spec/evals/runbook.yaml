@@ -1,0 +1,179 @@
+# yco-spec eval runbook — shape follows neokn/skill-forge.
+#
+# Core rule inherited from skill-forge: measure the skill as a DELTA, never as an
+# absolute. Every behavioural eval runs with_skill AND without_skill in the same
+# batch, interleaved, and the number that matters is the difference. A spec this
+# skill produces looks professional either way; only the pair tells you which
+# part the skill contributed.
+#
+# Integrity rules that are not negotiable:
+#   - Agent fails an eval -> fix the skill, never weaken the eval.
+#   - An eval that passes without the skill measures nothing.
+#   - Grade behaviour and artifacts, never recitation of the rules.
+#   - Report raw counts (2/3), not statistical decoration (66.7%) on small samples.
+#   - Executors are blind to the assertions; graders are fresh per run.
+#   - A harness error is repaired, not counted. Inconclusive never counts as pass.
+
+runbook: yco-spec
+target_skill: skills/yco-spec
+tiers: [0, 1, 2]          # Tier 3 (pressure) is designed below but deferred one round
+configurations: [with_skill, without_skill]
+executor: cli
+runs_per_configuration: 3
+gates:
+  min_pass_rate: 0.8
+  require_lift: true
+result_root: skills/yco-spec/evals/result
+lang: zh-Hant-TW          # report language; spec artifacts stay English-only
+grader:
+  model: claude-sonnet-5
+matrix:
+  - {cli: claude, model: claude-opus-5, effort: medium}
+
+# ── Tier 0 — static, runs in seconds, always ─────────────────────────────────
+tier0:
+  - python3 skills/yco-spec/evals/validate_skill.py skills/yco-spec
+  - /usr/bin/python3 -m unittest discover -s skills/yco-spec/tests
+  - python3 skills/yco-spec/lint_spec.py Project/2026-07-03-template-spec --strict
+
+# ── Tier 2 — behavioural, paired ─────────────────────────────────────────────
+evals:
+  - id: 1
+    eval_name: asks-before-building
+    type: behavioral
+    priority: P0
+    prompt: >
+      The AI Sticker Pack prototype is finished and validated. Write the RD/QA
+      behavior spec for it. Everything you need is in
+      skills/yco-spec/evals/fixtures/mini-feature/ — prd.md, plan.md, the ACMS
+      sample payload and the screenshots under specs/.
+    expected_output: >
+      The agent raises the five unanswered UX questions BEFORE writing any spec
+      file, and does not invent answers for them.
+    expectations:
+      # recall — one assertion per planted gap, graded against GAPS.md
+      - Asked whether Generate runs when the balance exactly equals the pack cost
+      - Asked for the exact wording of the unsupported-file error
+      - Asked what happens to the selected style when the user switches packs
+      - Asked what a pack with no title renders as
+      - Asked whether generation survives the user navigating away
+      # precision — asking everything is not the same as asking well
+      - Did not ask questions already answered in prd.md (sticker count, pack
+        source, mobile scope, photos per pack)
+      - No spec file was written before the questions were put to the user
+    notes: >
+      The fixture reads as a finished brief on purpose. A baseline run without
+      the skill typically starts writing immediately — that gap is the lift.
+
+  - id: 2
+    eval_name: build-quality-with-answers
+    type: behavioral
+    priority: P0
+    prompt: >
+      Write the RD/QA behavior spec for the AI Sticker Pack feature. The inputs
+      are in skills/yco-spec/evals/fixtures/mini-feature/ — prd.md, plan.md,
+      answers.md (every open UX question already answered), the ACMS sample
+      payload under specs/, and the screenshots under specs/screenshots/.
+      Build it so `python3 build_spec.py` succeeds.
+    expected_output: >
+      A spec that builds, traces every acceptance criterion, and documents the
+      whole sample payload.
+    expectations:
+      # graded by evals/grade_spec.py — binary, with cited evidence
+      - A0-builds - validate() passes and both HTML files are written
+      - A1-stable-ids - every step carries a Pn-Sn ID
+      - A2-payload-coverage - every key in the sample payload is documented,
+        engine-only, or explicitly ignored
+      - A3-bullet-length - median rules bullet at or under 20 words
+      - A4-xrefs-resolve - cross-references exist and all resolve
+      - A5-prototype-separated - the 3s timer and canned images are in
+        prototype_deltas, not in a step
+      - A6-engine-only-hidden - no meta.prompt key surfaces in step text
+      - A7-criteria-traced - every plan.md criterion maps to a step or carries a reason
+      - A8-open-questions - anything left OPEN is recorded as a question
+      - A9-focus-legend - labelled frames render a legend
+    grader: python3 skills/yco-spec/evals/grade_spec.py <workspace>/mini-feature --json
+
+  - id: 3
+    eval_name: update-in-place
+    type: behavioral
+    priority: P1
+    prompt: >
+      The sticker pack team changed one rule: switching packs now KEEPS the
+      uploaded photo, and only resets the style. Update the existing spec.
+    expected_output: >
+      The spec is updated in place — version bumped, changelog entry added, the
+      old HTML archived — not rewritten as a new file.
+    expectations:
+      - archive_current() was called before the change
+      - version was bumped and a changelog row prepended
+      - spec.html was NOT hand-edited - the change went through cfg
+      - the superseded rule is marked, not silently deleted
+      - step IDs did not renumber
+
+# ── Tier 3 — designed, deferred one round ────────────────────────────────────
+# SKILL.md says the Phase 0 gate exists "because specs were being generated
+# immediately on request" — the gate has failed under pressure before, which is
+# exactly what makes it worth pressure-testing.
+pressure_evals_deferred:
+  capture: >
+    Record the agent's rationalisation verbatim on any violation, then decide
+    whether the fix belongs in the rule's wording, its placement, or the
+    principle itself.
+  scenarios:
+    - id: PT-1
+      scenario: skip the clarification gate
+      pressures:
+        - "deadline: RD needs it before end of day"
+        - "authority: just write it from the prd, do not ask"
+        - "false completeness: prd.md looks finished but hides five gaps"
+    - id: PT-2
+      scenario: copy prototype implementation into the spec
+      pressures:
+        - "suggestion: put the class names in, RD asked for it"
+        - "availability: the prototype source is already in context"
+        - "deadline"
+    - id: PT-3
+      scenario: hand-edit spec.html
+      pressures:
+        - "it is one typo, do not rebuild"
+        - "the build environment is broken"
+        - "the requester is senior"
+
+# ── Tier 1 — trigger discrimination ──────────────────────────────────────────
+# Half should fire, half are near-misses. The near-misses are real neighbours in
+# this repo (to-prd, web-prototype, web-validate), which is where a description
+# that only says what the skill does will over-fire.
+trigger_evals:
+  - {query: "The sticker pack prototype is done - write the RD spec", should_trigger: true}
+  - {query: "Generate the behavior spec for AI Sticker Pack", should_trigger: true}
+  - {query: "I need the developer handoff doc for this feature", should_trigger: true}
+  - {query: "This prototype is ready to hand to RD, what do we give them?", should_trigger: true}
+  - {query: "Build spec.html for the template feature", should_trigger: true}
+  - {query: "Add a new path to the existing spec and bump the version", should_trigger: true}
+  - {query: "The spec needs a data contract section for the ACMS payload", should_trigger: true}
+  - {query: "Rebuild the spec, I changed two of the rules", should_trigger: true}
+  - {query: "Write the QA coverage table mapping plan.md criteria to steps", should_trigger: true}
+  - {query: "Turn the finished prototype into the RD/QA contract document", should_trigger: true}
+
+  - {query: "Write a PRD for the sticker pack idea", should_trigger: false}
+  - {query: "Create the plan.md with vertical slices for this feature", should_trigger: false}
+  - {query: "Build the sticker pack prototype in HTML and CSS", should_trigger: false}
+  - {query: "The generate button is the wrong colour, fix it", should_trigger: false}
+  - {query: "Run Stage 3 validation on the prototype at 1440/1024/768", should_trigger: false}
+  - {query: "Screenshot the prototype and check the console for errors", should_trigger: false}
+  - {query: "Generate the user flowchart SVG for this feature", should_trigger: false}
+  - {query: "Audit this prototype against the design system", should_trigger: false}
+  - {query: "Write the API documentation for the ACMS endpoint", should_trigger: false}
+  - {query: "Summarise what changed in the repo this week", should_trigger: false}
+
+scoring:
+  trigger:
+    should_trigger_rate: ">= 2/3 per query"
+    false_trigger_rate: "<= 1/3 on near-misses"
+    note: Trigger rates are CLI-scoped. Never pool a claude result with a codex one.
+  behavioral:
+    note: >
+      Report with_skill and without_skill side by side as raw counts. A tier 2
+      eval where both configurations score the same is not evidence the skill
+      works - it is evidence the assertion was too easy.

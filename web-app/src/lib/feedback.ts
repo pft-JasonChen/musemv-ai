@@ -39,12 +39,32 @@ export const FEEDBACK_TYPES = [
 
 export type FeedbackTypeKey = (typeof FEEDBACK_TYPES)[number]["key"];
 
-/** Field limits (§3.1). Enforced by `maxLength` in the UI and by the wire schema. */
-export const FEEDBACK_SUBJECT_MAX = 100;
+/**
+ * Field limits (§3.1). Enforced by `maxLength` in the UI and by the wire schema.
+ *
+ * `FEEDBACK_SUBJECT_MAX` is gone: the **Subject field was removed** from the
+ * dialog on product-owner request (2026-08-27), and with it the `title` wire
+ * param. See `FeedbackTicketSchema` for what that costs RD.
+ */
 export const FEEDBACK_DESCRIPTION_MAX = 1000;
 
-/** Any file type, 10 MB across ALL attachments — not per file (CS spec AC-22). */
-export const FEEDBACK_MAX_TOTAL_BYTES = 10 * 1024 * 1024;
+/**
+ * Any file type, **5 MB** across ALL attachments — not per file.
+ *
+ * **5 MB IS THE REQUIREMENT.** Product owner, 2026-08-27. This is the number to
+ * enforce and the number the copy states; it is not a derived or provisional
+ * value.
+ *
+ * ⚠️ It was 10 MB until then, taken from YCO's CS spec (AC-22). **Do not
+ * "correct" it back on the next read of that document** — and note that the
+ * document may not even apply: the product owner's read on 2026-08-27 is that
+ * Muse uses a DIFFERENT endpoint from YCO's CSB, which is what makes the old
+ * AC-22 figure irrelevant rather than merely overridden (see TBD-PROF-07).
+ *
+ * The cumulative semantics are unchanged: the budget is the SUM of every picked
+ * file, and a pick that would cross it is refused whole (PROF-E5).
+ */
+export const FEEDBACK_MAX_TOTAL_BYTES = 5 * 1024 * 1024;
 
 export function questionTypeIdOf(key: FeedbackTypeKey): number | null {
   return FEEDBACK_TYPES.find((t) => t.key === key)?.questionTypeId ?? null;

@@ -2,6 +2,41 @@
 
 ## In flight — read before starting
 
+> ## → 2026-08-27: `docs/HANDOVER-2026-08-27-EMPTY-STATES.md`
+>
+> **The newest handover, and the one a fresh session should read FIRST.** The product owner asked
+> for three things: the Footer link removal and the Feedback dialog changes are **done**; the seven
+> empty / error / rejected states are **specced and triggerable but not drawn**. That file carries
+> each one's current code location, the four decisions already taken on the reject flow, and the
+> two contract additions the remaining work needs. It supersedes `NEXT-SESSION.md` as the entry
+> point while those seven items are open.
+>
+> **When the designer arrives, hand them `docs/DESIGNER-HANDOFF-2026-08-27.md` instead** — same
+> seven items, written for whoever is drawing them: the 15 artboards, a directly-openable
+> `?demo=1` URL per artboard, the existing constraints they must not violate (six widths, tokens,
+> the A1/A9/A13 contrast floor, 24×24 touch targets), the drop-handback procedure, and 5 questions
+> they must answer rather than draw.
+>
+> Three things from it are worth knowing before you touch anything:
+>
+> - **There is now a demo/QA panel at bottom-left, and it is INVISIBLE until `?demo=1`.** That is
+>   not shyness, it is what keeps it out of all 115 visual baselines and every axe sweep — a
+>   `position: fixed` element rendering by default would force a full re-record, and re-recording
+>   **accepts whatever else changed** on 17 routes at the same time (the A4 lesson). Guarded by
+>   e2e and mutation-tested both ways. `?demo=1` is the *enabler*: it writes
+>   `localStorage["muse_demo"]`, which is why the panel survives navigation.
+> - **`DEMO_FLAGS[].status` is a promise you have to keep.** `awaiting-design` means the flag is
+>   stored but no screen reads it yet, and the panel SAYS so on screen. Flip it to `live` in the
+>   same change that lands its UI, or the panel starts lying.
+> - **Feedback's `title` param is GONE, and that is a C2 change** (Subject field removed). The
+>   product owner reconfirmed "don't send it" on 2026-08-27 with a reason that widens the question:
+>   **Muse looks to be on a DIFFERENT API from YCO's CSB.** If so, every CSB-inherited value in
+>   that contract is provisional — not just `title`, but the four `questionTypeId`s, `prodVerId`
+>   504, and AC-22's 10 MB cap. That is `TBD-PROF-07`: RD names the real endpoint. If it turns out
+>   to require a title, the decision returns to the product owner; three substitutes were already
+>   considered and rejected, so do not pick one. The attachment cap is now **5 MB — that is the
+>   requirement**, not a deviation to be reconciled.
+
 > ## → START WITH `docs/archive/NEXT-SESSION.md`
 >
 > Rewritten 2026-08-07 so a fresh session does not have to re-derive anything. It carries the

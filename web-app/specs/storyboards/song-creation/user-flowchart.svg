@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1100" viewBox="0 0 1100 1100" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<title>AI Song Creation &#8212; User Flowchart</title>
+<defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
+<rect width="1100" height="1100" fill="#ffffff"/>
+<text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">AI Song Creation &#8212; User Flowchart</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v2, 2026-08-25</text>
+<text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; green = success / resolved &#183; red = error state</text>
+
+<g transform="translate(0,80)">
+<text x="40" y="65" font-size="12" fill="#5a6b78">Simple and Custom converge at Create Song; the generation, result and History screens are shared (drawn once).</text>
+<rect x="460" y="100" width="180" height="40" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="550" y="125" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Sidebar &quot;AI Song&quot;</text>
+<polygon points="550,178 679.911,210 550,242 420.089,210" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="550" y="215" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Compose mode?</text>
+<line x1="550" y1="140" x2="550" y2="178" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="240" y="300" width="180" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="330" y="320" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Compose &#8212; Simple</text>
+<text x="330" y="338" font-size="12" fill="#5a6b78" text-anchor="middle">Idea, Enhance, char cap &#183;</text>
+<text x="330" y="353" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S1..S4</text>
+<rect x="680" y="300" width="180" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="770" y="320" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Compose &#8212; Custom</text>
+<text x="770" y="338" font-size="12" fill="#5a6b78" text-anchor="middle">Lyrics, chips, Instrumental,</text>
+<text x="770" y="353" font-size="12" fill="#5a6b78" text-anchor="middle">Enhance &#183; P2-S1..S8</text>
+<line x1="550" y1="242" x2="330" y2="300" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="436.431" y="257.463" font-size="12" fill="#5a6b78" text-anchor="middle">Simple</text>
+<line x1="550" y1="242" x2="770" y2="300" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="663.569" y="257.463" font-size="12" fill="#5a6b78" text-anchor="middle">Custom</text>
+<rect x="460" y="410" width="180" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="550" y="430" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Tap Create Song</text>
+<text x="550" y="448" font-size="12" fill="#5a6b78" text-anchor="middle">Charges generation cost &#183;</text>
+<text x="550" y="463" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S5, P2-S9</text>
+<line x1="330" y1="365" x2="550" y2="410" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="770" y1="365" x2="550" y2="410" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="800" y="390" width="180" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="890" y="410" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">No active session</text>
+<text x="890" y="428" font-size="12" fill="#5a6b78" text-anchor="middle">Sign-in gate opens &#183; P4-S1</text>
+<text x="890" y="443" font-size="12" fill="#5a6b78" text-anchor="middle">&#8594; P4-S2</text>
+<rect x="800" y="490" width="180" height="50" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="890" y="510" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Balance below cost</text>
+<text x="890" y="528" font-size="12" fill="#5a6b78" text-anchor="middle">Buy-credits IAP &#183; P5-S1</text>
+<path d="M640 442.5 L720 442.5 L720 422.5 L800 422.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="890" y="382" font-size="11" fill="#5a6b78" text-anchor="middle">guest</text>
+<path d="M640 442.5 L720 442.5 L720 515 L800 515" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="890" y="482" font-size="11" fill="#5a6b78" text-anchor="middle">insufficient credits</text>
+<rect x="30" y="300" width="180" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="120" y="320" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Side rail</text>
+<text x="120" y="338" font-size="12" fill="#5a6b78" text-anchor="middle">Trending Songs, or My</text>
+<text x="120" y="353" font-size="12" fill="#5a6b78" text-anchor="middle">Creations &#183; P6-S1</text>
+<rect x="460" y="500" width="180" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="550" y="520" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/song/creating</text>
+<text x="550" y="538" font-size="12" fill="#5a6b78" text-anchor="middle">Progress ring + estimate &#183;</text>
+<text x="550" y="553" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S6, P2-S10</text>
+<line x1="550" y1="475" x2="550" y2="500" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<polygon points="550,578 653.635,610 550,642 446.365,610" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="550" y="608" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Job outcome</text>
+<text x="550" y="625" font-size="11" fill="#5a6b78" text-anchor="middle">mock timing</text>
+<line x1="550" y1="565" x2="550" y2="578" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="460" y="700" width="180" height="80" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="550" y="720" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/song/result</text>
+<text x="550" y="738" font-size="12" fill="#5a6b78" text-anchor="middle">Player; Lyrics panel on</text>
+<text x="550" y="753" font-size="12" fill="#5a6b78" text-anchor="middle">Custom only &#183; P1-S7,</text>
+<text x="550" y="768" font-size="12" fill="#5a6b78" text-anchor="middle">P2-S11</text>
+<line x1="550" y1="642" x2="550" y2="700" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="562" y="665" font-size="12" fill="#5a6b78" text-anchor="start">done</text>
+<rect x="800" y="700" width="180" height="95" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="890" y="720" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Result screen controls</text>
+<text x="890" y="738" font-size="12" fill="#5a6b78" text-anchor="middle">Like, Share, Lyrics sheet,</text>
+<text x="890" y="753" font-size="12" fill="#5a6b78" text-anchor="middle">Publish, Recreate, from</text>
+<text x="890" y="768" font-size="12" fill="#5a6b78" text-anchor="middle">History, Use in MV &#183;</text>
+<text x="890" y="783" font-size="12" fill="#5a6b78" text-anchor="middle">P7-S1..S7</text>
+<path d="M640 740 L720 740 L720 747.5 L800 747.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="890" y="692" font-size="11" fill="#5a6b78" text-anchor="middle">once already on the result screen</text>
+<rect x="460" y="800" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="550" y="820" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/history</text>
+<text x="550" y="838" font-size="12" fill="#5a6b78" text-anchor="middle">New row, Done pill &#183; P1-S8,</text>
+<text x="550" y="853" font-size="12" fill="#5a6b78" text-anchor="middle">P2-S12</text>
+<line x1="550" y1="780" x2="550" y2="800" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="140" y="700" width="180" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="230" y="720" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Generation Failed</text>
+<text x="230" y="738" font-size="12" fill="#5a6b78" text-anchor="middle">Retry / Back &#183; P3-E3</text>
+<line x1="550" y1="642" x2="230" y2="700" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="387.503" y="657.224" font-size="12" fill="#5a6b78" text-anchor="middle">&#8220;[fail]&#8221; marker &#183; P3-S1</text>
+<line x1="40" y1="896" x2="1060" y2="896" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="916" x2="74" y2="916" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="920" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="936" x2="74" y2="936" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="940" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+<line x1="40" y1="956" x2="74" y2="956" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="960" font-size="12" fill="#5a6b78">Error branch</text>
+</g>
+</svg>

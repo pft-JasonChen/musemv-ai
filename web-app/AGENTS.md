@@ -291,6 +291,28 @@ House style in one line:
 - Stories only for components with no `next/*` imports (runner is @storybook/react-vite). tsconfig
   excludes `*.stories.tsx`, so verify story changes with `npm run build-storybook`, not typecheck.
 
+## Demo / QA state panel
+
+- `?demo=1` on any URL arms a bottom-left switchboard (`src/components/demo/DemoPanel.tsx`) that
+  lets RD/QA trigger the empty / error / rejected states a seeded prototype cannot otherwise
+  reach. **It renders nothing without that query, and that is load-bearing** — a `position: fixed`
+  element rendering by default lands in all 115 `visual-baseline.spec.ts` screenshots and every
+  `a11y.spec.ts` sweep, and re-recording those baselines ACCEPTS whatever else changed on 17
+  routes at the same time. Guarded by e2e, mutation-tested both ways. Don't make it visible by
+  default; don't add it to the baselines.
+- The flags live in an **external store** (`src/lib/demoStore.ts`), read with
+  `useSyncExternalStore` — deliberately NOT a provider, so a demo tool stays outside the C4
+  contract surface RD codes against. Its snapshot is cached by raw string because
+  `useSyncExternalStore` compares by IDENTITY: re-parsing per call is an infinite render loop, not
+  a perf nit. `demoStore.test.ts` guards that; don't "simplify" the cache away.
+- **Consume a flag as the LAST render-time branch**, never by mutating real data:
+  `const shown = demoEmpty ? [] : rows.filter(…)`. A demo switch that empties a seed constant or
+  short-circuits a provider can leave the app in a state the panel can't undo, and it changes what
+  the production build does when the flag is off.
+- `DEMO_FLAGS[].status` is `live` or `awaiting-design`, and the panel shows the difference on
+  screen. **Flip an entry to `live` in the same change that lands its UI** — otherwise the panel
+  advertises a switch that does nothing.
+
 ## Judgment
 
 - **Done** means the four Definition-of-done commands exit 0 — and for visual work, the changed

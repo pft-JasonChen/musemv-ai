@@ -1271,7 +1271,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <td><strong>MV-P1-S2</strong></td>
 <td>Tap an MV-type card</td>
 <td>Selects type (purple border); autoplaying muted preview video per card</td>
-<td>Types: Singing / Storytelling / Hybrid — <strong>three cards, each autoplaying its own <code>feature_intro_ai_mv_*</code> video</strong>. That IS the type introduction; there is no separate carousel, in DP or here. <em>(Corrected 2026-08-20 against DP <code>MVCreatePage.tsx:45-47,91-93</code>.)</em></td>
+<td>Types: Singing / Storytelling / Hybrid — <strong>three cards, each autoplaying its own <code>feature_intro_ai_mv_*</code> video</strong>. That IS the type introduction; there is no separate carousel, in DP or here. <em>(Corrected 2026-08-20 against DP <code>MVCreatePage.tsx:45-47,91-93</code>.)</em> ⚠️ <strong>The on-screen label for <code>hybrid</code> is &ldquo;Sing &amp; Story&rdquo;, not &ldquo;Hybrid&rdquo;</strong> (product owner request, 2026-08-13) — the <code>id</code> stays <code>hybrid</code> (<code>MvTypeSchema</code>, frozen contract surface), only the DISPLAY name changed. Corrected 2026-08-27 from code (<code>src/lib/mv/mock.ts</code> <code>MV_TYPES</code>) during the S2 storyboard-spec capture.</td>
 </tr>
 <tr>
 <td><strong>MV-P1-S3</strong></td>
@@ -1283,7 +1283,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <td><strong>MV-P1-S4</strong></td>
 <td>Type / paste a description</td>
 <td>Updates <code>n/2500</code> counter; blocks keyboard/paste past 2500</td>
-<td>⚠️ Hard 2500 cap is web-new. Shortcuts: <strong>Templates</strong>, <strong>Enhance</strong> (<code>enhancePrompt</code>, 🔒 mock). <strong>The "Ideas" button was removed 2026-08-06</strong> — V1 ships no canned-sample fillers; a deliberate subtraction from DP, which still has one. Note: shortcut-fills are not length-capped (see AC-MV-03).</td>
+<td>⚠️ Hard 2500 cap is web-new. Shortcuts: <strong>Templates</strong> and <strong>Enhance</strong>. <strong>The "Ideas" button was removed 2026-08-06</strong> — V1 ships no canned-sample fillers, a deliberate subtraction from DP, which still has one. <strong>Enhance was removed 2026-08-25 (<code>3bdff87</code>) then RESTORED 2026-08-27</strong> — the 2026-08-25 removal was product-owner-directed because the field had no supported backend API; RD confirmed one exists on 2026-08-26, so the removal no longer applies and the shortcut is back (same <code>EnhanceButton</code> / <code>enhancePrompt</code> round-trip as before, <code>kind="mv"</code>). Corrected 2026-08-27 twice in one day during the S2 storyboard-spec capture — first to record the removal, then to record its reversal; the S2 spec's screenshots and P2 scope note were captured <strong>during the removal window</strong> and are stale on this one point (see PLAN.md). Note: Templates' and Enhance's fills are not length-capped (see AC-MV-03).</td>
 </tr>
 <tr>
 <td><strong>MV-P1-S5</strong></td>
@@ -1358,9 +1358,9 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 </ul>
 <h3 id="mv-p6-supporting-sheets-external-entries">MV-P6 — Supporting sheets &amp; external entries</h3>
 <ul>
-<li><strong>MV-P6-A ChooseSongModal:</strong> tabs <strong>My Songs</strong> (default) / <strong>Sample Songs</strong> (🔒 <code>MY_SONGS</code>/<code>SAMPLE_SONGS</code>); each row art/title/duration + <strong>Use</strong> → <code>onPick</code> (same handler for both tabs) → Trim. ⚠️ No in-modal inline preview (app F04-1 has one); preview happens on the song card in <code>/mv/room</code> after selection.</li>
+<li><strong>MV-P6-A ChooseSongModal:</strong> tabs <strong>My Songs</strong> (default) / <strong>Sample Songs</strong> (🔒 <code>MY_SONGS</code>/<code>SAMPLE_SONGS</code>); each row art/title/duration + <strong>Use</strong> → <code>onPick</code> (same handler for both tabs) → Trim. ⚠️ <strong>Stale as of slice 3g-2 (2026-08-06) — the migration ADDED an in-modal inline preview.</strong> Tapping a row now plays/pauses that song right there (art swaps to a pause icon, a live position readout replaces the duration) via <code>useAudioPlayer</code>; the row's <strong>Use</strong> pill is revealed on hover/tap/focus. This line used to say the opposite ("No in-modal inline preview"), true of the pre-migration <code>Modal</code> this document was written against but not of the current <code>MvSheet</code>-based component. Corrected 2026-08-27 from code (<code>ChooseSongModal.tsx</code>) during the S2 storyboard-spec capture; the song card on <code>/mv/room</code> still ALSO plays/pauses after selection, so both previews exist now, not one.</li>
 <li><strong>MV-P6-B Import audio:</strong> real local file picker. <strong>MV-02 (2026-07-23):</strong> accepts only MP3/AAC/WAV/M4A up to 50MB (by extension or MIME) — otherwise an error toast and no import. On accept, derives duration from metadata, <strong>falls back to 0 on error</strong> (then Trim math uses a 180s fallback while the card shows <code>0:00</code>) → Trim.</li>
-<li><strong>MV-P6-C TrimAudioModal:</strong> waveform + two drag handles; default select 15%→70%; min 5% gap; live preview of the selected region; <strong>Use Trimmed Audio</strong> stores <code>trim{start,end}</code> (full <code>durationSec</code> unchanged). <strong>MV-01 (2026-07-23):</strong> the selected length must be <strong>≥30s</strong> — below that the button is disabled and a "minimum 30s" hint shows. ⚠️ Sample-song trimming is web-new (app trims only library-import).</li>
+<li><strong>MV-P6-C TrimAudioModal:</strong> waveform + two drag handles; default select 15%→70%; min 5% gap; live preview of the selected region; a <strong>Confirm</strong> footer button (⚠️ <strong>not</strong> &ldquo;Use Trimmed Audio&rdquo; — that was the pre-migration <code>Modal</code>'s own label; slice 3g-2's <code>MvSheet</code> shell gives every one of the six sheets the same generic Cancel/Confirm footer, so this one reads plain &ldquo;Confirm&rdquo; like its siblings. Corrected 2026-08-27 from code during the S2 storyboard-spec capture, also visible in <code>e2e/mv-flow.spec.ts</code>'s own comment on the same rename) stores <code>trim{start,end}</code> (full <code>durationSec</code> unchanged). <strong>MV-01 (2026-07-23):</strong> the selected length must be <strong>≥30s</strong> — below that the button is disabled and a "minimum 30s" hint shows. ⚠️ Sample-song trimming is web-new (app trims only library-import).</li>
 <li><strong>MV-P6-D FacePickerModal:</strong> manual crop square + size slider (256×256 JPEG). Detected-face suggestions are supported by the component but <strong>not passed</strong> from <code>/mv/room</code> (manual-crop only as-built). ⚠️ App auto-detects up to 6 faces (→ <code>TBD-MV-03</code>).</li>
 <li><strong>MV-P6-E SettingsModal:</strong> Aspect Ratio 9:16/16:9 · Quality <strong>Standard/High</strong> (SD/HD icons). <strong>MV-04 (2026-07-23):</strong> on the free plan <strong>"High" is greyed with a crown</strong>; tapping it opens <code>SubscribeModal</code> (IAP) instead of selecting. Subscribers select it normally. · Title/Author toggles+inputs · Show Subtitle · Show Watermark.</li>
 <li><strong>MV-P6-F TemplateSheet</strong> (its own component since 3g-2 — it used to be an inline <code>&lt;Modal&gt;</code> in <code>MvRoom</code>): grid of <code>TEMPLATES</code>; selecting fills <code>description</code> with the template prompt. ⚠️ Does <strong>not</strong> auto-select/lock a song (the old web spec claimed it did → <code>TBD-MV-05</code>).</li>
@@ -1433,7 +1433,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>AC-MV-11</strong> — IF a job <code>failed</code>, THEN THE SYSTEM SHALL show the error state with <strong>Back</strong> and <strong>Retry</strong> and mark the History row Failed. (Retry with an unchanged <code>[fail]</code> description re-fails.)</li>
 <li><strong>AC-MV-12</strong> — WHEN Regenerate scene or Recreate cover is invoked in Edit MV, THE SYSTEM SHALL <strong>overwrite</strong> that scene/cover in place (no take/cover picker, no undo) and decrement the balance (<code>COST_REGEN</code> −20 / <code>COST_COVER</code> −4). <em>(Cover corrected from −10 on 2026-08-19.)</em></li>
 <li><strong>AC-MV-13</strong> — WHEN <strong>Merge MV</strong> is invoked with sufficient balance, THE SYSTEM SHALL re-render the MV from the current cover/scenes + edited text and charge <code>COST_RENDER</code> (−200) on generation start (refunded on failure); there is <strong>no Save</strong> and edits do not persist across leaving the page. WHEN the balance is insufficient, it SHALL open the buy-credits IAP instead.</li>
-<li><strong>AC-MV-14</strong> — WHEN <strong>Enhance</strong> is invoked on the description, visual style, scene prompt, or cover description, THE SYSTEM SHALL replace that field with the value returned by <code>enhancePrompt</code> for the matching <code>kind</code>.</li>
+<li><strong>AC-MV-14</strong> — WHEN <strong>Enhance</strong> is invoked on visual style, scene prompt, cover description, or the MV description, THE SYSTEM SHALL replace that field with the value returned by <code>enhancePrompt</code> for the matching <code>kind</code>. All four fields again — <code>/mv/room</code>'s Enhance button was removed 2026-08-25 (<code>3bdff87</code>, product owner, "not available in V1" — no supported backend API at the time) and <strong>restored 2026-08-27</strong> once RD confirmed the API exists. Corrected 2026-08-27 twice in one day during the S2 storyboard-spec capture: first to drop description (the removal), then to add it back (the reversal).</li>
 <li><strong>AC-MV-15</strong> — ~~WHEN a storyboard, render, or song job starts, THE SYSTEM SHALL NOT change the credit balance (only Edit-MV actions do).~~ <strong>WITHDRAWN 2026-08-19 — this was written backwards.</strong> It contradicted <code>AC-MV-19</code> in this same file, and the code, <code>00-overview</code> §6, the e2e guard <code>G5-d#1</code> and the QA checklist below all implement the opposite. <strong>The charging rule is <code>AC-MV-19</code>: charge on generation start, refund on failure.</strong> Nothing replaces this ID; it is retired rather than renumbered so existing references resolve to this note.</li>
 <li><strong>AC-MV-16</strong> — WHEN Trim is confirmed, THE SYSTEM SHALL store <code>{start,end}</code> (leaving <code>durationSec</code> unchanged) only when the selected length is <strong>≥30s</strong> (MV-01); below that the confirm is disabled.</li>
 <li><strong>AC-MV-17</strong> — WHEN a local audio file is imported, THE SYSTEM SHALL accept only MP3/AAC/WAV/M4A ≤50MB and reject anything else with an error toast (MV-02).</li>
@@ -1595,7 +1595,7 @@ History alone.</p>
 <ul>
 <li><code>mode</code>: <code>simple</code> (default) | <code>custom</code>.</li>
 <li><code>describe</code>: string (Simple), max 2500 (<code>DESCRIPTION_MAX</code>).</li>
-<li><code>instrumental</code>: boolean (both modes) — when ON in Custom, the Lyrics field is replaced by "No lyrics needed…".</li>
+<li><code>instrumental</code>: boolean (both modes) — when ON in Custom, the box <strong>keeps whatever is in it</strong> and only the <strong>Lyrics</strong> sample-fill hides; the placeholder (visible only while the box is empty) swaps to the instrumental copy (see <code>AC-SONG-02</code> / <code>AC-SONG-02c</code>).</li>
 <li><code>lyrics</code>: string (Custom), max 2500.</li>
 <li><code>genre</code> (default "Pop"), <code>mood</code> (default "Uplifting"), <code>vocal</code> (nullable, optional), <code>title</code> (optional).</li>
 <li><strong>CTA-ready</strong> (<code>isSongReady</code>): <strong>Custom → always ready</strong>; <strong>Simple → <code>describe.trim() !== ""</code></strong>.</li>
@@ -1635,13 +1635,95 @@ History alone.</p>
 <li>⚠️ <strong>UI pending designer polish.</strong> The control is DP's <code>.song-create__idea-btn</code> verbatim<br>
     (lightbulb mask + label, the pill the Lyrics button already used). The product owner asked for a<br>
     working button first and for the designer to adjust it later.</li>
+<li><strong>RESOLVED 2026-08-25: build-in, not MSR cloud config.</strong> A candidate MSR (cloud-config) JSON<br>
+    for these two pools — same shape as the sample handed to RD, i18n block for 9 target-market<br>
+    locales (<code>en de es hi id ja ko pt-BR zh-TW</code>) with only <code>en</code> filled — was drafted and given to<br>
+    RD to weigh against keeping the content in <code>src/lib/mv/songIdeas.ts</code>. <strong>RD decided build-in.</strong><br>
+    The draft is archived at <code>docs/archive/song-idea-lyrics-msr.json</code> for the record, not as a<br>
+    spec to implement against. <code>src/lib/mv/songIdeas.ts</code> stays the one source of truth; a future<br>
+    localization pass (if any) translates the two exported arrays in place rather than adding a<br>
+    cloud-config layer.</li>
 <li>Other compose helpers:<br>
-<strong>Enhance</strong> (<code>enhancePrompt</code>; Custom lyrics offers Refine Idea vs Refine Lyrics; <strong>FREE — no charge<br>
+<strong>Enhance</strong> (<code>enhancePrompt</code>; <strong>FREE — no charge<br>
   at all</strong> since 2026-08-12. <code>enhanceCost</code> / <code>consumeEnhance</code> were removed from <code>useCredits</code> and the<br>
   cost badge from <code>EnhanceButton</code>; there is no cloud-config action for Enhance, so billing it was<br>
   never in the approved model — SONG-04, spec area 11 §5.5), a supported-languages info<br>
   popover (Custom). The inline <strong><code>CreditPill</code> shows the live balance</strong> (SONG-05).</li>
 </ul>
+<h3 id="enhance-asks-first-only-when-there-is-something-to-ask-about-ac-song-14">Enhance asks first only when there is something to ask about (<code>AC-SONG-14</code>)</h3>
+<p><code>Enhance</code> is one pill with two behaviours, and <strong>Instrumental is what selects between them</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>Instrumental</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Custom</strong></td>
+<td>OFF</td>
+<td>Opens a menu titled <strong>"What would you like to enhance?"</strong> — the box may hold a lyric sheet or a brief, so the front end cannot know which the user meant</td>
+</tr>
+<tr>
+<td><strong>Custom</strong></td>
+<td>ON</td>
+<td><strong>No menu.</strong> Runs <strong>Refine Idea</strong> (<code>kind: "song"</code>) on the first tap — lyrics are not supported in this mode, so there is nothing to choose between</td>
+</tr>
+<tr>
+<td><strong>Simple</strong></td>
+<td>either</td>
+<td><strong>No menu.</strong> Runs <code>kind: "song"</code> directly — Simple has only the one field</td>
+</tr>
+</tbody>
+</table>
+<p>The chooser's two entries:</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Sub-label</th>
+<th><code>enhancePrompt</code> <code>kind</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Refine Idea</strong></td>
+<td>Sharpen the mood, tone, and detail</td>
+<td><code>song</code></td>
+</tr>
+<tr>
+<td><strong>Refine Lyrics</strong></td>
+<td>Polish wording, rhythm, and flow</td>
+<td><code>lyrics</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>The engine has two refine modes, so each choice is its own API call — RD owns both</strong><br>
+(product owner, 2026-08-25). The front end only picks the <code>kind</code>; it does not decide what<br>
+"refine" means for either.</p>
+<p>Implementation note: <code>EnhanceButton</code> branches on whether it was given <code>directions</code>, so<br>
+<code>SongCompose</code> passes them <strong>conditionally</strong> — withholding them under Instrumental is what<br>
+turns the chooser off. <code>Enhance</code> itself renders in both toggle states; the only control that<br>
+hides under Instrumental is the <strong>Lyrics</strong> sample-fill (<code>AC-SONG-02</code>).</p>
+<blockquote>
+<p>🎨 <strong>The chooser is a CENTRED DIALOG as of 2026-08-27.</strong> It was an anchored <code>w-60</code> popover<br>
+for two days — a WA placeholder for a design DP does not ship. The real one comes from the<br>
+mobile app prototype's "Enhance Direction Sheet" (<code>muse-prototype-v2.html:5726</code>): a centred<br>
+card, a gradient icon tile per direction (<code>ic_lightbulb</code> / <code>ic_singing_mic</code>), label over<br>
+sub-label. It renders through <code>DpDialog</code>, so Escape and the backdrop both close it, and its<br>
+styling is <code>src/styles/enhance-dialog.css</code> (WA-authored — there is no DP file to be verbatim<br>
+with). <strong>This closes the first half of <code>DESIGNER-TODO</code> A28</strong>; the phone question is still open.</p>
+<p>⚠️ <strong>This menu had been unreachable since the DP migration and was restored 2026-08-25.</strong><br>
+<code>EnhanceButton</code>'s DP-skinned branch returned the button alone while its click handler set<br>
+the open state, so on Custom <strong>Enhance was a dead button</strong> — it did nothing at all. The<br>
+two modes, their copy and the <code>kind</code> split had been in the code the whole time; only the<br>
+rendering was missing. Guarded by <code>e2e/behaviour-regressions.spec.ts</code> →<br>
+"Custom Enhance opens the two-mode menu".</p>
+<p>The remaining A28 question is what this does at 375px: the app prototype is a phone and<br>
+draws it as a bottom SHEET, while the web build shows the same centred card at every width.</p>
+</blockquote>
 <p><strong>Job (<code>SongJob</code> → <code>SongResult</code>)</strong>: <code>createSongJob(compose)</code> → poll <code>getSongJob</code> → on done sets<br>
 <code>songResult</code> ({title, cover, genre, mood, durationSec, audioUrl?, instrumental, lyrics?}) and marks<br>
 History completed. Generation estimate "~1 minute" (display-only; mock timing).</p>
@@ -1682,8 +1764,8 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <ul>
 <li><strong>SONG-P1-S0 (side rail, 2026-08-06)</strong> Same two-mode aside as <code>/mv/room</code> (area 02 MV-P1-S0): <strong>"Trending Songs"</strong> over <code>TOP_PICKS_SONGS</code> with a "See all" → <code>/explore/songs</code>, or <strong>"My Creations"</strong> over the user's own finished songs from <code>useHistory()</code>, no "See all", each row opening <code>/song/result?id=</code>. Requires <code>loggedIn</code> <strong>and</strong> at least one completed song.</li>
 <li><strong>SONG-P1-S1</strong> Arrive <code>/song/create</code> (<strong>guest-reachable</strong> — the route guard was removed 2026-08-12, the gate is on the Create Song button; see <code>SONG-E3</code> / <code>AC-AUTH-08</code>); <strong>Simple</strong> tab default; <strong>Create Song</strong> disabled until <code>describe</code> non-empty. Hint "Describe your song to continue."</li>
-<li><strong>SONG-P1-S2</strong> Toggle <strong>Instrumental</strong> (both modes). Simple: describe + <strong>Idea</strong> fill + Enhance.</li>
-<li><strong>SONG-P1-S3</strong> Switch to <strong>Custom</strong>: free-form <strong>Lyrics</strong> textarea (or "No lyrics needed" when Instrumental) + <strong>Idea</strong>/<strong>Lyrics</strong> sample fills (Idea survives Instrumental, Lyrics does not) / Enhance; Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. <em>(No BPM/Key row since 3j — §1.)</em></li>
+<li><strong>SONG-P1-S2</strong> Toggle <strong>Instrumental</strong> (both modes). Simple: describe + <strong>Idea</strong> fill + Enhance. Toggling <strong>never changes the text</strong> in either box — see <code>AC-SONG-02</code>.</li>
+<li><strong>SONG-P1-S3</strong> Switch to <strong>Custom</strong>: free-form <strong>Lyrics</strong> textarea (or "No lyrics needed" when Instrumental) + <strong>Idea</strong>/<strong>Lyrics</strong> sample fills (Idea survives Instrumental, Lyrics does not) / <strong>Enhance</strong> (survives Instrumental, but drops its chooser there — <code>AC-SONG-14</code>); Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. <em>(No BPM/Key row since 3j — §1.)</em></li>
 <li><strong>SONG-P1-S4</strong> Tap <strong>Create Song</strong> (<code>songCost(instrumental)</code> — <strong>6</strong> vocal / <strong>12</strong> instrumental) → <code>resetForNewSong()</code> → <code>/song/creating</code>. <em>(Was a flat <code>10</code>; repriced 2026-08-12, journey text corrected 2026-08-19.)</em></li>
 </ul>
 <h3 id="song-p2-generation">SONG-P2 — Generation</h3>
@@ -1727,7 +1809,7 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <tr>
 <td><strong>SONG-E4</strong></td>
 <td>Instrumental ON (Custom)</td>
-<td>Lyrics field replaced with an instrumental note; result typically has no Lyrics sheet. ⚠️ Toggling Instrumental does <strong>not</strong> clear already-typed lyrics, so an atypical path (type lyrics → enable Instrumental) can still carry lyrics into the result (→ <code>TBD-SONG-01</code>).</td>
+<td>Lyrics field keeps its contents and only the <strong>Lyrics</strong> sample-fill hides; result typically has no Lyrics sheet. ⚠️ Because the toggle never clears the box, a path of type lyrics → enable Instrumental can still carry lyrics into the result (→ <code>TBD-SONG-01</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -1736,7 +1818,12 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <ul>
 <li><strong>AC-SONG-01</strong> — WHEN <code>/song/create</code> loads, THE SYSTEM SHALL default to <strong>Simple</strong> and keep <strong>Create Song</strong> disabled until <code>describe.trim() !== ""</code>; in <strong>Custom</strong>, it SHALL be enabled by default.</li>
 <li><strong>AC-SONG-01b</strong> — WHILE logged out, WHEN <code>/song/create</code> is opened, THE SYSTEM SHALL render the full compose screen with no sign-in modal; and THE SYSTEM SHALL open the sign-in modal only when the user activates <strong>Create Song</strong>. THE SYSTEM SHALL NOT show the insufficient-credit upsell to a logged-out user — <code>requireLogin</code> wraps the GL-01 balance check, so sign-in always comes first. <em>(new 2026-08-12; see area 09 AC-AUTH-08)</em></li>
-<li><strong>AC-SONG-02</strong> — WHEN Instrumental is ON in Custom, THE SYSTEM SHALL hide the lyrics editor and typically generate without lyrics (no Lyrics sheet). <em>(Note: toggling does not clear previously-typed lyrics — see SONG-E4 / <code>TBD-SONG-01</code>.)</em></li>
+<li><strong>AC-SONG-02</strong> — WHEN Instrumental is toggled in Custom, THE SYSTEM SHALL leave the Lyrics box contents <strong>unchanged</strong> in both directions, and SHALL hide only the <strong>Lyrics</strong> sample-fill while it is ON. THE <strong>Idea</strong> fill and <strong>Enhance</strong> SHALL remain available while Instrumental is ON, and the song SHALL generate without a Lyrics sheet. <em>(Rewritten 2026-08-26: a rule that cleared the box on toggle-on was in place for one day and is withdrawn — the toggle is not a destructive control.)</em><blockquote>
+<p><em>Rewritten 2026-08-25 (product owner). The previous rule was the opposite — "toggling does not clear previously-typed lyrics" — which left the old prompt sitting under an instrumental placeholder that contradicted it. The two drafts are swapped, so neither piece of text is lost. Closes the clearing half of <code>TBD-SONG-01</code>.</em></p>
+</blockquote>
+</li>
+<li><strong>AC-SONG-02c</strong> — WHILE Instrumental is ON, the Lyrics box placeholder SHALL read exactly:<br>
+<code>No lyrics needed - AI will create a pure instrumental track.</code> / newline / <code>Describe the mood or vibe of your instrumental...</code> <em>(copy fixed by the product owner 2026-08-25; the previous text put the two sentences in the opposite order.)</em></li>
 <li><strong>AC-SONG-02b</strong> — WHEN the user activates <strong>Idea</strong>, THE SYSTEM SHALL replace the active box's contents with a randomly chosen <code>SONG_IDEA_PROMPTS</code> entry other than the one already there; and WHEN the user activates <strong>Lyrics</strong> (Custom, non-instrumental), THE SYSTEM SHALL do the same from <code>LYRIC_PRESETS</code>. <strong>Idea</strong> SHALL be present in both tabs and SHALL remain available while Instrumental is ON; <strong>Lyrics</strong> SHALL NOT be rendered while Instrumental is ON. <em>(new 2026-08-24 — the buttons were removed 2026-08-06 and restored with the product owner's copy; guarded by <code>e2e/behaviour-regressions.spec.ts</code> → <code>3j / 2026-08-24</code>.)</em></li>
 <li><strong>AC-SONG-03</strong> — WHEN describe/lyrics exceeds 2500 chars, THE SYSTEM SHALL cap typed/pasted input at 2500. (Enhance and the Idea / Lyrics sample fills are not capped by <code>maxLength</code> — every shipped preset is inside 2500 by construction, held by <code>src/lib/mv/songIdeas.test.ts</code>.)</li>
 <li><strong>AC-SONG-04</strong> — WHEN <strong>Create Song</strong> is tapped, THE SYSTEM SHALL <code>resetForNewSong()</code>, insert a Generating History row, and navigate to <code>/song/creating</code>.</li>
@@ -1749,6 +1836,7 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <li><strong>AC-SONG-11b</strong> — ⚠️ <strong>SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.</strong> It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and <code>songCompose.{bpm,key}</code> persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident. <em>(Renumbered from a second <code>AC-SONG-11</code> on 2026-08-19; the history-entry criterion above keeps the plain id.)</em></li>
 <li><strong>AC-SONG-12</strong> — WHEN Recreate is invoked with a balance covering one generation (<code>songRecreateCost</code> — 6 vocal / 12 instrumental), THE SYSTEM SHALL charge that amount and regenerate while keeping the prior song in History; otherwise it SHALL open the buy-credits IAP (SONG-03). <em>(repriced 2026-08-12; was a flat 50)</em></li>
 <li><strong>AC-SONG-13</strong> — WHEN AI Enhance is used, THE SYSTEM SHALL charge <strong>nothing, ever</strong> (SONG-04). <em>(Corrected 2026-08-19. The old "free first, then 1 credit" rule was removed on 2026-08-12 — §1 and §3 of this same file already said so, and <code>enhanceCost</code>/<code>consumeEnhance</code> are gone from <code>useCredits</code>. This AC was the last place the withdrawn rule survived.)</em></li>
+<li><strong>AC-SONG-14</strong> — WHEN <strong>Enhance</strong> is activated on the <strong>Custom</strong> tab WHILE Instrumental is <strong>OFF</strong>, THE SYSTEM SHALL open a chooser offering <strong>Refine Idea</strong> (<code>kind: "song"</code>) and <strong>Refine Lyrics</strong> (<code>kind: "lyrics"</code>), and SHALL call <code>enhancePrompt</code> only after one is picked. WHILE Instrumental is <strong>ON</strong>, THE SYSTEM SHALL call <code>enhancePrompt</code> with <code>kind: "song"</code> <strong>directly, with no chooser</strong> — lyrics are not supported in that mode, so there is nothing to choose between. WHEN it is activated on <strong>Simple</strong>, THE SYSTEM SHALL likewise call <code>kind: "song"</code> directly. <em>(new 2026-08-25; the Instrumental branch added 2026-08-26.)</em></li>
 <li><strong>AC-SONG-07</strong> — WHEN <strong>Use in Music Video</strong> is tapped, THE SYSTEM SHALL pre-load the song (incl. lyrics) into MV compose and navigate to <code>/mv/room</code>.</li>
 <li><strong>AC-SONG-08</strong> — IF the song job fails, THEN THE SYSTEM SHALL show the shared error state with Back + Retry.</li>
 <li><strong>AC-SONG-09</strong> — WHEN a song job starts, THE SYSTEM SHALL charge <code>songCost(instrumental)</code> (6 vocal / 12 instrumental) immediately and refund it if the job fails. <em>(Corrected 2026-08-19 — this previously said the balance must NOT change, which is the opposite of <code>SongFlowProvider.tsx:62-67</code> and of the same rule for MV in <code>AC-MV-19</code>. It was the song-side twin of the withdrawn <code>AC-MV-15</code>.)</em></li>
@@ -2458,7 +2546,8 @@ are local overrides; downloads use fixture media; grid layout (not the app's ver
 <p>Read <code>../00-overview.md</code> first (conventions, ID scheme, global auth/credits/i18n models).<br>
 <strong>As-built</strong>; ⚠️ = divergence from App v3.0, ❓ = a tracked <code>TBD-*</code>, 🔒 = mock/in-memory.<br>
 <strong>§3.1 Send Feedback</strong> was specified and shipped on 2026-08-17; what remains open there is the<br>
-backend (<code>TBD-PROF-02</code>) and two ids (<code>TBD-PROF-06</code>), not the frontend.</p>
+backend (<code>TBD-PROF-02</code>), two ids (<code>TBD-PROF-06</code>), and whether CSB still needs a <code>title</code><br>
+(<code>TBD-PROF-07</code>) — not the frontend.</p>
 </blockquote>
 <hr>
 <h2 id="1-overview-scope">1. Overview &amp; scope</h2>
@@ -2604,10 +2693,10 @@ spec</code>). <strong>The word "ticket" never appears in the UI</strong> — the
 </tr>
 <tr>
 <td>Subject</td>
-<td><strong>Yes</strong></td>
-<td>"What's this about?" · max <strong>100</strong> chars</td>
-<td><strong>Yes</strong></td>
-<td><code>title</code></td>
+<td><strong>No</strong> ⚠️</td>
+<td>—</td>
+<td>—</td>
+<td><strong>REMOVED</strong> (product owner, 2026-08-27) — and with it the <code>title</code> param; the payload omits it (see §11)</td>
 </tr>
 <tr>
 <td>Description</td>
@@ -2619,7 +2708,7 @@ spec</code>). <strong>The word "ticket" never appears in the UI</strong> — the
 <tr>
 <td>Attachment</td>
 <td><strong>Yes</strong></td>
-<td>any file type, <strong>10 MB total</strong> across all files</td>
+<td>any file type, <strong>5 MB total</strong> across all files</td>
 <td>No</td>
 <td><code>attachment</code> (multipart)</td>
 </tr>
@@ -2660,9 +2749,23 @@ spec</code>). <strong>The word "ticket" never appears in the UI</strong> — the
 </tr>
 </tbody>
 </table>
-<p><strong>On-screen order</strong> (product owner, 2026-08-17 — differs from T3): <strong>Type → Subject → Description →<br>
-Attachment → Email</strong>. Classification first, then what happened, then evidence; the prefilled contact<br>
-detail sits last so a field the user rarely touches never separates two they must fill.</p>
+<p><strong>On-screen order</strong> (product owner, 2026-08-27 — supersedes the 2026-08-17 five-field order, and<br>
+still differs from T3): <strong>Type → Description → Attachment → Email</strong>. Classification first, then what<br>
+happened, then evidence; the prefilled contact detail sits last so a field the user rarely touches<br>
+never separates two they must fill.</p>
+<blockquote>
+<p>⚠️ <strong>Subject was field 2 of five until 2026-08-27.</strong> Removing it also removed the only source of<br>
+the <code>title</code> param, so the payload now omits <code>title</code> entirely rather than substituting anything.<br>
+Three substitutes were put to the product owner and explicitly rejected: the Type label, the<br>
+first 60 chars of the description, and a fixed constant. <strong><code>FeedbackTicketSchema.title</code> is<br>
+deleted — a C2 contract change, logged in <code>docs/CHANGELOG-RD.md</code>.</strong></p>
+<p><strong>The product owner confirmed "don't send it" a second time on 2026-08-27, with a reason that<br>
+changes the rest of this section: Muse looks to be on a DIFFERENT API from YCO's CSB.</strong> If that<br>
+is right, then the whole CSB inheritance in this table is provisional — not just <code>title</code>, but the<br>
+four <code>questionTypeId</code> values, <code>prodVerId</code> 504, and AC-22's 10 MB. That is now ❓ <strong><code>TBD-PROF-07</code></strong>:<br>
+RD confirms <strong>which endpoint Muse actually posts to</strong>, and whether it wants a <code>title</code> at all.<br>
+Until it answers, <code>title</code> stays unsent. Do not pick a substitute unilaterally.</p>
+</blockquote>
 <h3 id="type-control">Type control</h3>
 <p>A <strong>custom listbox</strong> (not a native <code>&lt;select&gt;</code>) so it matches the DP surfaces around it — there is no<br>
 DP select in <code>AccountPage.css</code>, so this is new styling either way. Because it is hand-built, its<br>
@@ -2678,12 +2781,20 @@ keyboard and ARIA contract is <strong>part of the spec, not an implementation de
 <h3 id="attachment-rules">Attachment rules</h3>
 <ul>
 <li>hidden <code>&lt;input type="file" multiple&gt;</code> + a styled "Add file" trigger (the <code>MvRoom.tsx:368</code> pattern)</li>
-<li><strong>any</strong> file type; <strong>10 MB cumulative</strong> across all picked files, with the running total shown</li>
+<li><strong>any</strong> file type; <strong>5 MB cumulative</strong> across all picked files, with the running total shown</li>
 <li>picked files render as removable chips (name + size)</li>
-<li>a pick that would exceed 10 MB is <strong>refused whole</strong> — nothing is added — with <strong>one</strong> message under<br>
+<li>a pick that would exceed 5 MB is <strong>refused whole</strong> — nothing is added — with <strong>one</strong> message under<br>
   the field, never a toast (CS spec AC-22)</li>
-<li>files are held in memory only; the mock does not upload. RD sends them as <code>multipart/form-data</code></li>
 </ul>
+<blockquote>
+<p><strong>5 MB is the requirement</strong> (product owner, 2026-08-27). It was <strong>10 MB</strong> until then — a figure<br>
+inherited from YCO's CS spec (AC-22). ⚠️ <strong>Do not "correct" it back on the next read of that<br>
+document</strong>, and note the document may not even apply: the product owner's read is that Muse uses<br>
+a <strong>different endpoint</strong> from YCO's CSB (see <code>TBD-PROF-07</code>), which makes the old figure irrelevant<br>
+rather than merely overridden. Only the NUMBER changed — the budget is still cumulative and a<br>
+crossing pick is still refused whole.<br>
+- files are held in memory only; the mock does not upload. RD sends them as <code>multipart/form-data</code></p>
+</blockquote>
 <h3 id="states">States</h3>
 <table>
 <thead>
@@ -2698,12 +2809,12 @@ keyboard and ARIA contract is <strong>part of the spec, not an implementation de
 <tr>
 <td><code>FORM</code></td>
 <td>Send Feedback tapped</td>
-<td>5 fields; <strong>Send disabled</strong> while any required field is empty or the email is malformed</td>
+<td>4 fields; <strong>Send disabled</strong> while any required field is empty or the email is malformed</td>
 <td>on valid input → <code>FORM_VALID</code></td>
 </tr>
 <tr>
 <td><code>FORM_VALID</code></td>
-<td>Type + Subject + Description + valid Email</td>
+<td>Type + Description + valid Email</td>
 <td>Send enabled</td>
 <td>on Send → <code>SUBMITTING</code></td>
 </tr>
@@ -2781,7 +2892,7 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
 <tr>
 <td>4</td>
 <td>Subject/Description prefilled from the AI summary</td>
-<td>user-typed, real placeholders</td>
+<td>user-typed Description, real placeholder (no Subject)</td>
 <td>There is no chatbot on web, so there is no summary to prefill.</td>
 </tr>
 <tr>
@@ -2811,9 +2922,9 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
 </ul>
 <h3 id="prof-p5-send-feedback-support-ticket">PROF-P5 — Send Feedback (support ticket)</h3>
 <ul>
-<li><strong>PROF-P5-S1</strong> Tap <strong>Send Feedback</strong> → <code>FeedbackDialog</code> opens on <code>FORM</code>: Type (placeholder "Select an issue type"), Subject, Description, Attachment, Email <strong>prefilled from the account</strong>. <strong>Send is disabled.</strong></li>
+<li><strong>PROF-P5-S1</strong> Tap <strong>Send Feedback</strong> → <code>FeedbackDialog</code> opens on <code>FORM</code>: Type (placeholder "Select an issue type"), Description, Attachment, Email <strong>prefilled from the account</strong>. <strong>Send is disabled.</strong> There is <strong>no Subject field</strong> (removed 2026-08-27).</li>
 <li><strong>PROF-P5-S2</strong> Open <strong>Type</strong> → 5 options; pick one with mouse or ↑/↓ + Enter → the trigger shows the label, focus returns to the trigger.</li>
-<li><strong>PROF-P5-S3</strong> Type a Subject (≤100) and a Description (≤1000, counter updates). With a valid Email present, <strong>Send enables</strong>.</li>
+<li><strong>PROF-P5-S3</strong> Type a Description (≤1000, counter updates). With a Type chosen and a valid Email present, <strong>Send enables</strong>.</li>
 <li><strong>PROF-P5-S4</strong> <em>(optional)</em> <strong>Add file</strong> → pick one or more files of any type → chips with name + size + remove; the running total is shown.</li>
 <li><strong>PROF-P5-S5</strong> <strong>Send</strong> → <code>SUBMITTING</code> (Send disabled, fields read-only) → <code>submitFeedback</code> resolves → the form is replaced by <strong>"Feedback Sent"</strong> + "We'll reply to <code>&lt;email&gt;</code>." + <strong>Done</strong>.</li>
 <li><strong>PROF-P5-S6</strong> <strong>Done</strong> closes the dialog. No toast. Re-opening Send Feedback gives a <strong>fresh empty form</strong> (Email re-prefilled).</li>
@@ -2857,7 +2968,7 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
 </tr>
 <tr>
 <td><strong>PROF-E5</strong></td>
-<td>Attachment pick would exceed 10 MB total</td>
+<td>Attachment pick would exceed 5 MB total</td>
 <td><strong>Nothing is added</strong> (the pick is refused whole, not truncated) and <strong>one</strong> message appears under the Attachment field — never a toast. Already-picked files are untouched.</td>
 </tr>
 <tr>
@@ -2888,12 +2999,12 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
 </ul>
 <p><strong>Send Feedback (§3.1):</strong></p>
 <ul>
-<li><strong>AC-PROF-10</strong> — WHEN Send Feedback is opened, THE SYSTEM SHALL show exactly five fields in the order Type → Subject → Description → Attachment → Email, with Email prefilled from <code>profile.email</code> and Send <strong>disabled</strong>.</li>
-<li><strong>AC-PROF-11</strong> — THE SYSTEM SHALL keep Send disabled until Type, Subject, Description are non-empty AND Email is a well-formed address; and SHALL NOT show a field-level error for the merely-incomplete case.</li>
-<li><strong>AC-PROF-12</strong> — WHEN a valid form is submitted, THE SYSTEM SHALL call <code>MuseApi.submitFeedback</code> with <code>questionTypeId</code> from the §3.1 mapping, <code>title</code> = Subject, <code>q</code> = the Description text alone, <code>email</code> = the Email field, and <code>language</code> = the active product locale code — and SHALL NOT include a User ID or an Order ID.</li>
+<li><strong>AC-PROF-10</strong> — WHEN Send Feedback is opened, THE SYSTEM SHALL show exactly <strong>four</strong> fields in the order Type → Description → Attachment → Email, with Email prefilled from <code>profile.email</code> and Send <strong>disabled</strong>, and SHALL NOT render a Subject field. <em>(the absence is asserted, not merely un-asserted — a returning Subject silently re-opens TBD-PROF-07)</em></li>
+<li><strong>AC-PROF-11</strong> — THE SYSTEM SHALL keep Send disabled until Type and Description are non-empty AND Email is a well-formed address; and SHALL NOT show a field-level error for the merely-incomplete case.</li>
+<li><strong>AC-PROF-12</strong> — WHEN a valid form is submitted, THE SYSTEM SHALL call <code>MuseApi.submitFeedback</code> with <code>questionTypeId</code> from the §3.1 mapping, <code>q</code> = the Description text alone, <code>email</code> = the Email field, and <code>language</code> = the active product locale code — and SHALL NOT include <code>title</code>, a User ID, or an Order ID. <em>(the <code>title</code> = Subject clause was deleted 2026-08-27 with the field itself)</em></li>
 <li><strong>AC-PROF-13</strong> — WHEN the submit resolves, THE SYSTEM SHALL replace the form with a "Feedback Sent" confirmation carrying one line of copy and a <strong>Done</strong> control that closes the dialog, and SHALL NOT show a toast.</li>
 <li><strong>AC-PROF-14</strong> — WHEN the submit rejects, THE SYSTEM SHALL keep the dialog open with every entered value and attachment intact, show one inline error, and re-enable Send (PROF-E6).</li>
-<li><strong>AC-PROF-15</strong> — THE SYSTEM SHALL accept attachments of any type up to <strong>10 MB in total</strong>, and WHEN a pick would exceed that, SHALL add nothing and show one message inside the form, not a toast (PROF-E5).</li>
+<li><strong>AC-PROF-15</strong> — THE SYSTEM SHALL accept attachments of any type up to <strong>5 MB in total</strong>, and WHEN a pick would exceed that, SHALL add nothing and show one message inside the form, not a toast (PROF-E5).</li>
 <li><strong>AC-PROF-16</strong> — THE Type control SHALL be operable by keyboard alone (↑/↓, Home/End, Enter/Space, Esc) with <code>role="listbox"</code>/<code>role="option"</code> semantics and focus returning to its trigger, and SHALL pass axe at 375 and 1440. <em>(a11y — mutation-test it in both directions)</em></li>
 </ul>
 <hr>
@@ -2930,6 +3041,10 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
 <td>🔧 <strong>Backend / CS</strong> — two ids §3.1 cannot fill: <strong><code>prodVerId</code> for YouCam Muse Web</strong> (YCO's is <code>504</code>) and the <strong><code>questionTypeId</code> for "Community Report"</strong> (the other four are <code>313</code>/<code>348</code>/<code>204</code>/<code>211</code>). Until both land, the prototype ships the five labels and sends <code>null</code> for Community Report. <strong>Blocks:</strong> a real submit for that type.</td>
 </tr>
 <tr>
+<td><strong>TBD-PROF-07</strong></td>
+<td>🔧 <strong>Backend / CS</strong> — <strong>which endpoint does Muse feedback actually post to, and does it want a <code>title</code>?</strong> The product owner's read (2026-08-27) is that Muse is <strong>not</strong> on YCO's CSB. If so, everything this spec inherited from the CSB/T3 documents is provisional: the four <code>questionTypeId</code> values, <code>prodVerId</code> <code>504</code>, and AC-22's 10 MB attachment cap. Concretely: (a) name the endpoint; (b) confirm <code>title</code> is not required — the Subject field is gone and <code>FeedbackTicketSchema.title</code> was deleted with it (C2 change, see <code>docs/CHANGELOG-RD.md</code>), and if it IS required the decision returns to the product owner rather than to an invented value (the Type label, a description excerpt and a fixed constant were all considered and rejected); (c) confirm CS can triage on <code>questionTypeId</code> + <code>q</code> alone, having lost the per-ticket subject line. <strong>Blocks:</strong> every real submit.</td>
+</tr>
+<tr>
 <td><strong>TBD-PROF-04</strong></td>
 <td>🔧 <strong>Backend (RD)</strong> — real Unsubscribe (store deeplink per App F19, cancels subscription) and real account Delete (permanent data removal). Both are demo toasts today.</td>
 </tr>
@@ -2949,7 +3064,7 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
   Profile --&gt; Lang[&quot;Language → setLocale&quot;]
   Profile --&gt; Hist[&quot;History → /history (area 05)&quot;]
   Profile --&gt; FB[&quot;Send Feedback → FeedbackDialog&quot;]
-  FB --&gt; FBForm[&quot;FORM: Type · Subject · Description · Attachment · Email&quot;]
+  FB --&gt; FBForm[&quot;FORM: Type · Description · Attachment · Email&quot;]
   FBForm --&gt;|&quot;valid + Send&quot;| FBSend[&quot;SUBMITTING → MuseApi.submitFeedback&quot;]
   FBSend --&gt;|resolved| FBOk[&quot;Feedback Sent + Done (no toast)&quot;]
   FBSend --&gt;|rejected| FBErr[&quot;inline error, draft preserved (PROF-E6)&quot;]
@@ -3003,8 +3118,8 @@ session does not re-open them, and because four of them <strong>deviate from the
 </tr>
 <tr>
 <td>6</td>
-<td>Multiple attachments, <strong>10 MB cumulative</strong>, refusal shown inline</td>
-<td>CS AC-22</td>
+<td>Multiple attachments, <strong>5 MB cumulative</strong>, refusal shown inline (5 MB is ours, not CS's 10)</td>
+<td>CS AC-22 + product owner 2026-08-27</td>
 </tr>
 <tr>
 <td>7</td>

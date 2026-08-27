@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { CSSProperties } from "react";
@@ -45,8 +45,17 @@ export function SongGenerationScreen() {
     if (!valid) router.replace(localePath(locale, "/song/create"));
   }, [valid, router, locale]);
 
+  // GL-01: `startSong` CHARGES credits, so this mount effect must be idempotent.
+  // React Strict Mode (on by default in `next dev`) deliberately invokes every
+  // mount effect twice to expose exactly this class of bug, and without a guard
+  // that billed one generation twice: a 10-credit balance went to -2 for a 6-credit
+  // vocal song. A ref survives Strict Mode's simulated remount (the component
+  // instance is reused), so the second invocation is skipped. Retry calls
+  // `startSong` directly and is deliberately NOT gated by this.
+  const started = useRef(false);
   useEffect(() => {
-    if (!valid || alreadyDone) return;
+    if (!valid || alreadyDone || started.current) return;
+    started.current = true;
     startSong();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

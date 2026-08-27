@@ -4,7 +4,7 @@
 // a real backend client should do the same with response payloads.
 
 import { z } from "zod";
-import { FEEDBACK_DESCRIPTION_MAX, FEEDBACK_SUBJECT_MAX } from "@/lib/feedback";
+import { FEEDBACK_DESCRIPTION_MAX } from "@/lib/feedback";
 
 // ── AI MV ────────────────────────────────────────────────────────────────
 
@@ -251,8 +251,29 @@ export const FeedbackTicketSchema = z.object({
    * (TBD-PROF-06) — the label ships, the id does not.
    */
   questionTypeId: z.number().int().nullable(),
-  /** Subject line. */
-  title: z.string().min(1).max(FEEDBACK_SUBJECT_MAX),
+  /**
+   * ⚠️ **`title` IS GONE — this is a declared C2 contract change**
+   * (2026-08-27, product owner; logged in `docs/CHANGELOG-RD.md`).
+   *
+   * The dialog's **Subject** field was removed, so there is no longer anything
+   * to put in CSB's `title` param and the payload omits it entirely rather
+   * than sending a placeholder. This reverses `AC-PROF-12`'s old
+   * "`title` = Subject" clause, which is why the frozen surface snapshot moved
+   * in the same change instead of being regenerated quietly.
+   *
+   * ❓ **OPEN FOR RD (TBD-PROF-07): which endpoint is this, and does it want a
+   * `title` at all?** The product owner reconfirmed "don't send it" on
+   * 2026-08-27 with the reason that **Muse looks to be on a DIFFERENT API from
+   * YCO's CSB** — which, if right, makes every CSB-inherited value in this
+   * schema provisional, not just this one (the four `questionTypeId`s,
+   * `prodVerId` 504, and the attachment cap all came from those documents;
+   * `src/lib/feedback.ts` links them).
+   *
+   * If the real endpoint DOES require a title, the decision comes back to the
+   * product owner rather than to an invented value — the Type label, the first
+   * 60 chars of the description, and a fixed constant were all weighed and
+   * rejected. Do not pick one unilaterally.
+   */
   /**
    * The description text ALONE. §T3 composes User ID and Order ID into `q`;
    * Muse Web deliberately does not — the User ID is injected server-side from
@@ -263,7 +284,7 @@ export const FeedbackTicketSchema = z.object({
   language: z.string(),
   /** `null` until TBD-PROF-06 supplies Muse Web's own id (YCO's is 504). */
   prodVerId: z.number().int().nullable(),
-  /** Any file type, 10 MB across all of them. RD sends as multipart/form-data. */
+  /** Any file type, 5 MB across all of them. RD sends as multipart/form-data. */
   attachment: z.array(FileLikeSchema),
 });
 export type FeedbackTicket = z.infer<typeof FeedbackTicketSchema>;

@@ -30,6 +30,7 @@ import {
   mockStoryboard,
   SAMPLE_RESULT_VIDEO,
 } from "@/lib/mv/mock";
+import { demoStore } from "@/lib/demoStore";
 import { FEEDBACK_MAX_TOTAL_BYTES, totalBytes } from "@/lib/feedback";
 
 const STORYBOARD_MS = 7000;
@@ -42,6 +43,24 @@ const SONG_MS = 8000;
  */
 export const FAIL_TRIGGER = "[fail]";
 const FAIL_AT_PROGRESS = 60;
+
+/**
+ * The same failure, reachable from the demo panel's "Generation job fails"
+ * switch instead of requiring the caller to know the `[fail]` token.
+ *
+ * Read at job-CREATION time only, which is what makes it safe: flipping the
+ * switch mid-flight cannot retroactively fail a job already running, and
+ * turning it off does not rescue one that was created while it was on. Either
+ * of those would make the panel misrepresent what a real backend does.
+ *
+ * `demoStore` is read directly rather than passed in — this is not React, and
+ * threading a flag through `MuseApi` would put a demo concern into the C1
+ * contract RD codes against.
+ */
+function failAtFor(text: string): number | undefined {
+  if (text.includes(FAIL_TRIGGER)) return FAIL_AT_PROGRESS;
+  return demoStore.getSnapshot().flags.jobFail ? FAIL_AT_PROGRESS : undefined;
+}
 const STORYBOARD_STEPS = [
   "Analyzing audio...",
   "Designing scenes...",
@@ -119,7 +138,7 @@ export class MockMuseApi implements MuseApi {
         steps: phase === "render" ? RENDER_STEPS : STORYBOARD_STEPS,
       },
       thumb: mockStoryboard().characterImage,
-      failAt: compose.description.includes(FAIL_TRIGGER) ? FAIL_AT_PROGRESS : undefined,
+      failAt: failAtFor(compose.description),
     };
     this.mvJobs.set(record.id, record);
     return this.snapshotMv(record);
@@ -144,7 +163,7 @@ export class MockMuseApi implements MuseApi {
       id: crypto.randomUUID(),
       compose,
       timeline: { startedAt: Date.now(), durationMs: SONG_MS, steps: SONG_STEPS },
-      failAt: compose.describe.includes(FAIL_TRIGGER) ? FAIL_AT_PROGRESS : undefined,
+      failAt: failAtFor(compose.describe),
       result: mockSongResult(compose),
     };
     this.songJobs.set(record.id, record);
@@ -169,7 +188,7 @@ export class MockMuseApi implements MuseApi {
     // is the boundary check a real backend would also do, kept here so the
     // rule lives with the contract rather than only in a component.
     if (totalBytes(ticket.attachment) > FEEDBACK_MAX_TOTAL_BYTES) {
-      throw new Error("Attachments exceed the 10 MB total");
+      throw new Error("Attachments exceed the 5 MB total");
     }
     await new Promise((resolve) => setTimeout(resolve, 900)); // simulate the round-trip
     // The real ticket id comes from CSB; nothing in the UI displays this one

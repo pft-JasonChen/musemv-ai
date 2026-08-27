@@ -1,0 +1,230 @@
+{
+  "02_mv_type_selected.png": [
+    {
+      "box": [
+        51.9,
+        14.4,
+        14.7,
+        30.7
+      ],
+      "type": "action",
+      "label": "Sing &amp; Story"
+    }
+  ],
+  "03_choose_song_modal.png": [
+    {
+      "box": [
+        56.5,
+        39.6,
+        3.3,
+        3.1
+      ],
+      "type": "action",
+      "label": "Use"
+    }
+  ],
+  "04_trim_audio_default.png": [
+    {
+      "box": [
+        50.0,
+        64.2,
+        10.4,
+        4.4
+      ],
+      "type": "action",
+      "label": "Confirm"
+    }
+  ],
+  "07_photo_sample_added.png": [
+    {
+      "box": [
+        20.8,
+        68.4,
+        2.8,
+        4.4
+      ],
+      "type": "action",
+      "label": "Sample photo"
+    }
+  ],
+  "08_create_cta_ready.png": [
+    {
+      "box": [
+        35.8,
+        88.2,
+        16.0,
+        5.1
+      ],
+      "type": "action",
+      "label": "Create Music Video"
+    }
+  ],
+  "09_mode_modal_storyboard.png": [
+    {
+      "box": [
+        37.9,
+        40.9,
+        23.2,
+        15.4
+      ],
+      "type": "action",
+      "label": "Create Storyboard First"
+    }
+  ],
+  "12_mv_storyboard_generate.png": [
+    {
+      "box": [
+        36.8,
+        88.2,
+        16.0,
+        5.1
+      ],
+      "type": "action",
+      "label": "Generate MV"
+    }
+  ],
+  "16_templates_sheet.png": [
+    {
+      "box": [
+        49.9,
+        78.4,
+        16.0,
+        5.1
+      ],
+      "type": "action",
+      "label": "Confirm"
+    }
+  ],
+  "17_templates_applied.png": [
+    {
+      "box": [
+        22.0,
+        81.6,
+        7.8,
+        3.1
+      ],
+      "type": "action",
+      "label": "Templates"
+    }
+  ],
+  "18_mode_modal_direct.png": [
+    {
+      "box": [
+        37.9,
+        57.7,
+        23.2,
+        15.4
+      ],
+      "type": "action",
+      "label": "Create MV Directly"
+    }
+  ],
+  "21_fail_description.png": [
+    {
+      "box": [
+        35.8,
+        88.2,
+        16.0,
+        5.1
+      ],
+      "type": "action",
+      "label": "Create Music Video"
+    }
+  ],
+  "23_creating_failed.png": [
+    {
+      "box": [
+        55.8,
+        73.6,
+        4.1,
+        4.3
+      ],
+      "type": "action",
+      "label": "Retry"
+    }
+  ],
+  "24_choose_song_sample_tab.png": [
+    {
+      "box": [
+        45.5,
+        33.0,
+        8.4,
+        3.9
+      ],
+      "type": "action",
+      "label": "Sample Songs"
+    }
+  ],
+  "28_trim_floor.png": [
+    {
+      "box": [
+        38.6,
+        39.3,
+        21.8,
+        2.0
+      ],
+      "type": "info",
+      "label": "Selected"
+    }
+  ],
+  "29_face_picker_crop.png": [
+    {
+      "box": [
+        41.5,
+        75.8,
+        16.0,
+        5.1
+      ],
+      "type": "action",
+      "label": "Use This Face"
+    }
+  ],
+  "30_settings_high_crown.png": [
+    {
+      "box": [
+        49.8,
+        36.5,
+        10.6,
+        5.2
+      ],
+      "type": "action",
+      "label": "High"
+    }
+  ],
+  "32_side_rail_trending.png": [
+    {
+      "box": [
+        89.5,
+        10.9,
+        7.0,
+        4.0
+      ],
+      "type": "action",
+      "label": "See all"
+    }
+  ],
+  "34_result_like.png": [
+    {
+      "box": [
+        89.2,
+        11.7,
+        2.5,
+        4.0
+      ],
+      "type": "info",
+      "label": "Like"
+    }
+  ],
+  "36_result_publish_confirm.png": [
+    {
+      "box": [
+        49.9,
+        52.2,
+        10.5,
+        5.3
+      ],
+      "type": "action",
+      "label": "Confirm"
+    }
+  ]
+}

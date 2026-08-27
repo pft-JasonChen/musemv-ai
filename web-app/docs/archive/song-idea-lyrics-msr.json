@@ -1,0 +1,405 @@
+{
+    "country": "def",
+    "ideas": [
+        {
+            "title": "Song Lyric Idea 1",
+            "name_key": "song_lyric_idea_1"
+        },
+        {
+            "title": "Song Lyric Idea 2",
+            "name_key": "song_lyric_idea_2"
+        },
+        {
+            "title": "Song Lyric Idea 3",
+            "name_key": "song_lyric_idea_3"
+        },
+        {
+            "title": "Song Lyric Idea 4",
+            "name_key": "song_lyric_idea_4"
+        },
+        {
+            "title": "Song Lyric Idea 5",
+            "name_key": "song_lyric_idea_5"
+        },
+        {
+            "title": "Song Lyric Idea 6",
+            "name_key": "song_lyric_idea_6"
+        },
+        {
+            "title": "Song Lyric Idea 7",
+            "name_key": "song_lyric_idea_7"
+        },
+        {
+            "title": "Song Lyric Idea 8",
+            "name_key": "song_lyric_idea_8"
+        },
+        {
+            "title": "Song Lyric Idea 9",
+            "name_key": "song_lyric_idea_9"
+        },
+        {
+            "title": "Song Lyric Idea 10",
+            "name_key": "song_lyric_idea_10"
+        },
+        {
+            "title": "Song Lyric Idea 11",
+            "name_key": "song_lyric_idea_11"
+        },
+        {
+            "title": "Song Lyric Idea 12",
+            "name_key": "song_lyric_idea_12"
+        }
+    ],
+    "lyrics": [
+        {
+            "title": "Song Lyric 1",
+            "name_key": "song_lyric_1"
+        },
+        {
+            "title": "Song Lyric 2",
+            "name_key": "song_lyric_2"
+        },
+        {
+            "title": "Song Lyric 3",
+            "name_key": "song_lyric_3"
+        },
+        {
+            "title": "Song Lyric 4",
+            "name_key": "song_lyric_4"
+        },
+        {
+            "title": "Song Lyric 5",
+            "name_key": "song_lyric_5"
+        },
+        {
+            "title": "Song Lyric 6",
+            "name_key": "song_lyric_6"
+        },
+        {
+            "title": "Song Lyric 7",
+            "name_key": "song_lyric_7"
+        },
+        {
+            "title": "Song Lyric 8",
+            "name_key": "song_lyric_8"
+        },
+        {
+            "title": "Song Lyric 9",
+            "name_key": "song_lyric_9"
+        },
+        {
+            "title": "Song Lyric 10",
+            "name_key": "song_lyric_10"
+        }
+    ],
+    "translation": [
+        {
+            "key": "song_lyric_idea_1",
+            "i18n": {
+                "en": "Dark R&B Rock, wandering through a foggy neon alley, slow tense pulse, eerie cinematic intensity",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_2",
+            "i18n": {
+                "en": "Modern J-Pop, racing through a bright city at dawn, fast driving pop rhythm, bittersweet cinematic energy",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_3",
+            "i18n": {
+                "en": "Chill Acoustic Beach Pop, driving along the coast at sunset, relaxed cruising groove, breezy nostalgic warmth",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_4",
+            "i18n": {
+                "en": "Romantic Pop, watching city lights from a rooftop, soft mid-tempo dance groove, dreamy and intimate energy",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_5",
+            "i18n": {
+                "en": "Orchestral Pop, watching rain fall over a quiet city, slow sweeping tempo, melancholic cinematic grandeur",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_6",
+            "i18n": {
+                "en": "Ambient Electronic, watching the stars on a clear winter night, extremely slow evolving pace, deep meditative energy",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_7",
+            "i18n": {
+                "en": "Swing Big Band, dancing in a vintage ballroom, lively brass-led swing, groovy energetic charm",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_8",
+            "i18n": {
+                "en": "Country R&B, cruising a dirt road at sunset, steady mid-tempo groove, warm atmospheric confidence",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_9",
+            "i18n": {
+                "en": "Romantic Bossa Nova, relaxing in a sunny courtyard, relaxed swaying rhythm, light breezy intimacy",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_10",
+            "i18n": {
+                "en": "K-Pop Trap, getting ready for a glamorous night out, fast pumping beat, dark confident energy",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_11",
+            "i18n": {
+                "en": "Pop, Hip-Hop, EDM, and K-Pop, celebrating with friends at a night festival, energetic dance groove, dreamy uplifting energy",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_idea_12",
+            "i18n": {
+                "en": "Uplifting Electronic House, dancing in a bright club, driving four-on-the-floor groove, energetic euphoric energy",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_1",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\nFrost climbs the window pane\nBreath turns to silver mist\nThe world is holding still\nIn the quiet of the dark\n\n[chorus]\nI am drifting with the stars\nWeightless in the endless deep\nCold light glows above\nWatching over all we keep\n\n[verse]\nShadows stretch across the field\nVelvet sky is burning white\nAncient echoes start to hum\nThrough the crystal winter air\n\n[chorus]\nI am drifting with the stars\nWeightless in the endless deep\nCold light glows above\nWatching over all we keep\n\n[bridge]\nSilence blooms like frozen glass\nTime suspends its heavy hand\nFloating in the velvet tide\nFading to the distant blue\n\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_2",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\n窓を流れる街の灯りが\n溶け出す朝の冷たい風\nサイドシートには誰もいない\n思い出だけを積み込んだ\n信号機が青に変われば\nこの痛みも遠ざかるかな\nエンジンが奏でる旋律\n出口のない地図を走る\n\n[chorus]\nアクセル踏み込んで駆け抜ける\n暁の街を切り裂いていく\nさよならの影を追い越して\n光の先へ進むのさ\n忘れられない言葉も全部\n朝焼けの中に置いていく\n\n[verse]\n昨日の自分が置いてきた\n答えを探して彷徨った\nバックミラーに映る景色は\n少しずつ滲んで消えるよ\n高速道路のカーブ曲がれば\n新しい世界が顔を出す\n\n[chorus]\nアクセル踏み込んで駆け抜ける\n暁の街を切り裂いていく\nさよならの影を追い越して\n光の先へ進むのさ\n忘れられない言葉も全部\n朝焼けの中に置いていく\n君のいない道を選んだの\n\n[bridge]\n立ち止まった時間は終わる\n震える手でハンドル握り\n恐れなんて捨てていくから\n未来はすぐそこにあるはず\n\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_3",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\nGrey clouds hanging heavy on the window pane\nGot the rhythm of the drops tapping out a refrain\nOpen up the notebook while the kettle starts to hum\nSearching for a quiet frequency, let the words come\nPaper pages turning in the soft light of the lamp\nFeeling like the world is slow, a little bit damp\nCoffee getting colder but the thoughts are flowing clear\nNothing but the static and the lessons staying near\n\n[chorus]\nRainy day state of mind, drift into the page\nLost in the chapters, a solitary stage\nKeeping it slow while the clock ticks wide\nNowhere to go with the world left outside\n\n[verse]\nInk staining lines where the logic finds a home\nScanning through the paragraphs, I’m free to roam\nHighlighting the truth in a shade of neon blue\nConnecting all the pieces that I never thought were true\nCoffee steam rising like a ghost into the air\nFinding little comforts in the silence that we share\nFocus is a feather drifting steady on the breeze\nLearning how to navigate the complicated seas\n\n[chorus]\nRainy day state of mind, drift into the page\nLost in the chapters, a solitary stage\nKeeping it slow while the clock ticks wide\nNowhere to go with the world left outside\n\n[bridge]\nLet the streetlights blur in a wash of golden haze\nEverything is simple in these slow-motion days\nTurning down the volume of the noise in my head\nTaking in the meaning of the lines that I read\nIt’s just me and the ink in the pale afternoon\nCaught in the hum of this low-fidelity tune\n\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_4",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\nThe horizon bleeds in hues of violet light\nI drift away beneath the fading sun\nThe water holds me in the velvet night\nBefore the day is finally undone\n\n[chorus]\nLost in the waves of a golden tide\nWith nowhere left to go and nowhere to hide\nFloating in echoes of a dream so deep\nWrapped in the silence that the oceans keep\n\n[verse]\nMy heartbeat slows to match the rolling swell\nThe salt is heavy on the cooling air\nBound by a soft and ancient ocean spell\nLeaving behind the weight of every care\n\n[chorus]\nLost in the waves of a golden tide\nWith nowhere left to go and nowhere to hide\nFloating in echoes of a dream so deep\nWrapped in the silence that the oceans keep\n\n[bridge]\nThe stars awake within the liquid glass\nReflected sparks upon the midnight blue\nWatching the moments gently drift and pass\nDissolving into light and shade and you\n\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_5",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\nThe neon hum is calling out my name\nA thousand colors washing out the gray\nI catch your rhythm through the velvet night\nBathed in the glow of electric delight\nThe music swells beneath the open air\nThere is a magic waiting everywhere\nI take your hand and feel the spark ignite\nWe lose ourselves until the morning light\n\n[chorus]\nOh we're dancing under festival lights\nReaching for stars in the middle of nights\nSpinning in circles we never look down\nLost in the glow of this carnival town\nEverything's gold in the haze of the beat\nWith you in my arms the rhythm is sweet\n\n[verse]\nYour heartbeat syncs up with the pulsing drums\nForget the shadows of the days to come\nWe move as one through the crowded space\nA steady fire that the stars embrace\nThe world is blurred in a prism of blue\nI'm finding my heaven right here with you\n\n[chorus]\nOh we're dancing under festival lights\nReaching for stars in the middle of nights\nSpinning in circles we never look down\nLost in the glow of this carnival town\nEverything's gold in the haze of the beat\nWith you in my arms the rhythm is sweet\n\n[bridge]\nAnd if the music fades away tomorrow\nI will hold onto the light we borrowed\nBeyond the reach of every silent fear\nI know I'm safe whenever you are near\nThe night is ours to claim forevermore\nRight here upon this glowing dance floor\n\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_6",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\nLights are burning gold tonight\nEverything feels so damn right\nStep into the floor and move\nFinding that electric groove\nShadows fading in the haze\nLost inside this neon maze\nHands are reaching to the sky\nWatch the velvet colors fly\n\n[chorus]\nWe are dancing in the light\nHolding on with all our might\nFeeling every beat of fire\nTaking us a little higher\n\n[verse]\nBass is thumping in my chest\nPutting all the ghosts to rest\nSpinning round until we blur\nThis is how the magic stir\nNothing else is real today\nOnly music leads the way\nRhythm runs inside my veins\nBreaking free from heavy chains\nBrightest star is in your eyes\nUnderneath the velvet skies\n\n[chorus]\nWe are dancing in the light\nHolding on with all our might\nFeeling every beat of fire\nTaking us a little higher\n\n[bridge]\nLet the rhythm take control\nLet it resonate your soul\nStay within this perfect flow\nWatching how the embers glow\nMoving deeper in the night\nBathing in the liquid light\n\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_7",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\nThe pine needles crunch beneath my boots\nI settle where the ground is still and dry\nStriking a match against the cool damp air\nTo watch the cedar logs begin to sigh\n\n[chorus]\nOh the campfire carves a circle in the night\nKeeping back the shadows and the deep\nThere is nothing left to hold onto tonight\nBut the promises the mountains mean to keep\n\n[verse]\nA moth dances close to the orange bloom\nIgnoring how the heat might take its wing\nI pull my heavy blanket tighter now\nAnd listen to the woods begin to sing\n\n[chorus]\nOh the campfire carves a circle in the night\nKeeping back the shadows and the deep\nThere is nothing left to hold onto tonight\nBut the promises the mountains mean to keep\n\n[bridge]\nTomorrow holds a map I cannot read\nBut here the sparks drift upward to the dark\nI plant my weary spirit in the soil\nAnd leave my story with a dying spark\n\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_8",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\nThe ink is dancing on the paper edge\nA whisper trapped in lines of gold and blue\nBeside the glass upon the window ledge\nI trace the silent words that lead to you\n\n[chorus]\nOh, hold this flame until the morning light\nThe candle shadows paint a soft design\nWithin the velvet stillness of the night\nYour ghost is breathing between every line\n\n[verse]\nI turn a page to find a hidden dream\nThe wax is weeping down the crystal base\nWe drift along a quiet, silver stream\nReflected in the window's dark embrace\n\n[chorus]\nOh, hold this flame until the morning light\nThe candle shadows paint a soft design\nWithin the velvet stillness of the night\nYour ghost is breathing between every line\n\n[bridge]\nIt isn't just the story that I seek\nIt's how you found a rhythm in my soul\nThe secret language that we cannot speak\nUntil the final chapter makes us whole\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_9",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\nThe golden beams are dancing on the wall\nA quiet morning shadows start to fall\nThe scent of jasmine drifts across the stone\nI'm happy just to be here on my own\n\n[chorus]\nOh the world is spinning soft and slow\nWith nowhere else that I would need to go\nLet the breeze whisper secrets in the light\nEverything feels honest and so bright\n\n[verse]\nThe coffee steam is curling in the air\nI lose my heavy worries and my care\nThe garden gate is closed to all the noise\nIn simple peace I find my hidden joys\n\n[chorus]\nOh the world is spinning soft and slow\nWith nowhere else that I would need to go\nLet the breeze whisper secrets in the light\nEverything feels honest and so bright\n\n[bridge]\nTime is just a rhythm in the heat\nWith lazy steps upon this tiled street\nI trace the patterns where the colors play\nHolding on to this lovely kind of day\n\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        },
+        {
+            "key": "song_lyric_10",
+            "i18n": {
+                "en": "[intro]\n\n[verse]\nLights fade in the dark\nBurning like a spark\nFeel the static rise\nReflected in your eyes\n\n[chorus]\nChase the neon horizon\nLost in the sound\nWe are rising higher\nAbove the solid ground\n\n[verse]\nElectric pulse beat\nMoving through the street\nGravity is gone\nUntil the break of dawn\n\n[chorus]\nChase the neon horizon\nLost in the sound\nWe are rising higher\nAbove the solid ground\n\n[bridge]\nRunning fast, never slow\nWatching all the colors glow\nLet the rhythm take control\nLosing body, losing soul\n\n[chorus]\nChase the neon horizon\nLost in the sound\nWe are rising higher\nAbove the solid ground\n\n[outro]",
+                "de": "",
+                "es": "",
+                "hi": "",
+                "id": "",
+                "ja": "",
+                "ko": "",
+                "pt-BR": "",
+                "zh-TW": ""
+            }
+        }
+    ]
+}

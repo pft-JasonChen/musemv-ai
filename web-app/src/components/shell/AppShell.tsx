@@ -10,6 +10,7 @@ import { HomeBackground } from "@/components/home/HomeBackground";
 import { Footer } from "@/components/home/Footer";
 import { MobileHeader } from "./MobileHeader";
 import { MobileTabBar } from "./MobileTabBar";
+import { DemoPanel } from "@/components/demo/DemoPanel";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 2, Slice 2a) ────────────────────
@@ -126,8 +127,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useTrackInAppNavigation(pathname);
 
   // The public share-link page (/share) is a standalone, no-navigation page
-  // (spec P2-S1) — render it bare, without the app sidebar/top bar.
-  if (path.startsWith("/share")) return <>{children}</>;
+  // (spec P2-S1) — render it bare, without the app sidebar/top bar. The demo
+  // panel still rides along: /share is a real route QA has to be able to put
+  // into an error state, and it renders nothing at all unless `?demo=1` has
+  // armed it (see DemoPanel's header).
+  if (path.startsWith("/share"))
+    return (
+      <>
+        {children}
+        <DemoPanel />
+      </>
+    );
 
   const ownChrome = OWN_CHROME.some((r) => path === r || path.startsWith(`${r}/`));
   const isHome = path === "/";
@@ -145,6 +155,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {isHome && <Footer />}
         {isMobileTabBarRoute && <MobileTabBar />}
       </div>
+      {/* Bottom-left QA switchboard. Invisible unless `?demo=1` has armed it,
+          which is what keeps it out of all 115 visual baselines. */}
+      <DemoPanel />
     </div>
   );
 }

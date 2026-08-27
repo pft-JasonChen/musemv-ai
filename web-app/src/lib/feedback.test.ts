@@ -46,33 +46,35 @@ describe("feedback — CSB type mapping (spec areas/06 §3.1)", () => {
 describe("feedback — attachment budget (PROF-E5 / AC-PROF-15)", () => {
   const file = (size: number, name = "f") => ({ size, name });
 
-  it("is 10 MB", () => {
-    expect(FEEDBACK_MAX_TOTAL_BYTES).toBe(10 * MB);
+  // 5 MB is the requirement (product owner, 2026-08-27). Was 10 MB, a figure
+  // inherited from YCO's CS spec — an endpoint Muse probably does not even use.
+  it("is 5 MB", () => {
+    expect(FEEDBACK_MAX_TOTAL_BYTES).toBe(5 * MB);
   });
 
   it("accepts a pick that fits", () => {
-    const r = acceptAttachments([file(2 * MB)], [file(3 * MB)]);
+    const r = acceptAttachments([file(1 * MB)], [file(2 * MB)]);
     expect(r.refused).toBe(false);
-    expect(totalBytes(r.accepted)).toBe(5 * MB);
+    expect(totalBytes(r.accepted)).toBe(3 * MB);
   });
 
   it("counts the budget cumulatively, not per file", () => {
-    // Two 6 MB files are individually legal and jointly not — the per-file
-    // reading of "10 MB total" would wrongly accept this.
-    const r = acceptAttachments([file(6 * MB)], [file(6 * MB)]);
+    // Two 3 MB files are individually legal and jointly not — the per-file
+    // reading of "5 MB total" would wrongly accept this.
+    const r = acceptAttachments([file(3 * MB)], [file(3 * MB)]);
     expect(r.refused).toBe(true);
   });
 
   it("refuses a batch WHOLE — a partial add would read as success", () => {
-    const current = [file(9 * MB, "kept")];
-    const r = acceptAttachments(current, [file(500 * 1024, "a"), file(2 * MB, "b")]);
+    const current = [file(4 * MB, "kept")];
+    const r = acceptAttachments(current, [file(200 * 1024, "a"), file(2 * MB, "b")]);
     expect(r.refused).toBe(true);
     expect(r.accepted).toEqual(current); // not "a accepted, b dropped"
   });
 
   it("allows exactly the limit", () => {
-    expect(acceptAttachments([], [file(10 * MB)]).refused).toBe(false);
-    expect(acceptAttachments([], [file(10 * MB + 1)]).refused).toBe(true);
+    expect(acceptAttachments([], [file(5 * MB)]).refused).toBe(false);
+    expect(acceptAttachments([], [file(5 * MB + 1)]).refused).toBe(true);
   });
 
   it("treats an empty pick as a no-op, not a refusal", () => {

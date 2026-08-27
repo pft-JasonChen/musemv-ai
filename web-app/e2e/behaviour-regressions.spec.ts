@@ -116,7 +116,6 @@ function trimConfirm(page: Page) {
     .getByRole("button", { name: "Confirm", exact: true });
 }
 
-
 /** A locator's box once it has stopped moving — see the `.song-bar` note below. */
 async function settledBox(loc: ReturnType<Page["locator"]>) {
   let prev = await loc.boundingBox();
@@ -130,6 +129,25 @@ async function settledBox(loc: ReturnType<Page["locator"]>) {
   }
   expect(prev, "the bar never settled").not.toBeNull();
   return prev!;
+}
+
+/**
+ * `.history-card` count once it has stopped changing between reads — the
+ * first navigation to any route under `next dev` can take a moment to
+ * compile, so an immediate `.count()` right after `goto`/a client nav can
+ * undercount a page that is still rendering. Mirrors `settledBox`'s
+ * poll-until-stable shape above.
+ */
+async function stableHistoryCardCount(page: Page): Promise<number> {
+  const loc = page.locator(".history-card");
+  let prev = -1;
+  for (let i = 0; i < 30; i++) {
+    const cur = await loc.count();
+    if (cur === prev) return cur;
+    prev = cur;
+    await page.waitForTimeout(300);
+  }
+  return prev;
 }
 
 /** Kick off a storyboard-first generation from a composed MV room. */
@@ -208,7 +226,8 @@ test("G5-d#1 refunds the charge when the job fails", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
   await expect
     .poll(() => balance(page), {
-      message: 'a failed job must refund the full charge so the "credits were not charged" copy stays true',
+      message:
+        'a failed job must refund the full charge so the "credits were not charged" copy stays true',
     })
     .toBe(before);
 });
@@ -251,9 +270,10 @@ test("G5-d#2 insufficient balance routes to IAP instead of generating", async ({
   const numbers = prices.map((t) => Number(/(\d+)/.exec(t.replace(/[\s,]/g, ""))?.[1] ?? 0));
   expect(numbers.length, "both mode cards must advertise a price").toBe(2);
   for (const n of numbers) {
-    expect(n, `precondition: ${n} must be unaffordable on a ${before}-credit account`).toBeGreaterThan(
-      before,
-    );
+    expect(
+      n,
+      `precondition: ${n} must be unaffordable on a ${before}-credit account`,
+    ).toBeGreaterThan(before);
   }
 
   await page.getByText("Create MV Directly").click();
@@ -582,7 +602,10 @@ test("G5-d#8 publish: MV publish confirms, then enters reviewing", async ({ page
   // match, so this test had been red independently of anything the credit work
   // touched — found while clearing the pre-existing failures on 2026-08-19.
   await page.getByRole("button", { name: "Options" }).first().click();
-  await page.getByRole("switch", { name: /^Publish$/ }).first().click();
+  await page
+    .getByRole("switch", { name: /^Publish$/ })
+    .first()
+    .click();
 
   // HIST-04: a confirm dialog, NOT an instant toggle (DP made this instant).
   const confirm = page.getByRole("dialog", { name: "Ready to Go Public?" });
@@ -2827,9 +2850,10 @@ test("3k / GL-01: Recreate routes to IAP when the balance cannot cover it", asyn
   // Whatever the button says is what must happen — refused below it, charged
   // exactly at or above it. Never less than the flat `recreate` component.
   const scenePrice = await shownCost(page, ".mv-edit__recreate-scene .button__credits-count");
-  expect(scenePrice, "a shot recreate always includes the flat `recreate` 8").toBeGreaterThanOrEqual(
-    COST_RECREATE,
-  );
+  expect(
+    scenePrice,
+    "a shot recreate always includes the flat `recreate` 8",
+  ).toBeGreaterThanOrEqual(COST_RECREATE);
 
   if (before < scenePrice) {
     await recreate.click();
@@ -3260,19 +3284,25 @@ async function openFeedback(page: Page) {
   return page.getByRole("dialog", { name: "Send Feedback" });
 }
 
-test("PROF-P5: five fields in spec order, Email prefilled, Send gated until valid", async ({
+test("PROF-P5: four fields in spec order, Email prefilled, Send gated until valid", async ({
   page,
 }) => {
   const dialog = await openFeedback(page);
 
   // AC-PROF-10 — the product owner's order, not T3's. Asserted as positions so a
-  // reshuffle fails here rather than passing on "all five exist".
+  // reshuffle fails here rather than passing on "all four exist".
   const text = (await dialog.innerText()).replace(/\s+/g, " ");
-  const order = ["Type", "Subject", "Description", "Attachment", "Email"].map((l) =>
-    text.indexOf(l),
-  );
+  const order = ["Type", "Description", "Attachment", "Email"].map((l) => text.indexOf(l));
   expect(order, text).toEqual([...order].sort((a, b) => a - b));
   expect(Math.min(...order)).toBeGreaterThanOrEqual(0);
+
+  // 2026-08-27: Subject is REMOVED, and its absence is asserted rather than
+  // merely un-asserted. Dropping a field is the mirror of the affordance
+  // regressions this file exists for: nothing would go red if it came back, and
+  // a returning Subject would silently re-open the `title` contract question
+  // (TBD-PROF-07). There must also be exactly ONE textbox before Email now.
+  await expect(dialog.getByRole("textbox", { name: "Subject" })).toHaveCount(0);
+  expect(text).not.toContain("What's this about?"); // the old placeholder
 
   const send = dialog.getByRole("button", { name: "Send", exact: true });
   const email = dialog.getByRole("textbox", { name: "Email" });
@@ -3282,8 +3312,6 @@ test("PROF-P5: five fields in spec order, Email prefilled, Send gated until vali
   // AC-PROF-11 — each required field alone is not enough.
   await dialog.getByRole("combobox").click();
   await dialog.getByRole("option", { name: "Feature Issue" }).click();
-  await expect(send).toBeDisabled();
-  await dialog.getByRole("textbox", { name: "Subject" }).fill("Playback stalls at 12s");
   await expect(send).toBeDisabled();
   await dialog.getByRole("textbox", { name: "Description" }).fill("Every MV I open stalls.");
   await expect(send).toBeEnabled();
@@ -3307,7 +3335,7 @@ test("PROF-P5: five fields in spec order, Email prefilled, Send gated until vali
   // precisely so this is true without a reset effect.
   await page.getByRole("button", { name: "Send Feedback" }).click();
   const reopened = page.getByRole("dialog", { name: "Send Feedback" });
-  await expect(reopened.getByRole("textbox", { name: "Subject" })).toHaveValue("");
+  await expect(reopened.getByRole("textbox", { name: "Description" })).toHaveValue("");
   await expect(reopened.getByRole("combobox")).toContainText("Select an issue type");
 });
 
@@ -3320,16 +3348,18 @@ test("PROF-E5: an oversized attachment is refused WHOLE and explained inline", a
   });
   const input = dialog.locator('input[type="file"]');
 
-  // Under the cap: accepted, chip shown.
+  // Under the cap: accepted, chip shown. The cap is 5 MB (product owner,
+  // 2026-08-27); it was 10 MB, inherited from YCO's CS spec. See
+  // FEEDBACK_MAX_TOTAL_BYTES.
   await input.setInputFiles([file("small.log", 1)]);
   await expect(dialog.getByText("small.log")).toBeVisible();
-  await expect(dialog.getByText("File too large — 10 MB total.")).toBeHidden();
+  await expect(dialog.getByText("File too large — 5 MB total.")).toBeHidden();
 
-  // A batch that would cross 10 MB in total is refused ENTIRELY — the 0.5 MB
-  // file must not sneak in alongside the 9.8 MB one. A partial add is the
+  // A batch that would cross 5 MB in total is refused ENTIRELY — the 0.5 MB
+  // file must not sneak in alongside the 4.4 MB one. A partial add is the
   // failure mode that reads as success (AC-PROF-15).
-  await input.setInputFiles([file("huge.bin", 9.8), file("tiny.txt", 0.5)]);
-  await expect(dialog.getByText("File too large — 10 MB total.")).toBeVisible();
+  await input.setInputFiles([file("huge.bin", 4.4), file("tiny.txt", 0.5)]);
+  await expect(dialog.getByText("File too large — 5 MB total.")).toBeVisible();
   await expect(dialog.getByText("huge.bin")).toBeHidden();
   await expect(dialog.getByText("tiny.txt")).toBeHidden();
   await expect(dialog.getByText("small.log")).toBeVisible(); // the earlier pick survives
@@ -3340,7 +3370,7 @@ test("PROF-E5: an oversized attachment is refused WHOLE and explained inline", a
   // Removing a chip clears the refusal and the chip.
   await dialog.getByRole("button", { name: /Remove file: small\.log/ }).click();
   await expect(dialog.getByText("small.log")).toBeHidden();
-  await expect(dialog.getByText("File too large — 10 MB total.")).toBeHidden();
+  await expect(dialog.getByText("File too large — 5 MB total.")).toBeHidden();
 });
 
 test("AC-PROF-16: the Type combobox is fully operable by keyboard alone", async ({ page }) => {
@@ -3370,14 +3400,14 @@ test("AC-PROF-16: the Type combobox is fully operable by keyboard alone", async 
   await expect(combo).toBeFocused(); // focus returned, not lost to the body
 
   // Escape closes the list WITHOUT closing the dialog and losing the draft.
-  await dialog.getByRole("textbox", { name: "Subject" }).fill("keep me");
+  await dialog.getByRole("textbox", { name: "Description" }).fill("keep me");
   await combo.focus();
   await page.keyboard.press("ArrowDown");
   await expect(dialog.getByRole("listbox")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog.getByRole("listbox")).toBeHidden();
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("textbox", { name: "Subject" })).toHaveValue("keep me");
+  await expect(dialog.getByRole("textbox", { name: "Description" })).toHaveValue("keep me");
 });
 
 test("AC-PROF-16: the open feedback dialog is axe-clean at 1440 and 375", async ({ page }) => {
@@ -3672,4 +3702,291 @@ test("A23: `sp-synth-wave`'s no-lyrics panel shows the empty-state, not a blank 
   // block, now showing the empty-state, and the CTAs) — not the one-child
   // collapse A23 originally reported.
   await expect(page.locator(".song-result__side-panel > *")).toHaveCount(2);
+});
+
+// ── /song/create Custom tab: Enhance and Instrumental (product owner, 2026-08-26) ──
+//
+// One pill, two behaviours, and Instrumental selects between them (AC-SONG-14):
+// OFF the box may hold a lyric sheet or a brief, so Enhance asks first; ON
+// lyrics are unsupported, so it runs Refine Idea on the first tap. The toggle
+// itself never edits the text (AC-SONG-02) — a rule that cleared the box on
+// toggle-on stood for one day and was withdrawn.
+
+test("Custom Enhance opens the two-mode menu, and is not a dead button", async ({ page }) => {
+  // It WAS a dead button. `EnhanceButton`'s `bem` branch returned the button
+  // alone while `onClick` set `menuOpen`, so the only caller that passes
+  // `directions` — this one — toggled invisible state and did nothing. The menu
+  // lived in the legacy rendering and was not carried across in the DP migration.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.getByText("Custom", { exact: true }).first().click();
+
+  // Enhance only appears once there is something to enhance (`!value.trim()`).
+  const box = page.locator(".song-create__textarea").first();
+  await box.fill("a hopeful song about leaving home");
+  const enhance = page.locator(".song-create__enhance-btn").first();
+  await expect(enhance).toBeVisible();
+  await expect(enhance).toHaveAttribute("aria-expanded", "false");
+
+  await enhance.click();
+  await expect(enhance).toHaveAttribute("aria-expanded", "true");
+  const dialog = page.getByRole("dialog", { name: "What would you like to enhance?" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("Refine Idea")).toBeVisible();
+  await expect(dialog.getByText("Refine Lyrics")).toBeVisible();
+
+  // The gradient tiles are the design's whole point, and a mask glyph with no
+  // background to clip is the repo's recurring invisible-icon bug — so assert
+  // both tiles actually paint (2026-08-26, app prototype's Enhance sheet).
+  await expect(dialog.locator(".enhance-dialog__opt-ico--idea")).toBeVisible();
+  await expect(dialog.locator(".enhance-dialog__opt-ico--lyrics")).toBeVisible();
+  for (const g of await dialog.locator(".enhance-dialog__opt-glyph").all()) {
+    const bg = await g.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg).not.toBe("rgba(0, 0, 0, 0)");
+    const box = await g.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThan(0);
+  }
+
+  // Picking a direction closes the chooser and rewrites the field.
+  await dialog.getByText("Refine Idea").click();
+  await expect(dialog).toBeHidden();
+  await expect
+    .poll(async () => box.inputValue(), { timeout: 15000 })
+    .not.toBe("a hopeful song about leaving home");
+});
+
+test("Under Instrumental, Enhance runs Refine Idea directly with no chooser", async ({ page }) => {
+  // AC-SONG-14's second branch. `SongCompose` withholds `directions` while
+  // Instrumental is ON, and that is what turns the chooser off — so this asserts
+  // BOTH that no menu appears and that the field is still rewritten. Asserting
+  // only the absence would also pass on a button that did nothing at all, which
+  // is precisely the defect the test above exists for.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.getByText("Custom", { exact: true }).first().click();
+
+  const box = page.locator(".song-create__textarea").first();
+  const original = "warm analogue synths at dusk";
+  await box.fill(original);
+  await page.getByRole("switch", { name: "Instrumental" }).first().click();
+
+  const enhance = page.locator(".song-create__enhance-btn").first();
+  await expect(enhance).toBeVisible();
+  // No `directions` ⇒ no popup semantics at all, not merely a closed dialog.
+  await expect(enhance).not.toHaveAttribute("aria-haspopup", "dialog");
+
+  await enhance.click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText("What would you like to enhance?")).toHaveCount(0);
+
+  // …and it really ran: the mock awaits ~900ms, then replaces the text.
+  await expect(enhance).toBeDisabled();
+  await expect.poll(async () => box.inputValue(), { timeout: 15000 }).not.toBe(original);
+});
+
+test("Toggling Instrumental never edits the box; only the Lyrics fill hides", async ({ page }) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.getByText("Custom", { exact: true }).first().click();
+
+  const box = page.locator(".song-create__textarea").first();
+  const original = "Verse one, the city lights are low";
+  await box.fill(original);
+
+  const lyricsFill = page.getByRole("button", { name: "Lyrics", exact: true });
+  const ideaFill = page.getByRole("button", { name: "Idea", exact: true });
+  await expect(lyricsFill).toBeVisible();
+
+  // ON: text untouched; Lyrics gone; Idea and Enhance both stay.
+  await page.getByRole("switch", { name: "Instrumental" }).first().click();
+  await expect(box).toHaveValue(original);
+  await expect(lyricsFill).toHaveCount(0);
+  await expect(ideaFill).toBeVisible();
+  await expect(page.locator(".song-create__enhance-btn")).toBeVisible();
+
+  // The placeholder still swaps — it is simply not visible behind text.
+  await expect(box).toHaveAttribute("placeholder", /No lyrics needed - AI will create/);
+  await expect(box).toHaveAttribute("placeholder", /Describe the mood or vibe/);
+
+  // OFF: still untouched, and Lyrics comes back.
+  await page.getByRole("switch", { name: "Instrumental" }).first().click();
+  await expect(box).toHaveValue(original);
+  await expect(lyricsFill).toBeVisible();
+});
+
+test("Custom's box is labelled LYRICS / IDEA, matching what it accepts", async ({ page }) => {
+  // It read just "LYRICS" until 2026-08-25, which under-described a box that
+  // also takes a style/scene brief and has an `Idea` fill sitting inside it.
+  // The spec (§3) and this component's own comments had said DP calls it
+  // "LYRICS / IDEA" the whole time — the label was the piece that never caught up.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.getByText("Custom", { exact: true }).first().click();
+
+  const label = page
+    .locator(".song-create__label")
+    .filter({ hasText: /LYRICS/ })
+    .first();
+  await expect(label).toHaveText("LYRICS / IDEA");
+  // Both fills live under it — and they SHARE the pill class, which is why the
+  // label has to name both rather than just the one the field is called after.
+  await expect(page.locator(".song-create__idea-btn")).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Idea", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Lyrics", exact: true })).toBeVisible();
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// e739c4e — /mv/thinking must not double-start the storyboard job under
+// React Strict Mode (found while capturing the S2 mv-creation storyboard spec)
+// ════════════════════════════════════════════════════════════════════════════
+// `StoryboardGenerationScreen` used to call `startStoryboard()` from a bare
+// mount effect. `next dev`'s React Strict Mode deliberately invokes every
+// mount effect twice, so it fired TWO separate storyboard jobs:
+//   - `startStoryboard` charges credits (GL-01), so the account was charged
+//     twice for one storyboard.
+//   - Each job gets its own History row (`upsertGenerating` keyed by job id).
+//     The FIRST job's poll is silently cancelled the instant the second job's
+//     `track()` call replaces `MvFlowProvider`'s shared `cancelPoll.current`,
+//     with no `markFailed`/`markCompleted` on the way out — so the first row
+//     is stuck reading "Generating..." forever.
+// Fixed with a `started` useRef guard, the same pattern `GenerationView.tsx`
+// already carries for `/mv/creating` and `/song/creating` (this screen split
+// off from `GenerationView` in slice 3h and the guard did not come along).
+//
+// Mutation-tested 2026-08-27 (both directions, against a fresh `npm run build`
+// each time — `next start` reads its manifest once at boot, so testing against
+// a stale build would not have exercised the mutated source):
+//   - RED: with `started.current` removed from StoryboardGenerationScreen's
+//     mount-effect guard, this test failed on both assertions — the balance
+//     dropped by 2x the advertised script price, and History gained 2 new
+//     rows (one of them stuck "Generating...") for a single storyboard start.
+//   - GREEN: with the guard restored, both assertions pass.
+// NOTE ON WHAT THIS DOES *NOT* GUARD. This suite boots `next start -p 3100`
+// (playwright.config.ts) — the PRODUCTION build, where React elides Strict
+// Mode's double-invoked mount effect entirely. So this test cannot observe the
+// e739c4e double-start regression: it passes with or without the `started` ref.
+// Verified by mutation, 2026-08-27. What it does assert, and usefully, is the
+// production invariant — one start, one charge, one new History row.
+// The real guard for the double-start lives where the mechanism exists, in
+// React's dev build: src/components/mv/StoryboardGenerationScreen.test.tsx.
+test("AC-MV-06/19: one storyboard start charges once and adds exactly one History row", async ({
+  page,
+}) => {
+  test.slow(); // a full mock generation
+  await login(page);
+
+  // Count History's starting rows BEFORE funding/composing — a full page load
+  // (`page.goto`) resets the in-memory balance and compose state (see
+  // `fundAccount`'s own warning above), so this has to happen first, not as a
+  // client-side hop later. `HISTORY_SAMPLES` is a static seed merged in
+  // alongside the live (in-memory) rows, so this is never actually 0 — but the
+  // very first navigation to any route in `next dev` can take a moment to
+  // compile, so wait for the count to settle rather than reading it the
+  // instant `goto` resolves (an early read undercounts and every assertion
+  // below it becomes a false failure, not a sign of the bug).
+  await page.goto("/history");
+  const rowsBefore = await stableHistoryCardCount(page);
+
+  await page.locator('.sidebar__nav-item[href="/mv/room"]').click();
+  await page.waitForURL("**/mv/room");
+  await fundAccount(page);
+  await composeMv(page);
+
+  const before = await balance(page);
+  await page.getByRole("button", { name: "Create Music Video" }).click();
+  const scriptPrice = await shownCost(page, ".mv-mode-card__tag--credit");
+  await page.getByText("Create Storyboard First").click();
+  await page.waitForURL("**/mv/storyboard");
+
+  // Exactly one charge for one storyboard, not two.
+  expect(
+    await balance(page),
+    "a Strict-Mode double mount must not double-charge the storyboard (GL-01)",
+  ).toBe(before - scriptPrice);
+
+  // Exactly one new History row, not a stuck duplicate.
+  await page.locator('.sidebar__nav-item[href="/history"]').click();
+  await page.waitForURL("**/history");
+  expect(
+    await stableHistoryCardCount(page),
+    "one storyboard start must add exactly one History row, not a stuck duplicate",
+  ).toBe(rowsBefore + 1);
+});
+
+// ── Demo/QA state panel (product owner, 2026-08-27) ─────────────────────────
+//
+// The panel's whole cost model rests on ONE property: it renders nothing until
+// `?demo=1` has armed it. If that breaks, a `position: fixed` card lands in all
+// 115 `visual-baseline.spec.ts` screenshots and in every `a11y.spec.ts` sweep —
+// and re-recording those baselines would ACCEPT whatever else had changed on 17
+// routes at the same time (the A4 lesson). So the default-hidden state is
+// asserted here rather than trusted.
+
+const DEMO_PANEL = '[aria-label="Demo state panel"]';
+const DEMO_HANDLE = 'button:text-is("DEMO")';
+
+test("demo panel: invisible by default on every kind of route, and writes nothing", async ({
+  page,
+}) => {
+  await login(page);
+  // One migrated route, the landing page (which branches its layout in JS), and
+  // /share (which AppShell renders bare through an early return).
+  for (const route of ["/history", "/", "/share"]) {
+    await page.goto(route);
+    await expect(page.locator(DEMO_PANEL)).toHaveCount(0);
+    await expect(page.locator(DEMO_HANDLE)).toHaveCount(0);
+    // Not merely hidden — nothing is persisted either, so an un-armed session
+    // cannot leave a flag behind for the next one.
+    expect(await page.evaluate(() => localStorage.getItem("muse_demo"))).toBeNull();
+  }
+});
+
+test("demo panel: ?demo=1 arms it collapsed, it survives navigation, [x] clears the flags", async ({
+  page,
+}) => {
+  await login(page);
+
+  // Arms COLLAPSED — expanded, the card covers the sidebar's nav links, and QA
+  // has to be able to navigate while driving these states.
+  await page.goto("/history?demo=1");
+  await expect(page.locator(DEMO_HANDLE)).toBeVisible();
+  await expect(page.locator(DEMO_PANEL)).toHaveCount(0);
+
+  // `?demo=1` is the ENABLER, not the display condition: the armed state lives
+  // in localStorage, which is why it survives a navigation that drops the query.
+  await page.goto("/profile");
+  await expect(page.locator(DEMO_HANDLE)).toBeVisible();
+  expect(page.url()).not.toContain("demo=1");
+
+  await page.locator(DEMO_HANDLE).click();
+  const panel = page.locator(DEMO_PANEL);
+  await expect(panel).toBeVisible();
+
+  // The reason picker is conditional on the reject flag, and carries exactly the
+  // seven reasons the product owner supplied — no more, no fewer.
+  await expect(panel.locator("select")).toHaveCount(0);
+  await panel.getByRole("switch", { name: /Publish review REJECTED/ }).click();
+  const reasons = panel.locator("select").first();
+  await expect(reasons).toBeVisible();
+  await expect(reasons.locator("option")).toHaveCount(7);
+  await expect(reasons.locator("option").first()).toHaveText("Platform Policy Violation");
+
+  // [x] must clear the flags as well as hide, or a fake state stays on screen
+  // with no visible control left to turn it off.
+  await panel.getByRole("button", { name: "Close demo panel" }).click();
+  await expect(panel).toHaveCount(0);
+  await expect(page.locator(DEMO_HANDLE)).toHaveCount(0);
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("muse_demo") ?? "{}"));
+  expect(stored.enabled).toBe(false);
+  expect(Object.values(stored.flags ?? {}).some(Boolean)).toBe(false);
+
+  // Dismissal is permanent across a reload; re-arming is `?demo=1` again.
+  await page.goto("/profile");
+  await expect(page.locator(DEMO_HANDLE)).toHaveCount(0);
+  await page.goto("/profile?demo=1");
+  await expect(page.locator(DEMO_HANDLE)).toBeVisible();
 });

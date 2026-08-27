@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
@@ -57,8 +57,23 @@ export function StoryboardGenerationScreen() {
   }, [valid, router, locale]);
 
   // Start the mock generation once on mount.
+  //
+  // GL-01: `startStoryboard` CHARGES credits, so this must be idempotent.
+  // React Strict Mode (on by default in `next dev`) deliberately invokes every
+  // mount effect twice to expose exactly this class of bug — without a guard
+  // it fires TWO separate storyboard jobs, double-charging `scriptCost` and
+  // leaving the first job's History row stuck at "Generating..." forever (its
+  // poll is silently cancelled when the second job's `track()` call replaces
+  // `cancelPoll.current`, with no `markFailed`/`markCompleted` on the way out).
+  // Same bug, same fix as `GenerationView.tsx`'s own `started` ref (that one
+  // covers `/mv/creating` and `/song/creating`; this screen stopped routing
+  // through it in slice 3h — see the header note — and the guard did not come
+  // along for the ride). A ref survives Strict Mode's simulated remount (the
+  // component instance is reused), so the second invocation is skipped.
+  const started = useRef(false);
   useEffect(() => {
-    if (!valid || alreadyDone) return;
+    if (!valid || alreadyDone || started.current) return;
+    started.current = true;
     startStoryboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

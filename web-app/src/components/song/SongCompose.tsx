@@ -84,7 +84,22 @@ import { DESCRIPTION_MAX, isSongReady, songCost, type SongMode } from "@/lib/mv/
  * (`instrumentalText`), separate from lyrics, so toggling Instrumental swaps
  * which string the box holds. WA has one `lyrics` field on the contract, so the
  * toggle changes the box's placeholder and its footer, not its backing store —
- * turning Instrumental on and off no longer silently discards what was typed.
+ * turning Instrumental on and off never discards what was typed.
+ *
+ * ── ENHANCE IS TWO CONTROLS WEARING ONE PILL (product owner, 2026-08-26) ────
+ *
+ * The box holds a lyric sheet OR a brief, and Instrumental is what says which:
+ *
+ * · Instrumental OFF — the box may hold either, so Enhance cannot know what the
+ *   user meant. It opens the two-mode chooser (Refine Idea / Refine Lyrics) and
+ *   calls `enhancePrompt` only after a pick. See `EnhanceButton`'s `directions`.
+ * · Instrumental ON — lyrics are not supported at all, so there is nothing to
+ *   choose between. Enhance runs Refine Idea (`kind: "song"`) on the first tap.
+ *
+ * Which is why `directions` is passed CONDITIONALLY below: `EnhanceButton`
+ * branches on its presence, so withholding it is what turns the chooser off.
+ * Enhance itself renders in BOTH states — only the `Lyrics` fill hides under
+ * Instrumental (`AC-SONG-02`, `AC-SONG-14`).
  */
 export function SongCompose() {
   const router = useRouter();
@@ -170,9 +185,7 @@ export function SongCompose() {
                       designer-overrides.css), not a `useMediaQuery` read, so
                       there's no hydration-mismatch flash of the wrong text
                       on a phone's first paint. */}
-                  <span className="song-create__describe-label--phone">
-                    DESCRIBE YOUR SONG
-                  </span>
+                  <span className="song-create__describe-label--phone">DESCRIBE YOUR SONG</span>
                   <span className="song-create__describe-label--wide">
                     DESCRIBE IDEA OF YOUR SONG
                   </span>
@@ -240,7 +253,14 @@ export function SongCompose() {
             <div className="song-create__section">
               <div className="song-create__row-header">
                 <div className="song-create__label-group">
-                  <p className="song-create__label">LYRICS</p>
+                  {/* "LYRICS / IDEA" — DP's own name for this box, and the
+                      honest one: it takes either kind of input and has a fill
+                      button for each (see the footer note below). It read just
+                      "LYRICS" until 2026-08-25, which under-described a box that
+                      also accepts a style/scene brief — and contradicted this
+                      file's own comments, which had said DP calls it
+                      "LYRICS / IDEA" all along. */}
+                  <p className="song-create__label">LYRICS / IDEA</p>
                   <button
                     type="button"
                     className="song-create__info-btn"
@@ -272,7 +292,7 @@ export function SongCompose() {
                   className="song-create__textarea"
                   placeholder={
                     s.instrumental
-                      ? "Describe the mood or vibe of your instrumental…\n\nNo lyrics needed — AI will create a pure instrumental track."
+                      ? "No lyrics needed - AI will create a pure instrumental track.\nDescribe the mood or vibe of your instrumental..."
                       : "Write your lyrics here... Or leave blank — AI will generate them based on your chosen style and mood."
                   }
                   maxLength={DESCRIPTION_MAX}
@@ -285,8 +305,10 @@ export function SongCompose() {
                       writes a style/scene/tempo/mood brief, Lyrics writes a
                       whole lyric sheet. Same pill, different pool. Idea stays
                       visible under Instrumental — a brief is what that box asks
-                      for there — while Lyrics hides with the rest of the
-                      lyric-only controls. */}
+                      for there — and `Lyrics` is the ONLY control that hides
+                      there: a lyric sheet is the one thing an instrumental
+                      track cannot use. Enhance stays (see the footer-right
+                      note); the toggle does not touch the text either way. */}
                   <div className="song-create__input-actions">
                     <button
                       type="button"
@@ -308,26 +330,35 @@ export function SongCompose() {
                     )}
                   </div>
                   <div className="song-create__footer-right">
-                    {!s.instrumental && (
-                      <EnhanceButton
-                        value={s.lyrics}
-                        kind="lyrics"
-                        onEnhanced={(t) => patch({ lyrics: t })}
-                        bem="song-create"
-                        directions={[
-                          {
-                            kind: "song",
-                            label: "Refine Idea",
-                            sub: "Sharpen the mood, tone, and detail",
-                          },
-                          {
-                            kind: "lyrics",
-                            label: "Refine Lyrics",
-                            sub: "Polish wording, rhythm, and flow",
-                          },
-                        ]}
-                      />
-                    )}
+                    {/* Enhance renders in BOTH toggle states; what changes is
+                        whether it asks first. Instrumental OFF the box may hold
+                        a lyric sheet or a brief, so `directions` opens the
+                        chooser; Instrumental ON lyrics are not supported, so
+                        the pill runs Refine Idea (`kind: "song"`) on the first
+                        tap. Withholding `directions` is what disables the
+                        chooser — see `EnhanceButton`. (AC-SONG-14.) */}
+                    <EnhanceButton
+                      value={s.lyrics}
+                      kind="song"
+                      onEnhanced={(t) => patch({ lyrics: t })}
+                      bem="song-create"
+                      directions={
+                        s.instrumental
+                          ? undefined
+                          : [
+                              {
+                                kind: "song",
+                                label: "Refine Idea",
+                                sub: "Sharpen the mood, tone, and detail",
+                              },
+                              {
+                                kind: "lyrics",
+                                label: "Refine Lyrics",
+                                sub: "Polish wording, rhythm, and flow",
+                              },
+                            ]
+                      }
+                    />
                     <span className="song-create__char-count">
                       {s.lyrics.length}/{DESCRIPTION_MAX}
                     </span>
