@@ -174,7 +174,7 @@ to move the current page under the new locale prefix.
 **Adoption is partial, by design:** only `Sidebar.tsx` and `ProfileView.tsx` currently call
 `useT()`. Everything else (Home, MV, Song, Community, History, Auth, Credits modals, …) is
 hardcoded English JSX. Similarly, only 5 files build paths with `localePath()`
-(`AuthGuard.tsx`, `LocaleProvider.tsx`, `Sidebar.tsx`, `ProfileView.tsx`, `AccountMenu.tsx`); most
+(`AuthGuard.tsx`, `LocaleProvider.tsx`, `Sidebar.tsx`, `ProfileView.tsx`, `MobileHeader.tsx`); most
 in-app `router.push()` calls use raw unprefixed paths (e.g. `MvResult.tsx`).
 **Every MIGRATED screen is on `localePath()` — R-9 requires it** — so the raw-path set is now the
 unmigrated remainder, not a cross-section of the app. (`HomeView.tsx` used to be the headline

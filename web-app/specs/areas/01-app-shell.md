@@ -44,15 +44,25 @@ public `/share` page which renders bare.
 >    tab bar below 767px, only a two-route one. **AC-SHELL-01 needs qualifying accordingly** (see
 >    its correction below); this is the mechanism behind the already-documented A5 phone-back work
 >    (`CLAUDE.md`), not a new bug — just a fact this area never recorded.
-> 5. **`TopBar`/`HeaderActions`/`AccountMenu` are not "the fallback for routes not yet migrated" —
->    they are unreachable dead code.** Point 3 was accurate in 2026-08-12 (routes still existed
->    outside `OWN_CHROME`); by 2026-08-27 `OWN_CHROME`'s list has grown to cover every route except
->    `/` (which never uses `TopBar` — see point 3) and `/share*` (bare). See the full correction and
->    live repro below.
+> 5. **`TopBar`/`HeaderActions`/`AccountMenu` were not "the fallback for routes not yet migrated" —
+>    they were unreachable dead code, and they are now DELETED.** Point 3 was accurate in
+>    2026-08-12 (routes still existed outside `OWN_CHROME`); by 2026-08-27 `OWN_CHROME`'s list had
+>    grown to cover every route except `/` (which never used `TopBar` — see point 3) and `/share*`
+>    (bare). The S6 storyboard build measured that and raised it as `Q-01`; **the product owner
+>    chose deletion on 2026-08-27**, so `shell/TopBar.tsx`, `shell/HeaderActions.tsx` and
+>    `account/AccountMenu.tsx` are gone from `src/`, and `OWN_CHROME` went with them — a list whose
+>    only job was gating a component that no longer exists. Everything below marked ⚠️ *unreachable*
+>    now reads as ⚠️ **removed**; the behaviour each correction describes is unchanged, because none
+>    of it was reachable in the first place.
+>
+>    **The invariant that replaces it:** below `/`, the shell draws **no header at all** — every
+>    route renders its own (`RoomNavbar` / `DetailNavbar`, or a page's own mobile header), which is
+>    what all 16 already did. A NEW route must bring its own navbar; there is no fallback to inherit.
 
-**In scope:** `shell/AppShell`, `shell/Sidebar`, `shell/TopBar`, `shell/HeaderActions`,
-`shell/MobileHeader`, `shell/MobileTabBar`, `shell/DetailNavbar`, `shell/RoomNavbar`,
-`account/AccountMenu` (surface only — its destinations belong to areas 06/07).
+**In scope:** `shell/AppShell`, `shell/Sidebar`, `shell/MobileHeader`, `shell/MobileTabBar`,
+`shell/DetailNavbar`, `shell/RoomNavbar`, `home/Navbar` (the `/`-only marketing header).
+_(`shell/TopBar`, `shell/HeaderActions` and `account/AccountMenu` were in scope until they were
+deleted on 2026-08-27 — see §1 point 5.)_
 **Out of scope:** `SignInModal` (area 09), the credits modals (area 07), the Profile/History/Settings
 screens the shell links to (areas 05/06).
 
@@ -91,15 +101,12 @@ Feedback** rows (SHELL-03, UI-only) alongside Profile / My Creations / Sign Out.
 
 | Component             | Owns UI                                                                                                                                     | Reads/writes state                                                              | `MuseApi` |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------- |
-| `shell/AppShell`      | chrome vs bare decision; `OWN_CHROME` routing between own-chrome / `TopBar` / `Navbar`                                                      | `usePathname` + `stripLocalePrefix`                                             | —         |
+| `shell/AppShell`      | chrome vs bare decision; mounts `Navbar`/`MobileHeader`/`Footer` on `/` only, `MobileTabBar` on Home+History                                | `usePathname` + `stripLocalePrefix`                                             | —         |
 | `shell/Sidebar`       | desktop rail (≥768px), 5 nav links, active state, profile footer                                                                            | `useAuth().{loggedIn,requireLogin}`, `useLocale().{locale}`, `useT()`           | —         |
 | `shell/MobileTabBar`  | phone bottom bar (<768px), **3** items: Explore / Create / History                                                                          | `useAuth().{loggedIn,requireLogin}`, `useLocale()`, `useT()`                    | —         |
 | `shell/MobileHeader`  | phone top bar (<768px) — wordmark, credits, account button (the Profile entry)                                                              | `useCredits().credits`, `useAuth()`                                             | —         |
 | `shell/DetailNavbar`  | back + title bar for detail routes (own-chrome)                                                                                             | `useCredits().credits`, `useAuth()`                                             | —         |
 | `shell/RoomNavbar`    | create/room-screen navbar; also exports the shared `Tabs`                                                                                   | `useCredits().credits`, `useAuth()`                                             | —         |
-| `shell/TopBar`        | ⚠️ **unreachable** — its `!OWN_CHROME && !isHome` condition matches no route today (see §1 correction)                                      | —                                                                               | —         |
-| `shell/HeaderActions` | ⚠️ **unreachable** (mounts only inside `TopBar`) — logged-out Sign In button; logged-in credits badge + avatar; purchase toast              | `useCredits().credits`, `useAuth().{loggedIn,openSignIn,profile,subscribed}`    | —         |
-| `account/AccountMenu` | ⚠️ **unreachable** (mounts only inside `HeaderActions`) — account dropdown (profile header, credits row, Profile / My Creations / Sign Out) | `useCredits().credits`, `useAuth().{signOut,profile,subscribed}`, `useLocale()` | —         |
 
 Nav labels are localized via `useT()` (`nav.home/createMv/createSong/history/profile`) — one of the
 only two localized surfaces (nav + Profile). Everything else in the shell is hardcoded English.
@@ -114,7 +121,7 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
   Home `/` (`nav.home`) · Create MV `/mv/room` (`nav.createMv`) · Create Song `/song/create`
   (`nav.createSong`) · **History** `/history` (`nav.history` = "History") · Profile `/profile`
   (`nav.profile`). Note: the **same `/history` route is labeled "History" in the nav but
-  "My Creations" in the account menu** (`AccountMenu.tsx:98`) and as the page title (area 05).
+  "My Creations" as the page title (area 05, `HistoryView.tsx`). _(It was also the deleted account menu's label — that file is gone as of 2026-08-27.)_
 - **Gated nav** (`GATED = {/history, /profile, /settings}`, `Sidebar.tsx`): clicking a gated item
   **while logged out** calls `requireLogin(() => push(target))` — opens `SignInModal` and queues the
   navigation for after sign-in. Matches the four `AuthGuard` routes (`/profile/credits` has no nav
@@ -207,7 +214,7 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 
 | ID           | Trigger                         | Behaviour                                                                                                                                           |
 | ------------ | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **SHELL-E1** | Pre-hydration (SSR/first paint) | **Fixed (SHELL-04, 2026-07-23):** `HeaderActions` returns a fixed-height placeholder until `hydrated`, so the logged-out→in flash no longer occurs. |
+| **SHELL-E1** | Pre-hydration (SSR/first paint) | ⚠️ **Re-opened 2026-08-27.** The SHELL-04 fix (2026-07-23) was a fixed-height placeholder in `HeaderActions`, which was never reachable and is now deleted. In the navbars users actually see, `hydrated` guards only the Upgrade crown (`RoomNavbar.tsx:105`, `MobileHeader.tsx:69`); the **Login ↔ credit-pill swap itself is not guarded** in `RoomNavbar`/`DetailNavbar`, so a signed-in reload can still paint the logged-out control for a frame. Not fixed — flagged to the product owner with the deletion. |
 | **SHELL-E2** | Non-default locale active       | All nav/menu links go through `localePath`, keeping the `/jpn/…` prefix; active-state comparison also prefix-aware.                                 |
 | **SHELL-E3** | Missing translation key         | `useT()` falls back to English per key (empty non-English dicts).                                                                                   |
 
@@ -230,7 +237,7 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
   > during the S6 build (`specs/storyboards/shell-auth`).
 - **AC-SHELL-04** — WHILE logged out, THE SYSTEM SHALL show a **Login** button in each route's own navbar and no credits badge/avatar. _(Corrected 2026-08-27: was "Sign In button in the top bar" — the top bar (`HeaderActions`/`TopBar`) is unreachable; the live control reads "Login" and lives in `RoomNavbar`/`DetailNavbar`/`Navbar`. See §1's correction.)_
 - **AC-SHELL-05** — WHILE logged in, THE SYSTEM SHALL show the credits balance pill; and WHEN NOT `subscribed`, an additional **Upgrade** button. _(Corrected 2026-08-27: was "the avatar... gold ring and a PRO badge in the menu" — no avatar, gold ring, or menu exists on any reachable route today; see §1's correction. The PRO/FREE distinction a user can actually see is the `Sidebar` profile footer's plan-name text.)_
-- **AC-SHELL-06** — ⚠️ **Not currently satisfiable — corrected 2026-08-27.** There is no reachable control that opens `AccountMenu`; `HeaderActions`/`TopBar`, its only mount path, matches no route (§1's correction). The individual destinations it would have exposed are each reachable some other way: Buy Credits/Upgrade via the credits pill described in AC-SHELL-05, Profile/My Creations via the `Sidebar` footer or `MobileHeader`, Sign Out via `Settings` only. Left here rather than deleted, since the component still exists in `src/` and a real fix is either wiring a trigger back in or removing the dead component — a product/RD decision, not inferred here.
+- **AC-SHELL-06** — ⚠️ **RETIRED 2026-08-27 (product owner, S6 `Q-01`).** This criterion described the account dropdown; `AccountMenu` and its only mount path (`HeaderActions` → `TopBar`) have been **deleted** from `src/`, so there is nothing left to assert. Its destinations each keep their own criterion or owner: Buy Credits / Upgrade → AC-SHELL-05; **Profile** and **My Creations** → the `Sidebar` profile footer (desktop) and `MobileHeader`'s account icon (phone), both plain links to `/profile`; **Sign Out** → `Settings` only (AC-AUTH-05); **Send Feedback** → live at `/profile` (area 06). **Notifications** has no reachable surface at all now — it existed only in the deleted menu (SHELL-03). The id is kept and struck rather than renumbered, so QA's existing traces don't silently re-point.
 - **AC-SHELL-07** — WHEN the path starts with `/share`, THE SYSTEM SHALL render the page bare (no sidebar/top bar).
 - **AC-SHELL-08** — THE SYSTEM SHALL render the shell at 320/375/768/1024/1440/1920px with no overflow and the correct bar (bottom vs side) at the **767px** switch. _(visual)_ _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
   > **Corrected 2026-08-12** — was "640px". Note 768 is both a review viewport and the first width on the sidebar side of the cutover, so it exercises the boundary directly.
@@ -242,7 +249,7 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 - [ ] **SHELL-P1**: nav switches active item; locale prefix preserved on non-default locale (AC-02, E2).
 - [ ] **SHELL-P2**: logged-out gated click → sign-in modal → post-sign-in lands on target (AC-03).
 - [ ] **SHELL-P3/P4**: logged-out shows Login only; logged-in shows credits pill + (if !subscribed) Upgrade; no avatar/menu exists (AC-04/05, corrected 2026-08-27).
-- [ ] **SHELL-P4-S3 / AC-06**: ⚠️ not checkable as written — `AccountMenu` has no live trigger (corrected 2026-08-27). Check its individual destinations instead: `Sidebar`/`MobileHeader` route to Profile/My Creations; `Settings` Sign Out resets to guest.
+- [x] **SHELL-P4-S3 / AC-06**: ~~not checkable~~ — **retired 2026-08-27**: `AccountMenu` is deleted, so there is no menu to check. Its destinations are covered by AC-05 / AC-AUTH-05 and area 06.
 - [ ] **SHELL-P5**: `/share` renders bare (AC-07).
 - [ ] **AC-08**: 390/768/1024/1440 clean; bottom-bar↔sidebar switch at 640px _(visual)_.
 
@@ -260,13 +267,13 @@ No open items for this area — see `../00-overview.md` §9 for global open item
 flowchart TD
   Any["Any route"] --> Bare{path starts /share?}
   Bare -->|yes| Standalone["Bare page (no chrome)"]
-  Bare -->|no| Shell["Sidebar/BottomBar + TopBar + main"]
+  Bare -->|no| Shell["Sidebar/BottomBar + the route's own navbar + main"]
   Shell --> Nav["Nav click"]
   Nav -->|gated & logged out| Gate["SignInModal → queued route"]
   Nav -->|else| Route["Navigate (locale-prefixed)"]
   Shell --> Header{logged in?}
   Header -->|no| SignIn["Sign In button"]
-  Header -->|yes| Actions["Credits badge → BuyCredits · Avatar → AccountMenu"]
+  Header -->|yes| Actions["Credit pill → BuyCredits · Upgrade → Subscribe"]
   Actions --> Menu["Profile · My Creations · Sign Out"]
 ```
 

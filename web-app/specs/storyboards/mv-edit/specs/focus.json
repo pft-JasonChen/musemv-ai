@@ -1,0 +1,202 @@
+{
+  "01_result_edit_entry.png": [
+    {
+      "box": [
+        72.2,
+        33.4,
+        10.8,
+        5.9
+      ],
+      "type": "action",
+      "label": "Edit MV"
+    }
+  ],
+  "02_edit_header_tour.png": [
+    {
+      "box": [
+        21.4,
+        1.6,
+        2.7,
+        3.0
+      ],
+      "type": "info",
+      "label": "Back"
+    },
+    {
+      "box": [
+        80.1,
+        1.6,
+        6.9,
+        3.1
+      ],
+      "type": "info",
+      "label": "Credits"
+    }
+  ],
+  "06_cover_section.png": [
+    {
+      "box": [
+        81.6,
+        33.6,
+        5.9,
+        1.9
+      ],
+      "type": "action",
+      "label": "Enhance"
+    }
+  ],
+  "07_cover_lightbox.png": [
+    {
+      "box": [
+        94.9,
+        2.9,
+        2.6,
+        5.2
+      ],
+      "type": "action",
+      "label": "Close"
+    }
+  ],
+  "08_cover_recreate_click.png": [
+    {
+      "box": [
+        78.8,
+        36.8,
+        9.3,
+        3.1
+      ],
+      "type": "action",
+      "label": "Recreate"
+    }
+  ],
+  "10_scene_clip_strip.png": [
+    {
+      "box": [
+        21.4,
+        12.2,
+        6.0,
+        6.6
+      ],
+      "type": "action",
+      "label": "Scene 1"
+    }
+  ],
+  "11_scene_editor_enhance.png": [
+    {
+      "box": [
+        56.2,
+        62.2,
+        5.9,
+        1.9
+      ],
+      "type": "action",
+      "label": "Enhance"
+    }
+  ],
+  "12_scene_recreate_enabled.png": [
+    {
+      "box": [
+        51.2,
+        37.0,
+        16.4,
+        3.6
+      ],
+      "type": "action",
+      "label": "Recreate"
+    }
+  ],
+  "13_scene_recreated_version.png": [
+    {
+      "box": [
+        22.6,
+        37.0,
+        28.0,
+        3.6
+      ],
+      "type": "info",
+      "label": "Generated scene history"
+    }
+  ],
+  "18_settings_rail.png": [
+    {
+      "box": [
+        92.1,
+        15.6,
+        2.6,
+        1.6
+      ],
+      "type": "action",
+      "label": "Show MV title"
+    },
+    {
+      "box": [
+        92.1,
+        46.9,
+        2.6,
+        1.6
+      ],
+      "type": "info",
+      "label": "Show Watermark"
+    }
+  ],
+  "15_mobile_scene_editor.png": [
+    {
+      "box": [
+        4.3,
+        2.0,
+        8.5,
+        3.9
+      ],
+      "type": "action",
+      "label": "Back"
+    }
+  ],
+  "16_mobile_scene_recreate.png": [
+    {
+      "box": [
+        50.3,
+        89.7,
+        36.9,
+        5.7
+      ],
+      "type": "action",
+      "label": "Recreate"
+    }
+  ],
+  "21_merge_enabled.png": [
+    {
+      "box": [
+        36.9,
+        46.4,
+        16.4,
+        3.6
+      ],
+      "type": "action",
+      "label": "Merge MV"
+    }
+  ],
+  "04_history_menu_editmv.png": [
+    {
+      "box": [
+        23.4,
+        48.4,
+        13.7,
+        5.6
+      ],
+      "type": "action",
+      "label": "Edit MV"
+    }
+  ],
+  "19_delete_confirm.png": [
+    {
+      "box": [
+        49.8,
+        55.8,
+        11.8,
+        6.6
+      ],
+      "type": "action",
+      "label": "Delete"
+    }
+  ]
+}

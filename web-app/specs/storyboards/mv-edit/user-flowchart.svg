@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1650" viewBox="0 0 1180 1650" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<title>AI Music Video Edit &#8212; User Flowchart</title>
+<defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
+<rect width="1180" height="1650" fill="#ffffff"/>
+<text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">AI Music Video Edit &#8212; User Flowchart</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1403×697 AND phone 375×812 (D8 exception) &#183; matches spec v1, 2026-08-28</text>
+<text x="40" y="70" font-size="12" fill="#5a6b78">red = error state &#183; amber = decision &#183; green = success / resolved</text>
+
+<g transform="translate(0,80)">
+<text x="40" y="65" font-size="12" fill="#5a6b78">Five branches off one entry point, not a sequence &#8212; a visit touches whichever sections it touches before Merge or Delete or leaving. Every &quot;opened, stop&quot; node is another spec's territory (S2/S4); this diagram does not draw past it.</text>
+<rect x="500" y="100" width="180" height="80" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="590" y="120" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/edit</text>
+<text x="590" y="138" font-size="12" fill="#5a6b78" text-anchor="middle">Real entry (Result) or</text>
+<text x="590" y="153" font-size="12" fill="#5a6b78" text-anchor="middle">fabricated (History) &#183;</text>
+<text x="590" y="168" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S1..S5</text>
+<rect x="20" y="100" width="180" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="110" y="120" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Reload, no flow state</text>
+<text x="110" y="138" font-size="12" fill="#5a6b78" text-anchor="middle">router.replace(/mv/room) &#183;</text>
+<text x="110" y="153" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S4 (MV-E2)</text>
+<path d="M500 140 L440 140 L440 132.5 L200 132.5" fill="none" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="110" y="92" font-size="11" fill="#5a6b78" text-anchor="middle">no storyboard</text>
+<rect x="500" y="190" width="180" height="82" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="590" y="210" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Header + three</text>
+<text x="590" y="227" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">sections render</text>
+<text x="590" y="245" font-size="12" fill="#5a6b78" text-anchor="middle">Cover &#183; Scenes &#183; Output</text>
+<text x="590" y="260" font-size="12" fill="#5a6b78" text-anchor="middle">settings &#183; P1-S2, P1-S3</text>
+<line x1="590" y1="180" x2="590" y2="190" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<polygon points="590,258 716.044,290 590,322 463.956,290" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="590" y="295" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Recreate cover?</text>
+<line x1="590" y1="272" x2="590" y2="258" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="240" y="380" width="180" height="82" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="330" y="400" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Cover overwritten, no</text>
+<text x="330" y="417" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">undo</text>
+<text x="330" y="435" font-size="12" fill="#5a6b78" text-anchor="middle">Flat 4 credits &#183; P2-S3, P2-S4</text>
+<text x="330" y="450" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-MV-12)</text>
+<line x1="590" y1="322" x2="330" y2="380" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="456.952" y="337.336" font-size="12" fill="#5a6b78" text-anchor="middle">yes</text>
+<polygon points="590,448 770.571,480 590,512 409.429,480" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="590" y="485" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Edit + Recreate a scene?</text>
+<line x1="590" y1="272" x2="590" y2="448" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="240" y="570" width="180" height="82" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="330" y="590" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Scene video</text>
+<text x="330" y="607" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">overwritten</text>
+<text x="330" y="625" font-size="12" fill="#5a6b78" text-anchor="middle">Per-shot dynamic cost &#183;</text>
+<text x="330" y="640" font-size="12" fill="#5a6b78" text-anchor="middle">P3-S3, P3-S4 (AC-MV-12)</text>
+<line x1="590" y1="512" x2="330" y2="570" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="456.952" y="527.336" font-size="12" fill="#5a6b78" text-anchor="middle">yes</text>
+<rect x="830" y="480" width="180" height="82" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="920" y="500" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Phone: full-screen</text>
+<text x="920" y="517" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">scene view</text>
+<text x="920" y="535" font-size="12" fill="#5a6b78" text-anchor="middle">Same dirty-gate, same cost &#183;</text>
+<text x="920" y="550" font-size="12" fill="#5a6b78" text-anchor="middle">P3-S5..S8 (D8, A16)</text>
+<path d="M770.571 480 L800.285 480 L800.285 521 L830 521" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="920" y="472" font-size="11" fill="#5a6b78" text-anchor="middle">&lt;768px</text>
+<polygon points="590,638 720.704,670 590,702 459.296,670" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="590" y="675" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Toggle a setting?</text>
+<line x1="590" y1="272" x2="590" y2="638" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="240" y="760" width="230" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="355" y="780" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Marked dirty</text>
+<text x="355" y="798" font-size="12" fill="#5a6b78" text-anchor="middle">title/author/subtitle/watermark &#183; P4-S1</text>
+<text x="355" y="813" font-size="12" fill="#5a6b78" text-anchor="middle">(C2)</text>
+<line x1="590" y1="702" x2="355" y2="760" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="469.145" y="717.408" font-size="12" fill="#5a6b78" text-anchor="middle">yes</text>
+<rect x="830" y="670" width="180" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="920" y="690" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Delete this Project</text>
+<text x="920" y="708" font-size="12" fill="#5a6b78" text-anchor="middle">Confirm &#183; P4-S2</text>
+<path d="M680 231 L755 231 L755 695 L830 695" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="920" y="662" font-size="11" fill="#5a6b78" text-anchor="middle">Delete</text>
+<rect x="830" y="760" width="180" height="67" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="920" y="780" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Discards in-memory</text>
+<text x="920" y="797" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">flow -&gt; /history</text>
+<text x="920" y="815" font-size="12" fill="#5a6b78" text-anchor="middle">No backend delete &#183; P4-S3</text>
+<line x1="920" y1="720" x2="920" y2="760" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="932" y="734" font-size="12" fill="#5a6b78" text-anchor="start">confirm</text>
+<polygon points="590,828 725.35,860 590,892 454.65,860" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="590" y="865" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Any pending edit?</text>
+<line x1="330" y1="462" x2="590" y2="828" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="330" y1="652" x2="590" y2="828" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="355" y1="825" x2="590" y2="828" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="20" y="860" width="180" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="110" y="880" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Merge MV disabled</text>
+<text x="110" y="898" font-size="12" fill="#5a6b78" text-anchor="middle">No pending edit</text>
+<path d="M454.65 860 L394.65 860 L394.65 885 L200 885" fill="none" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="110" y="852" font-size="11" fill="#5a6b78" text-anchor="middle">no</text>
+<polygon points="590,928 731.526,960 590,992 448.474,960" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="590" y="965" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Sufficient balance?</text>
+<line x1="590" y1="892" x2="590" y2="928" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="602" y="904" font-size="12" fill="#5a6b78" text-anchor="start">yes</text>
+<rect x="240" y="1050" width="180" height="80" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="330" y="1070" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/creating</text>
+<text x="330" y="1088" font-size="12" fill="#5a6b78" text-anchor="middle">Flat 10 credits charged &#183;</text>
+<text x="330" y="1103" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S1, P5-S3</text>
+<text x="330" y="1118" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-MV-13/19)</text>
+<path d="M448.474 960 L434.237 960 L434.237 1090 L420 1090" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="330" y="1042" font-size="11" fill="#5a6b78" text-anchor="middle">yes</text>
+<rect x="830" y="1050" width="180" height="67" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="920" y="1070" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Upgrade Your Plan</text>
+<text x="920" y="1087" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">(buy-credits IAP)</text>
+<text x="920" y="1105" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S2</text>
+<path d="M731.526 960 L780.763 960 L780.763 1083.5 L830 1083.5" fill="none" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="920" y="1042" font-size="11" fill="#5a6b78" text-anchor="middle">no</text>
+<rect x="500" y="1150" width="180" height="67" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="590" y="1170" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Leave with no Merge</text>
+<text x="590" y="1187" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">-&gt; every edit lost</text>
+<text x="590" y="1205" font-size="12" fill="#5a6b78" text-anchor="middle">MV-E5</text>
+<line x1="590" y1="272" x2="590" y2="1150" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="1446" x2="1140" y2="1446" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="1466" x2="74" y2="1466" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="1470" font-size="12" fill="#5a6b78">Error branch</text>
+<line x1="40" y1="1486" x2="74" y2="1486" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1490" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="1506" x2="74" y2="1506" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="1510" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+</g>
+</svg>

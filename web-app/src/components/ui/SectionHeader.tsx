@@ -13,8 +13,8 @@ import { DpIcon } from "@/components/ui/DpIcon";
  *
  * WA already has `src/components/ui/SectionLabel.tsx` and this does NOT replace
  * it — SectionLabel is the legacy Tailwind heading still used by unmigrated
- * screens. The two coexist until those screens migrate, same as TopBar and
- * RoomNavbar do.
+ * screens. The two coexist until those screens migrate. (The TopBar/RoomNavbar
+ * pair this used to compare itself to is gone: TopBar was deleted 2026-08-27.)
  *
  * DP renders both titles and lets CSS pick one per layout mode, so the mobile
  * abbreviation is a pure style concern; that is kept as-is.

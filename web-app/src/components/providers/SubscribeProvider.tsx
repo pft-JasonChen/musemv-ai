@@ -16,7 +16,8 @@
 // linked to `/profile`, a no-op there too. Figma (node 1783:41659) shows it
 // opening "Buy Credits" directly, so that dialog is owned here too — the
 // two purchase flows already live side by side everywhere they're offered
-// (RoomNavbar's credit pill + Upgrade button, HeaderActions, AccountMenu),
+// (RoomNavbar's credit pill + Upgrade button; also the since-deleted
+// HeaderActions and AccountMenu),
 // so one provider owning both is the natural home, not two.
 //
 // This is its OWN provider, not folded into `AuthProvider`, because both

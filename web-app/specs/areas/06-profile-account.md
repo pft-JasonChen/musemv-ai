@@ -18,7 +18,7 @@ links + Sign Out + subscription cancel + account delete.
 **In scope:** `profile/ProfileView` (`/profile`, 🔒 **Auth**), `profile/SettingsView` (`/settings`),
 the Edit-Profile / Language / Feedback modals. **Send Feedback is a real support ticket** — see
 **§3.1** for the form and its CSB param mapping.
-**Out of scope (cross-referenced):** the account dropdown (area 01 `AccountMenu`); the credits/IAP
+**Out of scope (cross-referenced):** the credits/IAP
 the Credits Detail route + modals reached from here (area 07 — `/profile/credits`, `BuyCreditsModal`, `SubscribeModal`); the
 **community profile content grid** at `/creator?self=1` that the stat tiles link to (area 04);
 sign-in (area 09).
@@ -356,7 +356,9 @@ session does not re-open them, and because four of them **deviate from the refer
 | 11  | **Custom listbox** for Type, not a native `<select>`                                                         | so its keyboard/ARIA contract is spec'd — AC-PROF-16 |
 | 12  | Naming stays **"Send Feedback"**; "ticket" never appears in the UI                                           | no dictionary or e2e churn                           |
 
-**Scope note:** `/profile` is the only entry point. The account dropdown's own inert "Send Feedback"
-row (`AccountMenu.tsx:118-126`) is **left as-is** — `AccountMenu` renders only inside `TopBar`, which
-after the 17/17 migration is reached by exactly one route (`/mv/creating`, a transient generation
-screen), so it is vestigial rather than a live surface. Not wired, not deleted, recorded here.
+**Scope note:** `/profile` is the only entry point, and now the only surface at all. The account
+dropdown's own inert "Send Feedback" row used to sit in `AccountMenu`, and this spec recorded it as
+"vestigial, reached by exactly one route" — that was already too generous: the S6 storyboard build
+measured `TopBar`'s condition against the routes on disk and found it matched **none** of them. The
+product owner chose deletion on 2026-08-27, so `AccountMenu`/`HeaderActions`/`TopBar` are gone and
+that row with them. Nothing here changes; the alternative surface simply no longer exists.

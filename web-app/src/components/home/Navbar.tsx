@@ -11,11 +11,11 @@ import { DpIcon } from "@/components/ui/DpIcon";
 
 /**
  * DP's `Navbar` (Figma "Navbar", node 1330:22661) — the marketing header used
- * only on the landing page (`/`). `/` is the one route AppShell does not give
- * OWN_CHROME (see AppShell.tsx — `path.startsWith(r)` can never match "/" for
- * any real route prefix), so it used to fall through to the legacy `TopBar`.
- * This replaces that fallback for "/" specifically; `TopBar` itself is
- * untouched in case another unmigrated route ever needs it again.
+ * only on the landing page (`/`). `/` used to fall through to the legacy
+ * `TopBar`, because the `OWN_CHROME` list that spared every other route could
+ * never match "/" (`path.startsWith(r)`). This replaced that fallback for "/"
+ * specifically, and as of 2026-08-27 it is the ONLY header AppShell mounts —
+ * `TopBar` and `OWN_CHROME` are both deleted (S6 Q-01).
  *
  * Classes are from `src/styles/designer/Navbar.css`, verbatim from DP.
  *

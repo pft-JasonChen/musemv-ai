@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { stripLocalePrefix } from "@/lib/i18n/config";
 import { useTrackInAppNavigation } from "@/lib/navHistory";
 import { Sidebar } from "./Sidebar";
-import { TopBar } from "./TopBar";
 import { Navbar } from "@/components/home/Navbar";
 import { HomeBackground } from "@/components/home/HomeBackground";
 import { Footer } from "@/components/home/Footer";
@@ -29,49 +28,32 @@ import { DemoPanel } from "@/components/demo/DemoPanel";
  *   · Profile is no longer a bottom-bar tab — it is reached from MobileHeader's
  *     account button, or the Sidebar profile footer on desktop
  *
- * `TopBar` survives as the DEFAULT for routes not yet migrated (CH2) — in
- * practice only `/mv/creating` now (DP has no MV-render progress screen at
- * all, so that route can't move — see `docs/DESIGNER-TODO.md` §B).
+ * ── THE LEGACY `TopBar` IS GONE, 2026-08-27 (product owner, S6 Q-01) ───────
  *
- * Home (`/`) is no longer one of those: it now gets DP's own marketing
- * `Navbar` (`src/components/home/Navbar.tsx`), ported from designer feedback
- * that the legacy `TopBar` on the landing page didn't match the design at
- * all. `/` can never appear in `OWN_CHROME` (see the comment below), so it
- * has to be special-cased here rather than added to that list.
- */
-/**
- * Routes whose view renders its own DP navbar (RoomNavbar / DetailNavbar) and so
- * must NOT also get the legacy TopBar.
+ * `TopBar` used to be the DEFAULT header for routes not yet migrated (CH2),
+ * with `OWN_CHROME` listing the routes that had to be spared it. The S6
+ * `shell-auth` storyboard build measured that list against the routes on disk
+ * and found it covers ALL of them: with the migration at 17/17, `TopBar` —
+ * and with it `HeaderActions` and `AccountMenu` — had become unreachable, so
+ * the account dropdown those two drew was live dead code with no test
+ * coverage. All three files are deleted, and `OWN_CHROME` went with them: a
+ * list whose only job was gating a component that no longer exists.
  *
- * This list grows by one entry per migrated screen and is deleted outright when
- * the last route moves and TopBar goes with it. Keeping it here — rather than
- * having each page try to hand a navbar upward — is what App Router allows: the
- * page renders inside the layout, so the layout can only be told which routes to
- * stay out of the way for.
+ * THE INVARIANT THAT REPLACES IT: below `/`, the shell draws NO header at all.
+ * Every route renders its own (`RoomNavbar` / `DetailNavbar`, or a page's own
+ * `.mv-player__mobile-header`-style bar), which is what all 16 already did.
+ * **So a NEW route must bring its own navbar** — there is no fallback to
+ * inherit any more, and forgetting one now shows as a page with no header
+ * rather than as a legacy bar that looks wrong. The account destinations that
+ * dropdown offered are reached instead from the `Sidebar` profile footer and
+ * `MobileHeader`'s account icon (both plain links to `/profile`), Sign Out
+ * lives in `Settings`, and Send Feedback is live at `/profile`.
+ *
+ * Home (`/`) gets DP's own marketing `Navbar` (`src/components/home/Navbar.tsx`),
+ * ported from designer feedback that the legacy `TopBar` on the landing page
+ * didn't match the design at all — that special case is now the ONLY header
+ * this component mounts.
  */
-const OWN_CHROME = [
-  "/history",
-  "/explore/mvs",
-  "/explore/songs",
-  "/song/play",
-  "/profile",
-  "/settings",
-  "/watch",
-  "/creator",
-  "/mv/room",
-  "/mv/thinking",
-  "/mv/storyboard",
-  "/mv/result",
-  "/song/create",
-  "/song/creating",
-  "/song/result",
-  "/mv/edit",
-  // `/mv/creating` joined 2026-08-22 (see MOBILE_TAB_ROUTES below) — it now
-  // carries its own DetailNavbar (GenerationView.tsx) instead of the legacy
-  // TopBar, matching every other generation-adjacent screen.
-  "/mv/creating",
-];
-
 /**
  * ── "LAYER 1" VS EVERYTHING ELSE, 2026-08-22 (product owner) ────────────────
  *
@@ -139,7 +121,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </>
     );
 
-  const ownChrome = OWN_CHROME.some((r) => path === r || path.startsWith(`${r}/`));
   const isHome = path === "/";
   const isMobileTabBarRoute =
     isHome || MOBILE_TAB_ROUTES.some((r) => path === r || path.startsWith(`${r}/`));
@@ -149,7 +130,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="app-layout__main">
         {isHome && <HomeBackground />}
-        {!ownChrome && (isHome ? <Navbar /> : <TopBar />)}
+        {isHome && <Navbar />}
         {isHome && <MobileHeader />}
         <main className="app-layout__content">{children}</main>
         {isHome && <Footer />}
