@@ -358,3 +358,47 @@ generic filler presented as its own words. `AC-SONG-06` and `SONG-P3-S2` both sa
 this is a bug, not a demo convenience. It is also the kind of thing a CEO demo gets caught on.
 **Done looks like:** no `FALLBACK_LYRICS`; the Lyrics affordance is absent when the song carries no
 lyrics, guarded by an e2e that creates a Simple-mode song and asserts the control is not rendered.
+
+---
+
+## 9. `/mv/edit`'s cost sentence renders `(26credits)` with no space (found 2026-08-28, S3 capture)
+
+**Deferred by the product owner on 2026-08-28: fix it LATER, after the S3 spec landed.** The S3
+(`mv-edit`) storyboard quotes and photographs this sentence **verbatim, bug included**, with a
+`strings_ignore` entry saying so — so fixing the app makes `12_scene_recreate_enabled.png`,
+`13_scene_recreated_version.png` and two `exact` strings stale. That is why the fix waits: it costs
+a re-capture, not one line.
+
+`MvEditor.tsx:488-489` renders
+
+```
+Recreate (26credits) replaces a scene directly. Edits aren't saved — Merge MV (10 credits) re-renders…
+```
+
+— **no space before "credits" after the dynamic scene cost, a normal space after Merge's flat
+one** — even though the JSX source has an identical literal space in both places:
+
+```tsx
+Recreate ({sceneCost} credits) replaces a scene directly. Edits aren&apos;t saved —
+Merge MV ({COST_MERGE} credits) re-renders the video with your changes.
+```
+
+Reading the source is what makes this look impossible; the capture is what settles it. Confirmed
+twice — by a DOM `textContent` read across two scenes with different cost values during the S3
+capture run, and by eye in the committed screenshot. **Do not "fix" it by reasoning about JSX
+whitespace rules; reproduce it in a browser first**, because the asymmetry between the two halves
+of one sentence is the part any theory has to explain.
+
+**Repro:** `/mv/edit` with flow state → edit any scene's prompt → read `.mv-edit__sublabel`'s
+`textContent`.
+
+**Done looks like:** an explicit separator (`{" "}` or `&nbsp;`) so both halves read the same, an
+e2e assertion on the sublabel's text mutation-tested both ways, and the S3 spec re-captured and
+re-quoted in the same change — including dropping its `strings_ignore` entry, which exists only to
+tolerate this bug.
+
+**While you are in there:** delete the stale comments naming constants that no longer exist —
+`COST_RENDER` / `COST_STORYBOARD` / `COST_REGEN` in `src/lib/user.ts:70-71`,
+`src/components/mv/MvResult.tsx:91` and `src/components/mv/MvEditor.tsx:71,140`. Those comments are
+what fed the `areas/02` pricing drift that S3 corrected (Merge is a flat `COST_MERGE` = 10, per
+`areas/11` §3.6 — the spec had claimed `COST_RENDER` 200, a constant that does not exist).
