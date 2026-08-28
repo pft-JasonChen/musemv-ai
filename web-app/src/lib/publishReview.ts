@@ -63,6 +63,16 @@ export function publishRejectLabel(code: string): string {
 }
 
 /**
+ * Product owner, 2026-08-28: submitting doesn't go straight to live — the
+ * toggle sits OFF showing "In Review" for a beat, then either turns on
+ * ("On") or comes back as the rejected state above. `MvResult`, `HistoryView`
+ * and `CreatorProfile` all fake that turnaround with this one `setTimeout`
+ * delay, so a QA session sees the same pacing everywhere instead of three
+ * screens disagreeing on how long "review" takes.
+ */
+export const PUBLISH_REVIEW_DELAY_MS = 2500;
+
+/**
  * ⚠️ **MV ONLY.** Confirmed by the product owner 2026-08-27, matching what the
  * code already did: an **MV** goes through review before appearing in the
  * community; a **song** publishes immediately (`/song/result` renders only

@@ -29,6 +29,12 @@ import {
 } from "@/lib/mv/community";
 import { MOCK_USER } from "@/lib/user";
 import { MvPreviewCard } from "@/components/community/MvPreviewCard";
+import { useDemoFlag, useDemoState } from "@/components/demo/useDemo";
+import {
+  publishRejectLabel,
+  PUBLISH_REVIEW_DELAY_MS,
+  type PublishRejectCode,
+} from "@/lib/publishReview";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3e) ────────────────────
@@ -120,18 +126,32 @@ export function CreatorProfile() {
   const [tab, setTab] = useState<ProfileTab>(params.get("tab") === "songs" ? "songs" : "mv");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [liked, setLiked] = useState<ReadonlySet<string>>(() => new Set());
+  // `published` is the live/approved state only; `reviewing` is the pending
+  // phase in between (product owner, 2026-08-28) — same split as
+  // `HistoryView`'s `published`/`reviewing` override fields, mirrored here so
+  // the two menus behave identically.
   const [published, setPublished] = useState<ReadonlySet<string>>(() => new Set());
+  const [reviewing, setReviewing] = useState<ReadonlySet<string>>(() => new Set());
   const [removed, setRemoved] = useState<ReadonlySet<string>>(() => new Set());
   const [share, setShare] = useState<ProfileItem | null>(null);
   const [pubConfirm, setPubConfirm] = useState<ProfileItem | null>(null);
   const [del, setDel] = useState<ProfileItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // 2.5: same shape as `HistoryView`'s override map — a reject reverts the item
+  // to unpublished (rule 2), so the reason lives beside it rather than as a
+  // fourth persistent status, and clears the moment a resubmit is accepted.
+  const [rejectReasons, setRejectReasons] = useState<Record<string, PublishRejectCode>>({});
 
   const creator = DEFAULT_CREATOR;
   const name = self ? MOCK_USER.name : creator.name;
   // Only your own items are yours to edit, publish or delete — DP gates the menu
   // the same way (`isOwnProfile`). Logged out, there is no "own" to speak of.
   const ownerMenu = self && loggedIn;
+  // `profileEmpty` (`?demo=1` panel) — `CREATOR_MVS`/`CREATOR_SONGS` are
+  // constants and can never be empty for real, so the flag is the only way
+  // to reach this state. Last render-time branch, per `demoStore.ts`.
+  const demoEmpty = useDemoFlag("profileEmpty");
+  const demo = useDemoState();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -169,8 +189,8 @@ export function CreatorProfile() {
             downloadName: `${s.title}.mp3`,
             video: "",
           }));
-    return rows.filter((r) => !removed.has(r.id));
-  }, [tab, removed]);
+    return demoEmpty ? [] : rows.filter((r) => !removed.has(r.id));
+  }, [tab, removed, demoEmpty]);
 
   // Dismiss the open menu on an outside click or Escape — DP's behaviour, with
   // the listeners scoped to the open state so nothing is bound while closed.
@@ -194,6 +214,24 @@ export function CreatorProfile() {
     router.push(localePath(locale, item.href));
   }
 
+  function clearRejectReason(id: string) {
+    setRejectReasons((r) => {
+      if (!(id in r)) return r;
+      const next = { ...r };
+      delete next[id];
+      return next;
+    });
+  }
+
+  function stopReviewing(id: string) {
+    setReviewing((s) => {
+      if (!s.has(id)) return s;
+      const next = new Set(s);
+      next.delete(id);
+      return next;
+    });
+  }
+
   function doPublish(item: ProfileItem, next: boolean) {
     setOpenMenu(null);
     // An MV going public is reviewed first, so it confirms; a song is immediate.
@@ -202,14 +240,37 @@ export function CreatorProfile() {
       return;
     }
     setPublished((s) => toggle(s, item.id));
+    stopReviewing(item.id);
+    clearRejectReason(item.id);
     showToast(next ? "Published success" : "Unpublished success");
   }
 
+  // 2.5: the `?demo=1` panel's `publishRejected` flag decides what a submission
+  // comes back as, same as `HistoryView.confirmPublishMv`. Rejection reverts
+  // the item to unpublished (rule 2) rather than adding a fourth status.
+  //
+  // Product owner, 2026-08-28: submitting doesn't resolve immediately —
+  // `reviewing` sits true (toggle OFF) for `PUBLISH_REVIEW_DELAY_MS`, then
+  // either `published` flips true (toggle ON) or the reject reason lands,
+  // same pending phase as `HistoryView`/`MvResult`. The flag/reason are
+  // captured now, not re-read when the timer fires.
   function confirmPublish() {
     if (!pubConfirm) return;
-    setPublished((s) => toggle(s, pubConfirm.id));
-    setPubConfirm(null);
+    const id = pubConfirm.id;
+    const rejected = demo.flags.publishRejected;
+    const reason = demo.rejectReason;
+    setReviewing((s) => new Set(s).add(id));
+    clearRejectReason(id);
     showToast("Submitted for review");
+    window.setTimeout(() => {
+      stopReviewing(id);
+      if (rejected) {
+        setRejectReasons((r) => ({ ...r, [id]: reason }));
+      } else {
+        setPublished((s) => new Set(s).add(id));
+      }
+    }, PUBLISH_REVIEW_DELAY_MS);
+    setPubConfirm(null);
   }
 
   function doDownload(item: ProfileItem) {
@@ -277,9 +338,45 @@ export function CreatorProfile() {
           <Tabs tabs={PROFILE_TABS} active={tab} onChange={setTab} />
 
           <div className="community-profile__list">
-            {items.map((item) => {
+            {items.length === 0 ? (
+              // Product owner, 2026-08-28, Figma "Community User Profile —
+              // Empty" (node 1961:42438): icon + "No works released yet",
+              // no subtitle, no CTA — that's what's on screen for a visitor
+              // looking at someone ELSE's page (`!self`), where prompting
+              // them to go create is nonsensical. For `self` (own page, via
+              // /creator?self=1 — /profile's MV/Song stat links land here),
+              // the subtitle and a tab-specific CTA are added on top: the
+              // handoff calls for one explicitly, and both strings already
+              // exist as hidden layers on this same Figma node.
+              <div className="community-profile__empty">
+                <DpIcon name="ic_media" className="history-page__empty-icon" />
+                <div className="history-page__empty-message">
+                  <p className="history-page__empty-title">No works released yet</p>
+                  {self && (
+                    <p className="history-page__empty-subtitle">
+                      Start making AI music or music videos and they&apos;ll all show up in
+                      one place.
+                    </p>
+                  )}
+                </div>
+                {self && (
+                  <button
+                    type="button"
+                    className="history-page__empty-cta"
+                    onClick={() =>
+                      router.push(localePath(locale, tab === "mv" ? "/mv/room" : "/song/create"))
+                    }
+                  >
+                    {tab === "mv" ? "Create Music Video" : "Create Song"}
+                  </button>
+                )}
+              </div>
+            ) : (
+              items.map((item) => {
               const isLiked = liked.has(item.id);
               const isPublished = published.has(item.id);
+              const isReviewing = reviewing.has(item.id);
+              const itemRejectReason = rejectReasons[item.id];
               const menuOpen = openMenu === item.id;
 
               // The six-action owner menu (Edit/Like/Share/Publish/Download/
@@ -324,21 +421,29 @@ export function CreatorProfile() {
                       />
                       {menuOpen && (
                         <div className="community-profile__menu" role="menu">
-                          <a
-                            role="menuitem"
-                            className="community-profile__menu-primary"
-                            href={localePath(
-                              locale,
-                              item.kind === "mv" ? "/mv/edit" : "/song/create",
-                            )}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              doEdit(item);
-                            }}
-                          >
-                            <DpIcon name="ic_edit" />
-                            {item.kind === "mv" ? "Edit MV" : "Edit Song"}
-                          </a>
+                          {/* MV-13, same as HistoryView's menu: while an MV is
+                              published or pending, this entry disappears
+                              rather than becoming "Unpublish to edit" — the
+                              Publish toggle below is the only way back to
+                              editable. Songs never review (rule 3), so this
+                              never hides for them. */}
+                          {(item.kind !== "mv" || (!isPublished && !isReviewing)) && (
+                            <a
+                              role="menuitem"
+                              className="community-profile__menu-primary"
+                              href={localePath(
+                                locale,
+                                item.kind === "mv" ? "/mv/edit" : "/song/create",
+                              )}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                doEdit(item);
+                              }}
+                            >
+                              <DpIcon name="ic_edit" />
+                              {item.kind === "mv" ? "Edit MV" : "Edit Song"}
+                            </a>
+                          )}
                           <button
                             type="button"
                             role="menuitem"
@@ -361,7 +466,22 @@ export function CreatorProfile() {
                           <div className="community-profile__menu-publish">
                             <span>
                               <DpIcon as="i" name="ic_publish" />
-                              Publish
+                              {itemRejectReason ? (
+                                // Same "History Menu / self-view profile Menu"
+                                // Figma as HistoryView's own reject row (node
+                                // 2695:117710) — identical treatment, shared
+                                // class names.
+                                <span className="history-card__menu-publish-text">
+                                  <span className="history-card__menu-publish-title">
+                                    Publish <em>(Rejected)</em>
+                                  </span>
+                                  <span className="history-card__menu-publish-reason">
+                                    {publishRejectLabel(itemRejectReason)}
+                                  </span>
+                                </span>
+                              ) : (
+                                "Publish"
+                              )}
                             </span>
                             <ToggleSwitch
                               checked={isPublished}
@@ -454,7 +574,8 @@ export function CreatorProfile() {
                   <div className="community-profile__actions">{actions}</div>
                 </article>
               );
-            })}
+              })
+            )}
           </div>
         </div>
       </section>

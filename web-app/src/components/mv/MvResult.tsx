@@ -18,6 +18,12 @@ import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { MV_TYPES, mockStoryboard } from "@/lib/mv/mock";
 import { MOCK_USER } from "@/lib/user";
+import { useDemoState } from "@/components/demo/useDemo";
+import {
+  publishRejectLabel,
+  PUBLISH_REVIEW_DELAY_MS,
+  type PublishRejectCode,
+} from "@/lib/publishReview";
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds)) return "0:00";
@@ -96,8 +102,20 @@ export function MvResult() {
   const [duration, setDuration] = useState(0);
   const [vote, setVote] = useState<"up" | "down" | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  // Product owner, 2026-08-28: submitting doesn't flip the toggle on straight
+  // away — it sits "off" showing "In Review" for `PUBLISH_REVIEW_DELAY_MS`,
+  // then either turns on ("On") or comes back rejected. `published` is now
+  // ONLY the live/approved state; `pending` is the in-between one, and the
+  // toggle's `checked` reads `published`, not `published || pending`.
   const [published, setPublished] = useState(false);
+  const [pending, setPending] = useState(false);
   const [pubConfirm, setPubConfirm] = useState(false);
+  // Same shape as History/CreatorProfile's own reject state — a rejection
+  // reverts to unpublished (rule 2) rather than adding a fourth persistent
+  // status, so the reason is separate state that clears the moment a resubmit
+  // is accepted.
+  const [rejectReason, setRejectReason] = useState<PublishRejectCode | null>(null);
+  const demo = useDemoState();
 
   const entry = history.find((h) => h.kind === "mv" && h.resultUrl === resultUrl);
   // Opened from a `/history` row the id is in the URL and there is no live
@@ -159,6 +177,8 @@ export function MvResult() {
   function togglePublish(next: boolean) {
     if (!next) {
       setPublished(false);
+      setPending(false);
+      setRejectReason(null);
       return;
     }
     requireLogin(() => setPubConfirm(true));
@@ -316,19 +336,16 @@ export function MvResult() {
                   Share
                 </button>
               </div>
-              <div className="mv-result__actions-row">
-                {/* MV-13: published/in-review must be unpublished before editing.
-                    The control keeps its slot instead of vanishing. */}
-                {published ? (
-                  <button
-                    type="button"
-                    className="mv-result__action"
-                    onClick={() => setPublished(false)}
-                  >
-                    <img src="/assets/icons/ui/ic_edit.svg" alt="" />
-                    Unpublish to edit
-                  </button>
-                ) : (
+              <div
+                className={`mv-result__actions-row${
+                  published || pending ? " mv-result__actions-row--recreate-only" : ""
+                }`}
+              >
+                {/* Product owner, 2026-08-28: MV-13 still applies (can't edit
+                    while under review or live) — but the control now
+                    disappears instead of becoming "Unpublish to edit". The
+                    ONLY way back to editable is the Publish toggle itself. */}
+                {!published && !pending && (
                   <button type="button" className="mv-result__action" onClick={editMv}>
                     <img src="/assets/icons/ui/ic_edit.svg" alt="" />
                     Edit MV
@@ -348,9 +365,24 @@ export function MvResult() {
             <div className="mv-result__publish">
               <DpIcon name="ic_publish" className="mv-result__publish-icon" />
               <div className="mv-result__publish-text">
-                <p className="mv-result__publish-title">Publish</p>
+                <p className="mv-result__publish-title">
+                  Publish
+                  {/* Product owner, 2026-08-28, Figma "MV Result_Rejected_L"
+                      (node 3213:71460): a red "(Rejected)" suffix on the
+                      title, reason in place of the state line below. The
+                      "In Review" line ("MV Result_Review_L", node
+                      2695:118282) is the pending phase — the toggle stays
+                      OFF through it and only turns on once approved. */}
+                  {rejectReason && <span className="mv-result__publish-rejected"> (Rejected)</span>}
+                </p>
                 <p className="mv-result__publish-state">
-                  {published ? "Published · pending review" : "Off"}
+                  {rejectReason
+                    ? publishRejectLabel(rejectReason)
+                    : pending
+                      ? "In Review"
+                      : published
+                        ? "On"
+                        : "Off"}
                 </p>
               </div>
               <ToggleSwitch
@@ -397,13 +429,29 @@ export function MvResult() {
         url={buildShareUrl(shareId)}
       />
 
-      {/* MV-12: the same "Ready to Go Public?" confirm History and /creator use. */}
+      {/* MV-12: the same "Ready to Go Public?" confirm History and /creator use.
+          2.5: the `?demo=1` panel's `publishRejected` flag + reason decide what
+          this submission comes back as, same as `HistoryView.confirmPublishMv` —
+          captured now, applied after `PUBLISH_REVIEW_DELAY_MS`, so the pending
+          phase is genuinely visible rather than skipped straight to the result. */}
       <PublishConfirmDialog
         open={pubConfirm}
         onCancel={() => setPubConfirm(false)}
         onConfirm={() => {
-          setPublished(true);
+          setPending(true);
+          setRejectReason(null);
           setPubConfirm(false);
+          const rejected = demo.flags.publishRejected;
+          const reason = demo.rejectReason;
+          window.setTimeout(() => {
+            setPending(false);
+            if (rejected) {
+              setPublished(false);
+              setRejectReason(reason);
+            } else {
+              setPublished(true);
+            }
+          }, PUBLISH_REVIEW_DELAY_MS);
         }}
       />
     </>

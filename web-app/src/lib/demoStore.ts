@@ -36,61 +36,70 @@ const LS_KEY = "muse_demo";
  * designer has not delivered that state's artwork — so the panel can say so
  * instead of presenting a switch that appears broken. Flip an entry to `live`
  * in the same change that lands its UI.
+ *
+ * All eight are `live` as of 2026-08-28 — every state this panel was built
+ * for now has real UI behind it. `status` is still typed as the two-value
+ * `FlagStatus` union below rather than inferred from each entry's current
+ * `"live"` literal, so the NEXT flag this panel gains can start out
+ * `awaiting-design` again without `f.status === "awaiting-design"` (in
+ * `DemoPanel.tsx`) becoming a comparison of disjoint literal types.
  */
+type FlagStatus = "live" | "awaiting-design";
+
 export const DEMO_FLAGS = [
   {
     key: "historyEmpty",
     label: "History — no records",
     hint: "All 4 tabs (All · Music Videos · Songs · Liked)",
-    status: "awaiting-design",
+    status: "live" as FlagStatus,
   },
   {
     key: "mySongsEmpty",
     label: "Create MV → Choose Song — My Songs empty",
     hint: "WA already ships a hand-built state here (MV-11)",
-    status: "awaiting-design",
+    status: "live" as FlagStatus,
   },
   {
     key: "creditsEmpty",
     label: "Credits Detail — no records",
     hint: "All 3 tabs (All · Spend · Earn)",
-    status: "awaiting-design",
+    status: "live" as FlagStatus,
   },
   {
     key: "profileEmpty",
     label: "Community profile — no MVs / Songs",
     hint: "/creator (own + others) and /profile's two tabs",
-    status: "awaiting-design",
+    status: "live" as FlagStatus,
   },
   {
     key: "publishRejected",
     label: "Publish review REJECTED",
     hint: "MV only — pick a reason below",
-    status: "awaiting-design",
+    status: "live" as FlagStatus,
   },
   {
     key: "apiError",
     label: "Backend API error",
-    hint: "Full-page error boundary",
-    status: "awaiting-design",
+    hint: "Subscribe / Buy Credits popups fail to load, with Retry",
+    status: "live" as FlagStatus,
   },
   {
     key: "subOnApp",
     label: "Subscribed on a phone (App Store / Google Play)",
     hint: "/settings → Unsubscribe shows the go-to-your-phone dialog",
-    status: "awaiting-design",
+    status: "live" as FlagStatus,
   },
   {
     key: "jobFail",
     label: "Generation job fails",
     hint: 'Same failure as typing "[fail]" in a description',
-    status: "live",
+    status: "live" as FlagStatus,
   },
 ] as const satisfies readonly {
   key: string;
   label: string;
   hint: string;
-  status: "live" | "awaiting-design";
+  status: FlagStatus;
 }[];
 
 export type DemoFlagKey = (typeof DEMO_FLAGS)[number]["key"];

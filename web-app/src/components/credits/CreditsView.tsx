@@ -11,6 +11,7 @@ import { DpIcon } from "@/components/ui/DpIcon";
 import { Tabs } from "@/components/shell/RoomNavbar";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { CREDIT_TRANSACTIONS } from "@/lib/user";
+import { useDemoFlag } from "@/components/demo/useDemo";
 
 /**
  * `/profile/credits` — Figma "Credits Detail" (636:11875). Classes from
@@ -56,11 +57,19 @@ export function CreditsView() {
     setTimeout(() => setToast(null), 1800);
   };
 
-  const entries = CREDIT_TRANSACTIONS.filter((t) => {
-    if (tab === "spend") return t.amount < 0;
-    if (tab === "earn") return t.amount > 0;
-    return true;
-  });
+  // `creditsEmpty` (`?demo=1` panel) is the last thing that decides what
+  // renders, per `demoStore.ts` — applied after the tab filter, not by
+  // emptying `CREDIT_TRANSACTIONS` itself, so the flag can reproduce any of
+  // the 3 tabs' empty states (a real account can have entries in one tab and
+  // none in another, since the filter is derived from `amount`'s sign).
+  const demoEmpty = useDemoFlag("creditsEmpty");
+  const entries = demoEmpty
+    ? []
+    : CREDIT_TRANSACTIONS.filter((t) => {
+        if (tab === "spend") return t.amount < 0;
+        if (tab === "earn") return t.amount > 0;
+        return true;
+      });
 
   return (
     <>
@@ -99,6 +108,22 @@ export function CreditsView() {
             <Tabs tabs={CREDIT_TABS} active={tab} onChange={setTab} />
           </div>
 
+          {entries.length === 0 ? (
+            // Product owner, 2026-08-28, Figma "Account — Credits Detail -
+            // Empty_L" (node 1783:40808): same message for all 3 tabs — the
+            // copy doesn't call out which tab is empty, only that there's no
+            // history yet. No CTA (this page has no natural "go create" verb
+            // of its own — Buy More / Get Muse Pro above already covers it).
+            <div className="credits-page__empty">
+              <DpIcon name="ic_clock" className="history-page__empty-icon" />
+              <div className="history-page__empty-message">
+                <p className="history-page__empty-title">No activity yet</p>
+                <p className="history-page__empty-subtitle">
+                  Start creating AI Music Videos or songs to see your credit history here.
+                </p>
+              </div>
+            </div>
+          ) : (
           <div className="credits-page__list">
             {entries.map((t) => (
               <div className="credits-page__entry" key={t.id}>
@@ -126,6 +151,7 @@ export function CreditsView() {
               </div>
             ))}
           </div>
+          )}
         </div>
       </section>
 

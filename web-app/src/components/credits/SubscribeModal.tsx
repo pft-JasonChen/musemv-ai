@@ -6,6 +6,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { DpDialog } from "@/components/ui/DpDialog";
+import { ApiErrorState } from "@/components/ui/ApiErrorState";
+import { useDemoFlag } from "@/components/demo/useDemo";
 import {
   DEFAULT_PLAN_ID,
   MUSE_PRO_FEATURES,
@@ -211,12 +213,51 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
   const [selectedPlanId, setSelectedPlanId] = useState<PlanId>(DEFAULT_PLAN_ID);
   const selectedPlan =
     SUBSCRIPTION_PLANS.find((p) => p.id === selectedPlanId) ?? SUBSCRIPTION_PLANS[0];
+  // `apiError` (`?demo=1` panel) simulates the plan list itself failing to
+  // LOAD — Figma "Popup/Dialog - Edit" → "Error Message" (node 3232:73535):
+  // "We couldn't load this right now", shown BEFORE the plans (or the
+  // already-Pro card) rather than after a Subscribe attempt. Checked once
+  // when the dialog opens (like a real fetch-on-mount), not kept live in
+  // sync with the flag while it stays open — Retry re-checks it the same
+  // way a real retry would re-fetch.
+  const apiError = useDemoFlag("apiError");
+  const [failed, setFailed] = useState(false);
+  // Adjusting state on a prop change, done during render rather than in an
+  // effect — React's own documented pattern (same one `TopPicksSection` uses
+  // for `suspend`) — so a fresh "attempt" is checked exactly once per open,
+  // not every render while it stays open.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setFailed(apiError);
+  }
 
   function confirm(plan: SubscriptionPlan) {
     subscribe(plan.id);
     addCredits(plan.credits);
     onSubscribed?.(plan.name);
     onClose();
+  }
+
+  // The dialog stays mounted (inert) while closed, per `DpDialog` — reset the
+  // error so reopening later never shows a stale failure.
+  function close() {
+    setFailed(false);
+    onClose();
+  }
+
+  if (failed) {
+    return (
+      <DpDialog
+        open={open}
+        onClose={close}
+        block="upgrade-dialog"
+        label="Upgrade Your Plan"
+        title="Upgrade Your Plan"
+      >
+        <ApiErrorState onRetry={() => setFailed(apiError)} />
+      </DpDialog>
+    );
   }
 
   // CR-05: already-Pro state — no plan cards, just a confirmation. DP has no
@@ -226,7 +267,7 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
     return (
       <DpDialog
         open={open}
-        onClose={onClose}
+        onClose={close}
         block="upgrade-dialog"
         label="Muse Pro"
         title="Muse Pro"
@@ -268,7 +309,7 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
   return (
     <DpDialog
       open={open}
-      onClose={onClose}
+      onClose={close}
       block="upgrade-dialog"
       label="Upgrade Your Plan"
       title="Upgrade Your Plan"

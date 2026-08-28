@@ -23,8 +23,17 @@ import {
 import { formatCount } from "@/lib/mv/community";
 import { RoomNavbar, Tabs } from "@/components/shell/RoomNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { DpDialog } from "@/components/ui/DpDialog";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
+import { useDemoFlag, useDemoState } from "@/components/demo/useDemo";
+import {
+  publishRejectLabel,
+  PUBLISH_REVIEW_DELAY_MS,
+  type PublishRejectCode,
+} from "@/lib/publishReview";
+import { NewMVsSection } from "@/components/home/NewMVsSection";
+import { TopPicksSection } from "@/components/home/TopPicksSection";
 
 type Filter = "all" | "mv" | "song" | "liked";
 const FILTERS: { id: Filter; label: string }[] = [
@@ -34,10 +43,50 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: "liked", label: "Liked" },
 ];
 
+/** Product owner, 2026-08-27, Figma "History — {All,MV,Song,Liked} Empty"
+ *  (nodes 1724:39052 / 40449 / 40757 / 41144). `Liked` has no CTA — it's
+ *  someone else's liked content, not something to "go create" (HIST-03: the
+ *  tab only ever shows community rows the user liked). */
+const EMPTY_STATE: Record<
+  Filter,
+  {
+    icon: string;
+    title: string;
+    subtitle: string;
+    cta?: { label: string; kind: "sheet" | "mv" | "song" };
+  }
+> = {
+  all: {
+    icon: "ic_media",
+    title: "Your creations will appear here",
+    subtitle: "Start making AI music or music videos and they'll all show up in one place.",
+    cta: { label: "Start Creating", kind: "sheet" },
+  },
+  mv: {
+    icon: "ic_video_ai",
+    title: "No music videos yet",
+    subtitle: "Turn your selfie and a song into a cinematic AI music video in minutes.",
+    cta: { label: "Create Music Video", kind: "mv" },
+  },
+  song: {
+    icon: "ic_song_ai",
+    title: "No songs yet",
+    subtitle: "Describe your vibe and let AI compose an original song just for you.",
+    cta: { label: "Create Song", kind: "song" },
+  },
+  liked: {
+    icon: "ic_media",
+    title: "No likes yet",
+    subtitle: "Songs and videos you like will show up here.",
+  },
+};
+
 interface Override {
   liked?: boolean;
   published?: boolean;
   reviewing?: boolean;
+  /** Set only by a rejected submission; cleared the moment a resubmit succeeds. */
+  rejectReason?: PublishRejectCode | null;
 }
 
 /**
@@ -81,6 +130,9 @@ export function HistoryView() {
   const [del, setDel] = useState<HistorySample | null>(null);
   const [pubConfirm, setPubConfirm] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [createSheetOpen, setCreateSheetOpen] = useState(false);
+  const demoEmpty = useDemoFlag("historyEmpty");
+  const demo = useDemoState();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -90,6 +142,7 @@ export function HistoryView() {
   const liked = (r: HistorySample) => ov[r.id]?.liked ?? r.liked;
   const published = (r: HistorySample) => ov[r.id]?.published ?? r.published ?? false;
   const reviewing = (r: HistorySample) => ov[r.id]?.reviewing ?? false;
+  const rejectReason = (r: HistorySample) => ov[r.id]?.rejectReason ?? null;
 
   const rows: HistorySample[] = useMemo(() => {
     const live: HistorySample[] = history.map((h) => ({
@@ -124,14 +177,20 @@ export function HistoryView() {
     return [...live, ...HISTORY_SAMPLES].filter((r) => !removed.has(r.id));
   }, [history, removed]);
 
-  const shown = rows.filter((r) => {
-    const community = r.source === "community";
-    // HIST-03: the Liked tab shows only community-liked content, not liked own rows.
-    if (filter === "liked") return community && liked(r);
-    if (filter === "all") return !community;
-    if (filter === "mv") return !community && (r.kind === "mv" || r.kind === "storyboard");
-    return !community && r.kind === "song";
-  });
+  // `demoEmpty` (`?demo=1` panel) has to be the LAST thing that decides what
+  // renders, not a change to `rows` itself — see `src/lib/demoStore.ts`. Both
+  // of `rows`'s sources (live `history` and the `HISTORY_SAMPLES` seed) are
+  // covered this way, since the flag is applied after they're combined above.
+  const shown = demoEmpty
+    ? []
+    : rows.filter((r) => {
+        const community = r.source === "community";
+        // HIST-03: the Liked tab shows only community-liked content, not liked own rows.
+        if (filter === "liked") return community && liked(r);
+        if (filter === "all") return !community;
+        if (filter === "mv") return !community && (r.kind === "mv" || r.kind === "storyboard");
+        return !community && r.kind === "song";
+      });
 
   function openRow(r: HistorySample) {
     if (r.status !== "done") return;
@@ -184,16 +243,39 @@ export function HistoryView() {
   }
   function togglePublishMv(r: HistorySample) {
     if (published(r) || reviewing(r)) {
-      patch(r.id, { published: false, reviewing: false });
+      patch(r.id, { published: false, reviewing: false, rejectReason: null });
       showToast("Unpublished success");
       return;
     }
     setPubConfirm(r.id);
   }
+  // 2.5: the `?demo=1` panel's `publishRejected` flag decides what a submission
+  // comes back as — the same "fake backend result" shape `[fail]` already uses
+  // for job generation. Rule 2 (product owner, 2026-08-27): a rejection reverts
+  // to unpublished (not a fourth persistent state), so the reason lives beside
+  // `published`/`reviewing` in the override map and clears itself the moment a
+  // resubmit is accepted.
+  //
+  // Product owner, 2026-08-28: submitting doesn't resolve immediately —
+  // `reviewing` sits true (toggle OFF, "Publish (Review)") for
+  // `PUBLISH_REVIEW_DELAY_MS`, THEN `published` flips true (toggle ON) or the
+  // reject reason lands, matching `MvResult`'s own pending phase. The flag/
+  // reason are captured now, not re-read when the timer fires, so a QA
+  // toggling the panel mid-review doesn't change an already-submitted result.
   function confirmPublishMv() {
     if (pubConfirm) {
-      patch(pubConfirm, { reviewing: true, published: true });
+      const id = pubConfirm;
+      const rejected = demo.flags.publishRejected;
+      const reason = demo.rejectReason;
+      patch(id, { reviewing: true, published: false, rejectReason: null });
       showToast("Submitted for review");
+      window.setTimeout(() => {
+        if (rejected) {
+          patch(id, { reviewing: false, published: false, rejectReason: reason });
+        } else {
+          patch(id, { reviewing: false, published: true, rejectReason: null });
+        }
+      }, PUBLISH_REVIEW_DELAY_MS);
     }
     setPubConfirm(null);
   }
@@ -230,17 +312,45 @@ export function HistoryView() {
             decoration. The underlying retention BEHAVIOR is unchanged; this
             only removes the on-screen copy stating it. */}
         {shown.length === 0 ? (
-          <div
-            className="rounded-2xl border p-12 text-center"
-            style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}
-          >
-            Nothing here yet. Your{" "}
-            {filter === "all"
-              ? "creations"
-              : FILTERS.find((f) => f.id === filter)?.label.toLowerCase()}{" "}
-            will appear here.
+          <div className="history-page__empty">
+            <DpIcon name={EMPTY_STATE[filter].icon} className="history-page__empty-icon" />
+            <div className="history-page__empty-message">
+              <p className="history-page__empty-title">{EMPTY_STATE[filter].title}</p>
+              <p className="history-page__empty-subtitle">{EMPTY_STATE[filter].subtitle}</p>
+            </div>
+            {EMPTY_STATE[filter].cta && (
+              <button
+                type="button"
+                className="history-page__empty-cta"
+                onClick={() => {
+                  const cta = EMPTY_STATE[filter].cta!;
+                  if (cta.kind === "sheet") setCreateSheetOpen(true);
+                  else router.push(localePath(locale, cta.kind === "mv" ? "/mv/room" : "/song/create"));
+                }}
+              >
+                {EMPTY_STATE[filter].cta.label}
+              </button>
+            )}
           </div>
-        ) : (
+        ) : null}
+
+        {/* Product owner request, 2026-08-28 — give the empty tabs somewhere to
+            send a user besides the CTA. Desktop only: neither rail has a Figma
+            treatment for the History page below 768px, and the tabs' own
+            artboards are desktop-only (1440px). Reuses Home's existing rails
+            verbatim rather than inventing a third "recommendation" component. */}
+        {shown.length === 0 &&
+          (filter === "all" || filter === "mv" ? (
+            <div className="history-page__recommend">
+              <NewMVsSection />
+            </div>
+          ) : (
+            <div className="history-page__recommend">
+              <TopPicksSection />
+            </div>
+          ))}
+
+        {shown.length > 0 && (
           <ul className="history-page__grid">
             {shown.map((r) => (
               <li key={r.id}>
@@ -273,6 +383,7 @@ export function HistoryView() {
                         liked={liked(r)}
                         published={published(r)}
                         reviewing={reviewing(r)}
+                        rejectReason={rejectReason(r)}
                         open={openMenu === r.id}
                         setOpen={(v) => setOpenMenu(v ? r.id : null)}
                         onLike={() => toggleLike(r)}
@@ -332,6 +443,8 @@ export function HistoryView() {
           onConfirm={confirmPublishMv}
         />
 
+        <CreateSheet open={createSheetOpen} onClose={() => setCreateSheetOpen(false)} />
+
         {toast && (
           <div
             className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
@@ -342,6 +455,59 @@ export function HistoryView() {
         )}
       </div>
     </>
+  );
+}
+
+/**
+ * The "All" empty state's CTA (product owner, 2026-08-27, Figma "History —
+ * All Empty Create", node 1724:41428) — a centred picker on desktop/tablet,
+ * the same "mobile-tabbar-sheet" bottom-sheet style as the home tab bar's own
+ * create sheet on phones (that sheet is a separate instance, triggered from a
+ * different entry point; this one matches its look for consistency on a page
+ * where both could plausibly be seen). No DP source for this exact dialog, so
+ * its classes are new, in `designer-overrides.css` — see that file's header.
+ */
+function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const router = useRouter();
+  const { locale } = useLocale();
+
+  function go(path: string) {
+    onClose();
+    router.push(localePath(locale, path));
+  }
+
+  return (
+    <DpDialog open={open} onClose={onClose} block="create-sheet" label="What would you like to create?">
+      <div className="create-sheet__handle" aria-hidden="true" />
+      <div className="create-sheet__header">
+        <p className="create-sheet__title">What would you like to create?</p>
+        <button type="button" className="create-sheet__close" onClick={onClose} aria-label="Close">
+          <img src="/assets/icons/ui/ic_close.svg" alt="" className="create-sheet__close-icon" />
+        </button>
+      </div>
+      <div className="create-sheet__options">
+        <button type="button" className="create-sheet__option" onClick={() => go("/mv/room")}>
+          <span className="create-sheet__option-icon create-sheet__option-icon--mv">
+            <DpIcon name="ic_video_ai" className="create-sheet__option-icon-glyph" />
+          </span>
+          <span className="create-sheet__option-info">
+            <span className="create-sheet__option-label">AI Music Video</span>
+            <span className="create-sheet__option-sub">Selfie + music → cinematic MV</span>
+          </span>
+          <DpIcon name="ic_chevron-right" className="create-sheet__option-chevron" />
+        </button>
+        <button type="button" className="create-sheet__option" onClick={() => go("/song/create")}>
+          <span className="create-sheet__option-icon create-sheet__option-icon--song">
+            <DpIcon name="ic_song_ai" className="create-sheet__option-icon-glyph" />
+          </span>
+          <span className="create-sheet__option-info">
+            <span className="create-sheet__option-label">AI Song</span>
+            <span className="create-sheet__option-sub">Lyrics + style → original track</span>
+          </span>
+          <DpIcon name="ic_chevron-right" className="create-sheet__option-chevron" />
+        </button>
+      </div>
+    </DpDialog>
   );
 }
 
@@ -478,6 +644,7 @@ interface MenuProps {
   liked: boolean;
   published: boolean;
   reviewing: boolean;
+  rejectReason: PublishRejectCode | null;
   open: boolean;
   setOpen: (v: boolean) => void;
   onLike: () => void;
@@ -610,30 +777,20 @@ function Menu(p: MenuProps) {
               {isPhone && <div className="history-card__menu-handle" aria-hidden="true" />}
               {!community && !failed && (
                 <>
-                  {/* MV-13: a published / in-review MV must be unpublished before editing;
-                    the Edit MV entry becomes a neutral "Unpublish to edit MV" that unpublishes.
-                    Figma has no separate look for this corrective action, so it shares
-                    Edit MV's plain white pill rather than inventing an undesigned variant. */}
-                  {isMv &&
-                    (p.published || p.reviewing ? (
-                      <CtaBtn
-                        label="Unpublish to edit"
-                        icon="ic_edit"
-                        onClick={() => {
-                          p.setOpen(false);
-                          p.onPublish();
-                        }}
-                      />
-                    ) : (
-                      <CtaBtn
-                        label="Edit MV"
-                        icon="ic_edit"
-                        onClick={() => {
-                          p.setOpen(false);
-                          p.onEditMv();
-                        }}
-                      />
-                    ))}
+                  {/* MV-13: a published / in-review MV must be unpublished before
+                    editing. Product owner, 2026-08-28: the entry now disappears
+                    rather than becoming "Unpublish to edit" — the Publish toggle
+                    below is the only way back to editable. */}
+                  {isMv && !p.published && !p.reviewing && (
+                    <CtaBtn
+                      label="Edit MV"
+                      icon="ic_edit"
+                      onClick={() => {
+                        p.setOpen(false);
+                        p.onEditMv();
+                      }}
+                    />
+                  )}
                   {(isSong || isStoryboard) && (
                     <CtaBtn
                       label="Create MV"
@@ -666,10 +823,29 @@ function Menu(p: MenuProps) {
                   <div className="history-card__menu-publish">
                     <span>
                       <DpIcon as="i" name={isMv && p.reviewing ? "ic_timer" : "ic_publish"} />
-                      {isMv && p.reviewing ? "Publish (Review)" : "Publish"}
+                      {isMv && p.rejectReason ? (
+                        // Product owner, 2026-08-28, Figma "History - Menu"
+                        // (node 2695:117710): title gains a red "(Rejected)"
+                        // suffix, plus a reason line no other Publish state has.
+                        <span className="history-card__menu-publish-text">
+                          <span className="history-card__menu-publish-title">
+                            Publish <em>(Rejected)</em>
+                          </span>
+                          <span className="history-card__menu-publish-reason">
+                            {publishRejectLabel(p.rejectReason)}
+                          </span>
+                        </span>
+                      ) : isMv && p.reviewing ? (
+                        "Publish (Review)"
+                      ) : (
+                        "Publish"
+                      )}
                     </span>
+                    {/* Product owner, 2026-08-28: the toggle stays OFF through
+                        the pending phase (`reviewing`) and only turns on once
+                        approved (`published`) — it is no longer "on for either". */}
                     <ToggleSwitch
-                      checked={p.published || p.reviewing}
+                      checked={p.published}
                       onChange={() => p.onPublish()}
                       ariaLabel={isMv && p.reviewing ? "Publish (Review)" : "Publish"}
                     />

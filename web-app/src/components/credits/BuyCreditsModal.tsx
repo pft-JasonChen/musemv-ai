@@ -7,6 +7,8 @@ import { useCredits } from "@/components/providers/CreditsProvider";
 import { SubscribeModal } from "@/components/credits/SubscribeModal";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { DpDialog } from "@/components/ui/DpDialog";
+import { ApiErrorState } from "@/components/ui/ApiErrorState";
+import { useDemoFlag } from "@/components/demo/useDemo";
 import {
   CREDIT_PACKS,
   CREDIT_SALE_PCT,
@@ -80,10 +82,34 @@ export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
   const [selected, setSelected] = useState(DEFAULT_CREDIT_PACK_ID);
   const pack = CREDIT_PACKS.find((p) => p.id === selected)!;
   const sale = CREDIT_SALE_PCT > 0;
+  // `apiError` (`?demo=1` panel) simulates the pack list itself failing to
+  // LOAD — Figma "Popup/Dialog - Edit" → "Error Message" (node 3232:73535):
+  // "We couldn't load this right now", shown in place of the packs, not
+  // after a purchase attempt. Checked once when the dialog opens (like a
+  // real fetch-on-mount), not kept live in sync with the flag while it stays
+  // open — Retry re-checks it the same way a real retry would re-fetch.
+  const apiError = useDemoFlag("apiError");
+  const [failed, setFailed] = useState(false);
+  // Adjusting state on a prop change, done during render rather than in an
+  // effect — React's own documented pattern (same one `TopPicksSection` uses
+  // for `suspend`) — so a fresh "attempt" is checked exactly once per open,
+  // not every render while it stays open.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setFailed(apiError);
+  }
 
   function buy() {
     addCredits(pack.credits);
     onPurchased?.(pack.credits);
+    onClose();
+  }
+
+  // The dialog stays mounted (inert) while closed, per `DpDialog` — reset the
+  // error so reopening later never shows a stale failure.
+  function close() {
+    setFailed(false);
     onClose();
   }
 
@@ -97,11 +123,15 @@ export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
   return (
     <DpDialog
       open={open}
-      onClose={onClose}
+      onClose={close}
       block="credits-dialog"
       label="Buy Credits"
       title="Buy Credits"
     >
+      {failed ? (
+        <ApiErrorState onRetry={() => setFailed(apiError)} />
+      ) : (
+        <>
       <div className="credits-dialog__balance">
         <p className="credits-dialog__balance-label">YOUR BALANCE</p>
         <div className="credits-dialog__balance-row">
@@ -191,6 +221,8 @@ export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
         <span>|</span>
         <a href="#">Privacy Policy</a>
       </div>
+        </>
+      )}
     </DpDialog>
   );
 }

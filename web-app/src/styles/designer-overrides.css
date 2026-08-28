@@ -2843,3 +2843,420 @@
   }
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   History empty states — product owner, 2026-08-27, Figma "History — All /
+   MV / Song / Liked Empty" (nodes 1724:39052 / 40449 / 40757 / 41144).
+   `src/components/history/HistoryView.tsx`. DP has never shipped this —
+   its own data is constant and can never be empty (see
+   `DESIGNER-HANDOFF-2026-08-27.md` §0) — so `HistoryPage.css` has nothing
+   for it; hand-authored here like the other net-new dialogs above.
+   ════════════════════════════════════════════════════════════════════════ */
+.history-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding: 60px 0;
+  box-sizing: border-box;
+}
+
+.history-page__empty-icon {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  background-color: var(--neutral-dark-100, #fff);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.history-page__empty-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 600px;
+  text-align: center;
+}
+
+.history-page__empty-title {
+  margin: 0;
+  color: var(--neutral-dark-100, #fff);
+  font-family: var(--font-family-primary);
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  line-height: 22px;
+  letter-spacing: -0.17px;
+}
+
+.history-page__empty-subtitle {
+  margin: 0;
+  color: var(--neutral-dark-64, #9c9cab);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
+}
+
+.history-page__empty-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 44px;
+  min-width: 180px;
+  padding: 14px 16px;
+  border: 1px solid var(--white-15);
+  border-radius: 34px;
+  background: var(--neutral-dark-14, #212127);
+  color: var(--neutral-dark-84, #d3d3d9);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.14px;
+  white-space: nowrap;
+}
+
+.history-page__empty-cta:hover {
+  opacity: 0.85;
+}
+
+/* Product owner request, 2026-08-28 — reuse Home's "Trending Music Videos"
+   (`NewMVsSection`) below the All/Music Videos empty message, and Home's
+   "Top Picks Songs" (`TopPicksSection`) below the Songs/Liked one, so an
+   empty tab still has somewhere to send a user. Desktop only: the Figma for
+   this ("Newly Released Music Video" / "Top Picks Songs" on the four empty
+   boards) is a 1440px artboard only, with no phone/tablet treatment. */
+.history-page__recommend {
+  width: 100%;
+}
+
+@media (max-width: 1023px) {
+  .history-page__recommend {
+    display: none;
+  }
+}
+
+/* MV-11's empty "My Songs" tab (Choose Song dialog) — Figma "AI MV - Feature
+   Room_Song Picker_Empty_L" (node 3200:69854): icon + message, no CTA,
+   centered with 80px of top breathing room inside the tab's scroll area.
+   Reuses `.history-page__empty-icon/-message/-title/-subtitle` above
+   verbatim (identical type spec) — only this centering wrapper is new. */
+.mv-song-picker__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding-top: 80px;
+}
+
+/* Credits Detail — no records (all 3 tabs share one message per Figma
+   "Account — Credits Detail - Empty_L", node 1783:40808). Same
+   icon/title/subtitle type spec as History's empty state, `ic_clock`
+   instead of `ic_media`. */
+.credits-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding: 60px 0;
+  box-sizing: border-box;
+}
+
+/* Community profile — no MVs / Songs (Figma "Community User Profile —
+   Empty", node 1961:42438). Same icon/title/subtitle/CTA type spec as
+   History's empty state — the subtitle and CTA only render for `self`
+   (CreatorProfile.tsx decides that; this is just the shared shell). */
+.community-profile__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding: 60px 0;
+  box-sizing: border-box;
+}
+
+/* ── "What would you like to create?" (History's "All" empty CTA) ────────
+   Same DpDialog shell shape as `.enhance-dialog` above, this dialog's own
+   380px/12px-gap/16px-options proportions per its Figma (node 1724:41755).
+   Keeps the chevron `.enhance-dialog__option` dropped — this one still has
+   it in Figma. */
+.create-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.create-sheet-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.create-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.create-sheet {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-3xl, 26px);
+  background: var(--neutral-dark-09, #151519);
+  box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
+  transform: scale(0.96);
+  transition: transform 0.3s ease;
+}
+
+.create-sheet-overlay--visible .create-sheet {
+  transform: scale(1);
+}
+
+.create-sheet__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.create-sheet__title {
+  flex: 1;
+  margin: 0;
+  color: var(--neutral-dark-100, #fff);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 24px;
+  letter-spacing: -0.2px;
+}
+
+.create-sheet__close {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.create-sheet__close-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.create-sheet__options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.create-sheet__option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  margin: -8px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.create-sheet__option:hover {
+  background: var(--white-15);
+}
+
+.create-sheet__option-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+
+.create-sheet__option-icon--mv {
+  background-image: linear-gradient(135deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+}
+
+.create-sheet__option-icon--song {
+  background-image: linear-gradient(135deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+}
+
+.create-sheet__option-icon-glyph {
+  width: 20px;
+  height: 20px;
+  background-color: var(--neutral-dark-100, #fff);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.create-sheet__option-info {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.create-sheet__option-label {
+  overflow: hidden;
+  color: var(--neutral-dark-100, #fff);
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.create-sheet__option-sub {
+  color: var(--neutral-dark-64, #9c9cab);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
+.create-sheet__option-chevron {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  background-color: var(--neutral-dark-64, #9c9cab);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.create-sheet__handle {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .create-sheet-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .create-sheet {
+    max-width: 100%;
+    padding: 12px 20px max(env(safe-area-inset-bottom), 20px);
+    border-radius: 26px 26px 0 0;
+    transform: translateY(100%);
+  }
+
+  .create-sheet-overlay--visible .create-sheet {
+    transform: translateY(0);
+  }
+
+  .create-sheet__handle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    flex-shrink: 0;
+    margin: 0 auto;
+    border-radius: 2px;
+    background: var(--white-15);
+  }
+}
+
+/* ── Publish REJECTED (product owner, 2026-08-28) ─────────────────────────
+   Figma "MV Result_Review_L" (2695:118282) / "MV Result_Rejected_L"
+   (3213:71460) / "History - Menu" (2695:117710, also used by the self-view
+   /creator menu). Neither `.history-card__menu-publish` /
+   `.community-profile__menu-publish` (HistoryPage.css / CommunityProfilePage
+   .css — a single text line + toggle) has a slot for a two-line title +
+   reason, so this stacks one inside the label span only when a row is
+   actually rejected; every other state renders the existing plain text. */
+.history-card__menu-publish-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-card__menu-publish-title em {
+  color: var(--color-action-danger);
+  font-style: normal;
+}
+
+.history-card__menu-publish-reason {
+  color: var(--neutral-dark-64);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
+/* `/mv/result`'s Publish row already has the icon/title/state-line structure
+   (MVResultPage.css) — only the red suffix on the title is new. */
+.mv-result__publish-rejected {
+  color: var(--color-action-danger);
+}
+
+/* Product owner, 2026-08-28 — while published or pending, Edit MV disappears
+   from Quick Actions rather than becoming "Unpublish to edit" (the only way
+   back is the Publish toggle). `.mv-result__action` is `flex: 1`
+   (MVResultPage.css), so Recreate alone in the row would stretch to full
+   width without this: pins it back to the same half-row size it had
+   alongside Edit MV. */
+.mv-result__actions-row--recreate-only .mv-result__action {
+  flex: 0 0 calc(50% - 6px);
+}
+
+/* Backend API error (product owner, 2026-08-28) — `ApiErrorState`, shared by
+   `SubscribeModal` and `BuyCreditsModal`. Figma "Popup/Dialog - Edit" →
+   "Error Message" (node 3232:73535): icon/title/subtitle/Retry, centered,
+   replacing the dialog's entire body (packs/plans + footer all hidden in
+   that frame) — only this wrapper is new, the rest reuses History's classes. */
+.api-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding: 60px 0;
+  box-sizing: border-box;
+}
+

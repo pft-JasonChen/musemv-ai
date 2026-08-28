@@ -2,14 +2,12 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { MvSheet } from "./MvSheet";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
-import { useLocale } from "@/components/providers/LocaleProvider";
-import { localePath } from "@/lib/i18n/config";
 import { MY_SONGS, SAMPLE_SONGS, formatDuration } from "@/lib/mv/mock";
 import type { Song } from "@/lib/mv/types";
+import { useDemoFlag } from "@/components/demo/useDemo";
 
 interface Props {
   open: boolean;
@@ -39,10 +37,13 @@ interface Props {
  * ── WHAT DP DOES NOT HAVE ───────────────────────────────────────────────────
  *
  * MV-11's empty My Songs state — DP's catalog is a constant and can never be
- * empty, so it has no design for this. Composed from DP's own typography
- * (`.mv-settings__row-title` / `--desc`) and the shared `.button` component
- * rather than an invented class, since a class no stylesheet defines renders as
- * nothing at all and never errors.
+ * empty, so it has no design for this. Product owner, 2026-08-28, Figma
+ * "AI MV - Feature Room_Song Picker_Empty_L" (node 3200:69854): icon + "No
+ * songs yet" + subtitle, no CTA — replaces this session's earlier hand-built
+ * version (icon-less, with a "Create Song" button) now that a real design
+ * exists. Reuses History's `.history-page__empty-icon/-message/-title/
+ * -subtitle` classes verbatim (identical type spec) rather than duplicating
+ * them under a new name.
  *
  * ── WHAT DP HAS THAT WA DID NOT ─────────────────────────────────────────────
  *
@@ -54,12 +55,15 @@ interface Props {
  * probes — the data already has them, so the probes buy nothing.
  */
 export function ChooseSongModal({ open, onClose, onPick }: Props) {
-  const router = useRouter();
-  const { locale } = useLocale();
   const [tab, setTab] = useState<"my" | "sample">("my");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
-  const songs = tab === "my" ? MY_SONGS : SAMPLE_SONGS;
+  // `mySongsEmpty` (`?demo=1` panel): a brand-new account already sees this
+  // state for free — `MY_SONGS` is only ever non-empty once someone visits
+  // /song/create — so the flag exists purely to let an account that already
+  // has songs reproduce it. Last render-time branch, per `demoStore.ts`.
+  const demoMySongsEmpty = useDemoFlag("mySongsEmpty");
+  const songs = tab === "my" ? (demoMySongsEmpty ? [] : MY_SONGS) : SAMPLE_SONGS;
 
   const preview = useAudioPlayer({
     src: songs.find((s) => s.id === activeId)?.url,
@@ -116,18 +120,15 @@ export function ChooseSongModal({ open, onClose, onPick }: Props) {
       {tab === "my" && songs.length === 0 ? (
         // MV-11: an empty My Songs tab prompts creation instead of a blank list.
         <div className="mv-sheet__body">
-          <p className="mv-settings__row-title">You haven&apos;t created any songs yet</p>
-          <p className="mv-settings__row-desc">Create an AI song to use it in your music video.</p>
-          <button
-            type="button"
-            className="button button--medium button--primary"
-            onClick={() => {
-              onClose();
-              router.push(localePath(locale, "/song/create"));
-            }}
-          >
-            <span className="button__label">Create Song</span>
-          </button>
+          <div className="mv-song-picker__empty">
+            <DpIcon name="ic_song_ai" className="history-page__empty-icon" />
+            <div className="history-page__empty-message">
+              <p className="history-page__empty-title">No songs yet</p>
+              <p className="history-page__empty-subtitle">
+                Create your first AI song to use it here.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="mv-sheet__body mv-sheet__body--list">

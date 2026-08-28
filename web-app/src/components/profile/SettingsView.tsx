@@ -11,6 +11,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
+import { useDemoState } from "@/components/demo/useDemo";
 
 /**
  * Slice 3c — migrated to DP's `AccountPage` settings branch (Figma 1700:35001).
@@ -30,9 +31,23 @@ import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
  * affordance. The 2026-08-06 drop shipped exactly that, so that one place has
  * now been deleted and this screen rides DP's own compact mobile bar. Nothing
  * screen-specific is needed here.
+ *
+ * ── UNSUBSCRIBE SPLITS ON WHERE THE SUBSCRIPTION WAS BOUGHT ─────────────────
+ *
+ * Product owner, 2026-08-27 (`TBD-PROF-04`, extended): a subscription bought
+ * through the App Store or Google Play can't be cancelled from the website —
+ * the store owns the billing relationship, not Muse. Clicking Unsubscribe now
+ * checks the account's purchase platform first; a phone subscriber gets a
+ * "manage it on your phone" dialog instead of the existing web cancel-confirm.
+ * No real field exists for this yet (`subscriptionPlatform` is a C2 addition
+ * RD hasn't shipped), so it's simulated the same way as every other unbuilt
+ * backend fact here: the `?demo=1` panel's `subOnApp` flag + its iOS/Android
+ * picker (`demoStore.ts`'s `subPlatform`) stand in for the real value. No
+ * Figma was supplied for this dialog — the copy below is this session's own,
+ * not ported from a design.
  */
 
-type Dialog = null | "unsubscribe" | "delete";
+type Dialog = null | "unsubscribe" | "unsubscribe-on-app" | "delete";
 
 function SettingsRow({
   icon,
@@ -70,6 +85,7 @@ export function SettingsView() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { locale } = useLocale();
+  const demo = useDemoState();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [toast, setToast] = useState<string | null>(null);
   const flash = (m: string) => {
@@ -103,7 +119,7 @@ export function SettingsView() {
               icon="ic_calendar_x"
               title="Unsubscribe"
               subtitle="Cancel your Muse Pro subscription"
-              onClick={() => setDialog("unsubscribe")}
+              onClick={() => setDialog(demo.flags.subOnApp ? "unsubscribe-on-app" : "unsubscribe")}
             />
             <SettingsRow
               icon="ic_user_x"
@@ -145,6 +161,55 @@ export function SettingsView() {
             Unsubscribe
           </Button>
         </div>
+      </Modal>
+
+      {/* Subscribed on a phone — the website can't cancel a store purchase.
+          No Figma for this one; copy is this session's own (see the header
+          note above). */}
+      <Modal
+        open={dialog === "unsubscribe-on-app"}
+        onClose={close}
+        title={
+          demo.subPlatform === "android"
+            ? "Manage Subscription in Google Play"
+            : "Manage Subscription in the App Store"
+        }
+        maxWidth={400}
+      >
+        <div className="mb-4 flex items-start gap-3">
+          <span
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full"
+            // White, not the dark chip the Delete dialog uses — both logos
+            // are drawn in dark strokes/fills, so a dark card background left
+            // them nearly invisible.
+            style={{ background: "var(--neutral-dark-100)" }}
+          >
+            <img
+              src={`/assets/icons/ui/${demo.subPlatform === "android" ? "ic_google_logo" : "ic_apple_logo"}.svg`}
+              width={20}
+              height={20}
+              alt=""
+            />
+          </span>
+          <p className="text-[13px] leading-relaxed" style={{ color: "var(--neutral-dark-64)" }}>
+            {demo.subPlatform === "android" ? (
+              <>
+                Your Muse Pro subscription was purchased through Google Play. To cancel it, open
+                the Google Play Store app on your phone, tap your profile icon, then
+                Payments &amp; subscriptions → Subscriptions, and cancel Muse Pro there.
+              </>
+            ) : (
+              <>
+                Your Muse Pro subscription was purchased through the App Store. To cancel it, open
+                Settings on your iPhone, tap your name, then Subscriptions, and cancel Muse Pro
+                there.
+              </>
+            )}
+          </p>
+        </div>
+        <Button className="w-full" onClick={close}>
+          Got It
+        </Button>
       </Modal>
 
       {/* Delete Account — destructive confirm */}
