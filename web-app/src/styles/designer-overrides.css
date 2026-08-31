@@ -2062,6 +2062,18 @@
   }
 }
 
+/* Product owner, 2026-08-31 — the gated `max-width: 944px` was sized for DP's
+   original 3-card row; with only 2 (Basic/Pro) since the duration tabs
+   landed, that left a lot of empty width either side of the 280px cards.
+   680px on desktop only — 1024px is where this dialog switches from the
+   mobile/tablet list back to the 2-card grid, so it's also where a width
+   number stops being about the list and starts being about the cards. */
+@media (min-width: 1024px) {
+  .upgrade-dialog {
+    max-width: 680px;
+  }
+}
+
 .upgrade-dialog__list {
   display: flex;
   flex-direction: column;
