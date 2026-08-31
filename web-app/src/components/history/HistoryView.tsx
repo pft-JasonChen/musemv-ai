@@ -23,6 +23,7 @@ import {
 import { formatCount } from "@/lib/mv/community";
 import { RoomNavbar, Tabs } from "@/components/shell/RoomNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { DpBadge } from "@/components/ui/DpBadge";
 import { DpDialog } from "@/components/ui/DpDialog";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
@@ -106,6 +107,22 @@ interface Override {
  * paths the `NEXT_LOCALE` cookie redirect does NOT rescue. (Recorded as an open
  * R-9 shape in `PHASE-3-ACCEPTANCE.md` §3 "Also noted"; closed here.)
  */
+/** Product owner, 2026-08-31, Figma "History — Loading" (3261:44705, `?demo=1`
+ *  panel's "History — slow load"). The design is a static two-frame snapshot
+ *  (one dot raised, the other two at rest) rather than a real animation
+ *  export — matches the CSS `@keyframes` below (`designer-overrides.css`):
+ *  each dot floats up 8px and back, staggered 150ms after the previous one,
+ *  "one after another" per the product owner's own description. */
+function HistoryLoadingDots() {
+  return (
+    <div className="history-page__loading-dots" role="status" aria-label="Loading">
+      <span className="history-page__loading-dot history-page__loading-dot--1" />
+      <span className="history-page__loading-dot history-page__loading-dot--2" />
+      <span className="history-page__loading-dot history-page__loading-dot--3" />
+    </div>
+  );
+}
+
 function rowHref(locale: Locale, r: HistorySample): string {
   const path =
     r.source === "community" && r.communitySongId
@@ -132,6 +149,7 @@ export function HistoryView() {
   const [toast, setToast] = useState<string | null>(null);
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const demoEmpty = useDemoFlag("historyEmpty");
+  const demoLoading = useDemoFlag("historyLoading");
   const demo = useDemoState();
 
   function showToast(msg: string) {
@@ -301,113 +319,131 @@ export function HistoryView() {
       */}
       <RoomNavbar
         title="My Creations"
-        tabsSlot={<Tabs tabs={FILTERS} active={filter} onChange={setFilter} />}
+        tabsSlot={
+          demoLoading ? undefined : <Tabs tabs={FILTERS} active={filter} onChange={setFilter} />
+        }
         mobileHeaderActions
       />
 
       <div className="history-page">
-        {/* HIST-02's disclosure line lived here (retention policy: no 14-day
-            auto-delete) — removed 2026-08-11 per explicit designer request,
-            after flagging that it carried a product rule rather than being
-            decoration. The underlying retention BEHAVIOR is unchanged; this
-            only removes the on-screen copy stating it. */}
-        {shown.length === 0 ? (
-          <div className="history-page__empty">
-            <DpIcon name={EMPTY_STATE[filter].icon} className="history-page__empty-icon" />
-            <div className="history-page__empty-message">
-              <p className="history-page__empty-title">{EMPTY_STATE[filter].title}</p>
-              <p className="history-page__empty-subtitle">{EMPTY_STATE[filter].subtitle}</p>
-            </div>
-            {EMPTY_STATE[filter].cta && (
-              <button
-                type="button"
-                className="history-page__empty-cta"
-                onClick={() => {
-                  const cta = EMPTY_STATE[filter].cta!;
-                  if (cta.kind === "sheet") setCreateSheetOpen(true);
-                  else router.push(localePath(locale, cta.kind === "mv" ? "/mv/room" : "/song/create"));
-                }}
-              >
-                {EMPTY_STATE[filter].cta.label}
-              </button>
-            )}
+        {/* Product owner, 2026-08-31, Figma "History — Loading" (3261:44705).
+            A slow-load state, not another empty variant — the tabs (nothing
+            to filter yet) and the empty state's recommend rails are both
+            hidden in the design, so this is its own branch rather than a
+            fifth `EMPTY_STATE` entry. */}
+        {demoLoading ? (
+          <div className="history-page__loading">
+            <HistoryLoadingDots />
           </div>
-        ) : null}
+        ) : (
+          <>
+            {/* HIST-02's disclosure line lived here (retention policy: no 14-day
+                auto-delete) — removed 2026-08-11 per explicit designer request,
+                after flagging that it carried a product rule rather than being
+                decoration. The underlying retention BEHAVIOR is unchanged; this
+                only removes the on-screen copy stating it. */}
+            {shown.length === 0 ? (
+              <div className="history-page__empty">
+                <DpIcon name={EMPTY_STATE[filter].icon} className="history-page__empty-icon" />
+                <div className="history-page__empty-message">
+                  <p className="history-page__empty-title">{EMPTY_STATE[filter].title}</p>
+                  <p className="history-page__empty-subtitle">{EMPTY_STATE[filter].subtitle}</p>
+                </div>
+                {EMPTY_STATE[filter].cta && (
+                  <button
+                    type="button"
+                    className="history-page__empty-cta"
+                    onClick={() => {
+                      const cta = EMPTY_STATE[filter].cta!;
+                      if (cta.kind === "sheet") setCreateSheetOpen(true);
+                      else
+                        router.push(
+                          localePath(locale, cta.kind === "mv" ? "/mv/room" : "/song/create"),
+                        );
+                    }}
+                  >
+                    {EMPTY_STATE[filter].cta.label}
+                  </button>
+                )}
+              </div>
+            ) : null}
 
-        {/* Product owner request, 2026-08-28 — give the empty tabs somewhere to
-            send a user besides the CTA. Desktop only: neither rail has a Figma
-            treatment for the History page below 768px, and the tabs' own
-            artboards are desktop-only (1440px). Reuses Home's existing rails
-            verbatim rather than inventing a third "recommendation" component. */}
-        {shown.length === 0 &&
-          (filter === "all" || filter === "mv" ? (
-            <div className="history-page__recommend">
-              <NewMVsSection />
-            </div>
-          ) : (
-            <div className="history-page__recommend">
-              <TopPicksSection />
-            </div>
-          ))}
+            {/* Product owner request, 2026-08-28 — give the empty tabs somewhere to
+                send a user besides the CTA. Desktop only: neither rail has a Figma
+                treatment for the History page below 768px, and the tabs' own
+                artboards are desktop-only (1440px). Reuses Home's existing rails
+                verbatim rather than inventing a third "recommendation" component. */}
+            {shown.length === 0 &&
+              (filter === "all" || filter === "mv" ? (
+                <div className="history-page__recommend">
+                  <NewMVsSection />
+                </div>
+              ) : (
+                <div className="history-page__recommend">
+                  <TopPicksSection />
+                </div>
+              ))}
 
-        {shown.length > 0 && (
-          <ul className="history-page__grid">
-            {shown.map((r) => (
-              <li key={r.id}>
-                <HistoryCard
-                  r={r}
-                  liked={liked(r)}
-                  onOpen={() => openRow(r)}
-                  href={rowHref(locale, r)}
-                  cta={
-                    // HIST-05: storyboards surface Create outside the ⋯ menu. DP places
-                    // it on the cover itself (.history-card__create) rather than as a
-                    // row pill; same affordance, same handler.
-                    r.kind === "storyboard" && r.status === "done" ? (
-                      <span
-                        className="history-card__create"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          createMv(r);
-                        }}
-                      >
-                        <DpIcon name="ic_video" />
-                        Create MV
-                      </span>
-                    ) : null
-                  }
-                  menu={
-                    r.status === "processing" ? null : (
-                      <Menu
-                        r={r}
-                        liked={liked(r)}
-                        published={published(r)}
-                        reviewing={reviewing(r)}
-                        rejectReason={rejectReason(r)}
-                        open={openMenu === r.id}
-                        setOpen={(v) => setOpenMenu(v ? r.id : null)}
-                        onLike={() => toggleLike(r)}
-                        onShare={() => {
-                          setOpenMenu(null);
-                          setShare({ title: r.title, url: buildShareUrl(r.id) });
-                        }}
-                        onDownload={() => doDownload(r)}
-                        onDelete={() => {
-                          setOpenMenu(null);
-                          setDel(r);
-                        }}
-                        onPublish={() =>
-                          r.kind === "mv" ? togglePublishMv(r) : togglePublishSong(r)
-                        }
-                        onEditMv={() => editMv(r)}
-                        onCreateMv={() => createMv(r)}
-                      />
-                    )
-                  }
-                />
-              </li>
-            ))}
-          </ul>
+            {shown.length > 0 && (
+              <ul className="history-page__grid">
+                {shown.map((r) => (
+                  <li key={r.id}>
+                    <HistoryCard
+                      r={r}
+                      liked={liked(r)}
+                      onOpen={() => openRow(r)}
+                      href={rowHref(locale, r)}
+                      cta={
+                        // HIST-05: storyboards surface Create outside the ⋯ menu. DP places
+                        // it on the cover itself (.history-card__create) rather than as a
+                        // row pill; same affordance, same handler.
+                        r.kind === "storyboard" && r.status === "done" ? (
+                          <span
+                            className="history-card__create"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              createMv(r);
+                            }}
+                          >
+                            <DpIcon name="ic_video" />
+                            Create MV
+                          </span>
+                        ) : null
+                      }
+                      menu={
+                        r.status === "processing" ? null : (
+                          <Menu
+                            r={r}
+                            liked={liked(r)}
+                            published={published(r)}
+                            reviewing={reviewing(r)}
+                            rejectReason={rejectReason(r)}
+                            open={openMenu === r.id}
+                            setOpen={(v) => setOpenMenu(v ? r.id : null)}
+                            onLike={() => toggleLike(r)}
+                            onShare={() => {
+                              setOpenMenu(null);
+                              setShare({ title: r.title, url: buildShareUrl(r.id) });
+                            }}
+                            onDownload={() => doDownload(r)}
+                            onDelete={() => {
+                              setOpenMenu(null);
+                              setDel(r);
+                            }}
+                            onPublish={() =>
+                              r.kind === "mv" ? togglePublishMv(r) : togglePublishSong(r)
+                            }
+                            onEditMv={() => editMv(r)}
+                            onCreateMv={() => createMv(r)}
+                          />
+                        )
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
 
         <ShareDialog
@@ -477,7 +513,12 @@ function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
   }
 
   return (
-    <DpDialog open={open} onClose={onClose} block="create-sheet" label="What would you like to create?">
+    <DpDialog
+      open={open}
+      onClose={onClose}
+      block="create-sheet"
+      label="What would you like to create?"
+    >
       <div className="create-sheet__handle" aria-hidden="true" />
       <div className="create-sheet__header">
         <p className="create-sheet__title">What would you like to create?</p>
@@ -527,18 +568,6 @@ function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
  *    row gains middle-click and copy-link. See `rowHref()`.
  *  · The date must be a `<time>` for the same reason.
  */
-/** DP's Badge (styles/designer/Badge.css) for the states the cover shows. */
-function DpBadge({ status }: { status: "Done" | "Failed" | "Processing" }) {
-  const icon = status === "Done" ? "ic_check" : status === "Failed" ? "ic_close" : "ic_star";
-  const label = status === "Processing" ? "Generating..." : status;
-  return (
-    <span className={`badge badge--${status.toLowerCase()}`}>
-      <DpIcon name={icon} className="badge__icon" />
-      <span>{label}</span>
-    </span>
-  );
-}
-
 function HistoryCard({
   r,
   liked,
@@ -727,12 +756,7 @@ function Menu(p: MenuProps) {
           `.history-card__more` (28px, white-15 fill + border, its own
           `ic_more` mask icon). Swapped to the real class + DpIcon so this
           matches DP's design instead of an approximation of it. */}
-      <button
-        ref={btnRef}
-        aria-label="Options"
-        onClick={toggle}
-        className="history-card__more"
-      >
+      <button ref={btnRef} aria-label="Options" onClick={toggle} className="history-card__more">
         <DpIcon name="ic_more" />
       </button>
 
@@ -774,96 +798,96 @@ function Menu(p: MenuProps) {
             inert={!p.open}
             style={isPhone ? undefined : { position: "fixed", top: pos.top, right: pos.right }}
           >
-              {isPhone && <div className="history-card__menu-handle" aria-hidden="true" />}
-              {!community && !failed && (
-                <>
-                  {/* MV-13: a published / in-review MV must be unpublished before
+            {isPhone && <div className="history-card__menu-handle" aria-hidden="true" />}
+            {!community && !failed && (
+              <>
+                {/* MV-13: a published / in-review MV must be unpublished before
                     editing. Product owner, 2026-08-28: the entry now disappears
                     rather than becoming "Unpublish to edit" — the Publish toggle
                     below is the only way back to editable. */}
-                  {isMv && !p.published && !p.reviewing && (
-                    <CtaBtn
-                      label="Edit MV"
-                      icon="ic_edit"
-                      onClick={() => {
-                        p.setOpen(false);
-                        p.onEditMv();
-                      }}
-                    />
-                  )}
-                  {(isSong || isStoryboard) && (
-                    <CtaBtn
-                      label="Create MV"
-                      gradient
-                      icon="ic_video_ai"
-                      onClick={() => {
-                        p.setOpen(false);
-                        p.onCreateMv();
-                      }}
-                    />
-                  )}
-                </>
-              )}
+                {isMv && !p.published && !p.reviewing && (
+                  <CtaBtn
+                    label="Edit MV"
+                    icon="ic_edit"
+                    onClick={() => {
+                      p.setOpen(false);
+                      p.onEditMv();
+                    }}
+                  />
+                )}
+                {(isSong || isStoryboard) && (
+                  <CtaBtn
+                    label="Create MV"
+                    gradient
+                    icon="ic_video_ai"
+                    onClick={() => {
+                      p.setOpen(false);
+                      p.onCreateMv();
+                    }}
+                  />
+                )}
+              </>
+            )}
 
-              {/* HIST-06: a failed creation is Delete-only — no Like / Share. */}
-              {!failed && (community || isMv || isSong) && (
-                <OptRow
-                  icon={p.liked ? "ic_favorite_on" : "ic_favorite_off"}
-                  label={p.liked ? "Unlike" : "Like"}
-                  onClick={p.onLike}
-                  active={p.liked}
-                />
-              )}
-              {!failed && (community || isMv || isSong) && (
-                <OptRow icon="ic_share" label="Share" onClick={p.onShare} />
-              )}
+            {/* HIST-06: a failed creation is Delete-only — no Like / Share. */}
+            {!failed && (community || isMv || isSong) && (
+              <OptRow
+                icon={p.liked ? "ic_favorite_on" : "ic_favorite_off"}
+                label={p.liked ? "Unlike" : "Like"}
+                onClick={p.onLike}
+                active={p.liked}
+              />
+            )}
+            {!failed && (community || isMv || isSong) && (
+              <OptRow icon="ic_share" label="Share" onClick={p.onShare} />
+            )}
 
-              {!community && !failed && (isMv || isSong) && (
-                <>
-                  <div className="history-card__menu-publish">
-                    <span>
-                      <DpIcon as="i" name={isMv && p.reviewing ? "ic_timer" : "ic_publish"} />
-                      {isMv && p.rejectReason ? (
-                        // Product owner, 2026-08-28, Figma "History - Menu"
-                        // (node 2695:117710): title gains a red "(Rejected)"
-                        // suffix, plus a reason line no other Publish state has.
-                        <span className="history-card__menu-publish-text">
-                          <span className="history-card__menu-publish-title">
-                            Publish <em>(Rejected)</em>
-                          </span>
-                          <span className="history-card__menu-publish-reason">
-                            {publishRejectLabel(p.rejectReason)}
-                          </span>
+            {!community && !failed && (isMv || isSong) && (
+              <>
+                <div className="history-card__menu-publish">
+                  <span>
+                    <DpIcon as="i" name={isMv && p.reviewing ? "ic_timer" : "ic_publish"} />
+                    {isMv && p.rejectReason ? (
+                      // Product owner, 2026-08-28, Figma "History - Menu"
+                      // (node 2695:117710): title gains a red "(Rejected)"
+                      // suffix, plus a reason line no other Publish state has.
+                      <span className="history-card__menu-publish-text">
+                        <span className="history-card__menu-publish-title">
+                          Publish <em>(Rejected)</em>
                         </span>
-                      ) : isMv && p.reviewing ? (
-                        "Publish (Review)"
-                      ) : (
-                        "Publish"
-                      )}
-                    </span>
-                    {/* Product owner, 2026-08-28: the toggle stays OFF through
+                        <span className="history-card__menu-publish-reason">
+                          {publishRejectLabel(p.rejectReason)}
+                        </span>
+                      </span>
+                    ) : isMv && p.reviewing ? (
+                      "Publish (Review)"
+                    ) : (
+                      "Publish"
+                    )}
+                  </span>
+                  {/* Product owner, 2026-08-28: the toggle stays OFF through
                         the pending phase (`reviewing`) and only turns on once
                         approved (`published`) — it is no longer "on for either". */}
-                    <ToggleSwitch
-                      checked={p.published}
-                      onChange={() => p.onPublish()}
-                      ariaLabel={isMv && p.reviewing ? "Publish (Review)" : "Publish"}
-                    />
-                  </div>
-                  <OptRow icon="ic_download" label="Download" onClick={p.onDownload} />
-                  {!hideDelete && (
-                    <OptRow icon="ic_delete" label="Delete" danger onClick={p.onDelete} />
-                  )}
-                </>
-              )}
+                  <ToggleSwitch
+                    checked={p.published}
+                    onChange={() => p.onPublish()}
+                    ariaLabel={isMv && p.reviewing ? "Publish (Review)" : "Publish"}
+                  />
+                </div>
+                <OptRow icon="ic_download" label="Download" onClick={p.onDownload} />
+                {!hideDelete && (
+                  <OptRow icon="ic_delete" label="Delete" danger onClick={p.onDelete} />
+                )}
+              </>
+            )}
 
-              {(failed || isStoryboard) && (
-                <OptRow icon="ic_delete" label="Delete" danger onClick={p.onDelete} />
-              )}
-            </div>
-          </>,
-          document.body,
-        )}
+            {(failed || isStoryboard) && (
+              <OptRow icon="ic_delete" label="Delete" danger onClick={p.onDelete} />
+            )}
+          </div>
+        </>,
+        document.body,
+      )}
     </div>
   );
 }

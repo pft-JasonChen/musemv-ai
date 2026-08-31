@@ -1641,28 +1641,38 @@ test("3e: all six options-menu actions exist and none of them is dead", async ({
   // action and checks the state it is supposed to change.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/creator?self=1");
+  // `tab=songs`: the MV tab (default since the duration-tabs slice) renders
+  // `MvPreviewCard`, not `.community-profile__item` — only the Songs tab
+  // still uses this small row.
+  await page.goto("/creator?self=1&tab=songs");
 
   const firstRow = page.locator(".community-profile__item").first();
   const title = await firstRow.locator(".community-profile__copy > strong").innerText();
 
   await firstRow.getByRole("button", { name: "More" }).click();
-  const menu = page.locator(".community-profile__menu");
+  // Synced onto History's own menu (product owner, 2026-08-31): always
+  // mounted, one portal per row, `inert` while closed — `.history-card__menu`
+  // alone matches all N (7 for this tab) regardless of which is open, and
+  // Playwright's `getByRole("menu")` resolves all of them too (it does not
+  // honour `inert` here). `--visible` is the one class only the open menu
+  // carries.
+  const menu = page.locator(".history-card__menu--visible");
   await expect(menu).toBeVisible();
 
-  // All six are present.
-  await expect(menu.getByRole("menuitem", { name: /Edit MV/ })).toBeVisible();
+  // All six are present. "Create MV", not "Edit" — synced onto History's own
+  // menu (product owner, 2026-08-31): a song has no "Edit" here, it spins
+  // off a new MV instead. MVs get "Edit MV" here; same row, same behaviour.
+  await expect(menu.getByRole("menuitem", { name: "Create MV" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: /^(Like|Unlike)$/ })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Share" })).toBeVisible();
   await expect(menu.getByRole("switch")).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Download" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Delete" })).toBeVisible();
 
-  // Publish: MV confirms first (MV-vs-Song split), then toasts.
+  // Publish: a Song publishes immediately (no confirm step — that's MV-only,
+  // per the MV-vs-Song split; we're on the Songs tab here).
   await menu.getByRole("switch").click();
-  await expect(page.getByRole("dialog", { name: "Ready to Go Public?" })).toBeVisible();
-  await page.getByRole("button", { name: "Publish" }).click();
-  await expect(page.getByText("Submitted for review")).toBeVisible();
+  await expect(page.getByText("Published success")).toBeVisible();
 
   // Delete: confirms, then the row actually leaves the list.
   const before = await page.locator(".community-profile__item").count();
@@ -1677,14 +1687,17 @@ test("3e: all six options-menu actions exist and none of them is dead", async ({
 test("3e: Download triggers a real download, not a menu close", async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/creator?self=1");
+  await page.goto("/creator?self=1&tab=songs");
 
   const firstRow = page.locator(".community-profile__item").first();
   await firstRow.getByRole("button", { name: "More" }).click();
 
   const download = page.waitForEvent("download");
+  // `--visible`, not a bare `.history-card__menu`: every row's menu is always
+  // mounted (`inert` while closed), so a plain class selector — and even
+  // `getByRole("menu")` — matches all of them, not just the open one.
   await page
-    .locator(".community-profile__menu")
+    .locator(".history-card__menu--visible")
     .getByRole("menuitem", { name: "Download" })
     .click();
   expect((await download).suggestedFilename()).toMatch(/\.(mp4|mp3)$/);
@@ -1705,7 +1718,7 @@ test("3e: switching tabs does NOT write the URL", async ({ page }) => {
 test("3e: someone else's profile has no owner menu", async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/creator");
+  await page.goto("/creator?tab=songs");
   await expect(page.locator(".community-profile__item").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "More" })).toHaveCount(0);
   // Like and Share stay — they are public actions.
@@ -1725,7 +1738,7 @@ test("3e / A5: /creator has a working back control at 375px", async ({ page }) =
 test("3e / R9: row links carry the locale prefix", async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/jpn/creator?self=1");
+  await page.goto("/jpn/creator?self=1&tab=songs");
   await expect(page.locator(".community-profile__item-main").first()).toHaveAttribute(
     "href",
     /^\/jpn\//,

@@ -1,14 +1,17 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { Tabs } from "@/components/shell/RoomNavbar";
+import { useSeedMvFlow } from "@/components/history/useOpenCreation";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { DpBadge } from "@/components/ui/DpBadge";
 import { IconButton } from "@/components/ui/IconButton";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { Modal } from "@/components/ui/Modal";
@@ -17,6 +20,7 @@ import { PublishConfirmDialog } from "@/components/ui/PublishConfirmDialog";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
+import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
 import { SAMPLE_AUDIO } from "@/lib/mv/mock";
 import {
   CREATOR_MVS,
@@ -89,6 +93,24 @@ const PROFILE_TABS = [
   { id: "songs" as const, label: "Songs" },
 ];
 
+/**
+ * Storyboard / Failed generation outcomes — product owner, 2026-08-31, Figma
+ * "Community User Profile — MV Self-view" (1961:41878, 3rd/4th MV rows) and
+ * "— Song" (1711:43159, 5th Song row). `CommunityMv`/`CommunitySong`
+ * (`schemas.ts`) model only FINISHED community content — every other reader
+ * (home sections, explore, the player pages) has no failed/in-progress
+ * concept at all, so adding it there would widen a shared contract for one
+ * screen. Kept local instead, keyed by id onto three of the existing seed
+ * rows — the same shape `HistoryView` gets for free from its own local
+ * `HistorySample` type. Ids, not new fixtures: the task was to place these
+ * two use cases at specific positions in the CURRENT list, not to invent
+ * new titles matching Figma's own placeholder names ("Starlight in Your
+ * Eyes", "Midnight Drive").
+ */
+const STORYBOARD_MV_ID = "cp-starfall-serenade"; // 3rd MV item
+const FAILED_MV_ID = "cp-electric-dreams"; // 4th MV item
+const FAILED_SONG_ID = "cps-velvet-sky"; // 5th Song item
+
 interface ProfileItem {
   id: string;
   title: string;
@@ -106,6 +128,12 @@ interface ProfileItem {
   /** MVs only — the real clip the new preview card plays (2026-08-07). Empty
    *  for songs, which keep the small `.community-profile__item` row. */
   video: string;
+  /** `"failed"` — HIST-06's rule applies here too: Delete-only, no Like /
+   *  Share / Publish / Download, and the cover/title stop opening anything. */
+  status: "done" | "failed";
+  /** MVs only — no clip yet, so the row shows "Create MV" instead of Like/
+   *  Share and routes to `/mv/storyboard`, not `/watch`. */
+  isStoryboard: boolean;
 }
 
 function toggle(set: ReadonlySet<string>, id: string): Set<string> {
@@ -115,11 +143,216 @@ function toggle(set: ReadonlySet<string>, id: string): Set<string> {
   return next;
 }
 
+interface ProfileMenuProps {
+  item: ProfileItem;
+  isLiked: boolean;
+  isPublished: boolean;
+  isReviewing: boolean;
+  rejectReason: PublishRejectCode | undefined;
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  onLike: () => void;
+  onShare: () => void;
+  onDownload: () => void;
+  onDelete: () => void;
+  onPublish: (next: boolean) => void;
+  onEdit: () => void;
+  onCreateMv: () => void;
+}
+
+/**
+ * The owner action menu on `/creator` — product owner, 2026-08-31: style,
+ * open/close transition, and close-on-scroll all synced onto History's own
+ * `.history-card__menu` (`HistoryView.tsx`'s `Menu`), which this is a close
+ * copy of rather than a shared extraction — the row CONTENTS differ just
+ * enough (this screen's own `restricted`/Create-MV handling) that pulling the
+ * shell out from under a component with its own e2e coverage wasn't worth the
+ * risk for a sync task. What's copied verbatim:
+ *
+ * · Portal + `getBoundingClientRect()`-computed `position: fixed` — proven to
+ *   escape a grid card's stacking context, same reason History needs it.
+ * · Always-mounted + `inert` + a `--visible` class driving `opacity` (0.2s) —
+ *   not a conditional mount, so the SAME transition plays open AND close;
+ *   `MenuProps`'s `open`/`setOpen` are owned by the caller (`CreatorProfile`'s
+ *   `openMenu` state) for the same reason History's are.
+ * · Close on SCROLL, not on outside click/Escape — replaces this screen's own
+ *   previous `mousedown`/`keydown` listener, which (now that the menu is
+ *   portalled to `document.body` instead of living inside
+ *   `.community-profile__menu-shell`) would have misfired on every click
+ *   inside the menu itself, since `.closest(".community-profile__menu-
+ *   shell")` can never find an ancestor the portal detached it from.
+ * · The invisible full-viewport backdrop that closes on click, and the phone
+ *   bottom-sheet swap (`isPhone`) that skips the inline fixed-position style
+ *   so `.history-card__menu`'s own `@media (max-width: 767px)` rule can turn
+ *   it into a sheet instead.
+ *
+ * A standalone component, not inlined in the `.map()` above: each row needs
+ * its OWN trigger ref and position state, and hooks cannot live inside a
+ * plain per-iteration callback.
+ */
+function ProfileMenu(p: ProfileMenuProps) {
+  const { item } = p;
+  const { locale } = useLocale();
+  const failed = item.status === "failed";
+  const restricted = failed || item.isStoryboard;
+  const isMv = item.kind === "mv";
+
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const isPhone = useMediaQuery(PHONE_QUERY);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+
+  function toggleOpen() {
+    if (!p.open) {
+      const rect = btnRef.current?.getBoundingClientRect();
+      if (rect) {
+        const viewportWidth = document.documentElement.getBoundingClientRect().width;
+        setPos({ top: rect.bottom + 4, right: Math.max(8, viewportWidth - rect.right) });
+      }
+    }
+    p.setOpen(!p.open);
+  }
+
+  useEffect(() => {
+    if (!p.open) return;
+    function close() {
+      p.setOpen(false);
+    }
+    window.addEventListener("scroll", close, { passive: true, capture: true });
+    return () => window.removeEventListener("scroll", close, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.open]);
+
+  return (
+    <div className="history-card__menu-shell">
+      <IconButton
+        ref={btnRef}
+        size="small"
+        variant="tertiary"
+        icon="ic_more"
+        label="More"
+        onClick={toggleOpen}
+      />
+      {createPortal(
+        <>
+          {p.open &&
+            (isPhone ? (
+              <div className="history-card__menu-backdrop" onClick={() => p.setOpen(false)} />
+            ) : (
+              <div className="fixed inset-0 z-[90]" onClick={() => p.setOpen(false)} />
+            ))}
+          <div
+            className={`history-card__menu${p.open ? " history-card__menu--visible" : ""}`}
+            role="menu"
+            inert={!p.open}
+            style={isPhone ? undefined : { position: "fixed", top: pos.top, right: pos.right }}
+          >
+            {isPhone && <div className="history-card__menu-handle" aria-hidden="true" />}
+            {/* MV-13, same as HistoryView's menu: while an MV is published or
+                pending, this entry disappears rather than becoming "Unpublish
+                to edit" — the Publish toggle below is the only way back to
+                editable. Songs never review (rule 3), so this never hides. */}
+            {!restricted && isMv && !p.isPublished && !p.isReviewing && (
+              <a
+                role="menuitem"
+                className="history-card__menu-primary"
+                href={localePath(locale, "/mv/edit")}
+                onClick={(e) => {
+                  e.preventDefault();
+                  p.onEdit();
+                }}
+              >
+                <DpIcon name="ic_edit" />
+                Edit MV
+              </a>
+            )}
+            {/* A song has no "Edit" here — same as History's own menu, a song
+                row offers "Create MV" instead (gradient purple), spinning the
+                song off into a NEW music video rather than editing it. */}
+            {!restricted && !isMv && (
+              <button
+                type="button"
+                role="menuitem"
+                className="history-card__menu-primary history-card__menu-primary--gradient"
+                onClick={() => {
+                  p.setOpen(false);
+                  p.onCreateMv();
+                }}
+              >
+                <DpIcon name="ic_video_ai" />
+                Create MV
+              </button>
+            )}
+            {!restricted && (
+              <button type="button" role="menuitem" onClick={p.onLike}>
+                <DpIcon
+                  name={p.isLiked ? "ic_favorite_on" : "ic_favorite_off"}
+                  className={p.isLiked ? "history-card__menu-item-icon--active" : undefined}
+                />
+                {p.isLiked ? "Unlike" : "Like"}
+              </button>
+            )}
+            {!restricted && (
+              <button type="button" role="menuitem" onClick={p.onShare}>
+                <DpIcon name="ic_share" />
+                Share
+              </button>
+            )}
+            {!restricted && (
+              <div className="history-card__menu-publish">
+                <span>
+                  <DpIcon as="i" name="ic_publish" />
+                  {p.rejectReason ? (
+                    // Same "History Menu / self-view profile Menu" Figma as
+                    // HistoryView's own reject row (node 2695:117710) —
+                    // identical treatment, shared class names.
+                    <span className="history-card__menu-publish-text">
+                      <span className="history-card__menu-publish-title">
+                        Publish <em>(Rejected)</em>
+                      </span>
+                      <span className="history-card__menu-publish-reason">
+                        {publishRejectLabel(p.rejectReason)}
+                      </span>
+                    </span>
+                  ) : (
+                    "Publish"
+                  )}
+                </span>
+                <ToggleSwitch
+                  checked={p.isPublished}
+                  onChange={(next) => p.onPublish(next)}
+                  ariaLabel={`Publish ${item.title}`}
+                />
+              </div>
+            )}
+            {!restricted && (
+              <button type="button" role="menuitem" onClick={p.onDownload}>
+                <DpIcon name="ic_download" />
+                Download
+              </button>
+            )}
+            <button
+              type="button"
+              role="menuitem"
+              className="history-card__menu-delete"
+              onClick={p.onDelete}
+            >
+              <DpIcon name="ic_delete" />
+              Delete
+            </button>
+          </div>
+        </>,
+        document.body,
+      )}
+    </div>
+  );
+}
+
 export function CreatorProfile() {
   const router = useRouter();
   const params = useSearchParams();
   const { locale } = useLocale();
   const { loggedIn } = useAuth();
+  const seedMvFlow = useSeedMvFlow();
 
   const self = params.get("self") === "1";
   // Seeded from the URL, then owned by the component — see note 1 above.
@@ -161,20 +394,27 @@ export function CreatorProfile() {
   const items = useMemo<ProfileItem[]>(() => {
     const rows: ProfileItem[] =
       tab === "mv"
-        ? CREATOR_MVS.map((m: CommunityMv) => ({
-            id: m.id,
-            title: m.title,
-            cover: m.thumb,
-            plays: m.plays,
-            likes: m.likes,
-            shares: m.shares,
-            date: m.date,
-            kind: "mv",
-            href: `/watch?id=${m.id}`,
-            downloadUrl: m.video,
-            downloadName: `${m.title}.mp4`,
-            video: m.video,
-          }))
+        ? CREATOR_MVS.map((m: CommunityMv) => {
+            const isStoryboard = m.id === STORYBOARD_MV_ID;
+            return {
+              id: m.id,
+              title: m.title,
+              cover: m.thumb,
+              plays: m.plays,
+              likes: m.likes,
+              shares: m.shares,
+              date: m.date,
+              kind: "mv",
+              // A storyboard has no clip to watch yet — same destination
+              // HistoryView's own `rowHref` sends a storyboard row to.
+              href: isStoryboard ? `/mv/storyboard?id=${m.id}` : `/watch?id=${m.id}`,
+              downloadUrl: m.video,
+              downloadName: `${m.title}.mp4`,
+              video: m.video,
+              status: m.id === FAILED_MV_ID ? "failed" : "done",
+              isStoryboard,
+            };
+          })
         : CREATOR_SONGS.map((s: CommunitySong) => ({
             id: s.id,
             title: s.title,
@@ -188,29 +428,16 @@ export function CreatorProfile() {
             downloadUrl: SAMPLE_AUDIO,
             downloadName: `${s.title}.mp3`,
             video: "",
+            status: s.id === FAILED_SONG_ID ? "failed" : "done",
+            isStoryboard: false,
           }));
     return demoEmpty ? [] : rows.filter((r) => !removed.has(r.id));
   }, [tab, removed, demoEmpty]);
 
-  // Dismiss the open menu on an outside click or Escape — DP's behaviour, with
-  // the listeners scoped to the open state so nothing is bound while closed.
-  useEffect(() => {
-    if (!openMenu) return;
-    function onPointerDown(e: MouseEvent) {
-      if (!(e.target as Element).closest(".community-profile__menu-shell")) setOpenMenu(null);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpenMenu(null);
-    }
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [openMenu]);
-
   function open(item: ProfileItem) {
+    // Same guard as HistoryView's `openRow` — a failed generation has
+    // nothing behind it to open.
+    if (item.status !== "done") return;
     router.push(localePath(locale, item.href));
   }
 
@@ -286,9 +513,23 @@ export function CreatorProfile() {
     showToast("Deleted");
   }
 
-  function doEdit(item: ProfileItem) {
+  // MV only — a song's menu offers "Create MV" instead of "Edit" (see
+  // `ProfileMenu`), so this is never reached for a song row and takes no
+  // item. Unchanged from before this sync pass — pre-existing behavior,
+  // not touched here.
+  function doEdit() {
     setOpenMenu(null);
-    router.push(localePath(locale, item.kind === "mv" ? "/mv/edit" : "/song/create"));
+    router.push(localePath(locale, "/mv/edit"));
+  }
+
+  // Same two-step History's own `createMv` uses: seed the (in-memory,
+  // reload-losable) MV flow with this row's data, then land on
+  // `/mv/storyboard` (a storyboard resumes its own draft — same href the
+  // card's own pill already opens) or `/mv/room` (a song starts a brand NEW
+  // MV, seeded with its title/cover).
+  function createMv(item: ProfileItem) {
+    seedMvFlow({ id: item.id, title: item.title, thumb: item.cover });
+    router.push(localePath(locale, item.isStoryboard ? item.href : "/mv/room"));
   }
 
   return (
@@ -378,14 +619,60 @@ export function CreatorProfile() {
               const isReviewing = reviewing.has(item.id);
               const itemRejectReason = rejectReasons[item.id];
               const menuOpen = openMenu === item.id;
+              // HIST-06's rule, ported here: a failed generation is
+              // Delete-only — no Like / Share / Edit / Publish / Download.
+              // A storyboard isn't failed, but it isn't an MV yet either, so
+              // it gets the same restricted set (plus its own "Create MV").
+              const failed = item.status === "failed";
+              const restricted = failed || item.isStoryboard;
 
-              // The six-action owner menu (Edit/Like/Share/Publish/Download/
-              // Delete) — unchanged from before the MV preview redesign, just
-              // extracted so both the new `MvPreviewCard` (mv tab) and the
-              // still-small song row (songs tab) render the SAME menu rather
-              // than each carrying its own copy. See the class-level docs
-              // above for why the item inside is an `<a>`, not a `<button>`.
-              const actions = (
+              // The owner menu (Edit/Like/Share/Publish/Download/Delete,
+              // trimmed per `restricted` above) — content unchanged from
+              // before the MV preview redesign; the SHELL (below) is what's
+              // new, synced onto History's own `.history-card__menu`.
+              const menu = ownerMenu && (
+                <ProfileMenu
+                  item={item}
+                  isLiked={isLiked}
+                  isPublished={isPublished}
+                  isReviewing={isReviewing}
+                  rejectReason={itemRejectReason}
+                  open={menuOpen}
+                  setOpen={(v) => setOpenMenu(v ? item.id : null)}
+                  onLike={() => setLiked((s) => toggle(s, item.id))}
+                  onShare={() => {
+                    setOpenMenu(null);
+                    setShare(item);
+                  }}
+                  onDownload={() => doDownload(item)}
+                  onDelete={() => {
+                    setOpenMenu(null);
+                    setDel(item);
+                  }}
+                  onPublish={(next) => doPublish(item, next)}
+                  onEdit={doEdit}
+                  onCreateMv={() => createMv(item)}
+                />
+              );
+
+              const actions = restricted ? (
+                <>
+                  {/* Owner-only, same as the "..." menu below it — a visitor
+                      browsing someone else's storyboard has no business
+                      spinning off an MV from a draft that isn't theirs. */}
+                  {item.isStoryboard && ownerMenu && (
+                    <button
+                      type="button"
+                      className="button button--medium button--secondary"
+                      onClick={() => createMv(item)}
+                    >
+                      <DpIcon name="ic_video_ai" className="button__icon button__icon--mask" />
+                      <span className="button__label">Create MV</span>
+                    </button>
+                  )}
+                  {menu}
+                </>
+              ) : (
                 <>
                   <IconButton
                     size="small"
@@ -401,114 +688,7 @@ export function CreatorProfile() {
                     label="Share"
                     onClick={() => setShare(item)}
                   />
-                  {ownerMenu && (
-                    <div className="community-profile__menu-shell">
-                      {/* Designer fix, 2026-08-11: `size="small"` (28px), not
-                          `xsmall` (20px) — CommunityProfilePage.css has no
-                          dedicated "more" trigger class of its own (unlike
-                          History's `.history-card__more`), so this leans on
-                          IconButton's generic tertiary variant, which is
-                          already the right white-15 pill fill; it just needs
-                          the size History's own "more" button uses (28px) so
-                          the two read the same size, not one visibly smaller
-                          than the other. */}
-                      <IconButton
-                        size="small"
-                        variant="tertiary"
-                        icon="ic_more"
-                        label="More"
-                        onClick={() => setOpenMenu((c) => (c === item.id ? null : item.id))}
-                      />
-                      {menuOpen && (
-                        <div className="community-profile__menu" role="menu">
-                          {/* MV-13, same as HistoryView's menu: while an MV is
-                              published or pending, this entry disappears
-                              rather than becoming "Unpublish to edit" — the
-                              Publish toggle below is the only way back to
-                              editable. Songs never review (rule 3), so this
-                              never hides for them. */}
-                          {(item.kind !== "mv" || (!isPublished && !isReviewing)) && (
-                            <a
-                              role="menuitem"
-                              className="community-profile__menu-primary"
-                              href={localePath(
-                                locale,
-                                item.kind === "mv" ? "/mv/edit" : "/song/create",
-                              )}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                doEdit(item);
-                              }}
-                            >
-                              <DpIcon name="ic_edit" />
-                              {item.kind === "mv" ? "Edit MV" : "Edit Song"}
-                            </a>
-                          )}
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => setLiked((s) => toggle(s, item.id))}
-                          >
-                            <DpIcon name={isLiked ? "ic_favorite_on" : "ic_favorite_off"} />
-                            {isLiked ? "Unlike" : "Like"}
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setOpenMenu(null);
-                              setShare(item);
-                            }}
-                          >
-                            <DpIcon name="ic_share" />
-                            Share
-                          </button>
-                          <div className="community-profile__menu-publish">
-                            <span>
-                              <DpIcon as="i" name="ic_publish" />
-                              {itemRejectReason ? (
-                                // Same "History Menu / self-view profile Menu"
-                                // Figma as HistoryView's own reject row (node
-                                // 2695:117710) — identical treatment, shared
-                                // class names.
-                                <span className="history-card__menu-publish-text">
-                                  <span className="history-card__menu-publish-title">
-                                    Publish <em>(Rejected)</em>
-                                  </span>
-                                  <span className="history-card__menu-publish-reason">
-                                    {publishRejectLabel(itemRejectReason)}
-                                  </span>
-                                </span>
-                              ) : (
-                                "Publish"
-                              )}
-                            </span>
-                            <ToggleSwitch
-                              checked={isPublished}
-                              onChange={(next) => doPublish(item, next)}
-                              ariaLabel={`Publish ${item.title}`}
-                            />
-                          </div>
-                          <button type="button" role="menuitem" onClick={() => doDownload(item)}>
-                            <DpIcon name="ic_download" />
-                            Download
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="community-profile__menu-delete"
-                            onClick={() => {
-                              setOpenMenu(null);
-                              setDel(item);
-                            }}
-                          >
-                            <DpIcon name="ic_delete" />
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {menu}
                 </>
               );
 
@@ -519,7 +699,11 @@ export function CreatorProfile() {
                     title={item.title}
                     video={item.video}
                     cover={item.cover}
-                    ratio={mvCoverRatio(item.id)}
+                    // A storyboard is always the portrait crop Figma shows
+                    // (nodes 1961:41956) — not left to `mvCoverRatio`'s index
+                    // cycling, which would only get it right by coincidence.
+                    ratio={item.isStoryboard ? "3:4" : mvCoverRatio(item.id)}
+                    variant={failed ? "failed" : item.isStoryboard ? "storyboard" : "video"}
                     plays={item.plays}
                     likes={item.likes + (isLiked ? 1 : 0)}
                     shares={item.shares}
@@ -542,29 +726,56 @@ export function CreatorProfile() {
                       open(item);
                     }}
                   >
-                    <span className="community-profile__cover">
-                      <img src={item.cover} alt="" />
-                      <DpIcon name="ic_song" />
+                    {/* Failed — product owner, 2026-08-31, Figma "Community
+                        User Profile — Song" (1711:43159, 5th row): the
+                        cover becomes a flat swatch with a muted alert icon
+                        (no thumbnail to show), the subtitle becomes a plain
+                        kind label, and the social row is replaced by DP's
+                        own Failed badge beside the date — same badge History
+                        already uses for this state (`DpBadge`). */}
+                    <span
+                      className={`community-profile__cover${failed ? " community-profile__cover--failed" : ""}`}
+                    >
+                      {failed ? (
+                        <DpIcon name="ic_alert" className="community-profile__cover-icon" />
+                      ) : (
+                        <>
+                          <img src={item.cover} alt="" />
+                          <DpIcon name="ic_song" />
+                        </>
+                      )}
                     </span>
                     <span className="community-profile__copy">
                       <strong>{item.title}</strong>
-                      {/* `<i>`, not `<span>`: the stylesheet sizes these with
-                          `.community-profile__social i`. See DpIcon's `as`. */}
-                      <span className="community-profile__social">
-                        <span>
-                          <DpIcon as="i" name="ic_headphones" />
-                          {formatCount(item.plays)}
-                        </span>
-                        <span>
-                          <DpIcon as="i" name="ic_favorite_off" />
-                          {formatCount(item.likes + (isLiked ? 1 : 0))}
-                        </span>
-                        <span>
-                          <DpIcon as="i" name="ic_share" />
-                          {formatCount(item.shares)}
-                        </span>
-                      </span>
-                      <time>{item.date}</time>
+                      {failed ? (
+                        <>
+                          <p className="community-profile__kind">AI Song</p>
+                          <span className="community-profile__status-row">
+                            <DpBadge status="Failed" />
+                            <time>{item.date}</time>
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          {/* `<i>`, not `<span>`: the stylesheet sizes these with
+                              `.community-profile__social i`. See DpIcon's `as`. */}
+                          <span className="community-profile__social">
+                            <span>
+                              <DpIcon as="i" name="ic_headphones" />
+                              {formatCount(item.plays)}
+                            </span>
+                            <span>
+                              <DpIcon as="i" name="ic_favorite_off" />
+                              {formatCount(item.likes + (isLiked ? 1 : 0))}
+                            </span>
+                            <span>
+                              <DpIcon as="i" name="ic_share" />
+                              {formatCount(item.shares)}
+                            </span>
+                          </span>
+                          <time>{item.date}</time>
+                        </>
+                      )}
                     </span>
                   </a>
 

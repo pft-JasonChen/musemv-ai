@@ -188,6 +188,24 @@
   background: var(--neutral-dark-09);
 }
 
+/* Product owner, 2026-08-31 — the photo/name/email now open the public
+   creator profile (`ProfileView.tsx`), so they moved from two bare `<span>`s
+   into one `<Link>`. `AccountPage.css`'s own `.account-page__identity` is
+   `display:flex; gap:12px` over its (previously 3, now 2) children — this
+   reproduces that same flex/gap internally so `.account-page__avatar`'s
+   fixed 64px and `.account-page__identity-copy`'s `flex:1` still lay out
+   exactly as before, and `flex:1;min-width:0` on the link itself keeps it
+   (not the Edit button next to it) absorbing the row's remaining width. */
+.account-page__identity-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
 /* Designer decision, 2026-08-07 — user-row click targets shouldn't span the
    full row width. DP's `.list-item__user-row` / `.top-song__user-row` are
    flex items of a `flex-direction: column` parent (`.list-item__info`,
@@ -1992,10 +2010,9 @@
     flex-direction: column;
     gap: 0;
     width: 100%;
-    /* `.upgrade-dialog`'s own 32px gap (`UpgradeDialog.css`) is the
-       desktop three-card spacing; below the plan list it wants 20px above
-       and (via `.upgrade-dialog__footer` below) 12px below instead. */
-    margin-top: -12px; /* 32 - 12 = 20 */
+    /* `.upgrade-dialog`'s own gap below 1024px is 20px (2026-08-31 change) —
+       already this block's own target, so no compensating margin needed
+       above it; below it wants 12px instead, via `.upgrade-dialog__footer`. */
   }
 
   .upgrade-dialog__mobile .upgrade-dialog__details {
@@ -2009,7 +2026,7 @@
   /* `.upgrade-dialog__renew-note`'s own margin-bottom (below) already
      supplies the 12px to the CTA. */
   .upgrade-dialog__footer {
-    margin-top: -20px; /* 32 - 20 = 12 */
+    margin-top: -8px; /* 20 - 8 = 12 */
   }
 }
 
@@ -2024,6 +2041,24 @@
 @media (max-width: 767px) {
   .upgrade-dialog {
     padding: 20px;
+  }
+}
+
+/* Product owner, 2026-08-31 — `.upgrade-dialog`'s gated `gap: 32px` (the
+   spacing between its header/tabs/cards/footer rows) tightens to 24px on
+   desktop and 20px below 1024px (the same breakpoint the tab bar and
+   mobile/tablet list already key off). A height transition was tried here
+   (switching duration can add/remove a feature row) and pulled back the same
+   day — measured as sluggish, not the snappy resize the product owner
+   wanted — so the dialog resizes instantly again; `UpgradeDialog.css`'s own
+   `transition: transform 0.3s ease` (open/close only) is untouched. */
+.upgrade-dialog {
+  gap: 24px;
+}
+
+@media (max-width: 1023px) {
+  .upgrade-dialog {
+    gap: 20px;
   }
 }
 
@@ -2115,6 +2150,68 @@
   font-weight: var(--font-weight-medium);
   letter-spacing: -0.11px;
   text-align: center;
+}
+
+/* ── Duration Tab Bar (Weekly / Monthly / Yearly) — product owner, 2026-08-31,
+   Figma "Popup iAP - Pricing" (1797:33233 desktop; 2881:54660 tablet/mobile).
+   Not in the gated `UpgradeDialog.css` at all — DP's three-duration split with
+   a Basic/Pro tab per card is a NEW pattern this dialog never had, so there is
+   no verbatim source to copy. Shared by both the desktop 2-card grid and the
+   mobile/tablet list below — one instance, rendered once, ahead of both. */
+.upgrade-dialog__tabs {
+  display: flex;
+  gap: 4px;
+  width: fit-content;
+  margin: 0 auto 0;
+  padding: 4px;
+  border-radius: var(--radius-full);
+  background: var(--neutral-dark-14);
+}
+
+.upgrade-dialog__tab {
+  min-width: 100px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--neutral-light-04);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.upgrade-dialog__tab--active {
+  background: var(--neutral-light-04);
+  color: var(--neutral-dark-04);
+}
+
+/* Product owner, 2026-08-31 — below 1024px the wrapper should span the
+   dialog's own width (Figma's mobile/tablet frame) rather than stay
+   fit-content, so the tabs grow to fill it evenly instead of clumping in the
+   middle; the individual tab's floor shrinks from 100px to 90px to match. */
+@media (max-width: 1023px) {
+  .upgrade-dialog__tabs {
+    width: 100%;
+  }
+
+  .upgrade-dialog__tab {
+    flex: 1 1 0;
+    min-width: 90px;
+  }
+}
+
+/* With only 2 cards (Basic/Pro) per duration instead of DP's original 3,
+   `.upgrade-dialog__card`'s gated `flex: 1 1 0` would stretch each to ~430px
+   across the 880px content area instead of Figma's fixed 280px — scoped to
+   `--plans` so the already-subscribed branch's own single full-width card
+   (plain `.upgrade-dialog__cards`, no modifier) is untouched. */
+.upgrade-dialog__cards--plans {
+  justify-content: center;
+}
+
+.upgrade-dialog__cards--plans .upgrade-dialog__card {
+  flex: 0 0 280px;
 }
 
 /* ════════════════════════════════════════════════════════════════════════
@@ -2943,6 +3040,79 @@
   }
 }
 
+/* Product owner, 2026-08-31, Figma "History — Loading" (3261:44705, `?demo=1`
+   panel's "History — slow load"). DP has no loading state for this page any
+   more than it has an empty one (its own data is constant, `HistoryPage.css`
+   has nothing here) — hand-authored like the empty states above. Figma shows
+   only the 3 dots, centred, with the filter tabs and recommend rails both
+   hidden (`HistoryView.tsx` swaps those out entirely rather than layering
+   this on top). `min-height` stands in for a real fixed-height frame so the
+   dots land roughly where Figma's fixed 1440×960 canvas puts them without
+   depending on viewport height matching that exactly. */
+.history-page__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  width: 100%;
+}
+
+.history-page__loading-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-page__loading-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.history-page__loading-dot--1 {
+  background: linear-gradient(90deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+}
+
+.history-page__loading-dot--2 {
+  background: linear-gradient(90deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+}
+
+.history-page__loading-dot--3 {
+  background: linear-gradient(90deg, #3af9b9 0%, #4e8fff 50%, #391ed1 100%);
+}
+
+/* "Floating up and down one after another, gently" (product owner's own
+   words) — an 8px rise, eased both ways, each dot starting 150ms after the
+   previous one so the lift visibly travels left-to-right across the row.
+   The keyframes are unconditional (inert until referenced); only the actual
+   `animation` assignment is gated, matching this file's other motion (see
+   `disc-spin` in `globals.css`) — `prefers-reduced-motion: reduce` gets 3
+   still dots instead of 3 that never stop moving. */
+@keyframes history-loading-dot-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .history-page__loading-dot {
+    animation: history-loading-dot-float 1s ease-in-out infinite;
+  }
+
+  .history-page__loading-dot--2 {
+    animation-delay: 0.15s;
+  }
+
+  .history-page__loading-dot--3 {
+    animation-delay: 0.3s;
+  }
+}
+
 /* MV-11's empty "My Songs" tab (Choose Song dialog) — Figma "AI MV - Feature
    Room_Song Picker_Empty_L" (node 3200:69854): icon + message, no CTA,
    centered with 80px of top breathing room inside the tab's scroll area.
@@ -2983,6 +3153,65 @@
   width: 100%;
   padding: 60px 0;
   box-sizing: border-box;
+}
+
+/* Failed Song row — product owner, 2026-08-31, Figma "Community User Profile
+   — Song" (1711:43159, 5th row). `.community-profile__cover` (60×60,
+   CommunityProfilePage.css) is otherwise a photo + `ic_song` badge; this
+   modifier swaps that for a flat swatch + a single centred alert icon, same
+   `#383842` / muted-icon pairing the Figma row itself uses. */
+.community-profile__cover--failed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--neutral-dark-24);
+}
+
+/* `.community-profile__cover > span` (CommunityProfilePage.css, gated) is the
+   small kind-badge icon every OTHER row has — 12px, `position: absolute;
+   bottom: 4px; left: 4px`, an element selector matching (0,1,1). This icon is
+   a `<span>` direct child of `.community-profile__cover` too (`DpIcon`'s
+   default tag), so it inherited that rule outright: 12px instead of 20px,
+   and — the actual bug the product owner flagged — pinned to the bottom-left
+   corner rather than centred, since an absolutely-positioned element takes
+   no part in its parent's flex centring no matter what the parent declares.
+   `.community-profile__cover--failed .community-profile__cover-icon` at
+   (0,2,0) beats it; `position: static` hands control back to the flex
+   centring on `--failed` above. */
+.community-profile__cover--failed .community-profile__cover-icon {
+  position: static;
+  width: 20px;
+  height: 20px;
+  color: var(--white-40);
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* Replaces `.community-profile__social` for a failed row — a plain kind
+   label ("AI Song") where the plays/likes/shares stats normally sit, since
+   a failed generation has none. */
+.community-profile__kind {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-caption-m);
+  font-weight: var(--font-weight-medium);
+}
+
+.community-profile__status-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.community-profile__status-row time {
+  color: var(--neutral-dark-44);
+  font-size: var(--font-caption-m);
 }
 
 /* ── "What would you like to create?" (History's "All" empty CTA) ────────

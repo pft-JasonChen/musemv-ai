@@ -235,7 +235,7 @@ export function DemoPanel() {
             <button
               type="button"
               disabled={subscribed}
-              onClick={() => subscribe("weekly")}
+              onClick={() => subscribe("weekly_basic")}
               className="rounded-full border px-2 py-1 font-semibold disabled:opacity-40"
               style={{ borderColor: "var(--border-2)" }}
             >

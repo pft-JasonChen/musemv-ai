@@ -7,7 +7,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useLocale, useT } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
-import { SUBSCRIPTION_PLANS } from "@/lib/user";
+import { SUBSCRIPTION_PLANS, planDisplayName } from "@/lib/user";
 import type { TKey } from "@/lib/i18n/dictionaries/en";
 
 /**
@@ -130,7 +130,8 @@ export function Sidebar() {
     }
   }
 
-  const planName = SUBSCRIPTION_PLANS.find((p) => p.id === subscribedPlan)?.name;
+  const plan = SUBSCRIPTION_PLANS.find((p) => p.id === subscribedPlan);
+  const planName = plan && planDisplayName(plan);
 
   return (
     <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>

@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { DpIcon } from "@/components/ui/DpIcon";
 
 /**
@@ -11,31 +12,34 @@ import { DpIcon } from "@/components/ui/DpIcon";
  *
  * `label` is required and has no visible counterpart, so it is the accessible
  * name — a variant with visible text is `Button`, not this.
+ *
+ * `forwardRef`, added 2026-08-31 for `CreatorProfile`'s own menu trigger —
+ * synced onto History's `.history-card__menu` (portal + fixed positioning),
+ * which needs the trigger's real `getBoundingClientRect()` to place the menu.
  */
-export function IconButton({
-  size = "large",
-  variant = "primary",
-  disabled = false,
-  icon,
-  label,
-  onClick,
-  className,
-}: {
-  size?: "large" | "medium" | "small" | "xsmall";
-  variant?: "primary" | "secondary" | "tertiary" | "ghost";
-  disabled?: boolean;
-  /** Icon filename under `public/assets/icons/ui/`, without the extension. */
-  icon: string;
-  label: string;
-  onClick?: () => void;
-  className?: string;
-}) {
+export const IconButton = forwardRef<
+  HTMLButtonElement,
+  {
+    size?: "large" | "medium" | "small" | "xsmall";
+    variant?: "primary" | "secondary" | "tertiary" | "ghost";
+    disabled?: boolean;
+    /** Icon filename under `public/assets/icons/ui/`, without the extension. */
+    icon: string;
+    label: string;
+    onClick?: () => void;
+    className?: string;
+  }
+>(function IconButton(
+  { size = "large", variant = "primary", disabled = false, icon, label, onClick, className },
+  ref,
+) {
   const classes = ["icon-button", `icon-button--${size}`, `icon-button--${variant}`, className]
     .filter(Boolean)
     .join(" ");
 
   return (
     <button
+      ref={ref}
       type="button"
       className={classes}
       disabled={disabled}
@@ -45,4 +49,4 @@ export function IconButton({
       <DpIcon name={icon} className="icon-button__icon" />
     </button>
   );
-}
+});

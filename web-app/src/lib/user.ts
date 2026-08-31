@@ -112,16 +112,28 @@ export const AVATAR_SAMPLES = [
   "/assets/images/character-photos/samples/Sample_P6.jpg",
 ];
 
-export type PlanId = "weekly" | "weekly_pro" | "yearly";
+export type PlanId =
+  | "weekly_basic"
+  | "weekly_pro"
+  | "monthly_basic"
+  | "monthly_pro"
+  | "yearly_basic"
+  | "yearly_pro";
+
+/** Also the Tab Bar label and the "Credits Expire {cadence}" feature line. */
+export type PlanCadence = "Weekly" | "Monthly" | "Yearly";
 
 export interface SubscriptionPlan {
   id: PlanId;
+  cadence: PlanCadence;
+  /** Drives the PRO chip, the gradient CTA/card-border, and the badge choice
+   *  — no separate `cta`/`featured` fields; both are just `tier === "pro"`. */
+  tier: "basic" | "pro";
+  /** Card heading — just the cadence word; the PRO chip renders separately. */
   name: string;
   price: string;
   /** Credits granted per cycle. */
   credits: number;
-  /** How the credit allowance is described / when it expires: "Weekly" or "Yearly". */
-  cadence: "Weekly" | "Yearly";
   /** Billing-period suffix shown after the price (e.g. "week"). */
   per: string;
   /** Store SubscriptionID (Business Model "Subscription form"). */
@@ -133,64 +145,118 @@ export interface SubscriptionPlan {
    * prices next to it are still WA's (S20).
    */
   description: string;
-  /**
-   * Which of DP's three CTA treatments this card uses
-   * (`.upgrade-dialog__cta--{default|gradient|white}`). Card-level styling is
-   * per-plan in the Figma, not derived from selection state.
-   */
-  cta: "default" | "gradient" | "white";
-  /** DP's `--featured` card (raised border + emphasis). */
-  featured?: boolean;
 }
 
-// CR-02: Muse Pro plans (Business Model 2026-07-13, "Subscription Plans
-// Proposal 1 — Benchmark Sondo, Final Decision" + "Subscription form" backend
-// table). Two weekly tiers + one yearly; the credit allowance and its expiry
-// follow the plan (weekly credits expire weekly, yearly credits expire yearly).
-// Weekly Pro is the default-selected plan.
+// CR-02: Muse Pro plans. Product owner, 2026-08-28, Figma "IAP — Subscribe
+// Plan_{Weekly,Monthly,Yearly} - Card_L" (+ tablet/mobile "List_M" twins):
+// a duration Tab Bar (Weekly/Monthly/Yearly) replacing the old flat 3-card
+// list, each duration offering exactly two tiers (Basic/Pro).
+//
+// ⚠️ S20 applies only PARTIALLY here. Weekly Basic/Pro and Yearly Basic match
+// the Business Model (2026-07-13) exactly — $9.99/200cr, $29.99/1,000cr,
+// $59.99/2,000cr — which also means the OLD `weekly` entry's $19.99 here
+// before this change was simply wrong, not a deliberate DP-vs-Business-Model
+// override; it's corrected to $9.99 in the same change. Monthly (both tiers)
+// and Yearly Pro have NO Business Model entry at all — that document predates
+// this Tab Bar redesign — so those four prices/skus come from Figma alone,
+// with no second source to reconcile against. Flagged to the product owner;
+// not blocked on it, since the seven that DO have a source all agree.
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
-    id: "weekly",
-    name: "Weekly",
-    price: "$19.99",
-    credits: 200,
+    id: "weekly_basic",
     cadence: "Weekly",
+    tier: "basic",
+    name: "Weekly",
+    price: "$9.99",
+    credits: 200,
     per: "week",
     sku: "subscribe_1_week_no_trial_ycm",
     badge: "MOST POPULAR",
     description: "Everything you need to start creating.",
-    cta: "default",
   },
   {
     id: "weekly_pro",
-    name: "Weekly Pro",
+    cadence: "Weekly",
+    tier: "pro",
+    name: "Weekly",
     price: "$29.99",
     credits: 1000,
-    cadence: "Weekly",
     per: "week",
     sku: "subscribe_1_week_pro_no_trial_ycm",
     badge: "BEST VALUE",
     // DP's copy, and it happens to be arithmetically true of WA's numbers too:
     // 1,000 vs Weekly's 200 is exactly 5x.
     description: "5x the credits, create more freely.",
-    cta: "gradient",
-    featured: true,
   },
   {
-    id: "yearly",
+    id: "monthly_basic",
+    cadence: "Monthly",
+    tier: "basic",
+    name: "Monthly",
+    price: "$34.99",
+    credits: 1000,
+    per: "month",
+    // Not in the 2026-07-13 Business Model — see the note above. Follows the
+    // existing "subscribe_{duration}_no_trial_ycm" naming, unconfirmed by RD.
+    sku: "subscribe_1_month_no_trial_ycm",
+    description: "Everything you need to start creating.",
+  },
+  {
+    id: "monthly_pro",
+    cadence: "Monthly",
+    tier: "pro",
+    name: "Monthly",
+    price: "$49.99",
+    credits: 2000,
+    per: "month",
+    sku: "subscribe_1_month_pro_no_trial_ycm",
+    badge: "BEST VALUE",
+    description: "5x the credits, create more freely.",
+  },
+  {
+    id: "yearly_basic",
+    cadence: "Yearly",
+    tier: "basic",
     name: "Yearly",
     price: "$59.99",
     credits: 2000,
-    cadence: "Yearly",
     per: "year",
     sku: "subscribe_12_month_no_trial_ycm",
     description: "Every feature unlocked, all year.",
-    cta: "white",
+  },
+  {
+    id: "yearly_pro",
+    cadence: "Yearly",
+    tier: "pro",
+    name: "Yearly",
+    price: "$89.99",
+    credits: 4000,
+    per: "year",
+    // Not in the Business Model — see the note above.
+    sku: "subscribe_12_month_pro_no_trial_ycm",
+    badge: "BEST VALUE",
+    // Figma repeats the Basic card's copy verbatim for Yearly Pro (unlike the
+    // other two durations, where Pro gets its own "5x the credits" line) —
+    // kept as designed, not a copy-paste slip to fix.
+    description: "Every feature unlocked, all year.",
   },
 ];
 
+/** Default-selected duration tab. */
+export const DEFAULT_DURATION: PlanCadence = "Weekly";
+
 /** Default-selected Muse Pro plan (Business Model: "Default on weekly pro"). */
 export const DEFAULT_PLAN_ID: PlanId = "weekly_pro";
+
+/**
+ * "Weekly" / "Weekly Pro" — `plan.name` alone is just the cadence (the PRO
+ * chip on `SubscribeModal`'s cards renders "Pro" separately), but a subscriber's
+ * plan name shown elsewhere (`Sidebar`, `ProfileView`) has nowhere to put a
+ * chip and needs the tier spelled out in the string itself.
+ */
+export function planDisplayName(plan: Pick<SubscriptionPlan, "name" | "tier">): string {
+  return plan.tier === "pro" ? `${plan.name} Pro` : plan.name;
+}
 
 // The Muse Pro benefit list (app IAP). A per-plan "Credits Expire {cadence}"
 // line is appended in SubscribeModal from the selected plan's cadence.

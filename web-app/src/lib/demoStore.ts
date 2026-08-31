@@ -54,6 +54,12 @@ export const DEMO_FLAGS = [
     status: "live" as FlagStatus,
   },
   {
+    key: "historyLoading",
+    label: "History — slow load",
+    hint: "Floating 3-dot loading animation, tabs hidden while it shows",
+    status: "live" as FlagStatus,
+  },
+  {
     key: "mySongsEmpty",
     label: "Create MV → Choose Song — My Songs empty",
     hint: "WA already ships a hand-built state here (MV-11)",

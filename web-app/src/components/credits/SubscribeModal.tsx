@@ -9,11 +9,12 @@ import { DpDialog } from "@/components/ui/DpDialog";
 import { ApiErrorState } from "@/components/ui/ApiErrorState";
 import { useDemoFlag } from "@/components/demo/useDemo";
 import {
-  DEFAULT_PLAN_ID,
+  DEFAULT_DURATION,
   MUSE_PRO_FEATURES,
   SUBSCRIPTION_PLANS,
   YEARLY_EXTRA_FEATURES,
-  type PlanId,
+  planDisplayName,
+  type PlanCadence,
   type ProFeature,
   type SubscriptionPlan,
 } from "@/lib/user";
@@ -33,18 +34,32 @@ interface Props {
  * ── DP CHANGES THE INTERACTION MODEL, AND THAT IS THE POINT ─────────────────
  *
  * WA's dialog was a RADIO LIST: pick a plan, then one Subscribe button at the
- * bottom buys the selection. DP's is three self-contained CARDS, each with its
- * own Subscribe. That is a genuine redesign, not a detail, so it is ported as
- * designed — `selected` is gone and each card subscribes to its own plan.
- * `DEFAULT_PLAN_ID` therefore no longer drives this screen; it stays exported
- * because it is the Business Model's stated default and other code may want it.
+ * bottom buys the selection. DP's is self-contained CARDS, each with its own
+ * Subscribe. That is a genuine redesign, not a detail, so it is ported as
+ * designed — each card subscribes to its own plan directly.
  *
- * ── S20 AGAIN: DP'S PRICES AND ITS PERIOD SUFFIX ARE BOTH WRONG ─────────────
+ * ── DURATION TABS (product owner, 2026-08-31) ───────────────────────────────
  *
- * DP shows $9.99 for Weekly (WA: $19.99) and — more quietly — renders a literal
- * "/ week" on ALL THREE cards, including Yearly. WA models the period per plan
- * (`per`), so the yearly card correctly reads "/ year". Copying DP's markup
- * verbatim here would have shipped a $59.99-per-week plan.
+ * Figma adds a Weekly/Monthly/Yearly tab bar above the cards; each duration
+ * offers exactly 2 options, Basic and Pro (nodes 1797:33233 / 3113:64069 /
+ * 3113:64695 desktop, 2881:54660 / 3160:67281 / 3160:67886 tablet+mobile).
+ * `duration` picks the pair of cards shown; `selectedTier` (mobile/tablet
+ * only, same as before) picks which of that pair the summary panel and the
+ * shared Subscribe button act on — it survives a duration change unchanged
+ * (switching from Weekly Pro to Monthly keeps Pro selected) since both tiers
+ * exist for every duration.
+ *
+ * ── S20 AGAIN — AND ONLY PARTIALLY THIS TIME ────────────────────────────────
+ *
+ * DP shows $9.99 for Weekly Basic; the Business Model PDF's own pricing
+ * mockups agree ($9.99), while its backend-sku *table* on the same page says
+ * $19.99 for the same sku — the mockups are treated as authoritative since
+ * they match Figma exactly, and the old $19.99 here looks like a transcription
+ * of the table cell. Monthly (both tiers) and Yearly Pro have NO Business
+ * Model entry at all — Figma is the only source for those four cards. Flagged
+ * to the product owner; not blocked on it. DP's period suffix is still wrong
+ * on every card ("/ week" hardcoded everywhere) — WA keeps modelling it per
+ * plan (`per`), so Yearly correctly reads "/ year".
  *
  * ── WHAT WA KEEPS THAT DP HAS NO SLOT FOR ───────────────────────────────────
  *
@@ -108,14 +123,13 @@ function PlanCreditsAndFeatures({
 }
 
 function PlanCard({ plan, onSubscribe }: { plan: SubscriptionPlan; onSubscribe: () => void }) {
+  const pro = plan.tier === "pro";
   return (
-    <div
-      className={`upgrade-dialog__card${plan.featured ? " upgrade-dialog__card--featured" : ""}`}
-    >
+    <div className={`upgrade-dialog__card${pro ? " upgrade-dialog__card--featured" : ""}`}>
       <div className="upgrade-dialog__card-top">
         <div className="upgrade-dialog__plan-row">
           <div className="upgrade-dialog__plan-name-group">
-            <p className="upgrade-dialog__plan-name">{plan.name}</p>
+            <p className="upgrade-dialog__plan-name">{planDisplayName(plan)}</p>
           </div>
           {plan.badge && (
             <span
@@ -137,13 +151,42 @@ function PlanCard({ plan, onSubscribe }: { plan: SubscriptionPlan; onSubscribe: 
 
       <button
         type="button"
-        className={`upgrade-dialog__cta upgrade-dialog__cta--${plan.cta}`}
+        className={`upgrade-dialog__cta upgrade-dialog__cta--${pro ? "gradient" : "default"}`}
         onClick={onSubscribe}
       >
         Subscribe
       </button>
 
       <PlanCreditsAndFeatures plan={plan} />
+    </div>
+  );
+}
+
+/** Weekly / Monthly / Yearly — shared by the desktop grid and the mobile
+ *  list below it (one Tab Bar instance, not two). */
+const DURATIONS: PlanCadence[] = ["Weekly", "Monthly", "Yearly"];
+
+function DurationTabs({
+  duration,
+  onSelect,
+}: {
+  duration: PlanCadence;
+  onSelect: (next: PlanCadence) => void;
+}) {
+  return (
+    <div className="upgrade-dialog__tabs" role="tablist" aria-label="Billing period">
+      {DURATIONS.map((d) => (
+        <button
+          key={d}
+          type="button"
+          role="tab"
+          aria-selected={d === duration}
+          className={`upgrade-dialog__tab${d === duration ? " upgrade-dialog__tab--active" : ""}`}
+          onClick={() => onSelect(d)}
+        >
+          {d}
+        </button>
+      ))}
     </div>
   );
 }
@@ -193,10 +236,8 @@ function PlanListRow({
         aria-pressed={active}
       >
         <span className="upgrade-dialog__list-name-group">
-          <span className="upgrade-dialog__list-name">
-            {plan.featured ? plan.name.replace(" Pro", "") : plan.name}
-          </span>
-          {plan.featured && <span className="upgrade-dialog__pro-badge">PRO</span>}
+          <span className="upgrade-dialog__list-name">{plan.name}</span>
+          {plan.tier === "pro" && <span className="upgrade-dialog__pro-badge">PRO</span>}
         </span>
         <span className="upgrade-dialog__list-price">{plan.price}</span>
       </button>
@@ -208,11 +249,16 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
   const { subscribe, subscribed, subscribedPlan } = useAuth();
   const { addCredits } = useCredits();
   const [restored, setRestored] = useState(false);
-  // Only read by the mobile/tablet list below — the three-card layout has no
-  // selection concept, each card subscribes to its own plan directly.
-  const [selectedPlanId, setSelectedPlanId] = useState<PlanId>(DEFAULT_PLAN_ID);
+  const [duration, setDuration] = useState<PlanCadence>(DEFAULT_DURATION);
+  // Only read by the mobile/tablet list below — the desktop grid has no
+  // selection concept, each card subscribes to its own plan directly. Kept
+  // separate from `duration` (rather than a single `PlanId`) because both
+  // tiers exist for every duration, so switching duration should not lose
+  // which tier the user had picked — Business Model default is Pro.
+  const [selectedTier, setSelectedTier] = useState<"basic" | "pro">("pro");
+  const plansForDuration = SUBSCRIPTION_PLANS.filter((p) => p.cadence === duration);
   const selectedPlan =
-    SUBSCRIPTION_PLANS.find((p) => p.id === selectedPlanId) ?? SUBSCRIPTION_PLANS[0];
+    plansForDuration.find((p) => p.tier === selectedTier) ?? plansForDuration[0];
   // `apiError` (`?demo=1` panel) simulates the plan list itself failing to
   // LOAD — Figma "Popup/Dialog - Edit" → "Error Message" (node 3232:73535):
   // "We couldn't load this right now", shown BEFORE the plans (or the
@@ -235,7 +281,7 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
   function confirm(plan: SubscriptionPlan) {
     subscribe(plan.id);
     addCredits(plan.credits);
-    onSubscribed?.(plan.name);
+    onSubscribed?.(planDisplayName(plan));
     onClose();
   }
 
@@ -314,11 +360,13 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
       label="Upgrade Your Plan"
       title="Upgrade Your Plan"
     >
+      <DurationTabs duration={duration} onSelect={setDuration} />
+
       {/* `--plans` distinguishes this grid from the already-subscribed branch's
           own (single-card) `.upgrade-dialog__cards` above — only THIS one is
           hidden below 1024px in favour of `.upgrade-dialog__mobile`. */}
       <div className="upgrade-dialog__cards upgrade-dialog__cards--plans">
-        {SUBSCRIPTION_PLANS.map((plan) => (
+        {plansForDuration.map((plan) => (
           <PlanCard key={plan.id} plan={plan} onSubscribe={() => confirm(plan)} />
         ))}
       </div>
@@ -326,12 +374,12 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
       <div className="upgrade-dialog__mobile">
         <PlanCreditsAndFeatures plan={selectedPlan} showDivider={false} />
         <div className="upgrade-dialog__list">
-          {SUBSCRIPTION_PLANS.map((plan) => (
+          {plansForDuration.map((plan) => (
             <PlanListRow
               key={plan.id}
               plan={plan}
-              active={plan.id === selectedPlanId}
-              onSelect={() => setSelectedPlanId(plan.id)}
+              active={plan.tier === selectedTier}
+              onSelect={() => setSelectedTier(plan.tier)}
             />
           ))}
         </div>

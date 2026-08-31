@@ -13,7 +13,7 @@ import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackDialog } from "./FeedbackDialog";
 import { SAMPLE_CREATIONS } from "@/lib/mv/mock";
-import { AVATAR_SAMPLES, SUBSCRIPTION_PLANS } from "@/lib/user";
+import { AVATAR_SAMPLES, SUBSCRIPTION_PLANS, planDisplayName } from "@/lib/user";
 
 /**
  * Slice 3c — migrated to DP's `AccountPage` (Figma 1700:33262).
@@ -95,7 +95,8 @@ export function ProfileView() {
   // (2026-08-11 designer fix) — one dialog instance, opened from anywhere,
   // instead of this page owning its own private copy.
   const { openSubscribe } = useSubscribe();
-  const planName = SUBSCRIPTION_PLANS.find((p) => p.id === subscribedPlan)?.name;
+  const subscribedPlanRow = SUBSCRIPTION_PLANS.find((p) => p.id === subscribedPlan);
+  const planName = subscribedPlanRow && planDisplayName(subscribedPlanRow);
   const { locale, setLocale } = useLocale();
   const t = useT();
   // Edit-profile draft state (committed to the provider on Save).
@@ -138,22 +139,35 @@ export function ProfileView() {
         <div className="account-page__content">
           <div className="account-page__profile">
             <div className="account-page__identity">
-              <span className="account-page__avatar">
-                {profile.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={profile.avatar}
-                    alt=""
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  <DpIcon name="ic_user" />
-                )}
-              </span>
-              <span className="account-page__identity-copy">
-                <strong>{profile.name}</strong>
-                <span>{profile.email}</span>
-              </span>
+              {/* Product owner, 2026-08-31: the photo/name/email all open the
+                  same public creator profile the MVs/Songs stat pills below
+                  already link to — same destination, default (MV) tab, so
+                  omitting `tab=` here rather than repeating `tab=mv`. Grouped
+                  under one `Link` rather than three (image, name, email
+                  separately) since they're one identity, not three
+                  destinations — Edit stays its own control, outside the link,
+                  since it does something else entirely. */}
+              <Link
+                href={localePath(locale, "/creator?self=1")}
+                className="account-page__identity-link"
+              >
+                <span className="account-page__avatar">
+                  {profile.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.avatar}
+                      alt=""
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <DpIcon name="ic_user" />
+                  )}
+                </span>
+                <span className="account-page__identity-copy">
+                  <strong>{profile.name}</strong>
+                  <span>{profile.email}</span>
+                </span>
+              </Link>
               <button
                 type="button"
                 onClick={openEdit}
