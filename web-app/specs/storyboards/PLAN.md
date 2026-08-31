@@ -40,7 +40,7 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | **S4** | `history` | 6 | 05 | `/history` | 6 | 25 | ✅ v1, 2026-08-27 |
 | **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | ~4 | ~16 | ⬜ |
 | **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / route navbars / `SignInModal` | 7 | 24 | ✅ v1, 2026-08-27 |
-| **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, account menu, edit-profile | ~5 | ~20 | ⬜ |
+| **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, edit-profile, Send Feedback | 6 | ~24 | ▶ scoped 2026-08-28, dispatched |
 | **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | ~6 | ~30 | ⬜ |
 | **S9** | `share` | 4 | 10 | `/share`, `ShareDialog` | ~4 | ~12 | ⬜ |
 | **S10** | `credit-consumption` | — | 11 | none — `spec_kind='data-contract'` | — | 0 | ⏸ `TBD-CC-06` |
@@ -88,6 +88,43 @@ Three capture notes settled at the same gate:
 load-bearing for a phone-only rule, and `/mv/edit`'s scene **Recreate** is the shared `Button`
 (`variant="PrimaryPayg"`) whose coin is `.button__icon` **without** `--mask`. Both were invisible
 at 1440.
+
+### S7 scope — agreed at its Phase 0 gate, 2026-08-28
+
+Six paths, ~24 captures. Two things moved since the queue row above was written, and both change
+the shape: **the account menu is gone** (deleted 2026-08-27, S6 `Q-01`) so it is not a surface any
+more, and **Send Feedback has grown seven acceptance criteria of its own** (`AC-PROF-10`…`16`),
+which is why it gets a path rather than a few steps inside the rows.
+
+| Path | Covers |
+|---|---|
+| **P1** | Profile hub: the identity block (avatar · name · email · Edit — **no plan badge**, `AC-PROF-01` as corrected 2026-08-19), the three stat tiles and where each navigates (`AC-PROF-02`: Credits → `/profile/credits`, MVs/Songs → `/creator?self=1&tab=…`), and the row list. |
+| **P2** | Edit profile → `updateProfile` commits name/avatar and the shell reflects it in-memory (`AC-PROF-03`). |
+| **P3** | The rows: **Muse Pro** (see the IAP boundary below), **Language** → `setLocale` and a localized surface changing with it (`AC-PROF-05`), **Terms / Privacy** opening the real legal URL in a new tab (`AC-PROF-09`). |
+| **P4** | `/settings`: the row order, **Unsubscribe** and **Delete Account** — both demo toasts that cancel and delete nothing (`AC-PROF-07`, pending `TBD-PROF-04`) — and **Sign Out**, which since 2026-08-27 is the app's ONLY sign-out control (`AC-PROF-06` / `AC-AUTH-05`; S6's P6 owns the flow, S7 owns the screen). |
+| **P5** | **Send Feedback**, its own path: exactly four fields in order Type → Description → Attachment → Email with Email prefilled and **no Subject** (`AC-PROF-10` — the absence is asserted, because a returning Subject silently re-opens `TBD-PROF-07`); Send stays disabled until Type + Description are non-empty and Email is well-formed (`AC-PROF-11`); the success confirmation with **Done** and no toast (`AC-PROF-13`); the failure path that keeps every value and attachment and re-enables Send (`AC-PROF-14`, `PROF-E6`); and the **5 MB total** rejection that adds nothing and messages inside the form (`AC-PROF-15`). The Type control's keyboard contract (`AC-PROF-16`) is a step, not a screenshot — it is behaviour a picture cannot carry. |
+| **P6** | `/settings` is `AuthGuard`-gated: logged out, it renders nothing and opens the sign-in modal (`AC-PROF-17`). S6's P4 owns the dismiss behaviour; S7 shows the gate on this route and stops. |
+
+Three notes settled at the same gate:
+
+- **IAP boundary — tighter than the usual neighbour rule, on purpose.** The Muse Pro row is
+  captured in its **states only** (not subscribed · subscribed · "subscribed on a phone", the last
+  reachable via the demo panel's `subOnApp` flag) and the walk **stops at the click target**.
+  `SubscribeModal` is NOT photographed, even though the neighbour rule would normally allow one
+  boundary shot: **S5 is deliberately on hold until the designer delivers the IAP artwork**
+  (product owner, 2026-08-28), so any capture of that modal is a capture with a known expiry date.
+  RULES names the destination and cross-references S5.
+- **`?demo=1` is in scope where — and only where — area 06 already has an `AC` for the state.**
+  That is the feedback-submit failure (`AC-PROF-14`) and the subscribed-on-phone row state; the
+  mock has no organic way to fail a submit, so without the panel that criterion would be specified
+  in text and never photographed. **Print the exact `?demo=1` URL in the step** so QA reproduces it
+  in one click. This is not a tour of the panel — the panel spans 17 routes and would be its own
+  spec if anyone wanted one.
+- **D8 stands: desktop only.** Neither `/profile` nor `/settings` mounts a distinct phone component
+  tree — `/profile`'s phone back is `RoomNavbar`'s own `mobileBackHref`, the same shell affordance
+  S6 already captured on History, and `/settings`'s old `md:hidden` workaround was deleted when
+  drop 2 closed A5. The two D8 exceptions granted so far (S6's shell chrome, S3's
+  `.mv-edit-mobile-scene`) were each a *different component tree*; this is not one.
 
 ### S2 scope — agreed at its Phase 0 gate, 2026-08-27
 
