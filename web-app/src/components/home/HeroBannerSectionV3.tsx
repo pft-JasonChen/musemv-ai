@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
@@ -36,6 +37,36 @@ import { HERO_ITEMS } from "./heroItems";
  *
  * DP has no `AuthProvider`, so its CTA assigns `window.location` directly. Here
  * it is `requireLogin` + `router.push(localePath(…))` (R-9).
+ *
+ * ── CLICKING THE VIDEO OR THE TITLE OPENS THE MV'S OWN PAGE, 2026-09-01
+ *    (product owner) ──────────────────────────────────────────────────────
+ *
+ * Same destination and mechanism `NewMVsSection`'s Trending MV cards already
+ * use — `localePath(locale, "/watch?id=" + item.id)` — wired here as two
+ * separate `Link`s rather than one wrapping the whole card, because the CTA
+ * button and the mute toggle are their own clickable controls and nesting an
+ * `<a>` inside another is invalid HTML. `.hero-banner-v3__media-link` is new
+ * UI with no DP-native class (same reasoning the mute button below already
+ * uses for its own inline position), given `position:absolute;inset:0` in
+ * `designer-overrides.css` so its box actually covers the card instead of
+ * collapsing to 0×0 around its two absolutely-positioned children (`__bg` +
+ * `__scrim`). `.hero-banner-v3__text` needs no such override — swapping its
+ * tag from `div` to `next/link`'s anchor while keeping the same class
+ * changes nothing (R-9's caution about DP's own raw, unprefixed anchors
+ * does not apply here — this already goes through `next/link` +
+ * `localePath()`).
+ *
+ * Each hero video also gets its own official `CommunityMv` row
+ * (`community.ts`'s `HERO_MVS`) so `/watch?id=` has something to resolve —
+ * see that file's header comment for why they're not folded into the
+ * regular catalogs.
+ *
+ * ── NO WATERMARK HERE (product owner, 2026-09-01) ──────────────────────────
+ *
+ * The YCM watermark (Figma "Guideline_YCM") was tried on this card's active
+ * video and explicitly pulled back to the home page — it only shows once a
+ * video is opened on its own `/watch` page (`CommunityMvPlayer.tsx`, gated
+ * on `isOfficialMv(mv)`). Don't re-add it here without asking again.
  */
 
 const GAP = 20;
@@ -150,31 +181,34 @@ export function HeroBannerSectionV3() {
       <div className="hero-banner-v3__track" ref={trackRef} onScroll={handleScroll}>
         {PADDED_ITEMS.map((item, domIndex) => {
           const isActive = domIndex === activeDomIndex;
+          const detailHref = localePath(locale, `/watch?id=${item.id}`);
           return (
             <div className="hero-banner-v3__card" key={`${domIndex}-${item.title}`}>
-              {isActive ? (
-                <video
-                  className="hero-banner-v3__bg"
-                  src={item.video}
-                  // `poster` is the ONE attribute added to DP's markup here, and
-                  // it is the card's own inactive-state image — so in any browser
-                  // that can decode the mp4 it is replaced by the first frame and
-                  // changes nothing. It exists because a browser that CANNOT
-                  // decode H.264 renders this card as a black rectangle with no
-                  // error: Playwright's bundled Chromium is exactly that browser
-                  // (`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`, measured 2026-08-07),
-                  // which would have committed a black box as this screen's
-                  // visual baseline and blinded the gate to the whole hero.
-                  poster={item.thumbnail}
-                  autoPlay
-                  loop
-                  muted={muted}
-                  playsInline
-                />
-              ) : (
-                <img src={item.thumbnail} alt="" className="hero-banner-v3__bg" draggable={false} />
-              )}
-              <div className="hero-banner-v3__scrim" aria-hidden="true" />
+              <Link href={detailHref} className="hero-banner-v3__media-link" aria-label={item.title}>
+                {isActive ? (
+                  <video
+                    className="hero-banner-v3__bg"
+                    src={item.video}
+                    // `poster` is the ONE attribute added to DP's markup here, and
+                    // it is the card's own inactive-state image — so in any browser
+                    // that can decode the mp4 it is replaced by the first frame and
+                    // changes nothing. It exists because a browser that CANNOT
+                    // decode H.264 renders this card as a black rectangle with no
+                    // error: Playwright's bundled Chromium is exactly that browser
+                    // (`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`, measured 2026-08-07),
+                    // which would have committed a black box as this screen's
+                    // visual baseline and blinded the gate to the whole hero.
+                    poster={item.thumbnail}
+                    autoPlay
+                    loop
+                    muted={muted}
+                    playsInline
+                  />
+                ) : (
+                  <img src={item.thumbnail} alt="" className="hero-banner-v3__bg" draggable={false} />
+                )}
+                <div className="hero-banner-v3__scrim" aria-hidden="true" />
+              </Link>
               {isActive && (
                 // Figma node 1875:34094 (2311:63472) — glass circular button,
                 // top-right of the card. No DP-native class for this control
@@ -195,10 +229,10 @@ export function HeroBannerSectionV3() {
                 </div>
               )}
               <div className="hero-banner-v3__bottom">
-                <div className="hero-banner-v3__text">
+                <Link href={detailHref} className="hero-banner-v3__text">
                   <p className="hero-banner-v3__title">{item.title}</p>
                   <p className="hero-banner-v3__subtitle">{item.subtitle}</p>
-                </div>
+                </Link>
                 <button
                   type="button"
                   className="button button--medium button--secondary hero-banner-v3__cta"

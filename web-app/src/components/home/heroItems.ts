@@ -41,6 +41,11 @@
  */
 
 export interface HeroItem {
+  /** Stable id so the hero banner can link to this video's own `/watch?id=`
+   *  detail page (product owner, 2026-09-01) — same catalog-lookup mechanism
+   *  `NewMVsSection`'s Trending MV cards already use. See `community.ts`'s
+   *  `HERO_MVS`, which is keyed off this. */
+  id: string;
   title: string;
   subtitle: string;
   video: string;
@@ -54,48 +59,56 @@ function encodeHero(filename: string): string {
 /** Verbatim from DP's `HERO_ITEMS` — titles, subtitles and pairing all unchanged. */
 export const HERO_ITEMS: HeroItem[] = [
   {
+    id: "hero-vintage-drive",
     title: "Vintage Drive",
     subtitle: "Retro | 2-3 min",
     video: encodeHero("hero_01_Vintage Car-tmp-tmp.mp4"),
     thumbnail: encodeHero("hero_01_Vintage Car.png"),
   },
   {
+    id: "hero-splash-zone",
     title: "Splash Zone",
     subtitle: "Energetic | 2-3 min",
     video: encodeHero("hero_02_Splash-tmp-tmp.mp4"),
     thumbnail: encodeHero("hero_02_Splash.png"),
   },
   {
+    id: "hero-urban-runway",
     title: "Urban Runway",
     subtitle: "Fashion | 2-3 min",
     video: encodeHero("hero_03_Urban Fashion-tmp-tmp.mp4"),
     thumbnail: encodeHero("hero_03_Urban Fashion.png"),
   },
   {
+    id: "hero-midnight-static",
     title: "Midnight Static",
     subtitle: "Ambient | 3-4 min",
     video: encodeHero("hero_04_midnight_static-tmp-tmp.mp4"),
     thumbnail: encodeHero("hero_04_midnight_static.jpeg"),
   },
   {
+    id: "hero-pastel-dreams",
     title: "Pastel Dreams",
     subtitle: "Dreamy | 2-3 min",
     video: encodeHero("hero_05_pastel_film_converted.mp4"),
     thumbnail: encodeHero("hero_05_pastel_film.jpeg"),
   },
   {
+    id: "hero-wonderland-echoes",
     title: "Wonderland Echoes",
     subtitle: "Fantasy | 3-4 min",
     video: encodeHero("hero_06_alice_in_wonderland.mp4"),
     thumbnail: encodeHero("hero_06_alice_in_wonderland.jpg"),
   },
   {
+    id: "hero-jpop-rush",
     title: "J-Pop Rush",
     subtitle: "Pop | 2-3 min",
     video: encodeHero("hero_07_jpop.mp4"),
     thumbnail: encodeHero("hero_07_jpop.jpeg"),
   },
   {
+    id: "hero-paper-wonderland",
     title: "Paper Wonderland",
     subtitle: "Whimsical | 2-3 min",
     video: encodeHero("hero_08_paper_wonderland_converted.mp4"),

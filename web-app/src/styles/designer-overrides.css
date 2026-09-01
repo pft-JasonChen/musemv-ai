@@ -3587,3 +3587,49 @@
 .badge--processing {
   background: var(--black-60);
 }
+
+/* Product owner, 2026-09-01: the hero banner's video (desktop) and photo
+   (mobile) are now click targets, wrapped in a `next/link` `<a>` alongside
+   the existing `__bg` + `__scrim` (both `position:absolute;inset:0` already,
+   from the gated `HeroBannerSectionV3.css`/`HeroBannerSection.css`). Neither
+   file has a class for this — it's new UI, not a ported one, same reasoning
+   `HeroBannerSectionV3`'s own mute-button comment already gives for going
+   inline instead of touching a verbatim-copied stylesheet. Without this, the
+   anchor's box collapses to 0×0 (an element containing only absolutely-
+   positioned children contributes no size of its own) and nothing is
+   clickable. See both components' header comments for the full click-target
+   reasoning. */
+.hero-banner-v3__media-link,
+.hero-banner-mobile__media-link {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* The YCM watermark on an official YCM video's own `/watch` page (product
+   owner, 2026-09-01, Figma "Guideline_YCM"). `top`/`left` are NOT set here —
+   `.mv-player__stage` centers its video rather than pinning it to a corner
+   (`align-items:center;justify-content:center`), so a flat 16px/16px offset
+   here would land in the letterboxed blank space above/beside the video on
+   a screen taller than the video's own rendered box, not on the video
+   itself. `CommunityMvPlayer.tsx`'s `watermarkPos` measures the video's
+   ACTUAL rect at runtime and supplies `top`/`left` inline instead — see
+   that state's own comment. `ycm_watermark_hor.svg` bakes in the Figma-spec
+   0.85 opacity itself (`<g opacity="0.85">`), so no CSS opacity here would
+   double it up. */
+.mv-player__watermark {
+  position: absolute;
+  z-index: 3;
+  height: 24px;
+  width: auto;
+  pointer-events: none;
+}
+
+/* Product owner, 2026-09-01: 20% smaller on tablet and phone — the six-tier
+   breakpoint's own tablet-and-below cutoff (AGENTS.md), not a new one.
+   24px * 0.8 = 19.2px; width stays `auto` so the SVG scales proportionally. */
+@media (max-width: 1023px) {
+  .mv-player__watermark {
+    height: 19.2px;
+  }
+}

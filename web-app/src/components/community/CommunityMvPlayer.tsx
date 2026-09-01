@@ -14,7 +14,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
-import { getCommunityMv, mvCoverRatio, NEW_MVS, TRENDING_MVS } from "@/lib/mv/community";
+import { getCommunityMv, isOfficialMv, mvCoverRatio, NEW_MVS, TRENDING_MVS } from "@/lib/mv/community";
 import { CommunityEmpty } from "@/components/community/EmptyState";
 import { MvGridSections } from "@/components/community/MvGridSections";
 
@@ -245,6 +245,39 @@ export function CommunityMvPlayer() {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Where the YCM watermark actually goes — measured, not assumed, 2026-09-01.
+  // `.mv-player__stage` is `display:flex;align-items:center;justify-content:
+  // center`, so the video is CENTERED inside it, not pinned to its top-left —
+  // a flat `top:16px;left:16px` on the stage lands 16px below the stage's
+  // OWN top edge, which on a tall phone screen is deep inside the letterboxed
+  // blank space above the actual (shorter, centered) video, not on the video
+  // at all. Same measure-at-runtime approach `stageH` above already uses,
+  // just against the video's own rect instead of the stage's height.
+  const [watermarkPos, setWatermarkPos] = useState<{ top: number; left: number } | null>(null);
+  useEffect(() => {
+    const video = videoRef.current;
+    const stage = stageViewportRef.current;
+    function update() {
+      if (mvIndex >= 0 || !isOfficialMv(mv) || !video || !stage) {
+        setWatermarkPos(null);
+        return;
+      }
+      const v = video.getBoundingClientRect();
+      const s = stage.getBoundingClientRect();
+      setWatermarkPos({ top: v.top - s.top + 16, left: v.left - s.left + 16 });
+    }
+    update();
+    if (mvIndex >= 0 || !isOfficialMv(mv) || !video || !stage) return;
+    const ro = new ResizeObserver(update);
+    ro.observe(video);
+    ro.observe(stage);
+    return () => ro.disconnect();
+    // Mount/id-change only: `mv`/`mvIndex` decide WHETHER to measure; the
+    // measurement itself reads current DOM rects on every observed resize,
+    // not stale render-time values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mv.id, mvIndex]);
 
   function itemAt(base: number, offset: -1 | 0 | 1) {
     return MV_LIST[(base + offset + MV_LIST.length) % MV_LIST.length];
@@ -497,6 +530,24 @@ export function CommunityMvPlayer() {
             onPointerUp={(e) => endDrag(e, true)}
             onPointerCancel={(e) => endDrag(e, false)}
           >
+            {/* YCM watermark — product owner, 2026-09-01, Figma
+                "Guideline_YCM" (portrait + landscape nodes). Gated on
+                `isOfficialMv`, not on play/pause state: it marks the VIDEO as
+                an official YCM one, the same way it would on a real,
+                unmuted broadcast, not "is it currently playing". Position
+                comes from `watermarkPos` (measured against the video's own
+                rect, see that state's comment) rather than a flat CSS
+                top/left — the video is centered inside a taller stage, not
+                pinned to its corner. */}
+            {isOfficialMv(mv) && watermarkPos && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/assets/brand/ycm_watermark_hor.svg"
+                alt=""
+                className="mv-player__watermark"
+                style={{ top: watermarkPos.top, left: watermarkPos.left }}
+              />
+            )}
             {mvIndex < 0 ? (
               // No defined neighbour (e.g. a CREATOR_MVS id) — the plain
               // single video this screen always had; no slots, no peek.
@@ -542,6 +593,7 @@ export function CommunityMvPlayer() {
                         // slot currently plays "curr" (see header comment).
                         // eslint-disable-next-line react-hooks/refs
                         slotVideoRefs.current[slotIdx] = el;
+                        // eslint-disable-next-line react-hooks/refs
                         if (isCurrent) videoRef.current = el;
                       }}
                       className="mv-player__video"

@@ -4,9 +4,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
+import type { Locale } from "@/lib/i18n/config";
 import { IconButton } from "@/components/ui/IconButton";
 import { HERO_ITEMS } from "./heroItems";
 
@@ -116,6 +118,9 @@ const MOBILE_GAP = 8;
 const MOBILE_AUTO_MS = 4000;
 const MOBILE_ANIM_MS = 380;
 const MOBILE_DRAG_THRESHOLD = 60;
+/** How far a pointer has to move before a press commits to a drag — see
+ *  `handlePointerMove`'s comment for why this can't be 0. */
+const MOBILE_DRAG_COMMIT_PX = 8;
 const MOBILE_REAL = HERO_ITEMS.length;
 // domIndex 0 = clone of the last real card, 1..MOBILE_REAL = real cards,
 // MOBILE_REAL+1 = clone of the first real card.
@@ -129,8 +134,31 @@ function mobileRealIndex(domIndex: number) {
  * The phone hero: an infinite, draggable, auto-advancing carousel. Card width
  * is 85vw (not a fixed px), so every translateX figure is measured from the
  * rendered card on mount and on resize rather than assumed.
+ *
+ * ── CLICKING THE PHOTO OR THE TITLE OPENS THE MV'S OWN PAGE, 2026-09-01
+ *    (product owner) ──────────────────────────────────────────────────────
+ *
+ * Same `localePath(locale, "/watch?id=" + item.id)` destination
+ * `HeroBannerSectionV3`'s desktop cards and `NewMVsSection`'s Trending MV
+ * cards both use — see that file's header comment for the full reasoning
+ * (`HERO_MVS`, the media-link override, the tag-swap-is-safe note). No video
+ * ever plays here (this carousel is photos only, see the file header above),
+ * so there is no watermark to add — the product owner's watermark ask was
+ * specifically about the PLAYING hero video, which only exists on desktop.
+ *
+ * The text link is additionally gated the same way the CTA button already
+ * is (`tabIndex`/`aria-hidden` on `isActive`) — `.hero-banner-mobile__bottom`
+ * is `opacity:0;pointer-events:none` for a flanking card, and an invisible
+ * link left focusable/announced would be the exact "opacity 0 is not
+ * hidden" defect this codebase has already caught twice elsewhere.
  */
-function HeroBannerMobile({ onCreate }: { onCreate: () => void }) {
+function HeroBannerMobile({
+  onCreate,
+  locale,
+}: {
+  onCreate: () => void;
+  locale: Locale;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const domIndexRef = useRef(1);
   const dragRef = useRef({ startX: 0, dragging: false });
@@ -207,20 +235,38 @@ function HeroBannerMobile({ onCreate }: { onCreate: () => void }) {
   }, []);
 
   function handlePointerDown(event: ReactPointerEvent) {
-    dragRef.current = { startX: event.clientX, dragging: true };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = { startX: event.clientX, dragging: false };
     window.clearInterval(timerRef.current);
-    setTrackX(-domIndexRef.current * stepRef.current, false);
   }
 
   function handlePointerMove(event: ReactPointerEvent) {
-    if (!dragRef.current.dragging) return;
     const dx = event.clientX - dragRef.current.startX;
+    if (!dragRef.current.dragging) {
+      // Found while wiring this carousel's new click-through links,
+      // 2026-09-01: capturing on pointerDOWN (the previous behaviour) means
+      // even a plain tap — zero movement — commits to a captured pointer,
+      // and a captured pointer also retargets the CLICK that follows its
+      // pointerup to the capturing element (this track), not to whatever
+      // was actually under the finger. Every card's link/button tap was
+      // silently swallowed by it. Only capturing once real movement crosses
+      // a small threshold means a plain tap never captures at all, so its
+      // click reaches the tapped link/button completely normally.
+      if (Math.abs(dx) < MOBILE_DRAG_COMMIT_PX) return;
+      dragRef.current.dragging = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     setTrackX(-domIndexRef.current * stepRef.current + dx, false);
   }
 
   function handlePointerUp(event: ReactPointerEvent) {
-    if (!dragRef.current.dragging) return;
+    if (!dragRef.current.dragging) {
+      // Never crossed the drag threshold above — a plain tap. No pointer
+      // capture was ever taken, so there's nothing to settle; just resume
+      // auto-rotating (paused on pointerdown) and let the tap's own click
+      // reach its target on its own.
+      startAuto();
+      return;
+    }
     dragRef.current.dragging = false;
     const dx = event.clientX - dragRef.current.startX;
     if (dx < -MOBILE_DRAG_THRESHOLD) {
@@ -246,22 +292,30 @@ function HeroBannerMobile({ onCreate }: { onCreate: () => void }) {
       >
         {MOBILE_PADDED_ITEMS.map((item, domIndex) => {
           const isActive = mobileRealIndex(domIndex) === activeReal;
+          const detailHref = localePath(locale, `/watch?id=${item.id}`);
           return (
             <div className="hero-banner-mobile__card" key={`${domIndex}-${item.title}`}>
-              <img
-                src={item.thumbnail}
-                alt=""
-                className="hero-banner-mobile__bg"
-                draggable={false}
-              />
-              <div className="hero-banner-mobile__scrim" aria-hidden="true" />
+              <Link href={detailHref} className="hero-banner-mobile__media-link" aria-label={item.title}>
+                <img
+                  src={item.thumbnail}
+                  alt=""
+                  className="hero-banner-mobile__bg"
+                  draggable={false}
+                />
+                <div className="hero-banner-mobile__scrim" aria-hidden="true" />
+              </Link>
               <div
                 className={`hero-banner-mobile__bottom${isActive ? " hero-banner-mobile__bottom--active" : ""}`}
               >
-                <div className="hero-banner-mobile__text">
+                <Link
+                  href={detailHref}
+                  className="hero-banner-mobile__text"
+                  tabIndex={isActive ? 0 : -1}
+                  aria-hidden={!isActive}
+                >
                   <p className="hero-banner-mobile__title">{item.title}</p>
                   <p className="hero-banner-mobile__subtitle">{item.subtitle}</p>
-                </div>
+                </Link>
                 <button
                   type="button"
                   className="button button--small button--secondary hero-banner-mobile__cta"
@@ -430,7 +484,7 @@ export function HeroBannerSection() {
         </div>
       </section>
 
-      <HeroBannerMobile onCreate={createMv} />
+      <HeroBannerMobile onCreate={createMv} locale={locale} />
     </>
   );
 }

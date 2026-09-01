@@ -5,6 +5,7 @@
 // Entity types live as Zod schemas in @/lib/api/schemas; re-exported here so
 // existing imports keep working.
 import type { CommunityCreator, CommunityMv, CommunitySong, SongResult } from "@/lib/api/schemas";
+import { HERO_ITEMS } from "@/components/home/heroItems";
 
 export type { Badge, CommunityCreator, CommunityMv, CommunitySong } from "@/lib/api/schemas";
 
@@ -906,9 +907,84 @@ export const CREATOR_SONGS: CommunitySong[] = [
   },
 ];
 
+// ── Official YCM videos (home page hero banner) ─────────────────────────────
+//
+// Product owner, 2026-09-01: clicking a hero banner video/title should open
+// its own MV detail page, same as a Trending MV card (`localePath(locale,
+// "/watch?id=" + mv.id)`) — which means `getCommunityMv` needs a real row to
+// resolve for each of `HERO_ITEMS`' 8 videos, or the click has nowhere to go.
+//
+// NOT folded into NEW_MVS/TRENDING_MVS/CREATOR_MVS: those are the user-facing
+// catalogs `MvGridSections`/`MvExplore`/`CommunityMvPlayer`'s swipe feed
+// (`MV_LIST`) show, and these eight are YCM's own marketing videos, not
+// community content — mixing them in would surface hero footage in the
+// Explore grids and Trending rail too. Kept out of `MV_LIST` for the same
+// reason `CREATOR_MVS` ids already are (see that file's header comment): the
+// player's single-video fallback path (`mvIndex < 0`) already exists for
+// exactly this "reachable via its own link, no defined swipe neighbour" case.
+//
+// `creator` carries the "this is official, not user-submitted" fact instead
+// of a new field — `CommunityMvSchema` is frozen contract surface C2 (G4-a
+// fails on any diff), same reasoning `mvCoverRatio`/`songAudioUrl` below
+// already use to keep a presentation-only fact out of the schema.
+export const OFFICIAL_CREATOR_NAME = "YouCam Muse";
+
+/** Whether a community MV is one of YCM's own official videos (the hero
+ *  banner) rather than user-submitted content — gates the YCM watermark on
+ *  `/watch` (product owner, 2026-09-01, Figma "Guideline_YCM"). */
+export function isOfficialMv(mv: CommunityMv): boolean {
+  return mv.creator === OFFICIAL_CREATOR_NAME;
+}
+
+const HERO_PROMPTS: Record<string, string> = {
+  "hero-vintage-drive":
+    "A vintage convertible cruising an open highway — sun-faded film grain, retro chrome, golden-hour warmth.",
+  "hero-splash-zone":
+    "Water bursts and neon pool lights — high-energy motion, bright saturated color, summer chaos.",
+  "hero-urban-runway":
+    "Runway-ready street style through a glowing city grid — bold silhouettes, editorial lighting, urban attitude.",
+  "hero-midnight-static":
+    "A quiet city after dark — flickering signage, soft static hum, ambient stillness.",
+  "hero-pastel-dreams":
+    "Soft pastel skies and floating light — dreamy haze, gentle motion, candy-colored calm.",
+  "hero-wonderland-echoes":
+    "A tumble through a fantastical wonderland — oversized props, curious creatures, storybook color.",
+  "hero-jpop-rush": "Bright J-Pop energy — candy visuals, quick cuts, idol-stage sparkle.",
+  "hero-paper-wonderland":
+    "A handcrafted paper-diorama world — folded textures, soft shadows, whimsical stop-motion charm.",
+};
+const HERO_DATES = [
+  "2026-07-30",
+  "2026-07-24",
+  "2026-07-18",
+  "2026-07-12",
+  "2026-07-06",
+  "2026-06-30",
+  "2026-06-24",
+  "2026-06-18",
+];
+const HERO_MATCHED_SONGS = [SONG_GOLDEN, SONG_NEON, SONG_ETHEREAL, SONG_ELYSIAN];
+
+export const HERO_MVS: CommunityMv[] = HERO_ITEMS.map((item, i) => ({
+  id: item.id,
+  title: item.title,
+  thumb: item.thumbnail,
+  video: item.video,
+  badge: null,
+  meta: item.subtitle,
+  prompt: HERO_PROMPTS[item.id] ?? item.subtitle,
+  mvType: "storytelling",
+  creator: OFFICIAL_CREATOR_NAME,
+  plays: 45000 - i * 3400,
+  likes: 9600 - i * 720,
+  shares: 1250 - i * 95,
+  date: HERO_DATES[i] ?? HERO_DATES[HERO_DATES.length - 1],
+  matchedSong: HERO_MATCHED_SONGS[i % HERO_MATCHED_SONGS.length],
+}));
+
 // ── Lookups ─────────────────────────────────────────────────────────────────
 const MV_BY_ID = new Map<string, CommunityMv>(
-  [...NEW_MVS, ...TRENDING_MVS, ...CREATOR_MVS].map((m) => [m.id, m]),
+  [...NEW_MVS, ...TRENDING_MVS, ...CREATOR_MVS, ...HERO_MVS].map((m) => [m.id, m]),
 );
 const SONG_BY_ID = new Map<string, CommunitySong>(
   [...ALL_COMMUNITY_SONGS, ...CREATOR_SONGS].map((s) => [s.id, s]),
@@ -943,6 +1019,10 @@ export type MvCoverRatio = (typeof RATIOS)[number];
 const RATIO_BY_ID = new Map<string, MvCoverRatio>(
   [...TRENDING_MVS, ...NEW_MVS, ...CREATOR_MVS].map((m, i) => [m.id, RATIOS[i % RATIOS.length]]),
 );
+// The hero banner's 8 videos are all real widescreen footage (not alternated
+// like the rest of the catalog above, which has no per-video ratio to go on)
+// — always the non-portrait bucket, so `/watch` renders them unpillarboxed.
+for (const heroMv of HERO_MVS) RATIO_BY_ID.set(heroMv.id, "4:3");
 
 /** Cover aspect ratio for a community MV. Defaults to portrait for ids we don't know. */
 export function mvCoverRatio(id: string): MvCoverRatio {
