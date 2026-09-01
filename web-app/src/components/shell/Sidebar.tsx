@@ -140,7 +140,7 @@ export function Sidebar() {
           {!collapsed && (
             <Link href={homePath} className="sidebar__logo">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/brand/Logo.svg" alt="MUSE" />
+              <img src="/assets/brand/ycm_logo_word_ver.svg" alt="MUSE" />
             </Link>
           )}
           <button

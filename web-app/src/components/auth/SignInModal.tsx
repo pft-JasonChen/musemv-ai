@@ -104,7 +104,7 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
           <div className="login-modal__content">
             <div className="login-modal__app-message">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/brand/AppIcon.svg" alt="" className="login-modal__logo" />
+              <img src="/assets/brand/ic_app_ycm.svg" alt="" className="login-modal__logo" />
 
               <div className="login-modal__message">
                 <p className="login-modal__title">Sign in to YouCam Muse</p>

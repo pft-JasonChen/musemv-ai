@@ -3167,12 +3167,16 @@
   box-sizing: border-box;
 }
 
-/* Failed Song row — product owner, 2026-08-31, Figma "Community User Profile
-   — Song" (1711:43159, 5th row). `.community-profile__cover` (60×60,
+/* Failed / Generating Song row — product owner, 2026-08-31 (Failed) and
+   2026-09-01 (Generating), Figma "Community User Profile — Song"
+   (1711:43159, 5th row Failed; the existing row component's own hidden
+   `ic_timer` sibling is the Generating source, same 20px size as the
+   visible `ic_alert`). `.community-profile__cover` (60×60,
    CommunityProfilePage.css) is otherwise a photo + `ic_song` badge; this
-   modifier swaps that for a flat swatch + a single centred alert icon, same
-   `#383842` / muted-icon pairing the Figma row itself uses. */
-.community-profile__cover--failed {
+   modifier swaps that for a flat swatch + a single centred icon, same
+   `#383842` background either way — only the icon and badge differ
+   (`CreatorProfile.tsx` picks those). */
+.community-profile__cover--status {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3187,10 +3191,10 @@
    and — the actual bug the product owner flagged — pinned to the bottom-left
    corner rather than centred, since an absolutely-positioned element takes
    no part in its parent's flex centring no matter what the parent declares.
-   `.community-profile__cover--failed .community-profile__cover-icon` at
+   `.community-profile__cover--status .community-profile__cover-icon` at
    (0,2,0) beats it; `position: static` hands control back to the flex
-   centring on `--failed` above. */
-.community-profile__cover--failed .community-profile__cover-icon {
+   centring on `--status` above. */
+.community-profile__cover--status .community-profile__cover-icon {
   position: static;
   width: 20px;
   height: 20px;
@@ -3501,3 +3505,85 @@
   box-sizing: border-box;
 }
 
+
+/* Product owner, 2026-09-01 — `sidebar__logo` now renders
+   `ycm_logo_word_ver.svg` (300×96, aspect ~3.125:1) instead of the old
+   placeholder `Logo.svg` (Figma "Sidebar", node 1330:21595). `Sidebar.css`
+   (gated, verbatim) hardcodes both `.sidebar__logo` and `.sidebar__logo img`
+   to a fixed 136×40 box sized for the OLD asset's aspect ratio (~3.4:1) —
+   left as-is, the new logo would stretch about 9% wider than its native
+   proportions. 125px keeps the same 40px height and matches the new SVG's
+   own ratio (40 * 300/96 = 125). */
+.sidebar__logo,
+.sidebar__logo img {
+  width: 125px;
+}
+
+/* Product owner, 2026-09-01 — `.footer__logo` (gated `Footer.css`) 30%
+   smaller: 40px -> 28px. `width: auto` (unchanged, still set by the gated
+   rule) keeps the new `ycm_logo_word_hor.svg` proportioned at the new size. */
+.footer__logo {
+  height: 28px;
+}
+
+/* Generating — Community Profile MV + Song, product owner 2026-09-01, Figma
+   "Community User Profile — MV Self-view" (node 3258:42145, now named
+   "Generating") and "— Song" (1711:43159, same hidden `ic_timer` sibling the
+   existing Failed row already carries). Requested: reuse History's own
+   `.history-card__state-icon--generating` animation. Can't reuse
+   `history-card-timer` byte-for-byte — its `transform` keyframe hardcodes
+   `translate(-50%, -50%)`, matching `.history-card__state-icon`'s own
+   absolute-positioned centring, and BOTH of these icons are centred by
+   flexbox instead; applying that verbatim would yank either one off-centre
+   the instant the animation started. Same opacity/rotate values (fade to
+   0.55, a 12deg wobble, 1.5s ease-in-out, infinite), own keyframe. */
+@keyframes profile-status-icon-generating {
+  50% {
+    opacity: 0.55;
+    transform: rotate(12deg);
+  }
+}
+
+/* Chained onto the base class (`.foo.foo--generating`, both on the SAME
+   element — `MvPreviewCard`/`CreatorProfile.tsx` apply both together), not a
+   bare `.foo--generating` — the base rules setting `color: var(--white-40)`
+   are (0,2,0) themselves (`.mv-preview__status-icon` alone is (0,1,0), but it
+   sits in a LATER-loaded stylesheet than this file, which wins any tie the
+   same way; `.community-profile__cover--status .community-profile__cover-
+   icon` is a genuine (0,2,0) descendant compound). Chaining both classes on
+   one element is (0,2,0) too, so it beats the first outright and ties-but-
+   loads-later than the second — winning both without depending on import
+   order for one of them and a cascade accident for the other. */
+.mv-preview__status-icon.mv-preview__status-icon--generating,
+.community-profile__cover-icon.community-profile__cover-icon--generating {
+  /* Full white, not the muted `--white-40` both icons default to for Failed
+     — confirmed against Figma's actual Generating frame, which has no
+     muting on this icon (it sits on the gradient below, not the flat panel
+     Failed uses). */
+  color: var(--neutral-dark-100);
+  animation: profile-status-icon-generating 1.5s ease-in-out infinite;
+}
+
+/* Generating's gradient background — Song, product owner, 2026-09-01. NOT
+   the same gradient as MV's (below) — this is the orange/red/purple stop
+   set, same 3 colors as `.history-page__loading-dot--1` (the first of
+   History's own 3-dot loading animation), just at 135deg here instead of
+   that dot's 90deg. */
+.community-profile__cover--generating {
+  background: linear-gradient(135deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+}
+
+/* Product owner, 2026-09-01: "badge--processing" (`DpBadge status="Processing"`,
+   the "Generating..." pill on History/Community's in-progress cards) was
+   opaque `--neutral-dark-14`; asked for a translucent `var(--color-black-60)`
+   instead. No token by that exact name exists — `--black-60` (`tokens.css`)
+   is already `rgba(9, 9, 11, 0.6)`, the same value, and is what Figma's own
+   Generating frame actually uses on this pill (noted and deliberately left
+   unmatched earlier this session, see `.mv-preview__status-cover--generating`
+   above). Using the existing token rather than inventing a same-value
+   `--color-black-60` alias. `.badge`'s own base rule already carries
+   `backdrop-filter: blur(4px)` (`Badge.css`) for every variant, processing
+   included, so the blur half of the request needs no override here. */
+.badge--processing {
+  background: var(--black-60);
+}

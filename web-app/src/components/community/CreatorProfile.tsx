@@ -94,22 +94,26 @@ const PROFILE_TABS = [
 ];
 
 /**
- * Storyboard / Failed generation outcomes — product owner, 2026-08-31, Figma
- * "Community User Profile — MV Self-view" (1961:41878, 3rd/4th MV rows) and
- * "— Song" (1711:43159, 5th Song row). `CommunityMv`/`CommunitySong`
- * (`schemas.ts`) model only FINISHED community content — every other reader
- * (home sections, explore, the player pages) has no failed/in-progress
- * concept at all, so adding it there would widen a shared contract for one
- * screen. Kept local instead, keyed by id onto three of the existing seed
- * rows — the same shape `HistoryView` gets for free from its own local
- * `HistorySample` type. Ids, not new fixtures: the task was to place these
- * two use cases at specific positions in the CURRENT list, not to invent
- * new titles matching Figma's own placeholder names ("Starlight in Your
- * Eyes", "Midnight Drive").
+ * Storyboard / Failed / Generating outcomes — product owner, 2026-08-31
+ * (Storyboard/Failed) and 2026-09-01 (Generating), Figma "Community User
+ * Profile — MV Self-view" (1961:41878) and "— Song" (1711:43159).
+ * `CommunityMv`/`CommunitySong` (`schemas.ts`) model only FINISHED community
+ * content — every other reader (home sections, explore, the player pages)
+ * has no failed/in-progress concept at all, so adding it there would widen a
+ * shared contract for one screen. Kept local instead, keyed by id onto five
+ * of the existing seed rows — the same shape `HistoryView` gets for free
+ * from its own local `HistorySample` type. Ids, not new fixtures: the task
+ * was to place these use cases at specific positions in the CURRENT list,
+ * not to invent new titles matching Figma's own placeholder names
+ * ("Starlight in Your Eyes", "Midnight Drive"). Generating's position (5th
+ * MV row, 6th Song row) is this session's own call, continuing the sequence
+ * Storyboard/Failed already started — the task didn't name one.
  */
 const STORYBOARD_MV_ID = "cp-starfall-serenade"; // 3rd MV item
 const FAILED_MV_ID = "cp-electric-dreams"; // 4th MV item
+const GENERATING_MV_ID = "cp-urban-whispers"; // 5th MV item
 const FAILED_SONG_ID = "cps-velvet-sky"; // 5th Song item
+const GENERATING_SONG_ID = "cps-neon-pulse"; // 6th Song item
 
 interface ProfileItem {
   id: string;
@@ -129,8 +133,10 @@ interface ProfileItem {
    *  for songs, which keep the small `.community-profile__item` row. */
   video: string;
   /** `"failed"` — HIST-06's rule applies here too: Delete-only, no Like /
-   *  Share / Publish / Download, and the cover/title stop opening anything. */
-  status: "done" | "failed";
+   *  Share / Publish / Download, and the cover/title stop opening anything.
+   *  `"generating"` is the same restriction while the job is still running —
+   *  nothing to Like/Share/Publish/Download yet either, and nothing to open. */
+  status: "done" | "failed" | "generating";
   /** MVs only — no clip yet, so the row shows "Create MV" instead of Like/
    *  Share and routes to `/mv/storyboard`, not `/watch`. */
   isStoryboard: boolean;
@@ -193,8 +199,9 @@ interface ProfileMenuProps {
 function ProfileMenu(p: ProfileMenuProps) {
   const { item } = p;
   const { locale } = useLocale();
-  const failed = item.status === "failed";
-  const restricted = failed || item.isStoryboard;
+  // "generating" gets the same restriction as "failed" — nothing to Like /
+  // Share / Publish / Download while the job is still running either.
+  const restricted = item.status !== "done" || item.isStoryboard;
   const isMv = item.kind === "mv";
 
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -411,7 +418,12 @@ export function CreatorProfile() {
               downloadUrl: m.video,
               downloadName: `${m.title}.mp4`,
               video: m.video,
-              status: m.id === FAILED_MV_ID ? "failed" : "done",
+              status:
+                m.id === FAILED_MV_ID
+                  ? "failed"
+                  : m.id === GENERATING_MV_ID
+                    ? "generating"
+                    : "done",
               isStoryboard,
             };
           })
@@ -428,7 +440,12 @@ export function CreatorProfile() {
             downloadUrl: SAMPLE_AUDIO,
             downloadName: `${s.title}.mp3`,
             video: "",
-            status: s.id === FAILED_SONG_ID ? "failed" : "done",
+            status:
+              s.id === FAILED_SONG_ID
+                ? "failed"
+                : s.id === GENERATING_SONG_ID
+                  ? "generating"
+                  : "done",
             isStoryboard: false,
           }));
     return demoEmpty ? [] : rows.filter((r) => !removed.has(r.id));
@@ -534,11 +551,13 @@ export function CreatorProfile() {
 
   return (
     <>
-      {/* `mobileTitle`, not `title`: DP's CommunityProfilePage passes the creator's
-          name for the compact phone bar while keeping the desktop "‹ Back" text
-          link. Passing `title` instead would switch the DESKTOP layout to
-          icon-only-plus-centred-heading, which is a different screen. */}
-      <DetailNavbar fallbackPath={self ? "/profile" : "/explore/mvs"} mobileTitle={name} />
+      {/* No `mobileTitle` here (product owner, 2026-09-01): the compact phone
+          bar's title would just repeat the `<h1>{name}</h1>` sitting right
+          below the avatar a few pixels down — DP's own reason for passing it
+          (a page with no other heading on phone) doesn't apply on this
+          screen. `title` isn't right either — that switches the DESKTOP
+          layout to icon-only-plus-centred-heading, a different screen. */}
+      <DetailNavbar fallbackPath={self ? "/profile" : "/explore/mvs"} />
 
       <section className="community-profile">
         <aside className="community-profile__summary">
@@ -619,12 +638,14 @@ export function CreatorProfile() {
               const isReviewing = reviewing.has(item.id);
               const itemRejectReason = rejectReasons[item.id];
               const menuOpen = openMenu === item.id;
-              // HIST-06's rule, ported here: a failed generation is
-              // Delete-only — no Like / Share / Edit / Publish / Download.
-              // A storyboard isn't failed, but it isn't an MV yet either, so
-              // it gets the same restricted set (plus its own "Create MV").
+              // HIST-06's rule, ported here: a failed OR still-generating
+              // item is Delete-only — no Like / Share / Edit / Publish /
+              // Download. A storyboard isn't either, but it isn't an MV yet
+              // either, so it gets the same restricted set (plus its own
+              // "Create MV").
               const failed = item.status === "failed";
-              const restricted = failed || item.isStoryboard;
+              const generating = item.status === "generating";
+              const restricted = failed || generating || item.isStoryboard;
 
               // The owner menu (Edit/Like/Share/Publish/Download/Delete,
               // trimmed per `restricted` above) — content unchanged from
@@ -703,7 +724,15 @@ export function CreatorProfile() {
                     // (nodes 1961:41956) — not left to `mvCoverRatio`'s index
                     // cycling, which would only get it right by coincidence.
                     ratio={item.isStoryboard ? "3:4" : mvCoverRatio(item.id)}
-                    variant={failed ? "failed" : item.isStoryboard ? "storyboard" : "video"}
+                    variant={
+                      failed
+                        ? "failed"
+                        : generating
+                          ? "generating"
+                          : item.isStoryboard
+                            ? "storyboard"
+                            : "video"
+                    }
                     plays={item.plays}
                     likes={item.likes + (isLiked ? 1 : 0)}
                     shares={item.shares}
@@ -726,18 +755,27 @@ export function CreatorProfile() {
                       open(item);
                     }}
                   >
-                    {/* Failed — product owner, 2026-08-31, Figma "Community
-                        User Profile — Song" (1711:43159, 5th row): the
-                        cover becomes a flat swatch with a muted alert icon
-                        (no thumbnail to show), the subtitle becomes a plain
-                        kind label, and the social row is replaced by DP's
-                        own Failed badge beside the date — same badge History
-                        already uses for this state (`DpBadge`). */}
+                    {/* Failed / Generating — product owner, 2026-08-31 and
+                        2026-09-01, Figma "Community User Profile — Song"
+                        (1711:43159, 5th row Failed; the same row component's
+                        own hidden `ic_timer` sibling is Generating's source):
+                        the cover becomes a flat swatch with a muted icon (no
+                        thumbnail to show), the subtitle becomes a plain kind
+                        label, and the social row is replaced by DP's own
+                        Failed/Processing badge beside the date — same badge
+                        History already uses for both states (`DpBadge`). */}
                     <span
-                      className={`community-profile__cover${failed ? " community-profile__cover--failed" : ""}`}
+                      className={`community-profile__cover${
+                        failed || generating ? " community-profile__cover--status" : ""
+                      }${generating ? " community-profile__cover--generating" : ""}`}
                     >
-                      {failed ? (
-                        <DpIcon name="ic_alert" className="community-profile__cover-icon" />
+                      {failed || generating ? (
+                        <DpIcon
+                          name={failed ? "ic_alert" : "ic_timer"}
+                          className={`community-profile__cover-icon${
+                            generating ? " community-profile__cover-icon--generating" : ""
+                          }`}
+                        />
                       ) : (
                         <>
                           <img src={item.cover} alt="" />
@@ -747,11 +785,11 @@ export function CreatorProfile() {
                     </span>
                     <span className="community-profile__copy">
                       <strong>{item.title}</strong>
-                      {failed ? (
+                      {failed || generating ? (
                         <>
                           <p className="community-profile__kind">AI Song</p>
                           <span className="community-profile__status-row">
-                            <DpBadge status="Failed" />
+                            <DpBadge status={failed ? "Failed" : "Processing"} />
                             <time>{item.date}</time>
                           </span>
                         </>

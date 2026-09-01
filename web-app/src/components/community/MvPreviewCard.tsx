@@ -33,23 +33,35 @@ import type { MvRatio } from "@/lib/mv/justifiedRows";
  * Delete) wired to its own state; duplicating that here would be a second
  * copy of behaviour the designer explicitly asked to reuse, not rebuild.
  *
- * ── STORYBOARD / FAILED (product owner, 2026-08-31, same Figma node) ───────
+ * ── STORYBOARD / FAILED / GENERATING (product owner, 2026-08-31 + 2026-09-01,
+ * same Figma frame) ──────────────────────────────────────────────────────
  *
- * Two more variants than "a real playable clip": `variant="storyboard"` has
+ * Three more variants than "a real playable clip": `variant="storyboard"` has
  * no clip yet (the source `<img>` sits where the `<video>` normally does,
- * no controller — same stage/backdrop/pillarbox shell, just a still image),
- * and `variant="failed"` has no thumbnail at all — a flat `--neutral-dark-14` panel,
- * DP's own `DpBadge status="Failed"` top-left, and a big muted `ic_alert`,
- * reusing exactly the same badge/icon History's own failed cards use
- * (`.badge--failed`, `ic_alert`) rather than inventing a second look for the
- * same state. Neither has stats to show, so the info row's subtitle line
+ * no controller — same stage/backdrop/pillarbox shell, just a still image).
+ * `variant="failed"` and `variant="generating"` both have no thumbnail at
+ * all — the SAME flat `.mv-preview__status-cover` panel either way (Figma's
+ * own Generating frame, 3258:42145, is a duplicate of its Failed one,
+ * 3295:70372 — same panel, different badge/icon) — `DpBadge status="Failed"`
+ * + a muted `ic_alert` for one, `status="Processing"` + `ic_timer` for the
+ * other, reusing exactly the badge/icon History's own cards use for both
+ * states rather than inventing a second look. The generating icon's
+ * animation is requested to match History's `.history-card__state-icon
+ * --generating` (`history-card-timer`: fade to 0.55 opacity + a 12deg wobble,
+ * 1.5s ease-in-out, infinite) — same values, but that keyframe's `transform`
+ * hardcodes `translate(-50%, -50%)` to match `.history-card__state-icon`'s
+ * OWN absolute-positioned centring; this icon is centred by flexbox instead,
+ * so reusing it verbatim would yank the icon off-centre the instant the
+ * animation started. `.mv-preview__status-icon--generating` (this file's own
+ * CSS) reproduces the same opacity/rotate values without that dependency.
+ * None of the three has stats to show, so the info row's subtitle line
  * swaps in for the plays/likes/shares row DP's own `.mv-preview__social`
- * always had a slot for — "Storyboard" / "Music Video", matching this same
- * Figma frame. `actions` still comes from the caller unchanged: CreatorProfile
- * already knows to swap Like/Share for a "Create MV" pill on a storyboard and
- * drop them entirely on a failed one (HIST-06's rule: a failed creation is
- * Delete-only), so this component doesn't need to know why the row looks
- * different, only that it does.
+ * always had a slot for — "Storyboard" / "Music Video" either way, matching
+ * this same Figma frame. `actions` still comes from the caller unchanged:
+ * CreatorProfile already knows to swap Like/Share for a "Create MV" pill on
+ * a storyboard and drop them entirely on a failed/generating one (HIST-06's
+ * rule: neither is Like/Share-able), so this component doesn't need to know
+ * why the row looks different, only that it does.
  */
 export function MvPreviewCard({
   title,
@@ -67,7 +79,7 @@ export function MvPreviewCard({
   video: string;
   cover: string;
   ratio: MvRatio;
-  variant?: "video" | "storyboard" | "failed";
+  variant?: "video" | "storyboard" | "failed" | "generating";
   plays?: number;
   likes?: number;
   shares?: number;
@@ -126,12 +138,21 @@ export function MvPreviewCard({
         ref={stageRef}
         className={`mv-preview__stage${isPortrait ? " mv-preview__stage--portrait" : ""}`}
       >
-        {variant === "failed" ? (
-          <div className="mv-preview__failed">
+        {variant === "failed" || variant === "generating" ? (
+          <div
+            className={`mv-preview__status-cover${
+              variant === "generating" ? " mv-preview__status-cover--generating" : ""
+            }`}
+          >
             <div className="mv-preview__badge-row">
-              <DpBadge status="Failed" />
+              <DpBadge status={variant === "failed" ? "Failed" : "Processing"} />
             </div>
-            <DpIcon name="ic_alert" className="mv-preview__failed-icon" />
+            <DpIcon
+              name={variant === "failed" ? "ic_alert" : "ic_timer"}
+              className={`mv-preview__status-icon${
+                variant === "generating" ? " mv-preview__status-icon--generating" : ""
+              }`}
+            />
           </div>
         ) : (
           <>
@@ -226,7 +247,7 @@ export function MvPreviewCard({
           </button>
           {variant === "storyboard" ? (
             <p className="mv-preview__subtitle">Storyboard</p>
-          ) : variant === "failed" ? (
+          ) : variant === "failed" || variant === "generating" ? (
             <p className="mv-preview__subtitle">Music Video</p>
           ) : (
             <div className="mv-preview__social">

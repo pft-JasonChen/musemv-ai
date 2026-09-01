@@ -7,8 +7,10 @@
  * Classes are from `src/styles/designer/Footer.css`, verbatim from DP.
  *
  * ── WHAT'S ADAPTED, NOT PORTED VERBATIM ──────────────────────────────────
- * The logo is `/assets/brand/Logo.svg` (Next's `public/` path, already used
- * by Sidebar) instead of DP's Vite asset import.
+ * The logo is `/assets/brand/ycm_logo_word_hor.svg` (Next's `public/` path)
+ * instead of DP's Vite asset import — a combined icon+wordmark lockup
+ * (Figma "Website Footer", node 1724:36697), swapped in from the old
+ * placeholder `Logo.svg` 2026-09-01.
  *
  * ── THREE LINKS DP HAS THAT V1 DELIBERATELY DOES NOT ────────────────────
  *
@@ -38,7 +40,7 @@ export function Footer() {
         <div className="footer__top">
           <div className="footer__brand">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/brand/Logo.svg" alt="MUSE" className="footer__logo" />
+            <img src="/assets/brand/ycm_logo_word_hor.svg" alt="MUSE" className="footer__logo" />
             <p className="footer__tagline">
               Transforming music production and video editing through intuitive AI creators. Join the visual
               rhythm revolution.

@@ -256,14 +256,23 @@
   gap: 16px;
 }
 
-/* Storyboard / Failed — product owner, 2026-08-31, Figma "Community User
-   Profile — MV Self-view" (1961:41878). A storyboard reuses the stage/
-   backdrop rules above verbatim (see `MvPreviewCard`'s own comment); a
-   failed generation has no thumbnail to blur, so it gets this flat panel
-   instead — same `#212127` / `ic_alert` / red badge treatment History's own
-   failed cards use, just at this card's bigger size (64px icon vs History's
-   34px, since this stage is a full preview card, not a small grid thumb). */
-.mv-preview__failed {
+/* Storyboard / Failed / Generating — product owner, 2026-08-31 (Storyboard/
+   Failed) and 2026-09-01 (Generating), Figma "Community User Profile — MV
+   Self-view" (1961:41878). A storyboard reuses the stage/backdrop rules
+   above verbatim (see `MvPreviewCard`'s own comment); a failed or still-
+   generating row has no thumbnail to blur, so both get this SAME flat panel
+   shell — flex-centred badge+icon, 48px icon (matching Figma's own dedicated
+   Generating frame, 3258:42145, and the Failed frame it was duplicated from,
+   3295:70372 — both the same size in the CURRENT file; this was 64px before
+   Figma's own two frames converged on 48px together). The BACKGROUND differs
+   though, missed on the first pass: Failed is the flat `#212127` History's
+   own failed cards use, but Generating is History's own IN-PROGRESS gradient
+   (`.history-card--generating .history-card__cover`'s pink/purple/indigo,
+   121deg) — confirmed against Figma's actual fill on the Generating frame,
+   not assumed from Failed's. The icon goes fully opaque white on the
+   gradient too (Figma has no muting on it there) — `--white-40`'s a11y-safe
+   muted look is a Failed-only choice, not applied to Generating in Figma. */
+.mv-preview__status-cover {
   position: relative;
   z-index: 1;
   display: flex;
@@ -274,9 +283,13 @@
   background: var(--neutral-dark-14);
 }
 
-.mv-preview__failed-icon {
-  width: 64px;
-  height: 64px;
+.mv-preview__status-cover--generating {
+  background: linear-gradient(121deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+}
+
+.mv-preview__status-icon {
+  width: 48px;
+  height: 48px;
   color: var(--white-40);
   background-color: currentColor;
   mask-repeat: no-repeat;
