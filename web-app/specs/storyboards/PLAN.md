@@ -41,13 +41,106 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | 6 | 21 | ✅ v1, 2026-09-01 |
 | **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / route navbars / `SignInModal` | 7 | 24 | ✅ v1, 2026-08-27 |
 | **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, edit-profile, Send Feedback | 6 | 22 | ✅ v1, 2026-08-31 |
-| **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | ~6 | ~30 | ⬜ |
-| **S9** | `share` | 4 | 10 | `/share`, `ShareDialog` | ~4 | ~12 | ⬜ |
+| **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | 6 | 36 | ✅ v1, 2026-09-01 |
+| **S9** | `share` | 4 | 10 | `/share`, `ShareDialog` | 5 | 15 | ✅ v1, 2026-09-01 |
 | **S10** | `credit-consumption` | — | 11 | none — `spec_kind='data-contract'` | — | 0 | ⏸ `TBD-CC-06` |
 | — | ~~proof-of-creation~~ | — | 08 | — | — | — | ❌ out of web scope (area 08 § Status) |
 
 **Coverage check.** Areas 01–07, 09, 10 are covered by S2–S9 plus the finished S1; area 08 is
 removed from scope; area 11 is S10 and is contract-shaped, not journey-shaped.
+
+**As of 2026-09-01 the queue is DONE except S10.** Nine of the ten specs are built; S10 is still
+blocked on `TBD-CC-06` (D7), unchanged.
+
+### S8 scope — agreed at its Phase 0 gate, 2026-09-01
+
+Six paths, 36 captures (desktop 1403×697 only). Larger than the ~6/~30 estimate above, and both
+causes are structural rather than scope creep:
+
+| Path | Covers |
+|---|---|
+| **P1** | The Home feed: the hero + two gated create cards, the three seed rails, the rail arrows' appear-only-when-scrollable rule, the album-art-previews-in-place split, one `ShareDialog` entry point (S9's boundary), and the logged-out screen plus the gate firing at the ACTION. |
+| **P2** | `/explore/mvs`: two sections, **all 14 seed items with no cap** (counted live — this is the assertion that closes `DESIGNER-TODO` A19's "3 of 14" question), and cards that are real locale-prefixed links. |
+| **P3** | `/explore/songs`: the Top Picks rail, the ten hardcoded genre tabs, "switching a tab must not change what is playing", and **both** halves of `AC-EXP-03`'s row split — art previews, title navigates. |
+| **P4** | `/watch`: the player and its transport, the grid below it, the YCM watermark (`AC-EXP-10`), the vertical swipe in three states (held · committed · an id with no neighbour, `AC-EXP-11`), the gated Like beside the un-gated Share, the Create hand-off, and the not-found state. |
+| **P5** | `/song/play`: the desktop arrival state, the bar opening on play, the creator-playlist swap (`EXP-09`), and the not-found state. |
+| **P6** | `/creator`: someone else's page, your own, both owner-menu variants, and the `profileEmpty` demo state in both modes. |
+
+1. **`/watch` grew two acceptance criteria in the days before this build** — the watermark and the
+   swipe feed — and the swipe alone needs three captures, because "commits", "springs back" and
+   "never commits" are three different rules.
+2. **`AC-EXP-03` carries TWO affordances on one row.** The album art previews and the title
+   navigates; one capture covers half a criterion.
+
+**The Curation PRD was read in full for the first time (D5), and the gate settled how to carry it.**
+Product owner: the designer prototype **superseded the PRD's layout** — for the home page and, on
+the same reasoning, for both explore pages — so the spec follows the shipped screen and the PRD's
+rail counts, carousel sizes, pagination model and item caps are recorded once as superseded. The
+**ranking / eligibility / moderation / refresh layer is only MARKED**, with the PDF named as the
+authority, rather than restated as requirements. Two things the read turned up are carried as open
+questions instead of being smoothed over: the PRD **contradicts itself twice** on its own scoring
+(weight tables vs formulas, on both scored rails — Q-01), and it defines **no endpoint, field or
+payload shape**, so `TBD-EXP-11` — the named handover blocker D5 expected this document to close —
+**is still open** (Q-02).
+
+**Five area-04 corrections came out of the capture, all under D11.** `/watch`'s control inventory
+(the `# Music Video` tag, meta line, `Stats` block and prompt are all gone, and the transport's
+seek/fullscreen and the grid below were never recorded); `/explore/songs` gained a Top Picks rail
+and moved its tabs into the page body; `/creator` shows **no email** and has **no `⋯` menu at all**
+on someone else's profile; the owner menu's first slot reads **Edit MV** on an MV and **Create MV**
+on a song, not a flat "Edit"; and §3.4's desktop disc player and Lyrics overlay describe a column
+DP drop 2 deleted. Two further findings are `open_questions` rather than corrections: the rail
+titled "Trending Music Videos" shows the *newly released* catalog while the catalog the PRD calls
+Trending has no home entry point at all (Q-03), and a shared song link opens the browse list with
+**nothing marking which song it named** (Q-04).
+
+**One capture-environment fact is recorded rather than worked around.** Every mp4 in this
+environment fails to decode (`MediaError 4`, AGENTS.md's documented limit), so `/watch`'s stage is
+blank in all ten of its captures — `CommunityMvPlayer`'s videos carry no `poster`, unlike the home
+hero's, which is why the home page photographs perfectly and the player does not. Injecting a still
+frame at capture time was rejected as a fabricated capture; the recommendation (give the player's
+videos the `poster` the hero already uses) went to the product owner instead, since a build session
+has no `src/` authority.
+
+### S9 scope — agreed at its Phase 0 gate, 2026-09-01
+
+Five paths, 15 captures. Larger than the ~4/~12 estimate, and the cause is a single fact the
+estimate could not have known: **`/share` was redesigned on 2026-08-24** (product owner, Figma
+"Share Page - MV"), reversing the 2026-07-23 "simplified chrome" decision `areas/10-share.md` still
+described. The page is no longer a logo, some media and a Download button — it has a full custom
+controller (play/pause, elapsed/total, seek, mute, fullscreen), a three-item **More** menu, and a
+**second action pill**. The extra path is that menu, whose three actions would otherwise have no
+photograph anywhere in the programme.
+
+| Path | Covers |
+|---|---|
+| **P1** | A valid MV link: the bare page, the controller, the two pills, and the four-source resolution order (a static History sample resolving in a fresh session). |
+| **P2** | The More menu: Download · Playback Speed · Picture in Picture — and the fact that **Playback Speed cycles and keeps the menu open** while the other two act once and close. |
+| **P3** | A valid song link: cover art, **title and creator**, its own pill controller, and the kind-labelled Create pill. |
+| **P4** | The unavailable state and all three ways in (bad id · no id · the QA switch), plus the prototype limit that produces it from a *working* link. |
+| **P5** | The legacy share URL's server redirect, and `ShareDialog` itself — the copy-only dialog, and its 1.5-second confirmation. |
+
+**The recipient session is deliberately SIGNED OUT** — the only spec in the programme where that is
+the default. `/share` is public by design and mostly opened by people with no account; a signed-in
+capture would photograph a state no real recipient sees. Only P5 runs signed in, because the dialog
+lives on a player screen rather than on `/share`.
+
+**Built after S8 on purpose (D6), and it paid off:** S8 had already captured the Share entry points
+on the Home rows and on `/watch`, so S9 cross-references them instead of re-deriving them.
+
+**Six area-10 corrections, all under D11** — §1, §2's route table, §3's valid-link bullet, §4's
+`SHARE-P1-S2`, and `AC-SHARE-01`, whose "and nothing else" clause was asserting the absence of four
+things now on screen. One finding is an `open_questions` row rather than a correction: **the MV
+panel shows no title and no creator while the song panel shows both** (Q-01), which no document
+explains — the component's own header says "title/creator … are back" without saying which panel.
+A second (Q-02) asks whether both Create pills should keep kind-specific labels when both go to the
+home page.
+
+**One thing worth carrying to any future spec that draws a diagram citing a neighbour.**
+`validate()` rejected this build because `make_flowchart.py` cited **S8's** step IDs (`P1-S6`,
+`P4-S9`) on S9's own diagram: the SVG is inlined, so a bare `Pn-Sn` drawn there is
+cross-reference-checked against *this* spec's steps and a neighbour's ID resolves to nothing.
+Name the neighbouring spec, never its step IDs.
 
 ### S5 scope — agreed at its Phase 0 gate, 2026-09-01
 
@@ -300,6 +393,11 @@ exception honoured, not narrowed — but it is why the count is 24 and not ~28.
    (`TBD-EXP-11`, a named handoff blocker). Its UI behaviour is still specifiable, but expect a long
    `open_questions` section, and expect the source PRD (`YouCam_Muse_Explore_Curation_PRD - V2.pdf`,
    still unread) to have to be read first.
+   > **Both halves of that came true, 2026-09-01.** The PRD was read in full at S8's Phase 0 gate
+   > (see the S8 scope block above) and the spec does carry six open questions — but the prediction
+   > was one step short: the PRD **does not close `TBD-EXP-11`**. It specifies ranking semantics and
+   > no wire contract at all — no endpoint, no field names, no payload shape — so the named handover
+   > blocker survives the document D5 expected to answer it.
 6. **S9** — share surfaces hang off result/player screens that S2–S8 will already have specced.
 7. **S10 blocked** — the per-action credit payload has no field contract yet (`TBD-CC-06`: field
    names, units, and which sub-action a delegated action's quantity maps to are all undefined).

@@ -126,11 +126,28 @@ The rails:
   > sections outright. This closes the question `DESIGNER-TODO` **A19** raised about the 3-of-14
   > ratio: it was never a spec'd number, only (mock length) × (this hiding rule).
 - **`/explore/songs`** (`song/SongDetailView` — **the same component as `/song/play`**, merged in Slice 3b): tabbed list (All + ~~one tab per catalog `genre`, derived at runtime~~ **the nine creation `GENRES`, hardcoded** — reversed 2026-09-01, see §4 EXP-P3) beside a Now Playing column, 1:1 at ≥1024px; row → selects in Now Playing at ≥768px, opens the full-screen player at `/song/play?id` below that; creator → `/creator`; **Create** → `requireLogin` → `patchSongCompose` + `/song/create` (gated at the click, consistent with Home — GL-02/EXP-02); Back → `DetailNavbar`'s `router.back()` with a fallback to `/explore/songs`.
+  > **Also new since that line was written, and never recorded (2026-09-01, S8 capture, D11): the
+  > screen now opens with its own `Top Picks Songs` rail**, a horizontal `TOP_PICKS_SONGS` carousel
+  > with the same prev/next arrows the Home rails use, above a sticky `Newly Released Songs`
+  > heading that carries the genre `Tabs`. The tabs are no longer in `DetailNavbar`'s `tabsSlot`;
+  > they moved into the page body with that rail. Captured at S8 `P3-S1`.
   > _Note found while editing this line (2026-09-01): "beside a Now Playing column" and "selects in Now Playing at ≥768px" describe the pre-drop-2 screen. §4 EXP-P3 and AC-EXP-03 already record that DP drop `2670ed2` (2026-08-07) deleted the desktop Now Playing column and a ≥768px row click navigates to `/song/result` instead — this line was not updated when that landed. Flagging rather than silently rewriting it, since only the genre-tab clause is this task's assignment._
 
 ### 3.3 MV player — `/watch`
 
-- `/watch` reads `?id` → `getCommunityMv(id) ?? NEW_MVS[0]`; **3:4 portrait** stage, autoplay **muted** loop, tap play/pause, mute toggle; `# Music Video` tag, title, meta; creator → `/creator`; **Like** (local), **Share** (`ShareDialog`), `Stats`, prompt; **Create Music Video** → `setCompose` (mvType + prompt + `matchedSong` + title) → `/mv/room` (area 02).
+- `/watch` reads `?id` → `getCommunityMv(id) ?? NEW_MVS[0]`; stage sized to the item's own ratio
+  (`mvCoverRatio()` — 3:4 or 4:3, `AC-EXP-04`), autoplay **muted** loop; floating title + creator →
+  `/creator`; **Like** (local), **Share** (`ShareDialog`); **Create Music Video** → `setCompose`
+  (mvType + prompt + `matchedSong` + title) → `/mv/room` (area 02); a transport row with
+  play/pause, a keyboard-operable `SeekBar`, mute and fullscreen; and **`MvGridSections` below the
+  player** — the same two sections `/explore/mvs` renders.
+  > ⚠️ **Corrected 2026-09-01 by the S8 storyboard capture (D11).** This line still listed a
+  > `# Music Video` tag, the `meta` line, a `Stats` block and the source prompt, and described the
+  > stage as flatly "3:4 portrait". None of the first four exist: DP's immersive player replaced
+  > WA's side panel when `/watch` migrated (slice 3d — `CommunityMvPlayer.tsx`'s own header records
+  > the loss and checks it against the ACs), and the ratio has been per-item since 2026-08-07. It
+  > also never mentioned the transport's seek/fullscreen controls or the two grid sections below the
+  > player, both of which are on screen. Captured at S8 `P4-S1` / `P4-S2`.
 - **`CommunityMvDialog` was DELETED on 2026-08-06**, along with `TrendingMvsPanel` (dead since
   slice 3g). `/watch` is the only MV player.
 - **YCM watermark, new to this spec (2026-09-01).** `isOfficialMv(mv)` (`lib/mv/community.ts`) —
@@ -206,13 +223,28 @@ The rails:
   surface (C2) and has no `audio` field. ⚠️ Known cost: the whole catalog maps onto the two demo
   mp3s in `public/assets/songs/`, so every song is one of two sounds (demo-media limit U4).
 - Click/drag-to-seek; **Like** (gated, per-id, shared between the list row and the player),
-  **Share**, **Lyrics** (desktop: an overlay replacing the cover art; mobile: DP's `LyricsSheet`);
+  **Share**, **Lyrics** (mobile: DP's `LyricsSheet`; on desktop the sheet lives on `/song/result`,
+  not here — see the correction below);
   **Create AI Song** (gated) → `patchSongCompose` → `/song/create`.
 - **Below 768px** the Now Playing column is replaced by a full-screen player (DP's
   `MobileNowPlaying`, portalled to `<body>`) whose own back control returns to the list via
   `router.back()` with a fallback to `/explore/songs`. "Open" is derived from `?id=` being present.
 - **No 30s gate.** Free accounts play in full (decision S3; `G5-d #7`'s preview half is inverted in
   `e2e/behaviour-regressions.spec.ts`). `SubscribeModal` is not reachable from this screen.
+- **Arriving via `?id=` on DESKTOP does not start anything, and marks nothing** _(new 2026-09-01,
+  S8 capture)_. `previewOpen` initialises `false`, so `SongPlayBar` is mounted-but-parked below the
+  fold until a play control is pressed; and no row carries an active/selected modifier for the
+  requested id. So a recipient of a shared song link sees the ordinary browse catalog with no
+  indication of which song the link named. Recorded as S8 `Q-04` for the product owner — captured
+  at S8 `P5-S1` / `P5-S2`, not fixed here.
+  > ⚠️ **Correction to the bullets above, 2026-09-01 (D11).** Two of them describe the pre-drop-2
+  > desktop column: the **disc cover** and the **desktop Lyrics overlay** are not on this screen at
+  > either URL. DP drop `2670ed2` deleted the desktop Now Playing column, and `AC-EXP-05`'s own
+  > 2026-08-07 amendment already relocated both to `/song/result` (which `AC-EXP-03`'s row click
+  > reaches) and to `MobileNowPlaying` below 768px — §3.4's own prose was never updated to match.
+  > Desktop here has the row list plus `SongPlayBar`, whose transport is Previous / Play / Next,
+  > seek, volume and mute, with no Lyrics control. Same for §3.2's "beside a Now Playing column",
+  > which that section already flags.
 - **No shuffle / repeat** — the transport is prev / play / next. Settled 2026-08-19: follow DP, and
   `AC-EXP-05` no longer asks for them. Historical context (was an open designer question) —
   `docs/DESIGNER-TODO.md` A7, plan S21.
@@ -220,7 +252,14 @@ The rails:
 ### 3.5 Creator profile — `/creator` (`CreatorProfile`)
 
 - Reads `?self` (`self=1` → `MOCK_USER` name/email; else `DEFAULT_CREATOR`) and `?tab` (`mv`|`songs`).
-- Header avatar/name/email + **Plays/Likes** stats (always `DEFAULT_CREATOR.plays/likes` strings, even in self mode ⚠️); MV/Songs tabs; rows (`CREATOR_MVS`/`CREATOR_SONGS`) → `/watch?id` or `/song/play?id`; per-row `⋯` menu = **Like / Share** only.
+- Header avatar + name + **Plays/Likes** stats (always `DEFAULT_CREATOR.plays/likes` strings, even
+  in self mode ⚠️); MV/Songs tabs; rows (`CREATOR_MVS`/`CREATOR_SONGS`) → `/watch?id` or
+  `/song/play?id`. Row actions depend on `ownerMenu = self && loggedIn` — see EXP-P6-S2.
+  > ⚠️ **Corrected 2026-09-01 by the S8 storyboard capture (D11), twice.** The header shows **no
+  > email**: DP's `<p>` under the name used to render one and the product owner had it removed on
+  > 2026-08-14, because this page is public. And there is **no `⋯` menu at all** on someone else's
+  > profile — `ownerMenu` is `self && loggedIn`, so a visitor gets Like and Share as inline
+  > `IconButton`s on the row instead. Captured at S8 `P6-S1` / `P6-S2`.
 - This route is **both** the App's _My Community Profile_ (F16, via `/profile` stats → `/creator?self=1`, area 06) **and** _Community User Profile_ (F17, via any creator link).
 - ⚠️ Self mode shows `MOCK_USER`'s identity but the **sample creator's stats + content** (`CREATOR_MVS/SONGS`); no **Report/Block** (App F17) (`TBD-EXP-05`).
 - **`profileEmpty` demo flag — live, added to this spec 2026-09-01.** `CREATOR_MVS`/`CREATOR_SONGS`
@@ -302,7 +341,19 @@ Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/son
 ### EXP-P6 — Creator profile
 
 - **EXP-P6-S1** `/creator` (or `?self=1&tab=…`): header + stats + MV/Songs tabs.
-- **EXP-P6-S2** Tap a row → `/watch?id` (MV) or `/song/play?id` (song). Row `⋯` → on **someone else's** profile, Like / Share. On **your own** (`?self=1`, signed in), all six: **Edit · Like · Share · Publish · Download · Delete**, wired to History's existing implementations. _(Corrected 2026-08-19 — the product owner decided "port all six and wire every one" on 2026-08-05 (slice 3e); this line still said Like/Share only.)_
+- **EXP-P6-S2** Tap a row → `/watch?id` (MV) or `/song/play?id` (song). On **someone else's**
+  profile there is **no `⋯` at all** — Like and Share sit inline on the row. On **your own**
+  (`?self=1`, signed in) the `⋯` opens six slots, and the FIRST one depends on the row's kind:
+  **Edit MV · Like · Share · Publish · Download · Delete** on an MV, **Create MV · Like · Share ·
+  Publish · Download · Delete** on a song (a song has no Edit here — the same rule History's own
+  menu follows). All wired to History's existing implementations. _(Corrected 2026-08-19 — the
+  product owner decided "port all six and wire every one" on 2026-08-05 (slice 3e); this line still
+  said Like/Share only.)_
+  > ⚠️ **Corrected again 2026-09-01 by the S8 storyboard capture (D11).** Both menus were read off
+  > the running app: the count is six on both tabs, but "Edit" is the wrong label (it reads
+  > **Edit MV**) and a song row does not offer it at all. The visitor half was wrong in the other
+  > direction — it named a `⋯` menu a visitor never sees. Captured at S8 `P6-S2` / `P6-S4` /
+  > `P6-S5`.
 - **EXP-P6-S3** _(new 2026-09-01)_ `?demo=1` + the `profileEmpty` toggle → the active tab's list renders empty: icon + "No works released yet", plus (self only) a subtitle and a **Create Music Video**/**Create Song** CTA. See §3.5.
 
 ---

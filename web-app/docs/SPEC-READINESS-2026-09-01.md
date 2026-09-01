@@ -229,6 +229,8 @@ FAQ / Terms of Service / Privacy Policy 三條**仍是 `href="#"`**,等網址(A2
 
 ## 4. Storyboard spec 隊列 — 現在只剩 S10 擋住
 
+> _更新 2026-09-01(同日稍晚):S8 與 S9 已完成,隊列只剩 S10。_
+
 | 代號 | Slug                  | 狀態                                                            |
 | ---- | --------------------- | --------------------------------------------------------------- |
 | S1   | `song-creation`       | ✅ v3 — 2026-09-01 更新(STYLE 規則 + 14 張截圖)                 |
@@ -238,8 +240,8 @@ FAQ / Terms of Service / Privacy Policy 三條**仍是 `href="#"`**,等網址(A2
 | S6   | `shell-auth`          | ✅ v1 — 需補 2.1(Footer Contact 登入閘)                         |
 | S7   | `profile-account`     | ✅ v1 — 需補 1.3(頭像上傳 + 圓形裁切)                           |
 | S5   | `credits-iap`         | ✅ **v1 完成 2026-09-01** —— 6 paths / 21 shots,validate 與 lint 全綠(56/56 strings) |
-| S8   | `explore-community`   | ⬜ 可以做了 —— 2.2 / 2.7 / 2.8 都已修,1.2 已從範圍移除          |
-| S9   | `share`               | ⬜ 可以做了                                                     |
+| S8   | `explore-community`   | ✅ **v1 完成 2026-09-01** —— 6 paths / 36 shots,validate 與 lint 全綠(56/56 strings)。Curation PRD 首次完整讀過:版面依原型(D-02),排名/審核層只標註並以 PDF 為準(D-03);PRD 自相矛盾與 `TBD-EXP-11` 仍開著,記為 Q-01 / Q-02 |
+| S9   | `share`               | ✅ **v1 完成 2026-09-01** —— 5 paths / 15 shots,validate 與 lint 全綠(15/15 strings)。`/share` 2026-08-24 已改版,area 10 依 D11 就地更正 |
 | S10  | `credit-consumption`  | ⏸ 卡在 `TBD-CC-06`(見 2.2)—— 依裁示先寫 TBD                     |
 | S11  | `notifications-email` | ✅ **不做截圖版** —— area 12 的 md 即 spec(產品負責人裁示)      |
 
@@ -249,4 +251,9 @@ FAQ / Terms of Service / Privacy Policy 三條**仍是 `href="#"`**,等網址(A2
 
 **第一版說「六項擋住 spec」,實測後一項都不擋。** 其中兩項根本不是缺口 —— 是我讀了過期的
 handover 而沒有讀程式碼。真正還開著的只有**三個 RD 契約**(第 2 節)與**兩個等回覆**(第 3 節),
-而那些擋的是 RD 實作,不是 spec 寫作。**S5、S8、S9 現在都可以做。**
+而那些擋的是 RD 實作,不是 spec 寫作。~~**S5、S8、S9 現在都可以做。**~~ **S5、S8、S9 都已於
+2026-09-01 完成;隊列只剩 S10,仍卡在 `TBD-CC-06`。**
+
+> **同一天又證實了一次「以程式碼為準」。** S8 與 S9 的拍攝各自推翻了自家 area spec 的既有敘述:
+> area 04 的 `/watch` 控制項清單、`/creator` 的 email 與 `⋯` 選單、`/song/play` 桌機到站狀態,
+> 以及 area 10 整個「只有三樣東西」的 `/share` 描述(2026-08-24 已改版)。全部依 D11 就地更正。

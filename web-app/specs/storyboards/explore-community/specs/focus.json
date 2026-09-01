@@ -1,0 +1,544 @@
+{
+  "01_home_hero_tools.png": [
+    {
+      "box": [
+        21.4,
+        10.1,
+        73.3,
+        4.8
+      ],
+      "type": "action",
+      "label": "Two gated create cards"
+    },
+    {
+      "box": [
+        21.4,
+        15.8,
+        73.3,
+        13.2
+      ],
+      "type": "info",
+      "label": "Hero filmstrip \u2014 only the centred card plays"
+    }
+  ],
+  "02_home_three_rails.png": [
+    {
+      "box": [
+        21.4,
+        30.9,
+        73.3,
+        15.6
+      ],
+      "type": "info",
+      "label": "Trending Music Videos \u2014 fed by NEW_MVS"
+    },
+    {
+      "box": [
+        21.4,
+        48.3,
+        73.3,
+        14.8
+      ],
+      "type": "info",
+      "label": "Top Picks Songs"
+    },
+    {
+      "box": [
+        21.4,
+        65.0,
+        73.3,
+        15.7
+      ],
+      "type": "info",
+      "label": "Newly Released Songs \u2014 6 rows, 2 columns"
+    }
+  ],
+  "03_home_rail_next.png": [
+    {
+      "box": [
+        90.1,
+        38.9,
+        4.0,
+        2.6
+      ],
+      "type": "action",
+      "label": "Next \u2014 rendered only while the row can scroll forward"
+    }
+  ],
+  "04_home_rail_scrolled.png": [
+    {
+      "box": [
+        22.0,
+        38.9,
+        4.0,
+        2.6
+      ],
+      "type": "action",
+      "label": "Previous appears once the row has scrolled"
+    }
+  ],
+  "05_home_preview_bar.png": [
+    {
+      "box": [
+        17.1,
+        88.4,
+        81.8,
+        11.6
+      ],
+      "type": "action",
+      "label": "Album art previews in the fixed bar \u2014 no navigation"
+    }
+  ],
+  "06_home_share_entry.png": [
+    {
+      "box": [
+        36.5,
+        55.6,
+        21.3,
+        2.8
+      ],
+      "type": "action",
+      "label": "Shared public link \u2014 S9 owns this dialog"
+    }
+  ],
+  "09_explore_mvs_sections.png": [
+    {
+      "box": [
+        21.4,
+        5.2,
+        73.3,
+        25.4
+      ],
+      "type": "info",
+      "label": "Top Picks \u2014 TRENDING_MVS"
+    },
+    {
+      "box": [
+        21.4,
+        33.2,
+        73.3,
+        64.2
+      ],
+      "type": "info",
+      "label": "Newly Released \u2014 NEW_MVS"
+    }
+  ],
+  "10_explore_mvs_card.png": [
+    {
+      "box": [
+        21.4,
+        9.3,
+        15.0,
+        21.2
+      ],
+      "type": "action",
+      "label": "Every card is a real link to /watch?id="
+    }
+  ],
+  "11_explore_songs_all.png": [
+    {
+      "box": [
+        21.4,
+        28.9,
+        73.3,
+        1.9
+      ],
+      "type": "action",
+      "label": "All + the nine creation genres"
+    },
+    {
+      "box": [
+        21.4,
+        5.4,
+        73.3,
+        17.1
+      ],
+      "type": "info",
+      "label": "Top Picks Songs rail"
+    }
+  ],
+  "12_explore_songs_genre_tab.png": [
+    {
+      "box": [
+        21.4,
+        76.2,
+        73.3,
+        4.9
+      ],
+      "type": "action",
+      "label": "Hip-Hop is the active tab"
+    },
+    {
+      "box": [
+        26.3,
+        91.4,
+        15.7,
+        5.7
+      ],
+      "type": "info",
+      "label": "\u2026and what is playing is untouched"
+    }
+  ],
+  "13_explore_songs_preview.png": [
+    {
+      "box": [
+        43.1,
+        91.8,
+        8.1,
+        4.9
+      ],
+      "type": "action",
+      "label": "Preview transport \u2014 browsing continues underneath"
+    }
+  ],
+  "14_explore_songs_row_navigates.png": [
+    {
+      "box": [
+        17.1,
+        0.0,
+        81.8,
+        100.0
+      ],
+      "type": "info",
+      "label": "Arrives on the result-stage player \u2014 S1 owns this screen"
+    }
+  ],
+  "15_explore_songs_create.png": [
+    {
+      "box": [
+        17.1,
+        0.0,
+        81.8,
+        100.0
+      ],
+      "type": "info",
+      "label": "Arrives on /song/create pre-filled \u2014 S1 owns this screen"
+    }
+  ],
+  "26_songplay_arrival.png": [
+    {
+      "box": [
+        21.4,
+        32.5,
+        73.3,
+        65.3
+      ],
+      "type": "info",
+      "label": "The same browse list \u2014 the bar is mounted but closed"
+    }
+  ],
+  "27_songplay_bar_open.png": [
+    {
+      "box": [
+        17.1,
+        88.4,
+        81.8,
+        11.6
+      ],
+      "type": "action",
+      "label": "Play opens the bar on the linked track"
+    }
+  ],
+  "28_songplay_creator_playlist.png": [
+    {
+      "box": [
+        21.4,
+        58.0,
+        73.3,
+        38.1
+      ],
+      "type": "info",
+      "label": "The playlist follows the song \u2014 8 creator tracks"
+    },
+    {
+      "box": [
+        21.4,
+        51.6,
+        73.3,
+        3.3
+      ],
+      "type": "info",
+      "label": "No tab is active"
+    }
+  ],
+  "29_songplay_notfound.png": [
+    {
+      "box": [
+        52.9,
+        37.7,
+        10.3,
+        6.6
+      ],
+      "type": "action",
+      "label": "Not found \u2014 an Explore CTA, never a silent fallback"
+    }
+  ],
+  "16_watch_player.png": [
+    {
+      "box": [
+        22.5,
+        80.7,
+        71.0,
+        6.6
+      ],
+      "type": "info",
+      "label": "Title, creator, Like / Share, Create MV"
+    },
+    {
+      "box": [
+        22.5,
+        88.7,
+        71.0,
+        2.9
+      ],
+      "type": "info",
+      "label": "Transport \u2014 play/pause, seek, mute, fullscreen"
+    }
+  ],
+  "17_watch_grid_below.png": [
+    {
+      "box": [
+        21.4,
+        32.3,
+        73.3,
+        18.1
+      ],
+      "type": "info",
+      "label": "The same two sections /explore/mvs shows"
+    }
+  ],
+  "18_watch_watermark_official.png": [
+    {
+      "box": [
+        22.5,
+        13.8,
+        12.1,
+        3.4
+      ],
+      "type": "action",
+      "label": "YCM watermark \u2014 official videos only"
+    }
+  ],
+  "19_watch_swipe_dragging.png": [
+    {
+      "box": [
+        21.4,
+        11.5,
+        73.3,
+        83.0
+      ],
+      "type": "action",
+      "label": "Held past the threshold \u2014 the next MV peeks in"
+    }
+  ],
+  "20_watch_swipe_committed.png": [
+    {
+      "box": [
+        22.5,
+        80.7,
+        56.1,
+        3.7
+      ],
+      "type": "action",
+      "label": "Committed to the next MV; the URL is replaced, not pushed"
+    }
+  ],
+  "21_watch_no_neighbour.png": [
+    {
+      "box": [
+        21.4,
+        11.5,
+        73.3,
+        83.0
+      ],
+      "type": "info",
+      "label": "An id outside the feed: one video, and the drag never commits"
+    }
+  ],
+  "24_watch_create_prefilled.png": [
+    {
+      "box": [
+        17.1,
+        0.0,
+        81.8,
+        100.0
+      ],
+      "type": "info",
+      "label": "Arrives on /mv/room pre-filled \u2014 S2 owns this screen"
+    }
+  ],
+  "25_watch_notfound.png": [
+    {
+      "box": [
+        51.0,
+        41.2,
+        14.1,
+        6.6
+      ],
+      "type": "action",
+      "label": "Not found \u2014 an Explore CTA, never a silent fallback"
+    }
+  ],
+  "07_guest_home_public.png": [
+    {
+      "box": [
+        21.4,
+        30.9,
+        73.3,
+        15.6
+      ],
+      "type": "info",
+      "label": "Public \u2014 the feed renders in full with nobody signed in"
+    }
+  ],
+  "08_guest_toolcard_gated.png": [
+    {
+      "box": [
+        35.9,
+        23.5,
+        27.1,
+        53.1
+      ],
+      "type": "action",
+      "label": "Sign-in opens at the click \u2014 S6 owns this modal"
+    }
+  ],
+  "22_guest_like_gated.png": [
+    {
+      "box": [
+        35.9,
+        23.5,
+        27.1,
+        53.1
+      ],
+      "type": "action",
+      "label": "Like gates at the action too (GL-02)"
+    }
+  ],
+  "23_guest_share_ungated.png": [
+    {
+      "box": [
+        36.5,
+        55.6,
+        21.3,
+        2.8
+      ],
+      "type": "action",
+      "label": "Share stays ungated \u2014 no sign-in for a public link"
+    }
+  ],
+  "30_creator_other_mv.png": [
+    {
+      "box": [
+        21.8,
+        13.0,
+        22.8,
+        18.6
+      ],
+      "type": "info",
+      "label": "Name + Plays / Likes \u2014 no email"
+    },
+    {
+      "box": [
+        48.0,
+        13.0,
+        46.2,
+        4.4
+      ],
+      "type": "action",
+      "label": "Music Videos / Songs"
+    }
+  ],
+  "31_creator_other_actions.png": [
+    {
+      "box": [
+        48.0,
+        20.1,
+        46.2,
+        54.2
+      ],
+      "type": "info",
+      "label": "Like and Share only \u2014 no owner menu on someone else's page"
+    }
+  ],
+  "32_creator_self.png": [
+    {
+      "box": [
+        21.8,
+        13.0,
+        22.8,
+        8.3
+      ],
+      "type": "info",
+      "label": "The signed-in user's own identity"
+    },
+    {
+      "box": [
+        21.8,
+        22.9,
+        22.8,
+        8.7
+      ],
+      "type": "info",
+      "label": "The sample creator's stats, even in self mode"
+    }
+  ],
+  "33_creator_self_menu.png": [
+    {
+      "box": [
+        79.3,
+        53.5,
+        15.0,
+        39.6
+      ],
+      "type": "action",
+      "label": "The owner menu on an MV row \u2014 wired to History's implementations"
+    }
+  ],
+  "34_creator_self_menu_song.png": [
+    {
+      "box": [
+        79.3,
+        30.1,
+        15.0,
+        39.3
+      ],
+      "type": "action",
+      "label": "The same six slots on a song row \u2014 Edit MV becomes Create MV"
+    }
+  ],
+  "35_creator_empty_self.png": [
+    {
+      "box": [
+        64.4,
+        38.9,
+        12.9,
+        2.9
+      ],
+      "type": "info",
+      "label": "No works released yet"
+    },
+    {
+      "box": [
+        64.5,
+        47.5,
+        12.8,
+        5.7
+      ],
+      "type": "action",
+      "label": "Tab-specific CTA \u2014 self only"
+    }
+  ],
+  "36_creator_empty_other.png": [
+    {
+      "box": [
+        47.9,
+        20.1,
+        46.3,
+        29.5
+      ],
+      "type": "info",
+      "label": "The same block minus the subtitle and CTA"
+    }
+  ]
+}
