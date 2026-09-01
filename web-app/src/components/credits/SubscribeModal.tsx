@@ -8,6 +8,7 @@ import { DpIcon } from "@/components/ui/DpIcon";
 import { DpDialog } from "@/components/ui/DpDialog";
 import { ApiErrorState } from "@/components/ui/ApiErrorState";
 import { useDemoFlag } from "@/components/demo/useDemo";
+import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
 import {
   DEFAULT_DURATION,
   MUSE_PRO_FEATURES,
@@ -65,9 +66,6 @@ interface Props {
  *
  * · CR-05 already-Pro state. DP has no such state — its dialog always sells.
  *   Dropping it would let a subscriber buy a second subscription.
- * · CR-05 Restore Purchases. A real action with real behaviour, and DP's footer
- *   has only dead `href="#"` links. It takes the footer slot, which is where a
- *   store dialog conventionally puts it.
  * · CR-03 expiry wording, per plan, from `cadence` — DP hardcodes "Weekly" on
  *   the two weekly cards and "Yearly" on the third, which agrees with WA's data
  *   today but would silently diverge if a plan's cadence ever changed.
@@ -248,7 +246,6 @@ function PlanListRow({
 export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
   const { subscribe, subscribed, subscribedPlan } = useAuth();
   const { addCredits } = useCredits();
-  const [restored, setRestored] = useState(false);
   const [duration, setDuration] = useState<PlanCadence>(DEFAULT_DURATION);
   // Only read by the mobile/tablet list below — the desktop grid has no
   // selection concept, each card subscribes to its own plan directly. Kept
@@ -393,20 +390,24 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
         </button>
       </div>
 
-      {/* CR-05. DP's footer is two dead `#` links; this is the one real action
-          that belongs there, so it takes the slot instead. */}
-      <div className="upgrade-dialog__footer">
-        <button type="button" onClick={() => setRestored(true)}>
-          Restore Purchases
-        </button>
+      {/* Product owner, 2026-09-01: replaces the CR-05 "Restore Purchases |
+          Demo only" row (removed) — this footer isn't duplicated per
+          breakpoint, same markup serves both `--plans` desktop and
+          `--mobile`. Wired to the real `TERMS_URL`/`PRIVACY_URL`
+          (`lib/legal.ts`, already used by Settings/SignIn) instead of DP's
+          dead `#` hrefs. "Terms of Use", not "Terms of Service" — matches
+          that file's own canonical wording and Settings' label; SignInModal
+          and FaceConsentDialog use the other label for the same URL, an
+          existing inconsistency this doesn't attempt to fix everywhere. */}
+      <p className="upgrade-dialog__footer">
+        <a href={TERMS_URL} target="_blank" rel="noopener noreferrer">
+          Terms of Use
+        </a>
         <span aria-hidden="true">|</span>
-        <span>Demo only — no real payment</span>
-      </div>
-      {restored && (
-        <p className="upgrade-dialog__footer" role="status">
-          No previous purchases found on this account.
-        </p>
-      )}
+        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+          Privacy Policy
+        </a>
+      </p>
     </DpDialog>
   );
 }

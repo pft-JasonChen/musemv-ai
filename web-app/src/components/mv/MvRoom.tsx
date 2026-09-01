@@ -253,7 +253,11 @@ export function MvRoom() {
 
   return (
     <>
-      <RoomNavbar title="AI Music Video" mobileBackHref="/" />
+      <RoomNavbar
+        title="AI Music Video"
+        mobileBackHref="/"
+        className="room-navbar__top--tight"
+      />
 
       <div className="mv-create">
         <div className="mv-create__panel">

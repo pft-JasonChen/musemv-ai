@@ -56,6 +56,7 @@ export function RoomNavbar({
   mobileBackHref,
   mobileHeaderActions,
   style,
+  className,
 }: {
   title: string;
   tabsSlot?: React.ReactNode;
@@ -70,6 +71,11 @@ export function RoomNavbar({
    *  below the shell's OWN sticky `.mobile-header` rather than at the very
    *  top of the viewport). */
   style?: React.CSSProperties;
+  /** Second escape hatch, same reasoning as `style` above: lets ONE caller's
+   *  `.room-navbar__top` be targeted in `designer-overrides.css` without a
+   *  bare-class override reaching every RoomNavbar page (History, Profile,
+   *  …). See `.room-navbar__top--tight`'s own comment there. */
+  className?: string;
 }) {
   const { loggedIn, subscribed, hydrated, openSignIn } = useAuth();
   const { openSubscribe, openBuyCredits } = useSubscribe();
@@ -85,7 +91,7 @@ export function RoomNavbar({
       className={`room-navbar${mobileBackHref ? " room-navbar--mobile-back" : ""}`}
       style={style}
     >
-      <div className="room-navbar__top">
+      <div className={`room-navbar__top${className ? ` ${className}` : ""}`}>
         {mobileBackHref && (
           <a
             href={localePath(locale, mobileBackHref)}

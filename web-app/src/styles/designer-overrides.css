@@ -155,6 +155,21 @@
   }
 }
 
+/* Product owner request, 2026-09-01 — remove RoomNavbar.css's `gap: 20px`
+   on desktop, `/mv/room` and `/song/create` (+ its generating stage) only.
+   `.room-navbar__top` is a bare class shared by every RoomNavbar caller
+   (History, Profile too), so a plain override here would have detuned
+   their gap as well, which was never asked for — `RoomNavbar`'s own
+   `className` prop (a second escape hatch alongside its existing `style`
+   one) lets those three callers opt in without touching the other two.
+   Scoped to `min-width: 768px` — mobile's own `gap: 20px` is untouched, it
+   was never part of this ask. */
+@media (min-width: 768px) {
+  .room-navbar__top--tight {
+    gap: 0;
+  }
+}
+
 /* ── Slice 3c: /profile's Credits stat is a button, not a link ──────────────
    DP's account stats are three `<a>`s: Credits -> /account/credits, MVs and
    Songs -> the creator page. WA has no /credits route — the balance breakdown

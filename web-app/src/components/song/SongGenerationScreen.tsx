@@ -77,7 +77,11 @@ export function SongGenerationScreen() {
 
   return (
     <>
-      <RoomNavbar title="AI Song" mobileBackHref="/song/create" />
+      <RoomNavbar
+        title="AI Song"
+        mobileBackHref="/song/create"
+        className="room-navbar__top--tight"
+      />
 
       <div className="song-create">
         <div className="song-create__panel song-create__panel--full">
