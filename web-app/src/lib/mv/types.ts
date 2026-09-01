@@ -201,8 +201,23 @@ export const DEFAULT_SONG_COMPOSE: SongCompose = {
   describe: "",
   instrumental: false,
   lyrics: "",
-  genre: "Pop",
-  mood: "Uplifting",
+  // `genre` / `mood` start EMPTY — product owner, 2026-09-01, second pass.
+  //
+  // The first pass of that day's change made both fields optional and
+  // clearable but LEFT the old `"Pop"` / `"Uplifting"` seeds in place, on the
+  // argument that `SongResultView`'s "genre · mood" line (the only thing the
+  // result screen says about what was generated) would otherwise be blank for
+  // anyone who never opened the STYLE section. The product owner overruled
+  // that: a field pre-filled on arrival does not read as optional, whatever
+  // the CTA does. **Preserving a result-screen line is not a reason to make a
+  // user un-pick a genre they never chose.**
+  //
+  // Downstream is already safe: `SongResultView` renders its genre · mood line
+  // with `visibility: hidden` (NOT `display: none`) when either value is
+  // empty, so the panel's height is unchanged and nothing reflows — that guard
+  // predates this change and exists for the same reason.
+  genre: "",
+  mood: "",
   vocal: null,
   title: "",
   bpm: 120,

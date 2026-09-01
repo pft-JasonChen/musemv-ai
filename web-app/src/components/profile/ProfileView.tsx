@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCredits } from "@/components/providers/CreditsProvider";
@@ -12,8 +12,9 @@ import { DpIcon } from "@/components/ui/DpIcon";
 import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackDialog } from "./FeedbackDialog";
+import { FacePickerModal } from "@/components/mv/FacePickerModal";
 import { SAMPLE_CREATIONS } from "@/lib/mv/mock";
-import { AVATAR_SAMPLES, SUBSCRIPTION_PLANS, planDisplayName } from "@/lib/user";
+import { SUBSCRIPTION_PLANS, planDisplayName } from "@/lib/user";
 
 /**
  * Slice 3c — migrated to DP's `AccountPage` (Figma 1700:33262).
@@ -105,6 +106,10 @@ export function ProfileView() {
   const [editOpen, setEditOpen] = useState(false);
   const [fbOpen, setFbOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  // Avatar upload → crop. `pendingAvatar` is the raw object URL waiting to be
+  // cropped; `avatarDraft` is the cropped result, committed by Save.
+  const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<string | null>(null);
   const flash = (m: string) => {
     setToast(m);
@@ -117,9 +122,37 @@ export function ProfileView() {
     setAvatarDraft(profile.avatar);
     setEditOpen(true);
   }
-  function cycleAvatar() {
-    const i = avatarDraft ? AVATAR_SAMPLES.indexOf(avatarDraft) : -1;
-    setAvatarDraft(AVATAR_SAMPLES[(i + 1) % AVATAR_SAMPLES.length]);
+  /**
+   * Change Photo — a REAL upload + crop since 2026-09-01 (product owner).
+   *
+   * It used to cycle `AVATAR_SAMPLES`, a mock that could not produce any image
+   * the user actually owned. The replacement deliberately reuses `/mv/room`'s
+   * `FacePickerModal` (`variant="avatar"`) rather than growing a second crop
+   * implementation — same drag/scale/canvas pipeline, circular frame, avatar
+   * copy. `DESIGNER-TODO` B's "Profile avatar upload is completely blank" is
+   * closed by this.
+   *
+   * The cropped result is a data URL held in `avatarDraft` and committed by
+   * Save, exactly like `nameDraft` — so Cancel still discards it and there is
+   * no new commit path to reason about. 🔒 Nothing is uploaded anywhere; a real
+   * backend has to replace the data URL with an upload + stored URL.
+   */
+  function pickAvatarFile() {
+    avatarFileRef.current?.click();
+  }
+  function onAvatarFile(file: File | undefined) {
+    if (!file) return;
+    // Same accept/size shape as `MvRoom`'s character-photo upload, so the two
+    // entry points into this dialog cannot disagree about what they take.
+    if (!file.type.startsWith("image/")) {
+      flash("Unsupported format. Please choose an image.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      flash("File too large. Maximum size is 10MB.");
+      return;
+    }
+    setPendingAvatar(URL.createObjectURL(file));
   }
   function saveProfile() {
     updateProfile({ name: nameDraft.trim() || profile.name, avatar: avatarDraft });
@@ -336,7 +369,7 @@ export function ProfileView() {
         {/* Avatar + Change Photo (cycles sample photos — mock upload) */}
         <div className="mb-5 flex flex-col items-center gap-2">
           <button
-            onClick={cycleAvatar}
+            onClick={pickAvatarFile}
             className="account-page__avatar relative"
             aria-label={t("profile.changePhoto")}
           >
@@ -354,9 +387,20 @@ export function ProfileView() {
               <DpIcon name="ic_camera" />
             </span>
           </button>
-          <button onClick={cycleAvatar} className="account-edit__change-photo" type="button">
+          <button onClick={pickAvatarFile} className="account-edit__change-photo" type="button">
             {t("profile.changePhoto")}
           </button>
+          <input
+            ref={avatarFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              onAvatarFile(e.target.files?.[0]);
+              // Reset so re-picking the SAME file fires `change` again.
+              e.target.value = "";
+            }}
+          />
         </div>
         <label className="account-edit__field">
           {t("profile.name")}
@@ -395,6 +439,23 @@ export function ProfileView() {
           There is no toast on success — the dialog's own "Feedback Sent" step
           replaces it (spec §3.1 / AC-PROF-13). */}
       {fbOpen && <FeedbackDialog onClose={() => setFbOpen(false)} />}
+
+      {/* Edit Profile Picture — `/mv/room`'s crop dialog in its avatar variant.
+          Mounted here (not inside the edit Modal) so it layers ABOVE it. */}
+      <FacePickerModal
+        open={pendingAvatar != null}
+        imageUrl={pendingAvatar ?? ""}
+        variant="avatar"
+        onClose={() => {
+          if (pendingAvatar) URL.revokeObjectURL(pendingAvatar);
+          setPendingAvatar(null);
+        }}
+        onConfirm={(dataUrl) => {
+          setAvatarDraft(dataUrl);
+          if (pendingAvatar) URL.revokeObjectURL(pendingAvatar);
+          setPendingAvatar(null);
+        }}
+      />
 
       {toast && (
         <div

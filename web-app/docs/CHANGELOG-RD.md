@@ -23,6 +23,55 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-01 (second pass) — **NO CONTRACT CHANGE** — `types.ts` default values only
+
+**Surface touched:** **C8** — `src/lib/mv/types.ts`, `DEFAULT_SONG_COMPOSE`.
+
+**Stating it explicitly, as G4-g asks:** two DEFAULT VALUES changed —
+`genre: "Pop"` → `genre: ""` and `mood: "Uplifting"` → `mood: ""` (product owner: the fields are
+optional, so they must not arrive pre-filled). **No key, type, export or schema changed.**
+`COST_*`, `DEFAULT_SETTINGS` and `isComposeReady` are untouched, and the frozen-surface snapshot
+is unchanged.
+
+**What RD should know:** `genre` and `mood` are `z.string()` on the wire (C2, unchanged) and will
+now commonly arrive as **`""`** rather than always carrying a value. Empty means "the user did not
+choose one", and the backend should treat it as absent rather than as a genre literally named "".
+An instrumental job additionally always carries `vocal: null` (see the previous entry).
+
+---
+
+## 2026-09-01 — **NO CONTRACT CHANGE** — `types.ts` touched, comment only
+
+**Surface touched:** **C8** — `src/lib/mv/types.ts`, and **only a comment.**
+
+**Stating it explicitly, as G4-g asks:** `DEFAULT_SONG_COMPOSE` gained a block comment
+explaining why `genre` / `mood` keep non-empty starting values now that both fields are
+user-clearable. **No value, key, type or export in that file changed** — `COST_*`,
+`DEFAULT_SETTINGS` and `isComposeReady` are all untouched, and the frozen-surface snapshot
+(`contract.surface.test.ts.snap`) is unchanged. Nothing for RD to do.
+
+### The wider change this comment belongs to is NOT contract surface
+
+For completeness, since RD will see these in the diff and they are not in here:
+
+- `/song/create`'s GENRE list went from 8 values to 9, GENRE/MOOD became clearable, and VOCAL
+  is hidden + cleared under Instrumental. The **payload shape is identical** — `genre` and
+  `mood` are still `z.string()`, `vocal` is still `z.string().nullable()` (C2, untouched).
+  One behavioural note worth having: **an instrumental job will now always carry
+  `vocal: null`**, where before it could carry a stale `"Male"`/`"Female"`. RD does not need
+  to defend against that combination any more, but nothing forces it to stop.
+  `genre` / `mood` may now also arrive as **`""`** where previously they were always one of
+  the fixed values — an empty string means "user cleared it", not "unset by accident".
+- `/explore/songs`'s tab bar and `src/lib/mv/community.ts`'s fixture genres changed together.
+  Both are **seed data and UI**, not contract; the community entities have no `MuseApi`
+  endpoint at all yet (`TBD-GL-05`).
+- `CREDIT_PACKS` prices changed (five of six) per the 2026-09-08 "YCM FINAL Pricing
+  (confirmed)" deck. `lib/user.ts` is **not** a C1–C8 surface; the was/now table is in that
+  file's own comment and in `specs/areas/07-credits-iap.md` §1. **SKUs did not change** and
+  are still app-shaped — see the new `TBD-CR-11`.
+
+---
+
 ## 2026-08-27 — **C2 CHANGED** — `FeedbackTicketSchema.title` is REMOVED (Subject field deleted)
 
 **Surface touched:** **C2** — `src/lib/api/schemas.ts`, `FeedbackTicketSchema`.

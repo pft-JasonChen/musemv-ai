@@ -33,6 +33,7 @@ import {
   songResultFromCommunity,
   type CommunitySong,
 } from "@/lib/mv/community";
+import { GENRES } from "@/lib/mv/mock";
 import { SongPlayBar } from "@/components/song/SongPlayBar";
 
 /**
@@ -96,16 +97,18 @@ import { SongPlayBar } from "@/components/song/SongPlayBar";
  *    copy of the spec; the divergence is the decision.
  *  · `Trending` IS NOT BUILT. DP has four tabs and its own comment admits three
  *    are fake ("no real per-tab data exists to actually filter by"). Product
- *    owner request, 2026-08-14, replaces the earlier Top Picks / New Releases
- *    split (itself WA's stand-in for DP's fake tabs) with genre tabs — one per
- *    distinct `CommunitySong.genre` value actually present in the catalog data,
- *    derived rather than hardcoded so a new genre in `community.ts` gets its
- *    own tab for free. Every song already carries a real `genre` (used
- *    elsewhere only to seed the Create flow); this is its first use for
- *    filtering. "Hip-Hop" — one of the examples given alongside Pop/R&B/Jazz/
- *    Acoustic — has no song in the mock catalog tagged with it, so it isn't
- *    one of the derived tabs; adding it would mean inventing catalog content
- *    rather than fixing the tab bar.
+ *    owner request, 2026-08-14, replaced the earlier Top Picks / New Releases
+ *    split (itself WA's stand-in for DP's fake tabs) with genre tabs. Every
+ *    song already carries a real `genre` (used elsewhere only to seed the
+ *    Create flow); that was its first use for filtering.
+ *
+ *    ⚠️ **SUPERSEDED 2026-09-01 — the tabs are no longer derived.** That pass
+ *    built them from the distinct `genre` values present in `community.ts`,
+ *    and noted that "Hip-Hop" therefore could not have a tab because no mock
+ *    song carried it. The product owner has since ruled the other way — "tag
+ *    please match creation" — so the tab bar is now the nine `GENRES` from
+ *    `lib/mv/mock.ts` verbatim, and the CATALOG was re-tagged onto them.
+ *    See the `TABS` declaration below for the full reasoning.
  *
  * ── WHAT DID NOT CHANGE ──────────────────────────────────────────────────────
  * EXP-09 (an id resolves to the playlist it belongs to), EXP-06 (not-found and
@@ -148,8 +151,29 @@ import { SongPlayBar } from "@/components/song/SongPlayBar";
  * instead — so the mobile rule now names both elements separately.)
  */
 
-const GENRES = Array.from(new Set(ALL_COMMUNITY_SONGS.map((s) => s.genre))).sort();
-
+/**
+ * ── TABS ARE THE CREATION GENRES, NOT THE CATALOG'S (2026-09-01) ────────────
+ *
+ * Product owner: "tag please match creation". These are `GENRES` from
+ * `lib/mv/mock.ts` — the SAME nine chips `/song/create` offers — with "All"
+ * prepended, in the product owner's order (NOT sorted).
+ *
+ * This reverses the 2026-08-14 derivation (`new Set(ALL_COMMUNITY_SONGS.map(…))`
+ * `.sort()`), and the reversal is the point: a tab bar derived from fixture
+ * data is a tab bar that changes shape when a mock song is added, and it
+ * offered genres a user could never create ("Acoustic", "Lo-fi", "Indie",
+ * "Funk") while hiding ones they could. Browse and create now share one
+ * vocabulary by construction.
+ *
+ * The old comment's objection — that "Hip-Hop" had no song to show — was
+ * answered by re-tagging the catalog onto these nine in the same change, not
+ * by dropping the tab: all nine have at least two songs (Electronic 5 ·
+ * Classical 5 · Pop/R&B/Hip-Hop 4 · Rap/Country 3 · Rock/Jazz 2).
+ *
+ * ⚠️ A genre with no songs would now render a bare empty list — there is no
+ * empty state for this tab bar (`DESIGNER-TODO` A30). Keep the catalog
+ * covering all nine, or that gap becomes visible.
+ */
 const TABS: { id: string; label: string }[] = [
   { id: "All", label: "All" },
   ...GENRES.map((genre) => ({ id: genre, label: genre })),

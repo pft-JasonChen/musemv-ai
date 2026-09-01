@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { DpIcon } from "@/components/ui/DpIcon";
@@ -20,6 +20,18 @@ interface Props {
   suggestions?: FaceRegion[];
   onClose: () => void;
   onConfirm: (dataUrl: string) => void;
+  /**
+   * Which screen is borrowing this crop (product owner, 2026-09-01).
+   *
+   * `"face"` (default) is `/mv/room`'s **Select a Face** — square-cornered
+   * frame, face-detection suggestions, MV-character copy.
+   * `"avatar"` is `/profile`'s **Edit Profile Picture** — the SAME crop
+   * mechanics with a CIRCULAR frame and avatar copy, because the product owner
+   * asked for the profile upload to reuse this dialog rather than get a second
+   * crop implementation. Only the frame shape and the three strings differ;
+   * the drag/scale/canvas-crop path below is shared, which is the point.
+   */
+  variant?: "face" | "avatar";
 }
 
 async function cropToDataUrl(src: string, r: FaceRegion): Promise<string> {
@@ -99,7 +111,34 @@ async function cropToDataUrl(src: string, r: FaceRegion): Promise<string> {
  *   the overlay's `height` is now `crop.size * boxRatio` — same width in
  *   pixels, expressed as whatever percentage-of-height that takes to match.
  */
-export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onConfirm }: Props) {
+const COPY = {
+  face: {
+    title: "Select a Face",
+    cta: "Use This Face",
+    busyCta: "Cropping…",
+    closeLabel: "Close face selector",
+    doneLabel: "Use this face",
+  },
+  avatar: {
+    title: "Edit Profile Picture",
+    subtitle: "Move and scale the box to select your avatar area.",
+    cta: "Set as Profile Picture",
+    busyCta: "Saving…",
+    closeLabel: "Close profile picture editor",
+    doneLabel: "Set as profile picture",
+  },
+} as const;
+
+export function FacePickerModal({
+  open,
+  imageUrl,
+  suggestions = [],
+  onClose,
+  onConfirm,
+  variant = "face",
+}: Props) {
+  const isAvatar = variant === "avatar";
+  const copy = COPY[variant];
   const wrapRef = useRef<HTMLDivElement>(null);
   // Designer request, 2026-08-11: the Size slider should open centered in
   // its 20–80 range (50), not offset toward one end.
@@ -120,18 +159,28 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
   // element itself avoids the two ever being able to disagree.
   const [boxRatio, setBoxRatio] = useState(1);
 
+  /**
+   * Measure the RENDERED preview box's aspect ratio.
+   *
+   * Pulled out of the effect and given to the `<img>`'s `onLoad` as well
+   * (2026-09-01) — see the effect below for why the ResizeObserver alone was
+   * not enough.
+   */
+  const measureBox = useCallback(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) setBoxRatio(r.width / r.height);
+  }, []);
+
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    function measure() {
-      const r = el!.getBoundingClientRect();
-      if (r.height > 0) setBoxRatio(r.width / r.height);
-    }
-    measure();
-    const observer = new ResizeObserver(measure);
+    measureBox();
+    const observer = new ResizeObserver(measureBox);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [imageUrl]);
+  }, [imageUrl, mounted, measureBox]);
 
   function onMove(e: React.PointerEvent) {
     if (drag.current !== "move" || !wrapRef.current) return;
@@ -170,7 +219,7 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
         type="button"
         className="face-picker__backdrop"
         onClick={onClose}
-        aria-label="Close face selector"
+        aria-label={copy.closeLabel}
       />
       <section
         className="face-picker"
@@ -194,11 +243,17 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
           </button>
           <div className="face-picker__heading">
             <h2 id="face-picker-title" className="face-picker__title">
-              Select a Face
+              {copy.title}
             </h2>
             <p className="face-picker__subtitle">
-              Drag the square to frame the face you want
-              {suggestions.length ? ", or tap a detected face." : "."}
+              {isAvatar ? (
+                COPY.avatar.subtitle
+              ) : (
+                <>
+                  Drag the square to frame the face you want
+                  {suggestions.length ? ", or tap a detected face." : "."}
+                </>
+              )}
             </p>
           </div>
           {/* Phone-only (`display: none` at >=768px, so it leaves the tab order
@@ -209,7 +264,7 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
             className="face-picker__icon-button face-picker__done face-picker__done--ready"
             onClick={confirm}
             disabled={busy}
-            aria-label="Use this face"
+            aria-label={copy.doneLabel}
           >
             <DpIcon name="ic_check" className="face-picker__icon" />
           </button>
@@ -234,7 +289,23 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
             onPointerUp={() => (drag.current = null)}
             onPointerLeave={() => (drag.current = null)}
           >
-            <img src={imageUrl} alt="Uploaded" draggable={false} />
+            {/* `onLoad` re-measures, and it is NOT redundant with the
+                ResizeObserver above — it is the trigger that was missing.
+                MEASURED 2026-09-01: before the image loads, the CSS min/max
+                clamps on `.face-picker__preview > img` give it a SQUARE box, so
+                the effect's first `measureBox()` records `boxRatio === 1`. The
+                observer did not correct it once the real 4:3 image settled the
+                box to 384×288 — probed live, `boxRatio` was still `1.0000001`
+                against a box that measured 384×288.
+
+                The consequence was not cosmetic: the frame was drawn at
+                `crop.size`% of BOTH axes (192×144) while `cropToDataUrl` has
+                always cut a SQUARE `s × s` region, so the area a user framed
+                was never the area they got. That has been true on `/mv/room`'s
+                Select a Face since the 2026-08-14 `boxRatio` change — it only
+                became visible here because a circular frame turns the same
+                rectangle into an obvious ellipse. */}
+            <img src={imageUrl} alt="Uploaded" draggable={false} onLoad={measureBox} />
             <span
               aria-hidden="true"
               style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.45)" }}
@@ -256,7 +327,14 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
                 height: `${crop.size * boxRatio}%`,
                 // 12px radius / ~2.6px border — Figma's exact values
                 // (`--radius/sm`, 2.625px), 2026-08-14.
-                borderRadius: 12,
+                //
+                // The avatar variant makes it a CIRCLE (product owner,
+                // 2026-09-01). `50%` is a true circle here, not an ellipse,
+                // because the box is already pixel-SQUARE — `height` above is
+                // `crop.size * boxRatio`, i.e. the same pixel length as
+                // `width` expressed as a percentage of a different axis. If
+                // that ratio correction is ever removed, this becomes an oval.
+                borderRadius: isAvatar ? "50%" : 12,
                 boxShadow: "0 0 0 9999px rgba(0,0,0,.45)",
                 border: "2.6px solid var(--color-accent-purple)",
               }}
@@ -323,7 +401,7 @@ export function FacePickerModal({ open, imageUrl, suggestions = [], onClose, onC
           )}
 
           <button type="button" className="face-picker__confirm" onClick={confirm} disabled={busy}>
-            {busy ? "Cropping…" : "Use This Face"}
+            {busy ? copy.busyCta : copy.cta}
           </button>
         </div>
       </section>

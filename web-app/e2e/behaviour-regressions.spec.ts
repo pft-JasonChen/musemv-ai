@@ -1859,15 +1859,44 @@ test("3f: Escape closes the dialog", async ({ page }) => {
   await expect(page.getByRole("dialog", { name: "Upgrade Your Plan" })).toHaveCount(0);
 });
 
-test("3f: CR-05 Restore Purchases survived DP's footer", async ({ page }) => {
-  // DP's footer is two dead `href="#"` links and has no Restore at all. WA's is
-  // a real action, so it took the slot — this is the affordance-loss check.
+test("2026-09-01: web has NO Restore Purchases, and the footer is real legal links", async ({
+  page,
+}) => {
+  // ── THIS TEST REPLACES ITS OWN OPPOSITE ────────────────────────────────────
+  // It used to be "3f: CR-05 Restore Purchases survived DP's footer", asserting
+  // that a Restore Purchases button existed and toasted "No previous purchases
+  // found on this account." The product owner removed the affordance on
+  // 2026-09-01: **the website does not support Restore Purchases at all — it is
+  // app-only.** The old test was therefore pinning a decision that had been
+  // reversed, and would have gone red on the next full run.
+  //
+  // It is REPLACED rather than deleted, because "we removed a control" is
+  // exactly the kind of change this repo has repeatedly lost track of (the A4 /
+  // G7 affordance lesson in AGENTS.md: a migrated row loses a trailing control,
+  // the behaviour survives, and the affordance dies silently). Guarding the
+  // ABSENCE keeps the removal deliberate — if a future designer drop or a
+  // re-port puts Restore back, this fails and someone has to re-decide.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await openCreditsDetail(page);
   await page.getByRole("button", { name: "Get Muse Pro" }).click();
-  await page.getByRole("button", { name: "Restore Purchases" }).click();
-  await expect(page.getByText("No previous purchases found on this account.")).toBeVisible();
+
+  const dialog = page.getByRole("dialog", { name: "Upgrade Your Plan" });
+  await expect(dialog).toBeVisible();
+
+  // The affordance is gone: no control, and no trace of its copy.
+  await expect(dialog.getByRole("button", { name: /Restore Purchases/i })).toHaveCount(0);
+  await expect(dialog.getByText(/No previous purchases found/i)).toHaveCount(0);
+
+  // What took the slot: two REAL legal links (not DP's dead `#` hrefs).
+  const terms = dialog.getByRole("link", { name: "Terms of Use" });
+  const privacy = dialog.getByRole("link", { name: "Privacy Policy" });
+  await expect(terms).toBeVisible();
+  await expect(privacy).toBeVisible();
+  for (const link of [terms, privacy]) {
+    const href = await link.getAttribute("href");
+    expect(href, "footer legal links must be real URLs, not dead `#` hrefs").toMatch(/^https?:\/\//);
+  }
 });
 
 test("3f: the credit pill's coin icon actually paints", async ({ page }) => {
@@ -2725,10 +2754,20 @@ test("3j: the result still says what was generated, not just its title", async (
   await page
     .getByPlaceholder(/A bittersweet love song/)
     .fill("An upbeat summer anthem about chasing dreams with friends.");
+
+  // 2026-09-01: GENRE and MOOD start EMPTY now, so this guard has to PICK them
+  // before it can assert the line reports them. That is the point — the A14
+  // loss it protects against is "the result screen says nothing about what was
+  // generated", and the line is only owed when there is something to say.
+  // Switching to Custom is what reveals the STYLE section.
+  await page.getByRole("button", { name: "Custom", exact: true }).click();
+  await page.getByRole("button", { name: "R&B", exact: true }).click();
+  await page.getByRole("button", { name: "Energetic", exact: true }).click();
+
   await page.getByRole("button", { name: /Create Song/ }).click();
   await page.waitForURL("**/song/result", { timeout: 30_000 });
 
-  await expect(page.locator(".song-result__meta")).toContainText(/Pop · Uplifting/);
+  await expect(page.locator(".song-result__meta")).toContainText(/R&B · Energetic/);
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -4002,4 +4041,57 @@ test("demo panel: ?demo=1 arms it collapsed, it survives navigation, [x] clears 
   await expect(page.locator(DEMO_HANDLE)).toHaveCount(0);
   await page.goto("/profile?demo=1");
   await expect(page.locator(DEMO_HANDLE)).toBeVisible();
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// 2026-09-01 — /watch's vertical swipe feed (A26's other half)
+// ════════════════════════════════════════════════════════════════════════════
+
+test("2026-09-01: /watch swipes vertically to the next MV and syncs the URL", async ({ page }) => {
+  // ── WHY THIS TEST EXISTS ───────────────────────────────────────────────────
+  // The vertical swipe-to-next/prev gesture shipped 2026-08-20/21 with roughly
+  // 150 lines of implementation — and ZERO test coverage. On 2026-09-01 the
+  // product owner asked for it to be deleted as "unsupported on web", because
+  // `DESIGNER-TODO` A26 still recorded it as missing. It only survived because
+  // someone read the source before deleting it.
+  //
+  // That is the coverage gap this closes: a feature no test mentions is a
+  // feature the next cleanup pass removes for free. `AC-EXP-11` / `EXP-P4-S4`.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/watch");
+
+  const stage = page.locator(".mv-player__stage");
+  await expect(stage).toBeVisible();
+
+  // The 3-slot rotating buffer is the implementation's distinctive shape: the
+  // previous / current / next MV are all mounted, and roles rotate on commit
+  // rather than the videos being remounted.
+  await expect(page.locator(".mv-player__preview-slot")).toHaveCount(3);
+
+  const before = new URL(page.url()).searchParams.get("id");
+
+  // Drag UP well past `SWIPE_THRESHOLD_RATIO` (80/693 of stage height) to
+  // commit to the NEXT item. Stepped moves, not one jump: the handler tracks
+  // pointermove deltas, and a single large move can be coalesced.
+  const box = (await stage.boundingBox())!;
+  const cx = box.x + box.width / 2;
+  const startY = box.y + box.height * 0.75;
+  await page.mouse.move(cx, startY);
+  await page.mouse.down();
+  for (let i = 1; i <= 6; i++) {
+    await page.mouse.move(cx, startY - (box.height * 0.45 * i) / 6);
+    await page.waitForTimeout(16);
+  }
+  await page.mouse.up();
+
+  // `SWIPE_COMMIT_MS` is 280ms; wait for the URL to actually change rather than
+  // sleeping past it, so a slower machine does not flake this.
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("id"), { timeout: 5000 })
+    .not.toBe(before);
+
+  // It is a `router.replace` into the same screen, not a navigation away.
+  await expect(page.locator(".mv-player__stage")).toBeVisible();
+  expect(new URL(page.url()).pathname).toMatch(/\/watch$/);
 });

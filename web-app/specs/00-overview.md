@@ -80,6 +80,13 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 - Account menu, Edit-profile → area 06 (F18)
 - MV sheets: `ChooseSongModal`, `TrimAudioModal`, `FacePickerModal`, `SettingsModal`, `ModeModal`, Templates (inline modal) → area 02
 
+**Surfaces with no route AND no UI** — specced because RD implements them, not because anything renders:
+
+- Notification emails (5 types: verification, welcome, MV done, storyboard done, subscription
+  confirmation) → **area 12** (`areas/12-notifications-email.md`, `MAIL-*` / `TBD-MAIL-*`). Backend
+  only — the prototype has no mail capability at all, so there is nothing here for QA to click.
+  _(Added 2026-09-01.)_
+
 ---
 
 ## 2. App-shell & global chrome (detail → `areas/01-app-shell.md`)
@@ -181,6 +188,14 @@ Reference: [Feedback API document](https://ecl.cyberlink.com/dc/DocView.aspx?d=4
 [API test tool](https://stage2.cyberlink.com/prog/support/app/feedback-test.htm) · field mapping
 derived from `CS Chatbot — Support ticket spec` §T3. **Two ids are still missing:** `prodVerId` for
 YouCam Muse Web (YCO's is `504`) and the `questionTypeId` for "Community Report".
+
+**Notification emails (area 12, `TBD-MAIL-*`).** Five email types are confirmed: four
+(verification, onboarding/welcome, MV generation complete, storyboard generation complete) are
+RD-implemented with Marcom copy, ready 2026-09-09; the fifth (subscription confirmation) is sent by
+**the payment company — Stripe in the US, 2Checkout elsewhere** — not RD, not this app (product
+owner, 2026-09-01, superseding the source document's 2Checkout-only statement). The prototype has
+no mail capability at all; this is a backend contract only, and its links to `/mv/result?id=` /
+`/mv/storyboard?id=` do not cold-resolve today (`TBD-MAIL-01`).
 
 ---
 

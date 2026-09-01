@@ -70,7 +70,45 @@ localized surfaces (nav + Profile). `/settings` copy is hardcoded English.
 - **History** — navigates to `/history` (area 05).
 - **Send Feedback** — opens `FeedbackDialog`: a **5-field support ticket** submitted through `MuseApi.submitFeedback` → **§3.1**. _(Replaced the one-textarea modal whose content was discarded, 2026-08-17. `TBD-PROF-02`'s frontend half is closed; the endpoint itself stays RD's.)_
 - **Settings** — navigates to `/settings` (via `localePath`). Sign Out is no longer on this screen (PROF-03 moved it into Settings).
-  **Edit-Profile modal** (`:176-197`): avatar **cycles `AVATAR_SAMPLES`** (mock "Change Photo", no real upload) 🔒; name (max 30); email **read-only**; Save → `updateProfile({name,avatar})` (in-memory; lost on reload → `TBD-GL-04`).
+  ⚠️ The `?demo=1` panel's `profileEmpty` flag drives an empty state on the content grid the MVs/Songs
+  tiles above link to — but that grid is `CreatorProfile` (`/creator?self=1`), which is **area 04's**
+  screen per this file's own §1 mapping note, not this one's. `profileEmpty` has **no consumer inside
+  `/profile` or `/settings` themselves** — grep confirms `CreatorProfile.tsx` is its only reader. Spec
+  the behaviour in area 04; nothing on this screen changes when it is toggled. `subOnApp` (the other
+  demo flag touching this area) already has its own note under **Settings** below.
+
+**Edit-Profile modal** (`:363-435`): avatar upload is a **real `<input type="file" accept="image/*">`**
+since 2026-09-01 (product owner) — **not** the `AVATAR_SAMPLES`-cycle mock this line described until
+then. **Change Photo** opens the native picker; a file that isn't `image/*` is rejected with the toast
+`Unsupported format. Please choose an image.`, one over **10MB** with `File too large. Maximum size is
+10MB.` (`onAvatarFile`, `:143-156`) — no dialog opens in either case. A valid pick opens
+`FacePickerModal` (`:445-458`) in a new **`variant="avatar"`** — the identical drag/scale/canvas-crop
+pipeline as `/mv/room`'s **Select a Face** (area 02 MV-P6-D), reused rather than reimplemented. The
+variant changes only three strings and the frame shape: title **Edit Profile Picture**, subtitle
+**Move and scale the box to select your avatar area.**, CTA **Set as Profile Picture**, and a
+**circular** crop frame (`border-radius: 50%` — see the boxRatio note below); it passes no
+`suggestions`, so the face-detection strip never renders. Confirming crops to a **256×256 JPEG data
+URL** (`cropToDataUrl`, same routine as MV-P6-D) held in `avatarDraft`; closing the crop dialog without
+confirming discards the pending pick (revokes the object URL) and leaves `avatarDraft` unchanged.
+`avatarDraft` itself is committed only by the Edit-Profile modal's own **Save**; its **Cancel**
+discards it too, because `openEdit()` re-seeds both drafts from the live profile on the next open —
+no new commit path exists alongside `nameDraft`'s. Name (max 30); email **read-only**; Save →
+`updateProfile({name,avatar})` (in-memory; lost on reload → `TBD-GL-04`). 🔒 **Nothing is uploaded
+anywhere** — a real backend has to replace the data URL with an upload plus a stored URL
+(`TBD-PROF-08`). `DESIGNER-TODO` B's "Profile avatar upload is completely blank" is closed by this.
+
+> 🐞 **A pre-existing crop bug was found and fixed alongside this feature (2026-09-01), and it affects
+> `/mv/room`'s Select a Face too — not something to re-file as new.** `FacePickerModal`'s `boxRatio`
+> correction (added 2026-08-14 so the crop box can be non-square) never actually re-measured once the
+> image loaded: the effect's first `ResizeObserver` read landed while a CSS min/max clamp still forced
+> the preview box square, latching `boxRatio` at `1`, and no later resize fired to correct it — probed
+> live, a settled 384×288 box still reported `boxRatio: 1.0000001`. Consequence: the on-screen frame
+> was drawn at `crop.size`% of **both** axes while `cropToDataUrl` has always cut a square `s × s`
+> region, so **the area a user framed was never the exact area they got**. It went unnoticed on the
+> square/rounded-square face-picker frame; the circular avatar frame turned the same mismatch into a
+> visible ellipse, which is how it was caught. Fixed by re-measuring on the `<img>`'s own `onLoad`, not
+> `ResizeObserver` alone. Cross-reference area 02 MV-P6-D rather than duplicating the mechanism here —
+> the fix is one shared component, not two.
 
 **Settings** (`SettingsView.tsx`): **Terms of Use** / **Privacy Policy** now **open the real legal
 pages** (`lib/legal.ts` `TERMS_URL`/`PRIVACY_URL`, new tab — PROF-06, same set as the sign-in modal
@@ -231,7 +269,15 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 ### PROF-P2 — Edit profile
 
 - **PROF-P2-S1** Tap edit pencil → Edit-Profile modal (draft seeded from live profile).
-- **PROF-P2-S2** **Change Photo** cycles sample avatars; edit name (≤30); email read-only. **Save** → `updateProfile` + "updated" toast (in-memory).
+- **PROF-P2-S2** **Change Photo** opens a native file picker (`image/*`); edit name (≤30); email
+  read-only. **Save** → `updateProfile` + "updated" toast (in-memory). _(Corrected 2026-09-01 from
+  code — Change Photo used to cycle sample avatars; see §3 and PROF-P2-S3/S4 below.)_
+- **PROF-P2-S3** A non-image file, or one over 10MB, is rejected with a toast and opens nothing; a
+  valid pick opens `FacePickerModal` (`variant="avatar"` — circular frame, avatar copy, no
+  face-suggestion strip; area 02 MV-P6-D is the shared mechanism).
+- **PROF-P2-S4** Drag/scale the circular crop box, then **Set as Profile Picture** → the 256×256 JPEG
+  crop becomes `avatarDraft` and the crop dialog closes; closing it instead (✕ / backdrop) discards
+  the pending pick and leaves `avatarDraft` as it was.
 
 ### PROF-P3 — Rows
 
@@ -256,15 +302,18 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 
 ## 5. Error & edge states
 
-| ID          | Trigger                                                        | Behaviour                                                                                                                                                                      |
-| ----------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **PROF-E1** | Logged out on `/profile`                                       | `AuthGuard` → sign-in modal (area 09).                                                                                                                                         |
-| **PROF-E2** | Direct-navigate `/settings` logged out                         | **Auth-gated (PROF-03, 2026-07-23):** `AuthGuard` opens the sign-in modal; dismiss → Home.                                                                                     |
-| **PROF-E3** | Reload after edit/subscribe                                    | Name/avatar/subscription reset to defaults (in-memory; only logged-in boolean persists → `TBD-GL-04`).                                                                         |
-| **PROF-E4** | Unsubscribe while subscribed                                   | Toast only; `subscribed` stays true (no state change). 🔒                                                                                                                      |
-| **PROF-E5** | Attachment pick would exceed 5 MB total                        | **Nothing is added** (the pick is refused whole, not truncated) and **one** message appears under the Attachment field — never a toast. Already-picked files are untouched.    |
-| **PROF-E6** | `submitFeedback` rejects (network / 500 / oversized multipart) | Dialog **stays open with every field and attachment preserved**; one error line above the actions ("Couldn't send. Please try again."); Send re-enabled. Nothing is discarded. |
-| **PROF-E7** | Dialog closed mid-draft (Cancel / Esc / backdrop)              | Draft is discarded with **no confirm**; the next open starts empty with Email re-prefilled.                                                                                    |
+| ID           | Trigger                                                        | Behaviour                                                                                                                                                                      |
+| ------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **PROF-E1**  | Logged out on `/profile`                                       | `AuthGuard` → sign-in modal (area 09).                                                                                                                                         |
+| **PROF-E2**  | Direct-navigate `/settings` logged out                         | **Auth-gated (PROF-03, 2026-07-23):** `AuthGuard` opens the sign-in modal; dismiss → Home.                                                                                     |
+| **PROF-E3**  | Reload after edit/subscribe                                    | Name/avatar/subscription reset to defaults (in-memory; only logged-in boolean persists → `TBD-GL-04`).                                                                         |
+| **PROF-E4**  | Unsubscribe while subscribed                                   | Toast only; `subscribed` stays true (no state change). 🔒                                                                                                                      |
+| **PROF-E5**  | Attachment pick would exceed 5 MB total                        | **Nothing is added** (the pick is refused whole, not truncated) and **one** message appears under the Attachment field — never a toast. Already-picked files are untouched.    |
+| **PROF-E6**  | `submitFeedback` rejects (network / 500 / oversized multipart) | Dialog **stays open with every field and attachment preserved**; one error line above the actions ("Couldn't send. Please try again."); Send re-enabled. Nothing is discarded. |
+| **PROF-E7**  | Dialog closed mid-draft (Cancel / Esc / backdrop)              | Draft is discarded with **no confirm**; the next open starts empty with Email re-prefilled.                                                                                    |
+| **PROF-E8**  | Change Photo: picked file is not an image                      | Toast "Unsupported format. Please choose an image."; no crop dialog opens; `avatarDraft` unchanged.                                                                            |
+| **PROF-E9**  | Change Photo: picked file exceeds 10MB                         | Toast "File too large. Maximum size is 10MB."; no crop dialog opens; `avatarDraft` unchanged.                                                                                  |
+| **PROF-E10** | Avatar crop dialog closed without confirming (✕ / backdrop)    | The pending pick's object URL is revoked and discarded; `avatarDraft` stays whatever it was before the pick (unset, or a previous crop).                                       |
 
 ---
 
@@ -291,12 +340,16 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 - **AC-PROF-15** — THE SYSTEM SHALL accept attachments of any type up to **5 MB in total**, and WHEN a pick would exceed that, SHALL add nothing and show one message inside the form, not a toast (PROF-E5).
 - **AC-PROF-16** — THE Type control SHALL be operable by keyboard alone (↑/↓, Home/End, Enter/Space, Esc) with `role="listbox"`/`role="option"` semantics and focus returning to its trigger, and SHALL pass axe at 375 and 1440. _(a11y — mutation-test it in both directions)_
 
+**Avatar upload (§3):**
+
+- **AC-PROF-18** — WHEN **Change Photo** is tapped, THE SYSTEM SHALL open a file picker restricted to `image/*`; WHEN the picked file is not an image or exceeds 10MB, THE SYSTEM SHALL reject it with a toast (PROF-E8/E9) and open no dialog; WHEN it is accepted, THE SYSTEM SHALL open `FacePickerModal` in `variant="avatar"` (circular crop frame, avatar copy, no face-suggestion strip) and, on confirm, hold a 256×256 JPEG data URL in `avatarDraft` until the Edit-Profile modal's own Save commits it via `updateProfile`; closing the crop dialog without confirming SHALL leave `avatarDraft` unchanged (PROF-E10). _(new 2026-09-01 — supersedes the `AVATAR_SAMPLES`-cycle behaviour previously described here and in PROF-P2.)_
+
 ---
 
 ## 7. Per-path QA checklist
 
 - [ ] **PROF-P1**: header/tiles/rows render; PRO pill only when subscribed; tiles route correctly (AC-01/02).
-- [ ] **PROF-P2**: edit → change photo cycles, name ≤30, email read-only, Save reflects in shell (AC-03).
+- [ ] **PROF-P2**: edit → Change Photo opens a real file picker (`image/*`) → a bad file (non-image or >10MB) rejects with a toast and opens nothing (AC-18, PROF-E8/E9) → a good file opens the circular crop dialog (avatar copy) → Set as Profile Picture → name ≤30, email read-only, Save commits the crop + name (AC-03, AC-18).
 - [ ] **PROF-P3**: Muse Pro → subscribe/credits (Upgrade pill only when not subscribed); Language switches; History nav; Send Feedback opens the form; Settings nav; Sign Out → Home (AC-04/05/06).
 - [ ] **PROF-P5**: five fields in order, Email prefilled, Send disabled → enabled (AC-10/11); payload has no User ID / Order ID (AC-12); success step + Done, **no toast** (AC-13); forced reject keeps the draft (AC-14, PROF-E6); 11 MB pick refused inline (AC-15, PROF-E5); Type control driven by keyboard only, axe clean at **375 and 1440** (AC-16).
 - [ ] **PROF-P4**: Terms/Privacy open the **real** legal pages in a new tab (`lib/legal.ts`); Unsubscribe demo toast (still subscribed); Delete demo toast → Home (AC-07, AC-09, E4). _("placeholder" corrected 2026-08-19 — §3/§6 and the code have used real links since AUTH-03.)_
@@ -315,6 +368,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 | **TBD-PROF-07** | 🔧 **Backend / CS** — **which endpoint does Muse feedback actually post to, and does it want a `title`?** The product owner's read (2026-08-27) is that Muse is **not** on YCO's CSB. If so, everything this spec inherited from the CSB/T3 documents is provisional: the four `questionTypeId` values, `prodVerId` `504`, and AC-22's 10 MB attachment cap. Concretely: (a) name the endpoint; (b) confirm `title` is not required — the Subject field is gone and `FeedbackTicketSchema.title` was deleted with it (C2 change, see `docs/CHANGELOG-RD.md`), and if it IS required the decision returns to the product owner rather than to an invented value (the Type label, a description excerpt and a fixed constant were all considered and rejected); (c) confirm CS can triage on `questionTypeId` + `q` alone, having lost the per-ticket subject line. **Blocks:** every real submit. |
 | **TBD-PROF-04** | 🔧 **Backend (RD)** — real Unsubscribe (store deeplink per App F19, cancels subscription) and real account Delete (permanent data removal). Both are demo toasts today.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | **TBD-PROF-05** | 🔧 **Backend (RD)** — real stats source. MVs/Songs counts come from static `SAMPLE_CREATIONS`; the Muse Pro row hardcodes "validity 2026-08-10".                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **TBD-PROF-08** | 🔧 **Backend (RD)** — real avatar storage. Change Photo's crop pipeline (§3, `FacePickerModal variant="avatar"`) outputs a 256×256 JPEG **data URL** held only in `avatarDraft`/in-memory `profile.avatar`; nothing is uploaded. A real backend must accept the crop as an upload and return a stored URL for `updateProfile` to use instead.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 See also global: `TBD-GL-01` (credits), `TBD-GL-04` (persistence), `TBD-GL-06` (localization).
 
@@ -326,6 +380,9 @@ See also global: `TBD-GL-01` (credits), `TBD-GL-04` (persistence), `TBD-GL-06` (
 flowchart TD
   Profile["/profile (account hub, auth)"] --> Tiles["Credits → CreditsDetail · MVs/Songs → /creator?self=1 (area 04)"]
   Profile --> Edit["Edit Profile (name/avatar, in-memory)"]
+  Edit --> AvatarPick["Change Photo → file picker (image/*, ≤10MB)"]
+  AvatarPick -->|"accepted"| AvatarCrop["FacePickerModal variant=avatar (circular crop)"]
+  AvatarCrop -->|"Set as Profile Picture"| Edit
   Profile --> Pro["Muse Pro → SubscribeModal / Manage (area 07)"]
   Profile --> Lang["Language → setLocale"]
   Profile --> Hist["History → /history (area 05)"]

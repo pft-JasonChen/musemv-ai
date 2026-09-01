@@ -452,6 +452,12 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 另外 `CreditsDialog` / `UpgradeDialog` 的價格與 Business Model 至少兩處不符
 (Weekly 寫 $9.99,實際 $19.99;credit pack 有兩檔對不上)。
 
+> ✅ **2026-09-01 更正 —— Weekly 那一項是我們錯,設計師是對的。**
+> 「YCM FINAL Pricing (confirmed)」(Data & Monetization,2026/09/08)確認 Weekly 就是
+> **$9.99**。程式碼早在 2026-08-28 的 Tab Bar 改版就改成 $9.99 了,只有這段文字沒跟上。
+> **這一則的 `/ week` 寫死問題仍然成立、仍要請設計師修**;credit pack 對不上也仍然成立
+> (本次六檔改了五檔)。只有 Weekly 價格這一句作廢 —— 見下方 S20。
+
 - **不擋開發,已在 WA 側處理完畢。** 依 S20「價格以 code 為準」,WA 版每張卡片的
   週期後綴改成逐案輸出(`per` 欄位),數字全部取自 `SUBSCRIPTION_PLANS` / `CREDIT_PACKS`。
   e2e 已斷言三張卡的價格與後綴,所以這件事不會再悄悄回來。
@@ -489,7 +495,12 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
   spacer 同樣落在最前面。所以這不是單一頁面的疏漏,是這個交錯手法本身的副作用 ——
   **上游修的時候兩頁一起修**(給 spacer 一個大於最後一個 section 的 `order`)。
 
-### A17. `CommunityProfilePage` 在 768px 讓 stats 文字撞進右側按鈕
+### A17. ~~`CommunityProfilePage` 在 768px 讓 stats 文字撞進右側按鈕~~ ✅ **2026-09-01 結案 —— 已修,實測無重疊**
+
+> 產品負責人裁示 + 實測:768px 下 `.community-profile__social`(播放數・愛心數・分享數)
+> 左緣 272px、右緣 592px;最近的右側控制項(Like/Share/More,`.community-profile__actions`)
+> 從 left 624px 開始 —— **兩者不重疊**。`document.documentElement.scrollWidth` 為 753px,
+> **≤ 768px,沒有水平溢出**。下面是當時發現時的原始記錄,保留備查。
 
 **發現於:** 2026-08-06,Phase 3 驗收(G5-b 六階寬度比對)。證據:`3e-creator-768.png`。
 
@@ -508,7 +519,10 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
   或讓它在空間不足時 `flex-shrink`。WA 這邊**沒有 override** —— 照 A16 的規矩,
   `designer-overrides.css` 只收「已寫進本文件、且產品負責人已裁示」的缺陷。
 
-### A18. 手機上「不是自己的」創作者頁**沒有任何分享入口**
+### A18. ~~手機上「不是自己的」創作者頁**沒有任何分享入口**~~ ✅ **2026-09-01 結案 —— 已修,實測有分享入口**
+
+> 產品負責人裁示 + 實測:375px 的 `/creator`(不是 `?self=1`)實測到 **3 個可見的 Share 按鈕**,
+> 每個 **28×28**(過 WCAG 2.5.8 的 24×24 門檻),頁面**沒有水平溢出**。下面是原始發現記錄,保留備查。
 
 **發現於:** 2026-08-06,Phase 3 驗收(G7 affordance 比對)。
 
@@ -524,7 +538,12 @@ DP 的 `.mv-player__floating` 只有標題 + 創作者 + like/share + CTA + tran
 - **需要設計判斷:** 手機上這一列要留 Share 嗎?若要,放哪裡(列上?長按?底部 sheet?)。
 - WA 這邊同樣**沒有 override**,先記在這裡等裁示。
 
-### A19. `/explore/mvs` 手機版只看得到 **14 支裡的 3 支** —— 已依 DP 拍板,但數字請設計師確認
+### A19. ~~`/explore/mvs` 手機版只看得到 **14 支裡的 3 支** —— 已依 DP 拍板,但數字請設計師確認~~ ✅ **2026-09-01 結案 —— 不是規則,是 mock seed 的產物**
+
+> 產品負責人裁示:「DP 只是示範,實際看後端拿到幾隻影片就顯示幾隻。」→ 規則改寫為
+> 「顯示後端回傳的全部項目」,不寫死 3/14 這個比例。3/14 是 mock seed(`TRENDING_MVS` 3 支 /
+> `NEW_MVS` 11 支)加上 DP 的 `--primary` 隱藏規則湊出來的數字,不是產品規則——
+> **不需要設計師再回答這一題,也不需要手機版雙 section 的設計。** 下面是原始發現記錄,保留備查。
 
 **發現於:** 2026-08-07,drop 2(`2670ed2`)的 re-sync。
 
@@ -571,7 +590,15 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
   把**這個損失本身寫成斷言**(和 A19 同一手法),免得下次交稿或下個 session
   順手把 WA 自己的 rail 加回來。
 
-### A21. Credits Detail 的「Buy More」少了 free user 狀態 —— 🔴 **擋開發,且已經改錯了 code**
+### A21. ~~Credits Detail 的「Buy More」少了 free user 狀態~~ —— ~~🔴 **擋開發,且已經改錯了 code**~~ ✅ **2026-09-01 結案 —— 不是缺口,CTA 已分流**
+
+> 產品負責人裁示:每個帳號一註冊就送 10 credits,所以 ledger 實際上不會是空的。
+> `CreditsView` 的 CTA **已經**依 `subscribed` 分支 —— 訂閱者是 **Buy More**,free user 是
+> **Get Muse Pro**。下面「需要設計師提供 free user 版 CTA」的三點請求**不再需要** ——
+> WA 自己補的「Get Muse Pro」文案就是拍板的版本,不用等 Figma 636:11875 的 free-user 稿。
+> 「code 已改成錯的,要改回來」那段(復原 `subscribed` gate)在寫下這一則之後已經照裁決做了,
+> `CreditsView.tsx` 與 `BuyCreditsModal.tsx` 目前都是依 `subscribed` 分支,兩種狀態都有回歸測試。
+> 下面是原始發現記錄,保留備查。
 
 **發現於:** 2026-08-12,spec 與 code 對齊掃描。**產品負責人已於同日裁決:spec 是對的。**
 
@@ -610,7 +637,11 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
 登記為 `specs/areas/07` 的 **TBD-CR-10**,`specs/OPEN-QUESTIONS.md` 亦有。
 **這是 spec 從頭到尾都寫對、code 走偏的案例** —— 所以 spec 沒有被改成配合 code。
 
-### A22. MV 角色照的「生物特徵同意」彈窗 —— **完全沒有稿,目前由我們代畫**
+### A22. ~~MV 角色照的「生物特徵同意」彈窗 —— **完全沒有稿,目前由我們代畫**~~ ✅ **2026-09-01 結案 —— 產品負責人:目前畫面即為定案**
+
+> 產品負責人:「目前我們畫的就是結案,請直接用。」`FaceConsentDialog` 現況即規格 ——
+> 不再需要正式稿,下面「需要設計師給的」那一段(未勾選/已勾選/320px 捲動三態 + 是否進 DP
+> 共用 dialog 家族)**不再是待答問題**。下面是原始發現記錄,保留備查。
 
 **新增於:** 2026-08-19,產品負責人指定。**不擋開發(已上線),但每次交稿都會重新變成問題。**
 
@@ -637,12 +668,12 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
 
 **文案已依 YCM 調整過四處**(產品負責人 2026-08-19 逐條確認),請一併看過:
 
-| 原文(Online Editor)                                        | YCM 版                                                   |
-| ------------------------------------------------------------ | -------------------------------------------------------- |
-| `your uploaded photo/video`                                   | `your uploaded photo`(角色照只吃 `image/*`)             |
-| `AI editing and generative AI experience`                     | `AI music video generation experience`                    |
-| `Any outcome of the Service will be stored ... up to 365 days` | **整句刪除**(YCM 的產出會一直留著,承諾 365 天是假的)   |
-| `...would be transmitted to any third parties...`             | 句尾加 `unless you choose to publish your creation to the community.` |
+| 原文(Online Editor)                                            | YCM 版                                                                |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `your uploaded photo/video`                                    | `your uploaded photo`(角色照只吃 `image/*`)                           |
+| `AI editing and generative AI experience`                      | `AI music video generation experience`                                |
+| `Any outcome of the Service will be stored ... up to 365 days` | **整句刪除**(YCM 的產出會一直留著,承諾 365 天是假的)                  |
+| `...would be transmitted to any third parties...`              | 句尾加 `unless you choose to publish your creation to the community.` |
 
 > 最後一列是**和既有產品規則的實際衝突**,不是潤稿:原句承諾「產出不會給第三方」,
 > 但 `PublishConfirmDialog` 寫的是「發布後會出現在社群,並可能被分享到我們的社群頻道」。
@@ -683,11 +714,11 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
 
 ## 🔗 直接打開來看(不用跑任何指令,貼上網址即可)
 
-| 狀態 | 網址 | 說明 |
-| --- | --- | --- |
-| ✅ 沒有歌詞(空狀態) | **`/song/result?id=sp-synth-wave`** | 可直接貼網址開啟。右半邊是 `ic_song` icon + 「No lyrics available for this one yet」,CTA 位置不變。 |
-| ✅ 有歌詞(對照組) | `/song/result?id=sp-pop-anthem` | 同一個元件,右半邊是歌詞欄,CTA 錨在歌詞下方。 |
-| ✅ 沒有歌詞・**自己的作品**(真實情境) | `/history` → 點 **「Whispers of the Past」** | 使用者自己的創作路徑,同一套空狀態。這一筆**刻意保留沒有歌詞**,見 `community.ts` 的註解。 |
+| 狀態                                  | 網址                                         | 說明                                                                                                |
+| ------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| ✅ 沒有歌詞(空狀態)                   | **`/song/result?id=sp-synth-wave`**          | 可直接貼網址開啟。右半邊是 `ic_song` icon + 「No lyrics available for this one yet」,CTA 位置不變。 |
+| ✅ 有歌詞(對照組)                     | `/song/result?id=sp-pop-anthem`              | 同一個元件,右半邊是歌詞欄,CTA 錨在歌詞下方。                                                        |
+| ✅ 沒有歌詞・**自己的作品**(真實情境) | `/history` → 點 **「Whispers of the Past」** | 使用者自己的創作路徑,同一套空狀態。這一筆**刻意保留沒有歌詞**,見 `community.ts` 的註解。            |
 
 > ⚠️ `h-*` 開頭的 History id **不能直接貼網址開啟** —— 那條路徑需要 in-memory flow state,
 > 冷開會被導走。所以上表第三列請從 `/history` 點進去。第一列的 `sp-*` 社群歌曲則可以直接開。
@@ -763,7 +794,27 @@ DP 的 `MVCreatePage` 稿上寫死的 **20 / 200** 因此在幾乎任何長度�
 
 ---
 
-### A26. `/watch` 缺【9:16 ↔ 3:4 切換】與【上滑看下一支】—— **V1 要做,等稿**
+### A26. ~~`/watch` 缺【9:16 ↔ 3:4 切換】與【上滑看下一支】~~ —— ✅ **2026-09-01 結案,但兩半的結論相反**
+
+> ⚠️ **這一則本身就是「文件過期害人做錯決定」的案例,請連同結論一起讀。**
+>
+> **【上滑看下一支】早就做好了 —— 這一則說「web 沒有」是錯的。**
+> `CommunityMvPlayer.tsx` 自 **2026-08-20 / 08-21** 就有完整實作:`.mv-player__stage` 上的
+> pointer 拖曳、`SWIPE_THRESHOLD_RATIO` / `SWIPE_TRANSITION` / `SWIPE_COMMIT_MS`、
+> **三格輪替的影片緩衝**、`router.replace()` 同步網址,**且不分寬度**。檔頭註解記了三次迭代,
+> 每次都掛名產品負責人,其中一次還附上 `code-snippets/mv-drag-preview.snippet.html` 當參考。
+>
+> 因為這一則沒有更新,2026-09-01 產品負責人是在「以為它不存在」的前提下說「web 不支援,
+> 從 spec 拿掉」—— 那是要移除一個**他以為不存在的東西**,不是要砍掉能動的程式碼。
+> 把實作攤開之後,**產品負責人確認:這個手勢留著。** 已補上 e2e 守著(原本零覆蓋,
+> 這正是差點被誤刪還沒人發現的原因)。
+>
+> **【9:16 ↔ 3:4 切換】才是真的沒有,而且確定不做。** 比例一直是依 `mvCoverRatio()` 逐項自動
+> 決定,沒有任何使用者可操作的切換控制項;spec 只保留一則 ⚠️ 記錄「App F10 有、web 沒有」當對照。
+>
+> `TBD-EXP-03` 已關閉(area 04)。下面「需要設計師回答的」三點**不再需要回答** ——
+> 上滑已經有答案(做完了),切換不做。下面是原始發現記錄,
+> 保留備查。
 
 **新增於:** 2026-08-19(規格盤點,產品負責人決定留在 V1)。
 
@@ -786,7 +837,13 @@ DP 的 `MVCreatePage` 稿上寫死的 **20 / 200** 因此在幾乎任何長度�
 
 ---
 
-### A27. 手機版 `/watch` 疊了兩個 header,且訪客會看到 Login —— **產品負責人指定由設計師重出圖**
+### A27. ~~手機版 `/watch` 疊了兩個 header,且訪客會看到 Login~~ —— ~~**產品負責人指定由設計師重出圖**~~ ✅ **2026-09-01 結案 —— 已修,實測確認**
+
+> 375px 實測,登入與訪客兩種狀態都測過:只有一個可見頁首 `.mv-player__mobile-header`
+> (70px);`.detail-navbar` 存在但 `display: none`;沒有 `.mobile-header`;**可見的 Login
+> 控制項 0 個**。下面「需要設計師回答的」三點問題已由這個實作結果回答:手機頁首用 DP 的頁內
+> header(返回 + 標題 + meta),全站 `MobileHeader` 不保留,訪客沒有登入入口(與 DP 一致)。
+> 下面是原始發現記錄,保留備查。
 
 **新增於:** 2026-08-20(產品負責人回報,附截圖)。**不擋開發,但畫面目前是壞的。**
 
@@ -818,16 +875,22 @@ DP 的 `MVCreatePage` 稿上寫死的 **20 / 200** 因此在幾乎任何長度�
 
 ---
 
-### A28. `/song/create` Custom 的 Enhance 兩模式選單 —— **設計已定案(桌機),手機版待答**
+### A28. ~~`/song/create` Custom 的 Enhance 兩模式選單~~ —— ~~**設計已定案(桌機),手機版待答**~~ ✅ **2026-09-01 結案 —— 手機版與桌機相同**
+
+> 375px 實測:同一個 `.enhance-dialog`,標題「What would you like to enhance?」,兩個選項
+> **Refine Idea** / **Refine Lyrics** 文案與桌機完全一致。`.enhance-dialog` **沒有任何
+> media query**,所以「手機版同桌機版」是**由結構保證的,不是巧合** —— 不需要切成底部 sheet。
+> 下面「仍未答 —— 手機版」那一點就此結案。**「Instrumental 開啟時的直接執行版本要不要有任何
+> 提示」這個子問題仍未回答**,不隨這次結案關閉。下面是原始發現記錄,保留備查。
 
 **新增於:** 2026-08-25(產品負責人指出)。**不擋開發。**
 
 Custom tab 按下 **Enhance** 會開一個小選單,標題「What would you like to enhance?」,兩個選項:
 
-| 選項 | 副標 | API `kind` |
-| --- | --- | --- |
-| **Refine Idea** | Sharpen the mood, tone, and detail | `song` |
-| **Refine Lyrics** | Polish wording, rhythm, and flow | `lyrics` |
+| 選項              | 副標                               | API `kind` |
+| ----------------- | ---------------------------------- | ---------- |
+| **Refine Idea**   | Sharpen the mood, tone, and detail | `song`     |
+| **Refine Lyrics** | Polish wording, rhythm, and flow   | `lyrics`   |
 
 引擎有兩種 refine 模式,所以**兩個選項各自對應一支 API,由 RD 負責**。前端只負責挑 `kind`。
 
@@ -866,11 +929,11 @@ Custom tab 按下 **Enhance** 會開一個小選單,標題「What would you like
 2026-08-27 依產品負責人指示移除 **Pricing / Blogs / Storybook Creator** 三條(V1 不做:WA 沒有
 `/blog`、沒有定價頁,也沒有 Storybook Creator 這個產品)。移除後 footer 剩下:
 
-| 欄位        | 連結                                          |
-| ----------- | --------------------------------------------- |
-| **Studio**  | Music Video Creator · Song Composer           |
-| **Support** | FAQ                                           |
-| **Company** | Terms of Service · Privacy Policy · Contact   |
+| 欄位        | 連結                                        |
+| ----------- | ------------------------------------------- |
+| **Studio**  | Music Video Creator · Song Composer         |
+| **Support** | FAQ                                         |
+| **Company** | Terms of Service · Privacy Policy · Contact |
 
 **FAQ 是刻意留下的佔位。** 產品負責人確認它「是 V1 的連結,頁面還沒準備好,之後會補」,所以
 Support 這一欄維持存在、只有一條連結。
@@ -880,13 +943,27 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
 就需要:Terms of Service、Privacy Policy、Contact、FAQ 的真實網址,以及 Studio 兩條要指向站內哪裡
 (推測是 `/mv/room` 與 `/song/create`,但沒人拍板過)。
 
+> ✅ **2026-09-01 更正:Contact 已經不在「5 條全部 `href="#"`」裡了。** 產品負責人裁示 Contact
+> 改成需要登入才能送出 feedback —— 它現在是 `<button onClick={() => requireLogin(() => setFbOpen(true))}>`,
+> 不是 `<a href="#">`:登出點擊會開 Sign in 對話框,登入後點擊會開 Send Feedback 表單。**這一條本則
+> 仍然開著,但範圍縮成 4 條** —— FAQ、Terms of Service、Privacy Policy 仍是 `href="#"`,需要真實網址;
+> Studio 兩條要指向站內哪裡也還沒拍板。
+
 > ⚠️ **這三條是「會隨版本回來」的偏移(deviation-that-decays)。** 下一次 DP 交稿如果又出現
 > Pricing / Blogs / Storybook Creator,那是 DP 走在 V1 範圍前面,不是 DP 在糾正我們 —— 請再移除一次。
 > 這與 `CLAUDE.md` 記的 `/mv/room` 的 `Ideas` 是同一類,現在共有兩則。
 
 ---
 
-### A30. 七個空狀態 / 錯誤狀態 —— 🔴 **這是下一個 session 的主要工作,等稿**
+### A30. ~~七個空狀態 / 錯誤狀態~~ —— ~~🔴 **這是下一個 session 的主要工作,等稿**~~ ✅ **2026-09-01 結案 —— 全部已接上,不需要設計稿**
+
+> 產品負責人裁示:「七個畫面只有字串換成其他的字串,畫面完全一樣,不需要出 7 個稿。」
+> 實測結果:`src/lib/demoStore.ts` 的 `DEMO_FLAGS` **九項全是 `status: "live"`**,每一項都有真的
+> 元件在消費(`HistoryView`、`ChooseSongModal`、`CreditsView`、`CreatorProfile`、`MvResult`、
+> `SubscribeModal`/`BuyCreditsModal`、`SettingsView`)。`/history?demo=1` 開 `historyEmpty` 實測
+> 畫面是「Your creations will appear here」+ Start Creating CTA。**下面「7 個裡有 6 個完全沒有
+> UI」那句話已經是舊狀態** —— 之後的 session 已經做完並把 `status` 翻成 `live`,不再等
+> `docs/DESIGNER-HANDOFF-2026-08-27.md` 的 15 張稿。下面是原始記錄,保留備查。
 
 2026-08-27 產品負責人列出七個「沒有內容 / 沒有紀錄 / 出錯」的畫面。目前 **7 個裡有 6 個完全沒有 UI**,
 第 7 個(My Songs)有一版我們自撰的。
@@ -899,15 +976,15 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
 設計師回答而不只是畫的問題。**請從那份開始,不要從這一則。**
 開發端的對應文件是 `docs/HANDOVER-2026-08-27-EMPTY-STATES.md`。
 
-| #   | 畫面                          | 要幾張稿                                          | 現況                                    |
-| --- | ----------------------------- | ------------------------------------------------- | --------------------------------------- |
-| 1   | History 無紀錄                | **4**(All · Music Videos · Songs · Liked）        | 一段通用文字,四個 tab 共用              |
-| 2   | Choose Song → My Songs 空     | 1                                                 | WA 自撰版已上線(MV-11),要不要換掉待答 |
-| 3   | Credits Detail 無紀錄         | **3**(All · Spend · Earn)                        | **完全空白**,連容器都沒有               |
-| 4   | Community profile 無作品      | **3**(自己 MV/Song · 別人 · `/profile` 兩個 tab） | **完全空白**                            |
-| 5   | 送審被 reject                 | 2 處(History 卡片 · `/mv/result`）+ 7 種原因文案  | 狀態機只有兩個 boolean,沒有第三態       |
-| 6   | 後端 API 錯誤                 | 1 整頁                                            | 全站沒有任何 `error.tsx`                 |
-| 7   | 手機訂閱者想在網頁取消        | 1 dialog                                          | `/settings` 的 Unsubscribe 只跳 toast    |
+| #   | 畫面                      | 要幾張稿                                          | 現況                                  |
+| --- | ------------------------- | ------------------------------------------------- | ------------------------------------- |
+| 1   | History 無紀錄            | **4**(All · Music Videos · Songs · Liked）        | 一段通用文字,四個 tab 共用            |
+| 2   | Choose Song → My Songs 空 | 1                                                 | WA 自撰版已上線(MV-11),要不要換掉待答 |
+| 3   | Credits Detail 無紀錄     | **3**(All · Spend · Earn)                         | **完全空白**,連容器都沒有             |
+| 4   | Community profile 無作品  | **3**(自己 MV/Song · 別人 · `/profile` 兩個 tab） | **完全空白**                          |
+| 5   | 送審被 reject             | 2 處(History 卡片 · `/mv/result`）+ 7 種原因文案  | 狀態機只有兩個 boolean,沒有第三態     |
+| 6   | 後端 API 錯誤             | 1 整頁                                            | 全站沒有任何 `error.tsx`              |
+| 7   | 手機訂閱者想在網頁取消    | 1 dialog                                          | `/settings` 的 Unsubscribe 只跳 toast |
 
 **最需要設計師注意的兩件事:**
 
@@ -921,12 +998,12 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
 
 ## B. 還沒有設計稿的畫面(擋該畫面,不擋其他)
 
-| 畫面                           | 狀況                                                                                                                                                        | 影響                                              |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| **`/mv/creating`**             | ⚠️ **DP 完全沒有 MV render 的進度畫面。** `MVResultPage` 只有結果態。Song 與 Storyboard 都有 processing stage,唯獨 MV render 沒有                           | 該 route 無法移轉,維持現行 UI                     |
-| ~~**`/share`、`/share/mv/[id]`**~~ | ✅ **2026-08-19 更正:這一列是錯的。** `ShareLinkView.tsx` 是 118 行的完整落地頁(logo header／影音播放／Download／過期態),`/share/mv/[id]` 是可用的 server redirect。稿仍未經設計師審過,但「沒有落地頁」不成立                                                                                                                      | 同上                                              |
-| **Landing page**               | 已決定延後。目前 `/home` 與 `/home-review-b` 兩版並存未選                                                                                                   | 連帶行銷 Navbar / Footer / 語言選單都不在本次範圍 |
-| **Profile 頭像上傳 + 裁切**    | ⚠️ **完全空白。** `AccountPage.tsx:106` 的 `Change Photo` 是**沒有 onClick 的死按鈕**;全套件沒有頭像用的 `type="file"`、沒有 `FileReader`、沒有任何 crop UI | 需要完整的上傳 → 裁切 → 預覽 → 儲存流程稿         |
+| 畫面                               | 狀況                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | 影響                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`/mv/creating`**                 | ⚠️ **DP 完全沒有 MV render 的進度畫面。** `MVResultPage` 只有結果態。Song 與 Storyboard 都有 processing stage,唯獨 MV render 沒有                                                                                                                                                                                                                                                                                                                                                                                                                      | ✅ **2026-09-01 更正:「沒有稿」不等於「沒有畫面」。** 該 route 一直都有共用的 `GenerationView`(`RenderGenerationScreen`)撐著:百分比、輪播階段字(如「Encoding video…」)、標題「Creating Your Music Video」、副標「Your cinematic MV is being rendered. We'll notify you when it's ready.」、進度條、「Estimated time remaining ~2 minutes」、**View Later**。第一版把「DP 沒出稿」寫成「該 route 無法移轉」——這是兩件事,已更正。仍然是「沒有 Figma 稿」,不是「沒有畫面」。 |
+| ~~**`/share`、`/share/mv/[id]`**~~ | ✅ **2026-08-19 更正:這一列是錯的。** `ShareLinkView.tsx` 是 118 行的完整落地頁(logo header／影音播放／Download／過期態),`/share/mv/[id]` 是可用的 server redirect。稿仍未經設計師審過,但「沒有落地頁」不成立                                                                                                                                                                                                                                                                                                                                          | 同上                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Landing page**                   | 已決定延後。目前 `/home` 與 `/home-review-b` 兩版並存未選                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 連帶行銷 Navbar / Footer / 語言選單都不在本次範圍                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ~~**Profile 頭像上傳 + 裁切**~~    | ✅ **2026-09-01 已實作。** `Change Photo` 已改成真的 `<input type="file" accept="image/*">`(非圖片 / 超過 10MB 用既有 toast 擋),打開的裁切彈窗是 `/mv/room` 的 `FacePickerModal` 新增的 `variant="avatar"` —— 同一套拖曳 / 縮放 / canvas 裁切,只換成**圓形**框(`border-radius: 50%`,實測 192×192 正圓)與三處文案(標題 Edit Profile Picture、說明 Move and scale the box to select your avatar area.、CTA Set as Profile Picture)。裁切結果是 256×256 JPEG data URL,由既有的 Save/Cancel 提交或丟棄;🔒 沒有真的上傳,後端要把 data URL 換成上傳 + 網址。 | 已完成,不再擋開發                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 > 關於頭像:設計師在 `PROJECT_CONTEXT.md` 已自述 MV Create 的臉部偵測是
 > 「綁定單張 `group.jpg` 的確定性模擬,任意上傳與真實座標抽取不在 prototype 範圍」。
@@ -949,11 +1026,11 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
 
 ## D. 需要設計判斷的產品差異(不是瑕疵,是取捨)
 
-| #           | 項目              | 現況落差                                                                                                                                                   |
-| ----------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **S2**      | MV 音訊最短 30 秒 | spec 要求 30 秒下限並顯示提示;DP 的 `TrimAudioSheet` 只有 `TRIM_MIN_GAP = 0.08`(軌長 8%),沒有絕對秒數下限。**已拍板保留 30 秒下限**,需要對應的錯誤提示視覺 |
-| **S20**     | Weekly 方案價     | DP 的 `UpgradeDialog` 寫 **$9.99**,程式碼是 **$19.99**。已拍板**以程式碼為準**,請下次交稿對齊(其餘兩檔 $29.99 / $59.99 一致)                               |
-| **credits** | 全站硬寫 `390`    | DP 有 19 處硬寫 credit 數字。我們會接上真實餘額 —— 這裡只是告知,**不需要設計師改**,但餘額不足 / 歸零的視覺狀態目前沒有稿                                   |
+| #           | 項目                                     | 現況落差                                                                                                                                                                                                                                                                                                      |
+| ----------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **S2**      | MV 音訊最短 30 秒                        | spec 要求 30 秒下限並顯示提示;DP 的 `TrimAudioSheet` 只有 `TRIM_MIN_GAP = 0.08`(軌長 8%),沒有絕對秒數下限。**已拍板保留 30 秒下限**,需要對應的錯誤提示視覺                                                                                                                                                    |
+| **S20**     | ~~Weekly 方案價~~ ✅ **2026-09-01 結案** | ~~DP 寫 $9.99,程式碼 $19.99,以程式碼為準~~ —— **反過來了:設計師是對的。** Final Pricing(2026/09/08「YCM FINAL Pricing (confirmed)」)確認 Weekly = **$9.99**,程式碼自 2026-08-28 起就是這個值。**不需要設計師做任何事。** 方案現在是六檔(Weekly / Monthly / Yearly × Basic / Pro),六檔價格與該文件**完全吻合** |
+| **credits** | 全站硬寫 `390`                           | DP 有 19 處硬寫 credit 數字。我們會接上真實餘額 —— 這裡只是告知,**不需要設計師改**,但餘額不足 / 歸零的視覺狀態目前沒有稿                                                                                                                                                                                      |
 
 ---
 

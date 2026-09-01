@@ -47,6 +47,28 @@ already-generated result, since none of those needs its own multi-step journey
 either. Renumbered every P1/P2 step from the insertions; every cross-reference
 below (criteria, the flow diagram, other steps) was updated to match — see D-11.
 
+Revised 2026-09-01 for the product owner's STYLE-field ruling on /song/create.
+Three rule changes, no new steps and no renumbering:
+
+  * GENRE is now NINE values in a fixed product-owner order (Pop, Hip-Hop, R&B,
+    Rock, Jazz, Electronic, Rap, Classical, Country), replacing the previous
+    eight. "Acoustic" and "Lo-fi" leave the product vocabulary entirely. The
+    request wrote the second one "Hip pop"; confirmed 2026-09-01 to mean the
+    existing "Hip-Hop" spelling, with "Rap" as a separate additional chip.
+  * GENRE and MOOD are now OPTIONAL and CLEARABLE. P2-S7's old rule — "Genre and
+    Mood always have exactly one selection" — was true of the code and is now
+    withdrawn: both were single-select but STICKY, so the first chip a user
+    touched could be moved but never removed. Both labels gained "(Optional)".
+    This is the one place where re-reading the old storyboard would mislead QA,
+    which is why the withdrawal is stated rather than the line just edited.
+  * VOCAL is HIDDEN while Instrumental is ON, and its value is cleared. That
+    makes P2-S3's "Lyrics is the ONLY control that hides under Instrumental"
+    false; it now names both. The asymmetry with the Lyrics box (which keeps its
+    text through the toggle) is deliberate and is explained in the step itself.
+
+Screenshots 06, 19, 21 and 22 were re-captured for this revision; the rest of the
+set is unchanged.
+
 Two real app bugs turned up while capturing this round, handled differently on
 the product owner's instruction:
   - Custom Lyrics' "Enhance" did nothing when tapped (EnhanceButton.tsx's
@@ -238,15 +260,25 @@ cfg = {
                 {
                     'shot': '06_custom_empty.png', 'num': 1,
                     'user': 'Switches to the Custom tab.',
-                    'system': 'Describe is replaced by a Lyrics textarea, plus Genre/Mood/Vocal chips and an optional Song Title; Create Song is enabled with no input needed.',
+                    'system': 'Describe is replaced by a Lyrics textarea, plus the STYLE section (Genre/Mood/Vocal chips) and an optional Song Title; Create Song is enabled with no input needed.',
                     'exact': [
                         'Section label: &ldquo;LYRICS / IDEA&rdquo; &mdash; the box takes either a finished lyric sheet or a style/scene brief, and has a fill button for each.',
                         'Placeholder: &ldquo;Write your lyrics here... Or leave blank &mdash; AI will generate them based on your chosen style and mood.&rdquo;',
-                        'Chip groups: &ldquo;GENRE&rdquo;, &ldquo;MOOD&rdquo;, &ldquo;VOCAL (Optional)&rdquo;',
-                        'Default selected chips: &ldquo;Pop&rdquo;, &ldquo;Uplifting&rdquo;',
+                        'Chip groups, all three now marked optional: &ldquo;GENRE (Optional)&rdquo;, &ldquo;MOOD (Optional)&rdquo;, &ldquo;VOCAL (Optional)&rdquo;.',
+                        'GENRE offers exactly nine chips, in this order: &ldquo;Pop&rdquo;, &ldquo;Hip-Hop&rdquo;, &ldquo;R&amp;B&rdquo;, &ldquo;Rock&rdquo;, &ldquo;Jazz&rdquo;, &ldquo;Electronic&rdquo;, &ldquo;Rap&rdquo;, &ldquo;Classical&rdquo;, &ldquo;Country&rdquo; (product owner, 2026-09-01).',
+                        'MOOD offers six: &ldquo;Uplifting&rdquo;, &ldquo;Melancholic&rdquo;, &ldquo;Romantic&rdquo;, &ldquo;Energetic&rdquo;, &ldquo;Calm&rdquo;, &ldquo;Dark&rdquo;.',
+                        'Chips selected on arrival: &ldquo;Pop&rdquo;, &ldquo;Uplifting&rdquo;. VOCAL starts with none.',
                         'Field label: &ldquo;SONG TITLE (Optional)&rdquo;',
                     ],
-                    'limits': ['Custom mode&rsquo;s Create Song is enabled by default (AC-SONG-01).'],
+                    'limits': [
+                        'Custom mode&rsquo;s Create Song is enabled by default (AC-SONG-01).',
+                        ('&ldquo;Pop&rdquo; and &ldquo;Uplifting&rdquo; are STARTING values, not required ones.',
+                         'All three STYLE fields are optional &mdash; Create Song has never read genre or mood '
+                         '(`isSongReady` looks only at mode and describe), and both can now be cleared by tapping '
+                         'the selected chip. They start non-empty so the result screen&rsquo;s &ldquo;genre &middot; mood&rdquo; '
+                         'line, which is the only thing it says about what was generated, is not blank for a user '
+                         'who never opens STYLE.'),
+                    ],
                     'focus': [{'box': [26.46, 11.11, 5.63, 3.78], 'type': 'action', 'label': 'Custom tab'}],
                 },
                 {
@@ -266,7 +298,17 @@ cfg = {
                     'system': 'The placeholder swaps to instrumental-specific copy; Create Song&rsquo;s cost rises; the Lyrics sample-fill button hides (Idea stays).',
                     'exact': ['Placeholder, both lines: &ldquo;No lyrics needed - AI will create a pure instrumental track.&rdquo; / &ldquo;Describe the mood or vibe of your instrumental...&rdquo; (AC-SONG-02c).'],
                     'limits': [
-                        'Lyrics is the ONLY control that hides under Instrumental; Idea stays visible either way (AC-SONG-02b).',
+                        ('Two controls hide under Instrumental: the Lyrics sample-fill, and the whole VOCAL chip group.',
+                         'VOCAL was added to this rule 2026-09-01 (product owner: &ldquo;If Instrumental toggle on, hide the '
+                         'VOCAL field&rdquo;). It is UNMOUNTED, not disabled &mdash; an instrumental track has no vocal to pick, '
+                         'so the field is not applicable rather than temporarily unavailable, and unmounting also keeps it out '
+                         'of the tab order and the accessibility tree. Idea stays visible either way (AC-SONG-02b).'),
+                        ('Turning Instrumental ON also CLEARS any Vocal already chosen, and turning it back OFF restores the '
+                         'group EMPTY &mdash; the earlier pick is not remembered.',
+                         'This is deliberately the opposite of the Lyrics box, which keeps its text through the toggle in both '
+                         'directions (AC-SONG-02). Lyrics can be preserved because instrumental briefs and lyric sheets live in '
+                         'two separate fields; there is no second vocal field, so preserving the pick would mean sending an '
+                         'instrumental job whose payload still says &ldquo;Female&rdquo;. QA: this asymmetry is intended, not a bug.'),
                         ('Enhance is absent here because the box is EMPTY, not because of the toggle.',
                          'EnhanceButton renders nothing while its field is blank, in either toggle state. With text present it stays visible under Instrumental &mdash; see P2-S5 and P2-S6.'),
                     ],
@@ -309,11 +351,14 @@ cfg = {
                 {
                     'shot': '19_custom_chips_selected.png', 'num': 7,
                     'user': 'Turns Instrumental back off, then selects Genre, Mood, and Vocal chips.',
-                    'system': 'Each group highlights the tapped chip; Vocal is optional and clears if the selected chip is tapped again.',
+                    'system': 'Each group highlights the tapped chip. All three groups are single-select and optional &mdash; tapping the selected chip again clears that group back to none.',
                     'exact': ['Chips shown selected here: &ldquo;R&amp;B&rdquo;, &ldquo;Energetic&rdquo;, &ldquo;Male&rdquo;'],
                     'limits': [
-                        'Genre and Mood always have exactly one selection; tapping another chip just moves it.',
-                        'Vocal is the one optional group: tapping its selected chip again clears it back to none.',
+                        'At most one chip per group. Tapping a different chip MOVES the selection; tapping the selected one CLEARS it.',
+                        ('All three groups clear on a second tap &mdash; changed 2026-09-01 (product owner).',
+                         'Genre and Mood used to be sticky: the click handler only ever SET a value, so the first chip a '
+                         'user touched could be moved but never removed. Vocal was already clearable and is unchanged. '
+                         'QA should test the clear path on all three, not just Vocal.'),
                     ],
                 },
                 {

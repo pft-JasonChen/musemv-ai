@@ -26,8 +26,16 @@ const BARS = [
 ];
 const DEFAULT_START_PCT = 15;
 const DEFAULT_END_PCT = 70;
-/** S2 / MV-01: an MV needs at least 30s of audio; the trim can't be shorter. */
-const MIN_TRIM_SEC = 30;
+/**
+ * S2 / MV-01: an MV needs at least 30s of audio; the trim can't be shorter.
+ *
+ * **Exported since 2026-09-01** because `MvRoom.importAudio` enforces the same
+ * floor at UPLOAD time (a track shorter than this can never be trimmed up to
+ * it, so it is rejected before this dialog ever opens). Two hardcoded 30s
+ * literals in two files is exactly the drift that makes one of them wrong
+ * later — there is one constant, and this is it.
+ */
+export const MIN_TRIM_SEC = 30;
 /** Handles can't cross. A PERCENTAGE clamp, deliberately looser than the 30s rule. */
 const MIN_GAP_PCT = 5;
 

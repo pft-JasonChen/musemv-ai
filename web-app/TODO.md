@@ -40,7 +40,7 @@ What "defined" means (all currently missing):
 
 Until then: do not build further community UI on top of the seed data.
 
-## 2. Accent pills fail WCAG AA contrast (needs a design decision)
+## 2. Accent pills fail WCAG AA contrast — ⚪ WON'T FIX (product owner, 2026-09-01)
 
 The small accent pills — "Create" in home/explore song rows, History filter
 chips, SongCompose mode chips, Creator tabs — put white 12–13px bold text on
@@ -53,6 +53,13 @@ because `--accent` is Figma-synced and token values must not be edited
 (AGENTS.md). Options for the design owner: darker accent variant for small
 text, larger/heavier label (≥ 19px bold only needs 3:1), or a different fill.
 Once decided: add the token, restyle the pills, delete the exclusions.
+
+> **2026-09-01 — closed WON'T FIX.** The product owner ruled the pills stay as
+> they are; this is no longer an open design decision waiting on an answer.
+> `e2e/a11y.spec.ts`'s `KNOWN_CONTRAST_PILLS` exclusion is now **permanent and
+> intentional**, not a placeholder pending a design-owner reply — do not treat
+> a future session's re-discovery of this contrast ratio as a new finding, and
+> do not remove the exclusion without a new product decision to reopen it.
 
 ## 3. Dev-dependency audit findings (tooling only, not shipped code)
 
@@ -160,16 +167,16 @@ re-checked and baselines re-recorded on Linux.
 > (←/→/↑/↓ = 5s, PageUp/PageDown = 10%, Home/End). The swap is markup- and class-name-identical,
 > so it is pixel-neutral by construction.
 >
-> | screen | component | block |
-> |---|---|---|
-> | `/song/result` | `SongResultView` | `.song-result__progress` |
-> | `/mv/result` | `MvResult` | `.mv-result__progress` |
-> | `/mv/edit` | `MvEditor` | `.mv-edit__progress` |
-> | `/song/play` | `SongDetailView` | `.song-detail-mobile-player__progress` |
-> | **`SongPlayBar`** | `SongPlayBar` | `.song-bar__progress` |
+> | screen            | component        | block                                  |
+> | ----------------- | ---------------- | -------------------------------------- |
+> | `/song/result`    | `SongResultView` | `.song-result__progress`               |
+> | `/mv/result`      | `MvResult`       | `.mv-result__progress`                 |
+> | `/mv/edit`        | `MvEditor`       | `.mv-edit__progress`                   |
+> | `/song/play`      | `SongDetailView` | `.song-detail-mobile-player__progress` |
+> | **`SongPlayBar`** | `SongPlayBar`    | `.song-bar__progress`                  |
 >
 > **The fifth was not on anyone's list.** `SongPlayBar` arrived with the drop-2 re-sync on
-> 2026-08-07, *after* this entry and `NEXT-SESSION`'s "four seek bars" were written, and it was
+> 2026-08-07, _after_ this entry and `NEXT-SESSION`'s "four seek bars" were written, and it was
 > ported with the same pointer-only defect. Found by grepping for the defect rather than working
 > from the list — worth remembering, because the list was accurate when written and wrong by the
 > time it was actioned.
@@ -230,9 +237,22 @@ The G7 affordance review diffed every migrated component against `5296f1a` contr
 Five findings were plain losses and were fixed with guards (see `docs/archive/PHASE-3-ACCEPTANCE.md`).
 These are the rest — each needs a designer or product answer first, so none was patched around.
 
-**7a. ANSWERED, AND DEFERRED IN FULL.** Decision (product owner, 2026-08-06): **±15s comes back
-and coexists with prev/next** — it is not either/or. Implementation waits for the DP drop, and
-so does the keyboard-seek half, which was offered separately and deferred with it.
+**7a. ~~ANSWERED, AND DEFERRED IN FULL.~~ ✅ REMOVED 2026-09-01 — the feature itself is gone, not
+waiting on artwork.** The product owner removed the ±15s skip controls from the product on
+2026-09-01: there are no ±15s controls anywhere in Muse and none are planned, so the 2026-08-06
+"comes back and coexists with prev/next" decision below is superseded, not merely still pending.
+This was never blocked on effort — it was blocked on a designer glyph for a control that no
+longer exists to need one. `grep -rn "±15\|nudge" src` (outside tests) now returns nothing; the
+keyboard-seek half this item bundled in is unaffected and stays closed via item #5 above (all
+five seek bars are keyboard-operable `SeekBar`s regardless of ±15s). Nothing further to do here —
+do not re-open this waiting on a designer drop.
+
+Original entry, kept for history:
+
+**ANSWERED, AND DEFERRED IN FULL** _(superseded — see above)_. Decision (product owner,
+2026-08-06): **±15s comes back and coexists with prev/next** — it is not either/or.
+Implementation waits for the DP drop, and so does the keyboard-seek half, which was offered
+separately and deferred with it.
 
 Two things the next session must not have to re-derive:
 

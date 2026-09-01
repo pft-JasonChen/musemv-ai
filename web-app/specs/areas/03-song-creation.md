@@ -27,6 +27,31 @@ credit pill shows the **live balance** (SONG-05). Generation itself charges **6 
 (instrumental)** on start (GL-01, insufficient → IAP) — `songCost(instrumental)`, repriced
 2026-08-12 from a flat `COST_SONG = 10` placeholder per spec area 11 §3.1.
 
+**GENRE / MOOD / VOCAL respecified (product owner, 2026-09-01).** All three STYLE chip rows are
+**optional, single-select, and tap-to-clear** — tapping the already-selected chip in a row now
+unsets it, where previously GENRE and MOOD were single-select but STICKY (nothing could unset
+them once touched; VOCAL already cleared this way). `GENRES` (`src/lib/mv/mock.ts`) is now
+**nine** values in the product owner's order — `Pop, Hip-Hop, R&B, Rock, Jazz, Electronic, Rap,
+Classical, Country` — replacing the previous eight (`Acoustic` and `Lo-fi` are gone from the
+vocabulary); `MOODS` is **unchanged**. Full detail, including the new Instrumental-hides-VOCAL
+rule, is in §3. _(One line for the record: the request wrote the second genre "Hip pop"; the
+product owner confirmed 2026-09-01 this means the existing **`Hip-Hop`** spelling, with `Rap` as
+a separate, additional chip — not a new "Hip Pop" genre.)_
+
+**GENRE and MOOD now START EMPTY, not pre-filled (product owner, 2026-09-01, SECOND pass — reversing
+a decision made earlier the SAME DAY).** `DEFAULT_SONG_COMPOSE.genre` and `.mood`
+(`src/lib/mv/types.ts`) are now `""` / `""`, not `"Pop"` / `"Uplifting"`. The first pass of this
+change made the two fields clearable but left the old seed values in place, reasoning that
+`SongResultView`'s `genre · mood` line — the only thing the result screen says about what was
+generated — would otherwise read blank for anyone who never opened STYLE. **The product owner
+overruled that reasoning:** a field that arrives pre-filled does not read as optional regardless of
+what the CTA does, and preserving one line of result-screen text is not a good enough reason to make
+a user un-pick a genre they never chose. `SongResultView` already had the fix for the visible
+consequence in place before this decision (`visibility: hidden`, not `display: none`, on the
+`genre · mood` line when either value is empty — panel height is unchanged; see §3), so the empty
+defaults ship with no other code change. See §3, `SONG-P1-S3` below; `AC-SONG-15`/`16`/`17` (added
+the same day) never asserted a starting value, so none needed rewording beyond this note.
+
 **Two of SONG-01/02 no longer describe the code — both by decision, both recorded here:**
 
 - ⚠️ **SONG-01's BPM slider and Key selector are GONE from the form** (plan S4, slice 3j). The
@@ -69,9 +94,43 @@ History alone.
 
 - `mode`: `simple` (default) | `custom`.
 - `describe`: string (Simple), max 2500 (`DESCRIPTION_MAX`).
-- `instrumental`: boolean (both modes) — when ON in Custom, the box **keeps whatever is in it** and only the **Lyrics** sample-fill hides; the placeholder (visible only while the box is empty) swaps to the instrumental copy (see `AC-SONG-02` / `AC-SONG-02c`).
+- `instrumental`: boolean (both modes) — when ON in Custom, the box **keeps whatever is in it** and only the **Lyrics** sample-fill hides; the placeholder (visible only while the box is empty) swaps to the instrumental copy (see `AC-SONG-02` / `AC-SONG-02c`). **VOCAL follows a different, NEW rule** — see the bullet below; `AC-SONG-02` governs only the Lyrics text box and does not extend to VOCAL.
 - `lyrics`: string (Custom), max 2500.
-- `genre` (default "Pop"), `mood` (default "Uplifting"), `vocal` (nullable, optional), `title` (optional).
+- **`genre` / `mood` / `vocal` — all three OPTIONAL, single-select, tap-to-clear (product owner,
+  2026-09-01).** `genre` and `mood` both start **empty** (`DEFAULT_SONG_COMPOSE.genre = ""`,
+  `.mood = ""`). ⚠️ _(Corrected 2026-09-01, second pass, same day: this row previously said `genre`
+  starts at `"Pop"` and `mood` at `"Uplifting"`, framed as "starting values, not required ones." The
+  product owner overruled keeping those seeds — see the callout in §1 — so the row now describes
+  the code as it actually ships.)_ `isSongReady()` has never read either field, so the CTA was
+  already optional on them before either change; what changed across both passes is the _control_
+  (clearability) and now also the _starting value_ (empty, not seeded). GENRE and MOOD were
+  single-select but STICKY (`onClick` set the value and nothing unset it, so the first chip a user
+  touched became permanent) — tapping the already-selected chip now clears it
+  (`patch({ genre: s.genre === g ? "" : g })`, same shape for `mood`), and both labels gained an
+  `(Optional)` suffix (`song-create__chip-label-optional`). VOCAL was already tap-to-clear
+  (`nullable`) before this change; it gains the Instrumental-hides rule below instead.
+  `GENRES` is now the **nine** values `Pop, Hip-Hop, R&B, Rock, Jazz, Electronic, Rap, Classical,
+Country`, in this exact product-owner order (not alphabetical) — replacing the previous eight
+  (`Pop, R&B, Electronic, Hip-Hop, Acoustic, Jazz, Classical, Lo-fi`); `Acoustic` and `Lo-fi` are
+  gone from the vocabulary. `MOODS` is **unchanged**: `Uplifting, Melancholic, Romantic, Energetic,
+Calm, Dark` — only the selection semantics were respecified, not the option list. `title` stays
+  optional, unaffected by this change.
+  > One line for the record: the product owner's request wrote the second genre as "Hip pop";
+  > confirmed 2026-09-01 that this means the existing **`Hip-Hop`** spelling `GENRES` already
+  > carried, with `Rap` as a separate, additional chip — not a new "Hip Pop" genre.
+- **VOCAL is HIDDEN (unmounted from the DOM), not disabled, while Instrumental is ON** — an
+  instrumental track has no vocal to pick, so the field is _not applicable_, not temporarily
+  unavailable; unmounting also keeps it out of the tab order and the a11y tree, which
+  `disabled`+`opacity` would not reliably do. **Turning Instrumental ON also clears `vocal` to
+  `null`**, via the shared `setInstrumental()` handler both mode tabs' `ToggleSwitch`es call —
+  `vocal` is C2 contract surface RD consumes, and hiding the control without clearing the value
+  would ship an instrumental job whose payload still carried `vocal: "Female"`. **Turning
+  Instrumental back OFF restores the VOCAL group empty — the prior pick is NOT restored.** This is
+  deliberately NOT the treatment `AC-SONG-02` gives the Lyrics box (which never discards typed
+  text on either transition): lyrics survive because they live in two separate fields (`lyrics` /
+  `instrumentalText`) with nothing to contradict, while there is no second vocal field to park a
+  pick in — "preserve it" and "don't send a contradiction" cannot both be true for a single field.
+  See `AC-SONG-15`/`AC-SONG-16`/`AC-SONG-17` and `SONG-E4`.
 - **CTA-ready** (`isSongReady`): **Custom → always ready**; **Simple → `describe.trim() !== ""`**.
 - Cost: `songCost(instrumental)` — **6 vocal / 12 instrumental** — shown live on the **Create Song**
   CTA, so toggling Instrumental changes the number. (Was a flat `COST_SONG = 10`; repriced
@@ -128,18 +187,18 @@ History alone.
 
 `Enhance` is one pill with two behaviours, and **Instrumental is what selects between them**:
 
-| Where | Instrumental | Behaviour |
-| --- | --- | --- |
-| **Custom** | OFF | Opens a menu titled **"What would you like to enhance?"** — the box may hold a lyric sheet or a brief, so the front end cannot know which the user meant |
-| **Custom** | ON | **No menu.** Runs **Refine Idea** (`kind: "song"`) on the first tap — lyrics are not supported in this mode, so there is nothing to choose between |
-| **Simple** | either | **No menu.** Runs `kind: "song"` directly — Simple has only the one field |
+| Where      | Instrumental | Behaviour                                                                                                                                                |
+| ---------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Custom** | OFF          | Opens a menu titled **"What would you like to enhance?"** — the box may hold a lyric sheet or a brief, so the front end cannot know which the user meant |
+| **Custom** | ON           | **No menu.** Runs **Refine Idea** (`kind: "song"`) on the first tap — lyrics are not supported in this mode, so there is nothing to choose between       |
+| **Simple** | either       | **No menu.** Runs `kind: "song"` directly — Simple has only the one field                                                                                |
 
 The chooser's two entries:
 
-| Choice | Sub-label | `enhancePrompt` `kind` |
-| --- | --- | --- |
-| **Refine Idea** | Sharpen the mood, tone, and detail | `song` |
-| **Refine Lyrics** | Polish wording, rhythm, and flow | `lyrics` |
+| Choice            | Sub-label                          | `enhancePrompt` `kind` |
+| ----------------- | ---------------------------------- | ---------------------- |
+| **Refine Idea**   | Sharpen the mood, tone, and detail | `song`                 |
+| **Refine Lyrics** | Polish wording, rhythm, and flow   | `lyrics`               |
 
 **The engine has two refine modes, so each choice is its own API call — RD owns both**
 (product owner, 2026-08-25). The front end only picks the `kind`; it does not decide what
@@ -184,10 +243,9 @@ that swaps the active track. Playback is uncapped for everyone (SONG-02 cancelle
   and local-only (no API, no History write). The spec's long-standing rule was **no Like on an own
   creation** — flagged, not resolved. Product owner / designer call: keep DP's control, or drop it
   as WA did. Until then AC-SONG-06's "and no Like" is a KNOWN divergence.
+
   > **RESOLVED 2026-08-19: the Like stays.** Product owner — a user may like their own creation.
   > It remains local state until `TBD-EXP-08` gives likes a real backing store.
-- ⚠️ **±15s nudge is gone** — DP's transport spends those two slots on prev/next through the
-  playlist. Seek by dragging the progress bar is unaffected.
 
 - **Use in Music Video** → `patchCompose({ song: {source:"library", …, lyrics} })` + `/mv/room` (area 02).
 - **Recreate** (SONG-03) → charges **the same as a fresh generation** (`songRecreateCost` — vocal 6 / instrumental 12, spec area 11 §3.1) via `resetForRecreate()` and routes to `/song/creating`, **keeping the previous song in History**; below that balance it opens `BuyCreditsModal` instead.
@@ -207,7 +265,7 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **SONG-P1-S0 (side rail, 2026-08-06)** Same two-mode aside as `/mv/room` (area 02 MV-P1-S0): **"Trending Songs"** over `TOP_PICKS_SONGS` with a "See all" → `/explore/songs`, or **"My Creations"** over the user's own finished songs from `useHistory()`, no "See all", each row opening `/song/result?id=`. Requires `loggedIn` **and** at least one completed song.
 - **SONG-P1-S1** Arrive `/song/create` (**guest-reachable** — the route guard was removed 2026-08-12, the gate is on the Create Song button; see `SONG-E3` / `AC-AUTH-08`); **Simple** tab default; **Create Song** disabled until `describe` non-empty. Hint "Describe your song to continue."
 - **SONG-P1-S2** Toggle **Instrumental** (both modes). Simple: describe + **Idea** fill + Enhance. Toggling **never changes the text** in either box — see `AC-SONG-02`.
-- **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics** textarea (or "No lyrics needed" when Instrumental) + **Idea**/**Lyrics** sample fills (Idea survives Instrumental, Lyrics does not) / **Enhance** (survives Instrumental, but drops its chooser there — `AC-SONG-14`); Genre/Mood chips + Vocal (optional, clearable); optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
+- **SONG-P1-S3** Switch to **Custom**: free-form **Lyrics** textarea (or "No lyrics needed" when Instrumental) + **Idea**/**Lyrics** sample fills (Idea survives Instrumental, Lyrics does not) / **Enhance** (survives Instrumental, but drops its chooser there — `AC-SONG-14`); **GENRE / MOOD / VOCAL chips — all three optional, single-select, tap-to-clear, and all three render with NOTHING selected on arrival** (product owner, 2026-09-01: GENRE and MOOD gained clearing, VOCAL already had it; separately, and later the same day, GENRE/MOOD's pre-filled `"Pop"`/`"Uplifting"` seeds were also removed — see §1/§3); **VOCAL disappears from the DOM entirely while Instrumental is ON** and its stored value is cleared, reappearing empty (not restored) when Instrumental goes back OFF — see §3, `AC-SONG-15`–`17`; optional Title. Custom CTA always enabled. _(No BPM/Key row since 3j — §1.)_
 - **SONG-P1-S4** Tap **Create Song** (`songCost(instrumental)` — **6** vocal / **12** instrumental) → `resetForNewSong()` → `/song/creating`. _(Was a flat `10`; repriced 2026-08-12, journey text corrected 2026-08-19.)_
 
 ### SONG-P2 — Generation
@@ -226,12 +284,12 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 
 ## 5. Error & edge states
 
-| ID          | Trigger                                                                     | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ----------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **SONG-E1** | Song job fails                                                              | Shared `GenerationView` failure state: "Generation Failed" + **Back** (`/song/create`) + **Retry**, "credits were not charged". **`[fail]` in the Simple-mode `describe` triggers a mock failure at ~60% (`mock.ts:137`); `lyrics` does not — so a Custom-mode song cannot be failed via the UI.** Production trigger → `TBD-SONG-06`.                                                                                                                                                                                                                       |
-| **SONG-E2** | Reload/deep-link `/song/creating` or `/song/result` with no in-memory state | Flow-guard → `router.replace("/song/create")`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| **SONG-E3** | Logged-out user opens `/song/create`                                        | **The page renders — no route guard.** ⚠️ **Corrected 2026-08-12:** this row said "`AuthGuard` → sign-in modal". `/song/create` lost its `AuthGuard` by product decision so a guest can compose before signing in, matching `/mv/room`. The gate moved to **Create Song**: `SongCompose.generate()` wraps the whole action in `requireLogin`, and the GL-01 balance check runs INSIDE that callback so a guest is never shown the credits upsell for an account they do not have. Dismissing the modal leaves the draft intact. See area 09 §3 / AC-AUTH-08. |
-| **SONG-E4** | Instrumental ON (Custom)                                                    | Lyrics field keeps its contents and only the **Lyrics** sample-fill hides; result typically has no Lyrics sheet. ⚠️ Because the toggle never clears the box, a path of type lyrics → enable Instrumental can still carry lyrics into the result (→ `TBD-SONG-01`). |
+| ID          | Trigger                                                                     | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SONG-E1** | Song job fails                                                              | Shared `GenerationView` failure state: "Generation Failed" + **Back** (`/song/create`) + **Retry**, "credits were not charged". **`[fail]` in the Simple-mode `describe` triggers a mock failure at ~60% (`mock.ts:137`); `lyrics` does not — so a Custom-mode song cannot be failed via the UI.** Production trigger → `TBD-SONG-06`.                                                                                                                                                                                                                                    |
+| **SONG-E2** | Reload/deep-link `/song/creating` or `/song/result` with no in-memory state | Flow-guard → `router.replace("/song/create")`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **SONG-E3** | Logged-out user opens `/song/create`                                        | **The page renders — no route guard.** ⚠️ **Corrected 2026-08-12:** this row said "`AuthGuard` → sign-in modal". `/song/create` lost its `AuthGuard` by product decision so a guest can compose before signing in, matching `/mv/room`. The gate moved to **Create Song**: `SongCompose.generate()` wraps the whole action in `requireLogin`, and the GL-01 balance check runs INSIDE that callback so a guest is never shown the credits upsell for an account they do not have. Dismissing the modal leaves the draft intact. See area 09 §3 / AC-AUTH-08.              |
+| **SONG-E4** | Instrumental ON (Custom)                                                    | Lyrics field keeps its contents and only the **Lyrics** sample-fill hides; result typically has no Lyrics sheet. ⚠️ Because the toggle never clears the box, a path of type lyrics → enable Instrumental can still carry lyrics into the result (→ `TBD-SONG-01`). **VOCAL is the opposite of this row** (product owner, 2026-09-01, §3): the VOCAL chip group is unmounted from the DOM and its stored value cleared to `null` on toggle-on, and is NOT restored on toggle-off — read as the VOCAL twin of this error state, not a re-statement of it. See `AC-SONG-17`. |
 
 ---
 
@@ -241,6 +299,9 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **AC-SONG-01b** — WHILE logged out, WHEN `/song/create` is opened, THE SYSTEM SHALL render the full compose screen with no sign-in modal; and THE SYSTEM SHALL open the sign-in modal only when the user activates **Create Song**. THE SYSTEM SHALL NOT show the insufficient-credit upsell to a logged-out user — `requireLogin` wraps the GL-01 balance check, so sign-in always comes first. _(new 2026-08-12; see area 09 AC-AUTH-08)_
 - **AC-SONG-02** — WHEN Instrumental is toggled in Custom, THE SYSTEM SHALL leave the Lyrics box contents **unchanged** in both directions, and SHALL hide only the **Lyrics** sample-fill while it is ON. THE **Idea** fill and **Enhance** SHALL remain available while Instrumental is ON, and the song SHALL generate without a Lyrics sheet. _(Rewritten 2026-08-26: a rule that cleared the box on toggle-on was in place for one day and is withdrawn — the toggle is not a destructive control.)_
   > _Rewritten 2026-08-25 (product owner). The previous rule was the opposite — "toggling does not clear previously-typed lyrics" — which left the old prompt sitting under an instrumental placeholder that contradicted it. The two drafts are swapped, so neither piece of text is lost. Closes the clearing half of `TBD-SONG-01`._
+  > _Scope note, 2026-09-01: this AC governs the Lyrics text box and its sample-fill ONLY. It does_
+  > _NOT extend to the VOCAL chip — VOCAL is hidden AND cleared on the same toggle, the opposite_
+  > _treatment. That is deliberate, not a contradiction: see `AC-SONG-17` and §3._
 - **AC-SONG-02c** — WHILE Instrumental is ON, the Lyrics box placeholder SHALL read exactly:
   `No lyrics needed - AI will create a pure instrumental track.` / newline / `Describe the mood or vibe of your instrumental...` _(copy fixed by the product owner 2026-08-25; the previous text put the two sentences in the opposite order.)_
 - **AC-SONG-02b** — WHEN the user activates **Idea**, THE SYSTEM SHALL replace the active box's contents with a randomly chosen `SONG_IDEA_PROMPTS` entry other than the one already there; and WHEN the user activates **Lyrics** (Custom, non-instrumental), THE SYSTEM SHALL do the same from `LYRIC_PRESETS`. **Idea** SHALL be present in both tabs and SHALL remain available while Instrumental is ON; **Lyrics** SHALL NOT be rendered while Instrumental is ON. _(new 2026-08-24 — the buttons were removed 2026-08-06 and restored with the product owner's copy; guarded by `e2e/behaviour-regressions.spec.ts` → `3j / 2026-08-24`.)_
@@ -249,7 +310,6 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **AC-SONG-05** — WHILE the song job is `processing`, THE SYSTEM SHALL show progress, step, an estimate, and View Later → `/history`; on `done` navigate to `/song/result`.
 - **AC-SONG-11** — WHEN `/song/result` is reached from a `/history` row, THE SYSTEM SHALL show that row's song (flow state is seeded by `useOpenCreation`, area 05) and carry the row id in `?id=` so Share builds that row's link. THE SYSTEM SHALL expose a **Back** control on this stage — DP switches it from `RoomNavbar` to `DetailNavbar backHref="/history"` — going `router.back()` with `/history` as the fallback. _(An earlier song has no stored genre/mood, so the genre · mood line is omitted rather than invented.)_
 - **AC-SONG-06** — WHEN `/song/result` loads, THE SYSTEM SHALL expose drag-to-seek, prev/next across My Creations, Share, Download, a Lyrics sheet (when lyrics exist), a Publish toggle, Use in Music Video, and Recreate. Playback SHALL NOT be capped for any account.
-  - _(a)_ ~~"**±15s**"~~ — **WITHDRAWN 2026-08-20.** 產品負責人：完全依照 DP。DP's transport is prev / play / next and there is no ±15s anywhere in it; the requirement described the pre-migration WA player. `TBD-SONG-09` closed — this is no longer a gap, and the missing glyph no longer blocks anything.
   - _(b)_ ~~"**and no Like**"~~ — **WITHDRAWN 2026-08-19.** The product owner decided a user MAY like their own work, so the ported Like is correct and this clause was the mistake. `TBD-SONG-08` closed.
   - _(c)_ the 30s cap it required is cancelled by S3 (§1) — already decided.
 - **AC-SONG-11b** — ⚠️ **SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.** It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and `songCompose.{bpm,key}` persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident. _(Renumbered from a second `AC-SONG-11` on 2026-08-19; the history-entry criterion above keeps the plain id.)_
@@ -260,12 +320,16 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 - **AC-SONG-08** — IF the song job fails, THEN THE SYSTEM SHALL show the shared error state with Back + Retry.
 - **AC-SONG-09** — WHEN a song job starts, THE SYSTEM SHALL charge `songCost(instrumental)` (6 vocal / 12 instrumental) immediately and refund it if the job fails. _(Corrected 2026-08-19 — this previously said the balance must NOT change, which is the opposite of `SongFlowProvider.tsx:62-67` and of the same rule for MV in `AC-MV-19`. It was the song-side twin of the withdrawn `AC-MV-15`.)_
 - **AC-SONG-10** — THE SYSTEM SHALL render `/song/create`, `/song/creating`, `/song/result` at 320/375/768/1024/1440/1920px with no overflow. _(visual)_ _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
+- **AC-SONG-15** — WHEN Custom mode renders the STYLE section, THE SYSTEM SHALL offer exactly the **nine** GENRE chips, in this order: `Pop, Hip-Hop, R&B, Rock, Jazz, Electronic, Rap, Classical, Country` (`GENRES`, `src/lib/mv/mock.ts`). _(new 2026-09-01, product owner — replaces the previous eight-value list; see §1/§3.)_
+- **AC-SONG-16** — WHEN a GENRE or MOOD chip is tapped, THE SYSTEM SHALL select it if it is not already the selected chip in its row (single-select — selecting one clears any other in the same row), and SHALL clear the row back to no selection if the tapped chip is already selected. Neither field SHALL be required by `isSongReady()`. _(new 2026-09-01, product owner — GENRE and MOOD were single-select but could not previously be cleared once touched; VOCAL already behaved this way, see `AC-SONG-17`.)_
+- **AC-SONG-17** — WHILE Instrumental is ON, THE SYSTEM SHALL NOT render the VOCAL chip group (removed from the DOM, not merely visually hidden or disabled) and SHALL clear any stored `vocal` value to `null`. WHEN Instrumental is toggled back OFF, THE SYSTEM SHALL re-render the VOCAL group with **no** chip selected — the prior pick is NOT restored. _(new 2026-09-01, product owner: "If Instrumental toggle on, hide the VOCAL field." Deliberately the opposite of `AC-SONG-02`'s Lyrics-box treatment — see §3 for why the two fields cannot both be handled the same way.)_
 
 ---
 
 ## 7. Per-path QA checklist
 
 - [ ] **SONG-P1**: Simple CTA gated by describe; Custom CTA always on; Instrumental hides lyrics (AC-01/02); **Idea** fills in both tabs and **Lyrics** in Custom, neither repeating the current value (AC-02b).
+- [ ] **SONG-P1 / STYLE (2026-09-01)**: Custom's GENRE row shows exactly the nine chips in order `Pop, Hip-Hop, R&B, Rock, Jazz, Electronic, Rap, Classical, Country` (AC-15). Tap a GENRE chip → selects; tap the SAME chip again → clears back to no selection; same for MOOD; same (already true) for VOCAL (AC-16). Toggle Instrumental ON → VOCAL group disappears from the DOM (not just visually) AND any prior VOCAL pick is cleared; toggle OFF → VOCAL group reappears with **nothing** selected, not the prior pick (AC-17). Confirm this is the OPPOSITE of what happens to the Lyrics textarea on the same toggle (AC-02) — the two must not be conflated.
 - [ ] **SONG-P2**: Generate → Generating row + progress → result (AC-04/05).
 - [ ] **SONG-P3**: full playback (no 30s lock); drag-to-seek; prev/next across My Creations; Lyrics sheet when lyrics; Share; Download; Publish toggle; Use-in-MV pre-loads song in `/mv/room`; Recreate → compose (AC-06/07).
 - [ ] **SONG-E1**: failure → Back + Retry (AC-08). **SONG-E2**: reload → redirect compose. **SONG-E3**: logged-out → sign-in.
@@ -280,7 +344,6 @@ Screens to capture later: `/song/create` (Simple + Custom), `/song/creating`, `/
 | **TBD-SONG-06**     | 🔧 **Backend (RD)** — the production song-generation failure trigger is undefined (the mock's `[fail]`-in-description behaviour needs a real equivalent).                                                                                                   |
 | **TBD-SONG-07**     | ⏳ **TBD** — the Custom info popover lists 11 languages; confirm the real supported-language set for lyric generation.                                                                                                                                      |
 | ~~**TBD-SONG-08**~~ | ✅ **2026-08-19 結案 — KEEP.** 產品負責人決定：**使用者可以 like 自己的作品**，`/song/result` 的 Like 保留。目前是 local state；接後端時它需要和社群的 like 走同一條寫入路徑（`TBD-EXP-08`）。`AC-SONG-06` 的 "and no Like" 子句已撤回。                    |
-| ~~**TBD-SONG-09**~~ | ✅ **2026-08-20 結案 — 不做 ±15s，完全依照 DP。** transport 就是 prev / play / next。此項不再需要 glyph，也不再是缺口。                                                                                                                                     |
 | **TBD-SONG-10**     | 🔧 **RD (from 3j / S4)** — `bpm` / `key` are now unreachable from the UI but still on `SongComposeSchema` and still sent. Deleting them is the C8 PR plan §11 requires; leaving them is also a valid answer. Decide before backend integration, not during. |
 
 See also global: `TBD-GL-01` (credit charging). _(The old "`COST_SONG=10` vs app 50" note is obsolete — song pricing was resolved to 6/12 on 2026-08-12 per area 11 §3.1.)_
@@ -302,10 +365,15 @@ flowchart TD
 
 ---
 
-**Decisions (as-built, 2026-08-06):** Simple default; Custom is Genre/Mood/Vocal chips + Title +
-a free-form Lyrics/Idea textarea, **no BPM/Key controls** (S4 — the fields stay); **no free-preview
-cap on either player screen** (S3), and since 2026-08-06 it survives nowhere at all;
-`/song/result` is DP's player over a **My Creations** playlist with a Publish toggle; Recreate costs
-50cr and keeps the prior song; generation is mock and display-only on credits (except the real
-`COST_SONG` charge). **Open, deliberately unresolved:** the ported Like on an own creation, and the
-±15s controls it replaced (TBD-SONG-08/09).
+**Decisions (as-built, 2026-08-06; ⚠️ prices below corrected 2026-09-01 — see §3/§6, this paragraph
+had not been touched since the 2026-08-12 repricing):** Simple default; Custom is Genre/Mood/Vocal
+chips + Title + a free-form Lyrics/Idea textarea (GENRE/MOOD now start empty and are tap-to-clear,
+2026-09-01 — §1/§3), **no BPM/Key controls** (S4 — the fields stay); **no free-preview cap on
+either player screen** (S3), and since 2026-08-06 it survives nowhere at all; `/song/result` is
+DP's player over a **My Creations** playlist with a Publish toggle; Recreate charges the same as a
+fresh generation — **6 vocal / 12 instrumental**, not the old flat 50cr this line used to say
+(repriced 2026-08-12, AC-SONG-12) — and keeps the prior song; generation is mock and display-only
+on credits (except the real `songCost` charge). **Resolved, not open:** the ported Like on an own
+creation stays (`TBD-SONG-08`, closed 2026-08-19); the ±15s controls it replaced do not exist and
+are not coming back (`TBD-SONG-09`, closed 2026-08-20 — removed from this spec outright 2026-09-01
+per the product owner, not merely marked deferred).

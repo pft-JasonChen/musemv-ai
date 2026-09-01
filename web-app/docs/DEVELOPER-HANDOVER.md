@@ -201,23 +201,44 @@ an in-place navigation. `localePath()` is the preferred pattern going forward.
 derived, not stored — `guest` (logged out) → `free` (logged in, `loggedIn` true) → `subscriber`
 (logged in AND `subscribed` true). `subscribe(plan: PlanId)` just sets `subscribed = true` and
 `subscribedPlan = plan`; it does not itself grant credits — callers (`SubscribeModal`) call
-`addCredits(plan.credits)` separately. `PlanId` and the three tiers live in `src/lib/user.ts`
-(`SUBSCRIPTION_PLANS`) — the as-approved Business Model (2026-07-13) figures:
+`addCredits(plan.credits)` separately. `PlanId` and the **six** tiers live in `src/lib/user.ts` (`SUBSCRIPTION_PLANS`):
 
-| `PlanId`     | Name       | Price  | Credits | Cadence | Badge        | Store SKU                           |
-| ------------ | ---------- | ------ | ------- | ------- | ------------ | ----------------------------------- |
-| `weekly`     | Weekly     | $19.99 | 200     | Weekly  | MOST POPULAR | `subscribe_1_week_no_trial_ycm`     |
-| `weekly_pro` | Weekly Pro | $29.99 | 1000    | Weekly  | BEST VALUE   | `subscribe_1_week_pro_no_trial_ycm` |
-| `yearly`     | Yearly     | $59.99 | 2000    | Yearly  | —            | `subscribe_12_month_no_trial_ycm`   |
+| `PlanId`        | Name        | Price  | Credits | Cadence | Badge        | Store SKU                            |
+| --------------- | ----------- | ------ | ------- | ------- | ------------ | ------------------------------------ |
+| `weekly_basic`  | Weekly      | $9.99  | 200     | Weekly  | MOST POPULAR | `subscribe_1_week_no_trial_ycm`      |
+| `weekly_pro`    | Weekly Pro  | $29.99 | 1000    | Weekly  | BEST VALUE   | `subscribe_1_week_pro_no_trial_ycm`  |
+| `monthly_basic` | Monthly     | $34.99 | 1000    | Monthly | —            | `subscribe_1_month_no_trial_ycm`     |
+| `monthly_pro`   | Monthly Pro | $49.99 | 2000    | Monthly | BEST VALUE   | `subscribe_1_month_pro_no_trial_ycm` |
+| `yearly_basic`  | Yearly      | $59.99 | 2000    | Yearly  | —            | `subscribe_12_month_no_trial_ycm`    |
+| `yearly_pro`    | Yearly Pro  | $89.99 | 4000    | Yearly  | BEST VALUE   | `subscribe_12_month_pro_no_trial_ycm` |
 
-`DEFAULT_PLAN_ID` is `weekly_pro`. Credits granted per cycle expire on the plan's cadence.
-(Corrected 2026-08-02 — this table previously listed a non-existent `super` plan and the wrong
-prices for `weekly`/`yearly`. `src/lib/api/contract.surface.test.ts` now freezes the real values.)
+`DEFAULT_DURATION` is `"Weekly"`; `DEFAULT_PLAN_ID` is `weekly_pro` (still exported, but it does
+not drive `SubscribeModal`'s desktop cards — see `specs/areas/07-credits-iap.md` §3). Credits
+granted per cycle expire on each plan renewal, and **no plan has a free trial** (hence every SKU's
+`no_trial`).
+
+> **Corrected 2026-09-01.** This table listed **three** plans at the pre-2026-08-28 prices —
+> `weekly` at **$19.99**, and `PlanId`s (`weekly`, `yearly`) that no longer exist. The duration
+> Tab Bar redesign (2026-08-28) took it to six, and "YouCam Muse (Web) — SKUs and Pricing: Final"
+> (Data & Monetization, 2026/09/08, "YCM FINAL Pricing (confirmed)") confirms **all six prices
+> exactly**, Weekly included at $9.99. **Web and app are priced separately — do not reconcile
+> these against the app's numbers.** SKUs are unconfirmed for web (`TBD-CR-11`).
+> _(The 2026-08-02 correction note this replaces is preserved in git history;
+> `src/lib/api/contract.surface.test.ts` still freezes the real values.)_
 
 **Credit balance** (`CreditsProvider`, `src/components/providers/CreditsProvider.tsx`): a single
-`useState(DEFAULT_CREDITS)` (`DEFAULT_CREDITS = 390` in `src/lib/user.ts`) plus `addCredits(n)`.
+`useState(startingCredits())` — **`DEFAULT_CREDITS = 10`** in `src/lib/user.ts`, overridable for
+demo builds via `NEXT_PUBLIC_DEMO_CREDITS` — plus `addCredits(n)`.
 `CREDIT_TRANSACTIONS` in `lib/user.ts` is a static 7-entry seed ledger (purchases, spends, bonuses)
-shown in `CreditsDetailModal` — it does not react to `addCredits()` calls or reflect real usage.
+shown on the `/profile/credits` route (`CreditsView`) — it does not react to `addCredits()` calls or
+reflect real usage.
+
+> **Corrected 2026-09-01:** said `DEFAULT_CREDITS = 390` and named `CreditsDetailModal`. The
+> starting balance became **10** on 2026-08-12 (the deliberate paywall funnel — 10 covers one vocal
+> song and no MV; the Final Pricing deck independently confirms the "sign-up gift: 10"), and
+> `CreditsDetailModal.tsx` was **deleted** on 2026-08-11, replaced by the `/profile/credits` route.
+> ⚠️ The `Modals` paragraph directly below still names it too, and the rest of this file has not
+> been audited against the code since — treat unverified claims here as suspect and check `src/`.
 
 **Modals** (`src/components/credits/`): `SubscribeModal` (→ `subscribe()` +
 `addCredits(plan.credits)`), `CreditsDetailModal` (balance + `CREDIT_TRANSACTIONS` ledger, "Buy

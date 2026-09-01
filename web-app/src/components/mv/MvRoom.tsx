@@ -10,7 +10,7 @@ import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { ListItem } from "@/components/ui/ListItem";
 import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { ChooseSongModal } from "./ChooseSongModal";
-import { TrimAudioModal } from "./TrimAudioModal";
+import { TrimAudioModal, MIN_TRIM_SEC } from "./TrimAudioModal";
 import { FacePickerModal } from "./FacePickerModal";
 import { FaceConsentDialog } from "./FaceConsentDialog";
 import { SettingsModal } from "./SettingsModal";
@@ -199,7 +199,24 @@ export function MvRoom() {
     }
     const url = URL.createObjectURL(file);
     const title = file.name.replace(/\.[^/.]+$/, "").trim() || "Imported audio";
-    const open = (durationSec: number) =>
+    const open = (durationSec: number) => {
+      // MV-01 / S2, added 2026-09-01 (product owner). An MV needs at least 30s
+      // of audio, and `TrimAudioModal` already enforces that on the SELECTION.
+      // But a track that is itself shorter than 30s cannot be trimmed UP to it,
+      // so letting it through opened the trim dialog on a dead end: red
+      // "· minimum 30s", Confirm permanently disabled, and no way forward
+      // except closing. Reject it here instead, with the same toast treatment
+      // the format and size rules above already use.
+      //
+      // `durationSec === 0` is the probe's FAILURE fallback (metadata never
+      // loaded), not a zero-length file — do not reject on it, or an
+      // unreadable-but-valid track becomes unusable. It falls through to the
+      // trim dialog, which is the pre-existing behaviour for that case.
+      if (durationSec > 0 && durationSec < MIN_TRIM_SEC) {
+        showToast(`Audio must be at least ${MIN_TRIM_SEC} seconds.`);
+        URL.revokeObjectURL(url);
+        return;
+      }
       pickSong({
         id: crypto.randomUUID(),
         source: "import",
@@ -208,6 +225,7 @@ export function MvRoom() {
         art: "/assets/images/album-art/album_01.jpg",
         url,
       });
+    };
     const probe = new Audio();
     probe.preload = "metadata";
     probe.src = url;

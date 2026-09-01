@@ -7,30 +7,58 @@ export interface CreditPack {
   badge?: "POPULAR" | "BEST VALUE";
 }
 
-// CR-02: credit packs, prices, and SKUs are the as-approved values from the
-// YouCam Muse Business Model (2026-07-13) — "Credit form" backend table
-// ("price 須跟後台一樣"). Credits are subscriber-only (see CreditsProvider/BuyCreditsModal).
-// Displayed largest→smallest to match the app IAP; BEST VALUE (2000) is the default
-// selection and POPULAR is pinned to the 1000 pack. Packs are valid for 2 years.
+// CR-02: credit packs, prices, and SKUs.
+//
+// ⚠️ **PRICES UPDATED 2026-09-01 from "YCM Web SKUs & Pricing: Final"
+// (Data & Monetization, dated 2026/09/08, slide headed "YCM FINAL Pricing
+// (confirmed)").** That deck supersedes the 2026-07-13 Business Model for the
+// WEB packs, and it is a different price list, not a restatement — five of the
+// six moved, and one moved by $5.50:
+//
+//     credits   was (Business Model)   now (Web Final)
+//        300           $14.99                $14.89
+//        600           $23.99                $29.59
+//      1,000           $39.99                $39.59
+//      2,000           $59.99                $65.49
+//      5,000          $148.99               $140.49
+//      8,000          $239.99               $224.49
+//
+// The old numbers were the **APP** column of that same deck's comparison
+// ($16.49/$32.99/$43.99/$76.99/$164.99/$263.99 are the app's own, different
+// again) — web and app are priced separately and must not be reconciled.
+//
+// The deck's "net rev" and "*40% off / *45% off" columns are INTERNAL
+// monetization figures (net rev is uniformly 90% of list; the %-off is the
+// discount ceiling Monetization may offer, +5% at 20k and above). Neither is a
+// price to render — `CREDIT_SALE_PCT` below is still the sample discount UI.
+//
+// SKUs are unchanged: the deck lists prices, not store identifiers, so the
+// 2026-07-13 SKUs stand until RD supplies web ones (TBD-CR-11).
+//
+// Credits are subscriber-only (see CreditsProvider/BuyCreditsModal), which the
+// deck independently confirms ("free user can buy? ✗"). Displayed
+// largest→smallest to match the app IAP; BEST VALUE (2000) is the default
+// selection and POPULAR is pinned to the 1000 pack. Packs are valid for
+// 2 years (deck: "Expiration — 2 years").
 export const CREDIT_PACKS: CreditPack[] = [
-  { id: 8000, credits: 8000, price: "$239.99", sku: "ycm_ios_8000_credits_sub_discount" },
-  { id: 5000, credits: 5000, price: "$148.99", sku: "ycm_ios_5000_credits_sub_discount" },
+  { id: 8000, credits: 8000, price: "$224.49", sku: "ycm_ios_8000_credits_sub_discount" },
+  { id: 5000, credits: 5000, price: "$140.49", sku: "ycm_ios_5000_credits_sub_discount" },
   {
     id: 2000,
     credits: 2000,
-    price: "$59.99",
+    price: "$65.49",
     sku: "ycm_2000_credits_sub_discount",
     badge: "BEST VALUE",
   },
   {
     id: 1000,
     credits: 1000,
-    price: "$39.99",
+    price: "$39.59",
     sku: "ycm_1000_credits_sub_discount",
     badge: "POPULAR",
   },
-  { id: 600, credits: 600, price: "$23.99", sku: "ycm_600_credits_sub_discount" },
-  { id: 300, credits: 300, price: "$14.99", sku: "ycm_300_credits_sub_discount" },
+  { id: 600, credits: 600, price: "$29.59", sku: "ycm_600_credits_sub_discount" },
+  { id: 300, credits: 300, price: "$14.89", sku: "ycm_300_credits_sub_discount" },
 ];
 
 /** Default-selected credit pack (BEST VALUE, per the Business Model). */
@@ -157,10 +185,23 @@ export interface SubscriptionPlan {
 // $59.99/2,000cr — which also means the OLD `weekly` entry's $19.99 here
 // before this change was simply wrong, not a deliberate DP-vs-Business-Model
 // override; it's corrected to $9.99 in the same change. Monthly (both tiers)
-// and Yearly Pro have NO Business Model entry at all — that document predates
-// this Tab Bar redesign — so those four prices/skus come from Figma alone,
-// with no second source to reconcile against. Flagged to the product owner;
-// not blocked on it, since the seven that DO have a source all agree.
+// and Yearly Pro had NO Business Model entry at all — that document predates
+// this Tab Bar redesign — so those four prices/skus came from Figma alone.
+//
+// ✅ **RESOLVED 2026-09-01.** "YCM Web SKUs & Pricing: Final" (Data &
+// Monetization, 2026/09/08, "YCM FINAL Pricing (confirmed)") is the missing
+// second source, and **all six rows match this table exactly** — including the
+// four that previously had none:
+//
+//     Weekly      $9.99    200 /week      Weekly Pro   $29.99  1,000 /week
+//     Monthly    $34.99  1,000 /month     Monthly Pro  $49.99  2,000 /month
+//     Yearly     $59.99  2,000 /year      Yearly Pro   $89.99  4,000 /year
+//
+// So nothing here changes; the flag above is cleared rather than acted on. The
+// deck also confirms two rules this file's neighbours already encode: credits
+// expire "on each plan renewal", and there is **no free trial** (which is why
+// every `sku` carries `no_trial`). SKUs remain Figma's — the deck lists no
+// store identifiers (TBD-CR-11).
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "weekly_basic",

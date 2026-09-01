@@ -116,6 +116,27 @@ export function SongCompose() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const ready = isSongReady(s);
+
+  /**
+   * Instrumental toggle — BOTH modes route through this, not through a bare
+   * `patch({ instrumental })`.
+   *
+   * Turning it ON also CLEARS `vocal` (product owner, 2026-09-01: "If
+   * Instrumental toggle on, hide the VOCAL field"). Hiding the control without
+   * clearing the value would leave an instrumental job carrying
+   * `vocal: "Female"` in its payload — and `vocal` is C2 contract surface RD
+   * consumes, so that contradiction would become RD's problem to defend
+   * against rather than ours to not create.
+   *
+   * This is deliberately NOT the treatment the lyrics box gets. Toggling
+   * Instrumental never discards typed text because the two texts live in two
+   * separate fields (`lyrics` / `instrumentalText`) — see this file's header.
+   * There is no second vocal field to park a pick in, so "preserve it" and
+   * "don't send a contradiction" cannot both be true here.
+   */
+  function setInstrumental(instrumental: boolean) {
+    patch(instrumental ? { instrumental, vocal: null } : { instrumental });
+  }
   // Spec 11 §3.1: vocal 6 / instrumental 12. One constant could not express this.
   const cost = songCost(s.instrumental);
 
@@ -193,7 +214,7 @@ export function SongCompose() {
                 <ToggleSwitch
                   label="Instrumental"
                   checked={s.instrumental}
-                  onChange={(instrumental) => patch({ instrumental })}
+                  onChange={setInstrumental}
                 />
               </div>
 
@@ -283,7 +304,7 @@ export function SongCompose() {
                 <ToggleSwitch
                   label="Instrumental"
                   checked={s.instrumental}
-                  onChange={(instrumental) => patch({ instrumental })}
+                  onChange={setInstrumental}
                 />
               </div>
 
@@ -379,8 +400,22 @@ export function SongCompose() {
               <div className="song-create__style">
                 <p className="song-create__label">STYLE</p>
 
+                {/* ── ALL THREE STYLE FIELDS ARE OPTIONAL, SINGLE-SELECT ──────────
+                    Product owner, 2026-09-01. GENRE and MOOD were previously
+                    single-select but STICKY — `onClick` set the value and
+                    nothing could unset it, so the first chip a user touched
+                    became permanent. That is why the toggle-off expression
+                    below (`s.x === v ? null : v`) is the change, not the
+                    `(Optional)` label: the label was already true of the CTA
+                    (`isSongReady` has never looked at genre/mood), it just
+                    was not true of the control.
+
+                    VOCAL already behaved this way; it gains the Instrumental
+                    rule instead. */}
                 <div className="song-create__chip-group">
-                  <p className="song-create__chip-label">GENRE</p>
+                  <p className="song-create__chip-label">
+                    GENRE <span className="song-create__chip-label-optional">(Optional)</span>
+                  </p>
                   <div className="song-create__chips">
                     {GENRES.map((g) => (
                       <button
@@ -388,7 +423,7 @@ export function SongCompose() {
                         type="button"
                         className={`chip${s.genre === g ? " chip--selected" : ""}`}
                         aria-pressed={s.genre === g}
-                        onClick={() => patch({ genre: g })}
+                        onClick={() => patch({ genre: s.genre === g ? "" : g })}
                       >
                         {g}
                       </button>
@@ -397,7 +432,9 @@ export function SongCompose() {
                 </div>
 
                 <div className="song-create__chip-group">
-                  <p className="song-create__chip-label">MOOD</p>
+                  <p className="song-create__chip-label">
+                    MOOD <span className="song-create__chip-label-optional">(Optional)</span>
+                  </p>
                   <div className="song-create__chips">
                     {MOODS.map((m) => (
                       <button
@@ -405,7 +442,7 @@ export function SongCompose() {
                         type="button"
                         className={`chip${s.mood === m ? " chip--selected" : ""}`}
                         aria-pressed={s.mood === m}
-                        onClick={() => patch({ mood: m })}
+                        onClick={() => patch({ mood: s.mood === m ? "" : m })}
                       >
                         {m}
                       </button>
@@ -413,24 +450,33 @@ export function SongCompose() {
                   </div>
                 </div>
 
-                <div className="song-create__chip-group">
-                  <p className="song-create__chip-label">
-                    VOCAL <span className="song-create__chip-label-optional">(Optional)</span>
-                  </p>
-                  <div className="song-create__chips">
-                    {VOCALS.map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        className={`chip${s.vocal === v ? " chip--selected" : ""}`}
-                        aria-pressed={s.vocal === v}
-                        onClick={() => patch({ vocal: s.vocal === v ? null : v })}
-                      >
-                        {v}
-                      </button>
-                    ))}
+                {/* VOCAL is HIDDEN, not disabled, while Instrumental is on —
+                    an instrumental track has no vocal to pick, so the field is
+                    not applicable rather than temporarily unavailable. Unmounting
+                    also keeps it out of the tab order and the a11y tree, which
+                    `disabled`+`opacity` would not reliably do (this file's own
+                    "`opacity: 0` is not hidden" lesson, `AGENTS.md`).
+                    `setInstrumental` clears the stored value at the same time. */}
+                {!s.instrumental && (
+                  <div className="song-create__chip-group">
+                    <p className="song-create__chip-label">
+                      VOCAL <span className="song-create__chip-label-optional">(Optional)</span>
+                    </p>
+                    <div className="song-create__chips">
+                      {VOCALS.map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          className={`chip${s.vocal === v ? " chip--selected" : ""}`}
+                          aria-pressed={s.vocal === v}
+                          onClick={() => patch({ vocal: s.vocal === v ? null : v })}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="song-create__title-field">

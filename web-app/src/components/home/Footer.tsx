@@ -1,10 +1,21 @@
+"use client";
+
+import { useState } from "react";
+import { FeedbackDialog } from "@/components/profile/FeedbackDialog";
+import { useAuth } from "@/components/providers/AuthProvider";
+
 /**
  * DP's `Footer` (Figma "Website Footer", node 1330:22087) — shown on Home and
  * Blog in DP; WA doesn't have Blog ported, so this only ever renders on "/"
- * (see AppShell.tsx). Static content, no state or handlers, so no client
- * directive is needed even though it's mounted from a client component.
+ * (see AppShell.tsx).
  *
  * Classes are from `src/styles/designer/Footer.css`, verbatim from DP.
+ *
+ * ── WHY THIS IS NOW A CLIENT COMPONENT ───────────────────────────────────
+ *
+ * It used to be static markup with no directive. **Contact** now opens the
+ * Send Feedback dialog (product owner, 2026-09-01), which needs `useState`,
+ * so the file takes `"use client"`. Everything else about it is unchanged.
  *
  * ── WHAT'S ADAPTED, NOT PORTED VERBATIM ──────────────────────────────────
  * The logo is `/assets/brand/ycm_logo_word_hor.svg` (Next's `public/` path)
@@ -31,9 +42,20 @@
  */
 const STUDIO_LINKS = ["Music Video Creator", "Song Composer"];
 const SUPPORT_LINKS = ["FAQ"];
-const COMPANY_LINKS = ["Terms of Service", "Privacy Policy", "Contact"];
+
+/**
+ * **Contact** is the ONLY footer link with a destination (2026-09-01) — it is
+ * a `<button>`, not an `<a href="#">`, because it opens a dialog rather than
+ * navigating. The other two in this column (Terms of Service, Privacy Policy)
+ * and FAQ above are still placeholders awaiting their URLs (`DESIGNER-TODO`
+ * A29), so they stay anchors and are rendered from this list.
+ */
+const COMPANY_LINKS = ["Terms of Service", "Privacy Policy"];
 
 export function Footer() {
+  const [fbOpen, setFbOpen] = useState(false);
+  const { requireLogin } = useAuth();
+
   return (
     <footer className="footer">
       <div className="footer__inner">
@@ -71,6 +93,28 @@ export function Footer() {
                   {link}
                 </a>
               ))}
+              {/* Same `.footer__link` class as its neighbours so it is
+                  visually indistinguishable from them — DP drew one column of
+                  links, not two link types. `.footer__link` already declares
+                  font-family / size / weight / color, and a class beats the
+                  UA button styles, so the ONLY things this has to undo are the
+                  button chrome the class does not mention: background, border,
+                  padding and the centred text.
+
+                  ⚠️ Do NOT add `font: inherit` here. It was in the first
+                  version of this and it rendered Contact at **16px** against
+                  its neighbours' 12px — an inline shorthand outranks the
+                  class, so it replaced `.footer__link`'s own font instead of
+                  supplying a fallback. Measured in the browser, not reasoned
+                  about; the two look identical in the source. */}
+              <button
+                type="button"
+                className="footer__link"
+                style={{ background: "none", border: 0, padding: 0, textAlign: "left", cursor: "pointer" }}
+                onClick={() => requireLogin(() => setFbOpen(true))}
+              >
+                Contact
+              </button>
             </div>
           </div>
         </div>
@@ -79,6 +123,23 @@ export function Footer() {
           <p className="footer__copyright">© 2026 Perfect Corp. All rights reserved.</p>
         </div>
       </div>
+
+      {/* Conditionally mounted, exactly as `ProfileView` mounts it — unmounting
+          IS the form reset, so re-opening always gives an empty form
+          (`FeedbackDialog`'s header).
+
+          ⚠️ **`requireLogin` GATES THIS** (product owner, 2026-09-01). The
+          first version of this shipped ungated, on the argument that a visitor
+          who cannot sign in is the one most likely to need support. The
+          product owner ruled the other way: a guest gets the sign-in dialog
+          first, and the form opens only after they are in.
+
+          That also removes the defect the ungated version had: `AuthProvider`
+          serves `DEFAULT_PROFILE` regardless of sign-in state, so a signed-out
+          visitor was shown the mock address `scott_wu@mail.com` prefilled in
+          the Email field. Behind the gate, `profile.email` is always the
+          signed-in user's. */}
+      {fbOpen && <FeedbackDialog onClose={() => setFbOpen(false)} />}
     </footer>
   );
 }

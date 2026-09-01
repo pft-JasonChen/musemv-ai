@@ -38,7 +38,7 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8 | 43 | ✅ v1, 2026-08-27 |
 | **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | 5 | 24 | ✅ v1, 2026-08-28 |
 | **S4** | `history` | 6 | 05 | `/history` | 6 | 25 | ✅ v1, 2026-08-27 |
-| **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | ~4 | ~16 | ⬜ |
+| **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | 6 | 21 | ✅ v1, 2026-09-01 |
 | **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / route navbars / `SignInModal` | 7 | 24 | ✅ v1, 2026-08-27 |
 | **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, edit-profile, Send Feedback | 6 | 22 | ✅ v1, 2026-08-31 |
 | **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | ~6 | ~30 | ⬜ |
@@ -48,6 +48,31 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 
 **Coverage check.** Areas 01–07, 09, 10 are covered by S2–S9 plus the finished S1; area 08 is
 removed from scope; area 11 is S10 and is contract-shaped, not journey-shaped.
+
+### S5 scope — agreed at its Phase 0 gate, 2026-09-01
+
+Six paths, 21 captures (desktop 1403×697 only). Larger than the ~4/~16 estimate above, for two
+structural reasons recorded here so the growth is not mistaken for scope creep:
+
+| Path | Covers |
+|---|---|
+| P1 | Subscribe: the three duration tabs, six plans, a real card press, and what it changes |
+| P2 | The already-on-Muse-Pro branch (CR-05) |
+| P3 | Buy Credits as a subscriber: six packs, selection, purchase |
+| P4 | The CR-06 free-user gate — every entry point, no interstitial |
+| P5 | `/profile/credits`: balance, All/Spend/Earn, ledger, branching CTA |
+| P6 | `apiError` on both dialogs (including its interaction with CR-06) and `creditsEmpty` |
+
+1. **`SubscribeModal` is six plans across a duration Tab Bar**, not the flat three-card list the
+   estimate assumed — that redesign landed 2026-08-28, after this row was written.
+2. **The empty/error states are built and `live`.** The estimate (and `DESIGNER-TODO` A30) assumed
+   they were awaiting artwork; they are not, so P6 has real screens to photograph.
+
+Two findings came out of the build and are carried as open questions in the spec rather than
+smoothed over: **CR-05's already-subscribed state has no live trigger** (every `openSubscribe()`
+call site is conditioned on `!subscribed`, so nothing reopens the dialog once you subscribe —
+Q-01), and **a pack purchase only toasts when it started from `/profile/credits`** (the shared
+dialog the header credit pills open is mounted with no `onPurchased` callback anywhere — Q-02).
 
 ### S3 scope — agreed at its Phase 0 gate, 2026-08-27
 

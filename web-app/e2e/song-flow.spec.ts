@@ -20,7 +20,12 @@ test("AI Song: describe -> compose -> result", async ({ page }) => {
   await cta.click();
   await page.waitForURL("**/song/result", { timeout: 14000 });
 
-  // Result view shows the genre/mood tag line (defaults: Pop · Uplifting).
-  await expect(page.getByText(/Pop · Uplifting/)).toBeVisible();
+  // Product owner, 2026-09-01: GENRE and MOOD now start EMPTY, so a Simple-tab
+  // song generated without opening STYLE has no genre/mood to report and the
+  // result's tag line stays hidden. (It was "Pop · Uplifting" until that change
+  // — the seeds were removed, not the line.) The line's own content is guarded
+  // where it is actually populated: `behaviour-regressions.spec.ts` → "3j: the
+  // result still says what was generated".
+  await expect(page.locator(".song-result__meta .song-create__title-hint--hidden")).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Use in Music Video" })).toBeVisible();
 });

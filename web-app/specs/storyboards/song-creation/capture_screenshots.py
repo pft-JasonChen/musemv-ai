@@ -201,6 +201,19 @@ async def main(base):
         await page.get_by_role("switch", name="Instrumental").first.click()
         await shoot("21_custom_instrumental_placeholder.png")
 
+        # ── P2-S7 · the three STYLE chip groups, one selected in each ────────
+        # Added 2026-09-01. This shot was one of the ~20 left over from the
+        # ad-hoc capture rounds this script exists to replace, so it did NOT
+        # re-capture when the STYLE rules changed and it kept showing the old
+        # eight-genre row under a bare "GENRE" label. Bringing it into the
+        # script is the fix; the header's "one shot per frame" rule still holds
+        # because it carries no focus frame.
+        await custom()
+        for chip in ("R&B", "Energetic", "Male"):
+            await page.get_by_role("button", name=chip, exact=True).first.click()
+            await page.wait_for_timeout(120)
+        await shoot("19_custom_chips_selected.png")
+
         # ── P2-S4 · the Lyrics sample fill ───────────────────────────────────
         await custom()
         await page.fill(BOX, LYRICS)

@@ -441,16 +441,40 @@ export const SAMPLE_CREATIONS: Creation[] = [
 
 import type { SongCompose, SongResult } from "./types";
 
+/**
+ * The nine SONG GENRES — product owner, 2026-09-01. This list is the single
+ * source of truth for BOTH `/song/create`'s GENRE chips and `/explore/songs`'s
+ * genre tab bar ("tag please match creation"), which is why it lives here in
+ * `lib` rather than beside either screen. `SongDetailView` imports it and
+ * prepends "All"; it no longer derives its tabs from the catalog's own data.
+ *
+ * Order is the product owner's, not alphabetical — do not sort it.
+ *
+ * ⚠️ "Hip-Hop" and "Rap" are two separate chips, as specified. The request
+ * wrote the first one "Hip pop"; confirmed 2026-09-01 as the existing
+ * "Hip-Hop" spelling this constant already used, not a new distinct genre.
+ *
+ * Replaces the previous eight (…"Acoustic", "Lo-fi"). Those two, plus "Indie"
+ * and "Funk", are gone from the product vocabulary entirely, so the 14 mock
+ * community songs tagged with them were re-tagged onto this list in the same
+ * change (`community.ts`) — otherwise five of the nine tabs would have shown
+ * an empty list against an empty-state design that does not exist yet
+ * (`DESIGNER-TODO` A30).
+ */
 export const GENRES = [
   "Pop",
-  "R&B",
-  "Electronic",
   "Hip-Hop",
-  "Acoustic",
+  "R&B",
+  "Rock",
   "Jazz",
+  "Electronic",
+  "Rap",
   "Classical",
-  "Lo-fi",
+  "Country",
 ];
+
+/** MOOD chips. Unchanged 2026-09-01 — the product owner respecified MOOD's
+ *  SELECTION semantics (optional, single-select) but not its option list. */
 export const MOODS = ["Uplifting", "Melancholic", "Romantic", "Energetic", "Calm", "Dark"];
 export const VOCALS = ["Male", "Female"];
 

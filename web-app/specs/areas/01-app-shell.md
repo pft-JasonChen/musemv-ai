@@ -51,7 +51,7 @@ public `/share` page which renders bare.
 >    (bare). The S6 storyboard build measured that and raised it as `Q-01`; **the product owner
 >    chose deletion on 2026-08-27**, so `shell/TopBar.tsx`, `shell/HeaderActions.tsx` and
 >    `account/AccountMenu.tsx` are gone from `src/`, and `OWN_CHROME` went with them — a list whose
->    only job was gating a component that no longer exists. Everything below marked ⚠️ *unreachable*
+>    only job was gating a component that no longer exists. Everything below marked ⚠️ _unreachable_
 >    now reads as ⚠️ **removed**; the behaviour each correction describes is unchanged, because none
 >    of it was reachable in the first place.
 >
@@ -60,7 +60,8 @@ public `/share` page which renders bare.
 >    what all 16 already did. A NEW route must bring its own navbar; there is no fallback to inherit.
 
 **In scope:** `shell/AppShell`, `shell/Sidebar`, `shell/MobileHeader`, `shell/MobileTabBar`,
-`shell/DetailNavbar`, `shell/RoomNavbar`, `home/Navbar` (the `/`-only marketing header).
+`shell/DetailNavbar`, `shell/RoomNavbar`, `home/Navbar` (the `/`-only marketing header), `home/Footer`
+(the `/`-only marketing footer — see **§3.1**, added 2026-09-01).
 _(`shell/TopBar`, `shell/HeaderActions` and `account/AccountMenu` were in scope until they were
 deleted on 2026-08-27 — see §1 point 5.)_
 **Out of scope:** `SignInModal` (area 09), the credits modals (area 07), the Profile/History/Settings
@@ -99,14 +100,15 @@ Feedback** rows (SHELL-03, UI-only) alongside Profile / My Creations / Sign Out.
 
 ## 2. Route / component / state / API map (RD)
 
-| Component             | Owns UI                                                                                                                                     | Reads/writes state                                                              | `MuseApi` |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------- |
-| `shell/AppShell`      | chrome vs bare decision; mounts `Navbar`/`MobileHeader`/`Footer` on `/` only, `MobileTabBar` on Home+History                                | `usePathname` + `stripLocalePrefix`                                             | —         |
-| `shell/Sidebar`       | desktop rail (≥768px), 5 nav links, active state, profile footer                                                                            | `useAuth().{loggedIn,requireLogin}`, `useLocale().{locale}`, `useT()`           | —         |
-| `shell/MobileTabBar`  | phone bottom bar (<768px), **3** items: Explore / Create / History                                                                          | `useAuth().{loggedIn,requireLogin}`, `useLocale()`, `useT()`                    | —         |
-| `shell/MobileHeader`  | phone top bar (<768px) — wordmark, credits, account button (the Profile entry)                                                              | `useCredits().credits`, `useAuth()`                                             | —         |
-| `shell/DetailNavbar`  | back + title bar for detail routes (own-chrome)                                                                                             | `useCredits().credits`, `useAuth()`                                             | —         |
-| `shell/RoomNavbar`    | create/room-screen navbar; also exports the shared `Tabs`                                                                                   | `useCredits().credits`, `useAuth()`                                             | —         |
+| Component            | Owns UI                                                                                                      | Reads/writes state                                                    | `MuseApi` |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | --------- |
+| `shell/AppShell`     | chrome vs bare decision; mounts `Navbar`/`MobileHeader`/`Footer` on `/` only, `MobileTabBar` on Home+History | `usePathname` + `stripLocalePrefix`                                   | —         |
+| `shell/Sidebar`      | desktop rail (≥768px), 5 nav links, active state, profile footer                                             | `useAuth().{loggedIn,requireLogin}`, `useLocale().{locale}`, `useT()` | —         |
+| `shell/MobileTabBar` | phone bottom bar (<768px), **3** items: Explore / Create / History                                           | `useAuth().{loggedIn,requireLogin}`, `useLocale()`, `useT()`          | —         |
+| `shell/MobileHeader` | phone top bar (<768px) — wordmark, credits, account button (the Profile entry)                               | `useCredits().credits`, `useAuth()`                                   | —         |
+| `shell/DetailNavbar` | back + title bar for detail routes (own-chrome)                                                              | `useCredits().credits`, `useAuth()`                                   | —         |
+| `shell/RoomNavbar`   | create/room-screen navbar; also exports the shared `Tabs`                                                    | `useCredits().credits`, `useAuth()`                                   | —         |
+| `home/Footer`        | `/`-only brand block + 3-column sitemap; **Contact** opens `FeedbackDialog` (added 2026-09-01, **§3.1**)     | local `fbOpen` — **now a client component** (was static markup)       | —         |
 
 Nav labels are localized via `useT()` (`nav.home/createMv/createSong/history/profile`) — one of the
 only two localized surfaces (nav + Profile). Everything else in the shell is hardcoded English.
@@ -120,7 +122,7 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
 - **Nav items** — canonical list (`Sidebar.tsx:23-29`, labels via `nav.*` keys), in order:
   Home `/` (`nav.home`) · Create MV `/mv/room` (`nav.createMv`) · Create Song `/song/create`
   (`nav.createSong`) · **History** `/history` (`nav.history` = "History") · Profile `/profile`
-  (`nav.profile`). Note: the **same `/history` route is labeled "History" in the nav but
+  (`nav.profile`). Note: the **same `/history` route** is labeled "History" in the nav but
   "My Creations" as the page title (area 05, `HistoryView.tsx`). _(It was also the deleted account menu's label — that file is gone as of 2026-08-27.)_
 - **Gated nav** (`GATED = {/history, /profile, /settings}`, `Sidebar.tsx`): clicking a gated item
   **while logged out** calls `requireLogin(() => push(target))` — opens `SignInModal` and queues the
@@ -166,6 +168,62 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
 
 ---
 
+## 3.1 Footer (`/`-only)
+
+> **Added 2026-09-01 (product owner: "Footer, click 'Contact' will popup Send Feedback dialog").**
+> `home/Footer.tsx` had no coverage in this file beyond the §2 component-map mention; this
+> subsection is that coverage.
+
+- **Renders only on `/`** — `AppShell.tsx` mounts it `{isHome && <Footer />}`, below `<main>`, the
+  same `isHome` gate that decides `Navbar`/`MobileHeader` (§2's `AppShell` row). No other route
+  renders a footer at all.
+- **Three sitemap columns:** Studio (Music Video Creator, Song Composer), Support (FAQ), Company
+  (Terms of Service, Privacy Policy, **Contact**).
+- **Every link is an `href="#"` placeholder except Contact** (`DESIGNER-TODO` A29) — Music Video
+  Creator, Song Composer, FAQ, Terms of Service and Privacy Policy are unchanged by this work and
+  still go nowhere.
+- **Contact is a `<button className="footer__link">`, not an `<a href="#">`**, because it opens
+  `FeedbackDialog` rather than navigating. The dialog is mounted conditionally
+  (`{fbOpen && <FeedbackDialog … />}`), the same pattern `ProfileView` uses — unmounting is the form
+  reset, so re-opening always starts from an empty form.
+  The dialog's own fields, validation and submit states are **area 06's `FeedbackDialog` (§3.1),
+  `AC-PROF-10` through `AC-PROF-16`** — not restated here.
+  > ⚠️ **Corrected 2026-09-01, same day, reversing the paragraph as first written.** Contact now
+  > **requires login**: `onClick={() => requireLogin(() => setFbOpen(true))}`
+  > (`Footer.tsx`). The "No `requireLogin` gate, deliberately" reasoning that used to stand here —
+  > that a visitor who cannot sign in is the one most likely to need support — was **overruled by
+  > the product owner the same day**, in favour of gating first. Measured: signed out and clicking
+  > Contact opens the **Sign in to YouCam Muse** dialog (`SignInModal`), not the feedback form;
+  > `requireLogin` queues `setFbOpen(true)` to run after a successful sign-in, so the form opens
+  > immediately afterward. Signed in, clicking Contact opens `FeedbackDialog` directly, same as
+  > before. Dismissing the sign-in dialog leaves the form unopened (no `onCancel` is passed, matching
+  > `SHELL-P2-S2`'s pattern elsewhere in this file). This also closes `TBD-SHELL-01` (§8) — see there.
+- ⚠️ **Styling constraint (already caused one defect):** Contact's inline style resets only the
+  button chrome the shared `.footer__link` class doesn't cover — `background`, `border`, `padding`,
+  `textAlign`, `cursor` — and must **not** set `font`. An inline `font: inherit` outranks
+  `.footer__link`'s own font rule instead of merely falling back to it, and the first version of
+  this did exactly that: Contact rendered at **16px** against its siblings' **12px**. Fixed and
+  measured in the browser: both now compute to `12px / 500 / Inter / rgb(156,156,171)`, height
+  `15px` — visually identical to the anchor links beside it.
+- **Phone (<768px): the WHOLE footer is hidden, not just its links.**
+  `designer/AppLayout.css` (gated verbatim) carries
+  `@media (max-width: 767px) { .app-layout--mobile-app .footer { display: none } }` — the same rule
+  that hides `.sidebar`, `.navbar` and `.room-navbar` for the mobile-app layout. Measured at 375px:
+  `.footer` computes to `display: none`, and Contact and its four sibling links therefore all
+  measure 0×0. So **Contact is reachable only at ≥768px**, and that is parity with the untouched
+  links rather than a regression this change introduced.
+  > _(Corrected 2026-09-01, same day it was written: the first version of this bullet said the rule
+  > hides "the entire sitemap column set". It does not — it hides the footer element itself, one
+  > layer up and in a different stylesheet. The user-visible conclusion is the same, but the wrong
+  > mechanism would send anyone debugging it to `Footer.css`, which has no `display` rule at all.)_
+  > The dialog itself, opened at a width where Contact exists, renders full-screen with no horizontal
+  > overflow (measured 375×812 by forcing the click — the dialog is not width-gated, only its trigger
+  > is).
+- ~~❓ **Open item** — see `TBD-SHELL-01` (§8): a signed-out visitor opening this sees the mock profile
+  email prefilled.~~ ✅ **Closed 2026-09-01** — moot now that Contact requires login; see `TBD-SHELL-01` (§8).
+
+---
+
 ## 4. Journeys
 
 Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); account menu open.
@@ -208,15 +266,30 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 
 - **SHELL-P5-S1** Navigating to `/share…` renders the page **without** sidebar/top bar (standalone).
 
+### SHELL-P6 — Footer Contact (Home only, added 2026-09-01)
+
+- **SHELL-P6-S1** At ≥768px on `/`, **signed-in** user clicks **Contact** in the Footer. **System:**
+  `requireLogin` sees `loggedIn === true` and runs its callback immediately — opens `FeedbackDialog`.
+  See **§3.1** for why it's a button, not a link, and area 06's `AC-PROF-10`–`AC-PROF-16` for the
+  dialog's own field/validation/submit behaviour.
+- **SHELL-P6-S2** At ≥768px on `/`, **signed-out** user clicks **Contact**. **System:**
+  `requireLogin` opens `SignInModal` (**Sign in to YouCam Muse**) and queues `FeedbackDialog`'s open
+  as the pending action; the form itself does not open yet. On successful sign-in, the queued action
+  runs and `FeedbackDialog` opens. On dismiss, nothing further happens (no `onCancel` is passed) —
+  same pattern as **SHELL-P2-S2**.
+  > ⚠️ **Corrected 2026-09-01, same day.** This step used to be a single ungated open ("no
+  > `requireLogin` gate"); the product owner reversed that the same day — see **§3.1**'s correction
+  > for the reasoning. `AC-SHELL-09` is corrected to match.
+
 ---
 
 ## 5. Error & edge states
 
-| ID           | Trigger                         | Behaviour                                                                                                                                           |
-| ------------ | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ID           | Trigger                         | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **SHELL-E1** | Pre-hydration (SSR/first paint) | ⚠️ **Re-opened 2026-08-27.** The SHELL-04 fix (2026-07-23) was a fixed-height placeholder in `HeaderActions`, which was never reachable and is now deleted. In the navbars users actually see, `hydrated` guards only the Upgrade crown (`RoomNavbar.tsx:105`, `MobileHeader.tsx:69`); the **Login ↔ credit-pill swap itself is not guarded** in `RoomNavbar`/`DetailNavbar`, so a signed-in reload can still paint the logged-out control for a frame. Not fixed — flagged to the product owner with the deletion. |
-| **SHELL-E2** | Non-default locale active       | All nav/menu links go through `localePath`, keeping the `/jpn/…` prefix; active-state comparison also prefix-aware.                                 |
-| **SHELL-E3** | Missing translation key         | `useT()` falls back to English per key (empty non-English dicts).                                                                                   |
+| **SHELL-E2** | Non-default locale active       | All nav/menu links go through `localePath`, keeping the `/jpn/…` prefix; active-state comparison also prefix-aware.                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **SHELL-E3** | Missing translation key         | `useT()` falls back to English per key (empty non-English dicts).                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 ---
 
@@ -241,6 +314,14 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 - **AC-SHELL-07** — WHEN the path starts with `/share`, THE SYSTEM SHALL render the page bare (no sidebar/top bar).
 - **AC-SHELL-08** — THE SYSTEM SHALL render the shell at 320/375/768/1024/1440/1920px with no overflow and the correct bar (bottom vs side) at the **767px** switch. _(visual)_ _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
   > **Corrected 2026-08-12** — was "640px". Note 768 is both a review viewport and the first width on the sidebar side of the cutover, so it exercises the boundary directly.
+- **AC-SHELL-09** — WHEN the Footer's **Contact** control is clicked (route `/` only, and only where
+  the sitemap is visible — ≥768px): WHILE logged in, THE SYSTEM SHALL open `FeedbackDialog`
+  immediately; WHILE logged out, THE SYSTEM SHALL open `SignInModal` first and open `FeedbackDialog`
+  only after a successful sign-in. The dialog's own fields, validation and submit states are area
+  06's (`AC-PROF-10`–`AC-PROF-16`), not restated here. _(Added 2026-09-01, product owner.)_
+  > ⚠️ **Corrected 2026-09-01, same day.** Was "SHALL open `FeedbackDialog` with **no** sign-in
+  > gate" — the product owner reversed that same-day decision; see §3.1 and SHELL-P6-S2. `requireLogin`
+  > now gates Contact exactly like `SHELL-P2`'s gated nav items.
 
 ---
 
@@ -252,12 +333,21 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
 - [x] **SHELL-P4-S3 / AC-06**: ~~not checkable~~ — **retired 2026-08-27**: `AccountMenu` is deleted, so there is no menu to check. Its destinations are covered by AC-05 / AC-AUTH-05 and area 06.
 - [ ] **SHELL-P5**: `/share` renders bare (AC-07).
 - [ ] **AC-08**: 390/768/1024/1440 clean; bottom-bar↔sidebar switch at 640px _(visual)_.
+- [ ] **SHELL-P6**: Footer Contact, signed in → `FeedbackDialog` opens directly; signed out →
+      `SignInModal` opens first, `FeedbackDialog` opens only after sign-in (corrected 2026-09-01,
+      reversing the earlier "no sign-in gate" check); at ≥768px on `/` only. Below 768px the whole
+      **footer** is `display: none` (`AppLayout.css`'s mobile-app rule), so Contact is unreachable
+      there — parity with its sibling links, not a regression (AC-09).
 
 ---
 
 ## 8. Open items for RD
 
-No open items for this area — see `../00-overview.md` §9 for global open items.
+| ID                   | Open item                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~**TBD-SHELL-01**~~ | ✅ **Closed 2026-09-01, same day.** ~~🔧 **Backend (RD)** — `AuthProvider` serves `DEFAULT_PROFILE` (`MOCK_USER`, `src/lib/user.ts`) regardless of sign-in state, so a **signed-out** visitor who opens Send Feedback from the Footer (SHELL-P6) sees the mock address **`scott_wu@mail.com`** prefilled in the Email field. The field is editable and validated (`AC-PROF-11`), so this is not a blocker, but real backend wiring must prefill from the session or leave the field blank for a guest. Cross-ref: `FeedbackDialog`, area 06 §3.1. Added 2026-09-01, product owner.~~ Reason: the product owner put Contact behind `requireLogin` the same day (§3.1), so a signed-out visitor can no longer reach the form at all — `profile.email` is always the signed-in user's when the dialog opens. `AuthProvider` still serves `DEFAULT_PROFILE` regardless of sign-in state; that fact just can no longer surface here. |
+
+See also `../00-overview.md` §9 for global open items.
 
 ---
 
