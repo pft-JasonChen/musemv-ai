@@ -1,16 +1,32 @@
 #!/usr/bin/env python3
 """Builds user-flowchart.svg for the Share (S9) storyboard spec.
 
-Layout note. This one IS close to a sequence, and it is drawn as two halves
-meeting in the middle: the SENDER half (a Share control anywhere in the app
-opens the dialog, which mints a link) and the RECIPIENT half (that link, or
-the legacy form of it, resolves to media or to the unavailable state). The
-resolution order is the branch that matters, so it gets a decision node with
-its four sources spelled out rather than one arrow labelled "resolves".
+── WHY THIS IS FIVE BANDS AND NOT ONE GRAPH (rewritten 2026-09-01) ─────────
 
-The two panels are separate nodes because they are genuinely different
-screens: only one of them shows a title and a creator, and only one has a
-More menu.
+The first version drew the sender and recipient halves as one connected graph
+and rendered wrong: two nodes were placed at negative x and were clipped off
+the canvas, one edge left the right margin and wrapped back in, two labels
+landed on top of each other, and the bottom legend was cut off. None of that
+fails a build — `flowchart_lib` draws wherever it is told, `decision()`
+silently widens itself to fit its text, and `legend()` needs 20px of clear
+canvas per edge kind BELOW the y it is given. The only way to see any of it is
+to render the SVG and look at the picture.
+
+So: one band per path, using the library's own `section()`. Each band is a
+short left-to-right run well inside the margins, and the two cross-band jumps
+(the dialog's link into Part 1, the legacy URL's redirect) are drawn as short
+local edges rather than as long lines across the whole diagram.
+
+`assert_in_canvas()` is the guard that would have caught the first version.
+Every node goes through `place()`, and `write()` is only reached once all of
+them are inside the margins — it fails the build rather than warning, because
+a clipped node looks like a deliberate half-drawn box.
+
+Nothing here cites another spec's step IDs, and that is a build gate rather
+than a style choice: the SVG is inlined into spec.html, so a bare `Pn-Sn`
+drawn here is cross-reference-checked against THIS spec's own steps, and a
+neighbouring spec's ID resolves to nothing and fails the build. Name the
+neighbouring spec, never its step IDs.
 
 Re-run whenever a step ID cited on the diagram changes: `python3 make_flowchart.py`.
 """
@@ -24,80 +40,146 @@ from flowchart_lib import Flow  # noqa: E402
 
 VERSION = 'v1'
 DATE = '2026-09-01'
+W, H = 1280, 1820
+MARGIN = 40
 
 f = Flow('Share', 'YouCam Muse Web — desktop 1440 (D8)',
-         version=VERSION, date=DATE, width=1180, height=1180)
-S = f.SPINE
-CX = S + 90
+         version=VERSION, date=DATE, width=W, height=H)
 
-f.note(40, 58,
-       'Two halves. The SENDER mints a link from a dialog that is the same on every screen that '
-       'offers it; the RECIPIENT opens that link with no account and no app chrome. Links do not '
-       'expire — the unavailable state means an id that did not resolve, nothing else.')
+_placed = []
 
-# ── sender half ─────────────────────────────────────────────────────────────
-share_btn = f.node(S, 118, 'A Share control anywhere in the app',
-                   'MV / song result and player screens — their entry points are captured by S8', w=340, kind='entry')
-dialog = f.node(S, 205, 'Share dialog — a read-only link and Copy',
-                'No social targets, no native share · P5-S2 (AC-SHARE-04)', w=340)
-f.edge(share_btn, dialog)
 
-copied = f.node(S + 340, 205, 'Copied! for 1.5s, then reverts',
-                'The clipboard holds the same link · P5-S3', w=280, kind='success')
-f.elbow(dialog, copied, 'Copy', kind='structural', out='right', into='left', gap=50)
+def place(x, y, *a, **kw):
+    n = f.node(x, y, *a, **kw)
+    _placed.append((a[0] if a else kw.get('title', '?'), n))
+    return n
 
-# ── recipient half ──────────────────────────────────────────────────────────
-legacy = f.node(S - 400, 300, 'The legacy MV share URL',
-                'Server redirect, language prefix kept · P5-S1 (AC-SHARE-03)', w=290, kind='aside')
 
-page = f.node(S, 320, '/share?id= — bare, public, no app chrome',
-              'No sidebar, no tab bar, no navbar · P1-S1 (AC-SHARE-01)', w=380)
-f.edge(dialog, page, 'the recipient opens the link')
-f.elbow(legacy, page, 'redirects to', kind='structural', out='right', into='left', gap=50)
+def decide(cx, cy, title, **kw):
+    n = f.decision(cx, cy, title, **kw)
+    _placed.append((title, n))
+    return n
 
-resolve = f.decision(CX, 415, 'Does the id resolve?')
-f.edge(page, resolve)
 
-kind = f.decision(S - 260, 510, 'Which kind of media?')
-f.elbow(resolve, kind, 'community item · a History sample · your own completed creation',
-        kind='primary', out='left', into='top', gap=60)
+def assert_in_canvas():
+    bad = [f'{t!r} spans x {n.x:g}..{n.x + n.w:g}, y {n.y:g}..{n.y + n.h:g}'
+           for t, n in _placed
+           if n.x < MARGIN or n.x + n.w > W - MARGIN or n.y < 0 or n.y + n.h > H]
+    if bad:
+        raise SystemExit('nodes outside the canvas:\n  ' + '\n  '.join(bad))
 
-mv = f.node(S - 520, 610, 'MV panel — video + controller',
-            'NO title, NO creator · P1-S1, P1-S2', w=280, kind='info')
-f.elbow(kind, mv, 'a music video', kind='structural', out='left', into='right', gap=50)
 
-song = f.node(S - 160, 610, 'Song panel — art, title, creator, controller',
-              'The only panel that identifies its media · P3-S1', w=300, kind='info')
-f.edge(kind, song, 'a song')
+f.note(MARGIN, 100,
+       'Two halves. The SENDER mints a link from a dialog that is identical on every screen offering it;')
+f.note(MARGIN, 120,
+       'the RECIPIENT opens that link with no account and no app chrome. Drawn as one band per path.')
+f.note(MARGIN, 140,
+       'Links DO NOT EXPIRE — the unavailable state means an id that did not resolve, and nothing else.')
 
-more = f.node(S - 520, 720, 'More: Download · Playback Speed · Picture in Picture',
-              'Speed cycles and the menu stays open · P2-S1, P2-S2', w=320, kind='info')
-f.elbow(mv, more, 'More', kind='structural', out='left', into='top', gap=50)
+# ══ Part 1 — a valid MV link ════════════════════════════════════════════════
+f.section(210, 'Part 1 — A valid MV link  ·  P1')
 
-actions = f.node(S - 340, 820, 'Two pills: Download, and Create',
-                 'Create is kind-specific in LABEL only — both go home · P1-S3, P3-S3', w=340)
-f.edge(mv, actions, 'always present', side='right')
-f.edge(song, actions, 'always present')
+link = place(MARGIN, 240, '/share?id=  — bare and public',
+             'No sidebar, tab bar, header or navbar · P1-S1 (AC-SHARE-01)', w=340, kind='entry')
+panel = place(470, 240, 'MV panel — video + controller',
+              'NO title and NO creator on this panel (Q-01) · P1-S1', w=340, kind='info')
+f.edge(link, panel, side='h')
 
-home = f.node(S - 340, 920, 'The home page',
-              'The logo, and both Create pills, land here · P1-S4', w=290, kind='success')
-f.edge(actions, home, 'Create')
+controls = place(900, 240, 'Play · elapsed / total · seek · mute · fullscreen · More',
+                 'The product’s own controls, not the browser’s · P1-S2', w=340, kind='info')
+f.edge(panel, controls, side='h')
 
-# ── the unavailable branch ──────────────────────────────────────────────────
-gone = f.node(S + 330, 510, 'This link isn’t available',
-              'Unresolvable id · no id at all · ?type=expired · P4-S1..S3 (AC-SHARE-02)',
-              w=330, kind='error')
-f.elbow(resolve, gone, 'no — and there is no expiry rule behind it',
-        kind='error', out='right', into='top', gap=60)
-f.elbow(gone, home, 'the header logo', kind='structural', out='right', into='right', gap=40)
+pills = place(470, 370, 'Two pills: Download, and Create MV',
+              'Download renders only when a media URL exists · P1-S3 (AC-SHARE-05)', w=340)
+f.edge(panel, pills)
 
-live = f.node(S + 330, 640, 'A LIVE own creation, opened in a fresh tab',
-              'Resolves from memory only, so it lands here too · P4-S4', w=330, kind='error')
-f.edge(live, gone, 'no server-side resolution yet')
+sources = place(900, 370, 'Four resolution sources, in order',
+                'Community MV · community song · your own completed creation · the samples · P1-S4',
+                w=340, kind='info')
+f.edge(pills, sources, side='h')
 
-f.legend(1020)
+home = place(MARGIN, 370, 'The home page',
+             'BOTH Create pills land here — never a create flow · P1-S3', w=340, kind='success')
+f.edge(pills, home, 'Create', kind='primary', side=('left', 'right'))
+
+# ══ Part 2 — the More menu ══════════════════════════════════════════════════
+f.section(500, 'Part 2 — The More menu  ·  P2')
+
+more = place(MARGIN, 530, 'More, on the MV controller', 'Opens over the video · P2-S1', w=340)
+menu = place(470, 530, 'Download · Playback Speed · Picture in Picture',
+             'Exactly three items, in this order · P2-S1', w=340, kind='info')
+f.edge(more, menu, side='h')
+
+speed = place(900, 530, 'Playback Speed CYCLES, and the menu STAYS OPEN',
+              '1 → 1.5 → 2 → 0.5, wrapping. Measured live · P2-S2', w=340, kind='info')
+f.edge(menu, speed, side='h')
+
+oneshot = place(470, 660, 'Download and Picture in Picture act once, then close',
+                'Picture in Picture is a no-op where the browser lacks it · P2-S1, P2-S3',
+                w=340, kind='aside')
+f.edge(menu, oneshot)
+
+# ══ Part 3 — a valid song link ══════════════════════════════════════════════
+f.section(790, 'Part 3 — A valid song link  ·  P3')
+
+songlink = place(MARGIN, 820, '/share?id=  on a song', 'The same bare page · P3-S1', w=340, kind='entry')
+songpanel = place(470, 820, 'Song panel — art, title, creator',
+                  'The ONLY panel that identifies its media (Q-01) · P3-S1', w=340, kind='info')
+f.edge(songlink, songpanel, side='h')
+
+songctl = place(900, 820, 'Play · elapsed / total · seek · mute · download',
+                'No fullscreen and no More menu on a song · P3-S2', w=340, kind='info')
+f.edge(songpanel, songctl, side='h')
+
+songpills = place(470, 950, 'Two pills: Download, and Create Song',
+                  'A different LABEL, the same destination as Part 1’s · P3-S3', w=340)
+f.edge(songpanel, songpills)
+
+# ══ Part 4 — an unavailable link ════════════════════════════════════════════
+f.section(1080, 'Part 4 — An unavailable link  ·  P4')
+
+bad = place(MARGIN, 1110, 'An id that matches nothing', 'P4-S1', w=340, kind='error')
+noid = place(470, 1110, 'No id at all', 'P4-S2', w=340, kind='error')
+forced = place(900, 1110, '?type=expired — the QA switch',
+               'Forces the state on an id that WOULD resolve · P4-S3', w=340, kind='error')
+
+gone = place(470, 1240, '“This link isn’t available”',
+             'One state, three ways in. The header logo is the only way out · AC-SHARE-02',
+             w=340, kind='error')
+f.edge(bad, gone, kind='error', side=('bottom', 'left'))
+f.edge(noid, gone, kind='error')
+f.edge(forced, gone, kind='error', side=('bottom', 'right'))
+
+live = place(900, 1240, 'A LIVE own creation, opened elsewhere',
+             'Held in the sender’s own session, so no other session resolves it · P4-S4',
+             w=340, kind='error')
+f.edge(live, gone, kind='error', side=('left', 'right'))
+
+# ══ Part 5 — minting a link ═════════════════════════════════════════════════
+f.section(1380, 'Part 5 — Minting a link  ·  P5')
+
+ctl = place(MARGIN, 1410, 'A Share control on any result or player screen',
+            'S8 captures those entry points · P5-S2', w=340, kind='entry')
+dialog = place(470, 1410, 'Share dialog — a read-only link and Copy',
+               'No social targets, no native share · P5-S2 (AC-SHARE-04)', w=340)
+f.edge(ctl, dialog, side='h')
+
+copied = place(900, 1410, '“Copied!” for 1.5s, then reverts',
+               'The dialog stays open; the clipboard holds that link · P5-S3', w=340, kind='success')
+f.edge(dialog, copied, 'Copy', side='h')
+
+legacy = place(MARGIN, 1540, 'The legacy MV share URL',
+               'Server redirect, language prefix kept · P5-S1 (AC-SHARE-03)', w=340, kind='aside')
+backto = place(470, 1540, '→ Part 1: /share?id=',
+               'The canonical page — same media, same panel · P5-S1', w=340)
+f.edge(legacy, backto, 'redirects to', kind='structural', side='h')
+f.edge(dialog, backto, 'the recipient opens the link', kind='primary')
+
+assert_in_canvas()
+# The legend draws ONE 20px row per edge kind used, starting AT this y — so it
+# needs y..y+80 of clear canvas below it. The first version cut it off.
+f.legend(1680)
 f.write(os.path.join(HERE, 'user-flowchart.svg'))
 print('Wrote', os.path.join(HERE, 'user-flowchart.svg'))
-if f.warnings:
-    for w in f.warnings:
-        print('WARN:', w)
+for w in f.warnings:
+    print('WARN:', w)
