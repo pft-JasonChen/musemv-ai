@@ -5,6 +5,8 @@ import Link from "next/link";
 import { NEW_MVS, mvCoverRatio } from "@/lib/mv/community";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
+import { useDemoFlag } from "@/components/demo/useDemo";
+import { FeedEmpty } from "@/components/community/FeedEmpty";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
@@ -43,6 +45,7 @@ import { IconButton } from "@/components/ui/IconButton";
  */
 export function NewMVsSection() {
   const { locale } = useLocale();
+  const demoEmpty = useDemoFlag("feedEmpty");
   const rowRef = useRef<HTMLDivElement>(null);
   const [canScrollBack, setCanScrollBack] = useState(false);
   const [canScrollForward, setCanScrollForward] = useState(false);
@@ -76,50 +79,57 @@ export function NewMVsSection() {
         seeAllHref="/explore/mvs"
       />
 
-      <div className="new-mvs__row-wrapper">
-        <div className="new-mvs__row" ref={rowRef} onScroll={updateScrollState}>
-          {NEW_MVS.map((mv) => (
-            <Link
-              key={mv.id}
-              href={localePath(locale, `/watch?id=${mv.id}`)}
-              className="new-mvs__item"
-            >
-              <Card
-                type="Video"
-                ratio={mvCoverRatio(mv.id)}
-                title={mv.title}
-                subtitle={mv.meta}
-                badge={mv.badge ?? undefined}
-                coverImage={mv.thumb}
+      {/* LAST render-time branch, never a mutated seed constant — the
+          `demoStore.ts` convention. `feedEmpty` is the only way to reach this
+          at all; NEW_MVS can never be empty for real. */}
+      {demoEmpty ? (
+        <FeedEmpty />
+      ) : (
+        <div className="new-mvs__row-wrapper">
+          <div className="new-mvs__row" ref={rowRef} onScroll={updateScrollState}>
+            {NEW_MVS.map((mv) => (
+              <Link
+                key={mv.id}
+                href={localePath(locale, `/watch?id=${mv.id}`)}
+                className="new-mvs__item"
+              >
+                <Card
+                  type="Video"
+                  ratio={mvCoverRatio(mv.id)}
+                  title={mv.title}
+                  subtitle={mv.meta}
+                  badge={mv.badge ?? undefined}
+                  coverImage={mv.thumb}
+                />
+              </Link>
+            ))}
+          </div>
+
+          {canScrollBack && (
+            <div className="new-mvs__previous">
+              <IconButton
+                size="large"
+                variant="ghost"
+                icon="ic_arrow_left"
+                label="Previous"
+                onClick={() => scrollByCard(-1)}
               />
-            </Link>
-          ))}
+            </div>
+          )}
+
+          {canScrollForward && (
+            <div className="new-mvs__next">
+              <IconButton
+                size="large"
+                variant="ghost"
+                icon="ic_arrow_right"
+                label="Next"
+                onClick={() => scrollByCard(1)}
+              />
+            </div>
+          )}
         </div>
-
-        {canScrollBack && (
-          <div className="new-mvs__previous">
-            <IconButton
-              size="large"
-              variant="ghost"
-              icon="ic_arrow_left"
-              label="Previous"
-              onClick={() => scrollByCard(-1)}
-            />
-          </div>
-        )}
-
-        {canScrollForward && (
-          <div className="new-mvs__next">
-            <IconButton
-              size="large"
-              variant="ghost"
-              icon="ic_arrow_right"
-              label="Next"
-              onClick={() => scrollByCard(1)}
-            />
-          </div>
-        )}
-      </div>
+      )}
     </section>
   );
 }

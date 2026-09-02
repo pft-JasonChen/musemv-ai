@@ -232,7 +232,7 @@ async def main_recipient(base):
             raise SystemExit("the MV panel grew a title/creator — area 10 and this spec disagree")
         if not meta["poster"]:
             raise SystemExit("the share video lost its poster; these captures depend on it")
-        if meta["pills"] != ["Download", "Create MV"]:
+        if meta["pills"] != ["Download", "Try YouCam Muse"]:
             raise SystemExit(f"unexpected MV action pills: {meta['pills']}")
         await multi_focus(cap, page, "01_mv_valid_link.png", [
             ([".share-page__header"], "Logo header — the only way home", "info"),
@@ -244,7 +244,7 @@ async def main_recipient(base):
 
         await multi_focus(cap, page, "03_mv_actions.png", [
             (['.share-page__pill--dark'], "Download — saves the file", "action"),
-            (['.share-page__pill--gradient-mv'], "Create MV — goes to the home page", "action"),
+            (['.share-page__pill--gradient-mv'], "Neutral label, and it goes to the home page", "action"),
         ])
 
         # Resolution: a static History sample resolves like a community item.
@@ -310,7 +310,7 @@ async def main_recipient(base):
         print("   song panel:", song)
         if song["title"] != "Pop Anthem" or not song["creator"]:
             raise SystemExit(f"the song panel lost its title/creator: {song}")
-        if song["pills"] != ["Download", "Create Song"]:
+        if song["pills"] != ["Download", "Try YouCam Muse"]:
             raise SystemExit(f"unexpected song action pills: {song['pills']}")
         await multi_focus(cap, page, "07_song_valid_link.png", [
             ([".share-song__art"], "Cover art", "info"),
@@ -322,7 +322,7 @@ async def main_recipient(base):
 
         await multi_focus(cap, page, "09_song_actions.png", [
             (['.share-page__pill--dark'], "Download — saves the audio", "action"),
-            (['.share-page__pill--gradient-song'], "Create Song — goes to the home page", "action"),
+            (['.share-page__pill--gradient-song'], "The same label; only the gradient differs by kind", "action"),
         ])
 
         # ══ P4 — the unavailable state ══════════════════════════════════════

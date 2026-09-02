@@ -229,7 +229,7 @@ FAQ / Terms of Service / Privacy Policy 三條**仍是 `href="#"`**,等網址(A2
 
 ## 4. Storyboard spec 隊列 — 現在只剩 S10 擋住
 
-> _更新 2026-09-01(同日稍晚):S8 與 S9 已完成,隊列只剩 S10。_
+> _更新 2026-09-01(同日稍晚):**隊列全部完成**。S8 / S9 建好後,同日的 spec review 又把四個 S8 問題與兩個 S9 問題全數裁示,其中三個改了程式(見下方);S10 依 S11 的舊裁示改用 md 形態交付。_
 
 | 代號 | Slug                  | 狀態                                                            |
 | ---- | --------------------- | --------------------------------------------------------------- |
@@ -240,9 +240,9 @@ FAQ / Terms of Service / Privacy Policy 三條**仍是 `href="#"`**,等網址(A2
 | S6   | `shell-auth`          | ✅ v1 — 需補 2.1(Footer Contact 登入閘)                         |
 | S7   | `profile-account`     | ✅ v1 — 需補 1.3(頭像上傳 + 圓形裁切)                           |
 | S5   | `credits-iap`         | ✅ **v1 完成 2026-09-01** —— 6 paths / 21 shots,validate 與 lint 全綠(56/56 strings) |
-| S8   | `explore-community`   | ✅ **v1 完成 2026-09-01** —— 6 paths / 36 shots,validate 與 lint 全綠(56/56 strings)。Curation PRD 首次完整讀過:版面依原型(D-02),排名/審核層只標註並以 PDF 為準(D-03);PRD 自相矛盾與 `TBD-EXP-11` 仍開著,記為 Q-01 / Q-02 |
+| S8   | `explore-community`   | ✅ **v1 完成 2026-09-01** —— 7 paths / 38 shots,validate 與 lint 全綠(56/56 strings)。Curation PRD 首次完整讀過:版面依原型(D-02),排名/審核層只標註並以 PDF 為準(D-03);PRD 自相矛盾與 `TBD-EXP-11` 仍開著,記為 Q-01 / Q-02 |
 | S9   | `share`               | ✅ **v1 完成 2026-09-01** —— 5 paths / 15 shots,validate 與 lint 全綠(15/15 strings)。`/share` 2026-08-24 已改版,area 10 依 D11 就地更正 |
-| S10  | `credit-consumption`  | ⏸ 卡在 `TBD-CC-06`(見 2.2)—— 依裁示先寫 TBD                     |
+| S10  | `credit-consumption`  | ✅ **完成 2026-09-01,依 S11 裁示用 md 當 spec**(PLAN D13)—— `specs/areas/11-credit-consumption.md` 就是 S10,補了 S10 檔頭、§1.1 數量欄位空白表、§9 QA 檢查清單。**唯一紅燈是 §1.1**(`TBD-CC-06`),產品負責人會補;它擋的是呼叫後端,不擋計價。 |
 | S11  | `notifications-email` | ✅ **不做截圖版** —— area 12 的 md 即 spec(產品負責人裁示)      |
 
 ---
@@ -251,9 +251,15 @@ FAQ / Terms of Service / Privacy Policy 三條**仍是 `href="#"`**,等網址(A2
 
 **第一版說「六項擋住 spec」,實測後一項都不擋。** 其中兩項根本不是缺口 —— 是我讀了過期的
 handover 而沒有讀程式碼。真正還開著的只有**三個 RD 契約**(第 2 節)與**兩個等回覆**(第 3 節),
-而那些擋的是 RD 實作,不是 spec 寫作。~~**S5、S8、S9 現在都可以做。**~~ **S5、S8、S9 都已於
-2026-09-01 完成;隊列只剩 S10,仍卡在 `TBD-CC-06`。**
+而那些擋的是 RD 實作,不是 spec 寫作。~~**S5、S8、S9 現在都可以做。**~~ **S5、S8、S9、S10 都已於 2026-09-01 完成 —— 隊列清空。**
+S10 用 md 形態交付,唯一未填的是 payload 的數量欄位(`TBD-CC-06`),由產品負責人補。
 
+> **同日 spec review 的六個裁示,三個改了程式碼:** `/song/play?id=` 現在會標示連結指到的那一列
+> (但不自動播,`AC-EXP-14`);五個 feed 介面共用同一組空狀態(`AC-EXP-13`,關掉 `TBD-EXP-06`);
+> `/share` 的 Create 膠囊改成中性標籤,與「都導首頁」一致(`AC-SHARE-07`)。三個都有 e2e 雙向守住。
+> 另外三個裁示為「現況正確,照寫」: Trending rail 的命名、`/share` MV 面板不顯示標題/創作者、
+> Curation PRD 的排名規則仍有效(但數字自相矛盾,待重出)。
+>
 > **同一天又證實了一次「以程式碼為準」。** S8 與 S9 的拍攝各自推翻了自家 area spec 的既有敘述:
 > area 04 的 `/watch` 控制項清單、`/creator` 的 email 與 `⋯` 選單、`/song/play` 桌機到站狀態,
 > 以及 area 10 整個「只有三樣東西」的 `/share` 描述(2026-08-24 已改版)。全部依 D11 就地更正。

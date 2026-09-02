@@ -82,15 +82,15 @@ f.section(210, 'Part 1 — A valid MV link  ·  P1')
 link = place(MARGIN, 240, '/share?id=  — bare and public',
              'No sidebar, tab bar, header or navbar · P1-S1 (AC-SHARE-01)', w=340, kind='entry')
 panel = place(470, 240, 'MV panel — video + controller',
-              'NO title and NO creator on this panel (Q-01) · P1-S1', w=340, kind='info')
+              'NO title and NO creator — deliberate, D-08 · P1-S1', w=340, kind='info')
 f.edge(link, panel, side='h')
 
 controls = place(900, 240, 'Play · elapsed / total · seek · mute · fullscreen · More',
                  'The product’s own controls, not the browser’s · P1-S2', w=340, kind='info')
 f.edge(panel, controls, side='h')
 
-pills = place(470, 370, 'Two pills: Download, and Create MV',
-              'Download renders only when a media URL exists · P1-S3 (AC-SHARE-05)', w=340)
+pills = place(470, 370, 'Two pills: Download, and a neutral Create',
+              'One label for both kinds; only the gradient differs · P1-S3 (AC-SHARE-07)', w=340)
 f.edge(panel, pills)
 
 sources = place(900, 370, 'Four resolution sources, in order',
@@ -99,7 +99,7 @@ sources = place(900, 370, 'Four resolution sources, in order',
 f.edge(pills, sources, side='h')
 
 home = place(MARGIN, 370, 'The home page',
-             'BOTH Create pills land here — never a create flow · P1-S3', w=340, kind='success')
+             'Where the pill says it goes — never a create flow · P1-S3', w=340, kind='success')
 f.edge(pills, home, 'Create', kind='primary', side=('left', 'right'))
 
 # ══ Part 2 — the More menu ══════════════════════════════════════════════════
@@ -124,15 +124,15 @@ f.section(790, 'Part 3 — A valid song link  ·  P3')
 
 songlink = place(MARGIN, 820, '/share?id=  on a song', 'The same bare page · P3-S1', w=340, kind='entry')
 songpanel = place(470, 820, 'Song panel — art, title, creator',
-                  'The ONLY panel that identifies its media (Q-01) · P3-S1', w=340, kind='info')
+                  'Cover art carries no words, so a song is named · P3-S1', w=340, kind='info')
 f.edge(songlink, songpanel, side='h')
 
 songctl = place(900, 820, 'Play · elapsed / total · seek · mute · download',
                 'No fullscreen and no More menu on a song · P3-S2', w=340, kind='info')
 f.edge(songpanel, songctl, side='h')
 
-songpills = place(470, 950, 'Two pills: Download, and Create Song',
-                  'A different LABEL, the same destination as Part 1’s · P3-S3', w=340)
+songpills = place(470, 950, 'Two pills: Download, and the same Create',
+                  'Identical to Part 1’s in label AND destination · P3-S3', w=340)
 f.edge(songpanel, songpills)
 
 # ══ Part 4 — an unavailable link ════════════════════════════════════════════

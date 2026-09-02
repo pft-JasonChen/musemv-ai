@@ -15,6 +15,8 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
+import { useDemoFlag } from "@/components/demo/useDemo";
+import { FeedEmpty } from "@/components/community/FeedEmpty";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ListItem } from "@/components/ui/ListItem";
 import { SongPlayBar } from "@/components/song/SongPlayBar";
@@ -109,6 +111,7 @@ export function NewSongsSection({
   const router = useRouter();
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
+  const demoEmpty = useDemoFlag("feedEmpty");
   const { patchSongCompose, setSongResult } = useSongFlow();
   const isPhone = useMediaQuery(PHONE_QUERY);
 
@@ -278,10 +281,17 @@ export function NewSongsSection({
         onEnded={() => setPlaying(false)}
       />
 
-      <div className="new-songs__layout">
-        <div className="new-songs__column">{column(COLUMN_1)}</div>
-        <div className="new-songs__column">{column(COLUMN_2)}</div>
-      </div>
+      {/* LAST render-time branch, never a mutated seed constant — the
+          `demoStore.ts` convention. `feedEmpty` is the only way to reach this
+          at all; the seed array can never be empty for real. */}
+      {demoEmpty ? (
+        <FeedEmpty />
+      ) : (
+        <div className="new-songs__layout">
+          <div className="new-songs__column">{column(COLUMN_1)}</div>
+          <div className="new-songs__column">{column(COLUMN_2)}</div>
+        </div>
+      )}
 
       {previewSong && (
         // `open` is a new required prop (2026-08-14, see SongPlayBar.tsx) for

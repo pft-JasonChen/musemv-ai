@@ -62,18 +62,26 @@ Renders **bare** (no shell) — `AppShell` treats any `/share…` path as chrome
   - **`SongPanel`** — cover art, **title + creator** (the creator line only when the media carries
     one), and a pill controller: play/pause, `elapsed / total`, seek, mute, download.
   - **Two action pills** below either panel: **Download** (rendered only when a media URL exists)
-    and a **Create** pill labelled `Create MV` / `Create Song` by media kind. ⚠️ **Both Create
-    pills go to the HOME page**, not to a create flow — product owner, 2026-08-24: this page is
-    unauthenticated and mostly reached by people with no account, so dropping them straight into a
-    create flow skips the product entirely. The label stays kind-specific to signal intent.
+    and a **Create** pill reading **`Try YouCam Muse`** on BOTH media kinds. ⚠️ **It goes to the
+    HOME page**, not to a create flow — product owner, 2026-08-24: this page is unauthenticated and
+    mostly reached by people with no account, so dropping them straight into a create flow skips
+    the product entirely. Only the pill's GRADIENT still varies by kind
+    (`--gradient-mv` / `--gradient-song`), which is decoration, not a promise.
+    > ⚠️ **Label corrected 2026-09-01 (product owner, at the S9 spec review).** It read
+    > `Create MV` / `Create Song` by media kind while both went to the home page — a button naming
+    > a flow it never opened, which is the shape QA files as a broken link. The DESTINATION was not
+    > reopened; only the label follows it now. Guarded by `e2e/behaviour-regressions.spec.ts`
+    > ("/share's Create pill is neutral and goes home"), asserted on both media kinds.
   > ⚠️ **Corrected 2026-09-01 by the S9 storyboard capture (D11).** This bullet, §1, §2's table row
   > and `AC-SHARE-01` all still described the 2026-07-23 "three things only" page — logo, media,
   > Download, "no Share action, title/creator, or Try CTA". Every clause of that is now wrong on the
   > running app: there is a full controller, a More menu, a second CTA, and a title/creator on the
   > song panel. The native `<video controls>`/`<audio controls>` and the 80vh cap went with the
   > redesign. Captured at S9 `P1-S1`..`P1-S3`, `P2-S1`, `P2-S2`, `P3-S1`..`P3-S3`.
-  > The **title/creator asymmetry** between the two panels is raised as S9 `Q-01` — nothing in the
-  > code or the handoff says it was intended.
+  > The **title/creator asymmetry** between the two panels is **settled as deliberate** (product
+  > owner, 2026-09-01): a music video usually carries its own title on screen, so repeating it is
+  > redundant, whereas a song's cover art carries no words and has to be named. Specified as a rule
+  > on both panels rather than left open.
 - **Unavailable/invalid (`null`):** logo header (→ home), an alert icon, "This link isn't available",
   copy "*We couldn't find this creation. Ask the sender to share it again.*".
   **Share links DO NOT EXPIRE (product owner, 2026-08-19).** The previous copy advertised a 30-day
@@ -135,6 +143,9 @@ Screens to capture later: `/share?id=…` (valid MV + valid song), `/share?type=
 - **AC-SHARE-03** — WHEN `/share/mv/{id}` is opened, THE SYSTEM SHALL redirect to `/share?id={id}` preserving the locale.
 - **AC-SHARE-04** — WHEN Share is invoked, THE SYSTEM SHALL open `ShareDialog` exposing a copyable `buildShareUrl` link and a Copy button — and **no** social-platform targets or native-share button (MVP).
 - **AC-SHARE-05** — WHEN Download is tapped on a valid link, THE SYSTEM SHALL download the media as `{title}.mp4` (MV) or `{title}.mp3` (song).
+- **AC-SHARE-07** — _(added 2026-09-01)_ WHEN a valid share link is opened, THE SYSTEM SHALL offer a
+  Create pill whose LABEL is the same string for both media kinds and whose destination is the home
+  page. THE SYSTEM SHALL NOT label it with a creation flow it does not open. See §3.
 - **AC-SHARE-06** — THE SYSTEM SHALL render `/share` (valid + expired) and `ShareDialog` at 320/375/768/1024/1440/1920px. *(visual)* _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
 
 ---
@@ -147,6 +158,8 @@ Screens to capture later: `/share?id=…` (valid MV + valid song), `/share?type=
 - [ ] **SHARE-P3**: `/share/mv/x` → `/share?id=x`, locale kept (AC-03).
 - [ ] **SHARE-E1**: static History sample (e.g. `h-cinematic-night`) resolves in a fresh tab; a *live* own creation still → expired (prototype limit).
 - [ ] **SHARE-P4 / AC-04**: `ShareDialog` still reachable from MV/Song result & player screens (areas 02/03/04).
+- [ ] **AC-07**: both a valid MV link and a valid song link show the SAME Create pill label, and it
+      goes to the home page — not to `/mv/room` or `/song/create`.
 - [ ] **AC-06**: 4 widths clean, page bare (no shell) *(visual)*.
 
 ---

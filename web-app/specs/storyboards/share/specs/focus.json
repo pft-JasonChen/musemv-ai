@@ -52,7 +52,7 @@
         4.6
       ],
       "type": "action",
-      "label": "Create MV \u2014 goes to the home page"
+      "label": "Neutral label, and it goes to the home page"
     }
   ],
   "04_mv_history_sample.png": [
@@ -144,7 +144,7 @@
         6.0
       ],
       "type": "action",
-      "label": "Create Song \u2014 goes to the home page"
+      "label": "The same label; only the gradient differs by kind"
     }
   ],
   "10_unavailable_bad_id.png": [

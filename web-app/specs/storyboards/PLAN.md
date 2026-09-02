@@ -41,16 +41,18 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | 6 | 21 | ✅ v1, 2026-09-01 |
 | **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / route navbars / `SignInModal` | 7 | 24 | ✅ v1, 2026-08-27 |
 | **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, edit-profile, Send Feedback | 6 | 22 | ✅ v1, 2026-08-31 |
-| **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | 6 | 36 | ✅ v1, 2026-09-01 |
+| **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | 7 | 38 | ✅ v1, 2026-09-01 |
 | **S9** | `share` | 4 | 10 | `/share`, `ShareDialog` | 5 | 15 | ✅ v1, 2026-09-01 |
-| **S10** | `credit-consumption` | — | 11 | none — `spec_kind='data-contract'` | — | 0 | ⏸ `TBD-CC-06` |
+| **S10** | `credit-consumption` | — | 11 | none — **the area 11 md IS the spec** (D13) | — | 0 | ✅ 2026-09-01, one blank: `TBD-CC-06` |
 | — | ~~proof-of-creation~~ | — | 08 | — | — | — | ❌ out of web scope (area 08 § Status) |
 
 **Coverage check.** Areas 01–07, 09, 10 are covered by S2–S9 plus the finished S1; area 08 is
 removed from scope; area 11 is S10 and is contract-shaped, not journey-shaped.
 
-**As of 2026-09-01 the queue is DONE except S10.** Nine of the ten specs are built; S10 is still
-blocked on `TBD-CC-06` (D7), unchanged.
+**As of 2026-09-01 the queue is DONE.** All ten are delivered. S10 is the one that is not an
+`spec.html`: the product owner ruled it takes the same md-as-spec form S11 got (D13), and it ships
+with exactly one blank — the payload's quantity field (`TBD-CC-06`, area 11 §1.1), which the
+product owner will fill. Everything else in it is complete and testable.
 
 ### S8 scope — agreed at its Phase 0 gate, 2026-09-01
 
@@ -65,6 +67,14 @@ causes are structural rather than scope creep:
 | **P4** | `/watch`: the player and its transport, the grid below it, the YCM watermark (`AC-EXP-10`), the vertical swipe in three states (held · committed · an id with no neighbour, `AC-EXP-11`), the gated Like beside the un-gated Share, the Create hand-off, and the not-found state. |
 | **P5** | `/song/play`: the desktop arrival state, the bar opening on play, the creator-playlist swap (`EXP-09`), and the not-found state. |
 | **P6** | `/creator`: someone else's page, your own, both owner-menu variants, and the `profileEmpty` demo state in both modes. |
+
+**A SEVENTH path landed after the first build, and it is the product owner's own decision, not
+scope creep.** At the 2026-09-01 spec review they were asked about four S8 findings and three
+answers changed the app: `/song/play`'s deep link now MARKS its row (P5-S1, `AC-EXP-14`), every
+feed surface gained a shared empty state (the new **P7**, `AC-EXP-13`, closing `TBD-EXP-06`), and
+the "Trending Music Videos" rail's name/data mismatch was settled as correct rather than fixed
+(D-07 — QA should not file it). Two more captures and one re-shoot; 6/36 became 7/38. The three
+code changes each carry an e2e guard, mutation-tested both ways.
 
 1. **`/watch` grew two acceptance criteria in the days before this build** — the watermark and the
    swipe feed — and the swipe alone needs three captures, because "commits", "springs back" and
@@ -135,6 +145,13 @@ panel shows no title and no creator while the song panel shows both** (Q-01), wh
 explains — the component's own header says "title/creator … are back" without saying which panel.
 A second (Q-02) asks whether both Create pills should keep kind-specific labels when both go to the
 home page.
+
+**Both S9 open questions were answered at the 2026-09-01 review, and one changed the app.** The
+MV panel's missing title/creator is **deliberate** (D-08: a video carries its own title on screen,
+a cover image does not), so it is now specified as a rule on both panels rather than left open.
+The Create pill's label **was** wrong: it read `Create MV` / `Create Song` by media kind while both
+went to the home page, so the button named a flow it never opened. One neutral string now serves
+both kinds (`AC-SHARE-07`); only the gradient still varies. Guarded by e2e on both media kinds.
 
 **One thing worth carrying to any future spec that draws a diagram citing a neighbour.**
 `validate()` rejected this build because `make_flowchart.py` cited **S8's** step IDs (`P1-S6`,
@@ -468,4 +485,5 @@ Locked unless a decision below changes them.
 | **D9** | **Own flowchart per spec**, drawn with `flowchart_lib`, citing its own step IDs, version-stamped. | `docs/flows/flow-*.svg` stays the six-diagram overview citing area IDs. |
 | **D10** | **App bug found while capturing: fix it if it is a one-file fix with an e2e guard, then report.** Anything larger stops for the product owner's call. | Chosen over report-and-wait with the risk stated: "small" is the judgement that fills this repo's error log. The mutation-test-both-directions rule applies to every guard added this way. |
 | **D11** | **A capture that contradicts an area-spec `AC-*` corrects `areas/*.md` in the same branch**, annotated in place with the ⚠️ convention areas 02/03/07 already use, and cited in the spec's report. | `00-overview.md`'s single-source rule: leaving the AC stale means the two layers now disagree, and the area specs are what the AI agents read. |
+| **D13** | **S10 (`credit-consumption`) ships as `specs/areas/11-credit-consumption.md` itself, not as a generated `spec.html`** (product owner, 2026-09-01), reusing the same ruling S11 got: "storyboard spec 都不用畫面,或是直接用 md 當成 spec 即可". | Supersedes D7's "deferred until `TBD-CC-06` is answered". The reason it is not merely convenience: the subject has **no journey to walk**, and the skill's `data-contract` form REQUIRES a complete field table — the one thing still missing. A generated document with a hole in its required section is not more handover-ready than the md. The md gained an S10 header, a §1.1 blank-field table, and a §9 QA checklist whose 8th row is the single red light. |
 | **D12** | **Execution:** the Phase 0 gate and the final review stay in the orchestrating session; one **sonnet-5 / effort-high** subagent per spec owns Phases 1–4 (read → capture → `build_spec.py` → `validate` + `lint_spec`). | The skill's own rule that a build session must not self-certify. One spec at a time — captures must not run concurrently (CPU contention flakes Playwright; see `AGENTS.md`). |

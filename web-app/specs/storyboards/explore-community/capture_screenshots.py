@@ -860,14 +860,74 @@ async def main_demo(base):
         print("Session D console errors:", cap.errors or "none")
 
 
+# ── Session E: signed in + ?demo=1 — P7, the feed empty state ───────────────
+async def main_feed_empty(base):
+    """The state that did not exist when this spec was first built.
+
+    Product owner, 2026-09-01: the three Home rails and `/explore/songs`' list
+    had NO empty state at all, and `/explore/mvs` had the older Tailwind one.
+    All five now share `FeedEmpty`, reachable only through `?demo=1`'s
+    `feedEmpty` switch — the seed arrays are module constants and can never be
+    empty for real, exactly like `profileEmpty` on `/creator`."""
+    async with NextCapture(HERE, base) as cap:
+        page = cap.page
+        shoot = make_shoot(cap, page)
+
+        await page.goto(f"{base}/?demo=1", wait_until="networkidle")
+        await page.wait_for_timeout(900)
+        await open_demo_panel(page)
+        await toggle_flag(page, "Home rails & Explore catalogs — no content", True)
+        await collapse_demo_panel(page)
+        await page.wait_for_timeout(600)
+        await freeze_media(page)
+
+        # All three rails at once, and their HEADINGS survive — only rows go.
+        counts = await page.evaluate(
+            """() => ({ empties: document.querySelectorAll('.feed-empty').length,
+                        headings: document.querySelectorAll('.section-header').length,
+                        rows: document.querySelectorAll('.new-mvs__item, .top-picks__item').length })""")
+        print("   home with the switch on:", counts)
+        if counts["empties"] != 3 or counts["rows"] != 0:
+            raise SystemExit(f"expected 3 empty blocks and 0 rows on the home feed, got {counts}")
+        await multi_focus(cap, page, "37_feed_empty_home.png", [
+            ([".new-mvs .feed-empty"], "The same block on all three rails", "info"),
+            ([".new-mvs .section-header"], "The heading and “See all” stay", "info"),
+        ])
+
+        # /explore/mvs — the one surface that already had an empty state.
+        await page.goto(f"{base}/explore/mvs", wait_until="networkidle")
+        await page.wait_for_timeout(900)
+        if await page.locator(".feed-empty").count() != 1:
+            raise SystemExit("/explore/mvs did not render the shared empty block")
+        if await page.locator('a[href*="/watch?id="]').count():
+            raise SystemExit("/explore/mvs still rendered cards with the switch on")
+        print("   /explore/mvs: shared empty block, 0 cards — verified (no separate shot)")
+
+        # /explore/songs — the tab bar stays; only the LIST empties.
+        await page.goto(f"{base}/explore/songs", wait_until="networkidle")
+        await page.wait_for_timeout(1100)
+        await freeze_media(page)
+        tabs = await page.locator(".song-detail-page__list-heading .tabs__tab").count()
+        rows = await page.locator(".song-detail__list-item").count()
+        print(f"   /explore/songs with the switch on: tabs={tabs} rows={rows}")
+        if tabs != 10 or rows != 0:
+            raise SystemExit(f"expected the 10 tabs to survive and 0 rows, got {tabs}/{rows}")
+        await multi_focus(cap, page, "38_feed_empty_songs.png", [
+            ([".song-detail__list .feed-empty"], "The list is what empties", "info"),
+            ([".song-detail-page__list-heading .tabs"], "All ten tabs stay", "info"),
+        ])
+
+        print("Session E console errors:", cap.errors or "none")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://localhost:3000")
-    ap.add_argument("--only", default="", help="comma-separated: public,watch,guest,demo")
+    ap.add_argument("--only", default="", help="comma-separated: public,watch,guest,demo,empty")
     args = ap.parse_args()
     only = [s for s in args.only.split(",") if s]
     runs = {"public": main_public, "watch": main_watch,
-            "guest": main_guest, "demo": main_demo}
+            "guest": main_guest, "demo": main_demo, "empty": main_feed_empty}
     for key, fn in runs.items():
         if only and key not in only:
             continue

@@ -34,6 +34,8 @@ import {
   type CommunitySong,
 } from "@/lib/mv/community";
 import { GENRES } from "@/lib/mv/mock";
+import { useDemoFlag } from "@/components/demo/useDemo";
+import { FeedEmpty } from "@/components/community/FeedEmpty";
 import { SongPlayBar } from "@/components/song/SongPlayBar";
 
 /**
@@ -593,9 +595,14 @@ export function SongDetailView() {
     isTab(tabParam) ? tabParam : isCreatorSong ? null : "All",
   );
 
+  // Product owner, 2026-09-01. TWO triggers, unlike the other feed surfaces:
+  // `feedEmpty` for QA, and — with the flag off — a genre tab whose catalog
+  // holds no songs, which until now rendered a bare list with no message at
+  // all (`DESIGNER-TODO` A30). Last render-time branch, per demoStore's rule.
+  const demoEmpty = useDemoFlag("feedEmpty");
   const displayedSongs = useMemo(
-    () => (activeTab === null ? CREATOR_SONGS : songsForTab(activeTab)),
-    [activeTab],
+    () => (demoEmpty ? [] : activeTab === null ? CREATOR_SONGS : songsForTab(activeTab)),
+    [activeTab, demoEmpty],
   );
 
   /**
@@ -1008,6 +1015,7 @@ export function SongDetailView() {
               style={previewOpen ? { paddingBottom: 96 } : undefined}
             >
               <div className="song-detail__list">
+                {displayedSongs.length === 0 && <FeedEmpty />}
                 {displayedSongs.map((song) => (
                   <div key={song.id} className="song-detail__list-item">
                     <TopSongListItem
@@ -1019,6 +1027,11 @@ export function SongDetailView() {
                       shares={song.shares}
                       coverImage={song.cover}
                       isPlaying={song.id === activeId && playing}
+                      /* Product owner, 2026-09-01: a `?id=` deep link must MARK
+                         its song without auto-playing it. `activeId` already
+                         resolves the id; before this, nothing on screen used
+                         that fact until playback started. */
+                      isSelected={song.id === activeId}
                       onSelect={() => selectSong(song.id)}
                       onPlay={() => previewSong(song.id)}
                       onCreate={() => createFromSong(song)}

@@ -418,10 +418,17 @@ export function ShareLinkView() {
   // Product owner, 2026-08-24: this page is unauthenticated and mostly reached
   // by people with no account — dropping them straight into a creation flow
   // skips the product entirely. Both CTAs go to the home page instead, so a
-  // new visitor sees the hero/tool selector first; the label stays kind-
-  // specific to signal intent even though the destination doesn't.
+  // new visitor sees the hero/tool selector first.
+  //
+  // Product owner, 2026-09-01: the LABEL is now neutral too. It used to read
+  // "Create MV" / "Create Song" by media kind while both went to the home
+  // page, and that mismatch is the kind of thing QA reports as a broken link —
+  // the button named a creation flow it never opened. One string for both
+  // kinds, naming the destination it actually reaches. The pill keeps its
+  // kind-specific GRADIENT (`--gradient-mv` / `--gradient-song`), which is
+  // decoration rather than a promise about where it goes.
   const createHref = home;
-  const createLabel = media.kind === "mv" ? "Create MV" : "Create Song";
+  const createLabel = "Try YouCam Muse";
 
   return (
     <div className="share-page">

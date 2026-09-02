@@ -97,7 +97,7 @@ cfg = {
     ],
 
     'short_nav': [
-        'Home feed', 'Explore MVs', 'Explore songs', 'Watch', 'Song play', 'Creator',
+        'Home feed', 'Explore MVs', 'Explore songs', 'Watch', 'Song play', 'Creator', 'Empty feed',
     ],
 
     # ── the spine: user paths ────────────────────────────────────────────────
@@ -245,6 +245,8 @@ cfg = {
                          'The screen is its own section&rsquo;s entry point, so it needs a destination when there is no history.'),
                         ('Below 768px only the FIRST section renders.',
                          'A phone therefore reaches 3 of the 14 seed items; recorded as a delta, not captured here (D8).'),
+                        ('An empty catalog renders the shared feed empty block &mdash; see P7.',
+                         'Verified live with the switch on: the block replaces the sections and no card remains.'),
                     ],
                 },
                 {
@@ -517,14 +519,14 @@ cfg = {
                 {
                     'shot': '26_songplay_arrival.png', 'num': 1,
                     'user': 'Opens a song link.',
-                    'system': 'The browse list renders. Nothing is playing yet and no player bar is showing.',
+                    'system': 'The browse list renders with the linked song marked. Nothing is playing yet and no player bar is showing.',
                     'limits': [
                         ('/song/play and /explore/songs are ONE screen behind two addresses.',
                          'The two were merged; the id only decides which song is queued up.'),
-                        ('The player bar does not open on arrival &mdash; only starting playback opens it.',
-                         'Verified live during capture.'),
-                        ('Nothing on screen marks WHICH song the link named until playback starts.',
-                         'Raised as Q-04 &mdash; a recipient of a shared song link sees an unmarked catalog.'),
+                        ('The row the link named is MARKED, and exactly one row is.',
+                         'Product owner, 2026-09-01 (D-08). Before that a recipient landed on an unmarked catalog with no way to tell which song had been shared.'),
+                        ('Marking it does NOT start it &mdash; the player bar stays closed until the visitor presses play.',
+                         'The decision was explicitly &ldquo;mark the row, do not auto-play&rdquo;. Verified live: no media element is playing and the bar is still parked below the fold.'),
                     ],
                 },
                 {
@@ -670,6 +672,54 @@ cfg = {
                 },
             ],
         },
+        # ══════════════════════════════════════════════════════════════════════
+        {
+            'id': 'p7-empty-feed', 'num': 7,
+            'name': 'The empty feed',
+            'desc': 'One block, five surfaces &mdash; and the switch that is the only way to reach it.',
+            'entry': 'Any feed surface with the empty-feed demo switch on',
+            'outcome': 'The visitor is told the catalog is empty instead of reading blank space',
+            'steps': [
+                {
+                    'shot': '37_feed_empty_home.png', 'num': 1,
+                    'user': 'Opens the home page with the empty-feed switch on &mdash; /?demo=1.',
+                    'system': 'All three rails show the same empty block. Their headings and &ldquo;See all&rdquo; links stay.',
+                    'exact': [
+                        'Title: &ldquo;Nothing here yet&rdquo;',
+                        'Body: &ldquo;Be the first to create!&rdquo;',
+                    ],
+                    'limits': [
+                        ('Only the ROWS are replaced &mdash; every heading and &ldquo;See all&rdquo; link stays.',
+                         'Counted live with the switch on: three empty blocks, three headings, zero cards.'),
+                        ('The switch is the only way to reach this state.',
+                         'The seed catalogs are fixed module constants and can never be empty on their own.'),
+                        ('The same block serves all five feed surfaces, sharing /creator&rsquo;s treatment.',
+                         'Product owner, 2026-09-01 (D-09). Before that the rails and the song list had no empty state at all.'),
+                    ],
+                },
+                {
+                    'shot': '38_feed_empty_songs.png', 'num': 2,
+                    'user': 'Opens /explore/songs with the same switch on.',
+                    'system': 'The list is replaced by the block. The Top Picks rail above it and all ten tabs stay.',
+                    'limits': [
+                        ('The tab bar survives &mdash; the switch empties the LIST, not the screen.',
+                         'Counted live: ten tabs, zero rows.'),
+                        ('This surface has a SECOND trigger the others do not: a genre tab whose catalog holds no songs.',
+                         'That case used to render a bare list with no message at all.'),
+                    ],
+                },
+                {
+                    'num': 3,
+                    'user': 'Opens /explore/mvs with the same switch on.',
+                    'system': 'The same block replaces both sections.',
+                    'limits': [
+                        ('Identical block, identical copy &mdash; this surface had an older, different one until 2026-09-01.',
+                         'Verified live: one block, zero cards.'),
+                        'No screenshot: it is the same block P7-S1 already shows, on a page P2-S1 already shows populated.',
+                    ],
+                },
+            ],
+        },
     ],
 
     'states': [
@@ -719,11 +769,11 @@ cfg = {
             'P6-S6, P6-S7',
         ),
         (
-            'Empty rail or empty grid',
-            'A catalog with no items',
-            'Undefined on the Home rails and both explore grids &mdash; the seed arrays can never be empty, so there is nothing to trigger it',
-            'None &mdash; unbuilt',
-            'Not captured; no live state exists (see Q-05)',
+            'Empty rail or empty catalog',
+            'A feed surface with no items; reachable today only through the empty-feed demo switch',
+            'The shared empty block replaces the items; the surface&rsquo;s heading, tabs and links stay',
+            'Nothing to recover &mdash; it is a state, not a failure',
+            'P7-S1, P7-S2, P7-S3',
         ),
         (
             'Browser offline',
@@ -750,9 +800,9 @@ cfg = {
     'open_questions': [
         (
             'Q-01',
-            'The Curation PRD contradicts itself twice on its own scoring. Trending MV&rsquo;s weight table reads 45 / 30 / 15 / 10 while its formula reads 0.35 / 0.25 / 0.15 / 0.10 (summing to 0.85); Top Picks&rsquo; table reads 60 / 40 and labels both signals as a 7-day window, while its notes say all-time and its formula reads 0.30 / 0.25 (summing to 0.55). Which half of each pair is authoritative?',
+            'The Curation PRD&rsquo;s ranking RULES stand, but its numbers cannot be quoted: it contradicts itself twice on its own scoring. Trending MV&rsquo;s weight table reads 45 / 30 / 15 / 10 while its formula reads 0.35 / 0.25 / 0.15 / 0.10 (summing to 0.85); Top Picks&rsquo; table reads 60 / 40 and labels both signals as a 7-day window, while its notes say all-time and its formula reads 0.30 / 0.25 (summing to 0.55). Which half of each pair is authoritative?',
             'Nothing in this spec &mdash; no rail is ranked today. It blocks whoever implements ranking.',
-            'Product / RD (the PRD is the authority; see References)',
+            'Product / RD &mdash; the product owner settled the RULES half on 2026-09-01 (they stand, see D-07); only the numbers are reopened',
         ),
         (
             'Q-02',
@@ -762,24 +812,6 @@ cfg = {
         ),
         (
             'Q-03',
-            'The rail titled &ldquo;Trending Music Videos&rdquo; shows the newly-released catalog, and the Top Picks catalog it does NOT show is the one the PRD calls Trending. Is the rail&rsquo;s title wrong, is its data wrong, or does &ldquo;Trending&rdquo; mean something different once ranking exists?',
-            'Whether QA should file the mismatch, and what the rail is called after ranking lands',
-            'Product owner',
-        ),
-        (
-            'Q-04',
-            'A shared song link opens the browse list with the linked song queued but nothing marking it, and no player bar until the recipient presses play. Should a deep link start playing, or at least mark the row it named?',
-            'What a recipient of a shared song link actually sees (P5-S1)',
-            'Product owner',
-        ),
-        (
-            'Q-05',
-            'The Home rails and both explore grids have no defined behaviour for a catalog that comes back empty. The creator profile now has one, reachable through the demo panel; nothing equivalent exists for the other five surfaces.',
-            'Every one of those surfaces on the day a real backend returns zero items',
-            'Product owner / designer (tracked as TBD-EXP-06)',
-        ),
-        (
-            'Q-06',
             'What does &ldquo;cost per the Credit Consume MSR&rdquo; resolve to, generally? (Carried per the programme&rsquo;s own convention; no step in THIS spec quotes a cost &mdash; nothing on this surface spends credits.)',
             'N/A to this spec&rsquo;s own steps; recorded because every spec in the programme carries this row',
             'Product / RD (the MSR document link is still TBD)',
@@ -799,6 +831,8 @@ cfg = {
         ('AC-EXP-09', 'WHEN a /watch or /song/play id is unresolvable, THE SYSTEM SHALL show a not-found state; WHEN an explore grid is empty or the browser is offline, THE SYSTEM SHALL show the empty / offline state.', ['P4-S11', 'P5-S4'], 'The not-found half is captured on both players. The empty and offline halves have no live trigger &mdash; the seed arrays cannot be empty and the capture harness cannot simulate offline &mdash; so both are listed in the error table, and the missing empty-rail design is Q-05.'),
         ('AC-EXP-10', 'WHEN the MV player plays an official MV, THE SYSTEM SHALL overlay the YCM watermark positioned against the video&rsquo;s own rendered rectangle; WHEN the MV is user-submitted, THE SYSTEM SHALL NOT show it.', ['P4-S1', 'P4-S3']),
         ('AC-EXP-11', 'WHEN the viewer drags vertically on the MV stage past the swipe threshold, THE SYSTEM SHALL commit to the next or previous item in the feed, replacing the URL without a full page navigation; WHEN the current id has no neighbour, THE SYSTEM SHALL take no action on any drag.', ['P4-S4', 'P4-S5', 'P4-S6', 'P4-S7']),
+        ('AC-EXP-13', 'WHEN any feed surface &mdash; the three Home rails, either explore catalog, or the genre-filtered song list &mdash; has no items, THE SYSTEM SHALL render the shared empty block in place of the items, keeping the surface&rsquo;s own heading, tabs and links.', ['P7-S1', 'P7-S2', 'P7-S3']),
+        ('AC-EXP-14', 'WHEN /song/play is opened with an id, THE SYSTEM SHALL mark that song&rsquo;s row in the list and SHALL NOT begin playback or open the player bar until the visitor starts it.', ['P5-S1', 'P5-S2']),
         ('AC-EXP-12', 'WHEN the creator profile loads with the empty-profile demo switch on, THE SYSTEM SHALL render the active tab&rsquo;s list as an empty block; WHEN it is also the self variant, THE SYSTEM SHALL additionally show the subtitle and a tab-specific create CTA.', ['P6-S6', 'P6-S7']),
     ],
 
@@ -839,6 +873,11 @@ cfg = {
             'Production needs the real publish pipeline and a real delete; the publish-to-feed pipeline in particular does not exist at all.',
         ),
         (
+            'The empty feed exists but has no real trigger',
+            'All five feed surfaces now render the same empty block, but only the demo switch can reach it &mdash; the seed catalogs are module constants. The one exception is /explore/songs, where a genre tab with no songs empties the list for real.',
+            'Production reaches it whenever the feed returns zero items. Nothing more is needed: the state is built, not stubbed.',
+        ),
+        (
             'Two behaviours differ below 768px and are not captured',
             'The MV catalog hides its second section, so a phone reaches 3 of the 14 seed items; and the song screens replace the preview bar with a full-screen player that carries the lyrics sheet and the disc the desktop screen does not have.',
             'Not a production gap &mdash; recorded because this spec is desktop-only by scope (D8), so neither appears in the captures above.',
@@ -857,7 +896,11 @@ cfg = {
         ('D-04', 'The MV stage is blank in every /watch capture. Fix it, or ship it?', 'Ship it, and say so. The capture browser cannot decode the sample MVs&rsquo; codec &mdash; a documented limitation of this repo&rsquo;s capture environment, not a defect. Injecting a still frame at capture time was rejected: a screenshot showing something the app does not render is a fabricated capture, and provenance outranks a prettier picture. The recommendation that came out of it &mdash; give the player&rsquo;s videos the poster image the home hero already uses, so a non-decoding browser shows the design instead of a hole &mdash; is reported to the product owner rather than applied here, since a build session has no authority over app code.'),
         ('D-05', 'Does the sign-in gate belong in this spec at all, given S6 owns the modal?', 'The gate does; the modal does not. On this surface the gate fires at the ACTION rather than at the route, which is a rule about these screens and is specified by two of their own acceptance criteria. So P1-S8 and P4-S8 show that it opens and what it blocks, and stop there &mdash; the modal&rsquo;s own behaviour, dismissal and success animation are S6&rsquo;s.'),
         ('D-06', 'Desktop only, or add narrow captures for the two screens that behave differently?', 'Desktop 1403&times;697 only (D8), confirmed at the Phase 0 gate. Neither difference is a different component tree of the kind that earned S6 and S3 their exceptions: one is a CSS section-hiding rule and the other is a layout swap on the same screen. Both are recorded in Prototype vs production rather than left invisible.'),
-        ('D-07', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo, same as S1 and S3 through S7.'),
+        ('D-07', 'The rail titled &ldquo;Trending Music Videos&rdquo; shows the NEWLY-RELEASED catalog, and the catalog the PRD calls Trending has no entry point on the home page at all. Title wrong, data wrong, or neither?', 'Neither &mdash; product owner, 2026-09-01. Once ranking is wired, &ldquo;Trending&rdquo; will BE the ranked result and the rail&rsquo;s name comes true; what it shows today is the seed data standing in for a rank that does not exist yet. The spec records what the rail is fed rather than treating the name as a defect, and no code changed. QA should not file the mismatch.'),
+        ('D-08', 'A shared song link landed the recipient on an unmarked browse list &mdash; nothing said which song the link named, because the player bar only opens once playback starts. Fix, and how?', 'Mark the row, do NOT auto-play &mdash; product owner, 2026-09-01. Autoplay was rejected: browsers block it without a user gesture, so it would have opened a silent bar and looked broken in a different way. The row now carries a resting highlight (not the playing state, which also swaps the album-art glyph), and the bar still waits for a press. Both halves are asserted by e2e, in both directions.'),
+        ('D-09', 'The three Home rails and /explore/songs&rsquo; list had NO empty state, and /explore/mvs had an older, different one. Build now, or wait for a design?', 'Build now, reusing /creator&rsquo;s block &mdash; product owner, 2026-09-01, explicitly &ldquo;do not wait for a drawing&rdquo;. All five feed surfaces now share it (P7). One thing was decided rather than inherited and is flagged for confirmation: the VISUAL is /creator&rsquo;s, but the COPY is the existing feed empty state&rsquo;s (&ldquo;Nothing here yet&rdquo; / &ldquo;Be the first to create!&rdquo;) rather than /creator&rsquo;s &ldquo;No works released yet&rdquo;, which is about one person&rsquo;s own output and reads wrong on a global feed. Both strings were already approved; inventing a third would have put an unsourced product decision into this spec. No CTA, because a feed has no owner for the /creator rule to key off.'),
+        ('D-10', 'What happens to the Curation PRD&rsquo;s ranking layer now that its layout half is superseded?', 'The RULES stand and the NUMBERS do not &mdash; product owner, 2026-09-01. The scoring design is still what the backend will implement, so the spec keeps pointing at the PDF for it; but its two self-contradictions mean no weight in that document can be quoted as authoritative, and the values have to be reissued before anyone builds against them. That is why Q-01 stays open on the numbers alone.'),
+        ('D-11', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo, same as S1 and S3 through S7.'),
     ],
 
     'references': [
@@ -922,6 +965,10 @@ cfg = {
         os.path.join(WEB_APP, 'src', 'components', 'community', 'CommunityMvPlayer.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'community', 'CreatorProfile.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'community', 'EmptyState.tsx'),
+        # P7's block. Its two strings also live in EmptyState.tsx (they are
+        # deliberately the same copy), but this is the component that actually
+        # renders them on the five feed surfaces.
+        os.path.join(WEB_APP, 'src', 'components', 'community', 'FeedEmpty.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'song', 'SongDetailView.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'song', 'SongPlayBar.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'ui', 'SectionHeader.tsx'),

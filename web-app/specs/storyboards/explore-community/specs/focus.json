@@ -540,5 +540,49 @@
       "type": "info",
       "label": "The same block minus the subtitle and CTA"
     }
+  ],
+  "37_feed_empty_home.png": [
+    {
+      "box": [
+        21.4,
+        36.6,
+        73.3,
+        10.7
+      ],
+      "type": "info",
+      "label": "The same block on all three rails"
+    },
+    {
+      "box": [
+        21.4,
+        33.4,
+        73.3,
+        2.0
+      ],
+      "type": "info",
+      "label": "The heading and \u201cSee all\u201d stay"
+    }
+  ],
+  "38_feed_empty_songs.png": [
+    {
+      "box": [
+        21.4,
+        70.5,
+        36.2,
+        24.8
+      ],
+      "type": "info",
+      "label": "The list is what empties"
+    },
+    {
+      "box": [
+        21.4,
+        62.7,
+        73.3,
+        4.0
+      ],
+      "type": "info",
+      "label": "All ten tabs stay"
+    }
   ]
 }

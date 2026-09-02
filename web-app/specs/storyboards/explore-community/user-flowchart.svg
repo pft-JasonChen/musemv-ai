@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="2520" viewBox="0 0 1280 2520" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="2860" viewBox="0 0 1280 2860" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
 <title>Explore &amp; Community &#8212; User Flowchart</title>
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
-<rect width="1280" height="2520" fill="#ffffff"/>
+<rect width="1280" height="2860" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">Explore &amp; Community &#8212; User Flowchart</text>
 <text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 (D8) &#183; matches spec v1, 2026-09-01</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; blue = system response &#183; coral = human hand-off &#183; green = success / resolved &#183; red = error state</text>
@@ -143,15 +143,16 @@
 <text x="210" y="1750" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/song/play?id=</text>
 <text x="210" y="1768" font-size="12" fill="#5a6b78" text-anchor="middle">The SAME screen as /explore/songs &#8212; the id only</text>
 <text x="210" y="1783" font-size="12" fill="#5a6b78" text-anchor="middle">pre-selects &#183; P5-S1</text>
-<rect x="470" y="1730" width="340" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="640" y="1750" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">The bar arrives CLOSED</text>
-<text x="640" y="1768" font-size="12" fill="#5a6b78" text-anchor="middle">And nothing marks which song the link named (Q-04) &#183;</text>
-<text x="640" y="1783" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S1</text>
-<line x1="380" y1="1762.5" x2="470" y2="1762.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="470" y="1730" width="340" height="82" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="640" y="1750" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">The linked row is MARKED, the bar stays</text>
+<text x="640" y="1767" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">closed</text>
+<text x="640" y="1785" font-size="12" fill="#5a6b78" text-anchor="middle">Marked, not started &#8212; the decision was &#8220;do not auto-play&#8221; &#183;</text>
+<text x="640" y="1800" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S1</text>
+<line x1="380" y1="1762.5" x2="470" y2="1771" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <rect x="900" y="1730" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
 <text x="1070" y="1750" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Play opens the bar on that track</text>
 <text x="1070" y="1768" font-size="12" fill="#5a6b78" text-anchor="middle">On the linked song, not the list&#8217;s first row &#183; P5-S2</text>
-<line x1="810" y1="1762.5" x2="900" y2="1755" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="810" y1="1771" x2="900" y2="1755" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <rect x="470" y="1850" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
 <text x="640" y="1870" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">A creator id swaps the whole list</text>
 <text x="640" y="1888" font-size="12" fill="#5a6b78" text-anchor="middle">Eight creator tracks, and NO tab is active &#183; P5-S3 (EXP-09)</text>
@@ -191,14 +192,33 @@
 <text x="1070" y="2260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Ranking &#183; eligibility &#183; moderation &#183; refresh</text>
 <text x="1070" y="2278" font-size="12" fill="#5a6b78" text-anchor="middle">The Curation PRD&#8217;s whole layer &#8212; UNBUILT. No edge on</text>
 <text x="1070" y="2293" font-size="12" fill="#5a6b78" text-anchor="middle">this diagram passes through it (TBD-EXP-01 / 07)</text>
-<line x1="40" y1="2356" x2="1240" y2="2356" stroke="#e5e9ed" stroke-width="1"/>
-<line x1="40" y1="2376" x2="74" y2="2376" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="86" y="2380" font-size="12" fill="#5a6b78">Primary happy path</text>
-<line x1="40" y1="2396" x2="74" y2="2396" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
-<text x="86" y="2400" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
-<line x1="40" y1="2416" x2="74" y2="2416" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="86" y="2420" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
-<line x1="40" y1="2436" x2="74" y2="2436" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="86" y="2440" font-size="12" fill="#5a6b78">Error branch</text>
+<line x1="40" y1="2378" x2="1240" y2="2378" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="2400" font-size="15" font-weight="700" fill="#0c1c22">Part 7 &#8212; The empty feed  &#183;  P7</text>
+<rect x="40" y="2430" width="390" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="235" y="2450" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">feedEmpty (?demo=1) &#8212; the only way in</text>
+<text x="235" y="2468" font-size="12" fill="#5a6b78" text-anchor="middle">The seed catalogs are constants and can never empty on their own &#183;</text>
+<text x="235" y="2483" font-size="12" fill="#5a6b78" text-anchor="middle">P7-S1</text>
+<rect x="490" y="2430" width="390" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="685" y="2450" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">One shared block on all FIVE feed surfaces</text>
+<text x="685" y="2468" font-size="12" fill="#5a6b78" text-anchor="middle">Three home rails &#183; both explore catalogs &#183; the genre list &#183;</text>
+<text x="685" y="2483" font-size="12" fill="#5a6b78" text-anchor="middle">P7-S1..P7-S3 (AC-EXP-13)</text>
+<line x1="430" y1="2462.5" x2="490" y2="2462.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="920" y="2430" width="320" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="1080" y="2450" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Headings, tabs and &#8220;See all&#8221; all STAY</text>
+<text x="1080" y="2468" font-size="12" fill="#5a6b78" text-anchor="middle">The switch empties the items, not the screen &#183; P7-S2</text>
+<line x1="880" y1="2462.5" x2="920" y2="2455" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="490" y="2570" width="390" height="50" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="685" y="2590" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">One surface has a REAL trigger too</text>
+<text x="685" y="2608" font-size="12" fill="#5a6b78" text-anchor="middle">A genre tab whose catalog holds no songs empties for real &#183; P7-S2</text>
+<line x1="685" y1="2495" x2="685" y2="2570" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="2696" x2="1240" y2="2696" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="2716" x2="74" y2="2716" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="2720" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="2736" x2="74" y2="2736" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="86" y="2740" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
+<line x1="40" y1="2756" x2="74" y2="2756" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="2760" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+<line x1="40" y1="2776" x2="74" y2="2776" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="2780" font-size="12" fill="#5a6b78">Error branch</text>
 </g>
 </svg>

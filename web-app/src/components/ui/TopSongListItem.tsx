@@ -54,6 +54,7 @@ export function TopSongListItem({
   likes,
   shares,
   isPlaying = false,
+  isSelected = false,
   onSelect,
   onPlay,
   onCreate,
@@ -69,6 +70,17 @@ export function TopSongListItem({
   shares: number;
   /** Swaps the album-art play icon for a pause icon. */
   isPlaying?: boolean;
+  /**
+   * Marks this row as the one the screen is CURRENTLY ABOUT, without implying
+   * that it is playing (product owner, 2026-09-01). Added because a shared
+   * `/song/play?id=` link landed a recipient on the plain browse list with
+   * nothing at all indicating which song the link had named — the player bar
+   * only opens once playback starts, so until then the id was invisible.
+   * Deliberately NOT folded into `isPlaying`: the two states are different
+   * (`isPlaying` also swaps the album-art glyph to a pause icon), and the
+   * decision was explicitly "mark the row, do not auto-play".
+   */
+  isSelected?: boolean;
   /** Opens this song — on desktop that is a navigation to its result screen.
    *  Fires on a click ANYWHERE in the row except the creator link and the
    *  like/share/Create actions (designer request, 2026-08-11 — same rule
@@ -113,7 +125,10 @@ export function TopSongListItem({
   );
 
   return (
-    <div className="top-song top-song--clickable" onClick={onSelect}>
+    <div
+      className={`top-song top-song--clickable${isSelected ? " top-song--selected" : ""}`}
+      onClick={onSelect}
+    >
       <button
         type="button"
         className="top-song__album-art"

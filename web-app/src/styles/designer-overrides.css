@@ -619,6 +619,17 @@
   cursor: pointer;
 }
 
+/* Product owner, 2026-09-01 — a shared `/song/play?id=` link used to land the
+   recipient on the plain browse list with NOTHING marking which song the link
+   named: the player bar only opens once playback starts, so until then the id
+   was invisible. The decision was "mark the row, but do not auto-play", so
+   this is a resting highlight and not a playing state — `.top-song__title
+   --playing` (below) still owns that, and the album art keeps its play glyph.
+   Same surface as `:hover` on purpose: the row IS the one you would click. */
+.top-song--selected {
+  background-color: var(--white-15);
+}
+
 /* Designer request, 2026-08-11 — Song Result's transport row (prev/play/next)
    used `justify-content: space-between` with no explicit gap, so the space
    between the three buttons scaled with the container's width instead of
@@ -3179,6 +3190,22 @@
   gap: 20px;
   width: 100%;
   padding: 60px 0;
+  box-sizing: border-box;
+}
+
+/* Product owner, 2026-09-01 — the same block, for a FEED rather than a
+   profile: the three Home rails, both explore catalogs, and the genre-filtered
+   song list. Reuses `/creator`'s layout verbatim rather than inventing a
+   second empty-state shape; see `FeedEmpty.tsx` for why the COPY comes from
+   `CommunityEmpty` instead. Less vertical padding than the profile's, because
+   a rail sits between two other rails rather than filling a page. */
+.feed-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding: 40px 0;
   box-sizing: border-box;
 }
 

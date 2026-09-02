@@ -18,7 +18,7 @@
 <text x="210" y="293" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHARE-01)</text>
 <rect x="470" y="240" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
 <text x="640" y="260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">MV panel &#8212; video + controller</text>
-<text x="640" y="278" font-size="12" fill="#5a6b78" text-anchor="middle">NO title and NO creator on this panel (Q-01) &#183; P1-S1</text>
+<text x="640" y="278" font-size="12" fill="#5a6b78" text-anchor="middle">NO title and NO creator &#8212; deliberate, D-08 &#183; P1-S1</text>
 <line x1="380" y1="272.5" x2="470" y2="265" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <rect x="900" y="240" width="340" height="67" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
 <text x="1070" y="260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Play &#183; elapsed / total &#183; seek &#183; mute &#183; fullscreen &#183;</text>
@@ -26,9 +26,9 @@
 <text x="1070" y="295" font-size="12" fill="#5a6b78" text-anchor="middle">The product&#8217;s own controls, not the browser&#8217;s &#183; P1-S2</text>
 <line x1="810" y1="265" x2="900" y2="273.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <rect x="470" y="370" width="340" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="640" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Two pills: Download, and Create MV</text>
-<text x="640" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">Download renders only when a media URL exists &#183; P1-S3</text>
-<text x="640" y="423" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHARE-05)</text>
+<text x="640" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Two pills: Download, and a neutral Create</text>
+<text x="640" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">One label for both kinds; only the gradient differs &#183; P1-S3</text>
+<text x="640" y="423" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHARE-07)</text>
 <line x1="640" y1="290" x2="640" y2="370" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <rect x="900" y="370" width="340" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
 <text x="1070" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Four resolution sources, in order</text>
@@ -37,7 +37,7 @@
 <line x1="810" y1="402.5" x2="900" y2="402.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <rect x="40" y="370" width="340" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
 <text x="210" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">The home page</text>
-<text x="210" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">BOTH Create pills land here &#8212; never a create flow &#183; P1-S3</text>
+<text x="210" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">Where the pill says it goes &#8212; never a create flow &#183; P1-S3</text>
 <line x1="470" y1="402.5" x2="380" y2="395" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <text x="426.163" y="384.798" font-size="12" fill="#5a6b78" text-anchor="middle">Create</text>
 <line x1="40" y1="478" x2="1240" y2="478" stroke="#e5e9ed" stroke-width="1"/>
@@ -67,16 +67,15 @@
 <text x="210" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">The same bare page &#183; P3-S1</text>
 <rect x="470" y="820" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
 <text x="640" y="840" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Song panel &#8212; art, title, creator</text>
-<text x="640" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">The ONLY panel that identifies its media (Q-01) &#183; P3-S1</text>
+<text x="640" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">Cover art carries no words, so a song is named &#183; P3-S1</text>
 <line x1="380" y1="845" x2="470" y2="845" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <rect x="900" y="820" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
 <text x="1070" y="840" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Play &#183; elapsed / total &#183; seek &#183; mute &#183; download</text>
 <text x="1070" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">No fullscreen and no More menu on a song &#183; P3-S2</text>
 <line x1="810" y1="845" x2="900" y2="845" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="470" y="950" width="340" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="640" y="970" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Two pills: Download, and Create Song</text>
-<text x="640" y="988" font-size="12" fill="#5a6b78" text-anchor="middle">A different LABEL, the same destination as Part 1&#8217;s &#183;</text>
-<text x="640" y="1003" font-size="12" fill="#5a6b78" text-anchor="middle">P3-S3</text>
+<rect x="470" y="950" width="340" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="640" y="970" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Two pills: Download, and the same Create</text>
+<text x="640" y="988" font-size="12" fill="#5a6b78" text-anchor="middle">Identical to Part 1&#8217;s in label AND destination &#183; P3-S3</text>
 <line x1="640" y1="870" x2="640" y2="950" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <line x1="40" y1="1058" x2="1240" y2="1058" stroke="#e5e9ed" stroke-width="1"/>
 <text x="40" y="1080" font-size="15" font-weight="700" fill="#0c1c22">Part 4 &#8212; An unavailable link  &#183;  P4</text>

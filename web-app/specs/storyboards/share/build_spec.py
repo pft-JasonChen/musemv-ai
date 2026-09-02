@@ -34,7 +34,9 @@ TWO THINGS THIS RUN MEASURED THAT NO DOCUMENT SAYS
        The component's own header comment says "title/creator ... are back"
        without saying which panel, and area 10 says neither has them — which
        was true before the redesign and is now wrong in both directions.
-       Read off the live DOM; recorded as a decision and as an open question.
+       Read off the live DOM, then put to the product owner, who confirmed the
+       asymmetry is deliberate (D-08): a video carries its own title on screen,
+       a cover image does not.
     2. **The share page's video photographs, unlike `/watch`'s.** Same codec
        limit in this capture browser, but `MvPanel` passes a `poster`, which
        is exactly what a non-decoding browser paints. That one attribute is
@@ -109,13 +111,13 @@ cfg = {
                     'system': 'A bare page: a logo header, the video, and two actions. No app chrome of any kind.',
                     'exact': [
                         'Header wordmark: &ldquo;YouCam Muse&rdquo;',
-                        'Actions: &ldquo;Download&rdquo;, &ldquo;Create MV&rdquo;',
+                        'Actions: &ldquo;Download&rdquo;, &ldquo;Try YouCam Muse&rdquo;',
                     ],
                     'limits': [
                         ('The page renders with NO sidebar, tab bar, header or navbar.',
                          'AC-SHARE-01. Verified on every state below, not only this one.'),
                         ('The MV panel shows the media and nothing that identifies it &mdash; no title, no creator.',
-                         'Measured live. The song panel DOES show both, which is why P3 is a separate path; raised as Q-01.'),
+                         'Measured live, and settled as correct (D-08): an MV usually carries its own title on screen, so repeating it is redundant. The song panel DOES show both, which is why P3 is a separate path.'),
                         ('The route is not behind any guard, and nothing on it asks for an account.',
                          'The whole point of a share link is that the recipient does not have one.'),
                     ],
@@ -141,8 +143,8 @@ cfg = {
                          'AC-SHARE-05.'),
                         ('Download renders only when there is a media URL to save.',
                          'A creation with no file offers no Download.'),
-                        ('The Create pill&rsquo;s LABEL follows the media kind, but its destination does not.',
-                         'Both go to the home page, so a visitor with no account meets the product first instead of being dropped into a create flow. Confirmed live.'),
+                        ('The Create pill reads the SAME neutral string on both media kinds, and goes to the home page.',
+                         'Product owner, 2026-09-01 (D-07). Only the pill&rsquo;s gradient still varies by kind; a visitor with no account meets the product first rather than being dropped into a create flow.'),
                     ],
                 },
                 {
@@ -225,7 +227,7 @@ cfg = {
                     ],
                     'limits': [
                         ('The song panel identifies its media; the MV panel does not.',
-                         'Measured live on both. Raised as Q-01 &mdash; it is not clear the asymmetry is intended.'),
+                         'Measured live on both, and the asymmetry is deliberate (D-08): cover art carries no words, so a song has to be named.'),
                         ('The creator line renders only when the media carries one.',
                          'A sample creation has no creator, so the line is simply absent.'),
                         'The header, the two action pills and the bare-page rule are identical to the MV panel.',
@@ -248,13 +250,13 @@ cfg = {
                     'user': 'Looks at the two pills below the panel.',
                     'system': 'Download, and a Create action labelled for a song.',
                     'exact': [
-                        'Actions: &ldquo;Download&rdquo;, &ldquo;Create Song&rdquo;',
+                        'Actions: &ldquo;Download&rdquo;, &ldquo;Try YouCam Muse&rdquo; &mdash; the same string as the MV panel&rsquo;s',
                     ],
                     'limits': [
                         ('Download saves the audio under the song&rsquo;s title with the audio extension.',
                          'AC-SHARE-05.'),
-                        ('The Create pill reads differently from the MV one and goes to the same place.',
-                         'Both land on the home page &mdash; see P1-S3.'),
+                        ('The Create pill is identical to the MV panel&rsquo;s, in label and destination.',
+                         'Only the gradient differs by kind &mdash; see P1-S3.'),
                     ],
                 },
             ],
@@ -429,24 +431,12 @@ cfg = {
     'open_questions': [
         (
             'Q-01',
-            'The MV panel shows no title and no creator; the song panel shows both. Is the asymmetry intended, or did the 2026-08-24 redesign only add them to one panel?',
-            'What a recipient of an MV link can tell about what they are watching (P1-S1 vs P3-S1)',
-            'Product owner / designer',
-        ),
-        (
-            'Q-02',
-            'Both Create pills go to the home page, but their labels name a specific creation kind. Should the label match the destination, or should the destination follow the label?',
-            'Whether the pill is a promise the page keeps (P1-S3, P3-S3)',
-            'Product owner',
-        ),
-        (
-            'Q-03',
             'Share-link analytics has no field specification. The frontend deliberately carries no tracking parameters rather than guessing at them, so today a shared link reports nothing at all.',
             'Any measurement of sharing; the link format itself, if parameters have to be added later',
             'BA (tracked as TBD-SHARE-03)',
         ),
         (
-            'Q-04',
+            'Q-02',
             'What does &ldquo;cost per the Credit Consume MSR&rdquo; resolve to, generally? (Carried per the programme&rsquo;s own convention; no step in THIS spec quotes a cost &mdash; nothing on this surface spends credits.)',
             'N/A to this spec&rsquo;s own steps; recorded because every spec in the programme carries this row',
             'Product / RD (the MSR document link is still TBD)',
@@ -459,6 +449,7 @@ cfg = {
         ('AC-SHARE-03', 'WHEN the legacy MV share URL is opened, THE SYSTEM SHALL redirect to the canonical share URL for the same id, preserving the language prefix.', ['P5-S1']),
         ('AC-SHARE-04', 'WHEN Share is invoked, THE SYSTEM SHALL open the share dialog exposing a copyable public link and a Copy action &mdash; and NO social-platform targets and no native-share button.', ['P5-S2', 'P5-S3']),
         ('AC-SHARE-05', 'WHEN Download is pressed on a valid link, THE SYSTEM SHALL save the media under the creation&rsquo;s title with the matching extension.', ['P1-S3', 'P2-S1', 'P3-S3']),
+        ('AC-SHARE-07', 'WHEN a valid share link is opened, THE SYSTEM SHALL offer a Create pill whose label is the same for both media kinds and whose destination is the home page.', ['P1-S3', 'P3-S3']),
         ('AC-SHARE-06', 'THE SYSTEM SHALL render /share (valid and unavailable) and the share dialog at 320/375/768/1024/1440/1920px.', [], 'Visual-only; the six-tier sweep is e2e/visual-baseline.spec.ts&rsquo;s job. This spec&rsquo;s D8 scope captures 1403&times;697 desktop only.'),
     ],
 
@@ -496,7 +487,9 @@ cfg = {
         ('D-03', 'Why is the recipient session signed OUT, when every other spec in this programme seeds auth?', 'Because that is the subject. /share is public by design and is mostly opened by people with no account, so a signed-in capture would photograph a state a real recipient never sees. Only P5 &mdash; the dialog, which lives on a player screen rather than on /share &mdash; runs signed in.'),
         ('D-04', 'Does this spec capture the screens that OPEN the dialog?', 'No. S1, S2, S4 and S8 own those screens and already capture their Share controls as entry points; S8&rsquo;s own captures were taken first for exactly this reason. This spec picks up at the opened dialog and specifies what it does.'),
         ('D-05', 'The MV panel has no title or creator and the song panel has both. Specify it, or report it?', 'Both. It is specified as measured &mdash; the steps say what each panel shows &mdash; and raised as Q-01, because nothing in the code, the area spec or the component&rsquo;s own comment says the asymmetry was intended. Writing it down as if it were a rule would make an accident into a contract.'),
-        ('D-06', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo, same as S1 and S3 through S8.'),
+        ('D-07', 'Both Create pills went to the home page while their labels named a specific creation flow. Fix the label, or the destination?', 'The label &mdash; product owner, 2026-09-01. The destination was already decided on 2026-08-24 and for a good reason: the recipient has no account, so a creation flow drops them at a sign-in wall instead of at the product. What was wrong was a button naming a flow it never opened, which is the shape QA files as a broken link. One neutral string now serves both media kinds; only the pill&rsquo;s gradient still varies, which is decoration rather than a promise.'),
+        ('D-08', 'The MV panel shows no title or creator while the song panel shows both. Intended, or an oversight in the redesign?', 'Intended &mdash; product owner, 2026-09-01. A music video usually carries its own title on screen, so repeating it above the player is redundant; a song&rsquo;s cover art carries no words, so the song panel has to name it. Specified as a rule on both panels rather than left as an open question, and area 10 is corrected to match.'),
+        ('D-09', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo, same as S1 and S3 through S8.'),
     ],
 
     'references': [
@@ -539,6 +532,7 @@ cfg = {
         os.path.join(WEB_APP, 'src', 'components', 'ui', 'Modal.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'ui', 'SeekBar.tsx'),
         os.path.join(WEB_APP, 'src', 'lib', 'share.ts'),
+        os.path.join(WEB_APP, 'src', 'components', 'shell', 'AppShell.tsx'),
         # The example title and creator P3-S1 quotes are fixture values, not
         # component strings — without this file they read as invented.
         os.path.join(WEB_APP, 'src', 'lib', 'mv', 'community.ts'),

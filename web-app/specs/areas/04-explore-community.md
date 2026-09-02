@@ -107,6 +107,13 @@ The rails:
   count — see §3.2's correction of `DESIGNER-TODO` **A19**. `DESIGNER-TODO` **A20**; asserted in
   `e2e` so it is not quietly restored.
 - ⚠️ **No ranking, refresh, eligibility, or dedup** from the Curation PRD — ordering is array order (`TBD-EXP-01`).
+- ❗ **The rail titled "Trending Music Videos" is fed by `NEW_MVS`, not `TRENDING_MVS`** — and that
+  is **settled as correct** (product owner, 2026-09-01, at the S8 spec review). Once ranking is
+  wired, "Trending" will BE the ranked result; what the rail shows today is seed data standing in
+  for a rank that does not exist yet. `TRENDING_MVS` remains reachable only from `/explore/mvs`,
+  where it is the `--primary` section (A20 / A19). **QA should not file the name/data mismatch as
+  a defect**, and no code changed. Recorded because it looks exactly like a wiring error.
+- 🆕 **Empty rails now have a UI** _(2026-09-01)_ — see `AC-EXP-13` and §3.7.
 - 📄 **Publish→feed locale contract (backend; spec-only).** When a creation is published (area 02/05) it carries a **language/locale code**. The backend returns each feed **already ranked locale-primary** (viewer's locale first, then engagement signals per the Curation PRD). The **frontend just requests and displays** the server-sorted data — no client-side ranking; "we only ask, the backend sorts." The **code format (2-char ISO `en` vs 3-char product `enu`, etc.) is RD-TBD** → `TBD-EXP-10` (relates to i18n `TBD-GL-06`). No prototype change now (mock feed stays seed).
 
 ### 3.2 Explore pages
@@ -231,12 +238,20 @@ The rails:
   `router.back()` with a fallback to `/explore/songs`. "Open" is derived from `?id=` being present.
 - **No 30s gate.** Free accounts play in full (decision S3; `G5-d #7`'s preview half is inverted in
   `e2e/behaviour-regressions.spec.ts`). `SubscribeModal` is not reachable from this screen.
-- **Arriving via `?id=` on DESKTOP does not start anything, and marks nothing** _(new 2026-09-01,
-  S8 capture)_. `previewOpen` initialises `false`, so `SongPlayBar` is mounted-but-parked below the
-  fold until a play control is pressed; and no row carries an active/selected modifier for the
-  requested id. So a recipient of a shared song link sees the ordinary browse catalog with no
-  indication of which song the link named. Recorded as S8 `Q-04` for the product owner — captured
-  at S8 `P5-S1` / `P5-S2`, not fixed here.
+- **Arriving via `?id=` on DESKTOP MARKS the row but does not start it** _(new 2026-09-01;
+  found by the S8 capture, then fixed the same day — `AC-EXP-14`)_. `previewOpen` initialises
+  `false`, so `SongPlayBar` stays mounted-but-parked below the fold until a play control is
+  pressed. **The row the id names carries `.top-song--selected`** (`TopSongListItem`'s
+  `isSelected`), a resting highlight that is deliberately NOT the playing state — `isPlaying` also
+  swaps the album-art glyph to a pause icon, and this must not.
+  > ⚠️ **This is a same-day reversal of what the capture found.** As built until 2026-09-01 the
+  > screen marked NOTHING: a recipient of a shared song link saw the ordinary browse catalog with
+  > no indication which song had been shared, because the only thing that ever consumed the
+  > resolved id was the player bar, and that opens on playback. Product owner: **mark the row, do
+  > not auto-play** — autoplay was rejected because browsers block it without a user gesture, so
+  > it would have opened a silent bar and looked broken a different way. Guarded in both
+  > directions by `e2e/behaviour-regressions.spec.ts` ("a /song/play deep link MARKS its row
+  > without auto-playing"): one marked row, and no media element playing. Captured at S8 `P5-S1`.
   > ⚠️ **Correction to the bullets above, 2026-09-01 (D11).** Two of them describe the pre-drop-2
   > desktop column: the **disc cover** and the **desktop Lyrics overlay** are not on this screen at
   > either URL. DP drop `2670ed2` deleted the desktop Now Playing column, and `AC-EXP-05`'s own
@@ -273,6 +288,30 @@ The rails:
   videos and they'll all show up in one place.**) and a tab-specific CTA (**Create Music Video** /
   **Create Song** → `/mv/room` / `/song/create`). On someone **else's** empty profile there is no
   subtitle or CTA, since prompting a visitor to go create on a stranger's page reads as wrong.
+
+### 3.7 Feed empty state — `FeedEmpty` (new 2026-09-01)
+
+- **Five surfaces, one block.** The three Home rails (`NewMVsSection` / `TopPicksSection` /
+  `NewSongsSection`), both explore catalogs (`MvExplore`, `SongDetailView`'s list) now render
+  `community/FeedEmpty` when their list is empty. Icon (`ic_media`) + **Nothing here yet** +
+  **Be the first to create!**, in `/creator`'s block layout (`.feed-empty`, a copy of
+  `.community-profile__empty` with less vertical padding).
+- **Only the items are replaced.** Every surface keeps its own heading, "See all" link, Top Picks
+  rail and genre tabs — the block sits where the rows were.
+- **Reachability.** `?demo=1` → **`feedEmpty`** (`demoStore.ts`, `status: "live"`) is the only way
+  in for four of the five, since the seed catalogs are module constants. `/explore/songs` has a
+  **second, real** trigger with the flag off: a genre tab whose catalog holds no songs, which used
+  to render a bare list with no message at all (closes `DESIGNER-TODO` **A30**).
+- **Consumed as the LAST render-time branch** in every consumer, never by emptying a seed constant
+  (`demoStore.ts`'s own convention).
+  > **Decided rather than inherited, and worth confirming.** The product owner's instruction was
+  > "reuse `/creator`'s block, do not wait for a design". The VISUAL is `/creator`'s; the **COPY**
+  > is the pre-existing `CommunityEmpty` `empty` variant's, not `/creator`'s "No works released
+  > yet" — that wording is about one person's own output and reads wrong on a global feed. Both
+  > strings were already approved, so nothing new was invented. **No CTA**: `/creator` shows one
+  > only on your OWN profile, and a feed has no owner for that rule to key off. Guarded by
+  > `e2e/behaviour-regressions.spec.ts` ("feedEmpty gives every feed surface an empty state"),
+  > mutation-tested both ways. Captured at S8 `P7`.
 
 ### 3.6 Shared
 
@@ -367,7 +406,7 @@ Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/son
 | **EXP-E1c** | Explore grid empty / browser offline                       | **EXP-06:** the grids render a `CommunityEmpty` **empty** ("Be the first to create!") or **offline** state (`useOnline`).                                                                                                                                                                  |
 | **EXP-E2**  | Like/Create on any community item                          | **GL-02 (2026-07-23):** gated at the action — `requireLogin` runs before the effect. State is still local, lost on reload; real counters/persistence → `TBD-EXP-08`.                                                                                                                       |
 | **EXP-E3**  | `/song/play` playback                                      | ~~No real audio — a `setInterval` advances a progress bar to 125s then stops.~~ **Obsolete since 2026-08-05** — it is a real `<audio>` element (`SongDetailView.tsx:625-636`). Row kept so the ID resolves; there is no edge state here any more. _(Corrected 2026-08-19.)_                |
-| **EXP-E4**  | Empty rail / no content                                    | Not handled for real data — seed arrays are always populated (`TBD-EXP-06`). **A live UI for this state does now exist for `/creator`**, corrected 2026-09-01 — see EXP-E6; nothing analogous exists for the Home rails or the two explore grids, which is what `TBD-EXP-06` still tracks. |
+| **EXP-E4**  | Empty rail / empty catalog                                 | **Handled since 2026-09-01** — all five feed surfaces render the shared `FeedEmpty` block (§3.7, `AC-EXP-13`), keeping their own heading / tabs / "See all". Reached via `?demo=1`'s `feedEmpty`; `/explore/songs` also reaches it for real via a genre tab with no songs. `TBD-EXP-06` is closed by this. |
 | **EXP-E5**  | Create from a community item while logged out              | All Create entry points (Home hero, New-Songs, `/explore/songs`, players) call `requireLogin` at the click (GL-02/EXP-02).                                                                                                                                                                 |
 | **EXP-E6**  | `/creator`, `profileEmpty` demo flag on _(new 2026-09-01)_ | The active tab's list is forced empty (last render-time branch, `demoStore.ts` convention). Renders a bespoke empty block (not `CommunityEmpty`): icon + "No works released yet"; `self` mode adds a subtitle + a Create CTA, other-profile mode adds neither. See §3.5.                   |
 
@@ -424,6 +463,14 @@ Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/son
   instruction for this spec round says should not exist on web at all — recorded here per "code
   wins over docs," not as a settled requirement. Do not treat the ❓ as decorative: this criterion
   may be deleted, not just re-annotated, once the product owner resolves the conflict.
+- **AC-EXP-13** — _(added 2026-09-01)_ WHEN any feed surface — the three Home rails, either explore
+  catalog, or the genre-filtered song list — has no items, THE SYSTEM SHALL render the shared
+  `FeedEmpty` block in place of the items, and SHALL keep that surface's own heading, tabs,
+  "See all" link and any sibling rail. See §3.7.
+- **AC-EXP-14** — _(added 2026-09-01)_ WHEN `/song/play` is opened with an `?id=`, THE SYSTEM SHALL
+  mark that song's row in the list (`.top-song--selected`), and SHALL NOT begin playback or open
+  `SongPlayBar` until the visitor starts it. Marking SHALL NOT use the playing state, which also
+  changes the album-art glyph. See §3.4.
 - **AC-EXP-12** — _(added 2026-09-01)_ WHEN `/creator` loads with the `profileEmpty` demo flag on,
   THE SYSTEM SHALL render the active tab's list as empty with the icon + "No works released yet"
   block; WHEN also `self=1`, THE SYSTEM SHALL additionally show the subtitle and a tab-specific
@@ -443,6 +490,11 @@ Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/son
 - [ ] **EXP-P4**: /watch autoplay muted 3:4; play/mute/like/share; Create MV pre-fills (AC-04); bad id → NEW_MVS[0] (AC-07, E1); a `HERO_MVS` id shows the YCM watermark, a `NEW_MVS`/`TRENDING_MVS`/`CREATOR_MVS` id does not (AC-10); ❓ vertical drag on the stage swipes to next/prev MV (AC-11, contested — see §3.3 before treating this as a requirement).
 - [ ] **EXP-P5**: real `<audio>` progress; Prev/Next cycle; Lyrics; Create AI Song pre-fills (AC-05).
 - [ ] **EXP-P6**: creator tabs + rows open players; self=1 shows MOCK_USER (AC-06); `?demo=1` + `profileEmpty` shows the empty block, with the subtitle/CTA only in self mode (AC-12).
+- [ ] **AC-13**: `?demo=1` + `feedEmpty` → all three home rails, both explore catalogs and the song
+      list show the shared block, with every heading / tab / "See all" still present; flag off, all
+      five are populated again. Also: a genre tab with no songs shows it with the flag OFF.
+- [ ] **AC-14**: `/song/play?id=…` marks exactly that one row and starts nothing — no media element
+      playing, `SongPlayBar` still parked below the fold.
 - [ ] **AC-08**: six surfaces clean at 4 widths _(visual)_.
 - [ ] **`/explore/mvs`**: confirm no hardcoded item cap — grid renders every `TRENDING_MVS`/`NEW_MVS` entry, not a fixed "3 of 14" (§3.2, closes A19).
 
@@ -457,7 +509,8 @@ Curation items are **spec-only** — do not change the codebase from these; back
 | **TBD-EXP-01** | 📄 **Spec-only (Curation PRD)** — implement the Explore PRD: scoring formulas per rail (Trending/New MVs/Top Picks/New Songs), eligibility gates, refresh cadence, dedup. Today all four are static seed in array order.            |
 | ~~**TBD-EXP-03**~~ | ✅ **CLOSED 2026-09-01 — the shipped swipe gesture STAYS.** This row previously asked for a 9:16↔3:4 toggle and a swipe-up "next MV" feed on `/watch`, per `DESIGNER-TODO` A26 ("等設計稿"). Both halves are now settled, differently. **Toggle:** never built, never needed — the ratio is automatic per item (`AC-EXP-04`), so there is nothing to decide; web has no viewer-controlled aspect switch and App F10's remains an app-only affordance. **Swipe feed:** `CommunityMvPlayer.tsx` has shipped one since 2026-08-20/21, attributed in its own comments to the product owner across three iterations. A same-day instruction to "delete both, web supports neither" was written against A26's stale claim that neither existed — i.e. a request to remove something believed absent, not a decision to remove working code. **On being shown the implementation the product owner confirmed it stays.** A26 is the stale document; the code is correct. Specified as built in §3.3 / `AC-EXP-11` / `EXP-P4-S4`, and now guarded by e2e (previously it had zero test coverage, which is how a delete request nearly went unnoticed). |
 | **TBD-EXP-05** | ⏳ **TBD** — a single `DEFAULT_CREATOR` backs every avatar; self mode mixes `MOCK_USER` identity with sample content/stats; no Report/Block (App F17). Wire real creators + moderation actions.                                     |
-| **TBD-EXP-06** | ⏳ **TBD, narrowed 2026-09-01** — a real empty rail/grid (backend returns zero items) still has no handling on Home or the two explore grids; seed data can't exercise it. `/creator`'s equivalent state now DOES have a live, testable UI via the `profileEmpty` demo flag (EXP-E6, `AC-EXP-12`) — this row covers what is still missing elsewhere, not the whole area any more. |
+| ~~**TBD-EXP-06**~~ | ✅ **CLOSED 2026-09-01 — every feed surface now has an empty state.** The product owner ruled "reuse `/creator`'s block, do not wait for a design", so the three Home rails, both explore catalogs and the genre-filtered song list all render `FeedEmpty` (§3.7, `AC-EXP-13`), reachable via `?demo=1`'s `feedEmpty` and — on `/explore/songs` — for real. Previous text below. |
+| ~~TBD-EXP-06 (was)~~ | ⏳ **TBD, narrowed 2026-09-01** — a real empty rail/grid (backend returns zero items) still has no handling on Home or the two explore grids; seed data can't exercise it. `/creator`'s equivalent state now DOES have a live, testable UI via the `profileEmpty` demo flag (EXP-E6, `AC-EXP-12`) — this row covers what is still missing elsewhere, not the whole area any more. |
 | **TBD-EXP-07** | 📄 **Spec-only (Curation PRD)** — how user creations enter these rails (ties `TBD-MV-06`), plus the AI+human moderation pipeline and admin pin/unpin. Entirely unbuilt.                                                             |
 | **TBD-EXP-08** | 🔧 **Backend (RD)** — likes/shares/plays are local, ungated (well, gated at the click per GL-02, but not persisted), non-persistent. Define real counters + storage.                                                                |
 | **TBD-EXP-10** | ⏳ **Format TBD (RD)** — the publish/feed **language/locale code format** (2-char ISO vs 3-char product code). Frontend just passes it through and requests the server-sorted feed; RD decides the format (ties i18n `TBD-GL-06`).  |

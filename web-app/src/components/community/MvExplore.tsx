@@ -3,6 +3,8 @@
 import { NEW_MVS, TRENDING_MVS } from "@/lib/mv/community";
 import { CommunityEmpty, useOnline } from "@/components/community/EmptyState";
 import { DetailNavbar, useBackNavigation } from "@/components/shell/DetailNavbar";
+import { useDemoFlag } from "@/components/demo/useDemo";
+import { FeedEmpty } from "@/components/community/FeedEmpty";
 import { MvGridSections } from "@/components/community/MvGridSections";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -93,7 +95,11 @@ import { localePath } from "@/lib/i18n/config";
 
 export function MvExplore() {
   const online = useOnline();
-  const isEmpty = TRENDING_MVS.length === 0 && NEW_MVS.length === 0;
+  // Product owner, 2026-09-01: `feedEmpty` is the only way to REACH this state
+  // — the two seed arrays are module constants and can never be empty for
+  // real. Applied as the last render-time branch, never by emptying a seed.
+  const demoEmpty = useDemoFlag("feedEmpty");
+  const isEmpty = demoEmpty || (TRENDING_MVS.length === 0 && NEW_MVS.length === 0);
   const { locale } = useLocale();
   const goBack = useBackNavigation("/");
 
@@ -134,7 +140,10 @@ export function MvExplore() {
         {!online ? (
           <CommunityEmpty variant="offline" />
         ) : isEmpty ? (
-          <CommunityEmpty variant="empty" />
+          /* Was `CommunityEmpty variant="empty"`. Swapped 2026-09-01 so all
+             five feed surfaces share ONE empty block — see FeedEmpty.tsx. The
+             copy is unchanged; only the visual moved onto /creator's. */
+          <FeedEmpty />
         ) : (
           <MvGridSections />
         )}

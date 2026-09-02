@@ -37,7 +37,7 @@ from flowchart_lib import Flow  # noqa: E402
 
 VERSION = 'v1'
 DATE = '2026-09-01'
-W, H = 1280, 2520
+W, H = 1280, 2860
 MARGIN = 40
 
 # NOTE: NOT `&amp;` — `flowchart_lib` escapes the title itself, so an
@@ -189,8 +189,8 @@ f.section(1700, 'Part 5 — Play a community song  ·  P5')
 
 play = place(MARGIN, 1730, '/song/play?id=',
              'The SAME screen as /explore/songs — the id only pre-selects · P5-S1', w=340)
-closed = place(470, 1730, 'The bar arrives CLOSED',
-               'And nothing marks which song the link named (Q-04) · P5-S1', w=340, kind='error')
+closed = place(470, 1730, 'The linked row is MARKED, the bar stays closed',
+               'Marked, not started — the decision was “do not auto-play” · P5-S1', w=340, kind='info')
 f.edge(play, closed, side='h')
 
 opened = place(900, 1730, 'Play opens the bar on that track',
@@ -232,11 +232,31 @@ prd = place(900, 2240, 'Ranking · eligibility · moderation · refresh',
             'The Curation PRD’s whole layer — UNBUILT. No edge on this diagram passes through it '
             '(TBD-EXP-01 / 07)', w=340, kind='aside')
 
+# ══ Part 7 — the empty feed ═════════════════════════════════════════════════
+f.section(2400, 'Part 7 — The empty feed  ·  P7')
+
+switch = place(MARGIN, 2430, 'feedEmpty (?demo=1) — the only way in',
+               'The seed catalogs are constants and can never empty on their own · P7-S1',
+               w=390, kind='error')
+
+block = place(490, 2430, 'One shared block on all FIVE feed surfaces',
+              'Three home rails · both explore catalogs · the genre list · P7-S1..P7-S3 (AC-EXP-13)',
+              w=390, kind='info')
+f.edge(switch, block, side='h')
+
+kept = place(920, 2430, 'Headings, tabs and “See all” all STAY',
+             'The switch empties the items, not the screen · P7-S2', w=320, kind='info')
+f.edge(block, kept, side='h')
+
+genre = place(490, 2570, 'One surface has a REAL trigger too',
+              'A genre tab whose catalog holds no songs empties for real · P7-S2', w=390, kind='aside')
+f.edge(block, genre)
+
 assert_in_canvas()
 # The legend draws ONE 20px row per edge kind used (four here), starting AT
 # this y — so it needs y..y+80 of clear canvas. Both earlier versions cut it
 # off, because `Flow` sizes to an explicit height without checking.
-f.legend(2380)
+f.legend(2720)
 f.write(os.path.join(HERE, 'user-flowchart.svg'))
 print('Wrote', os.path.join(HERE, 'user-flowchart.svg'))
 for w in f.warnings:
