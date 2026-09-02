@@ -72,7 +72,7 @@ _SHARED = os.path.expanduser("~/Library/Caches/ms-playwright")
 if "PLAYWRIGHT_BROWSERS_PATH" not in os.environ and os.path.isdir(_SHARED):
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _SHARED
 
-from capture_lib import Capture  # noqa: E402
+from capture_lib import Capture, chromium_path  # noqa: E402
 from playwright.async_api import async_playwright  # noqa: E402
 from PIL import Image  # noqa: E402
 
@@ -99,8 +99,23 @@ class NextCapture(Capture):
     async def __aenter__(self):
         os.makedirs(self.save_dir, exist_ok=True)
         self._pw = await async_playwright().start()
-        self._browser = await self._pw.chromium.launch(
-            args=["--no-sandbox", "--disable-dev-shm-usage"])
+        # Resolve the browser binary that actually EXISTS (2026-09-03). Playwright
+        # launches the build its own version pins; a sandboxed image ships whatever
+        # build it ships, and the mismatch fails with "Executable doesn't exist" plus
+        # an instruction to run `playwright install` — the wrong move, because the
+        # browser IS there under another build number. `capture_lib.chromium_path()`
+        # has resolved this since the helper was extracted, and its own docstring
+        # notes that two scripts had not adopted it; this was one of the two, so
+        # re-capturing this spec was impossible on exactly the machines that most
+        # need to re-capture it. `channel` and `executable_path` are mutually
+        # exclusive, hence the branch.
+        _exe = chromium_path()
+        _launch = {"args": ["--no-sandbox", "--disable-dev-shm-usage"]}
+        if _exe:
+            _launch["executable_path"] = _exe
+        else:
+            _launch["channel"] = "chromium"
+        self._browser = await self._pw.chromium.launch(**_launch)
         ctx = await self._browser.new_context(
             viewport=self.viewport, device_scale_factor=1)
         if self.seed_auth:
@@ -497,7 +512,17 @@ async def main_credits_gate(base):
         # credits through a real generation, and it is itself a real Edit-MV
         # action, not a shortcut around one.
         await page.click(".mv-edit__regen-btn")
-        await page.wait_for_timeout(2500)
+        # Wait for the CONDITION, not a stopwatch (2026-09-03). This was
+        # `wait_for_timeout(2500)` against a 2200ms `setTimeout` inside
+        # `recreateCover()` — a 300ms margin, which is nothing on a machine that is
+        # also running a dev server and a build. Under load the cover had not landed,
+        # `dirty` was still false, Merge was still `disabled`, the click did nothing,
+        # and the run died 30s later on "waiting for .upgrade-dialog-overlay--visible"
+        # — a failure that reads exactly like the credits gate being broken. It is
+        # not: the same script passed on an idle machine minutes later. Waiting for
+        # Merge to become enabled is the real precondition and cannot flake this way.
+        await page.wait_for_selector(".mv-edit__merge-btn:not([disabled])",
+                                     state="attached", timeout=15000)
 
         await page.locator(".mv-edit__merge-btn").scroll_into_view_if_needed()
         await page.wait_for_timeout(200)

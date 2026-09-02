@@ -19,7 +19,16 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import { downloadFile } from "@/lib/download";
-import { COST_COVER, COST_MERGE, recreateShotCost, resolutionOf, sceneDurationSec, shotKind, DESCRIPTION_MAX, type Scene } from "@/lib/mv/types";
+import {
+  COST_COVER,
+  COST_MERGE,
+  recreateShotCost,
+  resolutionOf,
+  sceneDurationSec,
+  shotKind,
+  DESCRIPTION_MAX,
+  type Scene,
+} from "@/lib/mv/types";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
 
 function formatTime(seconds: number): string {
@@ -68,8 +77,8 @@ const clipCover = (i: number) => `/assets/videos/storyboard-clips/clip_${(i % 19
  *   hid are gone — DP has no design for them, and a flag guarding dead markup
  *   inside a migrated screen is worse than the decision it recorded.
  * · **Merge is enabled only by a pending edit** (`dirty`). DP's Merge is always
- *   live, so porting it verbatim would let a user pay `COST_RENDER` to
- *   re-render an unchanged video.
+ *   live, so porting it verbatim would let a user pay the full Merge price
+ *   (`COST_MERGE`) to re-render an unchanged video.
  * · **GL-01** on Merge and on both Recreates: below the cost, route to IAP.
  *   DP charges nothing and only checks sign-in.
  * · `resetForRerender()` before `/mv/creating`, so the previous rendered video
@@ -137,8 +146,8 @@ export function MvEditor() {
 
   // Designer request, 2026-08-11: the per-scene Recreate button should start
   // disabled and only enable once the user has actually edited THIS scene's
-  // prompt — recreating an untouched scene spends COST_REGEN credits for a
-  // result that (per MV-08 below) is random anyway, not driven by the edit.
+  // prompt — recreating an untouched scene spends a full `recreateShotCost()`
+  // for a result that (per MV-08 below) is random anyway, not driven by the edit.
   // State, not a ref: `react-hooks/refs` (this repo's lint config) forbids
   // reading/writing `.current` during render, only in effects/handlers — so
   // this uses React's own "adjust state during render" pattern instead (the
@@ -285,7 +294,6 @@ export function MvEditor() {
     if (!media || !media.duration) return;
     media.currentTime = Math.min(media.duration, Math.max(0, next));
   }
-
 
   const sceneEditor = (
     <>
@@ -484,9 +492,36 @@ export function MvEditor() {
               stated reason and edits looked saved. `mv-edit__sublabel` is DP's
               own muted explanatory line, already used on this screen for
               "Select to edit storyboard"; no new class, no override. */}
+          {/* TODO.md #9 (found 2026-08-28, deferred by the product owner until the
+              S3 spec landed, fixed 2026-09-03). This sentence rendered
+              "(26credits)" with no space, while the IDENTICAL construction around
+              `COST_MERGE` eight words later rendered "(10 credits)" with one —
+              even though the JSX source carried a literal space in both places.
+              Reading the source can never explain that; the compiled bundle does.
+              SWC emitted the children as
+
+                ["Recreate (", sceneCost,
+                 "credits) … saved — Merge MV (", COST_MERGE,
+                 " credits) re-renders …"]
+
+              The surviving space belongs to the text node whose second source line
+              is whitespace-only (dropped, so the node is effectively single-line);
+              the stripped one belongs to the node whose run spans two NON-empty
+              source lines, where SWC trims the leading whitespace of the joined
+              result. So the trigger is where Prettier happened to WRAP the line,
+              not the expression before it — which means any future reflow of this
+              paragraph can silently reintroduce it, in either half.
+
+              Hence string literals rather than JSX text: a `{" "}` would fix
+              today's wrap, but these leave no JSX text node for a formatter to
+              re-wrap at all. Guarded by e2e "TODO#9", mutation-tested both ways.
+              (The apostrophe is a plain ' inside a JS string, which is the same
+              U+0027 `&apos;` produced — not a copy change.) */}
           <p className="mv-edit__sublabel">
-            Recreate ({sceneCost} credits) replaces a scene directly. Edits aren&apos;t saved —
-            Merge MV ({COST_MERGE} credits) re-renders the video with your changes.
+            Recreate ({sceneCost}
+            {" credits) replaces a scene directly. Edits aren't saved — Merge MV ("}
+            {COST_MERGE}
+            {" credits) re-renders the video with your changes."}
           </p>
 
           <div className="mv-edit__ctas">

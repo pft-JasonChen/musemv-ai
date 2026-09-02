@@ -37,12 +37,7 @@ import * as z from "zod";
 
 import { api } from "./index";
 import * as schemas from "./schemas";
-import {
-  DEFAULT_LOCALE,
-  HTML_LANG,
-  LOCALES,
-  localePath,
-} from "@/lib/i18n/config";
+import { DEFAULT_LOCALE, HTML_LANG, LOCALES, localePath } from "@/lib/i18n/config";
 import {
   COST_COVER,
   COST_FROM_SCRIPT,
@@ -268,6 +263,23 @@ describe("C8 — domain constants (src/lib/mv/types.ts) [additive only]", () => 
     // worked example said 110, which was the pre-§6.1 arithmetic — a 30s song
     // now falls in the `[1,40] = 12` tier, not `15`. Spec corrected 2026-08-19.
     expect(scriptCost(30) + generateMvCost("storytelling", "720p", 30)).toBe(107);
+  });
+
+  it("the CHEAPEST reachable MV is 105, not the 220 three documents claimed", () => {
+    // Added 2026-09-03. `DEFAULT_CREDITS`' comment, `specs/areas/07` and
+    // `specs/OPEN-QUESTIONS.md` all stated "the cheapest MV path is 220
+    // (COST_STORYBOARD 20 + COST_RENDER 200)" — two constants deleted on
+    // 2026-08-19 and a price unreachable ever since. Nothing re-derived it
+    // because nothing asserted it. Now something does.
+    //
+    // The floor is the cheapest COMBINATION, not a constant: the shortest song
+    // the trim floor allows (30s, S2) on the cheapest type/resolution pair.
+    expect(createMvCost("storytelling", "720p", 30)).toBe(105); // §3.2 `45 + 2×30`
+    // And the storyboard route cannot undercut it — 107, asserted above.
+    expect(scriptCost(30) + generateMvCost("storytelling", "720p", 30)).toBeGreaterThan(105);
+    // What the DEFAULT compose actually costs, for the same 30s song: singing
+    // at Standard/720p. This is the number a demo walkthrough meets first.
+    expect(createMvCost("singing", "720p", 30)).toBe(195); // `45 + 5×30`
   });
 
   it("DEFAULT_SETTINGS is unchanged", () => {

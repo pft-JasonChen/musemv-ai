@@ -61,7 +61,7 @@ Figma's/Business-Model's — the newer deck lists no store identifiers, `TBD-CR-
   `SubscribeModal` for a non-subscriber (also the safety net for the in-flow insufficient-balance path).
   Only subscribers see **Buy Credits** (CR-06).
   > **Starting balance is now `DEFAULT_CREDITS = 10`** (was 390; product decision 2026-08-12,
-  > `TBD-CR-06a`). **10 does not cover any MV** — the cheapest MV path is 220 — so a free account
+  > `TBD-CR-06a`). **10 does not cover any MV** — the cheapest MV is **105** — so a free account
   > generates one vocal song (6) and then meets the paywall. That is the intended funnel, and it
   > **reverses** this line's old claim that the demo stays playable without subscribing. Because
   > `AGENTS.md` also calls this a CEO-demoable prototype, `startingCredits()` in `lib/user.ts`
@@ -71,6 +71,18 @@ Figma's/Business-Model's — the newer deck lists no store identifiers, `TBD-CR-
   > 2026-08-11; CR-06 comes from the Business Model, not the comp, so the product owner reinstated
   > it and the code was reverted the same day. "As-built" holds again. Guarded by
   > `e2e`'s "3f / CR-06: a free account cannot reach Buy Credits". History in TBD-CR-10.
+  >
+  > ⚠️ **"cheapest MV" corrected 2026-09-03 — it said 220.** That figure was `COST_STORYBOARD` 20 +
+  > `COST_RENDER` 200, two constants deleted on **2026-08-19** when `areas/11`'s per-second pricing
+  > landed. Since then there is no single MV price to quote: `createMvCost()` is `45 + rate × seconds`
+  > and the rate varies by MV type and resolution, so the floor is the cheapest COMBINATION — a
+  > 30-second song (the trim floor, `AC-MV-16`) as a **storytelling** MV at **Standard**/720p:
+  > `45 + 2×30` = **105**. For comparison, storyboard-first is **107** (`scriptCost(30)` 12 +
+  > `generateMvCost` 95) and the DEFAULT compose (singing/Standard) at 30s is **195**. The same
+  > stale 220 was carried in `lib/user.ts`'s `DEFAULT_CREDITS` comment and `OPEN-QUESTIONS.md`;
+  > all three are corrected, and the numbers are now pinned by
+  > `src/lib/api/contract.surface.test.ts` ("the CHEAPEST reachable MV is 105") so the next
+  > pricing change fails a test instead of leaving three documents behind.
 - **Discount presentation — UI elements only, `TBD-CR-07`.** `BuyCreditsModal` renders, per pack, a
   struck-through list price and a red "N% OFF" badge (a card may carry its tier badge — POPULAR /
   BEST VALUE — and the discount badge together), plus the discounted price shown on the Buy CTA.

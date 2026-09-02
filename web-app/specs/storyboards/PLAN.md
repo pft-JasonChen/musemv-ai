@@ -36,7 +36,7 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | ------- | --------------------- | ---- | ----------------- | ---------------------------------------------------------------------------------- | ----- | ----- | -------------------------------------- |
 | **S1**  | `song-creation`       | 3    | 03 (+05 glance)   | `/song/create` `/song/creating` `/song/result`                                     | 7     | 32    | ✅ v3, 2026-09-02                      |
 | **S2**  | `mv-creation`         | 2    | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8     | 44    | ✅ v3, 2026-09-02                      |
-| **S3**  | `mv-edit`             | 2    | 02 (MV-P5)        | `/mv/edit`                                                                         | 5     | 24    | ✅ v1, 2026-08-28                      |
+| **S3**  | `mv-edit`             | 2    | 02 (MV-P5)        | `/mv/edit`                                                                         | 5     | 24    | ✅ v2, 2026-09-03                      |
 | **S4**  | `history`             | 6    | 05                | `/history`                                                                         | 7     | 27    | ✅ v2, 2026-09-02                      |
 | **S5**  | `credits-iap`         | 5    | 07                | `SubscribeModal` `BuyCreditsModal` `/profile/credits`                              | 6     | 21    | ✅ v1, 2026-09-01                      |
 | **S6**  | `shell-auth`          | 1    | 01 + 09           | sidebar / tab bar / route navbars / `SignInModal` / marketing footer               | 8     | 27    | ✅ v2, 2026-09-02                      |
