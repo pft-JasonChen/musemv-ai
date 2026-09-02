@@ -13,7 +13,7 @@
 //     2  insufficient balance routes to IAP .......... "song upsell", "MV has no guard" (test.fail)
 //     3  AuthGuard 5 routes + action-level login ..... "AuthGuard", "requireLogin"
 //     4  flow-guard on direct deep link .............. "flow-guard"
-//     5  [fail] path: fail + Retry + History Failed .. "fail path"
+//     5  [fail] path: fail + Back-only + History Failed "fail path"
 //     6  job polling 0 -> 100 ........................ "polling"
 //     7  Pro gate: High crown ........................ "Pro gate: High"
 //        …its 30s-preview half INVERTED by slice 3b ... "S3 / G5-d#7 inverted"
@@ -223,7 +223,8 @@ test("G5-d#1 refunds the charge when the job fails", async ({ page }) => {
   await startStoryboard(page);
 
   // GL-01: the refund runs from pollJob's onError, so wait for the failure UI first.
-  await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
+  // /mv/thinking's failure state offers Back only (no Retry, product owner 2026-09-02).
+  await expect(page.getByText("Generation Failed")).toBeVisible();
   await expect
     .poll(() => balance(page), {
       message:
@@ -442,7 +443,9 @@ test("G5-d#4 flow-guard: opening /mv/result with no flow state redirects to the 
 // ════════════════════════════════════════════════════════════════════════════
 // G5-d #5 — the [fail] demo path
 // ════════════════════════════════════════════════════════════════════════════
-test("G5-d#5 [fail] path: job fails, Retry is offered, History shows Failed", async ({ page }) => {
+test("G5-d#5 [fail] path: job fails, Back-only (no Retry), History shows Failed", async ({
+  page,
+}) => {
   await login(page);
   await page.goto("/mv/room");
   // Funding added 2026-08-19. `DEFAULT_CREDITS` dropped 390 → 10 on 2026-08-12
@@ -452,7 +455,11 @@ test("G5-d#5 [fail] path: job fails, Retry is offered, History shows Failed", as
   await composeMv(page, `${MV_DESCRIPTION} ${FAIL_TRIGGER}`);
   await startStoryboard(page);
 
-  await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
+  // Product owner, 2026-09-02: /mv/thinking's failure state offers Back only.
+  // Retry re-ran the same [fail] compose and always re-failed deterministically,
+  // so it was a dead-end affordance — removed rather than kept as a decoy.
+  await expect(page.getByRole("link", { name: "Back" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(0);
   // It must NOT reach the storyboard editor.
   expect(page.url()).not.toContain("/mv/storyboard");
 

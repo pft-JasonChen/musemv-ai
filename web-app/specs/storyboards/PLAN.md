@@ -12,10 +12,10 @@
 
 ## 1. Two spec layers — don't confuse them
 
-| Layer | Files | Audience | Basis |
-|---|---|---|---|
-| **Area specs** (existing) | `specs/areas/01..11-*.md` | RD + AI agents | Behaviour-first, as-built, EARS `AC-*` criteria. Text only, no screenshots. |
-| **Storyboard specs** (this programme) | `specs/storyboards/<slug>/specs/spec.html` | **QA** | Screenshot-led walkthrough of the same behaviour, built with `skills/yco-spec`. Every rule traces back to an `AC-*` in the area spec. |
+| Layer                                 | Files                                      | Audience       | Basis                                                                                                                                 |
+| ------------------------------------- | ------------------------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **Area specs** (existing)             | `specs/areas/01..11-*.md`                  | RD + AI agents | Behaviour-first, as-built, EARS `AC-*` criteria. Text only, no screenshots.                                                           |
+| **Storyboard specs** (this programme) | `specs/storyboards/<slug>/specs/spec.html` | **QA**         | Screenshot-led walkthrough of the same behaviour, built with `skills/yco-spec`. Every rule traces back to an `AC-*` in the area spec. |
 
 The storyboard layer adds **no new product rules**. When a capture shows the app doing something
 the area spec does not say, that is a finding: it becomes a `decisions` row, an `open_questions`
@@ -32,19 +32,19 @@ own** `user-flowchart.svg` at its own level of detail; the six overview diagrams
 Sizes are estimates from the area specs' journey counts (`## 4. Journeys`) and route inventory,
 calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line `build_spec.py`**.
 
-| # | Slug | Flow | Area source | Routes / surfaces | Paths | Shots | Status |
-|---|---|---|---|---|---|---|---|
-| **S1** | `song-creation` | 3 | 03 (+05 glance) | `/song/create` `/song/creating` `/song/result` | 7 | 32 | ✅ v3, 2026-09-02 |
-| **S2** | `mv-creation` | 2 | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8 | 44 | ✅ v2, 2026-09-02 |
-| **S3** | `mv-edit` | 2 | 02 (MV-P5) | `/mv/edit` | 5 | 24 | ✅ v1, 2026-08-28 |
-| **S4** | `history` | 6 | 05 | `/history` | 7 | 27 | ✅ v2, 2026-09-02 |
-| **S5** | `credits-iap` | 5 | 07 | `SubscribeModal` `BuyCreditsModal` `/profile/credits` | 6 | 21 | ✅ v1, 2026-09-01 |
-| **S6** | `shell-auth` | 1 | 01 + 09 | sidebar / tab bar / route navbars / `SignInModal` / marketing footer | 8 | 27 | ✅ v2, 2026-09-02 |
-| **S7** | `profile-account` | 1 | 06 | `/profile` `/settings`, edit-profile, Send Feedback | 6 | 23 | ✅ v2, 2026-09-02 |
-| **S8** | `explore-community` | 4 | 04 | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator` | 7 | 38 | ✅ v1, 2026-09-01 |
-| **S9** | `share` | 4 | 10 | `/share`, `ShareDialog` | 5 | 15 | ✅ v1, 2026-09-01 |
-| **S10** | `credit-consumption` | — | 11 | none — **the area 11 md IS the spec** (D13) | — | 0 | ✅ 2026-09-01, one blank: `TBD-CC-06` |
-| — | ~~proof-of-creation~~ | — | 08 | — | — | — | ❌ out of web scope (area 08 § Status) |
+| #       | Slug                  | Flow | Area source       | Routes / surfaces                                                                  | Paths | Shots | Status                                 |
+| ------- | --------------------- | ---- | ----------------- | ---------------------------------------------------------------------------------- | ----- | ----- | -------------------------------------- |
+| **S1**  | `song-creation`       | 3    | 03 (+05 glance)   | `/song/create` `/song/creating` `/song/result`                                     | 7     | 32    | ✅ v3, 2026-09-02                      |
+| **S2**  | `mv-creation`         | 2    | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8     | 44    | ✅ v3, 2026-09-02                      |
+| **S3**  | `mv-edit`             | 2    | 02 (MV-P5)        | `/mv/edit`                                                                         | 5     | 24    | ✅ v1, 2026-08-28                      |
+| **S4**  | `history`             | 6    | 05                | `/history`                                                                         | 7     | 27    | ✅ v2, 2026-09-02                      |
+| **S5**  | `credits-iap`         | 5    | 07                | `SubscribeModal` `BuyCreditsModal` `/profile/credits`                              | 6     | 21    | ✅ v1, 2026-09-01                      |
+| **S6**  | `shell-auth`          | 1    | 01 + 09           | sidebar / tab bar / route navbars / `SignInModal` / marketing footer               | 8     | 27    | ✅ v2, 2026-09-02                      |
+| **S7**  | `profile-account`     | 1    | 06                | `/profile` `/settings`, edit-profile, Send Feedback                                | 6     | 23    | ✅ v2, 2026-09-02                      |
+| **S8**  | `explore-community`   | 4    | 04                | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator`               | 7     | 38    | ✅ v1, 2026-09-01                      |
+| **S9**  | `share`               | 4    | 10                | `/share`, `ShareDialog`                                                            | 5     | 15    | ✅ v1, 2026-09-01                      |
+| **S10** | `credit-consumption`  | —    | 11                | none — **the area 11 md IS the spec** (D13)                                        | —     | 0     | ✅ 2026-09-01, one blank: `TBD-CC-06`  |
+| —       | ~~proof-of-creation~~ | —    | 08                | —                                                                                  | —     | —     | ❌ out of web scope (area 08 § Status) |
 
 **Coverage check.** Areas 01–07, 09, 10 are covered by S2–S9 plus the finished S1; area 08 is
 removed from scope; area 11 is S10 and is contract-shaped, not journey-shaped.
@@ -59,14 +59,14 @@ product owner will fill. Everything else in it is complete and testable.
 Six paths, 36 captures (desktop 1403×697 only). Larger than the ~6/~30 estimate above, and both
 causes are structural rather than scope creep:
 
-| Path | Covers |
-|---|---|
-| **P1** | The Home feed: the hero + two gated create cards, the three seed rails, the rail arrows' appear-only-when-scrollable rule, the album-art-previews-in-place split, one `ShareDialog` entry point (S9's boundary), and the logged-out screen plus the gate firing at the ACTION. |
-| **P2** | `/explore/mvs`: two sections, **all 14 seed items with no cap** (counted live — this is the assertion that closes `DESIGNER-TODO` A19's "3 of 14" question), and cards that are real locale-prefixed links. |
-| **P3** | `/explore/songs`: the Top Picks rail, the ten hardcoded genre tabs, "switching a tab must not change what is playing", and **both** halves of `AC-EXP-03`'s row split — art previews, title navigates. |
+| Path   | Covers                                                                                                                                                                                                                                                                            |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P1** | The Home feed: the hero + two gated create cards, the three seed rails, the rail arrows' appear-only-when-scrollable rule, the album-art-previews-in-place split, one `ShareDialog` entry point (S9's boundary), and the logged-out screen plus the gate firing at the ACTION.    |
+| **P2** | `/explore/mvs`: two sections, **all 14 seed items with no cap** (counted live — this is the assertion that closes `DESIGNER-TODO` A19's "3 of 14" question), and cards that are real locale-prefixed links.                                                                       |
+| **P3** | `/explore/songs`: the Top Picks rail, the ten hardcoded genre tabs, "switching a tab must not change what is playing", and **both** halves of `AC-EXP-03`'s row split — art previews, title navigates.                                                                            |
 | **P4** | `/watch`: the player and its transport, the grid below it, the YCM watermark (`AC-EXP-10`), the vertical swipe in three states (held · committed · an id with no neighbour, `AC-EXP-11`), the gated Like beside the un-gated Share, the Create hand-off, and the not-found state. |
-| **P5** | `/song/play`: the desktop arrival state, the bar opening on play, the creator-playlist swap (`EXP-09`), and the not-found state. |
-| **P6** | `/creator`: someone else's page, your own, both owner-menu variants, and the `profileEmpty` demo state in both modes. |
+| **P5** | `/song/play`: the desktop arrival state, the bar opening on play, the creator-playlist swap (`EXP-09`), and the not-found state.                                                                                                                                                  |
+| **P6** | `/creator`: someone else's page, your own, both owner-menu variants, and the `profileEmpty` demo state in both modes.                                                                                                                                                             |
 
 **A SEVENTH path landed after the first build, and it is the product owner's own decision, not
 scope creep.** At the 2026-09-01 spec review they were asked about four S8 findings and three
@@ -100,7 +100,7 @@ and moved its tabs into the page body; `/creator` shows **no email** and has **n
 on someone else's profile; the owner menu's first slot reads **Edit MV** on an MV and **Create MV**
 on a song, not a flat "Edit"; and §3.4's desktop disc player and Lyrics overlay describe a column
 DP drop 2 deleted. Two further findings are `open_questions` rather than corrections: the rail
-titled "Trending Music Videos" shows the *newly released* catalog while the catalog the PRD calls
+titled "Trending Music Videos" shows the _newly released_ catalog while the catalog the PRD calls
 Trending has no home entry point at all (Q-03), and a shared song link opens the browse list with
 **nothing marking which song it named** (Q-04).
 
@@ -122,13 +122,13 @@ controller (play/pause, elapsed/total, seek, mute, fullscreen), a three-item **M
 **second action pill**. The extra path is that menu, whose three actions would otherwise have no
 photograph anywhere in the programme.
 
-| Path | Covers |
-|---|---|
-| **P1** | A valid MV link: the bare page, the controller, the two pills, and the four-source resolution order (a static History sample resolving in a fresh session). |
+| Path   | Covers                                                                                                                                                                      |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P1** | A valid MV link: the bare page, the controller, the two pills, and the four-source resolution order (a static History sample resolving in a fresh session).                 |
 | **P2** | The More menu: Download · Playback Speed · Picture in Picture — and the fact that **Playback Speed cycles and keeps the menu open** while the other two act once and close. |
-| **P3** | A valid song link: cover art, **title and creator**, its own pill controller, and the kind-labelled Create pill. |
-| **P4** | The unavailable state and all three ways in (bad id · no id · the QA switch), plus the prototype limit that produces it from a *working* link. |
-| **P5** | The legacy share URL's server redirect, and `ShareDialog` itself — the copy-only dialog, and its 1.5-second confirmation. |
+| **P3** | A valid song link: cover art, **title and creator**, its own pill controller, and the kind-labelled Create pill.                                                            |
+| **P4** | The unavailable state and all three ways in (bad id · no id · the QA switch), plus the prototype limit that produces it from a _working_ link.                              |
+| **P5** | The legacy share URL's server redirect, and `ShareDialog` itself — the copy-only dialog, and its 1.5-second confirmation.                                                   |
 
 **The recipient session is deliberately SIGNED OUT** — the only spec in the programme where that is
 the default. `/share` is public by design and mostly opened by people with no account; a signed-in
@@ -156,7 +156,7 @@ both kinds (`AC-SHARE-07`); only the gradient still varies. Guarded by e2e on bo
 **One thing worth carrying to any future spec that draws a diagram citing a neighbour.**
 `validate()` rejected this build because `make_flowchart.py` cited **S8's** step IDs (`P1-S6`,
 `P4-S9`) on S9's own diagram: the SVG is inlined, so a bare `Pn-Sn` drawn there is
-cross-reference-checked against *this* spec's steps and a neighbour's ID resolves to nothing.
+cross-reference-checked against _this_ spec's steps and a neighbour's ID resolves to nothing.
 Name the neighbouring spec, never its step IDs.
 
 ### S5 scope — agreed at its Phase 0 gate, 2026-09-01
@@ -164,14 +164,14 @@ Name the neighbouring spec, never its step IDs.
 Six paths, 21 captures (desktop 1403×697 only). Larger than the ~4/~16 estimate above, for two
 structural reasons recorded here so the growth is not mistaken for scope creep:
 
-| Path | Covers |
-|---|---|
-| P1 | Subscribe: the three duration tabs, six plans, a real card press, and what it changes |
-| P2 | The already-on-Muse-Pro branch (CR-05) |
-| P3 | Buy Credits as a subscriber: six packs, selection, purchase |
-| P4 | The CR-06 free-user gate — every entry point, no interstitial |
-| P5 | `/profile/credits`: balance, All/Spend/Earn, ledger, branching CTA |
-| P6 | `apiError` on both dialogs (including its interaction with CR-06) and `creditsEmpty` |
+| Path | Covers                                                                                |
+| ---- | ------------------------------------------------------------------------------------- |
+| P1   | Subscribe: the three duration tabs, six plans, a real card press, and what it changes |
+| P2   | The already-on-Muse-Pro branch (CR-05)                                                |
+| P3   | Buy Credits as a subscriber: six packs, selection, purchase                           |
+| P4   | The CR-06 free-user gate — every entry point, no interstitial                         |
+| P5   | `/profile/credits`: balance, All/Spend/Earn, ledger, branching CTA                    |
+| P6   | `apiError` on both dialogs (including its interaction with CR-06) and `creditsEmpty`  |
 
 1. **`SubscribeModal` is six plans across a duration Tab Bar**, not the flat three-card list the
    estimate assumed — that redesign landed 2026-08-28, after this row was written.
@@ -191,13 +191,13 @@ reasons recorded here so the growth is not mistaken for scope creep: the screen 
 independently-priced micro-operations rather than one generation, and it is the second spec to earn
 the D8 exception.
 
-| Path | Covers |
-|---|---|
+| Path   | Covers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **P1** | Entry + screen tour: arriving from `/mv/result`'s **Edit MV**, `DetailNavbar` (back · "Edit Music Video" · credit balance) and the three sections — cover, storyboard + scene editor, output settings — plus the Merge footer and its cost pill. **Also the second entry**: arriving from History's **Edit MV**, which fabricates flow state (`mockStoryboard()` + a synthetic song, `durationSec: 145`) — captured here, with the fabrication as a `prototype_deltas` row. S4's P6 owns the menu tap and cross-references. |
-| **P2** | Cover: description + **Enhance**, **Expand** → lightbox + Download, **Recreate** cover — overwrites in place, no picker, no undo (`AC-MV-12`). |
-| **P3** | Scenes: the clip strip, the inline preview transport, the scene prompt (2500 max) + **Enhance**, the scene-version history row, **Recreate scene** — overwrites that scene's video in place, no take tray, no undo (`AC-MV-12`). |
-| **P4** | Output settings as inline rail sections, not a modal: MV title toggle+input, Author name toggle+input, Show Subtitle, Show Watermark — **the two switches are `MvSettingsSchema` fields (C2), not decoration** (`MV-P5-S4`) — and **Delete this Project**, which confirms with History's wording and then discards the in-memory flow and leaves. It calls no backend delete. |
-| **P5** | **Merge MV** → `resetForRerender()` → `/mv/creating` (stop at the destination's first frame; S2 owns that route), enabled by ANY pending edit incl. `storyboardDirty`; **insufficient balance opens `BuyCreditsModal` instead** (`AC-MV-13`/`AC-MV-19`); plus **MV-E5** — leaving the page loses every edit, there is no Save — and **MV-E2**, reload with no flow state → `router.replace("/mv/room")` after the 400ms hydrate wait. |
+| **P2** | Cover: description + **Enhance**, **Expand** → lightbox + Download, **Recreate** cover — overwrites in place, no picker, no undo (`AC-MV-12`).                                                                                                                                                                                                                                                                                                                                                                              |
+| **P3** | Scenes: the clip strip, the inline preview transport, the scene prompt (2500 max) + **Enhance**, the scene-version history row, **Recreate scene** — overwrites that scene's video in place, no take tray, no undo (`AC-MV-12`).                                                                                                                                                                                                                                                                                            |
+| **P4** | Output settings as inline rail sections, not a modal: MV title toggle+input, Author name toggle+input, Show Subtitle, Show Watermark — **the two switches are `MvSettingsSchema` fields (C2), not decoration** (`MV-P5-S4`) — and **Delete this Project**, which confirms with History's wording and then discards the in-memory flow and leaves. It calls no backend delete.                                                                                                                                               |
+| **P5** | **Merge MV** → `resetForRerender()` → `/mv/creating` (stop at the destination's first frame; S2 owns that route), enabled by ANY pending edit incl. `storyboardDirty`; **insufficient balance opens `BuyCreditsModal` instead** (`AC-MV-13`/`AC-MV-19`); plus **MV-E5** — leaving the page loses every edit, there is no Save — and **MV-E2**, reload with no flow state → `router.replace("/mv/room")` after the 400ms hydrate wait.                                                                                       |
 
 Three capture notes settled at the same gate:
 
@@ -231,14 +231,14 @@ the shape: **the account menu is gone** (deleted 2026-08-27, S6 `Q-01`) so it is
 more, and **Send Feedback has grown seven acceptance criteria of its own** (`AC-PROF-10`…`16`),
 which is why it gets a path rather than a few steps inside the rows.
 
-| Path | Covers |
-|---|---|
-| **P1** | Profile hub: the identity block (avatar · name · email · Edit — **no plan badge**, `AC-PROF-01` as corrected 2026-08-19), the three stat tiles and where each navigates (`AC-PROF-02`: Credits → `/profile/credits`, MVs/Songs → `/creator?self=1&tab=…`), and the row list. |
-| **P2** | Edit profile → `updateProfile` commits name/avatar and the shell reflects it in-memory (`AC-PROF-03`). |
-| **P3** | `/profile`'s rows: **Muse Pro** (see the IAP boundary below) and **Language** → `setLocale`, with a localized surface changing with it (`AC-PROF-05`). ⚠️ **Terms / Privacy moved to P4 during the build** — this gate put them here, but they live on `SettingsView`, as area 06 §2's own table says. Same six paths. |
-| **P4** | `/settings`: the row order, **Terms / Privacy** opening the real legal URL in a new tab (`AC-PROF-09`), **Unsubscribe** and **Delete Account** — both demo toasts that cancel and delete nothing (`AC-PROF-07`, pending `TBD-PROF-04`) — and **Sign Out**, which since 2026-08-27 is the app's ONLY sign-out control (`AC-PROF-06` / `AC-AUTH-05`; S6's P6 owns the flow, S7 owns the screen). |
+| Path   | Covers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **P1** | Profile hub: the identity block (avatar · name · email · Edit — **no plan badge**, `AC-PROF-01` as corrected 2026-08-19), the three stat tiles and where each navigates (`AC-PROF-02`: Credits → `/profile/credits`, MVs/Songs → `/creator?self=1&tab=…`), and the row list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **P2** | Edit profile → `updateProfile` commits name/avatar and the shell reflects it in-memory (`AC-PROF-03`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **P3** | `/profile`'s rows: **Muse Pro** (see the IAP boundary below) and **Language** → `setLocale`, with a localized surface changing with it (`AC-PROF-05`). ⚠️ **Terms / Privacy moved to P4 during the build** — this gate put them here, but they live on `SettingsView`, as area 06 §2's own table says. Same six paths.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **P4** | `/settings`: the row order, **Terms / Privacy** opening the real legal URL in a new tab (`AC-PROF-09`), **Unsubscribe** and **Delete Account** — both demo toasts that cancel and delete nothing (`AC-PROF-07`, pending `TBD-PROF-04`) — and **Sign Out**, which since 2026-08-27 is the app's ONLY sign-out control (`AC-PROF-06` / `AC-AUTH-05`; S6's P6 owns the flow, S7 owns the screen).                                                                                                                                                                                                                                                                                                                                                               |
 | **P5** | **Send Feedback**, its own path: exactly four fields in order Type → Description → Attachment → Email with Email prefilled and **no Subject** (`AC-PROF-10` — the absence is asserted, because a returning Subject silently re-opens `TBD-PROF-07`); Send stays disabled until Type + Description are non-empty and Email is well-formed (`AC-PROF-11`); the success confirmation with **Done** and no toast (`AC-PROF-13`); the failure path that keeps every value and attachment and re-enables Send (`AC-PROF-14`, `PROF-E6`); and the **5 MB total** rejection that adds nothing and messages inside the form (`AC-PROF-15`). The Type control's keyboard contract (`AC-PROF-16`) is a step, not a screenshot — it is behaviour a picture cannot carry. |
-| **P6** | `/settings` is `AuthGuard`-gated: logged out, it renders nothing and opens the sign-in modal (`AC-PROF-17`). S6's P4 owns the dismiss behaviour; S7 shows the gate on this route and stops. |
+| **P6** | `/settings` is `AuthGuard`-gated: logged out, it renders nothing and opens the sign-in modal (`AC-PROF-17`). S6's P4 owns the dismiss behaviour; S7 shows the gate on this route and stops.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 Three notes settled at the same gate:
 
@@ -263,26 +263,36 @@ Three notes settled at the same gate:
 
   This is not a tour of the panel — the panel spans 17 routes and would be its own spec if anyone
   wanted one.
+
 - **D8 stands: desktop only.** Neither `/profile` nor `/settings` mounts a distinct phone component
   tree — `/profile`'s phone back is `RoomNavbar`'s own `mobileBackHref`, the same shell affordance
   S6 already captured on History, and `/settings`'s old `md:hidden` workaround was deleted when
   drop 2 closed A5. The two D8 exceptions granted so far (S6's shell chrome, S3's
-  `.mv-edit-mobile-scene`) were each a *different component tree*; this is not one.
+  `.mv-edit-mobile-scene`) were each a _different component tree_; this is not one.
 
 ### S2 scope — agreed at its Phase 0 gate, 2026-08-27
 
 Eight paths, ~42 captures. `/mv/edit` is **not** in it (that is S3).
 
-| Path | Covers |
-|---|---|
-| **P1** | Storyboard-first, end to end: compose → `ModeModal` → `/mv/thinking` → `/mv/storyboard` (visual style + scene edits, Enhance) → Generate MV → `/mv/creating` → `/mv/result` → the new `/history` row. ~12 steps. |
-| **P2** | Direct generation: **Templates** (and, again, **Enhance**) fills the brief → **Create MV Directly** → `/mv/creating` → `/mv/result`. ~6 steps. |
-| **P3** | Generation failure, **both stages**: the `[fail]` marker is captured at `createMvJob` and reused by `renderMvJob`, so storyboard-first fails at **thinking** and direct fails at **creating**; Retry re-runs the same compose and re-fails deterministically. |
-| **P4** | The six sheets and their boundaries, kept together because `MV-01` / `MV-02` / `MV-04` are three app-synced numeric rules QA tests individually: Choose Song (My / Sample), Import reject on format **and** 50 MB, Trim's ≥30s floor, FacePicker crop, Settings' Pro-gated **High** crown → `SubscribeModal`, Templates. |
-| **P5** | Guest gate (`AC-MV-01b`): the screen renders with no modal; **Song Library** and **Create Music Video** gate; **Import Audio stays ungated**. |
-| **P6** | Insufficient credits at mode select → buy-credits IAP instead of generating. |
-| **P7** | The side rail's two modes — Trending MVs vs My Creations (needs `loggedIn` **and** ≥1 completed MV). |
-| **P8** | `/mv/result` controls tour: the hand-built transport, Like/Dislike, Share, Download, Publish → "Ready to Go Public?" → pending review, the **"Unpublish to edit"** neutral state (`MV-E7`), the info panel, and the opened-from-History variant. |
+**v3, same day (2026-09-02): `/mv/thinking`'s failure state dropped Retry.** Product owner request —
+`/mv/thinking`'s "Generation Failed" screen now offers **Back only**; `/mv/creating`'s is unchanged
+(Back + Retry). Retry there had only ever re-run the identical `[fail]` compose and re-failed
+deterministically, so on `/mv/thinking` it was a dead end kept purely for visual symmetry with
+`/mv/creating`. `22_thinking_failed.png` re-shot; `23_creating_failed.png` untouched but its RULES
+text no longer claims the two screens are identical. `areas/02-mv-creation.md` (MV-P2-S2, MV-E1,
+AC-MV-11, the §9 flow diagram) and `e2e/behaviour-regressions.spec.ts` (G5-d#1, G5-d#5) corrected
+in the same change.
+
+| Path   | Covers                                                                                                                                                                                                                                                                                                                       |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P1** | Storyboard-first, end to end: compose → `ModeModal` → `/mv/thinking` → `/mv/storyboard` (visual style + scene edits, Enhance) → Generate MV → `/mv/creating` → `/mv/result` → the new `/history` row. ~12 steps.                                                                                                             |
+| **P2** | Direct generation: **Templates** (and, again, **Enhance**) fills the brief → **Create MV Directly** → `/mv/creating` → `/mv/result`. ~6 steps.                                                                                                                                                                               |
+| **P3** | Generation failure, **both stages, no longer identical**: the `[fail]` marker is captured at `createMvJob` and reused by `renderMvJob`, so storyboard-first fails at **thinking** (Back only, v3) and direct fails at **creating** (Back + Retry, unchanged); Retry re-runs the same compose and re-fails deterministically. |
+| **P4** | The six sheets and their boundaries, kept together because `MV-01` / `MV-02` / `MV-04` are three app-synced numeric rules QA tests individually: Choose Song (My / Sample), Import reject on format **and** 50 MB, Trim's ≥30s floor, FacePicker crop, Settings' Pro-gated **High** crown → `SubscribeModal`, Templates.     |
+| **P5** | Guest gate (`AC-MV-01b`): the screen renders with no modal; **Song Library** and **Create Music Video** gate; **Import Audio stays ungated**.                                                                                                                                                                                |
+| **P6** | Insufficient credits at mode select → buy-credits IAP instead of generating.                                                                                                                                                                                                                                                 |
+| **P7** | The side rail's two modes — Trending MVs vs My Creations (needs `loggedIn` **and** ≥1 completed MV).                                                                                                                                                                                                                         |
+| **P8** | `/mv/result` controls tour: the hand-built transport, Like/Dislike, Share, Download, Publish → "Ready to Go Public?" → pending review, the **"Unpublish to edit"** neutral state (`MV-E7`), the info panel, and the opened-from-History variant.                                                                             |
 
 **Capture run 1 was voided and re-run (2026-08-27).** Its 44 screenshots were taken against the
 pre-rebase branch, whose `/mv/room` still carried an **Enhance** button that `origin/main` had
@@ -310,14 +320,14 @@ Six paths, ~26 captures, 1:1 with area 05's own `HIST-P1`..`HIST-P6` journeys �
 covers meaningfully different mechanics, unlike S1's folded sub-steps which were minor variations
 of one screen.
 
-| Path | Covers |
-|---|---|
-| **P1** | Browse & filter: All / Music Videos / Songs / Liked, plus the empty state (reached via **Unlike**, not delete — corrected during the build: community rows expose no Delete at all, so Unlike is the only way to empty Liked). |
-| **P2** | Open a creation: done MV → `/mv/result?id=`, done song → `/song/result?id=`, storyboard → `/mv/storyboard?id=`, community → `/song/play?id=`, processing → inert (not clickable, no menu). |
+| Path   | Covers                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **P1** | Browse & filter: All / Music Videos / Songs / Liked, plus the empty state (reached via **Unlike**, not delete — corrected during the build: community rows expose no Delete at all, so Unlike is the only way to empty Liked).                                                                                                                                                                                           |
+| **P2** | Open a creation: done MV → `/mv/result?id=`, done song → `/song/result?id=`, storyboard → `/mv/storyboard?id=`, community → `/song/play?id=`, processing → inert (not clickable, no menu).                                                                                                                                                                                                                               |
 | **P3** | The `⋯` menu, both its actions AND its five row-type variants — this is the highest-value coverage in the spec, the one place a content change could regress silently with no test catching it. One capture per variant (MV / song / storyboard / community / failed) showing the menu open, per the area spec's own "Net per type" table, plus Like/Unlike, Share (`ShareDialog`), and Download (toast, fixture media). |
-| **P4** | Publish: MV → live "Ready to Go Public?" confirm → "Submitted for review" toast → the menu now shows **Publish (Review)** and Edit MV becomes **"Unpublish to edit"** (MV-13). Song → immediate toggle, no confirm. |
-| **P5** | Delete: confirm modal ("cannot be undone") → row removed; hidden for published/reviewing rows. |
-| **P6** | Edit MV / Create MV: the `⋯` menu tap only — no follow-through capture of `/mv/edit` / `/mv/storyboard` / `/mv/room`, which S2/S3 already own in full. RULES cites the destination and cross-references the owning spec. |
+| **P4** | Publish: MV → live "Ready to Go Public?" confirm → "Submitted for review" toast → the menu now shows **Publish (Review)** and Edit MV becomes **"Unpublish to edit"** (MV-13). Song → immediate toggle, no confirm.                                                                                                                                                                                                      |
+| **P5** | Delete: confirm modal ("cannot be undone") → row removed; hidden for published/reviewing rows.                                                                                                                                                                                                                                                                                                                           |
+| **P6** | Edit MV / Create MV: the `⋯` menu tap only — no follow-through capture of `/mv/edit` / `/mv/storyboard` / `/mv/room`, which S2/S3 already own in full. RULES cites the destination and cross-references the owning spec.                                                                                                                                                                                                 |
 
 **One gap surfaced at this gate, not before it:** there is no review-REJECTED state anywhere in
 the app — `confirmPublishMv()` sets `reviewing`+`published` together and nothing ever clears
@@ -339,15 +349,15 @@ files collide with neither S2 (`areas/02`, `src/components/mv/*`) nor the separa
 (`areas/05`, `src/components/history/*`). **Dispatch is held** — its first run died on an
 account-level session limit before producing anything, so it restarts from this table.
 
-| Path | Covers |
-|---|---|
-| **P1** | Signed-in navigation: sidebar item → `next/link` through `localePath`, active styling, locale prefix preserved. |
-| **P2** | Gated **nav** while logged out (`GATED = /history, /profile, /settings`) → sign-in modal with the target queued → on success the queued navigation runs; **on dismiss the user stays put**. |
-| **P3** | Header **Sign In** with no queued action → 1.8s success animation → the header swaps to logged-in chrome, no navigation. |
-| **P4** | Gated **route** entry (arriving at `/history` etc. directly) → the guard renders nothing and opens the modal → **on dismiss `router.replace(home)`**. The contrast with P2's dismiss is the reason this is its own path. |
+| Path   | Covers                                                                                                                                                                                                                           |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P1** | Signed-in navigation: sidebar item → `next/link` through `localePath`, active styling, locale prefix preserved.                                                                                                                  |
+| **P2** | Gated **nav** while logged out (`GATED = /history, /profile, /settings`) → sign-in modal with the target queued → on success the queued navigation runs; **on dismiss the user stays put**.                                      |
+| **P3** | Header **Sign In** with no queued action → 1.8s success animation → the header swaps to logged-in chrome, no navigation.                                                                                                         |
+| **P4** | Gated **route** entry (arriving at `/history` etc. directly) → the guard renders nothing and opens the modal → **on dismiss `router.replace(home)`**. The contrast with P2's dismiss is the reason this is its own path.         |
 | **P5** | Account menu, walked in place: credits badge, avatar with its PRO/FREE badge, the credits row, Profile / My Creations rows, the inert Notifications / Send Feedback rows (`SHELL-03`), Sign Out; outside-click and Esc close it. |
-| **P6** | Sign out from **both** entry points (the menu, and Settings) + `AUTH-E1`: a reload keeps `loggedIn` but drops subscription and profile, so the user is `free` again. |
-| **P7** | Bare page — `/share…` renders with no sidebar and no top bar. |
+| **P6** | Sign out from **both** entry points (the menu, and Settings) + `AUTH-E1`: a reload keeps `loggedIn` but drops subscription and profile, so the user is `free` again.                                                             |
+| **P7** | Bare page — `/share…` renders with no sidebar and no top bar.                                                                                                                                                                    |
 
 **S2's captures are stale on one point (2026-08-27, same day as the build).** `origin/main`'s
 `3bdff87` had removed `/mv/room`'s Enhance shortcut for V1 (product owner: no supported backend API);
@@ -364,7 +374,7 @@ immediately — S6 is the priority next spec.
 showing it **opened** and stops: `BuyCreditsModal` → S5, Profile → S7, My Creations → S4, `/share`'s
 own content → S9. Restating their rules here would make S6 the contract for patterns it does not own.
 
-**D8 exception, scoped to S6 only: capture at 1440 *and* 375.** The phone chrome is not a reflow of
+**D8 exception, scoped to S6 only: capture at 1440 _and_ 375.** The phone chrome is not a reflow of
 the desktop shell, it is a **different component tree** (`MobileTabBar` / `MobileHeader` vs
 `Sidebar` / `TopBar`) carrying behaviour that exists nowhere else — the ＋ create sheet (un-gated
 2026-08-12) and its still-gated History entry. At 1440 all of it is `display:none`, so a
@@ -428,7 +438,7 @@ Locked unless a decision below changes them.
 
 - **Layout.** `specs/storyboards/<slug>/` holding `build_spec.py`, `make_flowchart.py`,
   `capture_screenshots.py`, `user-flowchart.svg`, and `specs/{spec.html, spec-bundled.html,
-  screenshots/NN_name.png}`.
+screenshots/NN_name.png}`.
 - **Screenshot source = the live app.** There is no separate prototype in this repo; captures come
   from `npm run dev` on localhost:3000 driven by Playwright, signed in with the same
   `localStorage['muse_auth'] = '1'` seed the e2e specs use. **Desktop 1440 only.**
@@ -472,18 +482,18 @@ Locked unless a decision below changes them.
 
 ## 5. Decisions — settled 2026-08-27 (grill-me, product owner)
 
-| ID | Decision | Note |
-|---|---|---|
-| **D1** | **MV is two specs** — `mv-creation` (`/mv/room` + its 7 overlays → thinking → storyboard → creating → result, plus failure and the two gates) and `mv-edit` (`/mv/edit`). | The cut lands where the user re-enters from the result screen **and** where charging changes from per-generation to per-micro-op. One document would have been ~60–70 shots / ~1,300-line `cfg`. |
-| **D2** | **Credit cost in RULES follows S1: no numbers.** Every cost bullet reads "charges on start, refunds on failure; cost per the Credit Consume MSR". | Applies even though `areas/11` §3.2–3.6 prices MV precisely and the code computes to it (`scriptCost` / `createMvCost` / `generateMvCost` / `recreateShotCost`). **Carry-over:** the MSR link is still `TBD` in S1's `references`, so the pointer resolves to nothing — every spec raises it as an `open_questions` row until we have the link. |
-| **D3** | **Queue order stands** — creation half first (§2). | Ordered by contract readiness, not by document size. |
-| **D4** | **`shell-auth` is one spec** (areas 01 + 09). | `SHELL-P2` (gated nav while logged out) *is* `AUTH-P2`'s trigger; splitting puts the trigger and the response in different files. |
-| **D5** | **`explore-community` is one spec** across all six routes, and `YouCam_Muse_Explore_Curation_PRD - V2.pdf` is **read as an input before its Phase 0**. | Its six journeys share one seed data set and one missing API contract (`TBD-EXP-11`). |
-| **D6** | **`share` is its own spec.** S1/S2/S4 name the shared dialog and add only what they do differently. | `/share` is public by design and never-expiring (`TBD-GL-07`, closed 2026-08-19). |
-| **D7** | **S10 (`credit-consumption`) is deferred** until `TBD-CC-06` is answered, then re-evaluated against `areas/11`. | Field names, units and delegated-action quantity mapping are all undefined; a spec today would be an open-questions list wearing a spec's clothes. |
-| **D8** | **Desktop 1440 only**, every spec. | Accepted coverage gap, stated so nobody reads it as covered: the phone layouts (bottom tab bar, mobile header, full-screen player, `/mv/edit`'s `MobileSceneDetail`) get no QA storyboard, and `e2e/a11y.spec.ts` is desktop-only too, so nothing else covers them either. A phone pass is its own decision and its own capture run. |
-| **D9** | **Own flowchart per spec**, drawn with `flowchart_lib`, citing its own step IDs, version-stamped. | `docs/flows/flow-*.svg` stays the six-diagram overview citing area IDs. |
-| **D10** | **App bug found while capturing: fix it if it is a one-file fix with an e2e guard, then report.** Anything larger stops for the product owner's call. | Chosen over report-and-wait with the risk stated: "small" is the judgement that fills this repo's error log. The mutation-test-both-directions rule applies to every guard added this way. |
-| **D11** | **A capture that contradicts an area-spec `AC-*` corrects `areas/*.md` in the same branch**, annotated in place with the ⚠️ convention areas 02/03/07 already use, and cited in the spec's report. | `00-overview.md`'s single-source rule: leaving the AC stale means the two layers now disagree, and the area specs are what the AI agents read. |
+| ID      | Decision                                                                                                                                                                                                                                       | Note                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **D1**  | **MV is two specs** — `mv-creation` (`/mv/room` + its 7 overlays → thinking → storyboard → creating → result, plus failure and the two gates) and `mv-edit` (`/mv/edit`).                                                                      | The cut lands where the user re-enters from the result screen **and** where charging changes from per-generation to per-micro-op. One document would have been ~60–70 shots / ~1,300-line `cfg`.                                                                                                                                                                                                                                                                    |
+| **D2**  | **Credit cost in RULES follows S1: no numbers.** Every cost bullet reads "charges on start, refunds on failure; cost per the Credit Consume MSR".                                                                                              | Applies even though `areas/11` §3.2–3.6 prices MV precisely and the code computes to it (`scriptCost` / `createMvCost` / `generateMvCost` / `recreateShotCost`). **Carry-over:** the MSR link is still `TBD` in S1's `references`, so the pointer resolves to nothing — every spec raises it as an `open_questions` row until we have the link.                                                                                                                     |
+| **D3**  | **Queue order stands** — creation half first (§2).                                                                                                                                                                                             | Ordered by contract readiness, not by document size.                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **D4**  | **`shell-auth` is one spec** (areas 01 + 09).                                                                                                                                                                                                  | `SHELL-P2` (gated nav while logged out) _is_ `AUTH-P2`'s trigger; splitting puts the trigger and the response in different files.                                                                                                                                                                                                                                                                                                                                   |
+| **D5**  | **`explore-community` is one spec** across all six routes, and `YouCam_Muse_Explore_Curation_PRD - V2.pdf` is **read as an input before its Phase 0**.                                                                                         | Its six journeys share one seed data set and one missing API contract (`TBD-EXP-11`).                                                                                                                                                                                                                                                                                                                                                                               |
+| **D6**  | **`share` is its own spec.** S1/S2/S4 name the shared dialog and add only what they do differently.                                                                                                                                            | `/share` is public by design and never-expiring (`TBD-GL-07`, closed 2026-08-19).                                                                                                                                                                                                                                                                                                                                                                                   |
+| **D7**  | **S10 (`credit-consumption`) is deferred** until `TBD-CC-06` is answered, then re-evaluated against `areas/11`.                                                                                                                                | Field names, units and delegated-action quantity mapping are all undefined; a spec today would be an open-questions list wearing a spec's clothes.                                                                                                                                                                                                                                                                                                                  |
+| **D8**  | **Desktop 1440 only**, every spec.                                                                                                                                                                                                             | Accepted coverage gap, stated so nobody reads it as covered: the phone layouts (bottom tab bar, mobile header, full-screen player, `/mv/edit`'s `MobileSceneDetail`) get no QA storyboard, and `e2e/a11y.spec.ts` is desktop-only too, so nothing else covers them either. A phone pass is its own decision and its own capture run.                                                                                                                                |
+| **D9**  | **Own flowchart per spec**, drawn with `flowchart_lib`, citing its own step IDs, version-stamped.                                                                                                                                              | `docs/flows/flow-*.svg` stays the six-diagram overview citing area IDs.                                                                                                                                                                                                                                                                                                                                                                                             |
+| **D10** | **App bug found while capturing: fix it if it is a one-file fix with an e2e guard, then report.** Anything larger stops for the product owner's call.                                                                                          | Chosen over report-and-wait with the risk stated: "small" is the judgement that fills this repo's error log. The mutation-test-both-directions rule applies to every guard added this way.                                                                                                                                                                                                                                                                          |
+| **D11** | **A capture that contradicts an area-spec `AC-*` corrects `areas/*.md` in the same branch**, annotated in place with the ⚠️ convention areas 02/03/07 already use, and cited in the spec's report.                                             | `00-overview.md`'s single-source rule: leaving the AC stale means the two layers now disagree, and the area specs are what the AI agents read.                                                                                                                                                                                                                                                                                                                      |
 | **D13** | **S10 (`credit-consumption`) ships as `specs/areas/11-credit-consumption.md` itself, not as a generated `spec.html`** (product owner, 2026-09-01), reusing the same ruling S11 got: "storyboard spec 都不用畫面,或是直接用 md 當成 spec 即可". | Supersedes D7's "deferred until `TBD-CC-06` is answered". The reason it is not merely convenience: the subject has **no journey to walk**, and the skill's `data-contract` form REQUIRES a complete field table — the one thing still missing. A generated document with a hole in its required section is not more handover-ready than the md. The md gained an S10 header, a §1.1 blank-field table, and a §9 QA checklist whose 8th row is the single red light. |
-| **D12** | **Execution:** the Phase 0 gate and the final review stay in the orchestrating session; one **sonnet-5 / effort-high** subagent per spec owns Phases 1–4 (read → capture → `build_spec.py` → `validate` + `lint_spec`). | The skill's own rule that a build session must not self-certify. One spec at a time — captures must not run concurrently (CPU contention flakes Playwright; see `AGENTS.md`). |
+| **D12** | **Execution:** the Phase 0 gate and the final review stay in the orchestrating session; one **sonnet-5 / effort-high** subagent per spec owns Phases 1–4 (read → capture → `build_spec.py` → `validate` + `lint_spec`).                        | The skill's own rule that a build session must not self-certify. One spec at a time — captures must not run concurrently (CPU contention flakes Playwright; see `AGENTS.md`).                                                                                                                                                                                                                                                                                       |

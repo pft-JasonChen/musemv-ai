@@ -102,7 +102,7 @@ cfg = {
     'feature_name': 'AI Music Video (MV) Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video',
     'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
-    'version': 'v2',
+    'version': 'v3',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -415,16 +415,15 @@ cfg = {
                 {
                     'shot': '22_thinking_failed.png', 'num': 2, 'role': 'error',
                     'user': 'Picks Create Storyboard First; the job fails around 60% progress.',
-                    'system': '/mv/thinking swaps to a Generation Failed state with Retry and Back.',
+                    'system': '/mv/thinking swaps to a Generation Failed state with Back only &mdash; no Retry.',
                     'exact': [
                         'Heading: &ldquo;Generation stopped&rdquo; (icon caption) / &ldquo;Generation Failed&rdquo; (title)',
-                        'Body: &ldquo;Something went wrong while generating. Your credits were not charged &mdash; you can retry now or adjust your input and try again.&rdquo;',
-                        'Buttons: &ldquo;Retry&rdquo;, &ldquo;Back&rdquo;',
+                        'Body: &ldquo;Something went wrong while generating. Your credits were not charged &mdash; go back and try again.&rdquo;',
+                        'Button: &ldquo;Back&rdquo; only.',
                     ],
                     'limits': [
                         'Back returns to /mv/room.',
-                        ('Retry re-runs the SAME compose, which still contains &ldquo;[fail]&rdquo;, so it re-fails deterministically (MV-E1).',
-                         'The copy says &ldquo;adjust your input&rdquo; but Retry itself performs no in-place edit; only Back returns to the form to change it (mock-only artifact).'),
+                        ('&ldquo;Retry&rdquo; was removed from this screen 2026-09-02 (product owner).', 'It only ever re-ran the SAME compose, which still contains &ldquo;[fail]&rdquo;, so it re-failed deterministically (MV-E1) &mdash; a dead end kept for visual symmetry with /mv/creating rather than because it could succeed. /mv/creating (next step) still has Retry; this screen no longer does.'),
                         ('The charged storyboard cost is refunded in full on failure (AC-MV-11, AC-MV-19).', 'Matches the on-screen &ldquo;credits were not charged&rdquo; message.'),
                         'The History row for this job shows Failed.',
                     ],
@@ -432,9 +431,9 @@ cfg = {
                 {
                     'shot': '23_creating_failed.png', 'num': 3, 'role': 'error',
                     'user': 'A fresh &ldquo;[fail]&rdquo; brief, this time picking Create MV Directly; the job fails around 60% progress.',
-                    'system': '/mv/creating shows the same Generation Failed layout as /mv/thinking.',
-                    'limits': [('Same copy, same Retry/Back behavior as P3-E2 &mdash; only the stage differs.',
-                                'Direct mode has no storyboard stage to fail at, so its failure always happens here, at creating.')],
+                    'system': '/mv/creating shows the same Generation Failed CARD as /mv/thinking, but keeps Retry alongside Back.',
+                    'limits': [('Unchanged, and now the ONLY stage that offers Retry (MV-E1, corrected 2026-09-02).',
+                                'Direct mode has no storyboard stage to fail at, so its failure always happens here, at creating. The previous step&rsquo;s screen dropped Retry; this one did not &mdash; the two are no longer identical.')],
                     'focus': [{'box': [55.8, 73.6, 4.1, 4.3], 'type': 'action', 'label': 'Retry'}],
                 },
             ],
@@ -691,15 +690,22 @@ cfg = {
         ('STORYBOARD_EDIT', '/mv/storyboard after a done storyboard job', 'Visual style / scenes editable, story / lyrics read-only, MV Song play-only, no Save', '&rarr; CREATING via Generate MV', 'On Generate MV'),
         ('CREATING', '/mv/creating after direct mode or Generate MV', 'Progress ring, step label, estimate, View Later', '&rarr; RESULT on done &middot; &rarr; FAILED on mock failure', 'On job outcome'),
         ('RESULT', '/mv/result after a successful job', 'Player, Like/Dislike, Share, Download, Publish toggle, Recreate, Edit MV / Unpublish to edit, Detail panel', '&rarr; MODE_SELECT via Recreate (returns to /mv/room) &middot; &rarr; History via Back', 'On navigation away'),
-        ('FAILED', '/mv/thinking or /mv/creating after a mock failure', 'Generation Failed message, Retry, Back', '&rarr; THINKING/CREATING via Retry &middot; &rarr; /mv/room via Back', 'On Retry or Back'),
+        ('FAILED', '/mv/thinking or /mv/creating after a mock failure', 'Generation Failed message; /mv/thinking shows Back only, /mv/creating shows Back + Retry', '&rarr; CREATING via Retry (creating only) &middot; &rarr; /mv/room via Back', 'On Retry (creating only) or Back'),
         ('Side rail: Trending MVs', 'Default &mdash; signed out, or signed in with zero completed MVs', 'NEW_MVS with a &ldquo;See all&rdquo; link (P7-S1)', '&rarr; My Creations once both conditions below are met', '&mdash;'),
         ('Side rail: My Creations', 'Signed in AND &ge;1 completed MV', 'The user&rsquo;s own finished MVs, no &ldquo;See all&rdquo; (P7-S2)', '&rarr; Trending MVs on sign-out or reload (History is in-memory)', '&mdash;'),
     ],
 
     'errors': [
         (
-            'MV generation fails',
-            'Description contains &ldquo;[fail]&rdquo; &mdash; the QA hook for a mid-generation failure; storyboard-first fails at thinking, direct fails at creating (MV-E1)',
+            'MV generation fails &mdash; storyboard-first (/mv/thinking)',
+            'Description contains &ldquo;[fail]&rdquo; &mdash; the QA hook for a mid-generation failure; storyboard-first fails at thinking (MV-E1)',
+            'Generation Failed &mdash; &ldquo;Something went wrong while generating. Your credits were not charged &mdash; go back and try again.&rdquo;',
+            'Back only (no Retry, since 2026-09-02) returns to /mv/room to adjust the input.',
+            'Yes, in full (AC-MV-11, AC-MV-19) &mdash; the balance returns to its pre-charge value.',
+        ),
+        (
+            'MV generation fails &mdash; direct / render (/mv/creating)',
+            'Description contains &ldquo;[fail]&rdquo; &mdash; the QA hook for a mid-generation failure; direct mode fails at creating (MV-E1)',
             'Generation Failed &mdash; &ldquo;Something went wrong while generating. Your credits were not charged &mdash; you can retry now or adjust your input and try again.&rdquo;',
             'Retry re-runs the job from the same compose state (and re-fails, since it still contains &ldquo;[fail]&rdquo;); Back returns to /mv/room.',
             'Yes, in full (AC-MV-11, AC-MV-19) &mdash; the balance returns to its pre-charge value.',
@@ -757,7 +763,7 @@ cfg = {
         ('AC-MV-08', 'Visual Style and Scene text are editable and ephemeral (no Save); MV Song is play-only; edits carry into the next Generate MV.', ['P1-S11']),
         ('AC-MV-09', 'Generate MV renders using the (possibly edited) storyboard and lands on /mv/result.', ['P1-S12', 'P1-S13', 'P1-S14']),
         ('AC-MV-10', '/mv/result loops muted video and exposes Like/Dislike, Share, Download, a Publish toggle with a &ldquo;Ready to Go Public?&rdquo; confirm on turn-on, Recreate, and Edit MV (replaced by &ldquo;Unpublish to edit&rdquo; while published).', ['P1-S14', 'P8-S1', 'P8-S2', 'P8-S3', 'P8-S4']),
-        ('AC-MV-11', 'A failed job shows the error state with Back and Retry, and marks the History row Failed.', ['P3-E2', 'P3-E3']),
+        ('AC-MV-11', 'A failed job shows the error state with Back (storyboard) or Back + Retry (render/song), and marks the History row Failed.', ['P3-E2', 'P3-E3']),
         ('AC-MV-12', 'Regenerate scene / Recreate cover overwrite in place, with no picker and no undo, and decrement the balance.', [],
          'Edit MV only &mdash; out of scope here; owned by the mv-edit spec (S3).'),
         ('AC-MV-13', 'Merge MV re-renders from the current cover/scenes and charges on generation start, refunded on failure.', [],
@@ -800,9 +806,9 @@ cfg = {
             'Production needs a real per-account song/photo library and a CMS-authored template catalog; an always-populated Choose Song also means the intended empty-state (TBD-MV-11) is unbuilt and unverifiable here.',
         ),
         (
-            'MV-E1&rsquo;s deterministic re-fail',
-            'The &ldquo;[fail]&rdquo; marker is a QA-only hook with no production trigger; Retry re-runs the identical compose and therefore re-fails every time, which is why the on-screen &ldquo;adjust your input&rdquo; copy has no matching affordance in this build.',
-            'A real failure needs a real trigger (timeout, model error, moderation reject, &hellip;); production Retry should reasonably succeed once whatever caused the failure has cleared.',
+            'MV-E1&rsquo;s deterministic re-fail (now /mv/creating only)',
+            'The &ldquo;[fail]&rdquo; marker is a QA-only hook with no production trigger. /mv/creating still offers Retry, and Retry re-runs the identical compose and therefore re-fails every time, which is why its &ldquo;adjust your input&rdquo; copy has no matching affordance in this build. /mv/thinking dropped Retry entirely 2026-09-02 for the same reason &mdash; its copy now says &ldquo;go back and try again&rdquo;, which matches its actual (Back-only) affordance.',
+            'A real failure needs a real trigger (timeout, model error, moderation reject, &hellip;); production Retry on /mv/creating should reasonably succeed once whatever caused the failure has cleared. Whether /mv/creating&rsquo;s Retry should also be removed, for consistency, is a product question this spec does not decide.',
         ),
     ],
 
@@ -938,6 +944,10 @@ cfg = {
         # capture (same false-positive class the Song spec's build script
         # documents for this same lint check).
         'Something went wrong while generating. Your credits were not charged - you can retry now or adjust your input and try again.',
+        # Same false-positive class, confirmed by direct grep of
+        # StoryboardGenerationScreen.tsx (2026-09-02, Retry removed from
+        # /mv/thinking's failure copy) and against the live app.
+        'Something went wrong while generating. Your credits were not charged - go back and try again.',
         'Upgrade Your Plan',
         'Demo only - no real payment',
         'Save your creations, sync across devices, and unlock your full creative history.',
