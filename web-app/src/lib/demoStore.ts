@@ -78,6 +78,12 @@ export const DEMO_FLAGS = [
     status: "live" as FlagStatus,
   },
   {
+    key: "feedEmpty",
+    label: "Home rails & Explore catalogs — no content",
+    hint: "The 3 home rails, /explore/mvs and /explore/songs' list",
+    status: "live" as FlagStatus,
+  },
+  {
     key: "publishRejected",
     label: "Publish review REJECTED",
     hint: "MV only — pick a reason below",

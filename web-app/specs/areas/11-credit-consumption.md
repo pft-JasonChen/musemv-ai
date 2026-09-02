@@ -11,6 +11,23 @@
 >
 > Related: 餘額 / 儲值 / 訂閱 UI → `07-credits-iap.md`。各流程的 UI 行為 → `02-mv-creation.md`、
 > `03-song-creation.md`。
+>
+> ---
+>
+> ## 📌 這份檔案**就是** S10（`credit-consumption`）的 spec
+>
+> **產品負責人裁示 2026-09-01**，沿用先前對 S11（`notifications-email`）的同一個決定:
+> 「storyboard spec 都不用畫面，或是直接用 md 當成 spec 即可」。
+>
+> S10 因此**不另外產出 `specs/storyboards/credit-consumption/specs/spec.html`**。理由不只是省事:
+> 這個題目**沒有畫面可走** —— 它是一份 payload 契約，`yco-spec` 的 storyboard 形態（截圖 →
+> 步驟卡 → 焦點框）對它沒有東西可拍。skill 自己的 `data-contract` 形態原本適用，但它**強制要求**
+> 一份完整的欄位表，而這裡唯一未定的就是欄位（見下方 §1.1）—— 產出一份中間空一格的 HTML，
+> 不會比這份 md 更能交接。
+>
+> **交接時 RD 讀這一份就夠**: §1 是 API 與 payload、§2 是計量基準、§3 是六個扣點情境的完整
+> 呼叫方式、§4 是 action 對照總表、§5 是扣點時機與失敗退款、§9 是 QA 檢查清單。
+> **唯一的缺口是 §1.1**，且它是 blocking 的。
 
 ---
 
@@ -47,6 +64,40 @@
 Sub-action 機制的設計理由（避免組合爆炸、子服務可獨立複用）見 `MSR Credit Consume Form
 (with Sub-Actions).md`。RD 只需知道：**一次任務 = 一個 main action + 0~N 個 sub actions**，
 後端把命中的計費規則全部加總。
+
+---
+
+### 1.1 🔴 待補 —— 數量欄位（`TBD-CC-06`）
+
+**這一節刻意留白。** 產品負責人 2026-09-01 指示: 「請完全不猜且留空，我會之後補」。
+
+`consumedType` 從 `duration` 改成 `credit` 之後，**前端必須自己在 payload 帶數量／秒數**
+（原本後端從 task 自己取）。上面 §1 的 payload 只有 `action` / `consumedType` / `rule[]`
+三個 key，**沒有任何欄位放得下這個數量**。在補上之前，前端無法實作扣點呼叫。
+
+| 待定項 | 目前狀態 |
+| --- | --- |
+| 欄位名稱 | _（待補）_ |
+| 放在哪一層（payload 根層／每個 `rule` 元素內） | _（待補）_ |
+| 單位（秒 / 幀 / 結果數 / 其他） | _（待補）_ |
+| 委派型 action（`create_mv` / `generate_mv` / `edit_mv`）的數量對應到哪一個 sub action | _（待補）_ |
+| 級距型（`create_script_upload_song` / `merge_mv`）是送原始長度、還是送已選好的級距 | _（待補）_ |
+| 帶了數量之後，`rule[]` 的形狀是否改變 | _（待補）_ |
+
+<details><summary>已經找過哪些文件，以及為什麼它們不算答案（2026-09-01）</summary>
+
+搜過 repo 第一層與 `web-app/docs/`。**確實有 credit 相關的規範文件，但沒有一份定義這個欄位**:
+
+| 文件 | 它定義了什麼 | 為什麼不是答案 |
+| --- | --- | --- |
+| `[YCM] Credit Consume Cloud Config .json` | **後端**計價規則: 每條 rule 的 `procUnit` / `token` / `tknPerRes` / `tknPerChar` / `procUnitRange` | 這是後端「一個處理單位收幾點」的設定，不是前端 request 要帶什麼 |
+| `MSR Credit Consume Form (with Sub-Actions).md` | sub-action 機制、rule 形狀範例 | 同上，示範的是 cloud config 那一側 |
+| `YCM Credit_Action.pdf` | 每個 sub action 幾點、`45+6*(x sec)` 這類公式 | 定義了 `x` 怎麼被使用，沒有定義 `x` 怎麼被**傳送** |
+| `YCV AI MV Cost Estimation Table…pdf` | YCV 的對應成本表 | 同上，且是另一個產品線 |
+
+也就是說: **「一秒值幾點」有文件，「秒數放在 request 的哪裡」沒有。** 這正是 `TBD-CC-06`。
+
+</details>
 
 ---
 
@@ -314,11 +365,32 @@ ai_song_custom_vocal_refine                                          ← 移除
 |---|---|
 | ~~**TBD-CC-01**~~ | ✅ **2026-08-12 結案** — config 已補回 `[1,40] = 12` 那一階，三階與 PDF 一致（12 / 15 / 18）。 |
 | ~~**TBD-CC-02**~~ | ✅ **2026-08-12 結案** — 後端補上了 **`edit_poster`**，就是 Edit MV 封面 Recreate 的 action（每次 4 點）。仍待後台修正規則形狀，見 §6.1。 |
-| **TBD-CC-06** | 🔴 **前端要帶數量／秒數，但欄位名與格式未定。**（2026-08-19 註：此項**只擋 API 呼叫**，不擋計價。prototype 的餘額是本機的，四個計價函式已依本規格算出正確點數；待定的是送給後端時的欄位名。） `consumedType` 改為 `"credit"` 後，產品負責人確認前端須自行在 payload 帶數量／秒數（原本由後端從 task 取得）。**這是介面契約變更**：需要 RD 給出欄位名、單位（秒?幀?結果數?）、以及委派型 action（`create_mv`/`generate_mv`/`edit_mv`）的數量要對應到哪一個 sub action。在定案前前端無法實作扣點呼叫。 |
+| **TBD-CC-06** | 🔴 **前端要帶數量／秒數，但欄位名與格式未定 —— 空白表在 §1.1，產品負責人會補。** 2026-09-01 已搜過 repo 第一層與 `docs/`: credit 的**定價**有四份文件，但**沒有一份定義 request 要怎麼帶數量**（§1.1 的 details 列了逐份結論）。刻意不猜。（2026-08-19 註：此項**只擋 API 呼叫**，不擋計價。prototype 的餘額是本機的，四個計價函式已依本規格算出正確點數；待定的是送給後端時的欄位名。） `consumedType` 改為 `"credit"` 後，產品負責人確認前端須自行在 payload 帶數量／秒數（原本由後端從 task 取得）。**這是介面契約變更**：需要 RD 給出欄位名、單位（秒?幀?結果數?）、以及委派型 action（`create_mv`/`generate_mv`/`edit_mv`）的數量要對應到哪一個 sub action。在定案前前端無法實作扣點呼叫。 |
 | ~~**TBD-CC-05**~~ | ✅ **2026-08-19 結案。** 六個 placeholder 已全數依本規格重算：`COST_SONG` → 6/12（2026-08-12）· `COST_SONG_RECREATE` → 與首次生成同價（2026-08-12）· `COST_COVER` → 4（2026-08-12）· `COST_STORYBOARD` / `COST_RENDER` / `COST_REGEN` → **刪除**，改為 `scriptCost()` / `createMvCost()` / `generateMvCost()` / `recreateShotCost()` 四個依本規格計算的函式（2026-08-19）。AI Enhance 的 1 點收費也已移除。**「改為由後端回傳」仍未做，但那四個函式就是唯一的替換點**——`contract.surface.test.ts` 用本文的計算範例（225 / 95 / 28 / 12·15·18）鎖住它們。詳見 `docs/CHANGELOG-RD.md` 2026-08-19。 |
 
 **已結案：** ~~TBD-CC-03~~（AI Enhance 不扣點，見 §5.5）·
 ~~TBD-CC-04~~（產品上限 240s，級距已完整涵蓋，見 §2）· ~~`simpe` 拼字~~（後端已修正，見 §3.1）。
+
+---
+
+## 9. QA 檢查清單（S10）
+
+這份 md 就是 S10 的 spec（見檔頭），所以覆蓋表放在這裡而不是另一份 HTML。**每一項都對得到本文的
+某一節**；打不了勾的那一項就是還沒交接完的那一項。
+
+| # | 檢查 | 對應 | 現在能測嗎 |
+| --- | --- | --- | --- |
+| 1 | 六個扣點情境各自送出正確的 `action` | §3.1–§3.6、§4 | ✅ 前端四個計價函式已算對，`contract.surface.test.ts` 用本文的範例鎖住（225 / 95 / 28 / 12·15·18） |
+| 2 | 有 sub action 時 `rule[]` 內容與順序正確；沒有時**整個欄位省略**（不是空陣列） | §1、§4 | ✅ 可用本文的對照表逐一核對 |
+| 3 | `consumedType` **一律** `"credit"`（23 個 action 全部） | §1 | ✅ |
+| 4 | 12 個 sub action 的點數與 cloud config 一致（不 hardcode） | §4 | ✅ 以 JSON 為準 |
+| 5 | 扣點時機：開始時扣、失敗時退 | §5 | ✅ e2e 已涵蓋（`charges` / `refunds`） |
+| 6 | 級距型（`create_script_upload_song` / `merge_mv`）落在正確的 `procUnitRange` | §2、§3.3、§3.6 | ✅ |
+| 7 | AI Enhance 不扣點 | §5.5 | ✅ |
+| 8 | **request 帶出的數量／秒數欄位正確** | **§1.1** | ❌ **擋住** —— 欄位未定義，無從測起 |
+
+> **第 8 項是唯一的紅燈，而且它擋的是「呼叫後端」這一段，不擋計價。** prototype 的餘額是本機的，
+> 四個計價函式已依本規格算出正確點數；缺的是把數量送出去時要用哪個欄位。
 
 ---
 

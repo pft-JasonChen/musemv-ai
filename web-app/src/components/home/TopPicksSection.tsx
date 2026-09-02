@@ -8,6 +8,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
+import { useDemoFlag } from "@/components/demo/useDemo";
+import { FeedEmpty } from "@/components/community/FeedEmpty";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
@@ -69,6 +71,7 @@ export function TopPicksSection({
   onPreviewClose,
 }: TopPicksSectionProps = {}) {
   const router = useRouter();
+  const demoEmpty = useDemoFlag("feedEmpty");
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
   const isPhone = useMediaQuery(PHONE_QUERY);
@@ -195,51 +198,58 @@ export function TopPicksSection({
         onEnded={() => setPlaying(false)}
       />
 
-      <div className="top-picks__row-wrapper">
-        <div className="top-picks__row" ref={rowRef} onScroll={updateScrollState}>
-          {TOP_PICKS_SONGS.map((song) => (
-            <Link
-              key={song.id}
-              href={localePath(locale, `/song/play?id=${song.id}`)}
-              className="top-picks__item"
-            >
-              <Card
-                type="Song"
-                title={song.title}
-                subtitle="AI Song"
-                badge={song.badge ?? undefined}
-                coverImage={song.cover}
-                isPlaying={previewId === song.id && playing}
-                onPlayClick={() => handlePlayClick(song.id)}
+      {/* LAST render-time branch, never a mutated seed constant — the
+          `demoStore.ts` convention. `feedEmpty` is the only way to reach this
+          at all; the seed array can never be empty for real. */}
+      {demoEmpty ? (
+        <FeedEmpty />
+      ) : (
+        <div className="top-picks__row-wrapper">
+          <div className="top-picks__row" ref={rowRef} onScroll={updateScrollState}>
+            {TOP_PICKS_SONGS.map((song) => (
+              <Link
+                key={song.id}
+                href={localePath(locale, `/song/play?id=${song.id}`)}
+                className="top-picks__item"
+              >
+                <Card
+                  type="Song"
+                  title={song.title}
+                  subtitle="AI Song"
+                  badge={song.badge ?? undefined}
+                  coverImage={song.cover}
+                  isPlaying={previewId === song.id && playing}
+                  onPlayClick={() => handlePlayClick(song.id)}
+                />
+              </Link>
+            ))}
+          </div>
+
+          {canScrollBack && (
+            <div className="top-picks__previous">
+              <IconButton
+                size="large"
+                variant="ghost"
+                icon="ic_arrow_left"
+                label="Previous"
+                onClick={() => scrollByCard(-1)}
               />
-            </Link>
-          ))}
+            </div>
+          )}
+
+          {canScrollForward && (
+            <div className="top-picks__next">
+              <IconButton
+                size="large"
+                variant="ghost"
+                icon="ic_arrow_right"
+                label="Next"
+                onClick={() => scrollByCard(1)}
+              />
+            </div>
+          )}
         </div>
-
-        {canScrollBack && (
-          <div className="top-picks__previous">
-            <IconButton
-              size="large"
-              variant="ghost"
-              icon="ic_arrow_left"
-              label="Previous"
-              onClick={() => scrollByCard(-1)}
-            />
-          </div>
-        )}
-
-        {canScrollForward && (
-          <div className="top-picks__next">
-            <IconButton
-              size="large"
-              variant="ghost"
-              icon="ic_arrow_right"
-              label="Next"
-              onClick={() => scrollByCard(1)}
-            />
-          </div>
-        )}
-      </div>
+      )}
 
       {previewSong && (
         <SongPlayBar

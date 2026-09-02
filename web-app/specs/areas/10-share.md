@@ -12,9 +12,9 @@
 ## 1. Overview & scope
 
 The recipient-facing **public** share page and the shared **Share dialog**. A share link opens a
-standalone landing page (no app chrome). As of 2026-07-23 the page is **simplified** to just three
-things: a **logo header** (click → home), the **media** (MV video / song), and a **Download** button —
-no Share action, no title/creator, no "Try" CTA. An unresolvable id shows an expired state. The
+standalone landing page (no app chrome): a **logo header** (click → home), a **media panel** with a
+custom playback controller, and a **two-pill action row** (Download + a kind-labelled Create). An
+unresolvable id shows an unavailable state. The
 `ShareDialog` (**copy-link only** as of 2026-07-23 — MVP, no social platforms) is **no longer used on
 `/share`** but remains a shared UI primitive opened by the MV/Song result & player screens
 (areas 02/03/04).
@@ -35,7 +35,7 @@ native Share button were removed** (social channels deferred → `TBD-SHARE-02`)
 
 | Route / Component | Owns UI | Reads/writes state | `MuseApi` |
 |---|---|---|---|
-| `/share` → `share/ShareLinkView` | public landing (simplified 2026-07-23): logo header (→ home), media (MV video / song), Download button, expired state | `useSearchParams` (`id`, `type`), `useHistory`, `resolveShare`, `useLocale` | **none** (resolves from fixtures + History samples + in-memory History) |
+| `/share` → `share/ShareLinkView` | public landing (**redesigned 2026-08-24**): logo header (→ home), `MvPanel` **or** `SongPanel` + its controller, a two-pill action row, unavailable state | `useSearchParams` (`id`, `type`), `useHistory`, `resolveShare`, `useLocale` | **none** (resolves from fixtures + History samples + in-memory History) |
 | `/share/mv/[id]` → `page.tsx` | *(no UI)* server `redirect()` → `/share?id={id}` (locale-preserved) | route params | — |
 | `ui/ShareDialog` | copy-link input + Copy button (MVP — no social targets, no native Share) | local `copied` | — |
 | `lib/share` | `buildShareUrl(id)`, `resolveShare(id, history)`, `SharedMedia` | — | — |
@@ -50,12 +50,39 @@ Renders **bare** (no shell) — `AppShell` treats any `/share…` path as chrome
   community song fixture → the user's own **completed** in-memory History item → **static
   `HISTORY_SAMPLES`** (done MV/song, mapped to the shared demo video/audio) → else `null`.
   `?type=expired` forces `null` (`ShareLinkView.tsx`).
-- **Valid link (`SharedMedia` present):** logo header (→ home) + media (MV = `<video controls>` at
-  9:16, **capped at 80vh max-height** so it can't overflow the viewport on wide/short screens — width
-  derives from the aspect ratio instead of always filling the 520px column (2026-07-24); song = cover
-  image + `<audio controls>`) + a **Download** button (only if a media URL exists). No Share action,
-  title/creator, or Try CTA (simplified 2026-07-23).
-- **Unavailable/invalid (`null`):** logo header (→ home), bell-off icon, "This link isn't available",
+- **Valid link (`SharedMedia` present) — REDESIGNED 2026-08-24** (product owner, Figma
+  "Share Page - MV" / song equivalent, nodes `2906:61191` / `2881:57358`), which **reverses** the
+  2026-07-23 simplification this bullet used to describe:
+  - **`MvPanel`** — a `<video>` with a `poster`, driven by a custom controller (play/pause,
+    `elapsed / total`, the shared `SeekBar`, mute, fullscreen, **More**). ⚠️ It shows **no title and
+    no creator** — confirmed live 2026-09-01.
+  - **`MvMoreMenu`** — **Download · Playback Speed · Picture in Picture**. Playback Speed *cycles*
+    `[1, 1.5, 2, 0.5]` and deliberately keeps the menu open; the other two act once and close.
+    Closes on Escape or an outside click.
+  - **`SongPanel`** — cover art, **title + creator** (the creator line only when the media carries
+    one), and a pill controller: play/pause, `elapsed / total`, seek, mute, download.
+  - **Two action pills** below either panel: **Download** (rendered only when a media URL exists)
+    and a **Create** pill reading **`Try YouCam Muse`** on BOTH media kinds. ⚠️ **It goes to the
+    HOME page**, not to a create flow — product owner, 2026-08-24: this page is unauthenticated and
+    mostly reached by people with no account, so dropping them straight into a create flow skips
+    the product entirely. Only the pill's GRADIENT still varies by kind
+    (`--gradient-mv` / `--gradient-song`), which is decoration, not a promise.
+    > ⚠️ **Label corrected 2026-09-01 (product owner, at the S9 spec review).** It read
+    > `Create MV` / `Create Song` by media kind while both went to the home page — a button naming
+    > a flow it never opened, which is the shape QA files as a broken link. The DESTINATION was not
+    > reopened; only the label follows it now. Guarded by `e2e/behaviour-regressions.spec.ts`
+    > ("/share's Create pill is neutral and goes home"), asserted on both media kinds.
+  > ⚠️ **Corrected 2026-09-01 by the S9 storyboard capture (D11).** This bullet, §1, §2's table row
+  > and `AC-SHARE-01` all still described the 2026-07-23 "three things only" page — logo, media,
+  > Download, "no Share action, title/creator, or Try CTA". Every clause of that is now wrong on the
+  > running app: there is a full controller, a More menu, a second CTA, and a title/creator on the
+  > song panel. The native `<video controls>`/`<audio controls>` and the 80vh cap went with the
+  > redesign. Captured at S9 `P1-S1`..`P1-S3`, `P2-S1`, `P2-S2`, `P3-S1`..`P3-S3`.
+  > The **title/creator asymmetry** between the two panels is **settled as deliberate** (product
+  > owner, 2026-09-01): a music video usually carries its own title on screen, so repeating it is
+  > redundant, whereas a song's cover art carries no words and has to be named. Specified as a rule
+  > on both panels rather than left open.
+- **Unavailable/invalid (`null`):** logo header (→ home), an alert icon, "This link isn't available",
   copy "*We couldn't find this creation. Ask the sender to share it again.*".
   **Share links DO NOT EXPIRE (product owner, 2026-08-19).** The previous copy advertised a 30-day
   window that was never implemented and is now decided against — creations are kept indefinitely, so
@@ -80,7 +107,11 @@ Screens to capture later: `/share?id=…` (valid MV + valid song), `/share?type=
 
 ### SHARE-P1 — Open a valid share link (recipient, unauthenticated)
 - **SHARE-P1-S1** Recipient opens `/share?id={hash}`. **System:** bare page; `resolveShare` finds the media; renders the logo header + media.
-- **SHARE-P1-S2** **Download** (if URL) saves the file (`{title}.mp4`/`.mp3`); the **logo** → home.
+- **SHARE-P1-S2** **Download** (if URL) saves the file (`{title}.mp4`/`.mp3`) — offered both as a
+  pill and, on an MV, inside the More menu; the **Create** pill and the **logo** both → home.
+- **SHARE-P1-S3** _(new 2026-09-01)_ The MV controller's **More** menu: Download, **Playback
+  Speed** (cycles `1 → 1.5 → 2 → 0.5`, menu stays open), **Picture in Picture** (a no-op where the
+  browser does not support it). See §3 and S9 `P2`.
 
 ### SHARE-P2 — Expired / invalid link
 - **SHARE-P2-S1** `/share` with an unresolvable `id`, no `id`, or `?type=expired` → expired empty state; the **logo** → home.
@@ -106,11 +137,15 @@ Screens to capture later: `/share?id=…` (valid MV + valid song), `/share?type=
 
 ## 6. Acceptance criteria (EARS)
 
-- **AC-SHARE-01** — WHEN `/share?id={id}` resolves to media, THE SYSTEM SHALL render it bare (no app chrome) with a logo header (→ home), the media, and (if a URL exists) a Download button — and nothing else.
+- **AC-SHARE-01** — WHEN `/share?id={id}` resolves to media, THE SYSTEM SHALL render it bare (no app chrome) with a logo header (→ home), the media panel and its custom controller, and an action row carrying Download (only if a media URL exists) and a kind-labelled Create pill.
+  > ⚠️ **Rewritten 2026-09-01 (D11), and this REVERSES the 2026-07-23 wording.** It read "…the media, and (if a URL exists) a Download button — **and nothing else**". The 2026-08-24 redesign added the controller, the More menu and the second pill, so "nothing else" was asserting the absence of four things that are on screen. See §3.
 - **AC-SHARE-02** — WHEN the id is missing/unresolvable or `?type=expired`, THE SYSTEM SHALL render the expired empty state; the logo header links home.
 - **AC-SHARE-03** — WHEN `/share/mv/{id}` is opened, THE SYSTEM SHALL redirect to `/share?id={id}` preserving the locale.
 - **AC-SHARE-04** — WHEN Share is invoked, THE SYSTEM SHALL open `ShareDialog` exposing a copyable `buildShareUrl` link and a Copy button — and **no** social-platform targets or native-share button (MVP).
 - **AC-SHARE-05** — WHEN Download is tapped on a valid link, THE SYSTEM SHALL download the media as `{title}.mp4` (MV) or `{title}.mp3` (song).
+- **AC-SHARE-07** — _(added 2026-09-01)_ WHEN a valid share link is opened, THE SYSTEM SHALL offer a
+  Create pill whose LABEL is the same string for both media kinds and whose destination is the home
+  page. THE SYSTEM SHALL NOT label it with a creation flow it does not open. See §3.
 - **AC-SHARE-06** — THE SYSTEM SHALL render `/share` (valid + expired) and `ShareDialog` at 320/375/768/1024/1440/1920px. *(visual)* _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
 
 ---
@@ -123,6 +158,8 @@ Screens to capture later: `/share?id=…` (valid MV + valid song), `/share?type=
 - [ ] **SHARE-P3**: `/share/mv/x` → `/share?id=x`, locale kept (AC-03).
 - [ ] **SHARE-E1**: static History sample (e.g. `h-cinematic-night`) resolves in a fresh tab; a *live* own creation still → expired (prototype limit).
 - [ ] **SHARE-P4 / AC-04**: `ShareDialog` still reachable from MV/Song result & player screens (areas 02/03/04).
+- [ ] **AC-07**: both a valid MV link and a valid song link show the SAME Create pill label, and it
+      goes to the home page — not to `/mv/room` or `/song/create`.
 - [ ] **AC-06**: 4 widths clean, page bare (no shell) *(visual)*.
 
 ---

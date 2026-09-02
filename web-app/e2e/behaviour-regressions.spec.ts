@@ -1895,7 +1895,9 @@ test("2026-09-01: web has NO Restore Purchases, and the footer is real legal lin
   await expect(privacy).toBeVisible();
   for (const link of [terms, privacy]) {
     const href = await link.getAttribute("href");
-    expect(href, "footer legal links must be real URLs, not dead `#` hrefs").toMatch(/^https?:\/\//);
+    expect(href, "footer legal links must be real URLs, not dead `#` hrefs").toMatch(
+      /^https?:\/\//,
+    );
   }
 });
 
@@ -4094,4 +4096,104 @@ test("2026-09-01: /watch swipes vertically to the next MV and syncs the URL", as
   // It is a `router.replace` into the same screen, not a navigation away.
   await expect(page.locator(".mv-player__stage")).toBeVisible();
   expect(new URL(page.url()).pathname).toMatch(/\/watch$/);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2026-09-01 — three product-owner decisions taken at the S8 / S9 spec review.
+// Each was a state nothing on the surface could reach or prove before, which is
+// exactly the shape that gets deleted by the next cleanup pass for free.
+// ─────────────────────────────────────────────────────────────────────────────
+
+test("2026-09-01: a /song/play deep link MARKS its row without auto-playing", async ({ page }) => {
+  // Product owner: a shared song link used to land the recipient on the plain
+  // browse list with NOTHING indicating which song the link had named — the
+  // player bar only opens once playback starts. The decision was "mark the
+  // row, do not auto-play", so this asserts BOTH halves. Asserting only the
+  // marker would let an auto-play regression through, and vice versa.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/play?id=sp-pop-anthem");
+
+  const rows = page.locator(".song-detail__list-item .top-song");
+  await expect(rows.first()).toBeVisible();
+
+  // Exactly one row carries the marker, and it is the one the id named.
+  const marked = page.locator(".song-detail__list-item .top-song--selected");
+  await expect(marked).toHaveCount(1);
+  await expect(marked).toContainText("Pop Anthem");
+
+  // …and nothing is playing: the bar is still parked below the fold, and no
+  // media element has started. `toBeVisible()` is TRUE for the parked bar —
+  // it is translated, not hidden — so this measures its position instead.
+  const barTop = await page.evaluate(() => {
+    const b = document.querySelector(".song-bar");
+    return b ? b.getBoundingClientRect().top : null;
+  });
+  expect(barTop).not.toBeNull();
+  expect(barTop!).toBeGreaterThanOrEqual(page.viewportSize()!.height - 1);
+  const anyPlaying = await page.evaluate(() =>
+    [...document.querySelectorAll("audio, video")].some((m) => !(m as HTMLMediaElement).paused),
+  );
+  expect(anyPlaying).toBe(false);
+});
+
+test("2026-09-01: feedEmpty gives every feed surface an empty state", async ({ page }) => {
+  // Product owner: `/creator` had an empty state and the three Home rails and
+  // `/explore/songs`' list had none at all — the seed arrays are never empty,
+  // so the day a real feed returns zero items those surfaces would have
+  // rendered a heading over blank space (TBD-EXP-06). `feedEmpty` is the only
+  // way to reach the state, so it is also the only way to test it.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+
+  await page.goto("/?demo=1");
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "muse_demo",
+      JSON.stringify({ enabled: true, flags: { feedEmpty: true } }),
+    ),
+  );
+
+  // All three Home rails, and their headings SURVIVE — only the rows go.
+  await page.goto("/");
+  await expect(page.locator(".new-mvs .feed-empty")).toBeVisible();
+  await expect(page.locator(".top-picks .feed-empty")).toBeVisible();
+  await expect(page.locator(".new-songs .feed-empty")).toBeVisible();
+  await expect(page.locator(".new-mvs .section-header")).toBeVisible();
+  await expect(page.locator(".new-mvs__item")).toHaveCount(0);
+
+  // Both explore catalogs.
+  await page.goto("/explore/mvs");
+  await expect(page.locator(".feed-empty")).toBeVisible();
+  await expect(page.locator('a[href*="/watch?id="]')).toHaveCount(0);
+
+  await page.goto("/explore/songs");
+  await expect(page.locator(".song-detail__list .feed-empty")).toBeVisible();
+  await expect(page.locator(".song-detail__list-item")).toHaveCount(0);
+  // The tab bar stays — the switch empties the LIST, not the screen.
+  await expect(page.locator(".song-detail-page__list-heading .tabs__tab")).toHaveCount(10);
+
+  // With the flag OFF every one of them is populated again. Without this half
+  // the test would still pass against a component that renders the empty block
+  // unconditionally.
+  await page.evaluate(() => localStorage.removeItem("muse_demo"));
+  await page.goto("/");
+  await expect(page.locator(".new-mvs .feed-empty")).toHaveCount(0);
+  await expect(page.locator(".new-mvs__item").first()).toBeVisible();
+});
+
+test("2026-09-01: /share's Create pill is neutral and goes home", async ({ page }) => {
+  // Product owner: the pill used to read "Create MV" / "Create Song" by media
+  // kind while BOTH went to the home page (2026-08-24 — the recipient has no
+  // account, so a creation flow skips the product). The label named a flow it
+  // never opened, which reads as a broken link. Asserts the label AND the
+  // destination, on both media kinds, since the mismatch is the whole point.
+  for (const id of ["mv-cinematic-dark", "sp-pop-anthem"]) {
+    await page.goto(`/share?id=${id}`);
+    const pill = page.locator(".share-page__pill--gradient-mv, .share-page__pill--gradient-song");
+    await expect(pill).toHaveCount(1);
+    await expect(pill).toContainText("Try YouCam Muse");
+    await expect(pill).not.toContainText("Create");
+    await expect(pill).toHaveAttribute("href", /\/$/);
+  }
 });

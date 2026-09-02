@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1820" viewBox="0 0 1280 1820" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<title>Share &#8212; User Flowchart</title>
+<defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
+<rect width="1280" height="1820" fill="#ffffff"/>
+<text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">Share &#8212; User Flowchart</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 (D8) &#183; matches spec v1, 2026-09-01</text>
+<text x="40" y="70" font-size="12" fill="#5a6b78">blue = system response &#183; green = success / resolved &#183; red = error state</text>
+
+<g transform="translate(0,80)">
+<text x="40" y="100" font-size="12" fill="#5a6b78">Two halves. The SENDER mints a link from a dialog that is identical on every screen offering it;</text>
+<text x="40" y="120" font-size="12" fill="#5a6b78">the RECIPIENT opens that link with no account and no app chrome. Drawn as one band per path.</text>
+<text x="40" y="140" font-size="12" fill="#5a6b78">Links DO NOT EXPIRE &#8212; the unavailable state means an id that did not resolve, and nothing else.</text>
+<line x1="40" y1="188" x2="1240" y2="188" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="210" font-size="15" font-weight="700" fill="#0c1c22">Part 1 &#8212; A valid MV link  &#183;  P1</text>
+<rect x="40" y="240" width="340" height="65" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="210" y="260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/share?id= &#8212; bare and public</text>
+<text x="210" y="278" font-size="12" fill="#5a6b78" text-anchor="middle">No sidebar, tab bar, header or navbar &#183; P1-S1</text>
+<text x="210" y="293" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHARE-01)</text>
+<rect x="470" y="240" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="640" y="260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">MV panel &#8212; video + controller</text>
+<text x="640" y="278" font-size="12" fill="#5a6b78" text-anchor="middle">NO title and NO creator &#8212; deliberate, D-08 &#183; P1-S1</text>
+<line x1="380" y1="272.5" x2="470" y2="265" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="240" width="340" height="67" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="1070" y="260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Play &#183; elapsed / total &#183; seek &#183; mute &#183; fullscreen &#183;</text>
+<text x="1070" y="277" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">More</text>
+<text x="1070" y="295" font-size="12" fill="#5a6b78" text-anchor="middle">The product&#8217;s own controls, not the browser&#8217;s &#183; P1-S2</text>
+<line x1="810" y1="265" x2="900" y2="273.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="470" y="370" width="340" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="640" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Two pills: Download, and a neutral Create</text>
+<text x="640" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">One label for both kinds; only the gradient differs &#183; P1-S3</text>
+<text x="640" y="423" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHARE-07)</text>
+<line x1="640" y1="290" x2="640" y2="370" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="370" width="340" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="1070" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Four resolution sources, in order</text>
+<text x="1070" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">Community MV &#183; community song &#183; your own completed</text>
+<text x="1070" y="423" font-size="12" fill="#5a6b78" text-anchor="middle">creation &#183; the samples &#183; P1-S4</text>
+<line x1="810" y1="402.5" x2="900" y2="402.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="40" y="370" width="340" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="210" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">The home page</text>
+<text x="210" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">Where the pill says it goes &#8212; never a create flow &#183; P1-S3</text>
+<line x1="470" y1="402.5" x2="380" y2="395" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="426.163" y="384.798" font-size="12" fill="#5a6b78" text-anchor="middle">Create</text>
+<line x1="40" y1="478" x2="1240" y2="478" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="500" font-size="15" font-weight="700" fill="#0c1c22">Part 2 &#8212; The More menu  &#183;  P2</text>
+<rect x="40" y="530" width="340" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="210" y="550" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">More, on the MV controller</text>
+<text x="210" y="568" font-size="12" fill="#5a6b78" text-anchor="middle">Opens over the video &#183; P2-S1</text>
+<rect x="470" y="530" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="640" y="550" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Download &#183; Playback Speed &#183; Picture in Picture</text>
+<text x="640" y="568" font-size="12" fill="#5a6b78" text-anchor="middle">Exactly three items, in this order &#183; P2-S1</text>
+<line x1="380" y1="555" x2="470" y2="555" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="530" width="340" height="67" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="1070" y="550" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Playback Speed CYCLES, and the menu</text>
+<text x="1070" y="567" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">STAYS OPEN</text>
+<text x="1070" y="585" font-size="12" fill="#5a6b78" text-anchor="middle">1 &#8594; 1.5 &#8594; 2 &#8594; 0.5, wrapping. Measured live &#183; P2-S2</text>
+<line x1="810" y1="555" x2="900" y2="563.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="470" y="660" width="340" height="82" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="640" y="680" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Download and Picture in Picture act once, then</text>
+<text x="640" y="697" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">close</text>
+<text x="640" y="715" font-size="12" fill="#5a6b78" text-anchor="middle">Picture in Picture is a no-op where the browser lacks it &#183;</text>
+<text x="640" y="730" font-size="12" fill="#5a6b78" text-anchor="middle">P2-S1, P2-S3</text>
+<line x1="640" y1="580" x2="640" y2="660" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="768" x2="1240" y2="768" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="790" font-size="15" font-weight="700" fill="#0c1c22">Part 3 &#8212; A valid song link  &#183;  P3</text>
+<rect x="40" y="820" width="340" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="210" y="840" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/share?id= on a song</text>
+<text x="210" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">The same bare page &#183; P3-S1</text>
+<rect x="470" y="820" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="640" y="840" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Song panel &#8212; art, title, creator</text>
+<text x="640" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">Cover art carries no words, so a song is named &#183; P3-S1</text>
+<line x1="380" y1="845" x2="470" y2="845" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="820" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="1070" y="840" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Play &#183; elapsed / total &#183; seek &#183; mute &#183; download</text>
+<text x="1070" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">No fullscreen and no More menu on a song &#183; P3-S2</text>
+<line x1="810" y1="845" x2="900" y2="845" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="470" y="950" width="340" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="640" y="970" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Two pills: Download, and the same Create</text>
+<text x="640" y="988" font-size="12" fill="#5a6b78" text-anchor="middle">Identical to Part 1&#8217;s in label AND destination &#183; P3-S3</text>
+<line x1="640" y1="870" x2="640" y2="950" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="1058" x2="1240" y2="1058" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1080" font-size="15" font-weight="700" fill="#0c1c22">Part 4 &#8212; An unavailable link  &#183;  P4</text>
+<rect x="40" y="1110" width="340" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="210" y="1130" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">An id that matches nothing</text>
+<text x="210" y="1148" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S1</text>
+<rect x="470" y="1110" width="340" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="640" y="1130" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">No id at all</text>
+<text x="640" y="1148" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S2</text>
+<rect x="900" y="1110" width="340" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="1070" y="1130" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">?type=expired &#8212; the QA switch</text>
+<text x="1070" y="1148" font-size="12" fill="#5a6b78" text-anchor="middle">Forces the state on an id that WOULD resolve &#183; P4-S3</text>
+<rect x="470" y="1240" width="340" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="640" y="1260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&#8220;This link isn&#8217;t available&#8221;</text>
+<text x="640" y="1278" font-size="12" fill="#5a6b78" text-anchor="middle">One state, three ways in. The header logo is the only way</text>
+<text x="640" y="1293" font-size="12" fill="#5a6b78" text-anchor="middle">out &#183; AC-SHARE-02</text>
+<line x1="210" y1="1160" x2="470" y2="1272.5" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<line x1="640" y1="1160" x2="640" y2="1240" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<line x1="1070" y1="1160" x2="810" y2="1272.5" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<rect x="900" y="1240" width="340" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="1070" y="1260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">A LIVE own creation, opened elsewhere</text>
+<text x="1070" y="1278" font-size="12" fill="#5a6b78" text-anchor="middle">Held in the sender&#8217;s own session, so no other session</text>
+<text x="1070" y="1293" font-size="12" fill="#5a6b78" text-anchor="middle">resolves it &#183; P4-S4</text>
+<line x1="900" y1="1272.5" x2="810" y2="1272.5" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<line x1="40" y1="1358" x2="1240" y2="1358" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1380" font-size="15" font-weight="700" fill="#0c1c22">Part 5 &#8212; Minting a link  &#183;  P5</text>
+<rect x="40" y="1410" width="340" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="210" y="1430" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">A Share control on any result or player screen</text>
+<text x="210" y="1448" font-size="12" fill="#5a6b78" text-anchor="middle">S8 captures those entry points &#183; P5-S2</text>
+<rect x="470" y="1410" width="340" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="640" y="1430" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Share dialog &#8212; a read-only link and Copy</text>
+<text x="640" y="1448" font-size="12" fill="#5a6b78" text-anchor="middle">No social targets, no native share &#183; P5-S2 (AC-SHARE-04)</text>
+<line x1="380" y1="1435" x2="470" y2="1435" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="1410" width="340" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="1070" y="1430" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&#8220;Copied!&#8221; for 1.5s, then reverts</text>
+<text x="1070" y="1448" font-size="12" fill="#5a6b78" text-anchor="middle">The dialog stays open; the clipboard holds that link &#183; P5-S3</text>
+<line x1="810" y1="1435" x2="900" y2="1435" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="855" y="1421" font-size="12" fill="#5a6b78" text-anchor="middle">Copy</text>
+<rect x="40" y="1540" width="340" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="210" y="1560" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">The legacy MV share URL</text>
+<text x="210" y="1578" font-size="12" fill="#5a6b78" text-anchor="middle">Server redirect, language prefix kept &#183; P5-S1</text>
+<text x="210" y="1593" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHARE-03)</text>
+<rect x="470" y="1540" width="340" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="640" y="1560" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&#8594; Part 1: /share?id=</text>
+<text x="640" y="1578" font-size="12" fill="#5a6b78" text-anchor="middle">The canonical page &#8212; same media, same panel &#183; P5-S1</text>
+<line x1="380" y1="1572.5" x2="470" y2="1565" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="423.837" y="1554.8" font-size="12" fill="#5a6b78" text-anchor="middle">redirects to</text>
+<line x1="640" y1="1460" x2="640" y2="1540" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="652" y="1494" font-size="12" fill="#5a6b78" text-anchor="start">the recipient opens the link</text>
+<line x1="40" y1="1656" x2="1240" y2="1656" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="1676" x2="74" y2="1676" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1680" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="1696" x2="74" y2="1696" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="1700" font-size="12" fill="#5a6b78">Error branch</text>
+<line x1="40" y1="1716" x2="74" y2="1716" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="86" y="1720" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
+</g>
+</svg>

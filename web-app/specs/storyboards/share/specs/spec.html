@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Share &mdash; Spec</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f7f8fa;color:#1a2530;line-height:1.6}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:230px;flex:none;background:#fff;border-right:1px solid #e5e9ed;position:sticky;top:0;height:100vh;overflow-y:auto;padding:24px 0 40px}
+.sidebar-logo{display:flex;align-items:center;gap:8px;padding:0 18px 18px;border-bottom:1px solid #f0f2f5;margin-bottom:12px}
+.sidebar-logo .dot{width:9px;height:9px;border-radius:50%;background:#03ADE2}
+.sidebar-logo span{font-size:13px;font-weight:700;color:#1a2530}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:.7px;color:#9aabb6;text-transform:uppercase;padding:12px 18px 4px}
+.nav-link{display:block;padding:6px 18px;font-size:13px;color:#4a6070;text-decoration:none;border-left:3px solid transparent}
+.nav-link:hover,.nav-link.active{color:#03ADE2;background:#f0fbff;border-left-color:#03ADE2}
+.nav-link.active{font-weight:600}.nav-path{padding-left:28px}
+.nav-path .pid{font-weight:700;color:#9aabb6;margin-right:5px}
+/* Step-level nav: a 16-screen document needs more than section links. */
+.nav-group{border:none}
+.nav-group>summary{list-style:none;cursor:pointer}
+.nav-group>summary::-webkit-details-marker{display:none}
+.nav-group>summary::before{content:"\25B8";color:#9aabb6;font-size:9px;margin-right:5px;display:inline-block;transition:transform .15s}
+.nav-group[open]>summary::before{transform:rotate(90deg)}
+.nav-step{padding:4px 18px 4px 40px;font-size:12px;color:#5a6b78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-step .pid{font-weight:700;color:#9aabb6;margin-right:5px;font-size:10.5px}
+.nav-jump{display:block;width:calc(100% - 36px);margin:0 18px 6px;padding:5px 8px;font:inherit;font-size:12px;color:#1a2530;background:#fafbfc;border:1px solid #e5e9ed;border-radius:6px}
+.nav-jump:focus{outline:none;border-color:#03ADE2;background:#fff}
+.nav-jump.bad{border-color:#c0392b;background:#fdecea}
+/* Where am I — sticky, so the ID is on screen no matter how deep you scroll. */
+.herebar{position:sticky;top:0;z-index:5;margin:-36px -48px 14px;padding:6px 48px;background:#fafbfc;border-bottom:1px solid #e5e9ed;font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:#8a9aa6}
+.herebar span{color:#007299}
+.main{flex:1;min-width:0;padding:36px 48px 90px;max-width:1100px}
+.spec-header{margin-bottom:18px}
+.breadcrumb{font-size:12px;color:#9aabb6;margin-bottom:7px}
+h1{font-size:26px;font-weight:700;color:#0c1c22;letter-spacing:-.4px;margin-bottom:11px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.badge{display:inline-flex;align-items:center;height:21px;padding:0 9px;border-radius:10px;font-size:11px;font-weight:700;background:#e0f7fd;color:#007299}
+.meta-item{font-size:12px;color:#4a6070}.meta-item strong{color:#1a2530}.meta-sep{color:#d0d8de}
+.tbd{color:#9aabb6;cursor:help;border-bottom:1px dotted #c0ccd3}
+/* Feature lead block */
+.feature{background:#fff;border:1px solid #e5e9ed;border-radius:8px;padding:16px 18px;margin-bottom:22px}
+.feature-desc{font-size:15px;color:#0c1c22;line-height:1.6;margin:0}
+.fmeta{display:flex;gap:12px;margin-top:12px;font-size:13px;color:#2e4050;line-height:1.55}
+.fmeta .fk{flex:none;width:88px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#5a6b78;padding-top:1px}
+.callout{background:#f0fbff;border:1px solid #bfe9f6;border-left:3px solid #03ADE2;border-radius:8px;padding:12px 16px;margin-bottom:22px;font-size:13px;color:#2e4050}
+.callout strong{color:#0c1c22}
+.overview-card{background:#fff;border:1px solid #e5e9ed;border-radius:8px;overflow:hidden;margin-bottom:24px}
+.overview-card table{width:100%;border-collapse:collapse}
+.overview-card td{padding:9px 15px;font-size:13px;border-bottom:1px solid #f0f2f5;vertical-align:top}
+.overview-card td:first-child{width:120px;font-weight:600;color:#4a6070;background:#fafbfc;white-space:nowrap}
+.overview-card tr:last-child td{border-bottom:none}.overview-card a{color:#03ADE2;text-decoration:none}
+.section{margin-bottom:46px}
+.section-title{font-size:17px;font-weight:700;color:#0c1c22;padding-bottom:10px;margin-bottom:18px;border-bottom:2px solid #e5e9ed;display:flex;align-items:center;gap:10px}
+.section-title .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:#03ADE2;color:#fff;font-size:11px;font-weight:700;flex:none}
+.section-note{font-size:13px;color:#4a6070;margin:-8px 0 16px}
+/* Flow diagram (collapsible, sits first) */
+.flow-box{margin-bottom:30px}
+.flow-details{background:#fff;border:1px solid #e5e9ed;border-radius:8px;overflow:hidden}
+.flow-details>summary{list-style:none;cursor:pointer;padding:12px 16px;font-size:14px;font-weight:700;color:#0c1c22;display:flex;align-items:center;gap:9px}
+.flow-details>summary::-webkit-details-marker{display:none}
+.flow-details>summary::before{content:"\25B6";color:#03ADE2;font-size:11px;transition:transform .15s}
+.flow-details[open]>summary::before{transform:rotate(90deg)}
+.flow-details>summary .num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:#03ADE2;color:#fff;font-size:11px;flex:none}
+.flow-inner{padding:0 16px 16px;overflow-x:auto}
+.flow-inner svg{max-width:100%;height:auto}
+.mermaid-src{background:#f4f6f8;border-radius:6px;padding:11px 13px;font-size:11.5px;font-family:monospace;color:#2e4050;overflow-x:auto;white-space:pre;margin-top:10px}
+.poverview{background:#fff;border:1px solid #e5e9ed;border-radius:8px;overflow:hidden;margin-bottom:36px}
+.poverview table{width:100%;border-collapse:collapse}
+.poverview th{background:#f4f6f8;font-weight:700;color:#4a6070;padding:8px 14px;text-align:left;border-bottom:2px solid #e5e9ed;font-size:12.5px}
+.poverview td{padding:10px 14px;border-bottom:1px solid #f0f2f5;font-size:13.5px;color:#2e4050;vertical-align:middle}
+.poverview tr:last-child td{border-bottom:none}
+.poverview .pn{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;padding:0 6px;border-radius:6px;background:#03ADE2;color:#fff;font-size:11px;font-weight:700}
+.poverview a{color:#03ADE2;text-decoration:none;font-weight:600}.poverview .sc{color:#9aabb6;font-size:12px}
+.path{margin-bottom:30px}
+.path-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.pbadge{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:28px;padding:0 9px;border-radius:7px;background:#03ADE2;color:#fff;font-size:12px;font-weight:700;flex:none}
+.pname{font-size:16px;font-weight:700;color:#0c1c22}
+.since{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.4px;color:#0a7d34;background:#e3f7ea;border:1px solid #b9ecca;border-radius:8px;padding:1px 7px;text-transform:uppercase}
+.pdesc{font-size:13.5px;color:#4a6070;margin:0 0 12px 46px}
+.skim{margin:0 0 18px 46px;padding-left:20px;color:#4a6070;font-size:13px}
+.skim li{margin-bottom:3px}
+.skid{font-weight:700;color:#9aabb6;font-size:11px;margin-right:4px}
+.step{background:#fff;border:1px solid #e5e9ed;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.step-head{background:#fafbfc;border-bottom:1px solid #f0f2f5;padding:8px 16px;display:flex;align-items:center;gap:9px}
+.step-head.err{background:#fef5f4}
+.snum{display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 11px;border-radius:11px;background:#03ADE2;color:#fff;font-size:11px;font-weight:700;letter-spacing:.4px}
+.snum.err{background:#c0392b}
+/* Screenshot first, with optional hover-tooltip red-box focus overlay */
+.shot{border-bottom:1px solid #f0f2f5;background:#f4f6f8;text-align:center}
+/* Wrapper shrinks to the rendered image so the %-based focus overlay stays aligned. */
+.shotwrap{position:relative;line-height:0;display:inline-block;max-width:100%;vertical-align:top}
+/* Cap height so tall PORTRAIT / mobile captures don't blow up to full-column width;
+   landscape shots still fill the column. Aspect ratio preserved; centered. */
+.shot img{display:block;max-width:100%;max-height:560px;width:auto;height:auto;margin:0 auto}
+.shot.noshot{padding:22px;text-align:center;font-size:12px;color:#9aabb6}
+.fbox{position:absolute;border:2px solid #e8392b;border-radius:4px;box-shadow:0 0 0 2px rgba(232,57,43,.18);cursor:help;opacity:.75;transition:opacity .12s,box-shadow .12s}
+/* Permanent number badge on each frame + a legend under the shot, so the
+   labels survive print / PDF / a screenshot pasted into a ticket. */
+.fpin{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:#e8392b;color:#fff;font-size:10.5px;font-weight:700;line-height:1;flex:none}
+.fbox>.fpin{position:absolute;top:-9px;left:-9px;box-shadow:0 0 0 2px #fff}
+.fpin-info,.fbox-info>.fpin{background:#e08a00}
+.fbox:hover{opacity:1;box-shadow:0 0 0 3px rgba(232,57,43,.28)}
+.fbox-info{border-style:dashed;border-color:#e08a00;box-shadow:0 0 0 2px rgba(224,138,0,.15)}
+.fbox-info:hover{box-shadow:0 0 0 3px rgba(224,138,0,.30)}
+.fkey{list-style:none;margin:0;padding:8px 16px 10px;text-align:left;border-top:1px solid #f0f2f5;background:#fff}
+.fkey li{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:#2e4050;margin-bottom:4px;line-height:1.5}
+.fkey li:last-child{margin-bottom:0}
+.step-body{padding:14px 18px}
+.srow{display:flex;gap:10px;margin-bottom:7px;align-items:flex-start}
+.role{font-size:11px;font-weight:700;letter-spacing:.4px;width:68px;flex:none;padding-top:2px;text-transform:uppercase}
+.r-user{color:#03ADE2}.r-sys{color:#5a6b78}.r-err{color:#c0392b}
+.stext{font-size:14px;color:#4a6070;flex:1}
+.stext.su{font-size:14.5px;font-weight:600;color:#0c1c22}
+.stext.su.err{color:#c0392b}
+/* No-screenshot WEB UI panel — readable on its own */
+.screen-panel{display:flex;gap:10px;margin-bottom:7px;padding:10px 12px;background:#f7f9fb;border:1px solid #e5e9ed;border-left:3px solid #9aabb6;border-radius:6px}
+.sp-key{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#5a6b78;width:68px;flex:none;padding-top:1px}
+.sp-body{flex:1;font-size:14px;color:#1a2530}
+.io{margin-top:10px;padding:7px 11px;background:#fafbfc;border:1px solid #f0f2f5;border-radius:6px;font-size:13px;color:#4a6070}
+.io strong{color:#1a2530}
+.mline{display:flex;gap:12px;align-items:flex-start;font-size:13.5px;color:#2e4050;margin-top:10px;line-height:1.6}
+.mkey{flex:none;width:112px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#5a6b78;padding-top:2px}
+.mbody{flex:1}.mval{display:block}
+.mlist{margin:0;padding-left:17px}.mlist li{margin-bottom:6px}.mlist li:last-child{margin-bottom:0}
+/* The reason behind a rule — quieter, so the normative line stays the rule. */
+.why{display:block;font-size:12.5px;color:#8a9aa6;line-height:1.5;margin-top:1px}
+.sublist{margin:5px 0 2px;padding-left:18px;list-style:circle}.sublist li{margin-bottom:3px}.sublist li:last-child{margin-bottom:0}
+td .sublist{margin:6px 0 2px}
+.qa-box{background:#fafbfc;border:1px solid #e5e9ed;border-radius:8px;padding:12px 16px;margin:6px 0 16px}
+.qa-box-title{font-size:11px;font-weight:700;letter-spacing:.5px;color:#5a6b78;text-transform:uppercase;margin-bottom:8px}
+.qa-box ul{list-style:none;padding:0;margin:0}
+.qa-box li{font-size:13px;color:#2e4050;margin-bottom:5px;display:flex;gap:9px;align-items:flex-start}
+.qa-box li span:last-child{flex:1}
+.qa-check{color:#9aabb6;flex:none;font-size:15px;line-height:1.3}
+.bridge{display:flex;gap:12px;align-items:flex-start;background:#f0fbff;border:1px dashed #8fd6ef;border-radius:8px;padding:11px 15px;margin:0 0 40px 46px;font-size:13px;color:#2e4050}
+.bridge-i{color:#03ADE2;font-weight:700;font-size:16px;line-height:1.2;flex:none}
+.psec{background:#fff;border:1px solid #e5e9ed;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.psec-body{padding:12px 18px;border-bottom:1px solid #f0f2f5}
+.psec-name{font-size:14px;font-weight:700;color:#0c1c22}
+.psec-purpose{font-size:13px;color:#4a6070;margin-top:2px}
+.table-wrap{overflow-x:auto;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:#f4f6f8;font-weight:700;color:#4a6070;padding:8px 13px;text-align:left;border-bottom:2px solid #e5e9ed}
+td{padding:8px 13px;border-bottom:1px solid #f0f2f5;vertical-align:top;color:#2e4050}
+tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfc}
+.idcell{font-weight:700;color:#5a6b78;white-space:nowrap}
+.err-badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;background:#fdecea;color:#c0392b}
+.proto-wrap td:first-child{font-weight:600;color:#1a2530;width:160px}
+.proto-prod{color:#0c1c22}
+/* Inline design-decision callout (opt-in: cfg['inline_decisions']) — the WHY
+   rendered beside the step it governs, so the reader never leaves the path. */
+.dec-inline{display:flex;gap:10px;align-items:flex-start;background:#f0fbff;border:1px solid #bfe9f6;border-left:3px solid #03ADE2;border-radius:7px;padding:9px 12px;margin-top:10px}
+.dec-inline-id{flex:none;font-size:10px;font-weight:700;letter-spacing:.4px;color:#007299;background:#e0f7fd;border-radius:9px;padding:2px 8px;text-decoration:none;margin-top:1px}
+.dec-inline-body{flex:1;font-size:12.5px;color:#2e4050;line-height:1.55}
+.dec-inline-q{display:block;font-weight:700;color:#0c1c22}
+.dec-back{font-size:11px;font-weight:600;color:#03ADE2;text-decoration:none;white-space:nowrap;margin-left:6px}
+.note{font-size:12.5px;color:#4a6070;margin-top:8px}
+/* A criterion this spec deliberately does not cover. */
+.oos{color:#8a9aa6;font-style:italic}
+/* Collapsible raw sample payload under the Data Contract. */
+.payload{background:#fff;border:1px solid #e5e9ed;border-radius:8px;margin-bottom:14px}
+.payload>summary{cursor:pointer;padding:9px 14px;font-size:12.5px;font-weight:600;color:#4a6070}
+.payload pre{margin:0;padding:0 14px 14px;font-family:monospace;font-size:11.5px;line-height:1.5;color:#2e4050;overflow-x:auto;white-space:pre}
+/* JSON schema block — a payload shown as highlighted JSON with its keys
+   documented underneath, the layout RDs already read API docs in. A five-column
+   table cannot show nesting or arrays; this is for payloads whose contract IS
+   their shape. Chrome reuses the document palette; only .jk/.jstr are new hues,
+   the minimum needed to tell a field name from an example value. */
+.dc-block{background:#fff;border:1px solid #e5e9ed;border-radius:10px;overflow:hidden;margin-bottom:20px}
+.jb{background:#f9fafb;border-bottom:1px solid #f0f2f5;padding:12px 16px 16px}
+.jb-toolbar{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-bottom:8px}
+.jb-badge{font-size:11px;font-weight:700;letter-spacing:.3px;color:#5a6b78;background:#fff;border:1px solid #e5e9ed;border-radius:12px;padding:2px 11px}
+.jb-copy{width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;padding:0;background:#fff;border:1px solid #e5e9ed;border-radius:6px;color:#8a9aa6;cursor:pointer;position:relative}
+.jb-copy:hover{background:#f4f6f8;color:#4a6070}
+.jb-copy svg{width:14px;height:14px}
+.jb-copy[data-copied]::after{content:"Copied";position:absolute;top:-25px;right:0;padding:3px 7px;border-radius:5px;background:#0c1c22;color:#fff;font-size:10.5px;font-weight:600;white-space:nowrap}
+.jb pre{margin:0;font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace;font-size:13px;line-height:1.7;color:#2e4050;overflow-x:auto;white-space:pre}
+.jb .jk{color:#9c3f63}
+.jb .jstr{color:#5c7a3d}
+.jb .jlit{color:#5a6b78}
+.jb .jpunc{color:#9aabb6}
+/* Field list. Stacked, never two-column: a long key path
+   (credit_detail[].credit_detail_name_key) overlapped its own description in
+   the side-by-side version this replaced. */
+.jf{padding:2px 16px}
+.jf-row{padding:12px 2px;border-bottom:1px solid #f0f2f5}
+.jf-row:last-child{border-bottom:none}
+.jf-key{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}
+.jf-key code{font-family:monospace;font-size:12.5px;font-weight:600;color:#0c1c22;word-break:break-word}
+.jf-type{flex:none;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:#5a6b78;background:#f4f6f8;border-radius:4px;padding:1px 6px}
+.jf-desc{font-size:13.5px;color:#4a6070;line-height:1.6}
+.jf-desc code{font-size:12px;padding:1px 5px;border-radius:4px;background:#f4f6f8;color:#2e4050}
+.jf-note{margin:0;padding:11px 16px;border-top:1px solid #f0f2f5;background:#fafbfc;font-size:13px;color:#4a6070;line-height:1.6}
+
+
+/* Cross-reference chips — bare "(T1)" / "see D-12" become real jumps. */
+.xref{font-weight:600;color:#007299;background:#e0f7fd;border-radius:4px;padding:0 4px;white-space:nowrap}
+.xref:hover{background:#bfe9f6}
+/* Anchored caption above an in-step data table ("T1 · …"). */
+.dc-cap{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#5a6b78;margin:0 0 7px}
+/* Classified but not displayed: keys the payload carries that render nothing.
+   Deliberately a note, not a table row — see _dc_notes. */
+.dc-note{font-size:13px;line-height:1.65;color:#4a6070;background:#f7f9fa;border-left:3px solid #cfd9de;border-radius:0 5px 5px 0;padding:9px 13px;margin:0 0 14px}
+.dc-note strong{color:#2b3a44}
+.dc-note code{font-size:12px}
+/* Anchors must clear the sticky position bar. */
+.step[id],.path[id],.section[id],.dc-cap[id],.dc-note[id],tr[id]{scroll-margin-top:40px}
+
+a{color:#03ADE2;text-decoration:none}
+@media print{.sidebar{display:none}.main{max-width:none;padding:0}.flow-details[open] .flow-inner{display:block}.step,.qa-box,.bridge,.overview-card,.poverview,.flow-details,.psec,.feature{break-inside:avoid}table{break-inside:auto}tr{break-inside:avoid}}
+@media(max-width:860px){.sidebar{display:none}.main{padding:18px 14px 60px}.mkey{width:auto}.mline{flex-direction:column;gap:2px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-logo"><div class="dot"></div><span>YCO Spec</span></div>
+  <input class="nav-jump" id="nav-jump" type="search" placeholder="Jump to ID (P1-S3, T1, D-12)" autocomplete="off"/>
+  <div class="nav-label">Overview</div>
+  <a class="nav-link" href="#overview">Overview</a>
+  <a class="nav-link" href="#flow-diagram">Flow Diagram</a>
+  <a class="nav-link" href="#paths">All Paths</a>
+  <div class="nav-label">User Paths</div>
+  <details class="nav-group" open><summary class="nav-link nav-path"><span class="pid">P1</span>Valid MV link</summary><a class="nav-link nav-step" href="#P1-S1"><span class="pid">P1-S1</span>Opens a shared music-video link, with no account and nothing signed in.</a><a class="nav-link nav-step" href="#P1-S2"><span class="pid">P1-S2</span>Looks at the controller under the video.</a><a class="nav-link nav-step" href="#P1-S3"><span class="pid">P1-S3</span>Looks at the two pills below the panel.</a><a class="nav-link nav-step" href="#P1-S4"><span class="pid">P1-S4</span>Opens a link to one of the sample creations, in a completely fresh session.</a></details><details class="nav-group" open><summary class="nav-link nav-path"><span class="pid">P2</span>The More menu</summary><a class="nav-link nav-step" href="#P2-S1"><span class="pid">P2-S1</span>Presses More on the controller.</a><a class="nav-link nav-step" href="#P2-S2"><span class="pid">P2-S2</span>Presses Playback Speed repeatedly.</a><a class="nav-link nav-step" href="#P2-S3"><span class="pid">P2-S3</span>Presses Picture in Picture.</a></details><details class="nav-group" open><summary class="nav-link nav-path"><span class="pid">P3</span>Valid song link</summary><a class="nav-link nav-step" href="#P3-S1"><span class="pid">P3-S1</span>Opens a shared song link.</a><a class="nav-link nav-step" href="#P3-S2"><span class="pid">P3-S2</span>Looks at the controller under the artwork.</a><a class="nav-link nav-step" href="#P3-S3"><span class="pid">P3-S3</span>Looks at the two pills below the panel.</a></details><details class="nav-group" open><summary class="nav-link nav-path"><span class="pid">P4</span>Unavailable</summary><a class="nav-link nav-step" href="#P4-S1"><span class="pid">P4-S1</span>Opens a share link whose id matches nothing.</a><a class="nav-link nav-step" href="#P4-S2"><span class="pid">P4-S2</span>Opens /share with no id at all.</a><a class="nav-link nav-step" href="#P4-S3"><span class="pid">P4-S3</span>Opens a link with the expired-state switch in the address.</a><a class="nav-link nav-step" href="#P4-S4"><span class="pid">P4-S4</span>Shares one of their OWN just-finished creations, and the recipient opens it.</a></details><details class="nav-group" open><summary class="nav-link nav-path"><span class="pid">P5</span>Minting a link</summary><a class="nav-link nav-step" href="#P5-S1"><span class="pid">P5-S1</span>Opens an old-format MV share URL.</a><a class="nav-link nav-step" href="#P5-S2"><span class="pid">P5-S2</span>Presses Share on a player screen.</a><a class="nav-link nav-step" href="#P5-S3"><span class="pid">P5-S3</span>Presses Copy.</a></details>
+  <div class="nav-label">Reference</div>
+  
+  
+  <a class="nav-link" href="#states">State Inventory</a>
+  <a class="nav-link" href="#open-questions">Open Questions</a>
+  <a class="nav-link" href="#qa-coverage">QA Coverage</a>
+  <a class="nav-link" href="#errors">Error States</a>
+  <a class="nav-link" href="#prototype">Prototype Simplifications</a>
+  <a class="nav-link" href="#decisions">Design Decisions</a>
+  <a class="nav-link" href="#references">References</a>
+  
+</nav>
+<main class="main">
+<div class="herebar">You are at <span id="here">the top</span></div>
+<div class="spec-header">
+  <div class="breadcrumb">YouCam Muse Web &rarr; Share</div>
+  <h1>Share</h1>
+  <div class="meta">
+    <span class="badge">Draft</span>
+    <span class="meta-sep">&middot;</span><span class="meta-item"><strong>Version:</strong> v1</span>
+    <span class="meta-sep">&middot;</span>
+    <span class="meta-item"><strong>Author:</strong> Jason Chen</span>
+    <span class="meta-sep">&middot;</span>
+    <span class="meta-item"><strong>Date:</strong> 2026-09-01</span>
+    
+    
+    <span class="meta-sep">&middot;</span><span class="meta-item"><strong>Guideline:</strong> <span class="tbd" title="TBD — link to be added">Open &nearr;</span></span>
+  </div>
+</div>
+<div class="feature"><p class="feature-desc">The public share link and the dialog that mints it: <code>/share</code> &mdash; a bare, unauthenticated landing page carrying the media, a full playback controller and two actions &mdash; and <code>ShareDialog</code>, the copy-link-only dialog every result and player screen in the app opens.</p><div class="fmeta"><span class="fk">Background</span><div>The tenth spec in this repo&rsquo;s yco-spec storyboard programme (specs/storyboards/PLAN.md), covering area 10 end to end. It is its own spec rather than a section of the screens that link to it because <code>/share</code> is the one surface that is public by design and never expires (programme decision D6); S1, S2, S4 and S8 each name the shared dialog and add only what they do differently.</div></div><div class="fmeta"><span class="fk">Goal</span><div>Give QA a screenshot-led walkthrough of what a share-link recipient sees, and of the dialog that produced the link.</div></div></div>
+<div class="callout"><strong>Reading this spec.</strong> This is a behavior specification for the front-end RD, not production code &mdash; the prototype source cannot be reused. Each step card shows the <strong>screenshot first</strong>, then what the <strong>user does</strong> (bold) and what the <strong>WEB UI</strong> shows, with on-screen text, rules &amp; limits, and input/output below. On a screenshot, a <strong style="color:#e8392b">solid red</strong> frame marks the click that advances the flow; a <strong style="color:#e08a00">dashed amber</strong> frame marks a key point to note (hover a frame for its label). Steps carry a stable ID (e.g. <strong><a class="xref" href="#P1-S2">P1-S2</a></strong>).</div>
+<div id="overview" class="overview-card"><table><tr><td>Platform</td><td>YouCam Muse Web &mdash; captured at 1403&times;697 (desktop only, D8)</td></tr><tr><td>Audience</td><td>QA</td></tr><tr><td>Scope</td><td>/share for a valid MV and a valid song (panel, controller, More menu, both action pills), the unavailable state and all three ways to reach it, the legacy share URL, and the ShareDialog with its Copy confirmation.</td></tr><tr><td>Out of scope</td><td>The result and player screens that OPEN the dialog (areas 02/03/04 &mdash; S1, S2, S8, which capture the entry points); real server-side link resolution, which does not exist (see Prototype vs production); share-link analytics, which has no field spec yet.</td></tr><tr><td>Source</td><td>specs/areas/10-share.md (&sect;&sect;1-9, AC-SHARE-01..06) and the running app</td></tr></table></div>
+<div id="flow-diagram" class="flow-box"><details class="flow-details"><summary><span class="num">&darr;</span> Flow Diagram &mdash; full user journey (click to expand)</summary><div class="flow-inner"><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1820" viewBox="0 0 1280 1820" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<title>Share &#8212; User Flowchart</title>
+<defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
+<rect width="1280" height="1820" fill="#ffffff"/>
+<text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">Share &#8212; User Flowchart</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 (D8) &#183; matches spec v1, 2026-09-01</text>
+<text x="40" y="70" font-size="12" fill="#5a6b78">blue = system response &#183; green = success / resolved &#183; red = error state</text>
+
+<g transform="translate(0,80)">
+<text x="40" y="100" font-size="12" fill="#5a6b78">Two halves. The SENDER mints a link from a dialog that is identical on every screen offering it;</text>
+<text x="40" y="120" font-size="12" fill="#5a6b78">the RECIPIENT opens that link with no account and no app chrome. Drawn as one band per path.</text>
+<text x="40" y="140" font-size="12" fill="#5a6b78">Links DO NOT EXPIRE &#8212; the unavailable state means an id that did not resolve, and nothing else.</text>
+<line x1="40" y1="188" x2="1240" y2="188" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="210" font-size="15" font-weight="700" fill="#0c1c22">Part 1 &#8212; A valid MV link  &#183;  P1</text>
+<rect x="40" y="240" width="340" height="65" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="210" y="260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/share?id= &#8212; bare and public</text>
+<text x="210" y="278" font-size="12" fill="#5a6b78" text-anchor="middle">No sidebar, tab bar, header or navbar &#183; <a class="xref" href="#P1-S1">P1-S1</a></text>
+<text x="210" y="293" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHARE-01)</text>
+<rect x="470" y="240" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="640" y="260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">MV panel &#8212; video + controller</text>
+<text x="640" y="278" font-size="12" fill="#5a6b78" text-anchor="middle">NO title and NO creator &#8212; deliberate, <a class="xref" href="#D-08">D-08</a> &#183; <a class="xref" href="#P1-S1">P1-S1</a></text>
+<line x1="380" y1="272.5" x2="470" y2="265" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="240" width="340" height="67" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="1070" y="260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Play &#183; elapsed / total &#183; seek &#183; mute &#183; fullscreen &#183;</text>
+<text x="1070" y="277" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">More</text>
+<text x="1070" y="295" font-size="12" fill="#5a6b78" text-anchor="middle">The product&#8217;s own controls, not the browser&#8217;s &#183; <a class="xref" href="#P1-S2">P1-S2</a></text>
+<line x1="810" y1="265" x2="900" y2="273.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="470" y="370" width="340" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="640" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Two pills: Download, and a neutral Create</text>
+<text x="640" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">One label for both kinds; only the gradient differs &#183; <a class="xref" href="#P1-S3">P1-S3</a></text>
+<text x="640" y="423" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHARE-07)</text>
+<line x1="640" y1="290" x2="640" y2="370" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="370" width="340" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="1070" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Four resolution sources, in order</text>
+<text x="1070" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">Community MV &#183; community song &#183; your own completed</text>
+<text x="1070" y="423" font-size="12" fill="#5a6b78" text-anchor="middle">creation &#183; the samples &#183; <a class="xref" href="#P1-S4">P1-S4</a></text>
+<line x1="810" y1="402.5" x2="900" y2="402.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="40" y="370" width="340" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="210" y="390" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">The home page</text>
+<text x="210" y="408" font-size="12" fill="#5a6b78" text-anchor="middle">Where the pill says it goes &#8212; never a create flow &#183; <a class="xref" href="#P1-S3">P1-S3</a></text>
+<line x1="470" y1="402.5" x2="380" y2="395" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="426.163" y="384.798" font-size="12" fill="#5a6b78" text-anchor="middle">Create</text>
+<line x1="40" y1="478" x2="1240" y2="478" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="500" font-size="15" font-weight="700" fill="#0c1c22">Part 2 &#8212; The More menu  &#183;  P2</text>
+<rect x="40" y="530" width="340" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="210" y="550" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">More, on the MV controller</text>
+<text x="210" y="568" font-size="12" fill="#5a6b78" text-anchor="middle">Opens over the video &#183; <a class="xref" href="#P2-S1">P2-S1</a></text>
+<rect x="470" y="530" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="640" y="550" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Download &#183; Playback Speed &#183; Picture in Picture</text>
+<text x="640" y="568" font-size="12" fill="#5a6b78" text-anchor="middle">Exactly three items, in this order &#183; <a class="xref" href="#P2-S1">P2-S1</a></text>
+<line x1="380" y1="555" x2="470" y2="555" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="530" width="340" height="67" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="1070" y="550" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Playback Speed CYCLES, and the menu</text>
+<text x="1070" y="567" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">STAYS OPEN</text>
+<text x="1070" y="585" font-size="12" fill="#5a6b78" text-anchor="middle">1 &#8594; 1.5 &#8594; 2 &#8594; 0.5, wrapping. Measured live &#183; <a class="xref" href="#P2-S2">P2-S2</a></text>
+<line x1="810" y1="555" x2="900" y2="563.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="470" y="660" width="340" height="82" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="640" y="680" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Download and Picture in Picture act once, then</text>
+<text x="640" y="697" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">close</text>
+<text x="640" y="715" font-size="12" fill="#5a6b78" text-anchor="middle">Picture in Picture is a no-op where the browser lacks it &#183;</text>
+<text x="640" y="730" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P2-S1">P2-S1</a>, <a class="xref" href="#P2-S3">P2-S3</a></text>
+<line x1="640" y1="580" x2="640" y2="660" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="768" x2="1240" y2="768" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="790" font-size="15" font-weight="700" fill="#0c1c22">Part 3 &#8212; A valid song link  &#183;  P3</text>
+<rect x="40" y="820" width="340" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="210" y="840" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/share?id= on a song</text>
+<text x="210" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">The same bare page &#183; <a class="xref" href="#P3-S1">P3-S1</a></text>
+<rect x="470" y="820" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="640" y="840" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Song panel &#8212; art, title, creator</text>
+<text x="640" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">Cover art carries no words, so a song is named &#183; <a class="xref" href="#P3-S1">P3-S1</a></text>
+<line x1="380" y1="845" x2="470" y2="845" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="820" width="340" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="1070" y="840" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Play &#183; elapsed / total &#183; seek &#183; mute &#183; download</text>
+<text x="1070" y="858" font-size="12" fill="#5a6b78" text-anchor="middle">No fullscreen and no More menu on a song &#183; <a class="xref" href="#P3-S2">P3-S2</a></text>
+<line x1="810" y1="845" x2="900" y2="845" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="470" y="950" width="340" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="640" y="970" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Two pills: Download, and the same Create</text>
+<text x="640" y="988" font-size="12" fill="#5a6b78" text-anchor="middle">Identical to Part 1&#8217;s in label AND destination &#183; <a class="xref" href="#P3-S3">P3-S3</a></text>
+<line x1="640" y1="870" x2="640" y2="950" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="1058" x2="1240" y2="1058" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1080" font-size="15" font-weight="700" fill="#0c1c22">Part 4 &#8212; An unavailable link  &#183;  P4</text>
+<rect x="40" y="1110" width="340" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="210" y="1130" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">An id that matches nothing</text>
+<text x="210" y="1148" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P4-S1">P4-S1</a></text>
+<rect x="470" y="1110" width="340" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="640" y="1130" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">No id at all</text>
+<text x="640" y="1148" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P4-S2">P4-S2</a></text>
+<rect x="900" y="1110" width="340" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="1070" y="1130" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">?type=expired &#8212; the QA switch</text>
+<text x="1070" y="1148" font-size="12" fill="#5a6b78" text-anchor="middle">Forces the state on an id that WOULD resolve &#183; <a class="xref" href="#P4-S3">P4-S3</a></text>
+<rect x="470" y="1240" width="340" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="640" y="1260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&#8220;This link isn&#8217;t available&#8221;</text>
+<text x="640" y="1278" font-size="12" fill="#5a6b78" text-anchor="middle">One state, three ways in. The header logo is the only way</text>
+<text x="640" y="1293" font-size="12" fill="#5a6b78" text-anchor="middle">out &#183; AC-SHARE-02</text>
+<line x1="210" y1="1160" x2="470" y2="1272.5" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<line x1="640" y1="1160" x2="640" y2="1240" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<line x1="1070" y1="1160" x2="810" y2="1272.5" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<rect x="900" y="1240" width="340" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="1070" y="1260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">A LIVE own creation, opened elsewhere</text>
+<text x="1070" y="1278" font-size="12" fill="#5a6b78" text-anchor="middle">Held in the sender&#8217;s own session, so no other session</text>
+<text x="1070" y="1293" font-size="12" fill="#5a6b78" text-anchor="middle">resolves it &#183; <a class="xref" href="#P4-S4">P4-S4</a></text>
+<line x1="900" y1="1272.5" x2="810" y2="1272.5" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<line x1="40" y1="1358" x2="1240" y2="1358" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1380" font-size="15" font-weight="700" fill="#0c1c22">Part 5 &#8212; Minting a link  &#183;  P5</text>
+<rect x="40" y="1410" width="340" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="210" y="1430" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">A Share control on any result or player screen</text>
+<text x="210" y="1448" font-size="12" fill="#5a6b78" text-anchor="middle">S8 captures those entry points &#183; <a class="xref" href="#P5-S2">P5-S2</a></text>
+<rect x="470" y="1410" width="340" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="640" y="1430" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Share dialog &#8212; a read-only link and Copy</text>
+<text x="640" y="1448" font-size="12" fill="#5a6b78" text-anchor="middle">No social targets, no native share &#183; <a class="xref" href="#P5-S2">P5-S2</a> (AC-SHARE-04)</text>
+<line x1="380" y1="1435" x2="470" y2="1435" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="900" y="1410" width="340" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="1070" y="1430" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&#8220;Copied!&#8221; for 1.5s, then reverts</text>
+<text x="1070" y="1448" font-size="12" fill="#5a6b78" text-anchor="middle">The dialog stays open; the clipboard holds that link &#183; <a class="xref" href="#P5-S3">P5-S3</a></text>
+<line x1="810" y1="1435" x2="900" y2="1435" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="855" y="1421" font-size="12" fill="#5a6b78" text-anchor="middle">Copy</text>
+<rect x="40" y="1540" width="340" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="210" y="1560" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">The legacy MV share URL</text>
+<text x="210" y="1578" font-size="12" fill="#5a6b78" text-anchor="middle">Server redirect, language prefix kept &#183; <a class="xref" href="#P5-S1">P5-S1</a></text>
+<text x="210" y="1593" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHARE-03)</text>
+<rect x="470" y="1540" width="340" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="640" y="1560" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&#8594; Part 1: /share?id=</text>
+<text x="640" y="1578" font-size="12" fill="#5a6b78" text-anchor="middle">The canonical page &#8212; same media, same panel &#183; <a class="xref" href="#P5-S1">P5-S1</a></text>
+<line x1="380" y1="1572.5" x2="470" y2="1565" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="423.837" y="1554.8" font-size="12" fill="#5a6b78" text-anchor="middle">redirects to</text>
+<line x1="640" y1="1460" x2="640" y2="1540" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="652" y="1494" font-size="12" fill="#5a6b78" text-anchor="start">the recipient opens the link</text>
+<line x1="40" y1="1656" x2="1240" y2="1656" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="1676" x2="74" y2="1676" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1680" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="1696" x2="74" y2="1696" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="1700" font-size="12" fill="#5a6b78">Error branch</text>
+<line x1="40" y1="1716" x2="74" y2="1716" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="86" y="1720" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
+</g>
+</svg>
+<details style="margin-top:10px"><summary style="font-size:13px;color:#4a6070;cursor:pointer">Mermaid source</summary><pre class="mermaid-src">flowchart TD
+  Btn["A Share control on any result or player screen"] --> Dlg["Share dialog: a read-only link + Copy"]
+  Dlg -->|Copy| Copied["Copied! for 1.5s, then reverts"]
+  Dlg -->|the recipient opens the link| Page["/share?id= - bare, public, no app chrome"]
+  Legacy["The legacy MV share URL"] -->|server redirect| Page
+  Page --> Resolve{Does the id resolve?}
+  Resolve -->|community item, History sample, or your own completed creation| Kind{Which kind?}
+  Kind -->|music video| Mv["MV panel: video + controller, no title, no creator"]
+  Kind -->|song| Song["Song panel: art, title, creator, controller"]
+  Mv -->|More| Menu["Download / Playback Speed / Picture in Picture"]
+  Mv --> Pills["Download + a kind-labelled Create pill"]
+  Song --> Pills
+  Pills -->|Create| Home["The home page - both pills land here"]
+  Resolve -->|no| Gone["This link is not available"]
+  Live["A LIVE own creation, opened in a fresh session"] --> Gone
+  Gone -->|the header logo| Home
+</pre></details></div></details></div>
+<div id="paths" class="section">
+  <div class="section-title"><span class="num">&rarr;</span> All User Paths</div>
+  <div class="poverview"><table>
+    <thead><tr><th>ID</th><th>Path</th><th>Entry point</th><th>Steps</th><th>Outcome</th></tr></thead>
+    <tbody><tr><td><span class="pn noxref">P1</span></td><td><a href="#P1">A valid MV link</a> </td><td>Opening /share?id= &mdash; no sign-in, no app</td><td><span class="sc">4 steps</span></td><td>The recipient watches it, saves it, or goes to the product</td></tr><tr><td><span class="pn noxref">P2</span></td><td><a href="#P2">The More menu</a> </td><td>The More control on a valid MV link</td><td><span class="sc">3 steps</span></td><td>The recipient saves the file, changes the speed, or pops the video out</td></tr><tr><td><span class="pn noxref">P3</span></td><td><a href="#P3">A valid song link</a> </td><td>Opening /share?id= on a song</td><td><span class="sc">3 steps</span></td><td>The recipient listens, saves it, or goes to the product</td></tr><tr><td><span class="pn noxref">P4</span></td><td><a href="#P4">An unavailable link</a> </td><td>Opening /share with an id that does not resolve</td><td><span class="sc">4 steps</span></td><td>The recipient is told the link did not resolve, and can reach the product</td></tr><tr><td><span class="pn noxref">P5</span></td><td><a href="#P5">Minting a link</a> </td><td>Any Share control in the app; or an old-format share URL</td><td><span class="sc">3 steps</span></td><td>A link on the clipboard, or a legacy URL landing on the canonical page</td></tr></tbody>
+  </table></div>
+</div>
+<section id="P1" class="path"><div class="path-head"><span class="pbadge noxref">P1</span><span class="pname">A valid MV link</span></div><p class="pdesc">What a recipient with no account gets when the link resolves to a music video.</p><ol class="skim"><li><span class="skid"><a class="xref" href="#P1-S1">P1-S1</a></span> Opens a shared music-video link, with no account and nothing signed in.</li><li><span class="skid"><a class="xref" href="#P1-S2">P1-S2</a></span> Looks at the controller under the video.</li><li><span class="skid"><a class="xref" href="#P1-S3">P1-S3</a></span> Looks at the two pills below the panel.</li><li><span class="skid"><a class="xref" href="#P1-S4">P1-S4</a></span> Opens a link to one of the sample creations, in a completely fresh session.</li></ol><div class="step" id="P1-S1"><div class="step-head"><span class="snum noxref">P1-S1</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/01_mv_valid_link.png" width="1403" height="1010" alt="P1-S1" loading="lazy"/><div class="fbox fbox-info" style="left:calc(0.0% - 6px);top:calc(0.0% - 6px);width:calc(98.9% + 12px);height:calc(7.9% + 12px)"><span class="fpin">1</span></div><div class="fbox fbox-info" style="left:calc(33.7% - 6px);top:calc(9.9% - 6px);width:calc(31.4% + 12px);height:calc(77.6% + 12px)"><span class="fpin">2</span></div></div><ul class="fkey"><li><span class="fpin fpin-info">1</span><span>Logo header — the only way home</span></li><li><span class="fpin fpin-info">2</span><span>The media, and nothing identifying it</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Opens a shared music-video link, with no account and nothing signed in.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">A bare page: a logo header, the video, and two actions. No app chrome of any kind.</span></div><div class="mline"><span class="mkey">Strings</span><div class="mbody"><ul class="mlist"><li>Header wordmark: &ldquo;YouCam Muse&rdquo;</li><li>Actions: &ldquo;Download&rdquo;, &ldquo;Try YouCam Muse&rdquo;</li></ul></div></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>The page renders with NO sidebar, tab bar, header or navbar.<span class="why">AC-SHARE-01. Verified on every state below, not only this one.</span></li><li>The MV panel shows the media and nothing that identifies it &mdash; no title, no creator.<span class="why">Measured live, and settled as correct (<a class="xref" href="#D-08">D-08</a>): an MV usually carries its own title on screen, so repeating it is redundant. The song panel DOES show both, which is why P3 is a separate path.</span></li><li>The route is not behind any guard, and nothing on it asks for an account.<span class="why">The whole point of a share link is that the recipient does not have one.</span></li></ul></div></div></div></div><div class="step" id="P1-S2"><div class="step-head"><span class="snum noxref">P1-S2</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/02_mv_controller.png" width="1403" height="1010" alt="P1-S2" loading="lazy"/><div class="fbox fbox-info" style="left:calc(33.8% - 6px);top:calc(80.3% - 6px);width:calc(31.3% + 12px);height:calc(7.1% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin fpin-info">1</span><span>Play/pause, elapsed / total, seek, mute, fullscreen, More</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Looks at the controller under the video.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">Play/pause, the elapsed and total time, a seek bar, mute, fullscreen and a More control.</span></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>The controller is the product&rsquo;s own, not the browser&rsquo;s default video controls.<span class="why">AC-SHARE-01 as redesigned 2026-08-24; it matches the vocabulary the in-app players use.</span></li><li>The seek control is keyboard-operable, like every other seek bar in the app.<span class="why">It is the shared seek component, not a bespoke one.</span></li><li>The time reads elapsed and total as one pair, not as two separate labels.</li></ul></div></div></div></div><div class="step" id="P1-S3"><div class="step-head"><span class="snum noxref">P1-S3</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/03_mv_actions.png" width="1403" height="1010" alt="P1-S3" loading="lazy"/><div class="fbox" style="left:calc(34.8% - 6px);top:calc(89.5% - 6px);width:calc(14.3% + 12px);height:calc(4.6% + 12px)"><span class="fpin">1</span></div><div class="fbox" style="left:calc(49.9% - 6px);top:calc(89.5% - 6px);width:calc(14.3% + 12px);height:calc(4.6% + 12px)"><span class="fpin">2</span></div></div><ul class="fkey"><li><span class="fpin">1</span><span>Download — saves the file</span></li><li><span class="fpin">2</span><span>Neutral label, and it goes to the home page</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Looks at the two pills below the panel.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">Download on the left, a gradient Create action on the right.</span></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>Download saves the media under the creation&rsquo;s own title with the matching extension.<span class="why">AC-SHARE-05.</span></li><li>Download renders only when there is a media URL to save.<span class="why">A creation with no file offers no Download.</span></li><li>The Create pill reads the SAME neutral string on both media kinds, and goes to the home page.<span class="why">Product owner, 2026-09-01 (<a class="xref" href="#D-07">D-07</a>). Only the pill&rsquo;s gradient still varies by kind; a visitor with no account meets the product first rather than being dropped into a create flow.</span></li></ul></div></div></div></div><div class="step" id="P1-S4"><div class="step-head"><span class="snum noxref">P1-S4</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/04_mv_history_sample.png" width="1403" height="1010" alt="P1-S4" loading="lazy"/><div class="fbox fbox-info" style="left:calc(33.8% - 6px);top:calc(10.0% - 6px);width:calc(31.3% + 12px);height:calc(77.4% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin fpin-info">1</span><span>A History sample resolves in a fresh session, like a community item</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Opens a link to one of the sample creations, in a completely fresh session.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">It resolves and plays, exactly like a community item.</span></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>An id resolves from four sources in order: community MV, community song, your own completed creation, then the samples.<span class="why">AC-SHARE-01. The first, second and fourth survive a reload; the third does not &mdash; see <a class="xref" href="#P4-S4">P4-S4</a>.</span></li><li>Which source an id came from changes nothing on screen.<span class="why">Verified live: the sample renders the same panel as <a class="xref" href="#P1-S1">P1-S1</a>.</span></li></ul></div></div></div></div></section><section id="P2" class="path"><div class="path-head"><span class="pbadge noxref">P2</span><span class="pname">The More menu</span></div><p class="pdesc">Three actions the redesign added, and the one that behaves differently from the other two.</p><ol class="skim"><li><span class="skid"><a class="xref" href="#P2-S1">P2-S1</a></span> Presses More on the controller.</li><li><span class="skid"><a class="xref" href="#P2-S2">P2-S2</a></span> Presses Playback Speed repeatedly.</li><li><span class="skid"><a class="xref" href="#P2-S3">P2-S3</a></span> Presses Picture in Picture.</li></ol><div class="step" id="P2-S1"><div class="step-head"><span class="snum noxref">P2-S1</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/05_mv_more_menu.png" width="1403" height="697" alt="P2-S1" loading="lazy"/><div class="fbox" style="left:calc(49.4% - 6px);top:calc(52.4% - 6px);width:calc(14.3% + 12px);height:calc(19.7% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin">1</span><span>Download, Playback Speed, Picture in Picture</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Presses More on the controller.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">A three-item menu opens over the video.</span></div><div class="mline"><span class="mkey">Strings</span><div class="mbody"><ul class="mlist"><li>Menu, in order: &ldquo;Download&rdquo;, &ldquo;Playback Speed&rdquo;, &ldquo;Picture in Picture&rdquo;</li></ul></div></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>Exactly three items, in this order.<span class="why">Read off the live menu during capture.</span></li><li>Download here is the same action as the pill below the panel.<span class="why">AC-SHARE-05. It is offered twice, not two different things.</span></li><li>The menu closes on Escape, on an outside press, and on Download or Picture in Picture.<span class="why">Those two are one-shot actions; Playback Speed is not &mdash; see <a class="xref" href="#P2-S2">P2-S2</a>.</span></li></ul></div></div></div></div><div class="step" id="P2-S2"><div class="step-head"><span class="snum noxref">P2-S2</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/06_mv_playback_speed.png" width="1403" height="697" alt="P2-S2" loading="lazy"/><div class="fbox" style="left:calc(60.6% - 6px);top:calc(60.8% - 6px);width:calc(1.9% + 12px);height:calc(2.8% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin">1</span><span>The rate cycles on each press; the menu stays open</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Presses Playback Speed repeatedly.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">The rate beside it changes on each press and the menu stays open.</span></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>Playback Speed CYCLES; it does not open a submenu and does not close the menu.<span class="why">Measured live across three consecutive presses, each landing on a different rate.</span></li><li>The rate shown beside the item is the rate actually applied to the video.<span class="why">Confirmed live by reading it back off the media element.</span></li><li>The cycle wraps, so the starting rate comes back round.<span class="why">There is no reset control; pressing on is how you get back.</span></li></ul></div></div></div></div><div class="step" id="P2-S3"><div class="step-head"><span class="snum noxref">P2-S3</span></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Presses Picture in Picture.</span></div><div class="screen-panel"><span class="sp-key">WEB UI</span><div class="sp-body">The video pops out into the browser&rsquo;s own floating window, and the menu closes.</div></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>It is a no-op where the browser does not support picture-in-picture.<span class="why">The item is always shown; the request is simply not made.</span></li><li>No screenshot: the floating window belongs to the browser, so a page capture cannot photograph it.</li></ul></div></div></div></div></section><section id="P3" class="path"><div class="path-head"><span class="pbadge noxref">P3</span><span class="pname">A valid song link</span></div><p class="pdesc">The other panel &mdash; and the only one that tells the recipient what they are listening to.</p><ol class="skim"><li><span class="skid"><a class="xref" href="#P3-S1">P3-S1</a></span> Opens a shared song link.</li><li><span class="skid"><a class="xref" href="#P3-S2">P3-S2</a></span> Looks at the controller under the artwork.</li><li><span class="skid"><a class="xref" href="#P3-S3">P3-S3</a></span> Looks at the two pills below the panel.</li></ol><div class="step" id="P3-S1"><div class="step-head"><span class="snum noxref">P3-S1</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/07_song_valid_link.png" width="1403" height="763" alt="P3-S1" loading="lazy"/><div class="fbox fbox-info" style="left:calc(38.1% - 6px);top:calc(16.9% - 6px);width:calc(22.8% + 12px);height:calc(41.9% + 12px)"><span class="fpin">1</span></div><div class="fbox fbox-info" style="left:calc(30.1% - 6px);top:calc(62.0% - 6px);width:calc(38.6% + 12px);height:calc(6.7% + 12px)"><span class="fpin">2</span></div></div><ul class="fkey"><li><span class="fpin fpin-info">1</span><span>Cover art</span></li><li><span class="fpin fpin-info">2</span><span>Title and creator — the MV panel has neither</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Opens a shared song link.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">The same bare page, with cover art above a title and a creator.</span></div><div class="mline"><span class="mkey">Strings</span><div class="mbody"><ul class="mlist"><li>Title on this example: &ldquo;Pop Anthem&rdquo;</li><li>Creator on this example: &ldquo;MelodyMaker123&rdquo;</li></ul></div></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>The song panel identifies its media; the MV panel does not.<span class="why">Measured live on both, and the asymmetry is deliberate (<a class="xref" href="#D-08">D-08</a>): cover art carries no words, so a song has to be named.</span></li><li>The creator line renders only when the media carries one.<span class="why">A sample creation has no creator, so the line is simply absent.</span></li><li>The header, the two action pills and the bare-page rule are identical to the MV panel.</li></ul></div></div></div></div><div class="step" id="P3-S2"><div class="step-head"><span class="snum noxref">P3-S2</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/08_song_controller.png" width="1403" height="763" alt="P3-S2" loading="lazy"/><div class="fbox fbox-info" style="left:calc(30.1% - 6px);top:calc(71.8% - 6px);width:calc(38.6% + 12px);height:calc(7.9% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin fpin-info">1</span><span>Play/pause, elapsed / total, seek, mute, download</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Looks at the controller under the artwork.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">A single pill holding play/pause, the elapsed and total time, a seek bar, mute and download.</span></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>The song controller carries Download; the MV controller carries fullscreen and More instead.<span class="why">The two panels are different components, not one with a switch.</span></li><li>There is no fullscreen and no More menu on a song.<span class="why">Neither applies to audio with a still cover.</span></li><li>Playback is a real audio element — the position and duration are its own.</li></ul></div></div></div></div><div class="step" id="P3-S3"><div class="step-head"><span class="snum noxref">P3-S3</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/09_song_actions.png" width="1403" height="763" alt="P3-S3" loading="lazy"/><div class="fbox" style="left:calc(34.8% - 6px);top:calc(86.1% - 6px);width:calc(14.3% + 12px);height:calc(6.0% + 12px)"><span class="fpin">1</span></div><div class="fbox" style="left:calc(49.9% - 6px);top:calc(86.1% - 6px);width:calc(14.3% + 12px);height:calc(6.0% + 12px)"><span class="fpin">2</span></div></div><ul class="fkey"><li><span class="fpin">1</span><span>Download — saves the audio</span></li><li><span class="fpin">2</span><span>The same label; only the gradient differs by kind</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Looks at the two pills below the panel.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">Download, and a Create action labelled for a song.</span></div><div class="mline"><span class="mkey">Strings</span><div class="mbody"><ul class="mlist"><li>Actions: &ldquo;Download&rdquo;, &ldquo;Try YouCam Muse&rdquo; &mdash; the same string as the MV panel&rsquo;s</li></ul></div></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>Download saves the audio under the song&rsquo;s title with the audio extension.<span class="why">AC-SHARE-05.</span></li><li>The Create pill is identical to the MV panel&rsquo;s, in label and destination.<span class="why">Only the gradient differs by kind &mdash; see <a class="xref" href="#P1-S3">P1-S3</a>.</span></li></ul></div></div></div></div></section><section id="P4" class="path"><div class="path-head"><span class="pbadge noxref">P4</span><span class="pname">An unavailable link</span></div><p class="pdesc">One state, three ways in &mdash; and the reason it is NOT called expiry.</p><ol class="skim"><li><span class="skid"><a class="xref" href="#P4-S1">P4-S1</a></span> Opens a share link whose id matches nothing.</li><li><span class="skid"><a class="xref" href="#P4-S2">P4-S2</a></span> Opens /share with no id at all.</li><li><span class="skid"><a class="xref" href="#P4-S3">P4-S3</a></span> Opens a link with the expired-state switch in the address.</li><li><span class="skid"><a class="xref" href="#P4-S4">P4-S4</a></span> Shares one of their OWN just-finished creations, and the recipient opens it.</li></ol><div class="step" id="P4-S1"><div class="step-head"><span class="snum noxref">P4-S1</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/10_unavailable_bad_id.png" width="1403" height="697" alt="P4-S1" loading="lazy"/><div class="fbox fbox-info" style="left:calc(40.8% - 6px);top:calc(50.6% - 6px);width:calc(17.4% + 12px);height:calc(4.7% + 12px)"><span class="fpin">1</span></div><div class="fbox" style="left:calc(4.3% - 6px);top:calc(2.9% - 6px);width:calc(12.6% + 12px);height:calc(5.7% + 12px)"><span class="fpin">2</span></div></div><ul class="fkey"><li><span class="fpin fpin-info">1</span><span>The unavailable state</span></li><li><span class="fpin">2</span><span>The header logo is the only way out</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Opens a share link whose id matches nothing.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">A message that the link is not available, under the same logo header.</span></div><div class="mline"><span class="mkey">Strings</span><div class="mbody"><ul class="mlist"><li>Heading: &ldquo;This link isn&rsquo;t available&rdquo;</li><li>Body: &ldquo;We couldn&rsquo;t find this creation. Ask the sender to share it again.&rdquo;</li></ul></div></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>Share links DO NOT EXPIRE &mdash; this state means an id did not resolve, and nothing else.<span class="why">AC-SHARE-02. The copy deliberately says so rather than naming a deadline the product does not enforce.</span></li><li>There is no retry and no Try-the-app button &mdash; the header logo is the only way out.<span class="why">AC-SHARE-02.</span></li></ul></div></div></div></div><div class="step" id="P4-S2"><div class="step-head"><span class="snum noxref">P4-S2</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/11_unavailable_no_id.png" width="1403" height="697" alt="P4-S2" loading="lazy"/><div class="fbox fbox-info" style="left:calc(33.8% - 6px);top:calc(11.5% - 6px);width:calc(31.4% + 12px);height:calc(88.5% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin fpin-info">1</span><span>No id at all lands in the same state</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Opens /share with no id at all.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">The same state.</span></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>No id and an unresolvable id are one state, not two.<span class="why">AC-SHARE-02. Verified live.</span></li></ul></div></div></div></div><div class="step" id="P4-S3"><div class="step-head"><span class="snum noxref">P4-S3</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/12_unavailable_forced.png" width="1403" height="697" alt="P4-S3" loading="lazy"/><div class="fbox fbox-info" style="left:calc(33.8% - 6px);top:calc(11.5% - 6px);width:calc(31.4% + 12px);height:calc(88.5% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin fpin-info">1</span><span>The QA switch reaches the same state on a resolvable id</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Opens a link with the expired-state switch in the address.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">The same state again, even though the id itself would have resolved.</span></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>The switch forces the state on a GOOD id, which is how QA reaches it deliberately.<span class="why">Verified live: the same id renders media without it.</span></li><li>It is a QA affordance, not a product rule &mdash; nothing in the product sets it.<span class="why">It is the only way to see this state without inventing a broken id.</span></li></ul></div></div></div></div><div class="step" id="P4-S4"><div class="step-head"><span class="snum noxref">P4-S4</span></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Shares one of their OWN just-finished creations, and the recipient opens it.</span></div><div class="screen-panel"><span class="sp-key">WEB UI</span><div class="sp-body">The unavailable state &mdash; the creation exists, but not anywhere the link can reach.</div></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>A live own creation is held in the sender&rsquo;s own session only, so no other session can resolve its id.<span class="why">The community items and the static samples resolve because they are compiled in; see Prototype vs production.</span></li><li>This is the single most likely false report on this screen.<span class="why">It looks exactly like a broken link and is the one case a working link produces it.</span></li><li>No screenshot: the result is pixel-identical to <a class="xref" href="#P4-S1">P4-S1</a>.</li></ul></div></div></div></div></section><section id="P5" class="path"><div class="path-head"><span class="pbadge noxref">P5</span><span class="pname">Minting a link</span></div><p class="pdesc">The dialog that produces these links, and the legacy URL that still resolves to them.</p><ol class="skim"><li><span class="skid"><a class="xref" href="#P5-S1">P5-S1</a></span> Opens an old-format MV share URL.</li><li><span class="skid"><a class="xref" href="#P5-S2">P5-S2</a></span> Presses Share on a player screen.</li><li><span class="skid"><a class="xref" href="#P5-S3">P5-S3</a></span> Presses Copy.</li></ol><div class="step" id="P5-S1"><div class="step-head"><span class="snum noxref">P5-S1</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/13_legacy_url_redirect.png" width="1403" height="1010" alt="P5-S1" loading="lazy"/><div class="fbox fbox-info" style="left:calc(33.7% - 6px);top:calc(9.9% - 6px);width:calc(31.4% + 12px);height:calc(77.6% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin fpin-info">1</span><span>The legacy path lands on the canonical one, same media</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Opens an old-format MV share URL.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">It lands on the canonical share page for the same item.</span></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>The redirect happens on the server and keeps the active language prefix.<span class="why">AC-SHARE-03. Verified live.</span></li><li>The destination is the ordinary share page &mdash; nothing about it differs.<span class="why">Compare with <a class="xref" href="#P1-S1">P1-S1</a>: same media, same panel, same actions.</span></li></ul></div></div></div></div><div class="step" id="P5-S2"><div class="step-head"><span class="snum noxref">P5-S2</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/14_share_dialog.png" width="1403" height="697" alt="P5-S2" loading="lazy"/><div class="fbox" style="left:calc(36.5% - 6px);top:calc(55.6% - 6px);width:calc(21.3% + 12px);height:calc(2.8% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin">1</span><span>The link is the /share URL this whole spec is about</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Presses Share on a player screen.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">A small dialog with a read-only link and one action.</span></div><div class="mline"><span class="mkey">Strings</span><div class="mbody"><ul class="mlist"><li>Body: &ldquo;Shareable public link to&rdquo;</li><li>Action: &ldquo;Copy&rdquo;</li></ul></div></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>Copy is the ONLY action &mdash; no social-platform targets, no native share button.<span class="why">AC-SHARE-04. Both were removed for this release; social channels are a later decision.</span></li><li>The link is the public share URL, built from the app&rsquo;s own origin.<span class="why">Confirmed live: the offered link opens <a class="xref" href="#P1-S1">P1-S1</a>.</span></li><li>The dialog is identical wherever it is opened from.<span class="why">The entry points themselves are captured by the specs that own those screens.</span></li></ul></div></div></div></div><div class="step" id="P5-S3"><div class="step-head"><span class="snum noxref">P5-S3</span></div><div class="shot"><div class="shotwrap"><img src="screenshots/15_share_dialog_copied.png" width="1403" height="697" alt="P5-S3" loading="lazy"/><div class="fbox" style="left:calc(57.2% - 6px);top:calc(54.8% - 6px);width:calc(5.2% + 12px);height:calc(4.5% + 12px)"><span class="fpin">1</span></div></div><ul class="fkey"><li><span class="fpin">1</span><span>Confirms for 1.5 seconds, then reverts</span></li></ul></div><div class="step-body"><div class="srow"><span class="role r-user">TRIGGER</span><span class="stext su">Presses Copy.</span></div><div class="srow"><span class="role r-sys">WEB UI</span><span class="stext">The action confirms in place, then goes back to how it was.</span></div><div class="mline"><span class="mkey">Strings</span><div class="mbody"><ul class="mlist"><li>Confirmation: &ldquo;Copied!&rdquo;</li></ul></div></div><div class="mline"><span class="mkey">Rules</span><div class="mbody"><ul class="mlist"><li>The confirmation lasts 1.5 seconds and then reverts; the dialog does not close.<span class="why">So a second copy is possible without reopening it.</span></li><li>The clipboard holds exactly the link the field was showing.<span class="why">Verified live by reading the clipboard back.</span></li><li>Where the clipboard is unavailable, Copy fails silently &mdash; no confirmation, no error.<span class="why">AC-SHARE-04. The recipient-facing half is unaffected; the link in the field is still selectable.</span></li></ul></div></div></div></div></section>
+
+
+<div id="states" class="section"><div class="section-title"><span class="num">&#9783;</span> State Inventory</div><p class="section-note">The contract of each screen state. The flow diagram shows the transitions; this shows what each state must render.</p><div class="table-wrap"><table><thead><tr><th>State</th><th>Entry condition</th><th>Visible / enabled</th><th>Transitions</th><th>Exit</th></tr></thead><tbody><tr><td class="idcell">/share</td><td>Id resolves to an MV</td><td>Logo, video, controller, Download + Create MV</td><td>Play, seek, mute, fullscreen, More; Download; Create</td><td>The logo, or Create</td></tr><tr><td class="idcell">/share</td><td>Id resolves to a song</td><td>Logo, art, title, creator, controller, Download + Create Song</td><td>Play, seek, mute, Download; Create</td><td>The logo, or Create</td></tr><tr><td class="idcell">/share</td><td>Id does not resolve</td><td>Logo and an unavailable message</td><td>Nothing but the logo</td><td>The logo</td></tr><tr><td class="idcell">More menu</td><td>Open</td><td>Download, Playback Speed with its current rate, Picture in Picture</td><td>Speed cycles in place; the other two act and close</td><td>Escape, or an outside press</td></tr><tr><td class="idcell">Share dialog</td><td>Open</td><td>A read-only link and Copy</td><td>Copy writes to the clipboard</td><td>Close</td></tr><tr><td class="idcell">Share dialog</td><td>Just copied</td><td>The action reads as confirmed</td><td>Reverts by itself after 1.5s</td><td>Close</td></tr></tbody></table></div></div>
+<div id="open-questions" class="section"><div class="section-title"><span class="num">?</span> Open Questions</div><p class="section-note">Undecided, and blocking something. Everything settled lives beside the rule it governs, not here.</p><div class="table-wrap"><table><thead><tr><th>ID</th><th>Question</th><th>Blocks</th><th>Owner</th></tr></thead><tbody><tr id="Q-01"><td class="idcell noxref">Q-01</td><td>Share-link analytics has no field specification. The frontend deliberately carries no tracking parameters rather than guessing at them, so today a shared link reports nothing at all.</td><td>Any measurement of sharing; the link format itself, if parameters have to be added later</td><td>BA (tracked as TBD-SHARE-03)</td></tr><tr id="Q-02"><td class="idcell noxref">Q-02</td><td>What does &ldquo;cost per the Credit Consume MSR&rdquo; resolve to, generally? (Carried per the programme&rsquo;s own convention; no step in THIS spec quotes a cost &mdash; nothing on this surface spends credits.)</td><td>N/A to this spec&rsquo;s own steps; recorded because every spec in the programme carries this row</td><td>Product / RD (the MSR document link is still TBD)</td></tr></tbody></table></div></div>
+<div id="qa-coverage" class="section"><div class="section-title"><span class="num">&#9745;</span> QA Coverage</div><p class="section-note">Every acceptance criterion in <code>plan.md</code> and where this spec defines it &mdash; 6 of 7 map to a step. Write the test cases in your test tool; this table is the trace back to the spec.</p><div class="table-wrap"><table><thead><tr><th>Criterion</th><th>What it asserts</th><th>Specified in</th></tr></thead><tbody><tr id="AC-SHARE-01"><td class="idcell noxref">AC-SHARE-01</td><td>WHEN /share?id= resolves to media, THE SYSTEM SHALL render it bare (no app chrome) with a logo header, the media and its controller, and the action pills.</td><td><a href="#P1-S1">P1-S1</a> &middot; <a href="#P1-S2">P1-S2</a> &middot; <a href="#P1-S4">P1-S4</a> &middot; <a href="#P3-S1">P3-S1</a> &middot; <a href="#P3-S2">P3-S2</a></td></tr><tr id="AC-SHARE-02"><td class="idcell noxref">AC-SHARE-02</td><td>WHEN the id is missing or unresolvable, or the expired-state switch is set, THE SYSTEM SHALL render the unavailable state; the logo header links home.</td><td><a href="#P4-S1">P4-S1</a> &middot; <a href="#P4-S2">P4-S2</a> &middot; <a href="#P4-S3">P4-S3</a></td></tr><tr id="AC-SHARE-03"><td class="idcell noxref">AC-SHARE-03</td><td>WHEN the legacy MV share URL is opened, THE SYSTEM SHALL redirect to the canonical share URL for the same id, preserving the language prefix.</td><td><a href="#P5-S1">P5-S1</a></td></tr><tr id="AC-SHARE-04"><td class="idcell noxref">AC-SHARE-04</td><td>WHEN Share is invoked, THE SYSTEM SHALL open the share dialog exposing a copyable public link and a Copy action &mdash; and NO social-platform targets and no native-share button.</td><td><a href="#P5-S2">P5-S2</a> &middot; <a href="#P5-S3">P5-S3</a></td></tr><tr id="AC-SHARE-05"><td class="idcell noxref">AC-SHARE-05</td><td>WHEN Download is pressed on a valid link, THE SYSTEM SHALL save the media under the creation&rsquo;s title with the matching extension.</td><td><a href="#P1-S3">P1-S3</a> &middot; <a href="#P2-S1">P2-S1</a> &middot; <a href="#P3-S3">P3-S3</a></td></tr><tr id="AC-SHARE-07"><td class="idcell noxref">AC-SHARE-07</td><td>WHEN a valid share link is opened, THE SYSTEM SHALL offer a Create pill whose label is the same for both media kinds and whose destination is the home page.</td><td><a href="#P1-S3">P1-S3</a> &middot; <a href="#P3-S3">P3-S3</a></td></tr><tr id="AC-SHARE-06"><td class="idcell noxref">AC-SHARE-06</td><td>THE SYSTEM SHALL render /share (valid and unavailable) and the share dialog at 320/375/768/1024/1440/1920px.</td><td><span class="oos">Visual-only; the six-tier sweep is e2e/visual-baseline.spec.ts&rsquo;s job. This spec&rsquo;s D8 scope captures 1403&times;697 desktop only.</span></td></tr></tbody></table></div></div>
+<div id="errors" class="section"><div class="section-title"><span class="num">!</span> Error States</div><div class="table-wrap"><table><thead><tr><th>Error</th><th>Trigger</th><th>Message shown to user</th><th>Recovery</th><th>Where</th></tr></thead><tbody><tr><td class="idcell">Unresolvable id</td><td>A share link whose id matches no creation</td><td>&ldquo;The unavailable state; the logo is the only way out&rdquo;</td><td>Ask the sender for the link again</td><td><a class="xref" href="#P4-S1">P4-S1</a></td></tr><tr><td class="idcell">No id at all</td><td>Opening /share with nothing after it</td><td>&ldquo;The same state&rdquo;</td><td>Same</td><td><a class="xref" href="#P4-S2">P4-S2</a></td></tr><tr><td class="idcell">A live own creation, opened elsewhere</td><td>Sharing a creation that has just been made, then opening it in another session</td><td>&ldquo;The same state, because it is held only in the sender&rsquo;s own session&rdquo;</td><td>None available today &mdash; it needs server-side resolution</td><td><a class="xref" href="#P4-S4">P4-S4</a></td></tr><tr><td class="idcell">No media URL</td><td>A creation with nothing to save</td><td>&ldquo;The Download pill is not rendered at all&rdquo;</td><td>Nothing to recover &mdash; playback is unaffected</td><td><a class="xref" href="#P1-S3">P1-S3</a></td></tr><tr><td class="idcell">Clipboard unavailable</td><td>A browser or context that refuses clipboard writes</td><td>&ldquo;Copy does nothing and shows no confirmation and no error&rdquo;</td><td>Select the link in the field and copy it manually</td><td><a class="xref" href="#P5-S3">P5-S3</a></td></tr></tbody></table></div><p class="note">Every row here resolves to ONE screen &mdash; the unavailable state &mdash; or to a control quietly not rendering. There is no error toast and no retry anywhere on this surface, which is deliberate: the recipient has no account and no way to act on a failure beyond asking the sender.</p></div>
+<div id="prototype" class="section"><div class="section-title"><span class="num">&#9888;</span> Prototype Simplifications &mdash; NOT the production contract</div><p class="section-note">Where the prototype fakes or stubs behaviour. Build the <strong>production must do</strong> column &mdash; never the prototype behaviour.</p><div class="table-wrap proto-wrap"><table><thead><tr><th>Area</th><th>Prototype does</th><th>Production must do</th></tr></thead><tbody><tr><td>There is no server-side link resolution</td><td>An id is resolved entirely in the recipient&rsquo;s own browser, against data compiled into the app plus whatever is in that session&rsquo;s memory. A creation made moments ago resolves for its author and for nobody else.</td><td class="proto-prod">Production must resolve any id on the server. This is the single behaviour a QA tester is most likely to file as a broken link (<a class="xref" href="#P4-S4">P4-S4</a>).</td></tr><tr><td>Links never expire, and nothing enforces that either way</td><td>There is no expiry rule in the code, and none is wanted &mdash; creations are kept indefinitely, so a link to one has no reason to lapse. The unavailable state is only ever a resolution failure.</td><td class="proto-prod">Production needs no expiry logic. The requirement was removed rather than deferred, so it should not reappear as a backend to-do.</td></tr><tr><td>Download saves a shared demo file</td><td>Every MV maps onto one demo clip and every song onto one of two demo tracks, so a download is the right filename over the wrong bytes.</td><td class="proto-prod">Production serves the real media. The filename rule is the contract; the file behind it is not.</td></tr><tr><td>The share link carries no tracking at all</td><td>The URL is the origin, the path and the id. No campaign, sender, medium or channel parameters are attached.</td><td class="proto-prod">This is deliberate rather than missing: the field specification is a BA deliverable and the frontend is holding blank until it lands (Q-03).</td></tr><tr><td>The dialog offers no social channels</td><td>Copy-link is the only action. The four social composer links and the native share button were removed for this release.</td><td class="proto-prod">Social channels are a later phase, and the web channel set is expected to differ from the mobile app&rsquo;s; they are not simply unimplemented.</td></tr></tbody></table></div></div>
+<div id="decisions" class="section">
+  <div class="section-title"><span class="num">&#10003;</span> Design Decisions</div>
+  
+  <div class="table-wrap"><table><thead><tr><th>ID</th><th>Question</th><th>Decision</th></tr></thead>
+  <tbody><tr id="D-01"><td class="idcell noxref">D-01</td><td>PLAN.md estimated ~4 paths / ~12 shots. This spec is 5 / 15 &mdash; why?</td><td>Because /share was REDESIGNED on 2026-08-24, after that estimate was written and after area 10 was last revised. The 2026-07-23 "simplified chrome" decision the area spec still describes &mdash; logo, media, Download, nothing else &mdash; was reversed: the page now has a full custom media controller, a three-item More menu and a second action pill. The extra path is that menu, whose three actions would otherwise have no photograph anywhere in the programme. Confirmed with the product owner at the Phase 0 gate, 2026-09-01.</td></tr><tr id="D-02"><td class="idcell noxref">D-02</td><td>Area 10 describes the pre-redesign page. Which wins?</td><td>The code, and area 10 is corrected in the same branch under programme decision D11. Its &sect;1, &sect;3 and AC-SHARE-01 all describe a page with no title, no creator, no controller and one action; all four claims are now wrong on the running app. The corrections are annotated in place with the file&rsquo;s own convention.</td></tr><tr id="D-03"><td class="idcell noxref">D-03</td><td>Why is the recipient session signed OUT, when every other spec in this programme seeds auth?</td><td>Because that is the subject. /share is public by design and is mostly opened by people with no account, so a signed-in capture would photograph a state a real recipient never sees. Only P5 &mdash; the dialog, which lives on a player screen rather than on /share &mdash; runs signed in.</td></tr><tr id="D-04"><td class="idcell noxref">D-04</td><td>Does this spec capture the screens that OPEN the dialog?</td><td>No. S1, S2, S4 and S8 own those screens and already capture their Share controls as entry points; S8&rsquo;s own captures were taken first for exactly this reason. This spec picks up at the opened dialog and specifies what it does.</td></tr><tr id="D-05"><td class="idcell noxref">D-05</td><td>The MV panel has no title or creator and the song panel has both. Specify it, or report it?</td><td>Both. It is specified as measured &mdash; the steps say what each panel shows &mdash; and raised as Q-01, because nothing in the code, the area spec or the component&rsquo;s own comment says the asymmetry was intended. Writing it down as if it were a rule would make an accident into a contract.</td></tr><tr id="D-07"><td class="idcell noxref">D-07</td><td>Both Create pills went to the home page while their labels named a specific creation flow. Fix the label, or the destination?</td><td>The label &mdash; product owner, 2026-09-01. The destination was already decided on 2026-08-24 and for a good reason: the recipient has no account, so a creation flow drops them at a sign-in wall instead of at the product. What was wrong was a button naming a flow it never opened, which is the shape QA files as a broken link. One neutral string now serves both media kinds; only the pill&rsquo;s gradient still varies, which is decoration rather than a promise.</td></tr><tr id="D-08"><td class="idcell noxref">D-08</td><td>The MV panel shows no title or creator while the song panel shows both. Intended, or an oversight in the redesign?</td><td>Intended &mdash; product owner, 2026-09-01. A music video usually carries its own title on screen, so repeating it above the player is redundant; a song&rsquo;s cover art carries no words, so the song panel has to name it. Specified as a rule on both panels rather than left as an open question, and area 10 is corrected to match.</td></tr><tr id="D-09"><td class="idcell noxref">D-09</td><td>Comments layer for this spec?</td><td>Disabled &mdash; no Firebase backend exists in this repo, same as S1 and S3 through S8.</td></tr></tbody></table></div>
+</div>
+<div id="references" class="section"><div class="section-title"><span class="num">&#128279;</span> References</div><div class="table-wrap"><table><thead><tr><th>Item</th><th>Link</th><th>Owner</th></tr></thead><tbody><tr><td>Area spec 10 — Share</td><td class="ref-link">specs/areas/10-share.md</td><td>The behaviour-first as-built spec these screenshots walk. AC-SHARE-01..06 are traced in QA Coverage. Corrected in this branch under D11 &mdash; see <a class="xref" href="#D-02">D-02</a>.</td></tr></tbody></table></div></div>
+
+</main>
+</div>
+<script>
+const links=document.querySelectorAll('.nav-link');
+const obs=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting){
+  links.forEach(l=>l.classList.remove('active'));
+  const a=document.querySelector('.nav-link[href="#'+en.target.id+'"]');
+  if(a)a.classList.add('active');}});},{rootMargin:'-20% 0px -70% 0px'});
+document.querySelectorAll('[id]').forEach(s=>obs.observe(s));
+const active=()=>document.querySelector('.nav-link.active');
+const obs2=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting){
+  const h=document.getElementById('here');
+  if(h)h.textContent=en.target.id;}});},{rootMargin:'-10% 0px -85% 0px'});
+document.querySelectorAll('.step[id],.path[id],.section[id]').forEach(s=>obs2.observe(s));
+const jump=document.getElementById('nav-jump');
+if(jump)jump.addEventListener('keydown',ev=>{
+  if(ev.key!=='Enter')return;
+  const t=document.getElementById(jump.value.trim().toUpperCase());
+  if(t){t.scrollIntoView({block:'start'});jump.classList.remove('bad');}
+  else jump.classList.add('bad');});
+if(jump)jump.addEventListener('input',()=>jump.classList.remove('bad'));
+</script>
+
+</body>
+</html>

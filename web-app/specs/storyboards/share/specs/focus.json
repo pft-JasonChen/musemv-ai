@@ -1,0 +1,232 @@
+{
+  "01_mv_valid_link.png": [
+    {
+      "box": [
+        0.0,
+        0.0,
+        98.9,
+        7.9
+      ],
+      "type": "info",
+      "label": "Logo header \u2014 the only way home"
+    },
+    {
+      "box": [
+        33.7,
+        9.9,
+        31.4,
+        77.6
+      ],
+      "type": "info",
+      "label": "The media, and nothing identifying it"
+    }
+  ],
+  "02_mv_controller.png": [
+    {
+      "box": [
+        33.8,
+        80.3,
+        31.3,
+        7.1
+      ],
+      "type": "info",
+      "label": "Play/pause, elapsed / total, seek, mute, fullscreen, More"
+    }
+  ],
+  "03_mv_actions.png": [
+    {
+      "box": [
+        34.8,
+        89.5,
+        14.3,
+        4.6
+      ],
+      "type": "action",
+      "label": "Download \u2014 saves the file"
+    },
+    {
+      "box": [
+        49.9,
+        89.5,
+        14.3,
+        4.6
+      ],
+      "type": "action",
+      "label": "Neutral label, and it goes to the home page"
+    }
+  ],
+  "04_mv_history_sample.png": [
+    {
+      "box": [
+        33.8,
+        10.0,
+        31.3,
+        77.4
+      ],
+      "type": "info",
+      "label": "A History sample resolves in a fresh session, like a community item"
+    }
+  ],
+  "05_mv_more_menu.png": [
+    {
+      "box": [
+        49.4,
+        52.4,
+        14.3,
+        19.7
+      ],
+      "type": "action",
+      "label": "Download, Playback Speed, Picture in Picture"
+    }
+  ],
+  "06_mv_playback_speed.png": [
+    {
+      "box": [
+        60.6,
+        60.8,
+        1.9,
+        2.8
+      ],
+      "type": "action",
+      "label": "The rate cycles on each press; the menu stays open"
+    }
+  ],
+  "07_song_valid_link.png": [
+    {
+      "box": [
+        38.1,
+        16.9,
+        22.8,
+        41.9
+      ],
+      "type": "info",
+      "label": "Cover art"
+    },
+    {
+      "box": [
+        30.1,
+        62.0,
+        38.6,
+        6.7
+      ],
+      "type": "info",
+      "label": "Title and creator \u2014 the MV panel has neither"
+    }
+  ],
+  "08_song_controller.png": [
+    {
+      "box": [
+        30.1,
+        71.8,
+        38.6,
+        7.9
+      ],
+      "type": "info",
+      "label": "Play/pause, elapsed / total, seek, mute, download"
+    }
+  ],
+  "09_song_actions.png": [
+    {
+      "box": [
+        34.8,
+        86.1,
+        14.3,
+        6.0
+      ],
+      "type": "action",
+      "label": "Download \u2014 saves the audio"
+    },
+    {
+      "box": [
+        49.9,
+        86.1,
+        14.3,
+        6.0
+      ],
+      "type": "action",
+      "label": "The same label; only the gradient differs by kind"
+    }
+  ],
+  "10_unavailable_bad_id.png": [
+    {
+      "box": [
+        40.8,
+        50.6,
+        17.4,
+        4.7
+      ],
+      "type": "info",
+      "label": "The unavailable state"
+    },
+    {
+      "box": [
+        4.3,
+        2.9,
+        12.6,
+        5.7
+      ],
+      "type": "action",
+      "label": "The header logo is the only way out"
+    }
+  ],
+  "11_unavailable_no_id.png": [
+    {
+      "box": [
+        33.8,
+        11.5,
+        31.4,
+        88.5
+      ],
+      "type": "info",
+      "label": "No id at all lands in the same state"
+    }
+  ],
+  "12_unavailable_forced.png": [
+    {
+      "box": [
+        33.8,
+        11.5,
+        31.4,
+        88.5
+      ],
+      "type": "info",
+      "label": "The QA switch reaches the same state on a resolvable id"
+    }
+  ],
+  "13_legacy_url_redirect.png": [
+    {
+      "box": [
+        33.7,
+        9.9,
+        31.4,
+        77.6
+      ],
+      "type": "info",
+      "label": "The legacy path lands on the canonical one, same media"
+    }
+  ],
+  "14_share_dialog.png": [
+    {
+      "box": [
+        36.5,
+        55.6,
+        21.3,
+        2.8
+      ],
+      "type": "action",
+      "label": "The link is the /share URL this whole spec is about"
+    }
+  ],
+  "15_share_dialog_copied.png": [
+    {
+      "box": [
+        57.2,
+        54.8,
+        5.2,
+        4.5
+      ],
+      "type": "action",
+      "label": "Confirms for 1.5 seconds, then reverts"
+    }
+  ]
+}
