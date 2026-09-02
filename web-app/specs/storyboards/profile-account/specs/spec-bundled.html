@@ -257,150 +257,140 @@ a{color:#03ADE2;text-decoration:none}
 <div class="feature"><p class="feature-desc"><code>/profile</code> &mdash; the signed-in account hub (identity, Credits/MVs/Songs stats, Edit Profile, Muse Pro, Language, History, Send Feedback, Settings) &mdash; and <code>/settings</code> &mdash; legal links, Unsubscribe, Delete Account and the app&rsquo;s only Sign Out control.</p><div class="fmeta"><span class="fk">Background</span><div>The seventh spec in this repo&rsquo;s yco-spec storyboard programme (specs/storyboards/PLAN.md), covering area 06 end to end. Scoped ahead of S5 (credits-iap, on hold pending designer artwork) and after S6 (shell-auth, which deleted the account dropdown and left Settings as the app&rsquo;s only Sign Out entry point).</div></div><div class="fmeta"><span class="fk">Goal</span><div>Give QA a screenshot-led walkthrough of every Profile/Account/Settings behavior they can follow without cross-referencing code.</div></div></div>
 <div class="callout"><strong>Reading this spec.</strong> This is a behavior specification for the front-end RD, not production code &mdash; the prototype source cannot be reused. Each step card shows the <strong>screenshot first</strong>, then what the <strong>user does</strong> (bold) and what the <strong>WEB UI</strong> shows, with on-screen text, rules &amp; limits, and input/output below. On a screenshot, a <strong style="color:#e8392b">solid red</strong> frame marks the click that advances the flow; a <strong style="color:#e08a00">dashed amber</strong> frame marks a key point to note (hover a frame for its label). Steps carry a stable ID (e.g. <strong><a class="xref" href="#P1-S2">P1-S2</a></strong>).</div>
 <div id="overview" class="overview-card"><table><tr><td>Platform</td><td>YouCam Muse Web &mdash; captured at 1403&times;697 (desktop only, D8)</td></tr><tr><td>Audience</td><td>QA</td></tr><tr><td>Scope</td><td>/profile (identity, stats, Edit Profile, Muse Pro, Language, Send Feedback) and /settings (Terms/Privacy, Unsubscribe in both its variants, Delete Account, Sign Out row) plus the logged-out gate on /settings.</td></tr><tr><td>Out of scope</td><td>SubscribeModal and /profile/credits (S5, on hold for designer IAP artwork &mdash; named as destinations, not toured); the community grid at /creator?self=1 (area 04); the Sign Out FLOW once triggered (S6&rsquo;s P6 owns it &mdash; this spec captures the row only).</td></tr><tr><td>Source</td><td>specs/areas/06-profile-account.md (&sect;&sect;1-10, AC-PROF-01..17) and the running app</td></tr></table></div>
-<div id="flow-diagram" class="flow-box"><details class="flow-details"><summary><span class="num">&darr;</span> Flow Diagram &mdash; full user journey (click to expand)</summary><div class="flow-inner"><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1200" viewBox="0 0 1180 1200" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<div id="flow-diagram" class="flow-box"><details class="flow-details"><summary><span class="num">&darr;</span> Flow Diagram &mdash; full user journey (click to expand)</summary><div class="flow-inner"><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="2070" viewBox="0 0 1180 2070" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
 <title>Profile, Account &amp; Settings &#8212; User Flowchart</title>
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
-<rect width="1180" height="1200" fill="#ffffff"/>
+<rect width="1180" height="2070" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">Profile, Account &amp; Settings &#8212; User Flowchart</text>
 <text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1403×697 (D8) &#183; matches spec v1, 2026-08-31</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; red = error state &#183; green = success / resolved</text>
 
 <g transform="translate(0,80)">
-<text x="40" y="65" font-size="12" fill="#5a6b78">Six branches off one signed-in entry point, not a sequence &#8212; a visit touches whichever rows it touches. Every &quot;not captured&quot; node is another spec's territory (S5/S6/area 04); this diagram does not draw past it.</text>
-<rect x="500" y="100" width="180" height="65" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
-<text x="590" y="120" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/profile</text>
-<text x="590" y="138" font-size="12" fill="#5a6b78" text-anchor="middle">Signed in, auth-gated &#183;</text>
-<text x="590" y="153" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P1-S1">P1-S1</a>, <a class="xref" href="#P1-S2">P1-S2</a></text>
-<rect x="20" y="100" width="180" height="82" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
-<text x="110" y="120" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Credits / MVs / Songs</text>
-<text x="110" y="137" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">tiles</text>
-<text x="110" y="155" font-size="12" fill="#5a6b78" text-anchor="middle">Destinations named, not</text>
-<text x="110" y="170" font-size="12" fill="#5a6b78" text-anchor="middle">toured &#183; <a class="xref" href="#P1-S1">P1-S1</a></text>
-<path d="M500 132.5 L440 132.5 L440 141 L200 141" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="110" y="92" font-size="11" fill="#5a6b78" text-anchor="middle">tap a tile</text>
-<polygon points="590,158 688.989,190 590,222 491.011,190" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="195" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Edit Profile?</text>
-<line x1="590" y1="165" x2="590" y2="158" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="240" y="280" width="180" height="82" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="330" y="300" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Name/avatar updated,</text>
-<text x="330" y="317" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">toast</text>
-<text x="330" y="335" font-size="12" fill="#5a6b78" text-anchor="middle">In-memory only &#183; <a class="xref" href="#P2-S3">P2-S3</a></text>
-<text x="330" y="350" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-03)</text>
-<line x1="590" y1="222" x2="330" y2="280" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="456.952" y="237.336" font-size="12" fill="#5a6b78" text-anchor="middle">Save</text>
-<polygon points="590,348 704.457,380 590,412 475.543,380" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="385" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Muse Pro tap?</text>
-<line x1="590" y1="165" x2="590" y2="348" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="240" y="470" width="180" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="330" y="490" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">SubscribeModal</text>
-<text x="330" y="508" font-size="12" fill="#5a6b78" text-anchor="middle">S5, on hold &#8212; not captured &#183;</text>
-<text x="330" y="523" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P3-S1">P3-S1</a></text>
-<path d="M475.543 380 L447.772 380 L447.772 502.5 L420 502.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="330" y="462" font-size="11" fill="#5a6b78" text-anchor="middle">not subscribed</text>
-<rect x="830" y="470" width="180" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
-<text x="920" y="490" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/profile/credits</text>
-<text x="920" y="508" font-size="12" fill="#5a6b78" text-anchor="middle">S5 &#8212; named, not toured &#183;</text>
-<text x="920" y="523" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P3-S2">P3-S2</a></text>
-<path d="M704.457 380 L767.228 380 L767.228 502.5 L830 502.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="920" y="462" font-size="11" fill="#5a6b78" text-anchor="middle">subscribed</text>
-<polygon points="590,528 736.185,560 590,592 443.815,560" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="565" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Change Language?</text>
-<line x1="590" y1="165" x2="590" y2="528" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="240" y="650" width="250" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="365" y="670" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">URL + Language subtitle update</text>
-<text x="365" y="688" font-size="12" fill="#5a6b78" text-anchor="middle">Rest of screen stays English &#183; <a class="xref" href="#P3-S4">P3-S4</a></text>
-<text x="365" y="703" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-05)</text>
-<line x1="590" y1="592" x2="365" y2="650" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="474.005" y="607.443" font-size="12" fill="#5a6b78" text-anchor="middle">pick a locale</text>
-<rect x="500" y="740" width="180" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="590" y="760" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/settings</text>
-<text x="590" y="778" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P4-S1">P4-S1</a></text>
-<line x1="590" y1="165" x2="590" y2="740" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="602" y="446.5" font-size="12" fill="#5a6b78" text-anchor="start">Settings row</text>
-<rect x="20" y="830" width="180" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
-<text x="110" y="850" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Terms / Privacy</text>
-<text x="110" y="868" font-size="12" fill="#5a6b78" text-anchor="middle">Real links, new tab &#183; <a class="xref" href="#P4-S1">P4-S1</a></text>
-<text x="110" y="883" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-09)</text>
-<path d="M500 765 L440 765 L440 862.5 L200 862.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="110" y="822" font-size="11" fill="#5a6b78" text-anchor="middle">tap</text>
-<polygon points="590,798 722.234,830 590,862 457.766,830" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="835" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Unsubscribe tap?</text>
-<line x1="590" y1="790" x2="590" y2="798" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="240" y="920" width="230" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="355" y="940" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Confirm -&gt; demo toast</text>
-<text x="355" y="958" font-size="12" fill="#5a6b78" text-anchor="middle">subscribed unchanged &#183; <a class="xref" href="#P4-S2">P4-S2</a>, <a class="xref" href="#P4-S3">P4-S3</a></text>
-<text x="355" y="973" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-07)</text>
-<path d="M457.766 830 L397.766 830 L397.766 952.5 L470 952.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
-<text x="355" y="912" font-size="11" fill="#5a6b78" text-anchor="middle">subOnApp off (default)</text>
-<rect x="830" y="920" width="230" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="945" y="940" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Manage-on-your-phone dialog</text>
-<text x="945" y="958" font-size="12" fill="#5a6b78" text-anchor="middle">D11 correction &#183; <a class="xref" href="#P4-S6">P4-S6</a></text>
-<path d="M722.234 830 L776.117 830 L776.117 945 L830 945" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="945" y="912" font-size="11" fill="#5a6b78" text-anchor="middle">subOnApp on (?demo=1)</text>
-<polygon points="590,978 739.26,1010 590,1042 440.74,1010" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="1015" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Delete Account tap?</text>
-<line x1="590" y1="790" x2="590" y2="978" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="240" y="1100" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="330" y="1120" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Demo toast -&gt; Home</text>
-<text x="330" y="1138" font-size="12" fill="#5a6b78" text-anchor="middle">Nothing deleted &#183; <a class="xref" href="#P4-S5">P4-S5</a></text>
-<text x="330" y="1153" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-07)</text>
-<line x1="590" y1="1042" x2="330" y2="1100" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="456.952" y="1057.34" font-size="12" fill="#5a6b78" text-anchor="middle">confirm</text>
-<rect x="830" y="1010" width="180" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
-<text x="920" y="1030" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Sign Out row</text>
-<text x="920" y="1048" font-size="12" fill="#5a6b78" text-anchor="middle">Flow owned by S6 &#183; <a class="xref" href="#P4-S1">P4-S1</a></text>
-<text x="920" y="1063" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-06)</text>
-<path d="M680 765 L755 765 L755 1042.5 L830 1042.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="920" y="1002" font-size="11" fill="#5a6b78" text-anchor="middle">row shown</text>
-<rect x="500" y="1150" width="180" height="80" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="590" y="1170" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Send Feedback</text>
-<text x="590" y="1188" font-size="12" fill="#5a6b78" text-anchor="middle">FORM: Type -&gt; Description</text>
-<text x="590" y="1203" font-size="12" fill="#5a6b78" text-anchor="middle">-&gt; Attachment -&gt; Email &#183;</text>
-<text x="590" y="1218" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P5-S1">P5-S1</a></text>
-<line x1="590" y1="165" x2="590" y2="1150" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="602" y="651.5" font-size="12" fill="#5a6b78" text-anchor="start">Send Feedback row</text>
-<polygon points="590,1208 727.631,1240 590,1272 452.369,1240" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="1245" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Send (valid form)?</text>
-<line x1="590" y1="1230" x2="590" y2="1208" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="240" y="1330" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="330" y="1350" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Feedback Sent + Done</text>
-<text x="330" y="1368" font-size="12" fill="#5a6b78" text-anchor="middle">No toast &#183; <a class="xref" href="#P5-S7">P5-S7</a></text>
-<text x="330" y="1383" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-13)</text>
-<line x1="590" y1="1272" x2="330" y2="1330" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="456.952" y="1287.34" font-size="12" fill="#5a6b78" text-anchor="middle">resolves</text>
-<rect x="830" y="1330" width="180" height="82" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="920" y="1350" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Inline error, draft</text>
-<text x="920" y="1367" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">preserved</text>
-<text x="920" y="1385" font-size="12" fill="#5a6b78" text-anchor="middle">Not reachable in this build &#183;</text>
-<text x="920" y="1400" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P5-E9">P5-E9</a> (Q-02)</text>
-<path d="M727.631 1240 L778.815 1240 L778.815 1371 L830 1371" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="920" y="1322" font-size="11" fill="#5a6b78" text-anchor="middle">rejects (undemonstrable)</text>
-<rect x="20" y="1240" width="180" height="82" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="110" y="1260" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Attachment refused</text>
-<text x="110" y="1277" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">whole</text>
-<text x="110" y="1295" font-size="12" fill="#5a6b78" text-anchor="middle">5 MB cumulative &#183; <a class="xref" href="#P5-S6">P5-S6</a></text>
-<text x="110" y="1310" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-15)</text>
-<path d="M500 1190 L440 1190 L440 1281 L200 1281" fill="none" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="110" y="1232" font-size="11" fill="#5a6b78" text-anchor="middle">pick &gt; budget</text>
-<rect x="500" y="1410" width="180" height="65" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
-<text x="590" y="1430" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/settings, logged out</text>
-<text x="590" y="1448" font-size="12" fill="#5a6b78" text-anchor="middle">Separate entry &#8212; no session</text>
-<text x="590" y="1463" font-size="12" fill="#5a6b78" text-anchor="middle">&#183; <a class="xref" href="#P6-S1">P6-S1</a></text>
-<rect x="830" y="1410" width="180" height="67" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="920" y="1430" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Sign-in modal; dismiss</text>
-<text x="920" y="1447" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">-&gt; Home</text>
-<text x="920" y="1465" font-size="12" fill="#5a6b78" text-anchor="middle">AC-PROF-17</text>
-<path d="M680 1442.5 L755 1442.5 L755 1443.5 L830 1443.5" fill="none" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="920" y="1402" font-size="11" fill="#5a6b78" text-anchor="middle">AuthGuard</text>
-<line x1="40" y1="1706" x2="1140" y2="1706" stroke="#e5e9ed" stroke-width="1"/>
-<line x1="40" y1="1726" x2="74" y2="1726" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="86" y="1730" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
-<line x1="40" y1="1746" x2="74" y2="1746" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="86" y="1750" font-size="12" fill="#5a6b78">Primary happy path</text>
-<line x1="40" y1="1766" x2="74" y2="1766" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
-<text x="86" y="1770" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
-<line x1="40" y1="1786" x2="74" y2="1786" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="86" y="1790" font-size="12" fill="#5a6b78">Error branch</text>
+<text x="40" y="65" font-size="12" fill="#5a6b78">Six branches off one signed-in entry point, not a sequence &#8212; a visit touches whichever rows it touches.</text>
+<text x="40" y="85" font-size="12" fill="#5a6b78">Every &quot;not captured&quot; node is another spec&#8217;s territory (S5/S6/area 04); this diagram does not draw past it.</text>
+<line x1="40" y1="128" x2="1140" y2="128" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="150" font-size="15" font-weight="700" fill="#0c1c22">Part 1 &#8212; /profile, signed in  &#183;  P1</text>
+<rect x="40" y="180" width="300" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="190" y="200" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/profile</text>
+<text x="190" y="218" font-size="12" fill="#5a6b78" text-anchor="middle">Signed in, auth-gated &#183; <a class="xref" href="#P1-S1">P1-S1</a>, <a class="xref" href="#P1-S2">P1-S2</a></text>
+<rect x="820" y="180" width="300" height="50" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="970" y="200" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Credits / MVs / Songs tiles</text>
+<text x="970" y="218" font-size="12" fill="#5a6b78" text-anchor="middle">Destinations named, not toured &#183; <a class="xref" href="#P1-S1">P1-S1</a></text>
+<line x1="340" y1="205" x2="820" y2="205" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="580" y="191" font-size="12" fill="#5a6b78" text-anchor="middle">tap a tile</text>
+<text x="40" y="262" font-size="12" fill="#5a6b78">Parts 2&#8211;5 below each START from this screen. They are branches off it, not steps after it.</text>
+<line x1="40" y1="298" x2="1140" y2="298" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="320" font-size="15" font-weight="700" fill="#0c1c22">Part 2 &#8212; Edit Profile  &#183;  P2</text>
+<polygon points="200,348 298.989,380 200,412 101.011,380" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="200" y="385" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Edit Profile?</text>
+<rect x="820" y="350" width="300" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="970" y="370" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Name/avatar updated, toast</text>
+<text x="970" y="388" font-size="12" fill="#5a6b78" text-anchor="middle">In-memory only &#183; <a class="xref" href="#P2-S3">P2-S3</a> (AC-PROF-03)</text>
+<line x1="298.989" y1="380" x2="820" y2="375" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="559.36" y="363.501" font-size="12" fill="#5a6b78" text-anchor="middle">Save</text>
+<line x1="40" y1="428" x2="1140" y2="428" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="450" font-size="15" font-weight="700" fill="#0c1c22">Part 3 &#8212; Muse Pro and Language  &#183;  P3</text>
+<polygon points="200,478 314.457,510 200,542 85.5433,510" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="200" y="515" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Muse Pro tap?</text>
+<rect x="480" y="480" width="300" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="630" y="500" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">SubscribeModal</text>
+<text x="630" y="518" font-size="12" fill="#5a6b78" text-anchor="middle">S5, on hold &#8212; not captured &#183; <a class="xref" href="#P3-S1">P3-S1</a></text>
+<line x1="314.457" y1="510" x2="480" y2="505" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="396.806" y="493.506" font-size="12" fill="#5a6b78" text-anchor="middle">not subscribed</text>
+<rect x="820" y="570" width="300" height="50" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="970" y="590" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/profile/credits</text>
+<text x="970" y="608" font-size="12" fill="#5a6b78" text-anchor="middle">S5 &#8212; named, not toured &#183; <a class="xref" href="#P3-S2">P3-S2</a></text>
+<line x1="200" y1="542" x2="820" y2="595" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="511.192" y="554.551" font-size="12" fill="#5a6b78" text-anchor="middle">subscribed</text>
+<polygon points="200,648 346.185,680 200,712 53.8146,680" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="200" y="685" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Change Language?</text>
+<rect x="820" y="660" width="300" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="970" y="680" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">URL + Language subtitle update</text>
+<text x="970" y="698" font-size="12" fill="#5a6b78" text-anchor="middle">Rest of screen stays English &#183; <a class="xref" href="#P3-S4">P3-S4</a></text>
+<text x="970" y="713" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-05)</text>
+<line x1="346.185" y1="680" x2="820" y2="692.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="583.462" y="672.255" font-size="12" fill="#5a6b78" text-anchor="middle">pick a locale</text>
+<line x1="40" y1="748" x2="1140" y2="748" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="770" font-size="15" font-weight="700" fill="#0c1c22">Part 4 &#8212; /settings: Terms, Sign Out, Unsubscribe  &#183;  P4</text>
+<rect x="40" y="800" width="300" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="190" y="820" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/settings</text>
+<text x="190" y="838" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P4-S1">P4-S1</a></text>
+<rect x="820" y="800" width="300" height="50" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="970" y="820" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Terms / Privacy</text>
+<text x="970" y="838" font-size="12" fill="#5a6b78" text-anchor="middle">Real links, new tab &#183; <a class="xref" href="#P4-S1">P4-S1</a> (AC-PROF-09)</text>
+<line x1="340" y1="825" x2="820" y2="825" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="580" y="811" font-size="12" fill="#5a6b78" text-anchor="middle">tap</text>
+<rect x="820" y="900" width="300" height="50" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="970" y="920" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Sign Out row</text>
+<text x="970" y="938" font-size="12" fill="#5a6b78" text-anchor="middle">Flow owned by S6 &#183; <a class="xref" href="#P4-S1">P4-S1</a> (AC-PROF-06)</text>
+<line x1="190" y1="850" x2="820" y2="925" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="506.655" y="873.598" font-size="12" fill="#5a6b78" text-anchor="middle">row shown</text>
+<polygon points="200,918 332.234,950 200,982 67.7663,950" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="200" y="955" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Unsubscribe tap?</text>
+<line x1="190" y1="850" x2="200" y2="918" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="480" y="930" width="300" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="630" y="950" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Confirm -&gt; demo toast</text>
+<text x="630" y="968" font-size="12" fill="#5a6b78" text-anchor="middle">subscribed unchanged &#183; <a class="xref" href="#P4-S2">P4-S2</a>, <a class="xref" href="#P4-S3">P4-S3</a></text>
+<text x="630" y="983" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-PROF-07)</text>
+<line x1="332.234" y1="950" x2="480" y2="962.5" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="407.297" y="942.3" font-size="12" fill="#5a6b78" text-anchor="middle">subOnApp off (default)</text>
+<rect x="820" y="1060" width="300" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="970" y="1080" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Manage-on-your-phone dialog</text>
+<text x="970" y="1098" font-size="12" fill="#5a6b78" text-anchor="middle">D11 correction &#183; <a class="xref" href="#P4-S6">P4-S6</a></text>
+<line x1="200" y1="982" x2="820" y2="1085" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="512.294" y="1019.69" font-size="12" fill="#5a6b78" text-anchor="middle">subOnApp on (?demo=1)</text>
+<line x1="40" y1="1158" x2="1140" y2="1158" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1180" font-size="15" font-weight="700" fill="#0c1c22">Part 4 (continued) &#8212; /settings: Delete Account  &#183;  P4</text>
+<polygon points="200,1218 349.26,1250 200,1282 50.7404,1250" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="200" y="1255" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Delete Account tap?</text>
+<rect x="480" y="1220" width="300" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="630" y="1240" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Demo toast -&gt; Home</text>
+<text x="630" y="1258" font-size="12" fill="#5a6b78" text-anchor="middle">Nothing deleted &#183; <a class="xref" href="#P4-S5">P4-S5</a> (AC-PROF-07)</text>
+<line x1="349.26" y1="1250" x2="480" y2="1245" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="414.095" y="1233.51" font-size="12" fill="#5a6b78" text-anchor="middle">confirm</text>
+<line x1="40" y1="1328" x2="1140" y2="1328" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1350" font-size="15" font-weight="700" fill="#0c1c22">Part 5 &#8212; Send Feedback  &#183;  P5</text>
+<rect x="40" y="1380" width="300" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="190" y="1400" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Send Feedback</text>
+<text x="190" y="1418" font-size="12" fill="#5a6b78" text-anchor="middle">FORM: Type -&gt; Description -&gt; Attachment -&gt; Email</text>
+<text x="190" y="1433" font-size="12" fill="#5a6b78" text-anchor="middle">&#183; <a class="xref" href="#P5-S1">P5-S1</a></text>
+<rect x="820" y="1380" width="300" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="970" y="1400" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Attachment refused whole</text>
+<text x="970" y="1418" font-size="12" fill="#5a6b78" text-anchor="middle">5 MB cumulative &#183; <a class="xref" href="#P5-S6">P5-S6</a> (AC-PROF-15)</text>
+<line x1="340" y1="1412.5" x2="820" y2="1405" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="579.781" y="1394.75" font-size="12" fill="#5a6b78" text-anchor="middle">pick &gt; budget</text>
+<polygon points="200,1498 337.631,1530 200,1562 62.3692,1530" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="200" y="1535" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Send (valid form)?</text>
+<line x1="190" y1="1445" x2="200" y2="1498" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="480" y="1500" width="300" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="630" y="1520" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Feedback Sent + Done</text>
+<text x="630" y="1538" font-size="12" fill="#5a6b78" text-anchor="middle">No toast &#183; <a class="xref" href="#P5-S7">P5-S7</a> (AC-PROF-13)</text>
+<line x1="337.631" y1="1530" x2="480" y2="1525" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="408.324" y="1513.51" font-size="12" fill="#5a6b78" text-anchor="middle">resolves</text>
+<rect x="820" y="1600" width="300" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="970" y="1620" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Inline error, draft preserved</text>
+<text x="970" y="1638" font-size="12" fill="#5a6b78" text-anchor="middle">Not reachable in this build &#183; <a class="xref" href="#P5-E9">P5-E9</a> (Q-02)</text>
+<line x1="200" y1="1562" x2="820" y2="1625" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="511.415" y="1579.57" font-size="12" fill="#5a6b78" text-anchor="middle">rejects (undemonstrable)</text>
+<line x1="40" y1="1688" x2="1140" y2="1688" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1710" font-size="15" font-weight="700" fill="#0c1c22">Part 6 &#8212; /settings with no session  &#183;  P6</text>
+<rect x="40" y="1740" width="300" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="190" y="1760" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/settings, logged out</text>
+<text x="190" y="1778" font-size="12" fill="#5a6b78" text-anchor="middle">Separate entry &#8212; no session &#183; <a class="xref" href="#P6-S1">P6-S1</a></text>
+<rect x="820" y="1740" width="300" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="970" y="1760" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Sign-in modal; dismiss -&gt; Home</text>
+<text x="970" y="1778" font-size="12" fill="#5a6b78" text-anchor="middle">AC-PROF-17</text>
+<line x1="340" y1="1765" x2="820" y2="1765" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="580" y="1751" font-size="12" fill="#5a6b78" text-anchor="middle">AuthGuard</text>
+<line x1="40" y1="1846" x2="1140" y2="1846" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="1866" x2="74" y2="1866" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="1870" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+<line x1="40" y1="1886" x2="74" y2="1886" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1890" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="1906" x2="74" y2="1906" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="86" y="1910" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
+<line x1="40" y1="1926" x2="74" y2="1926" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="1930" font-size="12" fill="#5a6b78">Error branch</text>
 </g>
 </svg>
 <details style="margin-top:10px"><summary style="font-size:13px;color:#4a6070;cursor:pointer">Mermaid source</summary><pre class="mermaid-src">flowchart TD

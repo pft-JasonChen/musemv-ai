@@ -62,7 +62,7 @@
 <line x1="624.514" y1="700" x2="858" y2="762" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
 <text x="741.257" y="725" font-size="12" fill="#5a6b78" text-anchor="middle">no</text>
 <path d="M956 787 L986 787 L986 452.5 L956 452.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="994" y="619.75" font-size="11" fill="#5a6b78" text-anchor="start">buy, then retry</text>
+<text x="990" y="619.75" font-size="11" fill="#5a6b78" text-anchor="end">buy, then retry</text>
 <rect x="44" y="852" width="196" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
 <text x="142" y="872" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Failed -&gt; full refund</text>
 <text x="142" y="890" font-size="12" fill="#5a6b78" text-anchor="middle">5.2</text>

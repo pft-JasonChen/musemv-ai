@@ -257,10 +257,10 @@ a{color:#03ADE2;text-decoration:none}
 <div class="feature"><p class="feature-desc">The whole discovery and community-consumption surface: the Home feed and its three rails, the two &ldquo;See all&rdquo; explore pages, the MV player at <code>/watch</code>, the community song player at <code>/song/play</code>, and the creator profile at <code>/creator</code>. Every route is public; the sign-in gate sits on the ACTION, never on the route.</p><div class="fmeta"><span class="fk">Background</span><div>The ninth spec in this repo&rsquo;s yco-spec storyboard programme (specs/storyboards/PLAN.md), covering area 04 end to end. It was deliberately scheduled late: this is the one half of the product that is NOT RD-ready &mdash; there is no community endpoint on the API at all, and every rail, grid and profile on these six routes runs on a fixed seed array. The source Curation PRD was read in full for the first time at this spec&rsquo;s Phase 0 gate.</div></div><div class="fmeta"><span class="fk">Goal</span><div>Give QA a screenshot-led walkthrough of every Explore/Community behavior they can follow without cross-referencing code.</div></div></div>
 <div class="callout"><strong>Reading this spec.</strong> This is a behavior specification for the front-end RD, not production code &mdash; the prototype source cannot be reused. Each step card shows the <strong>screenshot first</strong>, then what the <strong>user does</strong> (bold) and what the <strong>WEB UI</strong> shows, with on-screen text, rules &amp; limits, and input/output below. On a screenshot, a <strong style="color:#e8392b">solid red</strong> frame marks the click that advances the flow; a <strong style="color:#e08a00">dashed amber</strong> frame marks a key point to note (hover a frame for its label). Steps carry a stable ID (e.g. <strong><a class="xref" href="#P1-S2">P1-S2</a></strong>).</div>
 <div id="overview" class="overview-card"><table><tr><td>Platform</td><td>YouCam Muse Web &mdash; captured at 1403&times;697 (desktop only, D8)</td></tr><tr><td>Audience</td><td>QA</td></tr><tr><td>Scope</td><td>The Home feed (hero, tool selector, three rails), /explore/mvs, /explore/songs, /watch (including the YCM watermark and the vertical swipe feed), /song/play, and /creator (both modes, plus the demo-flag empty state). The sign-in gate is walked on this surface because it fires at the action, not at the route.</td></tr><tr><td>Out of scope</td><td>The create flows the CTAs lead into (areas 02/03 &mdash; S1, S2); the shell and the sign-in modal itself (areas 01/09 &mdash; S6); the share dialog&rsquo;s own rules (area 10 &mdash; S9); the ranking, eligibility, moderation and refresh layer, which is unbuilt (see Prototype vs production).</td></tr><tr><td>Source</td><td>specs/areas/04-explore-community.md (&sect;&sect;1-9, AC-EXP-01..12), the Explore Curation PRD, and the running app</td></tr></table></div>
-<div id="flow-diagram" class="flow-box"><details class="flow-details"><summary><span class="num">&darr;</span> Flow Diagram &mdash; full user journey (click to expand)</summary><div class="flow-inner"><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="2860" viewBox="0 0 1280 2860" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<div id="flow-diagram" class="flow-box"><details class="flow-details"><summary><span class="num">&darr;</span> Flow Diagram &mdash; full user journey (click to expand)</summary><div class="flow-inner"><svg xmlns="http://www.w3.org/2000/svg" width="1280" height="2920" viewBox="0 0 1280 2920" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
 <title>Explore &amp; Community &#8212; User Flowchart</title>
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
-<rect width="1280" height="2860" fill="#ffffff"/>
+<rect width="1280" height="2920" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">Explore &amp; Community &#8212; User Flowchart</text>
 <text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 (D8) &#183; matches spec v1, 2026-09-01</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; blue = system response &#183; coral = human hand-off &#183; green = success / resolved &#183; red = error state</text>
@@ -335,22 +335,22 @@ a{color:#03ADE2;text-decoration:none}
 <polygon points="640,1003 781.512,1035 640,1067 498.488,1035" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
 <text x="640" y="1040" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Where on the row?</text>
 <line x1="730" y1="970" x2="640" y2="1003" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="40" y="1090" width="380" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
-<text x="230" y="1110" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Album art &#8594; previews in the bottom bar</text>
-<text x="230" y="1128" font-size="12" fill="#5a6b78" text-anchor="middle">No navigation; real audio, no free-account cap &#183; <a class="xref" href="#P3-S3">P3-S3</a></text>
-<text x="230" y="1143" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-EXP-05)</text>
-<line x1="640" y1="1067" x2="230" y2="1090" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
-<text x="434.216" y="1064.52" font-size="12" fill="#5a6b78" text-anchor="middle">the album art</text>
-<rect x="470" y="1090" width="340" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="640" y="1110" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">The TITLE &#8594; /song/result</text>
-<text x="640" y="1128" font-size="12" fill="#5a6b78" text-anchor="middle">At &#8805;768px. S1 owns that screen &#183; <a class="xref" href="#P3-S4">P3-S4</a> (AC-EXP-03)</text>
-<line x1="640" y1="1067" x2="640" y2="1090" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="652" y="1072.5" font-size="12" fill="#5a6b78" text-anchor="start">the title</text>
-<rect x="870" y="1090" width="370" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="1055" y="1110" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Create &#8594; /song/create, pre-filled</text>
-<text x="1055" y="1128" font-size="12" fill="#5a6b78" text-anchor="middle">Genre, mood, title, lyrics. Gated &#183; <a class="xref" href="#P3-S5">P3-S5</a> (AC-EXP-02)</text>
-<line x1="640" y1="1067" x2="1055" y2="1090" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="848.275" y="1064.52" font-size="12" fill="#5a6b78" text-anchor="middle">Create</text>
+<rect x="40" y="1110" width="380" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="230" y="1130" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Album art &#8594; previews in the bottom bar</text>
+<text x="230" y="1148" font-size="12" fill="#5a6b78" text-anchor="middle">No navigation; real audio, no free-account cap &#183; <a class="xref" href="#P3-S3">P3-S3</a></text>
+<text x="230" y="1163" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-EXP-05)</text>
+<line x1="640" y1="1067" x2="230" y2="1110" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="433.54" y="1074.58" font-size="12" fill="#5a6b78" text-anchor="middle">the album art</text>
+<rect x="470" y="1110" width="340" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="640" y="1130" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">The TITLE &#8594; /song/result</text>
+<text x="640" y="1148" font-size="12" fill="#5a6b78" text-anchor="middle">At &#8805;768px. S1 owns that screen &#183; <a class="xref" href="#P3-S4">P3-S4</a> (AC-EXP-03)</text>
+<line x1="640" y1="1067" x2="640" y2="1110" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="652" y="1082.5" font-size="12" fill="#5a6b78" text-anchor="start">the title</text>
+<rect x="870" y="1110" width="370" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="1055" y="1130" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Create &#8594; /song/create, pre-filled</text>
+<text x="1055" y="1148" font-size="12" fill="#5a6b78" text-anchor="middle">Genre, mood, title, lyrics. Gated &#183; <a class="xref" href="#P3-S5">P3-S5</a> (AC-EXP-02)</text>
+<line x1="640" y1="1067" x2="1055" y2="1110" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="848.943" y="1074.57" font-size="12" fill="#5a6b78" text-anchor="middle">Create</text>
 <line x1="40" y1="1228" x2="1240" y2="1228" stroke="#e5e9ed" stroke-width="1"/>
 <text x="40" y="1250" font-size="15" font-weight="700" fill="#0c1c22">Part 4 &#8212; Watch an MV  &#183;  P4</text>
 <rect x="40" y="1280" width="340" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>

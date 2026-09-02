@@ -75,7 +75,7 @@
 <text x="142" y="688" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">In review</text>
 <text x="142" y="706" font-size="12" fill="#5a6b78" text-anchor="middle">then published &#183; TBD-HIST-04</text>
 <line x1="142" y1="643" x2="142" y2="668" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="154" y="649.5" font-size="12" fill="#5a6b78" text-anchor="start">Confirm</text>
+<text x="154" y="656" font-size="12" fill="#5a6b78" text-anchor="start">Confirm</text>
 <rect x="442" y="668" width="196" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
 <text x="540" y="688" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Now locked</text>
 <text x="540" y="706" font-size="12" fill="#5a6b78" text-anchor="middle">unpublish before editing; Delete</text>

@@ -44,41 +44,47 @@ rail = f.node(30, 195, 'Side rail', 'Trending MVs, or My Creations · P7-S1/S2',
 create = f.node(S, 300, 'Tap Create Music Video', 'clears previous MV state · P1-S9', kind='info')
 f.edge(compose, create)
 
-mode = f.decision(CX, 400, 'Mode?')
+# 'Tap Create Music Video' wraps to two title lines and two subtitle lines,
+# so it is an 82px box, not the 50px the spine assumes — the diamond used to
+# start 14px INSIDE it. Every y below is spaced off the measured height.
+mode = f.decision(CX, 440, 'Mode?')
 f.edge(create, mode)
 
-think = f.node(S - 260, 500, '/mv/thinking', 'Progress + estimate · P1-S10', kind='info')
+think = f.node(S - 260, 520, '/mv/thinking', 'Progress + estimate · P1-S10', kind='info')
 f.edge(mode, think, 'Storyboard First')
 
-think_outcome = f.decision(S - 260 + 90, 600, 'Job outcome')
+think_outcome = f.decision(S - 260 + 90, 640, 'Job outcome')
 f.edge(think, think_outcome)
 
-sb_editor = f.node(S - 260, 700, '/mv/storyboard', 'Visual style + scenes editable, no Save · P1-S11', kind='success')
+sb_editor = f.node(S - 260, 720, '/mv/storyboard', 'Visual style + scenes editable, no Save · P1-S11', kind='success')
 f.edge(think_outcome, sb_editor, 'done')
 
-think_failed = f.node(S - 560, 700, 'Generation Failed', 'Retry / Back · P3-E2', kind='error')
+# S - 560 is x = -60: this box was drawn OFF the left edge of the canvas and
+# the whole 'Generation Failed' card was simply not in the file. The failure
+# branch still hangs left, but at the left margin rather than past it.
+think_failed = f.node(30, 740, 'Generation Failed', 'Retry / Back · P3-E2', kind='error')
 f.edge(think_outcome, think_failed, '"[fail]" · P3-S1, P3-E2', kind='error')
 
-rendering = f.node(S, 800, '/mv/creating', 'Progress + estimate · P1-S13, P2-S5', kind='info')
+rendering = f.node(S, 850, '/mv/creating', 'Progress + estimate · P1-S13, P2-S5', kind='info')
 f.edge(sb_editor, rendering, 'Generate MV · P1-S12')
 
-direct = f.node(S + 260, 500, 'Directly (Templates only)', 'Enhance NOT offered · P2-S1..S4', kind='info')
+direct = f.node(S + 260, 520, 'Directly (Templates only)', 'Enhance NOT offered · P2-S1..S4', kind='info')
 f.edge(mode, direct, 'Directly')
 f.edge(direct, rendering)
 
-render_outcome = f.decision(CX, 900, 'Job outcome')
+render_outcome = f.decision(CX, 980, 'Job outcome')
 f.edge(rendering, render_outcome)
 
-result = f.node(S, 1000, '/mv/result', 'P8: Like, Share, Publish confirm, Recreate, Edit MV · P1-S14', kind='success')
+result = f.node(S, 1060, '/mv/result', 'P8: Like, Share, Publish confirm, Recreate, Edit MV · P1-S14', kind='success')
 f.edge(render_outcome, result, 'done')
 
-render_failed = f.node(S - 320, 1000, 'Generation Failed', 'Retry / Back · P3-E3', kind='error')
+render_failed = f.node(S - 320, 1075, 'Generation Failed', 'Retry / Back · P3-E3', kind='error')
 f.edge(render_outcome, render_failed, '"[fail]" · P3-S1, P3-E3', kind='error')
 
-history = f.node(S, 1100, '/history', 'New row, prepended · P1-S15, P2-S6', kind='success')
+history = f.node(S, 1160, '/history', 'New row, prepended · P1-S15, P2-S6', kind='success')
 f.edge(result, history)
 
-f.legend(1220)
+f.legend(1290)
 f.write(os.path.join(HERE, 'user-flowchart.svg'))
 print('Wrote', os.path.join(HERE, 'user-flowchart.svg'))
 if f.warnings:

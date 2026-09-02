@@ -59,24 +59,29 @@ f.edge(room, menu)
 quick = f.node(30, 610, 'Like/Unlike · Share · Download', 'P3-S6..S8', kind='aside')
 f.elbow(menu, quick, 'quick actions', kind='deferred', out='left', into='right', gap=60)
 
-pub = f.decision(CX, 720, 'Publish, kind?')
+# The Publish and Delete branches hang off the ⋯ menu SIDEWAYS, not straight
+# down. The first version put the Publish diamond directly under the menu box
+# and the menu box is three lines tall, so the two shapes overlapped by 19px;
+# and the menu→Delete edge, being vertical, was then drawn straight THROUGH
+# that diamond. Splitting the two branches left and right fixes both at once.
+pub = f.decision(340, 790, 'Publish, kind?')
 f.edge(menu, pub)
-mvconfirm = f.node(S - 260, 810, '"Ready to Go Public?" confirm', 'P4-S1', kind='decision')
-reviewing = f.node(S - 260, 900, 'reviewing + published', 'toast: Submitted for review · P4-S2..S3', kind='success')
+mvconfirm = f.node(150, 880, '"Ready to Go Public?" confirm', 'P4-S1', kind='decision')
+reviewing = f.node(150, 970, 'reviewing + published', 'toast: Submitted for review · P4-S2..S3', kind='success')
 f.edge(pub, mvconfirm, 'MV')
 f.edge(mvconfirm, reviewing)
-songtoggle = f.node(S + 260, 810, 'Immediate toggle', 'toast: Published success · P4-S4', kind='success')
+songtoggle = f.node(400, 880, 'Immediate toggle', 'toast: Published success · P4-S4', kind='success')
 f.edge(pub, songtoggle, 'song')
 
-delc = f.node(S, 810, 'Delete confirm', 'P5-S1', kind='decision')
+delc = f.node(700, 758, 'Delete confirm', 'P5-S1', kind='decision')
 f.edge(menu, delc)
-removed = f.node(S, 900, 'Row removed (local)', 'P5-S2', kind='success')
+removed = f.node(700, 880, 'Row removed (local)', 'P5-S2', kind='success')
 f.edge(delc, removed)
 
-cta = f.node(S + 330, 610, 'Edit MV / Create MV', '/mv/edit or /mv/room or /mv/storyboard · P6-S1..S2 (area 02, S3)', kind='aside')
+cta = f.node(S + 330, 620, 'Edit MV / Create MV', '/mv/edit or /mv/room or /mv/storyboard · P6-S1..S2 (area 02, S3)', kind='aside')
 f.elbow(menu, cta, 'CTA row', kind='deferred', out='right', into='left', gap=90)
 
-f.legend(1000)
+f.legend(1080)
 f.write(os.path.join(HERE, 'user-flowchart.svg'))
 print('Wrote', os.path.join(HERE, 'user-flowchart.svg'))
 if f.warnings:
