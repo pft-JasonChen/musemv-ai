@@ -19,7 +19,7 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v2'
+VERSION = 'v3'
 DATE = '2026-09-02'
 
 f = Flow('AI Music Video (MV) Creation', 'YouCam Muse Web — desktop 1440',
@@ -62,7 +62,7 @@ f.edge(think_outcome, sb_editor, 'done')
 # S - 560 is x = -60: this box was drawn OFF the left edge of the canvas and
 # the whole 'Generation Failed' card was simply not in the file. The failure
 # branch still hangs left, but at the left margin rather than past it.
-think_failed = f.node(30, 740, 'Generation Failed', 'Retry / Back · P3-E2', kind='error')
+think_failed = f.node(30, 740, 'Generation Failed', 'Back only · P3-E2', kind='error')
 f.edge(think_outcome, think_failed, '"[fail]" · P3-S1, P3-E2', kind='error')
 
 rendering = f.node(S, 850, '/mv/creating', 'Progress + estimate · P1-S13, P2-S5', kind='info')

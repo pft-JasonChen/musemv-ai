@@ -3,7 +3,7 @@
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
 <rect width="1180" height="1470" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">AI Music Video (MV) Creation &#8212; User Flowchart</text>
-<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v2, 2026-09-02</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v3, 2026-09-02</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">blue = system response &#183; amber = decision &#183; green = success / resolved &#183; red = error state</text>
 
 <g transform="translate(0,80)">
@@ -58,7 +58,7 @@
 <text x="342" y="690" font-size="12" fill="#5a6b78" text-anchor="start">done</text>
 <rect x="30" y="740" width="180" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
 <text x="120" y="760" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Generation Failed</text>
-<text x="120" y="778" font-size="12" fill="#5a6b78" text-anchor="middle">Retry / Back &#183; P3-E2</text>
+<text x="120" y="778" font-size="12" fill="#5a6b78" text-anchor="middle">Back only &#183; P3-E2</text>
 <line x1="330" y1="672" x2="120" y2="740" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
 <text x="220.687" y="692.681" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;[fail]&quot; &#183; P3-S1, P3-E2</text>
 <rect x="500" y="850" width="180" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
