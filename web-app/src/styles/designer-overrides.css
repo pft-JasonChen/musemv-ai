@@ -2303,8 +2303,11 @@
   letter-spacing: -0.18px;
 }
 
+/* Product owner, 2026-09-02: "Muse" was purple (var(--accent)) against
+   "YouCam"'s white — the whole wordmark should read as one solid white
+   lockup instead, matching every other header's brand text in the app. */
 .share-page__logo-text-accent {
-  color: var(--accent, #a855f7);
+  color: var(--neutral-dark-100, #fff);
 }
 
 .share-page__main {

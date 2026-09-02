@@ -102,12 +102,21 @@ function MvMoreMenu({
  *  those corners off into a circle instead of just being redundant. And the
  *  wordmark switches from an image (`muse_wordmark_logo_white.png`) to real
  *  text, matching this page's own pre-redesign convention and every other
- *  header in the app (`MobileHeader.tsx`, the original `ShareLinkView`). */
+ *  header in the app (`MobileHeader.tsx`, the original `ShareLinkView`).
+ *
+ *  Badge swapped 2026-09-02 (product owner) from the placeholder
+ *  `/assets/icons/app/ic_app_ycm.png` (a musical-note glyph, never updated
+ *  once the real brand assets landed) to the actual YCM brand mark —
+ *  `/assets/brand/ic_app_ycm.svg`, same rounded-square-plus-gradient shape
+ *  the comment above already assumes, just the correct artwork. SVG over
+ *  that folder's own `.png`/`@2x.png` siblings for the usual reason: it's
+ *  resolution-independent and every other brand-logo consumer already
+ *  prefers it. */
 function Logo() {
   return (
     <span className="share-page__logo">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/assets/icons/app/ic_app_ycm.png" alt="" className="share-page__logo-badge" />
+      <img src="/assets/brand/ic_app_ycm.svg" alt="" className="share-page__logo-badge" />
       <span className="share-page__logo-text">
         YouCam <span className="share-page__logo-text-accent">Muse</span>
       </span>
