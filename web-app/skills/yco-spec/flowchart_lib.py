@@ -168,6 +168,12 @@ class Flow:
         self.SPINE = width / 2 - node_w / 2      # x of a centred spine node
         self._body, self._kinds_used, self._edges_used = [], [], []
         self._max_y = 0
+        self._max_x = 0
+        # Everything drawn, remembered as a rectangle, so check() can find the
+        # three failures an SVG cannot report: a box off the canvas, two boxes
+        # on top of each other, and a label lying across a box. See check().
+        self._boxes = []    # [{'label','x0','y0','x1','y1'}] - node shapes
+        self._labels = []   # [{'text','x0','y0','x1','y1'}]  - free-standing text
         self.warnings = []
 
     # ── nodes ────────────────────────────────────────────────────────────────
@@ -216,7 +222,7 @@ class Flow:
         for j, line in enumerate(s_lines):
             self._body.append(_txt(cx, y + ys[len(t_lines) + j], line, 12, MUTED))
         n = Node(x, y, w, h, kind)
-        self._max_y = max(self._max_y, y + h)
+        self._reg_box(n, title)
         return n
 
     def decision(self, cx, cy, title, sub=None, hw=DIAMOND_W, hh=DIAMOND_H):
@@ -239,8 +245,11 @@ class Flow:
             self._body.append(_txt(cx, cy + 15, sub, 11, MUTED))
         else:
             self._body.append(_txt(cx, cy + 5, title, 13, INK, weight=700))
+        # hw grew above to fit the text, so the diamond's real footprint is not
+        # the one the caller asked for - which is exactly how a diamond ends up
+        # sitting on the node beside it. Register what was actually drawn.
         n = Node(cx - hw, cy - hh, hw * 2, hh * 2, 'decision')
-        self._max_y = max(self._max_y, cy + hh)
+        self._reg_box(n, title)
         return n
 
     def section(self, y, label):
@@ -249,11 +258,11 @@ class Flow:
                           f'stroke="{HAIRLINE}" stroke-width="1"/>')
         self._body.append(f'<text x="{PAD_L}" y="{y:g}" font-size="15" font-weight="700" '
                           f'fill="{INK}">{esc(label)}</text>')
-        self._max_y = max(self._max_y, y)
+        self._reg_label(PAD_L, y, label, 15, anchor='start', bold=True)
 
     def note(self, x, y, text, size=12):
         self._body.append(f'<text x="{x:g}" y="{y:g}" font-size="{size}" fill="{MUTED}">{esc(text)}</text>')
-        self._max_y = max(self._max_y, y)
+        self._reg_label(x, y, text, size, anchor='start', free=False)
 
     # ── edges ────────────────────────────────────────────────────────────────
 
@@ -290,6 +299,7 @@ class Flow:
                     nx, ny = -nx, -ny
                 lx, ly = mx + nx * label_clearance, my + ny * label_clearance
             self._body.append(_txt(lx, ly, label, 12, MUTED, anchor=anchor))
+            self._reg_label(lx, ly, label, 12, anchor=anchor)
 
     def elbow(self, a, b, label=None, kind='structural', out='right', into='left', gap=30):
         """A routed edge that leaves `a` sideways, turns, and enters `b` sideways.
@@ -334,6 +344,7 @@ class Flow:
                           f'marker-end="url(#fc-{kind})"/>')
         if label:
             self._body.append(_txt(b.cx, b.y - 8, label, 11, MUTED, anchor='middle'))
+            self._reg_label(b.cx, b.y - 8, label, 11)
 
     def _line(self, p1, p2, kind):
         stroke, w, dash, _ = EDGES[kind]
@@ -341,6 +352,87 @@ class Flow:
         self._body.append(
             f'<line x1="{p1[0]:g}" y1="{p1[1]:g}" x2="{p2[0]:g}" y2="{p2[1]:g}" '
             f'stroke="{stroke}" stroke-width="{w}"{dash} marker-end="url(#fc-{kind})"/>')
+
+
+    # ── geometry bookkeeping ─────────────────────────────────────────────────
+    # WHY: `flowchart_lib` draws exactly where it is told and never complains.
+    # A box at a negative x, two boxes on the same coordinates, a diamond that
+    # auto-widened into its neighbour, a legend below an explicit `height=` —
+    # all of them produce a perfectly valid SVG that is wrong to look at, and
+    # every one of them shipped at least once. The only defence is to remember
+    # what was drawn and check it before writing the file.
+
+    def _reg_box(self, n, label):
+        self._boxes.append({'label': str(label), 'x0': n.x, 'y0': n.y,
+                            'x1': n.x + n.w, 'y1': n.y + n.h})
+        self._max_x = max(self._max_x, n.x + n.w)
+        self._max_y = max(self._max_y, n.y + n.h)
+
+    def _reg_label(self, x, y, text, size, anchor='middle', bold=False, free=True):
+        """Record a free-standing text run. `y` is the BASELINE; the cap-height
+        box above it is what a reader sees, so that is what is stored.
+
+        `free=False` marks text that is part of the page furniture (notes,
+        legend rows) rather than a floating edge label: it still counts for the
+        canvas bounds, but it is not checked for collisions, because a note
+        deliberately spans the full width and every band heading sits alone.
+        """
+        w = text_width(text, size, bold)
+        left = x if anchor == 'start' else (x - w if anchor == 'end' else x - w / 2)
+        box = {'text': str(text), 'x0': left, 'x1': left + w,
+               'y0': y - size * 0.80, 'y1': y + size * 0.25, 'free': free}
+        self._labels.append(box)
+        self._max_x = max(self._max_x, box['x1'])
+        self._max_y = max(self._max_y, box['y1'])
+
+    def check(self):
+        """Findings on what was drawn, worst first. Empty means the picture is
+        geometrically sound — it says nothing about whether it is CORRECT.
+
+        This is the estimate; `skills/yco-spec/check_flowchart.py` is the truth,
+        because it renders the SVG in a browser and measures real text. Keep
+        both: this one fails the author's own `python3 make_flowchart.py` run,
+        which is where a layout mistake is cheapest to fix.
+        """
+        eps, out = 12.0, []
+        W = self.width
+
+        for b in self._boxes:
+            if b['x0'] < 0 or b['x1'] > W:
+                out.append(f'node {b["label"]!r} runs off the canvas horizontally — '
+                           f'x {b["x0"]:g}..{b["x1"]:g} vs width {W:g}')
+            if b['y0'] < 0:
+                out.append(f'node {b["label"]!r} is above the top of the canvas (y {b["y0"]:g})')
+        for t in self._labels:
+            if t['x0'] < 0 or t['x1'] > W:
+                out.append(f'text {t["text"][:44]!r} runs off the canvas horizontally — '
+                           f'x {t["x0"]:g}..{t["x1"]:g} vs width {W:g}')
+
+        def ov(a, b):
+            w = min(a['x1'], b['x1']) - max(a['x0'], b['x0'])
+            h = min(a['y1'], b['y1']) - max(a['y0'], b['y0'])
+            return w * h if (w > 0 and h > 0) else 0.0
+
+        for i, a in enumerate(self._boxes):
+            for b in self._boxes[i + 1:]:
+                if ov(a, b) > eps:
+                    out.append(f'nodes {a["label"][:36]!r} and {b["label"][:36]!r} '
+                               f'overlap by {ov(a, b):.0f}px²')
+
+        free = [t for t in self._labels if t['free']]
+        for t in free:
+            ta = max(1.0, (t['x1'] - t['x0']) * (t['y1'] - t['y0']))
+            for b in self._boxes:
+                if ov(t, b) / ta > 0.12:
+                    out.append(f'label {t["text"][:36]!r} sits on node {b["label"][:36]!r} '
+                               f'({ov(t, b) / ta * 100:.0f}% covered)')
+                    break
+        for i, a in enumerate(free):
+            for b in free[i + 1:]:
+                if ov(a, b) > eps:
+                    out.append(f'labels {a["text"][:30]!r} and {b["text"][:30]!r} '
+                               f'overlap by {ov(a, b):.0f}px²')
+        return out
 
     # ── output ───────────────────────────────────────────────────────────────
 
@@ -357,15 +449,26 @@ class Flow:
             self._body.append(f'<line x1="{PAD_L}" y1="{yy-4:g}" x2="{PAD_L+34}" y2="{yy-4:g}" '
                               f'stroke="{stroke}" stroke-width="{w}"{dash} marker-end="url(#fc-{kind})"/>')
             self._body.append(f'<text x="{PAD_L+46}" y="{yy:g}" font-size="12" fill="{MUTED}">{esc(meaning)}</text>')
+            self._reg_label(PAD_L + 46, yy, meaning, 12, anchor='start', free=False)
             yy += 20
         if extra_note:
             yy += 4
             self._body.append(f'<text x="{PAD_L}" y="{yy:g}" font-size="12" fill="{MUTED}">{esc(extra_note)}</text>')
+            self._reg_label(PAD_L, yy, extra_note, 12, anchor='start', free=False)
             yy += 20
         self._max_y = max(self._max_y, yy)
 
     def render(self):
-        h = self._height or int(self._max_y + HEAD_H + 40)
+        # An explicit `height=` is a REQUEST, not a cap. It was a cap once, and
+        # `profile-account` asked for 1200 while drawing to 1873 — so its whole
+        # bottom third, two paths and the legend, was simply not in the file.
+        # Nothing failed; the SVG was valid, just truncated. Take the larger.
+        need = int(self._max_y + HEAD_H + 40)
+        h = max(self._height, need) if self._height else need
+        if self._height and need > self._height:
+            self.warnings.append(f'height={self._height} was too small for the content '
+                                 f'({need}px) — grew the canvas; set height={need} or move '
+                                 f'the legend up')
         defs = ''.join(
             f'<marker id="fc-{k}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" '
             f'orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="{v[0]}" '
@@ -390,12 +493,23 @@ class Flow:
                 + '\n'.join(head) + f'\n\n<g transform="translate(0,{HEAD_H})">\n'
                 + '\n'.join(self._body) + '\n</g>\n</svg>\n')
 
-    def write(self, path):
+    def write(self, path, strict=True):
+        """Render, check, then write. `strict` (the default) refuses to write a
+        diagram whose boxes collide or fall off the canvas — a clipped node
+        reads as a deliberate half-drawn box, so a warning nobody looks at is
+        not enough. Pass strict=False only to inspect a work-in-progress.
+        """
         svg = self.render()
-        with open(path, 'w', encoding='utf-8') as f:
-            f.write(svg)
+        findings = self.check()
         for w in self.warnings:
             print(f'  ! {w}')
+        for msg in findings:
+            print(f'  ✗ {msg}')
+        if findings and strict:
+            raise SystemExit(f'{len(findings)} layout problem(s) — not written. '
+                             f'Fix the coordinates, or call write(..., strict=False) to look.')
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(svg)
         return path
 
 

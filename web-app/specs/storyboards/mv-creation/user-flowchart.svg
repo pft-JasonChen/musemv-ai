@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1400" viewBox="0 0 1180 1400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1470" viewBox="0 0 1180 1470" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
 <title>AI Music Video (MV) Creation &#8212; User Flowchart</title>
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
-<rect width="1180" height="1400" fill="#ffffff"/>
+<rect width="1180" height="1470" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">AI Music Video (MV) Creation &#8212; User Flowchart</text>
-<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v1, 2026-08-27</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v2, 2026-09-02</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">blue = system response &#183; amber = decision &#183; green = success / resolved &#183; red = error state</text>
 
 <g transform="translate(0,80)">
@@ -38,69 +38,69 @@
 <text x="590" y="355" font-size="12" fill="#5a6b78" text-anchor="middle">clears previous MV state &#183;</text>
 <text x="590" y="370" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S9</text>
 <line x1="590" y1="275" x2="590" y2="300" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<polygon points="590,368 682,400 590,432 498,400" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="405" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Mode?</text>
-<line x1="590" y1="382" x2="590" y2="368" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="240" y="500" width="180" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
-<text x="330" y="520" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/thinking</text>
-<text x="330" y="538" font-size="12" fill="#5a6b78" text-anchor="middle">Progress + estimate &#183;</text>
-<text x="330" y="553" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S10</text>
-<line x1="590" y1="432" x2="330" y2="500" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="456.458" y="452.456" font-size="12" fill="#5a6b78" text-anchor="middle">Storyboard First</text>
-<polygon points="330,568 433.635,600 330,632 226.365,600" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="330" y="605" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Job outcome</text>
-<line x1="330" y1="565" x2="330" y2="568" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="240" y="700" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="330" y="720" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/storyboard</text>
-<text x="330" y="738" font-size="12" fill="#5a6b78" text-anchor="middle">Visual style + scenes</text>
-<text x="330" y="753" font-size="12" fill="#5a6b78" text-anchor="middle">editable, no Save &#183; P1-S11</text>
-<line x1="330" y1="632" x2="330" y2="700" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="342" y="660" font-size="12" fill="#5a6b78" text-anchor="start">done</text>
-<rect x="-60" y="700" width="180" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="30" y="720" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Generation Failed</text>
-<text x="30" y="738" font-size="12" fill="#5a6b78" text-anchor="middle">Retry / Back &#183; P3-E2</text>
-<line x1="330" y1="632" x2="30" y2="700" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="176.905" y="652.346" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;[fail]&quot; &#183; P3-S1, P3-E2</text>
-<rect x="500" y="800" width="180" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
-<text x="590" y="820" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/creating</text>
-<text x="590" y="838" font-size="12" fill="#5a6b78" text-anchor="middle">Progress + estimate &#183;</text>
-<text x="590" y="853" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S13, P2-S5</text>
-<line x1="330" y1="765" x2="590" y2="800" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="461.868" y="768.625" font-size="12" fill="#5a6b78" text-anchor="middle">Generate MV &#183; P1-S12</text>
-<rect x="760" y="500" width="180" height="82" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
-<text x="850" y="520" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Directly (Templates</text>
-<text x="850" y="537" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">only)</text>
-<text x="850" y="555" font-size="12" fill="#5a6b78" text-anchor="middle">Enhance NOT offered &#183;</text>
-<text x="850" y="570" font-size="12" fill="#5a6b78" text-anchor="middle">P2-S1..S4</text>
-<line x1="590" y1="432" x2="850" y2="500" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="723.542" y="452.456" font-size="12" fill="#5a6b78" text-anchor="middle">Directly</text>
-<line x1="850" y1="582" x2="590" y2="800" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<polygon points="590,868 693.635,900 590,932 486.365,900" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="905" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Job outcome</text>
-<line x1="590" y1="865" x2="590" y2="868" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="500" y="1000" width="180" height="80" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="590" y="1020" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/result</text>
-<text x="590" y="1038" font-size="12" fill="#5a6b78" text-anchor="middle">P8: Like, Share, Publish</text>
-<text x="590" y="1053" font-size="12" fill="#5a6b78" text-anchor="middle">confirm, Recreate, Edit MV &#183;</text>
-<text x="590" y="1068" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S14</text>
-<line x1="590" y1="932" x2="590" y2="1000" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="602" y="960" font-size="12" fill="#5a6b78" text-anchor="start">done</text>
-<rect x="180" y="1000" width="180" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="270" y="1020" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Generation Failed</text>
-<text x="270" y="1038" font-size="12" fill="#5a6b78" text-anchor="middle">Retry / Back &#183; P3-E3</text>
-<line x1="590" y1="932" x2="270" y2="1000" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="427.09" y="952.306" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;[fail]&quot; &#183; P3-S1, P3-E3</text>
-<rect x="500" y="1100" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="590" y="1120" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/history</text>
-<text x="590" y="1138" font-size="12" fill="#5a6b78" text-anchor="middle">New row, prepended &#183;</text>
-<text x="590" y="1153" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S15, P2-S6</text>
-<line x1="590" y1="1080" x2="590" y2="1100" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<line x1="40" y1="1196" x2="1140" y2="1196" stroke="#e5e9ed" stroke-width="1"/>
-<line x1="40" y1="1216" x2="74" y2="1216" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="86" y="1220" font-size="12" fill="#5a6b78">Primary happy path</text>
-<line x1="40" y1="1236" x2="74" y2="1236" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="86" y="1240" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
-<line x1="40" y1="1256" x2="74" y2="1256" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="86" y="1260" font-size="12" fill="#5a6b78">Error branch</text>
+<polygon points="590,408 682,440 590,472 498,440" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="590" y="445" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Mode?</text>
+<line x1="590" y1="382" x2="590" y2="408" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="240" y="520" width="180" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="330" y="540" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/thinking</text>
+<text x="330" y="558" font-size="12" fill="#5a6b78" text-anchor="middle">Progress + estimate &#183;</text>
+<text x="330" y="573" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S10</text>
+<line x1="590" y1="472" x2="330" y2="520" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="457.458" y="482.233" font-size="12" fill="#5a6b78" text-anchor="middle">Storyboard First</text>
+<polygon points="330,608 433.635,640 330,672 226.365,640" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="330" y="645" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Job outcome</text>
+<line x1="330" y1="585" x2="330" y2="608" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="240" y="720" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="330" y="740" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/storyboard</text>
+<text x="330" y="758" font-size="12" fill="#5a6b78" text-anchor="middle">Visual style + scenes</text>
+<text x="330" y="773" font-size="12" fill="#5a6b78" text-anchor="middle">editable, no Save &#183; P1-S11</text>
+<line x1="330" y1="672" x2="330" y2="720" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="342" y="690" font-size="12" fill="#5a6b78" text-anchor="start">done</text>
+<rect x="30" y="740" width="180" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="120" y="760" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Generation Failed</text>
+<text x="120" y="778" font-size="12" fill="#5a6b78" text-anchor="middle">Retry / Back &#183; P3-E2</text>
+<line x1="330" y1="672" x2="120" y2="740" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="220.687" y="692.681" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;[fail]&quot; &#183; P3-S1, P3-E2</text>
+<rect x="500" y="850" width="180" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="590" y="870" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/creating</text>
+<text x="590" y="888" font-size="12" fill="#5a6b78" text-anchor="middle">Progress + estimate &#183;</text>
+<text x="590" y="903" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S13, P2-S5</text>
+<line x1="330" y1="785" x2="590" y2="850" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="463.395" y="803.918" font-size="12" fill="#5a6b78" text-anchor="middle">Generate MV &#183; P1-S12</text>
+<rect x="760" y="520" width="180" height="82" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="850" y="540" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Directly (Templates</text>
+<text x="850" y="557" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">only)</text>
+<text x="850" y="575" font-size="12" fill="#5a6b78" text-anchor="middle">Enhance NOT offered &#183;</text>
+<text x="850" y="590" font-size="12" fill="#5a6b78" text-anchor="middle">P2-S1..S4</text>
+<line x1="590" y1="472" x2="850" y2="520" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="722.542" y="482.233" font-size="12" fill="#5a6b78" text-anchor="middle">Directly</text>
+<line x1="850" y1="602" x2="590" y2="850" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<polygon points="590,948 693.635,980 590,1012 486.365,980" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="590" y="985" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Job outcome</text>
+<line x1="590" y1="915" x2="590" y2="948" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="500" y="1060" width="180" height="80" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="590" y="1080" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/result</text>
+<text x="590" y="1098" font-size="12" fill="#5a6b78" text-anchor="middle">P8: Like, Share, Publish</text>
+<text x="590" y="1113" font-size="12" fill="#5a6b78" text-anchor="middle">confirm, Recreate, Edit MV &#183;</text>
+<text x="590" y="1128" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S14</text>
+<line x1="590" y1="1012" x2="590" y2="1060" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="602" y="1030" font-size="12" fill="#5a6b78" text-anchor="start">done</text>
+<rect x="180" y="1075" width="180" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="270" y="1095" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Generation Failed</text>
+<text x="270" y="1113" font-size="12" fill="#5a6b78" text-anchor="middle">Retry / Back &#183; P3-E3</text>
+<line x1="590" y1="1012" x2="270" y2="1075" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="427.296" y="1029.76" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;[fail]&quot; &#183; P3-S1, P3-E3</text>
+<rect x="500" y="1160" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="590" y="1180" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/history</text>
+<text x="590" y="1198" font-size="12" fill="#5a6b78" text-anchor="middle">New row, prepended &#183;</text>
+<text x="590" y="1213" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S15, P2-S6</text>
+<line x1="590" y1="1140" x2="590" y2="1160" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="1266" x2="1140" y2="1266" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="1286" x2="74" y2="1286" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1290" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="1306" x2="74" y2="1306" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="1310" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+<line x1="40" y1="1326" x2="74" y2="1326" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="1330" font-size="12" fill="#5a6b78">Error branch</text>
 </g>
 </svg>

@@ -1356,6 +1356,29 @@
       `.mv-settings .mv-sheet__footer-btn--confirm` above); this dialog's
       `.face-picker__confirm` needed the identical fix independently, since
       it's a different class with its own gated rule. */
+/* 7. Stacking. `MVCreatePage.css` gives `.face-picker-overlay` `z-index: 1200`,
+      which was right while the picker only ever opened from `/mv/room`'s page
+      body. `/profile` opens it from INSIDE the Edit Profile dialog, and that
+      dialog is `z-[1300]` — so the crop dialog rendered UNDERNEATH the modal
+      that launched it. Measured 2026-09-02 at 1403x697:
+      `elementFromPoint` at the crop dialog's own centre returned the Edit
+      Profile <input>, and the screenshot showed "Edit Profile Picture" as a
+      blurred strip behind an opaque card.
+
+      **The feature was unreachable, not merely ugly** — a user clicked Change
+      Photo, picked a file, and nothing appeared to happen. It shipped that way
+      on 2026-09-02 and was reported as "已完成並實測", because the check read
+      the DOM (the circle really is 192x192) instead of looking at the screen.
+
+      1400 puts it above every dialog in the app: the top of the stack is
+      `z-[1300]` and the designer sheets top out at 1200. That is correct
+      unconditionally — this picker is always opened FROM something else, so
+      while it is open it is the frontmost thing on screen. Guarded by
+      `e2e/behaviour-regressions.spec.ts`, mutation-tested both ways. */
+.face-picker-overlay {
+  z-index: 1400;
+}
+
 @media (min-width: 768px) {
   .face-picker {
     max-width: 484px;

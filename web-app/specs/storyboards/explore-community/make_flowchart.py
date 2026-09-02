@@ -37,7 +37,7 @@ from flowchart_lib import Flow  # noqa: E402
 
 VERSION = 'v1'
 DATE = '2026-09-01'
-W, H = 1280, 2860
+W, H = 1280, 2920
 MARGIN = 40
 
 # NOTE: NOT `&amp;` — `flowchart_lib` escapes the title itself, so an
@@ -134,15 +134,15 @@ f.edge(songs, tab, side='h')
 row = decide(640, 1035, 'Where on the row?')
 f.edge(tab, row)
 
-art = place(MARGIN, 1090, 'Album art → previews in the bottom bar',
+art = place(MARGIN, 1110, 'Album art → previews in the bottom bar',
             'No navigation; real audio, no free-account cap · P3-S3 (AC-EXP-05)', w=380, kind='info')
 f.edge(row, art, 'the album art', kind='structural', side=('bottom', 'top'))
 
-title_nav = place(470, 1090, 'The TITLE → /song/result',
+title_nav = place(470, 1110, 'The TITLE → /song/result',
                   'At ≥768px. S1 owns that screen · P3-S4 (AC-EXP-03)', w=340, kind='success')
 f.edge(row, title_nav, 'the title')
 
-create_song = place(870, 1090, 'Create → /song/create, pre-filled',
+create_song = place(870, 1110, 'Create → /song/create, pre-filled',
                     'Genre, mood, title, lyrics. Gated · P3-S5 (AC-EXP-02)', w=370, kind='success')
 f.edge(row, create_song, 'Create', kind='primary', side=('bottom', 'top'))
 

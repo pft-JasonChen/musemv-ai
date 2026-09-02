@@ -21,8 +21,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v1'
-DATE = '2026-08-27'
+VERSION = 'v2'
+DATE = '2026-09-02'
 
 f = Flow('History (My Creations)', 'YouCam Muse Web — desktop 1440',
           version=VERSION, date=DATE, width=1140)
@@ -59,24 +59,40 @@ f.edge(room, menu)
 quick = f.node(30, 610, 'Like/Unlike · Share · Download', 'P3-S6..S8', kind='aside')
 f.elbow(menu, quick, 'quick actions', kind='deferred', out='left', into='right', gap=60)
 
-pub = f.decision(CX, 720, 'Publish, kind?')
+# The Publish and Delete branches hang off the ⋯ menu SIDEWAYS, not straight
+# down. The first version put the Publish diamond directly under the menu box
+# and the menu box is three lines tall, so the two shapes overlapped by 19px;
+# and the menu→Delete edge, being vertical, was then drawn straight THROUGH
+# that diamond. Splitting the two branches left and right fixes both at once.
+pub = f.decision(340, 790, 'Publish, kind?')
 f.edge(menu, pub)
-mvconfirm = f.node(S - 260, 810, '"Ready to Go Public?" confirm', 'P4-S1', kind='decision')
-reviewing = f.node(S - 260, 900, 'reviewing + published', 'toast: Submitted for review · P4-S2..S3', kind='success')
+mvconfirm = f.node(150, 880, '"Ready to Go Public?" confirm', 'P4-S1', kind='decision')
+reviewing = f.node(150, 970, 'reviewing + published', 'toast: Submitted for review · P4-S2..S3', kind='success')
 f.edge(pub, mvconfirm, 'MV')
 f.edge(mvconfirm, reviewing)
-songtoggle = f.node(S + 260, 810, 'Immediate toggle', 'toast: Published success · P4-S4', kind='success')
+songtoggle = f.node(400, 880, 'Immediate toggle', 'toast: Published success · P4-S4', kind='success')
 f.edge(pub, songtoggle, 'song')
 
-delc = f.node(S, 810, 'Delete confirm', 'P5-S1', kind='decision')
+delc = f.node(700, 758, 'Delete confirm', 'P5-S1', kind='decision')
 f.edge(menu, delc)
-removed = f.node(S, 900, 'Row removed (local)', 'P5-S2', kind='success')
+removed = f.node(700, 880, 'Row removed (local)', 'P5-S2', kind='success')
 f.edge(delc, removed)
 
-cta = f.node(S + 330, 610, 'Edit MV / Create MV', '/mv/edit or /mv/room or /mv/storyboard · P6-S1..S2 (area 02, S3)', kind='aside')
+cta = f.node(S + 330, 620, 'Edit MV / Create MV', '/mv/edit or /mv/room or /mv/storyboard · P6-S1..S2 (area 02, S3)', kind='aside')
 f.elbow(menu, cta, 'CTA row', kind='deferred', out='right', into='left', gap=90)
 
-f.legend(1000)
+# ══ Part 7 — the two ?demo=1 states ═════════════════════════════════════════
+f.section(1150, 'Part 7 — ?demo=1 states  ·  P7')
+
+demo = f.node(30, 1180, '/history?demo=1', 'Neither state is reachable from the seed · P7', w=280, kind='entry')
+empty = f.node(400, 1180, 'historyEmpty — a card per filter',
+               'Tabs and the Trending rail survive · P7-S1', w=300, kind='error')
+f.edge(demo, empty, side='h')
+loading = f.node(780, 1180, 'historyLoading — three-dot animation',
+                 'Filter tabs HIDDEN while it runs · P7-S2', w=320, kind='info')
+f.edge(empty, loading, side='h')
+
+f.legend(1300)
 f.write(os.path.join(HERE, 'user-flowchart.svg'))
 print('Wrote', os.path.join(HERE, 'user-flowchart.svg'))
 if f.warnings:

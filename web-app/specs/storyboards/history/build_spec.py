@@ -67,8 +67,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'History (My Creations)',
     'breadcrumb': 'YouCam Muse Web &rarr; History',
-    'author': 'Jason Chen', 'date': '2026-08-27', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
+    'version': 'v2',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -373,6 +373,38 @@ cfg = {
                     'limits': [
                         ('On a storyboard row the same action routes to /mv/storyboard?id=&hellip; instead of /mv/room.', 'Song has no existing storyboard to reopen; storyboard does.'),
                         ('A storyboard row also exposes this action as a cover pill (HIST-05), not just in the menu.', 'Visible on Starlight in Your Eyes in every earlier screenshot that includes it, e.g. P1-S1.'),
+                    ],
+                },
+            ],
+        },
+        {
+            'id': 'p7-demo-states', 'num': 7,
+            'name': 'The two ?demo=1 states',
+            'desc': 'Empty and slow-load &mdash; neither is reachable in a seeded prototype, so both are switches on the QA panel.',
+            'entry': '/history?demo=1', 'outcome': 'The screen renders a state the seed can never produce',
+            'steps': [
+                {
+                    'shot': '27_demo_history_empty.png', 'num': 1,
+                    'user': 'Turns on &ldquo;History &mdash; no records&rdquo;.',
+                    'system': 'Every filter renders its own empty card; the All tab offers a Start Creating shortcut.',
+                    'exact': [
+                        'Title: &ldquo;Your creations will appear here&rdquo;',
+                        'Subtitle: &ldquo;Start making AI music or music videos and they&rsquo;ll all show up in one place.&rdquo;',
+                        'CTA: &ldquo;Start Creating&rdquo;',
+                    ],
+                    'limits': [
+                        ('Each of the four filters has its OWN title, subtitle and CTA.', 'Music Videos, Songs and Liked carry different copy and a different shortcut &mdash; P1-S5 shows the Liked one reached organically, by emptying the filter rather than by a flag.'),
+                        ('The filter tabs and the Trending rail below both SURVIVE.', 'Only the list empties. A state that blanked the whole screen would be a different bug.'),
+                        ('The panel stays on screen, collapsed.', 'That is how a tester knows which switch produced the state; dismissing it with `[x]` would clear every flag as it closed.'),
+                    ],
+                },
+                {
+                    'shot': '28_demo_history_loading.png', 'num': 2,
+                    'user': 'Turns on &ldquo;History &mdash; slow load&rdquo;.',
+                    'system': 'A three-dot animation replaces the list, and the filter tabs are hidden while it runs.',
+                    'limits': [
+                        ('The tabs are HIDDEN, not disabled.', 'Nothing is filterable before the rows exist, so the control is withdrawn rather than left inert.'),
+                        ('The mock resolves instantly, so this state has no organic trigger.', 'It exists because a real backend will have one &mdash; the flag is the only way to review it before then.'),
                     ],
                 },
             ],

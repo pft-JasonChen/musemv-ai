@@ -149,6 +149,45 @@ was a false positive, because a path called "Browse the FAQ tab" is drawn as
 "FAQ" and no amount of threshold tuning fixes that. Coverage is a review
 question, which is what the stamp buys you.
 
+## Geometry is checked too — and it is the half that actually broke
+
+`flowchart_lib` draws exactly where it is told. `node(x, y, …)` takes the LEFT
+edge; `decision(cx, cy, …)` takes the CENTRE and **widens itself to fit its own
+label**, so a box you placed beside a diamond can end up underneath it after
+you edit the diamond's text; `legend(y)` needs 20px of clear canvas per edge
+kind BELOW y; and an explicit `height=` used to be a hard cap. None of that can
+fail — the SVG is always well-formed XML, and `validate()` only reads its
+`<text>`. So a diagram whose boxes overlap, whose labels sit on top of each
+other, or whose bottom third is simply not in the file builds green and ships.
+
+Measured 2026-09-02 across the 9 storyboard diagrams: **7 were broken**, 73
+findings. `profile-account` was the worst — it declared `height=1200` while
+drawing to y=1873, so two whole paths and the legend were outside the canvas.
+Nobody had looked at the pictures.
+
+Two gates now exist, and you want both:
+
+| Gate | When | What it sees |
+|---|---|---|
+| `Flow.check()`, run by `write()` | every `python3 make_flowchart.py` | ESTIMATED geometry from font metrics. Refuses to write the file. |
+| `python3 skills/yco-spec/check_flowchart.py [--strict] <dir>` | before you stamp | REAL geometry — renders each SVG in headless Chromium and reads `getBoundingClientRect()`. |
+
+The first one fails fast where a mistake is cheapest to fix; the second one is
+the truth, because text width depends on the font actually rendering. Neither
+checks edge ROUTING — a connector can still cross a box, and only looking at
+the picture catches that.
+
+**Prefer bands to a spine when the paths are parallel.** Five of the seven
+broken diagrams said some version of "N branches hang off ONE entry point" in
+their own layout note. That is the shape that breaks: N edges leave the same
+port down the same x, each drawn through whatever sits between it and its
+target. If a visit touches whichever paths it touches rather than walking them
+in order, give each path its own `section()` band, read left to right, and say
+once in a note that they all start from the same screen. Cross-band jumps are a
+short local node ("→ Part 1: SubscribeModal"), never a long line back up the
+page. `share`, `explore-community`, `mv-edit`, `profile-account`, `credits-iap`
+and `shell-auth` are all built that way.
+
 ## Review checklist
 
 Before you touch the stamp, walk the diagram against `cfg['paths']`:
@@ -162,3 +201,5 @@ Before you touch the stamp, walk the diagram against `cfg['paths']`:
       it here rather than in a stack trace).
 - [ ] Retired behaviour is gone from the canvas, not struck through.
 - [ ] Stamp matches `cfg['version']`.
+- [ ] `check_flowchart.py` reports 0 findings — and you have LOOKED at the
+      rendered picture, because neither gate sees edge routing.

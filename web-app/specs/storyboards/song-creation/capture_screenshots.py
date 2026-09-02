@@ -61,7 +61,7 @@ _SHARED = os.path.expanduser("~/Library/Caches/ms-playwright")
 if "PLAYWRIGHT_BROWSERS_PATH" not in os.environ and os.path.isdir(_SHARED):
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _SHARED
 
-from capture_lib import Capture  # noqa: E402
+from capture_lib import Capture, chromium_path  # noqa: E402
 from playwright.async_api import async_playwright  # noqa: E402
 
 VIEWPORT = (1403, 697)
@@ -116,6 +116,7 @@ class NextCapture(Capture):
         os.makedirs(self.save_dir, exist_ok=True)
         self._pw = await async_playwright().start()
         self._browser = await self._pw.chromium.launch(
+            executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
             viewport=self.viewport, device_scale_factor=1)

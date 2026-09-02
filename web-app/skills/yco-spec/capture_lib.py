@@ -43,6 +43,7 @@ Design notes:
   coordinate space as the element screenshot — matching spec_builder's contract.
 """
 import asyncio
+import glob
 import json
 import os
 import socket
@@ -88,6 +89,33 @@ def write_review_copy(png_path):
 # Browser cache must be set BEFORE importing playwright.
 os.environ.setdefault('PLAYWRIGHT_BROWSERS_PATH',
                       os.path.join(ROOT, '.tools', 'ms-playwright'))
+
+
+def chromium_path():
+    """The browser binary that actually EXISTS, or None to let Playwright pick.
+
+    Playwright launches the build its own version pins — `chromium-1234` here —
+    and a sandboxed image ships whatever build it ships (`chromium-1194`). The
+    mismatch fails with "Executable doesn't exist" and an instruction to run
+    `playwright install`, which is the wrong move: the browser IS present, just
+    under a different build number, and a download would pull ~150 MB into the
+    tree. `AGENTS.md` documents `CHROMIUM_PATH` as the escape hatch; this
+    resolves it automatically so a capture script does not have to.
+
+    Three capture scripts had grown their own identical copy of this helper and
+    two had not, so re-running those two failed with a message that reads like a
+    broken install. Resolve it once, here, where every `Capture` gets it.
+    """
+    env = os.environ.get('CHROMIUM_PATH')
+    if env and os.path.exists(env):
+        return env
+    for pat in ('/opt/pw-browsers/chromium-*/chrome-linux/chrome',
+                '/opt/pw-browsers/chromium_headless_shell-*/'
+                'chrome-headless-shell-linux64/chrome-headless-shell'):
+        hits = sorted(glob.glob(pat))
+        if hits:
+            return hits[-1]
+    return None
 
 # ── ARM64 Linux sandbox workaround: stub libXdamage.so.1 if missing ──────────
 _STUB_SRC = '''\
@@ -167,8 +195,16 @@ class Capture:
             except OSError:
                 time.sleep(0.2)
         self._pw = await async_playwright().start()
-        self._browser = await self._pw.chromium.launch(
-            channel='chromium', args=['--no-sandbox', '--disable-dev-shm-usage'])
+        # `channel='chromium'` only when no explicit binary was resolved: the
+        # two are mutually exclusive, and an explicit path is the one that
+        # survives a build-number mismatch.
+        exe = chromium_path()
+        launch = {'args': ['--no-sandbox', '--disable-dev-shm-usage']}
+        if exe:
+            launch['executable_path'] = exe
+        else:
+            launch['channel'] = 'chromium'
+        self._browser = await self._pw.chromium.launch(**launch)
         self.page = await self._browser.new_page(viewport=self.viewport)
         self.page.on('console',
                      lambda m: self.errors.append(m.text) if m.type == 'error' else None)

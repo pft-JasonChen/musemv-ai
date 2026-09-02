@@ -20,3 +20,8 @@ tsconfig.tsbuildinfo
 .playwright-mcp/
 # yco-spec downscaled review copies (regenerated on every capture; PNG is canonical)
 specs/storyboards/**/screenshots/_review/
+
+# Capture fixtures — generated on demand by each storyboard capture script
+# (deterministically seeded), never edited by hand. One is a 6 MB JPEG whose
+# only job is to exceed the 5 MB attachment cap.
+specs/storyboards/*/_fixtures/

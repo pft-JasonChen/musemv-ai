@@ -27,7 +27,7 @@
     {
       "box": [
         1.1,
-        33.0,
+        33.2,
         14.8,
         5.9
       ],
@@ -50,7 +50,7 @@
   "08_header_login_click.png": [
     {
       "box": [
-        91.5,
+        90.4,
         1.5,
         4.2,
         3.0
@@ -62,7 +62,7 @@
   "09_header_signin_success.png": [
     {
       "box": [
-        82.0,
+        81.0,
         1.5,
         6.1,
         3.1
@@ -74,7 +74,7 @@
   "15_settings_signout_click.png": [
     {
       "box": [
-        37.2,
+        36.6,
         51.1,
         42.8,
         8.6
@@ -86,7 +86,7 @@
   "16_signout_home_guest.png": [
     {
       "box": [
-        82.2,
+        81.1,
         1.0,
         4.2,
         1.8
@@ -119,10 +119,42 @@
       "label": "Reset to Free plan"
     }
   ],
+  "25_footer_guest.png": [
+    {
+      "box": [
+        66.0,
+        69.3,
+        8.4,
+        2.2
+      ],
+      "type": "action",
+      "label": "Music Video Creator"
+    },
+    {
+      "box": [
+        87.7,
+        78.2,
+        7.0,
+        2.2
+      ],
+      "type": "action",
+      "label": "Contact"
+    },
+    {
+      "box": [
+        78.9,
+        69.3,
+        4.2,
+        2.2
+      ],
+      "type": "info",
+      "label": "FAQ"
+    }
+  ],
   "20_mobile_home_chrome.png": [
     {
       "box": [
-        43.6,
+        41.6,
         48.7,
         12.8,
         3.2
@@ -136,7 +168,7 @@
       "box": [
         0.0,
         44.0,
-        100.0,
+        96.0,
         4.0
       ],
       "type": "action",
@@ -146,7 +178,7 @@
   "22_mobile_gated_history_tap.png": [
     {
       "box": [
-        74.1,
+        70.8,
         50.4,
         17.1,
         2.1
@@ -158,10 +190,10 @@
   "24_mobile_history_chrome.png": [
     {
       "box": [
-        88.3,
+        84.3,
         0.6,
         7.5,
-        1.1
+        1.2
       ],
       "type": "action",
       "label": "Account (direct link, no menu)"

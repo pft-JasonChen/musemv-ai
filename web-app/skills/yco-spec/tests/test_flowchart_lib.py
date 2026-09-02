@@ -250,5 +250,88 @@ class TestDocument(unittest.TestCase):
         parseString(f.render())      # raises on malformed output
 
 
+class TestGeometryCheck(unittest.TestCase):
+    """`check()` and the auto-fitting canvas — added 2026-09-02, after seven of
+    the nine storyboard diagrams were measured and found broken.
+
+    Every case here is mutation-tested: the "clean" assertion and the "dirty"
+    assertion sit side by side, so a check that cannot fail would show up as
+    two passing halves that say the same thing.
+    """
+
+    def _flow(self, **kw):
+        return Flow('T', 's', version='v1', date='d', width=600, **kw)
+
+    def test_overlapping_nodes_are_found_and_separated_ones_are_not(self):
+        f = self._flow()
+        f.node(40, 100, 'left')
+        f.node(40, 300, 'right')
+        self.assertEqual(f.check(), [])
+        g = self._flow()
+        g.node(40, 100, 'left')
+        g.node(40, 130, 'right')                      # 20px of vertical overlap
+        self.assertTrue(any('overlap' in m for m in g.check()))
+
+    def test_a_diamond_that_widened_into_its_neighbour_is_found(self):
+        """The failure that broke credits-iap AND profile-account: `decision()`
+        grows to fit its own label, so a box placed beside it at authoring time
+        can end up underneath it."""
+        f = self._flow()
+        f.node(40, 100, 'box')                        # x 40..220 at node_w=180
+        f.decision(420, 125, 'short?')                # hw=92 -> x 328..512
+        self.assertEqual(f.check(), [])
+        g = self._flow()
+        g.node(40, 100, 'box')
+        g.decision(420, 125, 'a decision whose label is very much longer')
+        self.assertTrue(any('overlap' in m for m in g.check()))
+
+    def test_a_node_off_the_canvas_is_found(self):
+        f = self._flow()
+        f.node(-60, 100, 'clipped')                   # mv-creation drew one at x=-60
+        self.assertTrue(any('off the canvas' in m for m in f.check()))
+
+    def test_a_label_lying_on_a_node_is_found(self):
+        f = self._flow()
+        a = f.node(40, 100, 'a')
+        b = f.node(40, 400, 'b')
+        f.edge(a, b, 'plenty of room')
+        self.assertEqual(f.check(), [])
+        g = self._flow()
+        c = g.node(40, 100, 'a')
+        d = g.node(40, 152, 'b')                      # 2px apart: nowhere for a label
+        g.edge(c, d, 'no room at all')
+        self.assertTrue(any(m.startswith('label ') for m in g.check()))
+
+    def test_explicit_height_can_only_grow(self):
+        """profile-account passed height=1200 and drew to 1873, so its bottom
+        third — two whole paths and the legend — was not in the file."""
+        f = self._flow(height=200)
+        f.node(40, 100, 'a')
+        f.legend(600)
+        svg = f.render()
+        h = int(re.search(r'<svg[^>]*height="(\d+)"', svg).group(1))
+        self.assertGreater(h, 600)
+        self.assertTrue(any('too small' in w for w in f.warnings))
+
+    def test_generous_explicit_height_is_honoured(self):
+        f = self._flow(height=2000)
+        f.node(40, 100, 'a')
+        self.assertIn('height="2000"', f.render())
+        self.assertEqual(f.warnings, [])
+
+    def test_write_refuses_a_broken_diagram(self):
+        import tempfile
+        f = self._flow()
+        f.node(40, 100, 'a')
+        f.node(40, 130, 'b')
+        with tempfile.TemporaryDirectory() as d:
+            out = os.path.join(d, 'x.svg')
+            with self.assertRaises(SystemExit):
+                f.write(out)
+            self.assertFalse(os.path.exists(out))     # nothing written
+            f.write(out, strict=False)                # ...unless asked to look
+            self.assertTrue(os.path.exists(out))
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
