@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="2200" viewBox="0 0 1180 2200" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="2440" viewBox="0 0 1180 2440" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
 <title>Shell &amp; Auth &#8212; User Flowchart</title>
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
-<rect width="1180" height="2200" fill="#ffffff"/>
+<rect width="1180" height="2440" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">Shell &amp; Auth &#8212; User Flowchart</text>
-<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1403×697 AND phone 375×812 (D8 exception) &#183; matches spec v1, 2026-08-27</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1403×697 AND phone 375×812 (D8 exception) &#183; matches spec v2, 2026-09-02</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; red = error state &#183; green = success / resolved &#183; blue = system response</text>
 
 <g transform="translate(0,80)">
@@ -124,12 +124,37 @@
 <text x="195" y="1910" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/share…</text>
 <text x="195" y="1928" font-size="12" fill="#5a6b78" text-anchor="middle">No sidebar, no top bar &#183; P7-S1</text>
 <text x="470" y="1915" font-size="12" fill="#5a6b78">The shell draws no chrome at all &#8212; S9 owns everything on that page.</text>
-<line x1="40" y1="1996" x2="1140" y2="1996" stroke="#e5e9ed" stroke-width="1"/>
-<line x1="40" y1="2016" x2="74" y2="2016" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="86" y="2020" font-size="12" fill="#5a6b78">Primary happy path</text>
-<line x1="40" y1="2036" x2="74" y2="2036" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="86" y="2040" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
-<line x1="40" y1="2056" x2="74" y2="2056" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="86" y="2060" font-size="12" fill="#5a6b78">Error branch</text>
+<line x1="40" y1="1968" x2="1140" y2="1968" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1990" font-size="15" font-weight="700" fill="#0c1c22">Part 8 &#8212; The marketing footer  &#183;  P8</text>
+<rect x="40" y="2020" width="310" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="195" y="2040" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Footer, on / only</text>
+<text x="195" y="2058" font-size="12" fill="#5a6b78" text-anchor="middle">Three sitemap columns &#183; P8-S1</text>
+<rect x="470" y="2020" width="310" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="625" y="2040" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Studio &#8594; /mv/room, /song/create</text>
+<text x="625" y="2058" font-size="12" fill="#5a6b78" text-anchor="middle">Locale-prefixed, not auth-gated &#183; P8-S1</text>
+<text x="625" y="2073" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-SHELL-10)</text>
+<line x1="350" y1="2045" x2="470" y2="2052.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="830" y="2020" width="310" height="50" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="985" y="2040" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">FAQ &#183; Terms &#183; Privacy still href=&quot;#&quot;</text>
+<text x="985" y="2058" font-size="12" fill="#5a6b78" text-anchor="middle">Need URLs, not a route decision &#183; A29</text>
+<line x1="780" y1="2052.5" x2="830" y2="2045" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="40" y="2130" width="310" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="195" y="2150" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Contact &#8212; a button, not a link</text>
+<text x="195" y="2168" font-size="12" fill="#5a6b78" text-anchor="middle">P8-S2 (AC-SHELL-09)</text>
+<rect x="470" y="2130" width="310" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="625" y="2150" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Logged out &#8594; SignInModal first</text>
+<text x="625" y="2168" font-size="12" fill="#5a6b78" text-anchor="middle">requireLogin queues the form &#183; P8-S2</text>
+<line x1="350" y1="2155" x2="470" y2="2155" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="830" y="2130" width="310" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="985" y="2150" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Then Send Feedback opens</text>
+<text x="985" y="2168" font-size="12" fill="#5a6b78" text-anchor="middle">Fields are area 06&#8217;s &#183; P8-S3</text>
+<line x1="780" y1="2155" x2="830" y2="2155" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="2236" x2="1140" y2="2236" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="2256" x2="74" y2="2256" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="2260" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="2276" x2="74" y2="2276" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="2280" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+<line x1="40" y1="2296" x2="74" y2="2296" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="2300" font-size="12" fill="#5a6b78">Error branch</text>
 </g>
 </svg>

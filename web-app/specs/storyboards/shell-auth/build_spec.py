@@ -104,8 +104,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Shell & Auth',
     'breadcrumb': 'YouCam Muse Web &rarr; Shell &amp; Auth',
-    'author': 'Jason Chen', 'date': '2026-08-27', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
+    'version': 'v2',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -416,6 +416,53 @@ cfg = {
                 },
             ],
         },
+        {
+            'id': 'p8-marketing-footer', 'num': 8,
+            'name': 'The marketing footer',
+            'desc': 'The `/`-only sitemap: two links that navigate, three placeholders that do not, and one control that is gated behind sign-in.',
+            'entry': '/ , scrolled to the bottom', 'outcome': 'Studio navigates; Contact opens Sign in first, then the feedback form',
+            'steps': [
+                {
+                    'shot': '25_footer_guest.png', 'num': 1,
+                    'user': 'Scrolls to the footer, logged out.',
+                    'system': 'Three sitemap columns render. The links differ in KIND, not just destination.',
+                    'exact': [
+                        'Columns: &ldquo;Studio&rdquo;, &ldquo;Support&rdquo;, &ldquo;Company&rdquo;',
+                        'Studio: &ldquo;Music Video Creator&rdquo;, &ldquo;Song Composer&rdquo;',
+                        'Support: &ldquo;FAQ&rdquo;',
+                        'Company: &ldquo;Terms of Service&rdquo;, &ldquo;Privacy Policy&rdquo;, &ldquo;Contact&rdquo;',
+                    ],
+                    'limits': [
+                        ('Studio&rsquo;s two links NAVIGATE, and carry the active locale prefix.',
+                         'Product owner, 2026-09-02: Music Video Creator &rarr; `/mv/room`, Song Composer &rarr; `/song/create`. Both were `href="#"` until then &mdash; they were the only footer entries whose destination was a ROUTING question rather than a missing URL, since both targets already existed. They go through `next/link` + `localePath()` (R-9): DP writes its footer as `&lt;a href="/&hellip;"&gt;`, which drops the locale prefix and looks perfect in English while being broken in the other eight locales.'),
+                        ('FAQ, Terms of Service and Privacy Policy are still `href="#"`.',
+                         'They need real URLs, not a routing decision &mdash; `DESIGNER-TODO` A29, still open. `BuyCreditsModal` carries the same pair, which A29 does not count.'),
+                        ('Neither Studio target is auth-gated.', 'A guest reaches the full compose screen; the gate is at the ACTION inside it (`AC-AUTH-08`).'),
+                    ],
+                },
+                {
+                    'shot': '26_footer_contact_guest_gate.png', 'num': 2,
+                    'user': 'Clicks Contact while logged out.',
+                    'system': 'Opens SignInModal, NOT the feedback form.',
+                    'exact': ['Title: &ldquo;Sign in to YouCam Muse&rdquo;'],
+                    'limits': [
+                        ('Contact is a `&lt;button&gt;`, not an `&lt;a href="#"&gt;`.', 'It opens a dialog rather than navigating, so it is the one Company entry that is not a placeholder.'),
+                        ('`requireLogin` queues the form, so a successful sign-in opens it immediately.',
+                         'Dismissing the sign-in dialog leaves the form unopened &mdash; no `onCancel` is passed, matching P2-S2&rsquo;s dismiss-and-stay.'),
+                    ],
+                },
+                {
+                    'shot': '27_footer_contact_feedback.png', 'num': 3,
+                    'user': 'Signs in, then clicks Contact.',
+                    'system': 'FeedbackDialog opens directly, with Email pre-filled from the session.',
+                    'exact': ['Title: &ldquo;Send Feedback&rdquo;'],
+                    'limits': [
+                        ('The gate is what closed `TBD-SHELL-01`.', 'Ungated, a visitor saw the signed-out placeholder email pre-filled in a support form. Behind sign-in that state is unreachable.'),
+                        ('Fields, validation and submit states belong to area 06.', 'S7 covers them under `AC-PROF-10`&ndash;`AC-PROF-16`.'),
+                    ],
+                },
+            ],
+        },
     ],
 
     # ── reference sections ───────────────────────────────────────────────────
@@ -476,6 +523,8 @@ cfg = {
         ('AC-SHELL-05', 'Logged in: the credits pill; an additional Upgrade button while not subscribed.', ['P3-S2', 'P1-S4']),
         ('AC-SHELL-06', 'RETIRED 2026-08-27 (D-10): the account dropdown it described is deleted, so there is nothing left to assert. Its destinations are covered by AC-SHELL-05 (credits/Upgrade), AC-AUTH-05 (Sign Out, Settings-only) and area 06 (Send Feedback).', ['P5-S3'], 'Kept as a trace target rather than renumbered. P5-S3 remains the evidence: it sweeps five routes for an account menu and finds none.'),
         ('AC-SHELL-07', '/share renders bare, no sidebar/top bar.', ['P7-S1']),
+        ('AC-SHELL-09', 'Footer Contact opens SignInModal while logged out and FeedbackDialog while logged in; a successful sign-in opens the form immediately.', ['P8-S2', 'P8-S3']),
+        ('AC-SHELL-10', 'The footer&rsquo;s Studio links navigate to /mv/room and /song/create under the active locale prefix; FAQ / Terms of Service / Privacy Policy remain placeholders.', ['P8-S1'], 'Added 2026-09-02 with the routing decision. The three placeholders are asserted too, so this criterion also fails if someone invents URLs for them ahead of A29.'),
         ('AC-SHELL-08', 'Renders at all six widths with no overflow.', [], 'Visual-only; six-width sweep is e2e/visual-baseline.spec.ts&rsquo;s job, not this per-path storyboard (D8: this spec captures 1403&times;697 and 375&times;812 only).'),
         ('AC-AUTH-01', 'A guarded route entered logged out renders no content and opens SignInModal.', ['P4-S1']),
         ('AC-AUTH-08', '/mv/room and /song/create render their full compose screen for a guest with no auto-modal; the gate is action-level inside them.', ['P3-S1'], 'Only the &ldquo;renders fully, no auto-gate&rdquo; half is this spec&rsquo;s to show; the action-level gate itself is area 02/03&rsquo;s territory (S2/S3).'),
@@ -551,6 +600,9 @@ cfg = {
         os.path.join(WEB_APP, 'src', 'components', 'auth', 'AuthGuard.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'auth', 'SignInModal.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'home', 'Navbar.tsx'),
+        # P8's sitemap copy lives in the footer, which is a separate `/`-only
+        # marketing component from the Navbar beside it.
+        os.path.join(WEB_APP, 'src', 'components', 'home', 'Footer.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'profile', 'SettingsView.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'credits', 'SubscribeModal.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'credits', 'BuyCreditsModal.tsx'),

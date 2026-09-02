@@ -5,16 +5,20 @@
 > 標了四個「需補」,那四個**到今天都還沒補**,而且當天稍晚的程式碼改動又讓第五份過期。
 > 這份的每一條都經過**實測**(跑 gate、grep 程式碼、開截圖看),不是讀文件。
 
+> **同日更新(2026-09-02 稍晚):第 2 節的五份已全部補完**,另外在補的過程中發現並修掉一個
+> **P0** —— `/profile` 的頭像裁切對話框開在 Edit Profile 之下,整個功能點不到(§2.1)。
+> 第 4 節的 footer Studio 兩條連結也已接上。
+
 ---
 
 ## 0. 一句話結論
 
-**程式碼可以交,QA 的 storyboard spec 還不能當 final。**
+**程式碼可以交;storyboard spec 已於同日補齊,現在也可以交。**
 
 | 交付物                       | 狀態                                             |
 | ---------------------------- | ------------------------------------------------ |
 | 程式碼 + 12 份 area spec     | ✅ 可以交 —— 但 RD 會被 3 個**契約缺口**擋住實作 |
-| 10 份 storyboard spec(給 QA) | 🟠 **5 份與現況不符**,QA 會照著錯的截圖測        |
+| 10 份 storyboard spec(給 QA) | ✅ **五份已補完**(2026-09-02),lint 全綠        |
 | 15 張 flow diagram           | ✅ 2026-09-02 全部重畫並加上幾何 gate,0 findings |
 
 ---
@@ -35,7 +39,7 @@
 
 ---
 
-## 2. 🟠 交 QA 前必補 —— 5 份 storyboard spec 與程式碼不符
+## 2. ✅ 已補完 —— 5 份 storyboard spec 與程式碼不符(2026-09-02 修好)
 
 這是本次掃描**新發現**的。`518bc71`(2026-09-02)那一輪改了六處產品行為,但只有
 `song-creation` 重拍了截圖,而它連截圖都拍到舊狀態。
@@ -44,12 +48,36 @@
 | ------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | **S1 `song-creation`**   | v2, 2026-08-25 | **截圖裡 GENRE `Pop` / MOOD `Uplifting` 是選中的**,程式碼 `DEFAULT_SONG_COMPOSE` 已改成 `""` / `""`(產品負責人 2026-09-01 第二次裁示)。spec 文字還寫「They start non-empty」。實測 `06_custom_empty.png` 兩顆 chip 都有紫色選取框。 | 🔴 QA 會照錯的截圖測      |
 | **S7 `profile-account`** | v1, 2026-08-31 | spec 說 Change Photo 是「a mock _Change Photo_ cycle」。程式碼已改成**真的 `<input type="file">` + 圓形裁切**(`FacePickerModal variant="avatar"`,192×192 正圓)。                                                                    | 🔴 描述的是已被取代的行為 |
-| **S2 `mv-creation`**     | v1, 2026-08-27 | 缺兩項:①「上傳不到 30 秒的音檔會在**上傳當下**跳 toast」(`Audio must be at least 30 seconds.`);② `/mv/creating` 的 render 進度畫面(Encoding video… / Estimated time remaining / **View Later**)。                                   | 🟠 少了兩條可測行為       |
+| **S2 `mv-creation`**     | v1, 2026-08-27 | 缺「上傳不到 30 秒的音檔會在**上傳當下**跳 toast」(`Audio must be at least 30 seconds.`)。⚠️ **本節第一版還說「缺 `/mv/creating` 的 render 進度畫面」—— 那是錯的。** 那一步(P1-S13,截圖 `13_mv_creating_progress.png`)一直都在,只是沒把 `Estimated time remaining` 與 `View Later` 寫進 exact。我當時 grep spec.html 找不到「Encoding video」就下了結論,沒有讀那一步。已補上兩個字串。                                   | 🟠 少了兩條可測行為       |
 | **S6 `shell-auth`**      | v1, 2026-08-27 | 缺 Footer **Contact 的登入閘** —— 登出點擊開 Sign in dialog,登入後才開 Send Feedback。                                                                                                                                              | 🟠 少了一條可測行為       |
 | **S4 `history`**         | v1, 2026-08-27 | 缺 `historyEmpty` / `historyLoading` 兩個 `?demo=1` 狀態。目前只有「篩選後沒東西」的空狀態(P1-S5)。                                                                                                                                 | 🟠 少了兩個可測狀態       |
 
-**補法:** S1 / S7 需要**重拍截圖 + 改 spec 文字**;S2 / S4 / S6 是**加 path/step**(各 2 shots 左右)。
-全部都要重跑 `build_spec.py` + `lint_spec.py`。
+**已完成(2026-09-02):**
+
+| Spec | 做了什麼 | 現在 |
+| --- | --- | --- |
+| **S1** | 重跑 `capture_screenshots.py`(14 張重拍),改寫 STYLE 預設值那條規則 | v3 · 7 paths / 32 shots · lint 5(既有 advisory) |
+| **S7** | 新增 `33_avatar_crop_circular.png` 與一個新 step,改寫「mock cycle」敘述 | v2 · 6 paths / 23 shots · lint 0 |
+| **S2** | 新增 `44_import_reject_too_short.png` 為 P4-S5,補 `/mv/creating` 的兩個字串,`AC-MV-16` 擴寫 | v2 · 8 paths / 44 shots · lint 0 |
+| **S6** | 新增 **P8「The marketing footer」**(3 shots):Studio 連結、Contact 登入閘 | v2 · 8 paths / 27 shots · lint 0 |
+| **S4** | 新增 **P7「The two ?demo=1 states」**(2 shots) | v2 · 7 paths / 27 shots · lint 0 |
+
+### 2.1 🔴 補的過程中發現一個 P0:頭像裁切對話框點不到
+
+`.face-picker-overlay` 在 gated 的 `MVCreatePage.css` 裡是 `z-index: 1200` —— 那在它只從
+`/mv/room` 的頁面本體打開時是對的。`/profile` 是**從 Edit Profile 對話框裡面**打開它,而那個
+對話框是 `z-[1300]`,所以**裁切畫面被開它的那張 modal 蓋住**。
+
+實測 1403×697:在裁切對話框自己的正中央做 `elementFromPoint`,回傳的是 Edit Profile 的
+`<input>`;截圖裡「Edit Profile Picture」只是一條糊在不透明卡片後面的殘影。
+
+**這不是難看,是點不到** —— 使用者按 Change Photo、選檔案,然後看起來什麼都沒發生。它就是
+這樣在 2026-09-02 上線的,而且被回報為「已完成並實測」,因為那次檢查是**讀 DOM**(圓形框
+確實是 192×192),不是**看畫面**。這正是 `AGENTS.md` 自己警告過的失敗模式。
+
+修法:`designer-overrides.css` 把 `.face-picker-overlay` 提到 `z-index: 1400`(全站最上層是
+`z-[1300]`)。這個 picker 永遠是「從別的東西裡打開」的,所以它開著的時候在最上層是無條件正確的。
+由 `e2e/behaviour-regressions.spec.ts` 守住,雙向 mutation 測過。
 
 ---
 
@@ -67,21 +95,22 @@
 
 ## 4. 🟡 PM 待拍板 —— 含 footer link
 
-### 4.1 Footer 死連結(`DESIGNER-TODO` A29)—— 實測 5 條
+### 4.1 Footer 死連結(`DESIGNER-TODO` A29)—— 剩 5 個目的地待給網址
 
 `src/components/home/Footer.tsx` 目前:
 
 | 欄位        | 連結                                | 狀態                                                                               |
 | ----------- | ----------------------------------- | ---------------------------------------------------------------------------------- |
-| **Studio**  | Music Video Creator · Song Composer | `href="#"` —— **要拍板指向站內哪裡**(推測 `/mv/room`、`/song/create`,但沒人拍板過) |
+| **Studio**  | Music Video Creator · Song Composer | ✅ **2026-09-02 已接上** —— `/mv/room` / `/song/create`,走 `next/link` + `localePath()`,`AC-SHELL-10` 守住 |
 | **Support** | FAQ                                 | `href="#"` —— 刻意留的佔位,**等真實網址**                                          |
 | **Company** | Terms of Service · Privacy Policy   | `href="#"` —— **等真實網址**                                                       |
 | **Company** | Contact                             | ✅ 已改為登入閘,不是死連結                                                         |
 
 > ⚠️ **A29 漏算了 2 條。** `BuyCreditsModal.tsx:220,222` 底部還有 **Terms of Use** 與
 > **Privacy Policy** 兩條 `href="#"`,和 footer 的是同一個問題(同一批網址),但 A29 沒有列進去。
-> 拍板網址時請一起給,**共 5 個目的地**:FAQ、Terms of Service、Privacy Policy、Terms of Use、
-> 以及 Studio 兩條的站內目標。
+> 拍板網址時請一起給。Studio 那兩條已於 2026-09-02 接上 —— 它們缺的是**路由決定**,不是外部
+> 網址 —— 所以現在缺的是 **5 個真實網址**:FAQ、Terms of Service、Privacy Policy(footer),
+> 以及 Terms of Use、Privacy Policy(`BuyCreditsModal`)。
 
 ### 4.2 各 spec 掛著的 open question
 
@@ -119,9 +148,9 @@ App)· `TBD-SHARE-03` 分享成效追蹤要收哪些欄位(BA 定義,前端刻�
 
 ---
 
-## 6. 建議的交接順序
+## 6. 交接順序 —— 第 1 項已完成
 
-1. **補第 2 節的 5 份 storyboard spec** —— 這是唯一會讓 QA 測錯的東西,也是最快能做完的(S1 / S7 重拍,S2 / S4 / S6 加 step)。
-2. **重建 `specs/index.html`,把 10 份 storyboard spec 加進去** —— QA 需要一個入口。
+1. ✅ ~~補第 2 節的 5 份 storyboard spec~~ —— **2026-09-02 完成**,並順手修掉一個 P0(§2.1)。
+2. **重建 `specs/index.html`,把 10 份 storyboard spec 加進去** —— QA 需要一個入口。這台機器缺 `markdown` 套件,需要 `pip install markdown` 才能重建。
 3. **更新 `OPEN-QUESTIONS.md` 到 09-02 的現況** —— 否則 RD 會去追已經結案的題。
-4. 以上三項完成後,**程式碼與 spec 可以交**;第 3 節的三個契約缺口與第 4 節的拍板事項**平行進行**,不必等。
+4. 剩下兩項不擋交接:**程式碼與 spec 現在可以交**;第 3 節的三個契約缺口與第 4 節的拍板事項**平行進行**。

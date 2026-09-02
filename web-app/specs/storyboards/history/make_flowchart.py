@@ -21,8 +21,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v1'
-DATE = '2026-08-27'
+VERSION = 'v2'
+DATE = '2026-09-02'
 
 f = Flow('History (My Creations)', 'YouCam Muse Web — desktop 1440',
           version=VERSION, date=DATE, width=1140)
@@ -81,7 +81,18 @@ f.edge(delc, removed)
 cta = f.node(S + 330, 620, 'Edit MV / Create MV', '/mv/edit or /mv/room or /mv/storyboard · P6-S1..S2 (area 02, S3)', kind='aside')
 f.elbow(menu, cta, 'CTA row', kind='deferred', out='right', into='left', gap=90)
 
-f.legend(1080)
+# ══ Part 7 — the two ?demo=1 states ═════════════════════════════════════════
+f.section(1150, 'Part 7 — ?demo=1 states  ·  P7')
+
+demo = f.node(30, 1180, '/history?demo=1', 'Neither state is reachable from the seed · P7', w=280, kind='entry')
+empty = f.node(400, 1180, 'historyEmpty — a card per filter',
+               'Tabs and the Trending rail survive · P7-S1', w=300, kind='error')
+f.edge(demo, empty, side='h')
+loading = f.node(780, 1180, 'historyLoading — three-dot animation',
+                 'Filter tabs HIDDEN while it runs · P7-S2', w=320, kind='info')
+f.edge(empty, loading, side='h')
+
+f.legend(1300)
 f.write(os.path.join(HERE, 'user-flowchart.svg'))
 print('Wrote', os.path.join(HERE, 'user-flowchart.svg'))
 if f.warnings:

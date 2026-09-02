@@ -34,8 +34,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v1'
-DATE = '2026-08-27'
+VERSION = 'v2'
+DATE = '2026-09-02'
 MARGIN = 40
 COL_A, COL_B, COL_C = 40, 470, 830
 NW = 310
@@ -133,7 +133,25 @@ f.section(1860, 'Part 7 — A path that starts /share  ·  P7')
 bare = f.node(COL_A, 1890, '/share…', 'No sidebar, no top bar · P7-S1', w=NW, kind='aside')
 f.note(COL_B, 1915, 'The shell draws no chrome at all — S9 owns everything on that page.')
 
-f.legend(2020)
+# ══ Part 8 — the marketing footer ═══════════════════════════════════════════
+f.section(1990, 'Part 8 — The marketing footer  ·  P8')
+
+footer = f.node(COL_A, 2020, 'Footer, on / only', 'Three sitemap columns · P8-S1', w=NW, kind='entry')
+studio = f.node(COL_B, 2020, 'Studio → /mv/room, /song/create',
+                'Locale-prefixed, not auth-gated · P8-S1 (AC-SHELL-10)', w=NW, kind='success')
+f.edge(footer, studio, side='h')
+dead = f.node(COL_C, 2020, 'FAQ · Terms · Privacy still href="#"',
+              'Need URLs, not a route decision · A29', w=NW, kind='aside')
+f.edge(studio, dead, side='h')
+
+contact = f.node(COL_A, 2130, 'Contact — a button, not a link', 'P8-S2 (AC-SHELL-09)', w=NW)
+gate = f.node(COL_B, 2130, 'Logged out → SignInModal first',
+              'requireLogin queues the form · P8-S2', w=NW, kind='error')
+f.edge(contact, gate, side='h')
+form = f.node(COL_C, 2130, 'Then Send Feedback opens', 'Fields are area 06’s · P8-S3', w=NW, kind='success')
+f.edge(gate, form, side='h')
+
+f.legend(2260)
 f.write(os.path.join(HERE, 'user-flowchart.svg'))
 print('Wrote', os.path.join(HERE, 'user-flowchart.svg'))
 if f.warnings:

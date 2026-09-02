@@ -74,8 +74,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Profile, Account &amp; Settings',
     'breadcrumb': 'YouCam Muse Web &rarr; Profile, Account &amp; Settings',
-    'author': 'Jason Chen', 'date': '2026-08-31', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
+    'version': 'v2',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -144,7 +144,7 @@ cfg = {
         {
             'id': 'p2-edit-profile', 'num': 2,
             'name': 'Edit profile',
-            'desc': 'The inline Edit-Profile modal: a mock &ldquo;Change Photo&rdquo; cycle, an editable name, a read-only email, and Save committing both in-memory.',
+            'desc': 'The inline Edit-Profile modal: a real photo upload with a circular crop, an editable name, a read-only email, and Save committing both in-memory.',
             'entry': 'Edit control on the identity block', 'outcome': 'Name/avatar update in the hub and the sidebar footer; no toast on the destination, a toast on this screen',
             'steps': [
                 {
@@ -156,17 +156,35 @@ cfg = {
                     'focus': [{'box': [46.5, 41.2, 5.8, 2.6], 'type': 'action', 'label': 'Change Photo'}],
                 },
                 {
-                    'shot': '04_edit_profile_avatar_name_changed.png', 'num': 2,
-                    'user': 'Clicks &ldquo;Change Photo&rdquo;, then edits Name.',
-                    'system': 'The avatar cycles to the next sample photo; Name accepts up to 30 characters.',
+                    'shot': '33_avatar_crop_circular.png', 'num': 2,
+                    'user': 'Clicks &ldquo;Change Photo&rdquo; and picks an image file.',
+                    'system': 'The Edit Profile Picture dialog opens OVER the Edit Profile modal, showing the whole image with a draggable, resizable CIRCULAR selection.',
+                    'exact': [
+                        'Title: &ldquo;Edit Profile Picture&rdquo;',
+                        'Subtitle: &ldquo;Move and scale the box to select your avatar area.&rdquo;',
+                        'CTA: &ldquo;Set as Profile Picture&rdquo;',
+                        'Slider label: &ldquo;Size&rdquo;',
+                    ],
                     'limits': [
-                        ('&ldquo;Change Photo&rdquo; is a mock cycle, not a real upload.', 'It steps through a fixed `AVATAR_SAMPLES` list &mdash; there is no file picker here (contrast Send Feedback&rsquo;s real attachment picker, P5).'),
+                        ('This is a real file picker, not a sample cycle.', 'It used to step through a fixed `AVATAR_SAMPLES` list. Since 2026-09-02 it is a genuine `&lt;input type="file" accept="image/*"&gt;`, sharing `/mv/room`&rsquo;s Select-a-Face dialog (`FacePickerModal variant="avatar"`) rather than a second crop implementation &mdash; same drag / scale / canvas pipeline, circular frame, avatar copy.'),
+                        ('Rejected before the dialog opens: a non-image, or a file over 10 MB.', 'Both surface as a toast on the Edit Profile modal and the crop dialog never appears. Note this is the AVATAR cap &mdash; Send Feedback&rsquo;s attachment budget is a separate 5 MB cumulative rule (P5-S6).'),
+                        ('The selection is a CIRCLE on any source aspect ratio.', 'Shot against a 4:3 source deliberately: a square source hides the crop-frame aspect bug that shipped 2026-08-14 and was fixed 2026-09-02 (the frame drew two axes of `crop.size`% while `cropToDataUrl` always cut a square, so the framed region was never the saved region). A square test image cannot show that, and did not.'),
+                        ('Nothing is uploaded anywhere.', 'The crop result is a data URL held in `avatarDraft`. A backend has to replace it with an upload and a stored URL &mdash; `TBD-GL-04`.'),
+                    ],
+                    'focus': [{'box': [41.3, 55.1, 17.4, 5.2], 'type': 'action', 'label': 'Set as Profile Picture'}],
+                },
+                {
+                    'shot': '04_edit_profile_avatar_name_changed.png', 'num': 3,
+                    'user': 'Confirms the crop, then edits Name.',
+                    'system': 'The crop dialog closes, the cropped image replaces the avatar in the still-open Edit Profile modal, and Name accepts up to 30 characters.',
+                    'limits': [
+                        ('Confirming the crop does NOT commit it.', 'It only fills the draft &mdash; Save commits, Cancel discards, exactly like the name field. There is no second commit path to reason about.'),
                         'Name is capped at 30 characters (maxLength).',
                     ],
                     'focus': [{'box': [49.9, 72.8, 12.3, 5.6], 'type': 'action', 'label': 'Save'}],
                 },
                 {
-                    'shot': '05_edit_profile_saved_toast.png', 'num': 3,
+                    'shot': '05_edit_profile_saved_toast.png', 'num': 4,
                     'user': 'Clicks Save.',
                     'system': 'updateProfile commits the name/avatar in-memory, the modal closes, and a toast confirms.',
                     'exact': ['Toast: &ldquo;Profile updated&rdquo;'],
@@ -475,7 +493,7 @@ cfg = {
     'criteria': [
         ('AC-PROF-01', 'WHEN /profile loads for a signed-in user, THE SYSTEM SHALL show avatar/name/email (no plan badge) and the Credits/MVs/Songs tiles and row list.', ['P1-S1']),
         ('AC-PROF-02', 'WHEN a stat tile is tapped, THE SYSTEM SHALL navigate to /profile/credits (Credits) or /creator?self=1&amp;tab=mv|songs (MVs/Songs).', ['P1-S1']),
-        ('AC-PROF-03', 'WHEN Edit-Profile is saved, THE SYSTEM SHALL commit name/avatar via updateProfile and reflect them in the shell (in-memory).', ['P2-S1', 'P2-S2', 'P2-S3']),
+        ('AC-PROF-03', 'WHEN Edit-Profile is saved, THE SYSTEM SHALL commit name/avatar via updateProfile and reflect them in the shell (in-memory).', ['P2-S1', 'P2-S2', 'P2-S3', 'P2-S4']),
         ('AC-PROF-04', 'WHEN the Muse Pro row is tapped, THE SYSTEM SHALL open SubscribeModal (not subscribed) or Credits detail (subscribed).', ['P3-S1', 'P3-S2']),
         ('AC-PROF-05', 'WHEN Language is changed, THE SYSTEM SHALL switch locale via setLocale and reflect it in localized surfaces.', ['P3-S3', 'P3-S4']),
         ('AC-PROF-06', 'WHEN Sign Out is invoked (Settings, or the flow S6 owns), THE SYSTEM SHALL clear auth and redirect Home; it SHALL NOT appear on /profile.', ['P1-S2', 'P4-S1']),
@@ -561,6 +579,11 @@ cfg = {
     # ── STRINGS lint source ──────────────────────────────────────────────────
     'prototype_src': [
         os.path.join(WEB_APP, 'src', 'components', 'profile', 'ProfileView.tsx'),
+        # The avatar crop dialog's copy lives here, not in ProfileView: /profile
+        # reuses /mv/room's Select-a-Face dialog through `variant="avatar"`
+        # rather than growing a second crop implementation, and the variant
+        # carries its own title/subtitle/CTA (P2-S2).
+        os.path.join(WEB_APP, 'src', 'components', 'mv', 'FacePickerModal.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'profile', 'SettingsView.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'profile', 'FeedbackDialog.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'ui', 'Modal.tsx'),

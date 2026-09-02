@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1140" height="1240" viewBox="0 0 1140 1240" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1140" height="1460" viewBox="0 0 1140 1460" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
 <title>History (My Creations) &#8212; User Flowchart</title>
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
-<rect width="1140" height="1240" fill="#ffffff"/>
+<rect width="1140" height="1460" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">History (My Creations) &#8212; User Flowchart</text>
-<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v1, 2026-08-27</text>
-<text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; green = success / resolved</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v2, 2026-09-02</text>
+<text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; green = success / resolved &#183; red = error state &#183; blue = system response</text>
 
 <g transform="translate(0,80)">
 <text x="40" y="65" font-size="12" fill="#5a6b78">Filter chips (P1) and the ⋯ menu&#8217;s five row-type variants (P3) are each one decision here &#8212; see the step cards for each variant&#8217;s exact content.</text>
@@ -94,10 +94,23 @@
 <text x="900" y="688" font-size="12" fill="#5a6b78" text-anchor="middle">(area 02, S3)</text>
 <path d="M660 658.5 L735 658.5 L735 660 L810 660" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
 <text x="900" y="612" font-size="11" fill="#5a6b78" text-anchor="middle">CTA row</text>
-<line x1="40" y1="1056" x2="1100" y2="1056" stroke="#e5e9ed" stroke-width="1"/>
-<line x1="40" y1="1076" x2="74" y2="1076" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="86" y="1080" font-size="12" fill="#5a6b78">Primary happy path</text>
-<line x1="40" y1="1096" x2="74" y2="1096" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="86" y="1100" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+<line x1="40" y1="1128" x2="1100" y2="1128" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1150" font-size="15" font-weight="700" fill="#0c1c22">Part 7 &#8212; ?demo=1 states  &#183;  P7</text>
+<rect x="30" y="1180" width="280" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="170" y="1200" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/history?demo=1</text>
+<text x="170" y="1218" font-size="12" fill="#5a6b78" text-anchor="middle">Neither state is reachable from the seed &#183; P7</text>
+<rect x="400" y="1180" width="300" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="550" y="1200" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">historyEmpty &#8212; a card per filter</text>
+<text x="550" y="1218" font-size="12" fill="#5a6b78" text-anchor="middle">Tabs and the Trending rail survive &#183; P7-S1</text>
+<line x1="310" y1="1205" x2="400" y2="1205" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="780" y="1180" width="320" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="940" y="1200" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">historyLoading &#8212; three-dot animation</text>
+<text x="940" y="1218" font-size="12" fill="#5a6b78" text-anchor="middle">Filter tabs HIDDEN while it runs &#183; P7-S2</text>
+<line x1="700" y1="1205" x2="780" y2="1205" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="1276" x2="1100" y2="1276" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="1296" x2="74" y2="1296" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1300" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="1316" x2="74" y2="1316" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="1320" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
 </g>
 </svg>

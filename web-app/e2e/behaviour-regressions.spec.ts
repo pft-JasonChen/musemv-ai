@@ -4197,3 +4197,108 @@ test("2026-09-01: /share's Create pill is neutral and goes home", async ({ page 
     await expect(pill).toHaveAttribute("href", /\/$/);
   }
 });
+
+test("2026-09-02: the footer's Studio links navigate, and keep the locale prefix", async ({
+  page,
+}) => {
+  // Product owner, 2026-09-02: Studio's two entries were the only footer links
+  // whose destination was a ROUTING question rather than a missing URL — both
+  // targets already existed, nobody had decided they were the targets.
+  //
+  // The locale half is the one no manual check would catch. DP writes its
+  // footer as `<a href="/…">`; copied across, that drops the prefix and the
+  // NEXT_LOCALE cookie still lands you on the right page — so it looks
+  // perfect in English and is broken in the other eight locales. Asserting the
+  // prefixed tree is what makes this a real guard rather than a smoke test.
+  await page.goto("/");
+  const studio = page.locator(".footer__column", { hasText: "Studio" });
+  await expect(studio.getByRole("link", { name: "Music Video Creator" })).toHaveAttribute(
+    "href",
+    "/mv/room",
+  );
+  await expect(studio.getByRole("link", { name: "Song Composer" })).toHaveAttribute(
+    "href",
+    "/song/create",
+  );
+
+  await page.goto("/jpn");
+  const jpn = page.locator(".footer__column", { hasText: "Studio" });
+  await expect(jpn.getByRole("link", { name: "Music Video Creator" })).toHaveAttribute(
+    "href",
+    "/jpn/mv/room",
+  );
+
+  // And they really arrive — a guest reaches the compose screen with no
+  // sign-in wall, per AC-AUTH-08.
+  await page.goto("/");
+  await studio.getByRole("link", { name: "Song Composer" }).click();
+  await expect(page).toHaveURL(/\/song\/create$/);
+
+  // The three that are still placeholders MUST stay placeholders: this test
+  // would otherwise pass against a footer where someone quietly invented URLs
+  // for FAQ / Terms of Service / Privacy Policy (DESIGNER-TODO A29).
+  await page.goto("/");
+  for (const label of ["FAQ", "Terms of Service", "Privacy Policy"]) {
+    await expect(page.locator(`.footer__link:text-is("${label}")`)).toHaveAttribute("href", "#");
+  }
+});
+
+test("2026-09-02: the avatar crop dialog opens ON TOP of the Edit Profile modal", async ({
+  page,
+}) => {
+  // It shipped underneath it. `.face-picker-overlay` is `z-index: 1200` in the
+  // gated designer CSS — correct while the picker only opened from /mv/room's
+  // page body — and /profile opens it from inside a `z-[1300]` dialog. The
+  // crop UI rendered behind an opaque modal, so picking a file looked like
+  // nothing happened. The DOM was fine throughout (the circle really was
+  // 192x192), which is why a DOM-only check reported it working.
+  //
+  // Mutation: drop the `.face-picker-overlay { z-index: 1400 }` rule from
+  // designer-overrides.css and the elementFromPoint assertion goes red.
+  await page.addInitScript(() => localStorage.setItem("muse_auth", "1"));
+  await page.goto("/profile");
+  await page.locator('button[aria-label="Edit Profile"]').click();
+  await page.waitForSelector('[role="dialog"][aria-label="Edit Profile"]');
+
+  await page.setInputFiles(
+    '[role="dialog"][aria-label="Edit Profile"] input[type="file"]',
+    // A 4:3 source, not a square one: the crop frame's aspect-ratio bug (fixed
+    // 2026-09-02) is invisible on a square image, which is how it survived
+    // from 2026-08-14.
+    {
+      name: "avatar.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAwCAIAAAD5tBviAAAAJUlEQVRoge3BMQEAAADCoPVP" +
+          "bQwfoAAAAAAAAAAAAAAAAAAAAHgbTGAAAY6l8lgAAAAASUVORK5CYII=",
+        "base64",
+      ),
+    },
+  );
+
+  const picker = page.locator(".face-picker");
+  await expect(picker).toBeVisible();
+  // Settle: the overlay fades in over 300ms and toBeVisible() is true at
+  // opacity 0, so a hit-test taken straight after it describes nothing.
+  await expect
+    .poll(async () =>
+      page.evaluate(
+        () => getComputedStyle(document.querySelector(".face-picker-overlay")!).opacity,
+      ),
+    )
+    .toBe("1");
+
+  // The real assertion: what is actually on top at the crop dialog's own centre.
+  const hit = await page.evaluate(() => {
+    const r = document.querySelector(".face-picker")!.getBoundingClientRect();
+    const el = document.elementFromPoint(r.left + r.width / 2, r.top + 40)!;
+    return { cls: el.className.toString(), inPicker: !!el.closest(".face-picker") };
+  });
+  expect(hit.inPicker, `crop dialog is covered — topmost element was "${hit.cls}"`).toBe(true);
+
+  // And it commits: the CTA closes the picker and leaves the Edit dialog open,
+  // so Save/Cancel still own whether the new avatar is kept.
+  await page.locator(".face-picker__confirm").click();
+  await expect(page.locator(".face-picker-overlay")).toHaveCount(0);
+  await expect(page.locator('[role="dialog"][aria-label="Edit Profile"]')).toBeVisible();
+});
