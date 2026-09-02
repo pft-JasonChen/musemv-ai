@@ -194,9 +194,9 @@ export function SettingsView() {
           <p className="text-[13px] leading-relaxed" style={{ color: "var(--neutral-dark-64)" }}>
             {demo.subPlatform === "android" ? (
               <>
-                Your Muse Pro subscription was purchased through Google Play. To cancel it, open
-                the Google Play Store app on your phone, tap your profile icon, then
-                Payments &amp; subscriptions → Subscriptions, and cancel Muse Pro there.
+                Your Muse Pro subscription was purchased through Google Play. To cancel it, open the
+                Google Play Store app on your phone, tap your profile icon, then Payments &amp;
+                subscriptions → Subscriptions, and cancel Muse Pro there.
               </>
             ) : (
               <>
@@ -234,7 +234,14 @@ export function SettingsView() {
             onClick={() => {
               close();
               flash("Account deleted (demo)");
-              setTimeout(() => router.push("/"), 700);
+              // R-9 / TODO.md #7f, closed 2026-09-03. This was the last raw
+              // unprefixed `router.push()` left in this file — the sign-out
+              // path three rows up already went through `localePath()`, so a
+              // Japanese user signing out navigated in place and a Japanese
+              // user deleting their account took a cookie-redirect round-trip
+              // to the same screen. Invisible in English, which is why it
+              // outlived the 2026-08-06 half-fix.
+              setTimeout(() => router.push(localePath(locale, "/")), 700);
             }}
             /* Designer request, 2026-08-11: pill, not rounded-xl — same
                filled-button rule as `Button.tsx`. */

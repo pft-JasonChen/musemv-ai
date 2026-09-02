@@ -95,10 +95,22 @@ export const MOCK_USER = {
  * 10 by product decision 2026-08-12 (`TBD-CR-06a`). Was `390`, which existed only
  * so the demo stayed playable before CR-06 made credit packs subscriber-only.
  *
- * ⚠️ **10 does not cover any MV.** The cheapest MV path is 220 (`COST_STORYBOARD`
- * 20 + `COST_RENDER` 200) and an instrumental song is 12, so a fresh free account
- * can generate exactly one vocal song (6) and then meets the paywall. That is the
- * intended funnel — and it is why `startingCredits()` below exists.
+ * ⚠️ **10 does not cover any MV.** ~~220 (`COST_STORYBOARD` 20 + `COST_RENDER`
+ * 200)~~ — **corrected 2026-09-03.** Those two constants were deleted on
+ * 2026-08-19 when spec 11's per-second pricing landed, and 220 has not been a
+ * reachable price since; it survived here (and in `specs/areas/07` and
+ * `specs/OPEN-QUESTIONS.md`) as a number nobody re-derived. There is no single
+ * MV price any more — `createMvCost()` is `45 + rate × seconds`, and the rate
+ * depends on MV type and resolution — so the floor is what the CHEAPEST
+ * combination costs: **105**, a 30-second (the trim floor) storytelling MV at
+ * Standard/720p, `45 + 2×30`. The storyboard-first route is 107
+ * (`scriptCost(30)` 12 + `generateMvCost` 95); the default compose
+ * (singing/Standard) at 30s is 195. An instrumental song is 12.
+ *
+ * So a fresh free account can generate exactly one vocal song (6) and then meets
+ * the paywall. That is the intended funnel — and it is why `startingCredits()`
+ * below exists. The three worked numbers above are pinned by
+ * `src/lib/api/contract.surface.test.ts`.
  */
 export const DEFAULT_CREDITS = 10;
 

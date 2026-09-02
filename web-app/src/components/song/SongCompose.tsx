@@ -49,8 +49,8 @@ import { DESCRIPTION_MAX, isSongReady, songCost, type SongMode } from "@/lib/mv/
  *
  * ── WHAT DP DOES NOT HAVE, AND IS KEPT ──────────────────────────────────────
  *
- * · GL-01 credit gating: below `COST_SONG`, route to IAP instead of starting a
- *   job. DP's CTA only checks sign-in.
+ * · GL-01 credit gating: below `songCost(instrumental)`, route to IAP instead
+ *   of starting a job. DP's CTA only checks sign-in.
  * · `resetForNewSong()` before a new generation, so a previous result cannot
  *   leak into the next one.
  * · `EnhanceButton`'s real `api.enhancePrompt` round-trip and SONG-04's

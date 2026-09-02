@@ -1908,6 +1908,61 @@ test("2026-09-01: web has NO Restore Purchases, and the footer is real legal lin
   }
 });
 
+test("2026-09-03: the two IAP dialogs' legal footers agree — BuyCredits was left behind", async ({
+  page,
+}) => {
+  // The 2026-09-01 pass above wired `SubscribeModal`'s footer to `lib/legal.ts`
+  // and its sibling `BuyCreditsModal` — same folder, same `credits-dialog__footer`
+  // slot, same two labels — kept DP's dead `#` hrefs. `DESIGNER-TODO` A29 then
+  // counted those two as "destinations still awaiting a URL", which they never
+  // were: the URLs had been in `lib/legal.ts` since PROF-06 and were already live
+  // in four other components including this dialog's twin.
+  //
+  // So this asserts the INVARIANT rather than the fix: whatever the two IAP
+  // dialogs show in that slot, they show the same thing. A future change that
+  // moves one and forgets the other fails here regardless of direction.
+  // The two dialogs are reachable in DIFFERENT account states and there is no
+  // single moment that shows both: `Buy Credits` is subscriber-only (CR-06), and
+  // every `openSubscribe()` is conditional on `!subscribed` (S5 `Q-01`), so a
+  // subscriber cannot reopen `Upgrade Your Plan` at all. Hence read the free
+  // state first, then subscribe through the same screen and read the other.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openCreditsDetail(page);
+
+  const readFooter = async (dialogName: string) => {
+    const dialog = page.getByRole("dialog", { name: dialogName });
+    await expect(dialog).toBeVisible();
+    const out: Record<string, string | null> = {};
+    for (const label of ["Terms of Use", "Privacy Policy"]) {
+      const link = dialog.getByRole("link", { name: label });
+      await expect(link, `${dialogName} must show a ${label} link`).toBeVisible();
+      out[label] = await link.getAttribute("href");
+    }
+    return out;
+  };
+
+  await page.getByRole("button", { name: "Get Muse Pro" }).click();
+  const subscribe = await readFooter("Upgrade Your Plan");
+
+  // Subscribing closes the dialog and flips the CTA to "Buy More".
+  await page
+    .locator(".upgrade-dialog__card--featured")
+    .getByRole("button", { name: "Subscribe" })
+    .click();
+  await expect(page.getByRole("dialog", { name: "Upgrade Your Plan" })).toBeHidden();
+
+  await page.getByRole("button", { name: "Buy More" }).click();
+  const buy = await readFooter("Buy Credits");
+
+  expect(buy, "the two IAP dialogs must point at the same legal pages").toEqual(subscribe);
+  for (const href of Object.values(buy)) {
+    expect(href, "an IAP legal link must be a real URL, not a dead `#` href").toMatch(
+      /^https?:\/\//,
+    );
+  }
+});
+
 test("3f: the credit pill's coin icon actually paints", async ({ page }) => {
   // `.credit-balance img` is an ELEMENT selector with no mask treatment, so the
   // `<span className="credit-balance__icon">` this was ported as matched no rule
@@ -3095,6 +3150,38 @@ test("G7 3k-1: MV Edit still explains why Merge is disabled", async ({ page }) =
   await expect(
     page.locator(".mv-edit__sublabel").filter({ hasText: /aren.t saved/i }),
   ).toBeVisible();
+});
+
+test("TODO#9: the MV-08 sentence spaces BOTH credit figures, not just the flat one", async ({
+  page,
+}) => {
+  // The sentence rendered "Recreate (26credits)" while the identical
+  // construction eight words later rendered "Merge MV (10 credits)" — the JSX
+  // carried a literal space in both places, and SWC dropped one of them
+  // depending on where Prettier had wrapped the line (see MvEditor.tsx). So the
+  // defect is reachable by REFORMATTING, not by editing the copy, and nothing
+  // else in the suite would notice: the sentence is still there, still visible,
+  // still matches `/aren.t saved/`. Read the text.
+  //
+  // Asserted as a shape, not as "26 credits": the recreate price is
+  // `recreateShotCost(kind, res, sec)` and moves with the scene.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openEditor(page);
+
+  const text = (
+    await page
+      .locator(".mv-edit__sublabel")
+      .filter({ hasText: /aren.t saved/i })
+      .textContent()
+  )?.replace(/\s+/g, " ");
+
+  expect(text, "the MV-08 sentence must be on screen").toBeTruthy();
+  // Two "(N credits)" figures, each with exactly one space before the noun.
+  expect(text!.match(/\(\d+ credits\)/g) ?? [], text!).toHaveLength(2);
+  // And the failure mode itself, named, so a red run reads as the bug it is.
+  expect(text!, "a credit figure lost the space before 'credits'").not.toMatch(/\d+credits/);
 });
 
 // ════════════════════════════════════════════════════════════════════════════

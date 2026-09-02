@@ -94,7 +94,7 @@ export function MvResult() {
   const [playing, setPlaying] = useState(false);
   // G7 finding 3i-1. The pre-migration screen was a `<video controls>`, so the
   // native bar carried volume; DP's is a hand-built bar with no volume control
-  // and a hardcoded `muted`, which left the audio of a COST_RENDER-priced
+  // and a hardcoded `muted`, which left the audio of a `createMvCost()`-priced
   // render unreachable. `MvEditor` already solves this the same way on the
   // sibling screen, so the treatment is DP's own, not an invention.
   const [muted, setMuted] = useState(true);
