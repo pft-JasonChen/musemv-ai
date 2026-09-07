@@ -7,6 +7,7 @@ exports[`C1 — MuseApi contract (src/lib/api/contract.ts) [FROZEN] > method nam
   "createMvJob",
   "createSongJob",
   "enhancePrompt",
+  "getFaq",
   "getMvJob",
   "getSongJob",
   "renderMvJob",
@@ -86,6 +87,80 @@ settings: object
     text: string
   watermark: boolean
 song: anyOf"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > FaqDocumentSchema shape is unchanged 1`] = `
+"appName: object
+  appName: string
+  id: integer
+id: integer
+isVisibleInListView: boolean
+languages: object
+  id: integer
+  languages: string
+publishedAt: anyOf
+sections: array
+  __component: string
+  category: string
+  categoryFaqList: array
+    androidAnswer: anyOf
+    id: integer
+    iosAnswer: anyOf
+    question: string
+    webAnswer: anyOf
+  id: integer
+shortDescription: string
+status: object
+  id: integer
+  status: string"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > FaqItemSchema shape is unchanged 1`] = `
+"androidAnswer: anyOf
+id: integer
+iosAnswer: anyOf
+question: string
+webAnswer: anyOf"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > FaqResponseSchema shape is unchanged 1`] = `
+"attributes: object
+  appName: object
+    appName: string
+    id: integer
+  id: integer
+  isVisibleInListView: boolean
+  languages: object
+    id: integer
+    languages: string
+  publishedAt: anyOf
+  sections: array
+    __component: string
+    category: string
+    categoryFaqList: array
+      androidAnswer: anyOf
+      id: integer
+      iosAnswer: anyOf
+      question: string
+      webAnswer: anyOf
+    id: integer
+  shortDescription: string
+  status: object
+    id: integer
+    status: string
+id: integer"
+`;
+
+exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > FaqSectionSchema shape is unchanged 1`] = `
+"__component: string
+category: string
+categoryFaqList: array
+  androidAnswer: anyOf
+  id: integer
+  iosAnswer: anyOf
+  question: string
+  webAnswer: anyOf
+id: integer"
 `;
 
 exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > FeedbackReceiptSchema shape is unchanged 1`] = `"ticketId: string"`;
@@ -288,6 +363,10 @@ exports[`C2 — wire schemas (src/lib/api/schemas.ts) [FROZEN] > the exported sc
   "CommunityMvSchema",
   "CommunitySongSchema",
   "ComposeStateSchema",
+  "FaqDocumentSchema",
+  "FaqItemSchema",
+  "FaqResponseSchema",
+  "FaqSectionSchema",
   "FeedbackReceiptSchema",
   "FeedbackTicketSchema",
   "MvCreateRequestSchema",
@@ -342,6 +421,7 @@ exports[`C7 — route map (src/app/**/page.tsx) > the URL shapes RD deep-links a
   "/[locale]/creator",
   "/[locale]/explore/mvs",
   "/[locale]/explore/songs",
+  "/[locale]/faq",
   "/[locale]/history",
   "/[locale]/mv/creating",
   "/[locale]/mv/edit",

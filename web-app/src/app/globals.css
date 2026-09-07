@@ -20,6 +20,11 @@
    counterpart (it comes from YouCam Online Editor's live popup), but renders
    through DP's `DpDialog` shell, so it needs that shell's class names. */
 @import "../styles/consent-dialog.css";
+/* Third of the same kind: DP has no FAQ page at all, so `/faq` gets a real
+   stylesheet written in DP's vocabulary rather than Tailwind inline. It is
+   NOT under `styles/designer/` because everything there must be byte-identical
+   to a DP source and there is no source to match — see the file's header. */
+@import "../styles/faq-page.css";
 
 /* Map design tokens -> Tailwind v4 theme so utilities resolve to our tokens. */
 @theme inline {

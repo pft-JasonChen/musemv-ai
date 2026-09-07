@@ -1969,6 +1969,8 @@ test("3f: every mask icon on a migrated screen has something to clip", async ({ 
     "/explore/mvs",
     "/mv/room", // slice 3g
     "/", // the landing page, migrated 2026-08-07
+    "/faq", // new screen, 2026-09-07 — three DpIcon masks (chevron-down on all
+    //         31 rows, chevron-left in the phone bar, close in the search field)
   ]) {
     await page.goto(route);
     await page.waitForLoadState("networkidle");

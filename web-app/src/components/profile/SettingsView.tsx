@@ -104,6 +104,19 @@ export function SettingsView() {
       <section className="account-page">
         <div className="account-page__content">
           <div className="account-page__rows account-page__rows--settings">
+            {/* The FAQ's IN-APP entry point (product owner, 2026-09-07). The
+                Footer's Support column is the other one, but the Footer only
+                renders on `/` and `/faq` — so without this row a signed-in
+                user deep inside the app has no way to reach help at all.
+                `router.push(localePath(…))` rather than a raw path, so the
+                navigation stays in-place instead of costing a cookie-redirect
+                round trip in the eight non-English locales. */}
+            <SettingsRow
+              icon="ic_info"
+              title="FAQ"
+              subtitle="Answers to common questions"
+              onClick={() => router.push(localePath(locale, "/faq"))}
+            />
             {/* PROF-06 / AUTH-03: Terms & Privacy open the real legal pages. */}
             <SettingsRow
               icon="ic_file_text"

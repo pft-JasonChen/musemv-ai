@@ -122,6 +122,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
 
   const isHome = path === "/";
+  /**
+   * ── MARKETING CHROME IS NO LONGER HOME-ONLY (2026-09-07) ────────────────
+   * `/faq` is reached from the Footer's Support column, so it is a marketing
+   * surface and gets DP's `Navbar` + `Footer` like `/` does. It deliberately
+   * does NOT get `HomeBackground` (the colourflow is the landing page's own
+   * identity) or `MobileHeader`/`MobileTabBar` (those are "layer 1" chrome for
+   * the two routes the tab bar links to).
+   *
+   * ⚠️ Below 767px `AppLayout.css` hides BOTH `.navbar` and `.footer`, so a
+   * phone gets no chrome from here at all — which is why `FaqView` draws its
+   * own back+title bar. A new marketing route must do the same; the shell has
+   * no mobile fallback to inherit.
+   *
+   * `path === "/faq"` is an exact match, not `startsWith`: there are no
+   * sub-routes under it, and a prefix test would also claim a future
+   * `/faq-something`.
+   */
+  const isMarketing = isHome || path === "/faq";
   const isMobileTabBarRoute =
     isHome || MOBILE_TAB_ROUTES.some((r) => path === r || path.startsWith(`${r}/`));
 
@@ -130,10 +148,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="app-layout__main">
         {isHome && <HomeBackground />}
-        {isHome && <Navbar />}
+        {isMarketing && <Navbar />}
         {isHome && <MobileHeader />}
         <main className="app-layout__content">{children}</main>
-        {isHome && <Footer />}
+        {isMarketing && <Footer />}
         {isMobileTabBarRoute && <MobileTabBar />}
       </div>
       {/* Bottom-left QA switchboard. Invisible unless `?demo=1` has armed it,

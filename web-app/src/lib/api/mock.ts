@@ -8,6 +8,7 @@
 
 import type { EnhanceKind, MuseApi } from "./contract";
 import {
+  FaqDocumentSchema,
   FeedbackReceiptSchema,
   FeedbackTicketSchema,
   MvCreateRequestSchema,
@@ -15,6 +16,7 @@ import {
   SongComposeSchema,
   SongJobSchema,
   StoryboardSchema,
+  type FaqDocument,
   type FeedbackReceipt,
   type FeedbackTicket,
   type MvCreateRequest,
@@ -31,6 +33,8 @@ import {
   SAMPLE_RESULT_VIDEO,
 } from "@/lib/mv/mock";
 import { demoStore } from "@/lib/demoStore";
+import { FAQ_FIXTURE } from "@/lib/faq/fixture";
+import type { Locale } from "@/lib/i18n/config";
 import { FEEDBACK_MAX_TOTAL_BYTES, totalBytes } from "@/lib/feedback";
 
 const STORYBOARD_MS = 7000;
@@ -197,6 +201,19 @@ export class MockMuseApi implements MuseApi {
     return FeedbackReceiptSchema.parse({
       ticketId: `MOCK-${Date.now().toString(36).toUpperCase()}`,
     });
+  }
+
+  async getFaq(locale: Locale): Promise<FaqDocument> {
+    // ── ONE ENGLISH FIXTURE, ON PURPOSE (product owner, 2026-09-07) ────────
+    // The SIGNATURE is the deliverable here: RD replaces this body with a
+    // request that passes `locale` through, and nothing above it moves. The
+    // mock ignores the argument and always answers with the ENU document,
+    // matching every other screen in the prototype — inventing translations
+    // for eight locales would put unofficial copy in the repo that somebody
+    // then has to remember to delete.
+    void locale;
+    await new Promise((resolve) => setTimeout(resolve, 250)); // simulate the round-trip
+    return FaqDocumentSchema.parse(FAQ_FIXTURE);
   }
 
   private mustGet<T>(map: Map<string, T>, id: string, label: string): T {

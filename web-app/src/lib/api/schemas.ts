@@ -291,3 +291,76 @@ export type FeedbackTicket = z.infer<typeof FeedbackTicketSchema>;
 
 export const FeedbackReceiptSchema = z.object({ ticketId: z.string() });
 export type FeedbackReceipt = z.infer<typeof FeedbackReceiptSchema>;
+
+// ── FAQ (CMS-backed help content) ─────────────────────────────────────────
+//
+// These mirror the CMS payload SHAPE ON PURPOSE, field for field, including
+// the parts the UI never reads (`status`, `publishedAt`, `appName`). RD swaps
+// the mock for a real `fetch` and parses the response with these same schemas —
+// flattening the shape here would just move that mapping work to them, and
+// would hide the two fields the filtering rule below depends on.
+//
+// ── MULTI-LANGUAGE IS THE CMS'S JOB, NOT THE DICTIONARY'S ─────────────────
+// `languages.languages` is a PRODUCT CODE ("ENU"), the same nine-code scheme
+// as `LOCALES` in `@/lib/i18n/config` — just upper-cased. So one document per
+// locale, and FAQ copy never enters `src/lib/i18n/dictionaries/`: RD calls the
+// endpoint with the active locale and the body comes back translated.
+
+/** One question. Three answer variants; `androidAnswer` is null throughout the
+ *  sample because there is no Android app yet. `id` is stable and is what the
+ *  `#faq-<id>` deep link addresses, so it must survive any re-import. */
+export const FaqItemSchema = z.object({
+  id: z.number().int(),
+  question: z.string(),
+  iosAnswer: z.string().nullable(),
+  androidAnswer: z.string().nullable(),
+  webAnswer: z.string().nullable(),
+});
+export type FaqItem = z.infer<typeof FaqItemSchema>;
+
+/**
+ * One category.
+ *
+ * ⚠️ **Filter on `__component`, do not assume `sections[]` is homogeneous.**
+ * The CMS models a page as a list of arbitrary section components; today every
+ * entry is `apps-page.section-category-faq`, but an author adding a hero or a
+ * rich-text block would land a section with no `categoryFaqList` at all, and
+ * code that mapped blindly would throw on a page that is merely *edited*.
+ * `FAQ_SECTION_COMPONENT` below is that guard.
+ */
+export const FaqSectionSchema = z.object({
+  id: z.number().int(),
+  __component: z.string(),
+  category: z.string(),
+  categoryFaqList: z.array(FaqItemSchema),
+});
+export type FaqSection = z.infer<typeof FaqSectionSchema>;
+
+/** The only `__component` value this screen knows how to render. */
+export const FAQ_SECTION_COMPONENT = "apps-page.section-category-faq";
+
+/** The document body — i.e. the `attributes` object of the CMS response. */
+export const FaqDocumentSchema = z.object({
+  id: z.number().int(),
+  shortDescription: z.string(),
+  /** `null` while the document is a draft. RD must serve only published docs. */
+  publishedAt: z.string().nullable(),
+  isVisibleInListView: z.boolean(),
+  languages: z.object({ id: z.number().int(), languages: z.string() }),
+  appName: z.object({ id: z.number().int(), appName: z.string() }),
+  status: z.object({ id: z.number().int(), status: z.string() }),
+  sections: z.array(FaqSectionSchema),
+});
+export type FaqDocument = z.infer<typeof FaqDocumentSchema>;
+
+/**
+ * The FULL response envelope, for RD's convenience: the sample is
+ * `{ id, attributes: { … } }`, so a real client can `FaqResponseSchema.parse(json)`
+ * and hand `.attributes` straight to the UI. The prototype's own mock returns
+ * the inner `FaqDocument`, which is what `MuseApi.getFaq` is typed as.
+ */
+export const FaqResponseSchema = z.object({
+  id: z.number().int(),
+  attributes: FaqDocumentSchema,
+});
+export type FaqResponse = z.infer<typeof FaqResponseSchema>;
