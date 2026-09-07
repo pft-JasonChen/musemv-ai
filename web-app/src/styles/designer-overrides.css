@@ -3820,3 +3820,66 @@
 .mv-create__settings-chevron {
   background-color: var(--neutral-dark-100);
 }
+
+/* Product owner, 2026-09-07 — "Top Picks Music Videos" on `/watch` and
+   `/explore/mvs` (both mount `MvGridSections`), desktop only: a horizontal-
+   scroll row with Previous/Next arrows once it overflows, instead of the
+   wrapping justified grid every other section on this page still uses (see
+   `MvTopPicksRow`'s own comment in `MvGridSections.tsx` for why). No DP
+   class exists for this — it's new UI, not a port — so these are new names
+   rather than reusing `.new-mvs__*` (Home's own scoped rail) or overriding
+   `.mv-detail__grid*` (still used, unchanged, by "Newly Released" below
+   it). Gap/arrow-reveal behavior matches `.new-mvs__*` on purpose, for
+   visual consistency with the Home page's own MV rail — but NOT card
+   sizing: `.mv-top-picks-item` has no width of its own (see the
+   component's "EQUAL CARD HEIGHT" comment) — every item's width is set
+   inline, per item, from its own aspect ratio against one shared row
+   height, matching how "Newly Released"'s justified grid sizes its own
+   cards rather than Home's uniform-width rail. */
+.mv-top-picks-row-wrapper {
+  position: relative;
+}
+
+.mv-top-picks-row {
+  display: flex;
+  min-width: 0;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.mv-top-picks-row::-webkit-scrollbar {
+  display: none;
+}
+
+.mv-top-picks-item {
+  display: block;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.mv-top-picks-previous,
+.mv-top-picks-next {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.mv-top-picks-previous {
+  left: 8px;
+}
+
+.mv-top-picks-next {
+  right: 8px;
+}
+
+.mv-detail__grid-section--primary:hover .mv-top-picks-previous,
+.mv-detail__grid-section--primary:hover .mv-top-picks-next {
+  opacity: 1;
+  pointer-events: auto;
+}
