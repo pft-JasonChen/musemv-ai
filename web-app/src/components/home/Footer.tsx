@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { FeedbackDialog } from "@/components/profile/FeedbackDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
 
 /**
  * DP's `Footer` (Figma "Website Footer", node 1330:22087) — shown on Home and
@@ -36,11 +39,35 @@ import { useAuth } from "@/components/providers/AuthProvider";
  *
  * **FAQ deliberately stays as a placeholder.** The product owner confirmed it
  * IS a V1 link and will supply the destination later, so "Support" keeps its
- * column with a single entry. Every remaining link is still `href="#"` —
- * tracked as `DESIGNER-TODO` A29, since a footer of five dead controls is
- * its own open item and not something this change introduced.
+ * column with a single entry. FAQ, Terms of Service and Privacy Policy are
+ * still `href="#"` — tracked as `DESIGNER-TODO` A29, which is now down to
+ * those three plus the same pair inside `BuyCreditsModal`.
  */
-const STUDIO_LINKS = ["Music Video Creator", "Song Composer"];
+
+/**
+ * **Studio's two links now navigate** (product owner, 2026-09-02). They are
+ * the only footer entries whose destination was a routing question rather
+ * than a missing URL — both targets already exist in the app, nobody had
+ * decided they were the targets.
+ *
+ * `next/link` + `localePath()` is not stylistic here (R-9). DP writes its
+ * footer links as plain anchor tags pointing at a bare same-origin path (no
+ * `next/link`), and copying that would make every footer click a full page
+ * load AND drop the locale prefix — which looks perfect in English and is
+ * broken in the other eight locales, where nobody testing in English would
+ * ever see it. `guard-greps.sh`'s G1-b rule fails on exactly that literal
+ * anchor shape for this reason — see the rule itself for the pattern, not
+ * repeated here since spelling it out verbatim would itself match the grep.
+ *
+ * Neither target is auth-gated: `AC-AUTH-08` says /mv/room and /song/create
+ * render their full compose screen for a guest, with the gate at the ACTION
+ * inside them — so these are plain links, not `requireLogin` handlers like
+ * Contact below.
+ */
+const STUDIO_LINKS: ReadonlyArray<readonly [label: string, href: string]> = [
+  ["Music Video Creator", "/mv/room"],
+  ["Song Composer", "/song/create"],
+];
 const SUPPORT_LINKS = ["FAQ"];
 
 /**
@@ -55,6 +82,7 @@ const COMPANY_LINKS = ["Terms of Service", "Privacy Policy"];
 export function Footer() {
   const [fbOpen, setFbOpen] = useState(false);
   const { requireLogin } = useAuth();
+  const { locale } = useLocale();
 
   return (
     <footer className="footer">
@@ -64,18 +92,18 @@ export function Footer() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/brand/ycm_logo_word_hor.svg" alt="MUSE" className="footer__logo" />
             <p className="footer__tagline">
-              Transforming music production and video editing through intuitive AI creators. Join the visual
-              rhythm revolution.
+              Transforming music production and video editing through intuitive AI creators. Join
+              the visual rhythm revolution.
             </p>
           </div>
 
           <div className="footer__sitemap">
             <div className="footer__column">
               <p className="footer__column-title">Studio</p>
-              {STUDIO_LINKS.map((link) => (
-                <a key={link} className="footer__link" href="#">
-                  {link}
-                </a>
+              {STUDIO_LINKS.map(([label, href]) => (
+                <Link key={label} className="footer__link" href={localePath(locale, href)}>
+                  {label}
+                </Link>
               ))}
             </div>
             <div className="footer__column">
@@ -110,7 +138,13 @@ export function Footer() {
               <button
                 type="button"
                 className="footer__link"
-                style={{ background: "none", border: 0, padding: 0, textAlign: "left", cursor: "pointer" }}
+                style={{
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  textAlign: "left",
+                  cursor: "pointer",
+                }}
                 onClick={() => requireLogin(() => setFbOpen(true))}
               >
                 Contact

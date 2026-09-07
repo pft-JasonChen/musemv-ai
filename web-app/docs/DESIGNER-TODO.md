@@ -924,7 +924,7 @@ Custom tab 按下 **Enhance** 會開一個小選單,標題「What would you like
 
 ---
 
-### A29. Footer 剩下的 5 條連結全部是 `href="#"` —— 不擋開發
+### A29. Footer 剩下 3 條連結是 `href="#"` —— 不擋開發(2026-09-02 縮小到 3 條)
 
 2026-08-27 依產品負責人指示移除 **Pricing / Blogs / Storybook Creator** 三條(V1 不做:WA 沒有
 `/blog`、沒有定價頁,也沒有 Storybook Creator 這個產品)。移除後 footer 剩下:
@@ -948,6 +948,21 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
 > 不是 `<a href="#">`:登出點擊會開 Sign in 對話框,登入後點擊會開 Send Feedback 表單。**這一條本則
 > 仍然開著,但範圍縮成 4 條** —— FAQ、Terms of Service、Privacy Policy 仍是 `href="#"`,需要真實網址;
 > Studio 兩條要指向站內哪裡也還沒拍板。
+
+> ✅ **2026-09-02 再更正:Studio 那兩條已經接上,範圍縮到 3 條。** 產品負責人裁示
+> **Music Video Creator → `/mv/room`**、**Song Composer → `/song/create`**。這兩條和其他三條
+> 的性質本來就不同 —— 它們缺的是「該指向站內哪裡」的決定,不是缺一個外部網址,而兩個目標
+> 一直都在。走 `next/link` + `localePath()`(R-9),不是 DP 的 `<a href="/…">`:照抄 DP 會
+> 掉語系前綴,英文看起來完全正常、其他 8 個語系壞掉。由
+> `e2e/behaviour-regressions.spec.ts` 的「footer's Studio links navigate, and keep the locale
+> prefix」守住,那個測試**同時斷言另外三條仍然是 `href="#"`**,所以有人在網址還沒定案前
+> 自己編一個上去也會紅。
+>
+> **仍然開著的是 3 條:FAQ、Terms of Service、Privacy Policy —— 需要真實網址。**
+>
+> ⚠️ **而且不只 footer。** `BuyCreditsModal.tsx:220,222` 底部還有 **Terms of Use** 與
+> **Privacy Policy** 兩條同性質的 `href="#"`,本則從來沒有算進去。拍板網址時請一起給,
+> 實際上是 **5 個目的地**。
 
 > ⚠️ **這三條是「會隨版本回來」的偏移(deviation-that-decays)。** 下一次 DP 交稿如果又出現
 > Pricing / Blogs / Storybook Creator,那是 DP 走在 V1 範圍前面,不是 DP 在糾正我們 —— 請再移除一次。

@@ -119,8 +119,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Song Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Song',
-    'author': 'Jason Chen', 'date': '2026-08-25', 'status': 'Draft',
-    'version': 'v2',
+    'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
+    'version': 'v3',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -267,17 +267,22 @@ cfg = {
                         'Chip groups, all three now marked optional: &ldquo;GENRE (Optional)&rdquo;, &ldquo;MOOD (Optional)&rdquo;, &ldquo;VOCAL (Optional)&rdquo;.',
                         'GENRE offers exactly nine chips, in this order: &ldquo;Pop&rdquo;, &ldquo;Hip-Hop&rdquo;, &ldquo;R&amp;B&rdquo;, &ldquo;Rock&rdquo;, &ldquo;Jazz&rdquo;, &ldquo;Electronic&rdquo;, &ldquo;Rap&rdquo;, &ldquo;Classical&rdquo;, &ldquo;Country&rdquo; (product owner, 2026-09-01).',
                         'MOOD offers six: &ldquo;Uplifting&rdquo;, &ldquo;Melancholic&rdquo;, &ldquo;Romantic&rdquo;, &ldquo;Energetic&rdquo;, &ldquo;Calm&rdquo;, &ldquo;Dark&rdquo;.',
-                        'Chips selected on arrival: &ldquo;Pop&rdquo;, &ldquo;Uplifting&rdquo;. VOCAL starts with none.',
+                        'Chips selected on arrival: NONE, in all three groups.',
                         'Field label: &ldquo;SONG TITLE (Optional)&rdquo;',
                     ],
                     'limits': [
                         'Custom mode&rsquo;s Create Song is enabled by default (AC-SONG-01).',
-                        ('&ldquo;Pop&rdquo; and &ldquo;Uplifting&rdquo; are STARTING values, not required ones.',
-                         'All three STYLE fields are optional &mdash; Create Song has never read genre or mood '
-                         '(`isSongReady` looks only at mode and describe), and both can now be cleared by tapping '
-                         'the selected chip. They start non-empty so the result screen&rsquo;s &ldquo;genre &middot; mood&rdquo; '
-                         'line, which is the only thing it says about what was generated, is not blank for a user '
-                         'who never opens STYLE.'),
+                        ('All three STYLE groups render with NOTHING selected, and each is clearable by '
+                         'tapping the chip that is on.',
+                         'All three are optional &mdash; Create Song has never read genre or mood '
+                         '(`isSongReady` looks only at mode and describe). GENRE and MOOD used to arrive '
+                         'pre-filled with &ldquo;Pop&rdquo; / &ldquo;Uplifting&rdquo;, to keep the result '
+                         'screen&rsquo;s &ldquo;genre &middot; mood&rdquo; line from being blank; the product '
+                         'owner overruled that on 2026-09-01 (second pass): a field pre-filled on arrival does '
+                         'not read as optional whatever the CTA does, and preserving one line on the result '
+                         'screen is not a reason to make a user un-pick a genre they never chose. '
+                         '`DEFAULT_SONG_COMPOSE` now holds `\'\'` for both. The result screen hides that line '
+                         'with `visibility: hidden`, so its layout height is unchanged.'),
                     ],
                     'focus': [{'box': [26.46, 11.11, 5.63, 3.78], 'type': 'action', 'label': 'Custom tab'}],
                 },

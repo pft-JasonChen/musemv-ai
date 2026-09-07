@@ -179,9 +179,14 @@ only two localized surfaces (nav + Profile). Everything else in the shell is har
   renders a footer at all.
 - **Three sitemap columns:** Studio (Music Video Creator, Song Composer), Support (FAQ), Company
   (Terms of Service, Privacy Policy, **Contact**).
-- **Every link is an `href="#"` placeholder except Contact** (`DESIGNER-TODO` A29) — Music Video
-  Creator, Song Composer, FAQ, Terms of Service and Privacy Policy are unchanged by this work and
-  still go nowhere.
+- **Studio's two links NAVIGATE; three placeholders remain** (`DESIGNER-TODO` A29, scope reduced
+  2026-09-02). Music Video Creator → `/mv/room` and Song Composer → `/song/create`, both through
+  `next/link` + `localePath()` so the active locale prefix survives (R-9 — DP's own `<a href="/…">`
+  would drop it, which looks correct in English and is broken in the other eight locales). Neither
+  target is auth-gated: a guest reaches the full compose screen and the gate is at the ACTION
+  inside it (`AC-AUTH-08`). **FAQ, Terms of Service and Privacy Policy are still `href="#"`** —
+  they need real URLs, which is a different kind of open item from a routing decision.
+  `AC-SHELL-10` asserts both halves.
 - **Contact is a `<button className="footer__link">`, not an `<a href="#">`**, because it opens
   `FeedbackDialog` rather than navigating. The dialog is mounted conditionally
   (`{fbOpen && <FeedbackDialog … />}`), the same pattern `ProfileView` uses — unmounting is the form
@@ -322,6 +327,13 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
   > ⚠️ **Corrected 2026-09-01, same day.** Was "SHALL open `FeedbackDialog` with **no** sign-in
   > gate" — the product owner reversed that same-day decision; see §3.1 and SHELL-P6-S2. `requireLogin`
   > now gates Contact exactly like `SHELL-P2`'s gated nav items.
+
+- **AC-SHELL-10** — WHEN the Footer's **Studio** links are clicked, THE SYSTEM SHALL navigate to
+  `/mv/room` and `/song/create` respectively, under the active locale prefix; AND FAQ, Terms of
+  Service and Privacy Policy SHALL remain inert placeholders until their URLs are supplied
+  (`DESIGNER-TODO` A29). _(Added 2026-09-02, product owner.)_
+  > The placeholder half is asserted deliberately: without it the criterion would still pass if
+  > someone invented destinations for the remaining three ahead of the decision.
 
 ---
 

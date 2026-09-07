@@ -312,5 +312,17 @@
       "type": "action",
       "label": "Done"
     }
+  ],
+  "33_avatar_crop_circular.png": [
+    {
+      "box": [
+        41.3,
+        76.2,
+        16.4,
+        6.6
+      ],
+      "type": "action",
+      "label": "Set as Profile Picture"
+    }
   ]
 }

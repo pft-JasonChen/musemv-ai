@@ -257,113 +257,114 @@ a{color:#03ADE2;text-decoration:none}
 <div class="feature"><p class="feature-desc">The whole monetization surface: <code>SubscribeModal</code> (Muse Pro &mdash; six plans across a Weekly/Monthly/Yearly duration Tab Bar), <code>BuyCreditsModal</code> (six credit packs, subscriber-only), and the <code>/profile/credits</code> route (balance, All/Spend/Earn ledger filter, and a purchase CTA that branches on subscription state).</p><div class="fmeta"><span class="fk">Background</span><div>The eighth spec in this repo&rsquo;s yco-spec storyboard programme (specs/storyboards/PLAN.md), covering area 07 end to end. It was on hold behind two things that both cleared on 2026-09-01: pricing (the &ldquo;YCM FINAL Pricing (confirmed)&rdquo; deck settled all six plans and all six pack prices) and the empty/error states (which turned out to be built and `live` already, not awaiting artwork).</div></div><div class="fmeta"><span class="fk">Goal</span><div>Give QA a screenshot-led walkthrough of every Credits/IAP behavior they can follow without cross-referencing code.</div></div></div>
 <div class="callout"><strong>Reading this spec.</strong> This is a behavior specification for the front-end RD, not production code &mdash; the prototype source cannot be reused. Each step card shows the <strong>screenshot first</strong>, then what the <strong>user does</strong> (bold) and what the <strong>WEB UI</strong> shows, with on-screen text, rules &amp; limits, and input/output below. On a screenshot, a <strong style="color:#e8392b">solid red</strong> frame marks the click that advances the flow; a <strong style="color:#e08a00">dashed amber</strong> frame marks a key point to note (hover a frame for its label). Steps carry a stable ID (e.g. <strong><a class="xref" href="#P1-S2">P1-S2</a></strong>).</div>
 <div id="overview" class="overview-card"><table><tr><td>Platform</td><td>YouCam Muse Web &mdash; captured at 1403&times;697 (desktop only, D8)</td></tr><tr><td>Audience</td><td>QA</td></tr><tr><td>Scope</td><td>SubscribeModal (all three duration tabs, both tiers, subscribe, and the already-Pro branch), BuyCreditsModal (packs, selection, purchase), the CR-06 free-user gate on every entry point, /profile/credits (balance, filter, ledger, branching CTA), and the apiError / creditsEmpty states.</td></tr><tr><td>Out of scope</td><td>The in-flow insufficient-balance route into IAP (GL-01/AC-CR-07 &mdash; it starts on /mv/room or /song/create, areas 02/03); how generation SPENDS credits (area 11); real store integration, which does not exist (see Prototype vs production).</td></tr><tr><td>Source</td><td>specs/areas/07-credits-iap.md (&sect;&sect;1-9, AC-CR-01..11) and the running app</td></tr></table></div>
-<div id="flow-diagram" class="flow-box"><details class="flow-details"><summary><span class="num">&darr;</span> Flow Diagram &mdash; full user journey (click to expand)</summary><div class="flow-inner"><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1360" viewBox="0 0 1180 1360" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<div id="flow-diagram" class="flow-box"><details class="flow-details"><summary><span class="num">&darr;</span> Flow Diagram &mdash; full user journey (click to expand)</summary><div class="flow-inner"><svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1940" viewBox="0 0 1180 1940" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
 <title>Credits &amp; IAP &#8212; User Flowchart</title>
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
-<rect width="1180" height="1360" fill="#ffffff"/>
+<rect width="1180" height="1940" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">Credits &amp; IAP &#8212; User Flowchart</text>
 <text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 (D8) &#183; matches spec v1, 2026-09-01</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; green = success / resolved &#183; blue = system response &#183; red = error state</text>
 
 <g transform="translate(0,80)">
-<text x="40" y="60" font-size="12" fill="#5a6b78">Any entry point can open Subscribe or Buy Credits; the fork that matters is subscribed-or-not, not which entry point was used. Free-user and demo-flag branches hang off that same fork rather than off a separate entry.</text>
-<rect x="500" y="105" width="340" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="670" y="125" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Signed in &#8212; any entry point</text>
-<text x="670" y="143" font-size="12" fill="#5a6b78" text-anchor="middle">Header crown/pill &#183; sidebar &#183; Muse Pro row &#183; Credits tile &#183;</text>
-<text x="670" y="158" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P1-S1">P1-S1</a>, <a class="xref" href="#P4-S1">P4-S1</a></text>
-<polygon points="590,168 813.455,200 590,232 366.545,200" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="205" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Open Subscribe or Buy Credits?</text>
-<line x1="670" y1="170" x2="590" y2="168" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="20" y="290" width="280" height="67" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="160" y="310" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">SubscribeModal &#8212; duration tabs, 2</text>
-<text x="160" y="327" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">tiers each</text>
-<text x="160" y="345" font-size="12" fill="#5a6b78" text-anchor="middle">Weekly/Monthly/Yearly x Basic/Pro &#183; <a class="xref" href="#P1-S2">P1-S2</a>..S4</text>
-<path d="M366.545 200 L333.272 200 L333.272 323.5 L300 323.5" fill="none" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="160" y="282" font-size="11" fill="#5a6b78" text-anchor="middle">Subscribe, or free user taps Buy Credits</text>
-<polygon points="590,258 782.52,290 590,322 397.48,290" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="295" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Buy Credits &#8212; subscribed?</text>
-<path d="M813.455 200 L853.455 200 L853.455 258 L590 258" fill="none" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
-<text x="590" y="250" font-size="11" fill="#5a6b78" text-anchor="middle">Buy Credits tapped</text>
-<path d="M397.48 290 L348.74 290 L348.74 323.5 L300 323.5" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="160" y="282" font-size="11" fill="#5a6b78" text-anchor="middle">no (CR-06) &#8212; renders SubscribeModal, no gate screen &#183; <a class="xref" href="#P4-S2">P4-S2</a></text>
-<rect x="830" y="290" width="280" height="82" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="970" y="310" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">BuyCreditsModal &#8212; 6 packs, default</text>
-<text x="970" y="327" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">2,000</text>
-<text x="970" y="345" font-size="12" fill="#5a6b78" text-anchor="middle">Discount tags shown, values not specced</text>
-<text x="970" y="360" font-size="12" fill="#5a6b78" text-anchor="middle">(TBD-CR-07) &#183; <a class="xref" href="#P3-S1">P3-S1</a></text>
-<line x1="590" y1="322" x2="970" y2="290" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="778.825" y="292.049" font-size="12" fill="#5a6b78" text-anchor="middle">yes</text>
-<rect x="20" y="400" width="280" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="160" y="420" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">subscribe(plan) + addCredits(plan)</text>
-<text x="160" y="438" font-size="12" fill="#5a6b78" text-anchor="middle">Toast &quot;Welcome to Muse Pro!&quot; &#183; <a class="xref" href="#P1-S5">P1-S5</a></text>
-<text x="160" y="453" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-CR-02)</text>
-<line x1="160" y1="357" x2="160" y2="400" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="172" y="372.5" font-size="12" fill="#5a6b78" text-anchor="start">pick a card&#8217;s Subscribe</text>
-<rect x="20" y="490" width="280" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="160" y="510" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Shell reflects PRO</text>
-<text x="160" y="528" font-size="12" fill="#5a6b78" text-anchor="middle">Sidebar plan name, Muse Pro row, no more</text>
-<text x="160" y="543" font-size="12" fill="#5a6b78" text-anchor="middle">crown &#183; <a class="xref" href="#P1-S6">P1-S6</a> (AC-CR-09)</text>
-<line x1="160" y1="465" x2="160" y2="490" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<polygon points="240,558 424.035,590 240,622 55.9655,590" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="240" y="595" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Reopen SubscribeModal?</text>
-<line x1="160" y1="555" x2="240" y2="558" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="20" y="680" width="280" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
-<text x="160" y="700" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&quot;You&#8217;re already on Muse Pro&quot; + Done</text>
-<text x="160" y="718" font-size="12" fill="#5a6b78" text-anchor="middle">No plan cards &#8212; CR-05 &#183; <a class="xref" href="#P2-S1">P2-S1</a> (AC-CR-06)</text>
-<line x1="240" y1="622" x2="160" y2="680" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="191.782" y="639.665" font-size="12" fill="#5a6b78" text-anchor="middle">yes</text>
-<rect x="830" y="400" width="280" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="970" y="420" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">addCredits(pack) + toast</text>
-<text x="970" y="438" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;Added N credits&quot; &#183; <a class="xref" href="#P3-S3">P3-S3</a> (AC-CR-01)</text>
-<line x1="970" y1="372" x2="970" y2="400" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="982" y="380" font-size="12" fill="#5a6b78" text-anchor="start">pick a pack, Buy Now</text>
-<rect x="500" y="800" width="180" height="80" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="590" y="820" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/profile/credits</text>
-<text x="590" y="838" font-size="12" fill="#5a6b78" text-anchor="middle">Balance + All/Spend/Earn +</text>
-<text x="590" y="853" font-size="12" fill="#5a6b78" text-anchor="middle">7-entry ledger &#183; <a class="xref" href="#P5-S1">P5-S1</a></text>
-<text x="590" y="868" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-CR-03)</text>
-<line x1="160" y1="555" x2="590" y2="800" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="381.931" y="665.336" font-size="12" fill="#5a6b78" text-anchor="middle">Credits tile</text>
-<line x1="970" y1="450" x2="590" y2="800" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="770.515" y="614.702" font-size="12" fill="#5a6b78" text-anchor="middle">Buy More CTA</text>
-<polygon points="590,858 745.422,890 590,922 434.578,890" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
-<text x="590" y="895" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Purchase CTA label?</text>
-<line x1="590" y1="880" x2="590" y2="858" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="240" y="980" width="250" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
-<text x="365" y="1000" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&quot;Buy More&quot; &#8594; BuyCreditsModal</text>
-<text x="365" y="1018" font-size="12" fill="#5a6b78" text-anchor="middle">Subscriber &#183; <a class="xref" href="#P5-S1">P5-S1</a></text>
-<path d="M434.578 890 L374.578 890 L374.578 1005 L490 1005" fill="none" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
-<text x="365" y="972" font-size="11" fill="#5a6b78" text-anchor="middle">subscribed</text>
-<rect x="830" y="980" width="250" height="82" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
-<text x="955" y="1000" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&quot;Get Muse Pro&quot; &#8594;</text>
-<text x="955" y="1017" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">SubscribeModal</text>
-<text x="955" y="1035" font-size="12" fill="#5a6b78" text-anchor="middle">Free user, same dialog as P4 &#183; <a class="xref" href="#P5-S4">P5-S4</a></text>
-<text x="955" y="1050" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-CR-08)</text>
-<path d="M745.422 890 L787.711 890 L787.711 1021 L830 1021" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="955" y="972" font-size="11" fill="#5a6b78" text-anchor="middle">not subscribed</text>
-<rect x="20" y="1090" width="300" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="170" y="1110" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">apiError (?demo=1)</text>
-<text x="170" y="1128" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;Something Went Wrong&quot; + Retry, both dialogs &#183;</text>
-<text x="170" y="1143" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P6-S1">P6-S1</a>..S3 (AC-CR-11)</text>
-<path d="M20 323.5 L-40 323.5 L-40 1090 L170 1090" fill="none" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="170" y="1082" font-size="11" fill="#5a6b78" text-anchor="middle">flag on &#8212; checked once per open</text>
-<path d="M1110 331 L1290 331 L1290 1090 L170 1090" fill="none" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="170" y="1082" font-size="11" fill="#5a6b78" text-anchor="middle">flag on, subscriber only</text>
-<rect x="830" y="1090" width="300" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
-<text x="980" y="1110" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">creditsEmpty (?demo=1)</text>
-<text x="980" y="1128" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;No activity yet&quot;, all 3 tabs &#183; <a class="xref" href="#P6-S4">P6-S4</a>, <a class="xref" href="#P6-S5">P6-S5</a></text>
-<text x="980" y="1143" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-CR-12)</text>
-<path d="M680 840 L740 840 L740 1090 L980 1090" fill="none" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="980" y="1082" font-size="11" fill="#5a6b78" text-anchor="middle">flag on</text>
-<line x1="40" y1="1206" x2="1140" y2="1206" stroke="#e5e9ed" stroke-width="1"/>
-<line x1="40" y1="1226" x2="74" y2="1226" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="86" y="1230" font-size="12" fill="#5a6b78">Primary happy path</text>
-<line x1="40" y1="1246" x2="74" y2="1246" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
-<text x="86" y="1250" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
-<line x1="40" y1="1266" x2="74" y2="1266" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="86" y="1270" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
-<line x1="40" y1="1286" x2="74" y2="1286" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="86" y="1290" font-size="12" fill="#5a6b78">Error branch</text>
+<text x="40" y="60" font-size="12" fill="#5a6b78">Any entry point can open Subscribe or Buy Credits; the fork that matters is subscribed-or-not, not which entry point was used.</text>
+<text x="40" y="80" font-size="12" fill="#5a6b78">Free-user and demo-flag branches hang off that same fork rather than off a separate entry. One band per path.</text>
+<line x1="40" y1="128" x2="1140" y2="128" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="150" font-size="15" font-weight="700" fill="#0c1c22">Part 1 &#8212; Subscribe  &#183;  P1</text>
+<rect x="40" y="180" width="290" height="65" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="185" y="200" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Signed in &#8212; any entry point</text>
+<text x="185" y="218" font-size="12" fill="#5a6b78" text-anchor="middle">Header crown/pill &#183; sidebar &#183; Muse Pro row &#183;</text>
+<text x="185" y="233" font-size="12" fill="#5a6b78" text-anchor="middle">Credits tile &#183; <a class="xref" href="#P1-S1">P1-S1</a>, <a class="xref" href="#P4-S1">P4-S1</a></text>
+<polygon points="600,268 823.455,300 600,332 376.545,300" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="600" y="305" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Open Subscribe or Buy Credits?</text>
+<line x1="185" y1="245" x2="600" y2="268" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="480" y="430" width="290" height="67" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="625" y="450" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">SubscribeModal &#8212; duration tabs, 2</text>
+<text x="625" y="467" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">tiers each</text>
+<text x="625" y="485" font-size="12" fill="#5a6b78" text-anchor="middle">Weekly/Monthly/Yearly x Basic/Pro &#183; <a class="xref" href="#P1-S2">P1-S2</a>..S4</text>
+<line x1="600" y1="332" x2="625" y2="430" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="624.5" y="375" font-size="12" fill="#5a6b78" text-anchor="start">Subscribe, or free user taps Buy Credits</text>
+<rect x="480" y="560" width="290" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="625" y="580" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">subscribe(plan) + addCredits(plan)</text>
+<text x="625" y="598" font-size="12" fill="#5a6b78" text-anchor="middle">Toast &quot;Welcome to Muse Pro!&quot; &#183; <a class="xref" href="#P1-S5">P1-S5</a></text>
+<text x="625" y="613" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-CR-02)</text>
+<line x1="625" y1="497" x2="625" y2="560" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="637" y="522.5" font-size="12" fill="#5a6b78" text-anchor="start">pick a card&#8217;s Subscribe</text>
+<rect x="850" y="560" width="290" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="995" y="580" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Shell reflects PRO</text>
+<text x="995" y="598" font-size="12" fill="#5a6b78" text-anchor="middle">Sidebar plan name, Muse Pro row, no more</text>
+<text x="995" y="613" font-size="12" fill="#5a6b78" text-anchor="middle">crown &#183; <a class="xref" href="#P1-S6">P1-S6</a> (AC-CR-09)</text>
+<line x1="770" y1="592.5" x2="850" y2="592.5" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="668" x2="1140" y2="668" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="690" font-size="15" font-weight="700" fill="#0c1c22">Part 2 &#8212; Reopening Subscribe once PRO  &#183;  P2</text>
+<polygon points="240,718 424.035,750 240,782 55.9655,750" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="240" y="755" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Reopen SubscribeModal?</text>
+<rect x="480" y="720" width="290" height="50" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="625" y="740" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&quot;You&#8217;re already on Muse Pro&quot; + Done</text>
+<text x="625" y="758" font-size="12" fill="#5a6b78" text-anchor="middle">No plan cards &#8212; CR-05 &#183; <a class="xref" href="#P2-S1">P2-S1</a> (AC-CR-06)</text>
+<line x1="424.035" y1="750" x2="480" y2="745" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="450.771" y="733.556" font-size="12" fill="#5a6b78" text-anchor="middle">yes</text>
+<line x1="40" y1="818" x2="1140" y2="818" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="840" font-size="15" font-weight="700" fill="#0c1c22">Parts 3 and 4 &#8212; Buy Credits, and the free-user redirect  &#183;  P3, P4</text>
+<polygon points="280,868 472.52,900 280,932 87.4803,900" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="280" y="905" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Buy Credits &#8212; subscribed?</text>
+<rect x="850" y="870" width="290" height="82" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="995" y="890" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">BuyCreditsModal &#8212; 6 packs, default</text>
+<text x="995" y="907" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">2,000</text>
+<text x="995" y="925" font-size="12" fill="#5a6b78" text-anchor="middle">Discount tags shown, values not specced</text>
+<text x="995" y="940" font-size="12" fill="#5a6b78" text-anchor="middle">(TBD-CR-07) &#183; <a class="xref" href="#P3-S1">P3-S1</a></text>
+<line x1="472.52" y1="900" x2="850" y2="911" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="661.668" y="891.506" font-size="12" fill="#5a6b78" text-anchor="middle">yes</text>
+<rect x="850" y="1010" width="290" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="995" y="1030" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">addCredits(pack) + toast</text>
+<text x="995" y="1048" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;Added N credits&quot; &#183; <a class="xref" href="#P3-S3">P3-S3</a> (AC-CR-01)</text>
+<line x1="995" y1="952" x2="995" y2="1010" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="1007" y="975" font-size="12" fill="#5a6b78" text-anchor="start">pick a pack, Buy Now</text>
+<rect x="480" y="1010" width="290" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="625" y="1030" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&#8594; Part 1: SubscribeModal</text>
+<text x="625" y="1048" font-size="12" fill="#5a6b78" text-anchor="middle">CR-06 &#8212; renders it directly, no gate screen &#183;</text>
+<text x="625" y="1063" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P4-S2">P4-S2</a></text>
+<line x1="280" y1="932" x2="625" y2="1010" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="455.587" y="957.345" font-size="12" fill="#5a6b78" text-anchor="middle">no</text>
+<line x1="40" y1="1128" x2="1140" y2="1128" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1150" font-size="15" font-weight="700" fill="#0c1c22">Part 5 &#8212; /profile/credits  &#183;  P5</text>
+<text x="40" y="1170" font-size="12" fill="#5a6b78">Reached two ways: the shell&#8217;s Credits tile (Part 1), or Buy More on the Part 3 toast.</text>
+<rect x="40" y="1200" width="290" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="185" y="1220" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/profile/credits</text>
+<text x="185" y="1238" font-size="12" fill="#5a6b78" text-anchor="middle">Balance + All/Spend/Earn + 7-entry ledger &#183;</text>
+<text x="185" y="1253" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P5-S1">P5-S1</a> (AC-CR-03)</text>
+<polygon points="600,1268 755.422,1300 600,1332 444.578,1300" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
+<text x="600" y="1305" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Purchase CTA label?</text>
+<line x1="185" y1="1265" x2="444.578" y2="1300" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="480" y="1400" width="290" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="625" y="1420" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&quot;Buy More&quot; &#8594; BuyCreditsModal</text>
+<text x="625" y="1438" font-size="12" fill="#5a6b78" text-anchor="middle">Subscriber &#183; <a class="xref" href="#P5-S1">P5-S1</a></text>
+<line x1="600" y1="1332" x2="625" y2="1400" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="538.5" y="1360" font-size="12" fill="#5a6b78" text-anchor="start">subscribed</text>
+<rect x="850" y="1400" width="290" height="65" rx="8" fill="#e0f7fd" stroke="#6cc7e6" stroke-width="1.5"/>
+<text x="995" y="1420" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&quot;Get Muse Pro&quot; &#8594; SubscribeModal</text>
+<text x="995" y="1438" font-size="12" fill="#5a6b78" text-anchor="middle">Free user, same dialog as P4 &#183; <a class="xref" href="#P5-S4">P5-S4</a></text>
+<text x="995" y="1453" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-CR-08)</text>
+<line x1="600" y1="1332" x2="850" y2="1432.5" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="730.222" y="1369.26" font-size="12" fill="#5a6b78" text-anchor="middle">not subscribed</text>
+<line x1="40" y1="1498" x2="1140" y2="1498" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1520" font-size="15" font-weight="700" fill="#0c1c22">Part 6 &#8212; ?demo=1 states  &#183;  P6</text>
+<rect x="40" y="1550" width="290" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="185" y="1570" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">apiError (?demo=1)</text>
+<text x="185" y="1588" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;Something Went Wrong&quot; + Retry, both dialogs &#183;</text>
+<text x="185" y="1603" font-size="12" fill="#5a6b78" text-anchor="middle"><a class="xref" href="#P6-S1">P6-S1</a>..S3 (AC-CR-11)</text>
+<rect x="480" y="1550" width="290" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="625" y="1570" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">creditsEmpty (?demo=1)</text>
+<text x="625" y="1588" font-size="12" fill="#5a6b78" text-anchor="middle">&quot;No activity yet&quot;, all 3 tabs &#183; <a class="xref" href="#P6-S4">P6-S4</a>, <a class="xref" href="#P6-S5">P6-S5</a></text>
+<text x="625" y="1603" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-CR-12)</text>
+<text x="40" y="1670" font-size="12" fill="#5a6b78">apiError is checked once per dialog OPEN, on both Subscribe and Buy Credits; creditsEmpty applies to /profile/credits only.</text>
+<text x="40" y="1690" font-size="12" fill="#5a6b78">?demo=1 changes what a screen renders, never how it is reached &#8212; which is why neither has an entry edge of its own.</text>
+<line x1="40" y1="1736" x2="1140" y2="1736" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="1756" x2="74" y2="1756" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1760" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="1776" x2="74" y2="1776" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="1780" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+<line x1="40" y1="1796" x2="74" y2="1796" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="86" y="1800" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
 </g>
 </svg>
 <details style="margin-top:10px"><summary style="font-size:13px;color:#4a6070;cursor:pointer">Mermaid source</summary><pre class="mermaid-src">flowchart TD

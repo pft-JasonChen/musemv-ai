@@ -54,6 +54,22 @@ import tempfile
 
 SCRATCH_DIR = tempfile.gettempdir()
 
+
+def _write_silent_wav(path, seconds, rate=8000):
+    """A real, decodable WAV of a chosen length.
+
+    The upload-time duration guard reads `duration` off an <audio> element, so
+    it can only be demonstrated with a file the browser actually decodes — a
+    named buffer of zeros gives NaN and is let through on purpose. Silence at
+    8 kHz mono keeps a 6-second clip under 100 KB.
+    """
+    import wave
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(b"\x00\x00" * int(rate * seconds))
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
 sys.path.insert(0, os.path.join(WEB_APP, "skills", "yco-spec"))
@@ -62,7 +78,7 @@ _SHARED = os.path.expanduser("~/Library/Caches/ms-playwright")
 if "PLAYWRIGHT_BROWSERS_PATH" not in os.environ and os.path.isdir(_SHARED):
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _SHARED
 
-from capture_lib import Capture  # noqa: E402
+from capture_lib import Capture, chromium_path  # noqa: E402
 from playwright.async_api import async_playwright  # noqa: E402
 
 VIEWPORT = (1440, 900)
@@ -101,6 +117,7 @@ class NextCapture(Capture):
         os.makedirs(self.save_dir, exist_ok=True)
         self._pw = await async_playwright().start()
         self._browser = await self._pw.chromium.launch(
+            executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
             viewport=self.viewport, device_scale_factor=1)
@@ -123,6 +140,7 @@ class GuestNextCapture(NextCapture):
         os.makedirs(self.save_dir, exist_ok=True)
         self._pw = await async_playwright().start()
         self._browser = await self._pw.chromium.launch(
+            executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
             viewport=self.viewport, device_scale_factor=1)
@@ -227,7 +245,7 @@ async def open_mode_modal(page):
     await page.wait_for_timeout(300)
 
 
-async def wait_generation_done(page, next_url_fragment, timeout=20000):
+async def wait_generation_done(page, next_url_fragment, timeout=90000):
     await page.wait_for_url(f"**{next_url_fragment}**", timeout=timeout)
     await page.wait_for_timeout(500)
 
@@ -456,6 +474,35 @@ async def main_hi_credit(base):
         os.remove(big_path)
         await page.wait_for_selector("text=File too large", state="visible")
         await shoot(cap, "27_import_reject_size.png")
+        await page.wait_for_timeout(2700)
+
+        # Import reject — TOO SHORT. Added 2026-09-02: the 30s floor used to be
+        # enforced only inside the trim dialog, which made a 20s upload a DEAD
+        # END — the dialog opened, showed "minimum 30s" in red, and kept Confirm
+        # disabled forever, since a 20s track cannot be trimmed UP to 30s. The
+        # floor now also runs at upload time.
+        #
+        # This needs a real, DECODABLE file: the check reads `duration` off an
+        # <audio> element, so a fake buffer with an .mp3 name yields NaN and
+        # falls through (deliberately — see MvRoom's own comment). A generated
+        # WAV is the smallest thing Chromium will decode.
+        short_wav = os.path.join(SCRATCH_DIR, "short-clip.wav")
+        _write_silent_wav(short_wav, seconds=6)
+        await page.set_input_files(AUDIO_INPUT, short_wav)
+        # Do NOT delete the file before the assertion, the way the size step
+        # above does. `set_input_files` hands the browser a PATH and the browser
+        # reads it asynchronously; the size check only needs `File.size`
+        # metadata, but the duration check has to decode the bytes. Removing it
+        # first produces `ERR_FILE_NOT_FOUND` in the console, `duration` of NaN,
+        # and NO toast — which reads exactly like the guard not existing.
+        await page.wait_for_selector("text=Audio must be at least", state="visible")
+        os.remove(short_wav)
+        # No focus frame, exactly like 26/27 — the toast IS the whole subject.
+        # That also makes this shot re-capturable on its own (nothing to merge
+        # into focus.json), which is how it was first taken: this path needs no
+        # credits, so it does not require the NEXT_PUBLIC_DEMO_CREDITS server
+        # the rest of this function runs against.
+        await shoot(cap, "44_import_reject_too_short.png")
         await page.wait_for_timeout(2700)
 
         # Trim floor: pick a song, drag the end handle to under 30s

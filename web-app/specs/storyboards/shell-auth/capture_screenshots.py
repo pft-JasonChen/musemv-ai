@@ -59,7 +59,7 @@ _SHARED = os.path.expanduser("~/Library/Caches/ms-playwright")
 if "PLAYWRIGHT_BROWSERS_PATH" not in os.environ and os.path.isdir(_SHARED):
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _SHARED
 
-from capture_lib import Capture  # noqa: E402
+from capture_lib import Capture, chromium_path  # noqa: E402
 from playwright.async_api import async_playwright  # noqa: E402
 from PIL import Image  # noqa: E402
 
@@ -84,6 +84,7 @@ class NextCapture(Capture):
         os.makedirs(self.save_dir, exist_ok=True)
         self._pw = await async_playwright().start()
         self._browser = await self._pw.chromium.launch(
+            executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
             viewport=self.viewport, device_scale_factor=1)
@@ -97,6 +98,18 @@ class NextCapture(Capture):
         self._server = None
         return await super().__aexit__(*a)
 
+    async def viewport_shot(self, name):
+        """Viewport-only PNG, for a control that sits at the bottom of a very
+        tall page. A `full_page=True` shot of the landing page is ~7000px, so a
+        footer link's focus box would be a 1%-tall sliver nobody can see."""
+        path = os.path.join(self.save_dir, name)
+        await self.page.screenshot(path=path)
+        self._record(name, path)
+        # `Capture` normalises the viewport into a dict, not the tuple it was
+        # given — index it by key or this raises KeyError: 0.
+        return {"x": 0, "y": 0,
+                "width": self.viewport["width"], "height": self.viewport["height"]}
+
     async def full_shot(self, name):
         """Full-page PNG; returns the container box `focus()` needs, read
         back from the SAVED FILE's real pixel size (matches history's
@@ -108,6 +121,16 @@ class NextCapture(Capture):
         with Image.open(path) as im:
             w, h = im.size
         return {"x": 0, "y": 0, "width": w, "height": h}
+
+
+async def multi_footer(cap, page, name, frames):
+    """Same shot, several labelled frames — the footer's point is that its
+    links differ in KIND (two navigate, one opens a dialog, one is still a
+    placeholder), which one frame cannot say."""
+    await page.wait_for_timeout(150)
+    cb = await cap.viewport_shot(name)
+    for targets, label, kind in frames:
+        await cap.focus(name, cb, targets, label, kind=kind)
 
 
 async def main(base):
@@ -346,6 +369,47 @@ async def main(base):
         if no_shell:
             raise SystemExit("/share unexpectedly rendered shell chrome")
         await shoot("19_bare_share.png")
+
+        # ══════════════════════════════════════════════════════════════════
+        # P8 — the marketing footer (landing page only)
+        # ══════════════════════════════════════════════════════════════════
+        # Viewport shots, not full-page: `/` runs ~7000px tall, so a footer
+        # link's focus box on a full-page capture is a sliver.
+        async def footer_shoot(name, targets=None, label=None, kind="action"):
+            await page.wait_for_timeout(150)
+            if targets:
+                await check(targets)
+            cb = await cap.viewport_shot(name)
+            if targets:
+                await cap.focus(name, cb, targets, label, kind=kind)
+
+        await go("/")
+        await sign_out()
+        await page.locator("footer.footer").scroll_into_view_if_needed()
+        await page.wait_for_timeout(400)
+        await multi_footer(cap, page, "25_footer_guest.png", [
+            (['.footer__column:has-text("Studio") a:has-text("Music Video Creator")'],
+             "Music Video Creator", "action"),
+            (['.footer__link--contact, footer.footer button.footer__link'], "Contact", "action"),
+            (['.footer__column:has-text("Support") a:has-text("FAQ")'], "FAQ", "info"),
+        ])
+
+        await page.locator("footer.footer button.footer__link").click()
+        await page.wait_for_selector(".login-modal--sign-in", state="visible")
+        await page.wait_for_timeout(350)
+        await footer_shoot("26_footer_contact_guest_gate.png")
+
+        await page.keyboard.press("Escape")
+        await page.wait_for_timeout(300)
+        await sign_in()
+        await page.locator("footer.footer").scroll_into_view_if_needed()
+        await page.wait_for_timeout(400)
+        await page.locator("footer.footer button.footer__link").click()
+        await page.wait_for_selector(".feedback-dialog, [role='dialog']", state="visible")
+        await page.wait_for_timeout(350)
+        await footer_shoot("27_footer_contact_feedback.png")
+        await page.keyboard.press("Escape")
+        await page.wait_for_timeout(300)
 
         # ══════════════════════════════════════════════════════════════════
         # PHONE PASS — 375x812 (D8 exception, see module docstring)

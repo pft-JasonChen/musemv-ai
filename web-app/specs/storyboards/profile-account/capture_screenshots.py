@@ -61,15 +61,44 @@ _SHARED = os.path.expanduser("~/Library/Caches/ms-playwright")
 if "PLAYWRIGHT_BROWSERS_PATH" not in os.environ and os.path.isdir(_SHARED):
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _SHARED
 
-from capture_lib import Capture  # noqa: E402
+from capture_lib import Capture, chromium_path  # noqa: E402
 from playwright.async_api import async_playwright  # noqa: E402
 from PIL import Image  # noqa: E402
 
 DESKTOP = (1403, 697)
 
-SCRATCH = "/private/tmp/claude-503/-Users-jasonchen-Documents-Claude-Projects-ycmuse-web-web-app/cb07d22c-a7ef-4893-9dff-0799f568e8e3/scratchpad"
-SMALL_FILE = os.path.join(SCRATCH, "note.txt")           # ~2 KB
-HUGE_FILE = os.path.join(SCRATCH, "huge_photo.jpg")      # ~6 MB — over the 5 MB total
+# Attachment fixtures. These used to be absolute paths into ONE machine's
+# scratch directory (`/private/tmp/claude-503/...`), so re-running this script
+# anywhere else died on FileNotFoundError before it captured anything. Generated
+# on demand into `_fixtures/` instead, which is GITIGNORED — the 6 MB JPEG has
+# no business in the repo. Regeneration is byte-stable because the noise is
+# seeded (`random.Random(20260902)`), which matters: the 5 MB cap is a property
+# of the FILE, and a fixture that came back a different size would silently
+# change what P5-S6 demonstrates.
+FIXTURES = os.path.join(HERE, "_fixtures")
+SMALL_FILE = os.path.join(FIXTURES, "note.txt")          # ~2 KB
+HUGE_FILE = os.path.join(FIXTURES, "huge_photo.jpg")     # ~6 MB — over the 5 MB total
+
+
+def ensure_fixtures():
+    """Create the two attachment fixtures and the avatar source if absent."""
+    os.makedirs(FIXTURES, exist_ok=True)
+    avatar = os.path.join(FIXTURES, "avatar-source.png")
+    if not os.path.exists(avatar):
+        _make_avatar_fixture(avatar)
+    if not os.path.exists(SMALL_FILE):
+        with open(SMALL_FILE, "w", encoding="utf-8") as fh:
+            fh.write(("Steps to reproduce, attached from the Send Feedback form.\n"
+                      "This fixture exists only to be a small, valid attachment.\n") * 24)
+    if not os.path.exists(HUGE_FILE):
+        # 6 MB of INCOMPRESSIBLE noise: a flat-colour JPEG this size would be a
+        # few KB on disk and would not trip the 5 MB cumulative cap at all.
+        import random
+        rnd = random.Random(20260902)
+        im = Image.new("RGB", (2400, 1800))
+        im.putdata([(rnd.randrange(256), rnd.randrange(256), rnd.randrange(256))
+                    for _ in range(2400 * 1800)])
+        im.save(HUGE_FILE, "JPEG", quality=97)
 
 
 class NextCapture(Capture):
@@ -87,6 +116,7 @@ class NextCapture(Capture):
         os.makedirs(self.save_dir, exist_ok=True)
         self._pw = await async_playwright().start()
         self._browser = await self._pw.chromium.launch(
+            executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
             viewport=self.viewport, device_scale_factor=1)
@@ -223,6 +253,23 @@ def make_shoot(cap, page, full_page=True):
     return shoot
 
 
+def _make_avatar_fixture(path):
+    """A 4:3 source image, generated once and committed.
+
+    4:3 on purpose: the crop frame's aspect-ratio bug (fixed 2026-09-02) only
+    showed on a non-square source — a square image hides it, which is why it
+    survived from 2026-08-14. Anyone re-running this capture should be able to
+    see a CIRCLE, not an ellipse.
+    """
+    from PIL import Image, ImageDraw
+    im = Image.new("RGB", (1200, 900), "#2b1b47")
+    d = ImageDraw.Draw(im)
+    for i in range(0, 1200, 60):
+        d.line([(i, 0), (i - 300, 900)], fill="#6d4aff", width=14)
+    d.ellipse([420, 270, 780, 630], fill="#f0c05a")
+    im.save(path)
+
+
 async def multi_focus(cap, page, name, frames, full_page=True):
     """Same shot, MULTIPLE labeled frames — see mv-edit's identical helper."""
     await page.wait_for_timeout(200)
@@ -241,6 +288,7 @@ async def multi_focus(cap, page, name, frames, full_page=True):
 
 
 async def main(base):
+    ensure_fixtures()
     async with NextCapture(HERE, base) as cap:
         page = cap.page
         shoot = make_shoot(cap, page)
@@ -277,8 +325,30 @@ async def main(base):
         await overlay_shoot("03_edit_profile_open.png",
                     ['.account-edit__change-photo'], "Change Photo")
 
-        await page.click(".account-edit__change-photo")
-        await page.wait_for_timeout(150)
+        # Change Photo is a REAL file picker since 2026-09-02 — it used to cycle
+        # a fixed `AVATAR_SAMPLES` list, and the spec still said so. Driving the
+        # hidden <input type="file"> directly is the only way to photograph the
+        # crop step; clicking the button opens the OS dialog, which Playwright
+        # cannot see into.
+        avatar_src = os.path.join(FIXTURES, "avatar-source.png")
+        await page.set_input_files(
+            '[role="dialog"][aria-label="Edit Profile"] input[type="file"]', avatar_src)
+
+        # The crop dialog animates in like every other DP overlay; measuring it
+        # mid-transition describes a card that no longer exists a frame later
+        # (AGENTS.md). Wait for the overlay to actually read opacity 1.
+        await page.wait_for_selector(".face-picker-overlay", state="visible")
+        await page.wait_for_function(
+            "() => getComputedStyle(document.querySelector"
+            "('.face-picker-overlay')).opacity === '1'", timeout=5000)
+        await page.wait_for_timeout(350)
+        await overlay_shoot("33_avatar_crop_circular.png",
+                    ['.face-picker__confirm'], "Set as Profile Picture")
+
+        await page.click(".face-picker__confirm")
+        await page.wait_for_selector(".face-picker-overlay", state="detached")
+        await page.wait_for_timeout(250)
+
         name_input = page.locator('.account-edit__field input[maxlength="30"]')
         await name_input.fill("Jamie Rivera")
         await page.wait_for_timeout(150)

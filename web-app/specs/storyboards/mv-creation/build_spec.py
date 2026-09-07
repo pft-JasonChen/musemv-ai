@@ -101,8 +101,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Music Video (MV) Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video',
-    'author': 'Jason Chen', 'date': '2026-08-27', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
+    'version': 'v3',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -200,7 +200,7 @@ cfg = {
                     'limits': [
                         'Default selection is a mid-track window, not the full song.',
                         ('The selected length must be &ge;30s or Confirm stays disabled (MV-01, AC-MV-16).',
-                         'See P4-S5 for the disabled state at the floor.'),
+                         'See P4-S6 for the disabled state at the floor.'),
                     ],
                     'focus': [{'box': [50.0, 64.2, 10.4, 4.4], 'type': 'action', 'label': 'Confirm'}],
                 },
@@ -231,7 +231,7 @@ cfg = {
                     'exact': ['Secondary slot label: &ldquo;2nd face photo (Optional)&rdquo;'],
                     'limits': [
                         'Character photo is optional; the CTA does not need one.',
-                        ('Sample Photos skip the consent dialog and FacePicker crop (P4-S6).', 'They are pre-cropped fixtures.'),
+                        ('Sample Photos skip the consent dialog and FacePicker crop (P4-S7).', 'They are pre-cropped fixtures.'),
                         'Up to 2 photos.',
                     ],
                     'focus': [{'box': [20.8, 68.4, 2.8, 4.4], 'type': 'action', 'label': 'Sample photo'}],
@@ -241,7 +241,7 @@ cfg = {
                     'user': 'Both a song and a description now exist.',
                     'system': 'Create Music Video becomes enabled.',
                     'limits': [('Settings defaults: 9:16, Standard quality, MV Title on, Author Name on, Show Subtitle on, Show Watermark off.',
-                                'Unchanged unless the user opens Settings (P4-S7).')],
+                                'Unchanged unless the user opens Settings (P4-S8).')],
                     'focus': [{'box': [35.8, 88.2, 16.0, 5.1], 'type': 'action', 'label': 'Create Music Video'}],
                 },
                 {
@@ -308,7 +308,8 @@ cfg = {
                     'exact': [
                         'Title: &ldquo;Creating Your Music Video&rdquo;',
                         'Subtitle: &ldquo;Your cinematic MV is being rendered. We&rsquo;ll notify you when it&rsquo;s ready.&rdquo;',
-                        'Estimate: &ldquo;~2 minutes&rdquo;.',
+                        'Estimate label: &ldquo;Estimated time remaining&rdquo;, value &ldquo;~2 minutes&rdquo;.',
+                        'Control: &ldquo;View Later&rdquo;',
                     ],
                     'limits': [
                         ('This screen is deliberately still the pre-migration shared `GenerationView`, not a designer-UI screen.',
@@ -414,16 +415,15 @@ cfg = {
                 {
                     'shot': '22_thinking_failed.png', 'num': 2, 'role': 'error',
                     'user': 'Picks Create Storyboard First; the job fails around 60% progress.',
-                    'system': '/mv/thinking swaps to a Generation Failed state with Retry and Back.',
+                    'system': '/mv/thinking swaps to a Generation Failed state with Back only &mdash; no Retry.',
                     'exact': [
                         'Heading: &ldquo;Generation stopped&rdquo; (icon caption) / &ldquo;Generation Failed&rdquo; (title)',
-                        'Body: &ldquo;Something went wrong while generating. Your credits were not charged &mdash; you can retry now or adjust your input and try again.&rdquo;',
-                        'Buttons: &ldquo;Retry&rdquo;, &ldquo;Back&rdquo;',
+                        'Body: &ldquo;Something went wrong while generating. Your credits were not charged &mdash; go back and try again.&rdquo;',
+                        'Button: &ldquo;Back&rdquo; only.',
                     ],
                     'limits': [
                         'Back returns to /mv/room.',
-                        ('Retry re-runs the SAME compose, which still contains &ldquo;[fail]&rdquo;, so it re-fails deterministically (MV-E1).',
-                         'The copy says &ldquo;adjust your input&rdquo; but Retry itself performs no in-place edit; only Back returns to the form to change it (mock-only artifact).'),
+                        ('&ldquo;Retry&rdquo; was removed from this screen 2026-09-02 (product owner).', 'It only ever re-ran the SAME compose, which still contains &ldquo;[fail]&rdquo;, so it re-failed deterministically (MV-E1) &mdash; a dead end kept for visual symmetry with /mv/creating rather than because it could succeed. /mv/creating (next step) still has Retry; this screen no longer does.'),
                         ('The charged storyboard cost is refunded in full on failure (AC-MV-11, AC-MV-19).', 'Matches the on-screen &ldquo;credits were not charged&rdquo; message.'),
                         'The History row for this job shows Failed.',
                     ],
@@ -431,9 +431,9 @@ cfg = {
                 {
                     'shot': '23_creating_failed.png', 'num': 3, 'role': 'error',
                     'user': 'A fresh &ldquo;[fail]&rdquo; brief, this time picking Create MV Directly; the job fails around 60% progress.',
-                    'system': '/mv/creating shows the same Generation Failed layout as /mv/thinking.',
-                    'limits': [('Same copy, same Retry/Back behavior as P3-E2 &mdash; only the stage differs.',
-                                'Direct mode has no storyboard stage to fail at, so its failure always happens here, at creating.')],
+                    'system': '/mv/creating shows the same Generation Failed CARD as /mv/thinking, but keeps Retry alongside Back.',
+                    'limits': [('Unchanged, and now the ONLY stage that offers Retry (MV-E1, corrected 2026-09-02).',
+                                'Direct mode has no storyboard stage to fail at, so its failure always happens here, at creating. The previous step&rsquo;s screen dropped Retry; this one did not &mdash; the two are no longer identical.')],
                     'focus': [{'box': [55.8, 73.6, 4.1, 4.3], 'type': 'action', 'label': 'Retry'}],
                 },
             ],
@@ -474,7 +474,19 @@ cfg = {
                     'limits': [('The 50MB ceiling applies even to an otherwise valid format (MV-02, AC-MV-17).', 'Format and size are independent checks; either alone can reject.')],
                 },
                 {
-                    'shot': '28_trim_floor.png', 'num': 5,
+                    'shot': '44_import_reject_too_short.png', 'num': 5,
+                    'user': 'Picks a valid-format audio file shorter than 30 seconds.',
+                    'system': 'Rejects it with a toast at UPLOAD time; the trim dialog never opens.',
+                    'exact': ['Toast: &ldquo;Audio must be at least 30 seconds.&rdquo;'],
+                    'limits': [
+                        ('The 30s floor is now enforced twice: here, and again inside the trim dialog (next step).',
+                         'Until 2026-09-02 it ran only in the trim dialog, which made a short upload a DEAD END &mdash; a 20s file opened Trim, showed &ldquo;minimum 30s&rdquo; in red, and left Confirm disabled forever, because a 20s track cannot be trimmed UP to 30s. The only way out was to close the dialog. Both checks read the same exported `MIN_TRIM_SEC`, so the two cannot drift apart.'),
+                        ('A file whose duration cannot be read is let THROUGH, on purpose.',
+                         'The check is `durationSec &gt; 0 &amp;&amp; durationSec &lt; MIN_TRIM_SEC`, so an unreadable-but-valid track falls through to the trim dialog rather than being rejected on a failed decode &mdash; the pre-existing behaviour for that case.'),
+                    ],
+                },
+                {
+                    'shot': '28_trim_floor.png', 'num': 6,
                     'user': 'Drags the trim window&rsquo;s end handle to under 30 seconds.',
                     'system': 'Shows the live selected length and a floor hint; Confirm stays disabled.',
                     'exact': ['Hint format: &ldquo;Selected: 00:07 &middot; minimum 30s&rdquo;'],
@@ -483,7 +495,7 @@ cfg = {
                     'focus': [{'box': [38.6, 39.3, 21.8, 2.0], 'type': 'info', 'label': 'Selected'}],
                 },
                 {
-                    'shot': '29_face_picker_crop.png', 'num': 6,
+                    'shot': '29_face_picker_crop.png', 'num': 7,
                     'user': 'Uploads a character photo (not a Sample Photo).',
                     'system': 'Opens a manual crop tool with a drag-to-frame square and a size slider.',
                     'exact': [
@@ -496,7 +508,7 @@ cfg = {
                     'focus': [{'box': [41.5, 75.8, 16.0, 5.1], 'type': 'action', 'label': 'Use This Face'}],
                 },
                 {
-                    'shot': '30_settings_high_crown.png', 'num': 7,
+                    'shot': '30_settings_high_crown.png', 'num': 8,
                     'user': 'Opens Settings.',
                     'system': 'Shows Aspect Ratio, Quality, and the output toggles; High quality is greyed with a crown.',
                     'exact': [
@@ -505,11 +517,11 @@ cfg = {
                         'Toggle hints: &ldquo;Subtitles will appear in the video&rdquo;, &ldquo;The YouCam Muse logo will appear.&rdquo;',
                     ],
                     'limits': [('On the free plan, tapping High opens the subscribe IAP instead of selecting it (MV-04, AC-MV-18b).',
-                                'Subscribers select High normally &mdash; see P4-S8.')],
+                                'Subscribers select High normally &mdash; see P4-S9.')],
                     'focus': [{'box': [49.8, 36.5, 10.6, 5.2], 'type': 'action', 'label': 'High'}],
                 },
                 {
-                    'shot': '31_subscribe_from_settings.png', 'num': 8,
+                    'shot': '31_subscribe_from_settings.png', 'num': 9,
                     'user': 'Taps High while on the free plan.',
                     'system': 'Opens the subscribe IAP; the Quality selection does not change.',
                     'exact': ['Title: &ldquo;Upgrade Your Plan&rdquo;', 'Footer: &ldquo;Demo only &mdash; no real payment&rdquo;'],
@@ -678,15 +690,22 @@ cfg = {
         ('STORYBOARD_EDIT', '/mv/storyboard after a done storyboard job', 'Visual style / scenes editable, story / lyrics read-only, MV Song play-only, no Save', '&rarr; CREATING via Generate MV', 'On Generate MV'),
         ('CREATING', '/mv/creating after direct mode or Generate MV', 'Progress ring, step label, estimate, View Later', '&rarr; RESULT on done &middot; &rarr; FAILED on mock failure', 'On job outcome'),
         ('RESULT', '/mv/result after a successful job', 'Player, Like/Dislike, Share, Download, Publish toggle, Recreate, Edit MV / Unpublish to edit, Detail panel', '&rarr; MODE_SELECT via Recreate (returns to /mv/room) &middot; &rarr; History via Back', 'On navigation away'),
-        ('FAILED', '/mv/thinking or /mv/creating after a mock failure', 'Generation Failed message, Retry, Back', '&rarr; THINKING/CREATING via Retry &middot; &rarr; /mv/room via Back', 'On Retry or Back'),
+        ('FAILED', '/mv/thinking or /mv/creating after a mock failure', 'Generation Failed message; /mv/thinking shows Back only, /mv/creating shows Back + Retry', '&rarr; CREATING via Retry (creating only) &middot; &rarr; /mv/room via Back', 'On Retry (creating only) or Back'),
         ('Side rail: Trending MVs', 'Default &mdash; signed out, or signed in with zero completed MVs', 'NEW_MVS with a &ldquo;See all&rdquo; link (P7-S1)', '&rarr; My Creations once both conditions below are met', '&mdash;'),
         ('Side rail: My Creations', 'Signed in AND &ge;1 completed MV', 'The user&rsquo;s own finished MVs, no &ldquo;See all&rdquo; (P7-S2)', '&rarr; Trending MVs on sign-out or reload (History is in-memory)', '&mdash;'),
     ],
 
     'errors': [
         (
-            'MV generation fails',
-            'Description contains &ldquo;[fail]&rdquo; &mdash; the QA hook for a mid-generation failure; storyboard-first fails at thinking, direct fails at creating (MV-E1)',
+            'MV generation fails &mdash; storyboard-first (/mv/thinking)',
+            'Description contains &ldquo;[fail]&rdquo; &mdash; the QA hook for a mid-generation failure; storyboard-first fails at thinking (MV-E1)',
+            'Generation Failed &mdash; &ldquo;Something went wrong while generating. Your credits were not charged &mdash; go back and try again.&rdquo;',
+            'Back only (no Retry, since 2026-09-02) returns to /mv/room to adjust the input.',
+            'Yes, in full (AC-MV-11, AC-MV-19) &mdash; the balance returns to its pre-charge value.',
+        ),
+        (
+            'MV generation fails &mdash; direct / render (/mv/creating)',
+            'Description contains &ldquo;[fail]&rdquo; &mdash; the QA hook for a mid-generation failure; direct mode fails at creating (MV-E1)',
             'Generation Failed &mdash; &ldquo;Something went wrong while generating. Your credits were not charged &mdash; you can retry now or adjust your input and try again.&rdquo;',
             'Retry re-runs the job from the same compose state (and re-fails, since it still contains &ldquo;[fail]&rdquo;); Back returns to /mv/room.',
             'Yes, in full (AC-MV-11, AC-MV-19) &mdash; the balance returns to its pre-charge value.',
@@ -744,7 +763,7 @@ cfg = {
         ('AC-MV-08', 'Visual Style and Scene text are editable and ephemeral (no Save); MV Song is play-only; edits carry into the next Generate MV.', ['P1-S11']),
         ('AC-MV-09', 'Generate MV renders using the (possibly edited) storyboard and lands on /mv/result.', ['P1-S12', 'P1-S13', 'P1-S14']),
         ('AC-MV-10', '/mv/result loops muted video and exposes Like/Dislike, Share, Download, a Publish toggle with a &ldquo;Ready to Go Public?&rdquo; confirm on turn-on, Recreate, and Edit MV (replaced by &ldquo;Unpublish to edit&rdquo; while published).', ['P1-S14', 'P8-S1', 'P8-S2', 'P8-S3', 'P8-S4']),
-        ('AC-MV-11', 'A failed job shows the error state with Back and Retry, and marks the History row Failed.', ['P3-E2', 'P3-E3']),
+        ('AC-MV-11', 'A failed job shows the error state with Back (storyboard) or Back + Retry (render/song), and marks the History row Failed.', ['P3-E2', 'P3-E3']),
         ('AC-MV-12', 'Regenerate scene / Recreate cover overwrite in place, with no picker and no undo, and decrement the balance.', [],
          'Edit MV only &mdash; out of scope here; owned by the mv-edit spec (S3).'),
         ('AC-MV-13', 'Merge MV re-renders from the current cover/scenes and charges on generation start, refunded on failure.', [],
@@ -752,10 +771,10 @@ cfg = {
         ('AC-MV-14', 'Enhance on visual style, scene prompt, or cover description replaces that field with the matching `enhancePrompt` result.', ['P1-S11']),
         ('AC-MV-15', 'Withdrawn upstream 2026-08-19 &mdash; it asserted generation does NOT change the balance, contradicting AC-MV-19 and the code.', [],
          'Withdrawn in the area spec itself; superseded by AC-MV-19. Nothing should map to it.'),
-        ('AC-MV-16', 'Trim stores {start,end} only when the selection is &ge;30s; below that Confirm is disabled with a minimum-30s hint.', ['P1-S4', 'P4-S5']),
+        ('AC-MV-16', 'A track shorter than 30s is refused at UPLOAD with a toast, and trim stores {start,end} only when the selection is &ge;30s &mdash; below that Confirm is disabled with a minimum-30s hint.', ['P1-S4', 'P4-S5', 'P4-S6']),
         ('AC-MV-17', 'Imported audio accepts only MP3/AAC/WAV/M4A &le;50MB and rejects anything else with an error toast.', ['P4-S3', 'P4-S4']),
         ('AC-MV-18', '/mv/result reached from a History row shows that row&rsquo;s MV, seeded fresh via useOpenCreation, with Back to /history.', ['P8-S5']),
-        ('AC-MV-18b', 'On the free plan, tapping High quality opens the subscribe IAP instead of selecting it.', ['P4-S7', 'P4-S8']),
+        ('AC-MV-18b', 'On the free plan, tapping High quality opens the subscribe IAP instead of selecting it.', ['P4-S8', 'P4-S9']),
         ('AC-MV-19', 'Storyboard/render generation charges its cost on start and refunds on failure; insufficient balance routes to the buy-credits IAP instead of generating.', ['P1-S10', 'P1-S13', 'P3-E2', 'P3-E3', 'P6-S1']),
         ('AC-MV-17b', '/mv/room, /mv/storyboard, /mv/result and /mv/edit render at 320/375/768/1024/1440/1920px with no overflow.', [],
          'Only 1440px is verified here &mdash; <strong>five of its six widths are unverified by this spec</strong>. Every capture is a single desktop viewport (D8). The six-width sweep is e2e/visual-baseline.spec.ts, not this document.'),
@@ -787,9 +806,9 @@ cfg = {
             'Production needs a real per-account song/photo library and a CMS-authored template catalog; an always-populated Choose Song also means the intended empty-state (TBD-MV-11) is unbuilt and unverifiable here.',
         ),
         (
-            'MV-E1&rsquo;s deterministic re-fail',
-            'The &ldquo;[fail]&rdquo; marker is a QA-only hook with no production trigger; Retry re-runs the identical compose and therefore re-fails every time, which is why the on-screen &ldquo;adjust your input&rdquo; copy has no matching affordance in this build.',
-            'A real failure needs a real trigger (timeout, model error, moderation reject, &hellip;); production Retry should reasonably succeed once whatever caused the failure has cleared.',
+            'MV-E1&rsquo;s deterministic re-fail (now /mv/creating only)',
+            'The &ldquo;[fail]&rdquo; marker is a QA-only hook with no production trigger. /mv/creating still offers Retry, and Retry re-runs the identical compose and therefore re-fails every time, which is why its &ldquo;adjust your input&rdquo; copy has no matching affordance in this build. /mv/thinking dropped Retry entirely 2026-09-02 for the same reason &mdash; its copy now says &ldquo;go back and try again&rdquo;, which matches its actual (Back-only) affordance.',
+            'A real failure needs a real trigger (timeout, model error, moderation reject, &hellip;); production Retry on /mv/creating should reasonably succeed once whatever caused the failure has cleared. Whether /mv/creating&rsquo;s Retry should also be removed, for consistency, is a product question this spec does not decide.',
         ),
     ],
 
@@ -809,7 +828,7 @@ cfg = {
 
     'references': [
         ('Credit Consume MSR &mdash; generation cost numbers', '', 'TBD'),
-        ('specs/areas/02-mv-creation.md &sect;8 TBD-MV-03', '', 'Multi-face auto-detect deferred &mdash; MVP keeps manual crop (P4-S6).'),
+        ('specs/areas/02-mv-creation.md &sect;8 TBD-MV-03', '', 'Multi-face auto-detect deferred &mdash; MVP keeps manual crop (P4-S7).'),
         ('specs/areas/02-mv-creation.md &sect;8 TBD-MV-06', '', 'Publish-to-community backend pipeline undefined (P8-S4).'),
         ('specs/areas/02-mv-creation.md &sect;8 TBD-MV-11', '', 'Choose Song&rsquo;s empty-state is unbuilt &mdash; the seed is always populated (prototype_deltas).'),
     ],
@@ -912,6 +931,11 @@ cfg = {
         '15 Credits',                  # live scriptCost() number, not a literal string
         '297 Credits',                 # live createMvCost()/generateMvCost() number, not a literal string
         'Selected: 00:07 . minimum 30s',  # {mm:ss} interpolated live-drag readout
+        # `MvRoom.tsx` composes this as `Audio must be at least ${MIN_TRIM_SEC}
+        # seconds.` — the 30 is the SAME constant `TrimAudioModal` exports and
+        # enforces, deliberately not written twice, so the literal sentence
+        # cannot appear in source. Quoted verbatim from the capture (P4-S5).
+        'Audio must be at least 30 seconds.',
         'Welcome back, Scott . via Apple',  # {MOCK_USER.name} / {provider} interpolated
         # lint_spec.py's plain() strips anything matching <[^>]+> as an HTML
         # tag; a stray unmatched '<'/'>' from TSX generics or comparisons
@@ -920,6 +944,10 @@ cfg = {
         # capture (same false-positive class the Song spec's build script
         # documents for this same lint check).
         'Something went wrong while generating. Your credits were not charged - you can retry now or adjust your input and try again.',
+        # Same false-positive class, confirmed by direct grep of
+        # StoryboardGenerationScreen.tsx (2026-09-02, Retry removed from
+        # /mv/thinking's failure copy) and against the live app.
+        'Something went wrong while generating. Your credits were not charged - go back and try again.',
         'Upgrade Your Plan',
         'Demo only - no real payment',
         'Save your creations, sync across devices, and unlock your full creative history.',

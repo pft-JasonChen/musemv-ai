@@ -117,20 +117,13 @@ export function StoryboardGenerationScreen() {
             </p>
             <p className="mv-storyboard-processing__subtitle">
               {failed
-                ? "Something went wrong while generating. Your credits were not charged — you can retry now or adjust your input and try again."
+                ? "Something went wrong while generating. Your credits were not charged — go back and try again."
                 : "AI is analyzing your audio and description to build the perfect cinematic sequence."}
             </p>
           </div>
 
           {failed ? (
             <div className="mv-storyboard-processing__progress">
-              <button
-                type="button"
-                className="button button--medium button--primary"
-                onClick={startStoryboard}
-              >
-                <span className="button__label">Retry</span>
-              </button>
               <Link
                 href={localePath(locale, "/mv/room")}
                 className="mv-storyboard-processing__view-later"

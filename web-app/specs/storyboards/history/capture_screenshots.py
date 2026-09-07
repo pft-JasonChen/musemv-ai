@@ -45,7 +45,7 @@ _SHARED = os.path.expanduser("~/Library/Caches/ms-playwright")
 if "PLAYWRIGHT_BROWSERS_PATH" not in os.environ and os.path.isdir(_SHARED):
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _SHARED
 
-from capture_lib import Capture  # noqa: E402
+from capture_lib import Capture, chromium_path  # noqa: E402
 from playwright.async_api import async_playwright  # noqa: E402
 from PIL import Image  # noqa: E402
 
@@ -66,6 +66,7 @@ class NextCapture(Capture):
         os.makedirs(self.save_dir, exist_ok=True)
         self._pw = await async_playwright().start()
         self._browser = await self._pw.chromium.launch(
+            executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
             viewport=self.viewport, device_scale_factor=1)
@@ -333,6 +334,34 @@ async def main(base):
         await shoot("26_menu_createmv_focus.png",
                     ['.history-card__menu--visible [role="menuitem"]:has-text("Create MV")'],
                     "Create MV")
+
+        # ── P7 · the two ?demo=1 states ─────────────────────────────────────
+        # A seeded prototype cannot reach either organically: the seed always
+        # has rows, and the mock resolves instantly. Both flags are `live` in
+        # `DEMO_FLAGS`, so the panel is telling the truth about them.
+        async def set_demo(**flags):
+            # `collapsed: true` shrinks the panel to its handle. Without it the
+            # switch list covers the left half of the screen — including the
+            # tabs row that `historyLoading` is supposed to be hiding, which is
+            # the whole point of that shot. Collapsed rather than dismissed on
+            # purpose: the panel staying visible is what tells QA HOW the state
+            # was reached, and `[x]` would clear every flag as it closed.
+            await page.evaluate(
+                "f => localStorage.setItem('muse_demo', JSON.stringify("
+                "{enabled: true, collapsed: true, flags: f}))", flags)
+            await page.reload(wait_until="networkidle")
+            await page.wait_for_timeout(600)
+
+        await go()
+        await set_demo(historyEmpty=True)
+        await shoot("27_demo_history_empty.png",
+                    ['.history-page__empty-cta'], "Start Creating")
+
+        await set_demo(historyLoading=True)
+        await shoot("28_demo_history_loading.png")
+
+        # Leave the session clean, so nothing after this inherits a flag.
+        await page.evaluate("() => localStorage.removeItem('muse_demo')")
 
         print("console errors:", cap.errors or "none")
 

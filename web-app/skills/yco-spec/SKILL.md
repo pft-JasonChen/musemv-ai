@@ -22,7 +22,7 @@ hand-authored HTML.
 | `references/cfg-schema.md` | Writing or extending a `cfg` — every key, every tuple shape, versioning |
 | `references/writing-rules.md` | Wording a step: caps, rule-vs-reason, tone & vocabulary, before/after examples |
 | `references/screenshots.md` | Phase 3 — capture, the two screenshot sources, focus measurement |
-| `references/flowchart.md` | `user-flowchart.svg` — drawing it with `flowchart_lib`, the visual language, the version stamp, the review checklist |
+| `references/flowchart.md` | `user-flowchart.svg` — drawing it with `flowchart_lib`, the visual language, the version stamp, the geometry gate (`check_flowchart.py`), the review checklist |
 | `references/engine-dod.md` | Editing `spec_builder.py` / `capture_lib.py` / `spec-styles.css` |
 | `cfg-template.py` | The copyable skeleton for a new `build_spec.py` |
 

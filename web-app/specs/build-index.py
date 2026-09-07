@@ -60,6 +60,40 @@ ROWS = [
      "Skim before a review — flags what's still genuinely undecided across areas."),
 ]
 
+# QA storyboard specs — screenshot-led walkthroughs (specs/storyboards/PLAN.md §2).
+# Unlike ROWS above these are NOT markdown: each is a pre-built, self-contained
+# HTML document (skills/yco-spec), so they are linked out to (a real <a href>,
+# opened in a new tab), never rendered inline into the reader pane.
+#
+# id, slug, name, version/date, routes, paths/shots
+STORYBOARDS = [
+    ("S1", "song-creation", "AI Song Creation", "v3 · 2026-09-02",
+     "/song/create · /song/creating · /song/result", "7 paths / 32 shots"),
+    ("S2", "mv-creation", "AI Music Video Creation", "v3 · 2026-09-02",
+     "/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result", "8 paths / 44 shots"),
+    ("S3", "mv-edit", "MV Edit", "v1 · 2026-08-28",
+     "/mv/edit", "5 paths / 24 shots"),
+    ("S4", "history", "History (My Creations)", "v2 · 2026-09-02",
+     "/history", "7 paths / 27 shots"),
+    ("S5", "credits-iap", "Credits &amp; IAP", "v1 · 2026-09-01",
+     "SubscribeModal · BuyCreditsModal · /profile/credits", "6 paths / 21 shots"),
+    ("S6", "shell-auth", "App Shell &amp; Auth", "v2 · 2026-09-02",
+     "sidebar / tab bar · route navbars · SignInModal · marketing footer", "8 paths / 27 shots"),
+    ("S7", "profile-account", "Profile, Account &amp; Settings", "v2 · 2026-09-02",
+     "/profile · /settings · edit profile · Send Feedback", "6 paths / 23 shots"),
+    ("S8", "explore-community", "Explore &amp; Community", "v1 · 2026-09-01",
+     "/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator", "7 paths / 38 shots"),
+    ("S9", "share", "Share", "v1 · 2026-09-01",
+     "/share · ShareDialog", "5 paths / 15 shots"),
+]
+# S10 (credit-consumption) has no spec.html — the product owner ruled it ships
+# AS `areas/11-credit-consumption.md` itself (PLAN.md D13). It gets a row here
+# too (QA should see all 10 in one place) but jumps to the already-embedded
+# area-11 doc instead of opening a file that doesn't exist.
+STORYBOARD_S10 = ("S10", "Credit Consumption (RD)", "2026-09-01",
+                   "— (no journey to walk; contract-shaped, see Area 11 above)",
+                   "0 shots — one blank field (TBD-CC-06)")
+
 STATUS_CLASS = {
     "validated": "st-ok",
     "golden sample": "st-base",
@@ -115,9 +149,33 @@ def main() -> None:
       </button>''')
     nav_html = "\n".join(nav)
 
-    out = TEMPLATE.replace("{{ROWS}}", rows_html).replace("{{DOCS}}", docs_html).replace("{{NAV}}", nav_html)
+    # Storyboard table rows — real external links (new tab), not reader-pane docs.
+    sb = []
+    for area, slug, name, ver, dev, qa in STORYBOARDS:
+        href = f"storyboards/{slug}/specs/spec.html"
+        sb.append(f"""      <tr>
+        <td class="c-area">{area}</td>
+        <td class="c-feat"><a class="sb-link" href="{href}" target="_blank" rel="noopener"><span class="feat-name">{name}</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">{href}</div></td>
+        <td><span class="badge st-ok">{ver}</span></td>
+        <td class="c-dev">{dev}</td>
+        <td class="c-qa">{qa}</td>
+      </tr>""")
+    s10_area, s10_name, s10_ver, s10_dev, s10_qa = STORYBOARD_S10
+    sb.append(f"""      <tr>
+        <td class="c-area">{s10_area}</td>
+        <td class="c-feat"><a class="sb-link" href="#11" data-jump="11"><span class="feat-name">{s10_name}</span><span class="feat-open">Open spec →</span></a><div class="c-file">areas/11-credit-consumption.md — no spec.html, the md IS the spec (D13)</div></td>
+        <td><span class="badge st-ref">{s10_ver}</span></td>
+        <td class="c-dev">{s10_dev}</td>
+        <td class="c-qa">{s10_qa}</td>
+      </tr>""")
+    storyboards_html = "\n".join(sb)
+
+    out = (TEMPLATE.replace("{{ROWS}}", rows_html)
+           .replace("{{DOCS}}", docs_html)
+           .replace("{{NAV}}", nav_html)
+           .replace("{{STORYBOARDS}}", storyboards_html))
     OUT.write_text(out, encoding="utf-8")
-    print(f"wrote {OUT} ({len(out):,} bytes, {len(docs)} specs)")
+    print(f"wrote {OUT} ({len(out):,} bytes, {len(docs)} specs, {len(STORYBOARDS) + 1} storyboard specs)")
 
 
 TEMPLATE = r"""<!doctype html>
@@ -190,6 +248,10 @@ TEMPLATE = r"""<!doctype html>
   .st-ref { color: var(--muted); border: 1px solid var(--border-2); }
   .st-removed { color: var(--muted); border: 1px solid var(--border-2); text-decoration: line-through; }
   .legend { color: var(--muted); font-size: 12.5px; margin: 16px 0 0; }
+  .sb-heading { font-size: 19px; margin: 34px 0 8px; padding-top: 22px; border-top: 1px solid var(--border);
+    letter-spacing: -0.01em; scroll-margin-top: 16px; }
+  .sb-link { display: block; color: inherit; text-decoration: none; }
+  .sb-link:hover .feat-name { text-decoration: underline; }
   footer { margin-top: 30px; color: var(--muted); font-size: 12px; }
 
   /* Shell: persistent sidebar + content pane (index table or doc reader) */
@@ -282,6 +344,7 @@ TEMPLATE = r"""<!doctype html>
 
       <div class="pills">
         <span class="pill">🗂️ 10 feature areas + overview</span>
+        <span class="pill">🎬 <a href="#sb-section">10 storyboard specs (QA)</a></span>
         <span class="pill">🛠️ <a href="../docs/archive/handoff-2026-07-23.md">Codebase handoff</a></span>
         <span class="pill">💳 Pricing synced to the Business Model (2026-07-24)</span>
       </div>
@@ -315,8 +378,30 @@ TEMPLATE = r"""<!doctype html>
         ❓ = open decision · 🔒 = mock / in-memory / seed.
       </p>
 
+      <h2 class="sb-heading" id="sb-section">10 Storyboard Specs — screenshot-led QA walkthroughs</h2>
+      <p class="sub">Built with <code>skills/yco-spec</code> from the same as-built behaviour as the area specs
+      above — every rule traces back to an <code>AC-*</code> criterion. Audience is QA; screenshots come from
+      the live app, not a mockup. These are separate, pre-built HTML documents (not markdown), so each opens
+      in its own tab rather than in the reader pane below. <b>S10</b> has no screenshots — the product owner
+      ruled it ships as the Area 11 spec itself (<code>specs/storyboards/PLAN.md</code> D13).</p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Spec</th><th>Name</th><th>Version</th>
+              <th>Routes / surfaces</th><th>Paths / shots</th>
+            </tr>
+          </thead>
+          <tbody id="sb-tbody">
+{{STORYBOARDS}}
+          </tbody>
+        </table>
+      </div>
+
       <footer>Basis: as-built from <code>web-app/src/</code> · App reference: YouCam Muse Spec v3.0 + Explore Curation PRD + Business Model 2026-07-13.<br>
-      Regenerate after editing a spec: <code>python3 specs/build-index.py</code>.</footer>
+      Regenerate after editing a spec: <code>python3 specs/build-index.py</code>. Regenerate a storyboard spec after editing its
+      <code>build_spec.py</code>: <code>python3 specs/storyboards/&lt;slug&gt;/build_spec.py</code>.</footer>
     </div>
 
     <div class="reader" id="reader">
@@ -400,6 +485,12 @@ TEMPLATE = r"""<!doctype html>
   });
   document.getElementById("back").addEventListener("click", close);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+
+  // S10 (credit-consumption) has no spec.html of its own — it jumps to the
+  // already-embedded Area 11 doc instead of a real external link.
+  document.querySelectorAll("[data-jump]").forEach(function (el) {
+    el.addEventListener("click", function (e) { e.preventDefault(); open(el.getAttribute("data-jump")); });
+  });
 
   // Filter
   var search = document.getElementById("search");

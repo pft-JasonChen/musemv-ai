@@ -40,7 +40,7 @@ from flowchart_lib import Flow  # noqa: E402
 
 VERSION = 'v1'
 DATE = '2026-09-01'
-W, H = 1280, 1820
+W, H = 1280, 1860
 MARGIN = 40
 
 f = Flow('Share', 'YouCam Muse Web — desktop 1440 (D8)',
