@@ -160,7 +160,7 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
               <input
                 type="text"
                 className="mv-settings__input"
-                placeholder="Enter MV song name"
+                placeholder="Enter MV name"
                 value={settings.title.text}
                 onChange={(e) => set({ title: { ...settings.title, text: e.target.value } })}
               />

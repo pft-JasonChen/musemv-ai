@@ -23,6 +23,41 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-07 — **NO CONTRACT CHANGE** — home-page mobile spacing, AI MV/Song desktop centering, three color/copy fixes
+
+**Surfaces: none of C1–C8 moved.** Everything below is CSS (`designer-overrides.css`,
+`consent-dialog.css`) and one placeholder string — no schema, hook key, route, or domain
+constant touched. Stated explicitly, as G4-g asks, even though none of these files sit under
+the gate's watched paths.
+
+**What shipped:**
+
+- **Home page, mobile only:** Trending MV / Top Picks rows now bleed to the true screen edge
+  (revealing more of the next card) instead of stopping at the page's own 16px padding; the
+  hero carousel's peek of the neighbour card — always *meant* to show ~28px on each side — was
+  being clipped down to a barely-visible sliver by its own overflow-hidden wrapper sitting
+  inside that same 16px padding, now fixed to reach the true viewport edge. Section header-to-
+  row gap (Trending MV / Top Picks / New Songs) tightened 24px → 12px. `.mobile-tabbar`'s three
+  items (Explore / Create / History) now space evenly, including the outer edges.
+- **`/mv/room` and `/song/create`, desktop only (≥1024px):** the two-column layout (form panel
+  + side rail, both fixed-width since a 2026-08-13 request) now centers as a block within its
+  row instead of packing against the left edge — visible once the row is wider than the two
+  columns combined, i.e. most desktop screens. The columns themselves are unchanged; only
+  their position moved.
+- **Color/copy:** `.mv-create__settings-chevron` (chip-row expand arrow) and the "Allow Data
+  Processing for Better Experience" consent dialog's checkbox are both now solid white
+  (`var(--neutral-dark-100)`), matching the rest of each screen's icon/control color. The MV
+  Settings sheet's MV-title field placeholder changed from "Enter MV song name" to
+  "Enter MV name".
+- Share page (`/share`) and the home-page hero banner also got a real brand-icon swap and a
+  couple of alignment/watermark fixes earlier this week, all UI-only — not repeated here in
+  detail since none of them touched C1–C8 either.
+
+**RD action required:** none — no interface, schema, hook return key, URL, or cost constant
+changed.
+
+---
+
 ## 2026-09-01 (second pass) — **NO CONTRACT CHANGE** — `types.ts` default values only
 
 **Surface touched:** **C8** — `src/lib/mv/types.ts`, `DEFAULT_SONG_COMPOSE`.

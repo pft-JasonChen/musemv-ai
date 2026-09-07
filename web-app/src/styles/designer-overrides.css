@@ -985,6 +985,28 @@
   }
 }
 
+/* Product owner request, 2026-09-07 — the two-column row (panel + side,
+   fixed 660px/372px since the 2026-08-13 request above) sits inside
+   `.mv-create`/`.song-create`, which is itself centered on the page
+   (`margin: 0 auto`, `max-width: 1440px`) but has no `justify-content` of
+   its own. Neither base file sets one, so the row's default `flex-start`
+   packs the fixed-width columns against the LEFT padding edge and leaves
+   all the leftover space stranded on the right — invisible at ~1024–1300px
+   where the columns nearly fill the row, but a clearly off-center ~240px
+   gap once the row reaches its own 1440px cap (any viewport wide enough
+   that the row isn't the bottleneck, i.e. most desktop screens). The
+   2026-08-13 request above settled that the columns themselves stay fixed-
+   width rather than growing to fill the row ("not a leftover gap to
+   close") — this doesn't reopen that: the columns are unchanged, only
+   their position AS A BLOCK within the row moves from packed-left to
+   centered. */
+@media (min-width: 1024px) {
+  .mv-create,
+  .song-create {
+    justify-content: center;
+  }
+}
+
 .mv-create__side-list {
   height: 500px;
 }
@@ -3787,4 +3809,14 @@
     margin-right: -16px;
     padding-right: 16px;
   }
+}
+
+/* Product owner, 2026-09-07 — `.mv-create__settings-chevron` (the chip-row
+   expand/collapse arrow, e.g. Watermark's settings chip) was a muted
+   `rgba(255, 255, 255, 0.35)`; now full opaque white, matching every other
+   chevron/arrow icon in this app's chip rows. Bare class, base rule in
+   `MVCreatePage.css` (loaded via `designer.css` before this file), so this
+   wins the cascade tie without needing a compound selector. */
+.mv-create__settings-chevron {
+  background-color: var(--neutral-dark-100);
 }

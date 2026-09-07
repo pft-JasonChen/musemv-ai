@@ -154,7 +154,9 @@
   /* Aligns the box optically with the first line of the label rather than the
      top of its box (13px text on a 20px line). */
   margin: 2px 0 0;
-  accent-color: var(--color-accent-purple);
+  /* Product owner, 2026-09-07: was var(--color-accent-purple) — checked
+     state now white, matching the rest of the dialog's monochrome look. */
+  accent-color: var(--neutral-dark-100);
   cursor: pointer;
 }
 
