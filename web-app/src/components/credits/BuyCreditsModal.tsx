@@ -16,6 +16,7 @@ import {
   displayDiscountPct,
   salePrice,
 } from "@/lib/user";
+import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
 
 interface Props {
   open: boolean;
@@ -56,6 +57,24 @@ interface Props {
  * request, 2026-08-11: ported as `href="#"`, same as DP, since the visual
  * presence of the footer was asked for explicitly and `guard-greps.sh`'s
  * R-9 rule only bans a literal internal (`/…`) href, not `#`.
+ *
+ * ⚠️ **`href="#"` corrected 2026-09-03 — these two were never waiting on a URL.**
+ * `DESIGNER-TODO` A29 counts them alongside the footer's FAQ / Terms / Privacy
+ * as "5 destinations still to be decided", and says so explicitly ("本則從來沒有
+ * 算進去" — this item never counted them). But `TERMS_URL` / `PRIVACY_URL` have
+ * existed in `lib/legal.ts` since PROF-06 / AUTH-03 and are live in FOUR other
+ * places, one of which is this dialog's own twin: on 2026-09-01 the product
+ * owner replaced `SubscribeModal`'s footer with exactly these constants, whose
+ * comment there calls DP's `#` hrefs "dead". That pass simply did not reach the
+ * sibling file, so the two IAP dialogs shipped with the same footer, one working
+ * and one inert. This is that pass finishing, not a new destination being
+ * invented — nothing here decides a URL that `SubscribeModal` had not already
+ * decided. Guarded by e2e ("the two IAP dialogs' legal footers agree").
+ *
+ * The FOOTER's three (`home/Footer.tsx`) are deliberately NOT touched: `AC-SHELL-10`
+ * requires them to stay inert until their URLs are supplied, and an e2e asserts
+ * it. Two of those three are the same two destinations, so that is a question
+ * for the product owner, not something to resolve from the code.
  *
  * ── CR-06: SUBSCRIBER-ONLY. Reversed 2026-08-11, RESTORED 2026-08-12 ────────
  *
@@ -132,95 +151,103 @@ export function BuyCreditsModal({ open, onClose, onPurchased }: Props) {
         <ApiErrorState onRetry={() => setFailed(apiError)} />
       ) : (
         <>
-      <div className="credits-dialog__balance">
-        <p className="credits-dialog__balance-label">YOUR BALANCE</p>
-        <div className="credits-dialog__balance-row">
-          <div className="credits-dialog__balance-amount">
-            {/* A plain <img>, not a mask — DP keeps the coin's own gold here
+          <div className="credits-dialog__balance">
+            <p className="credits-dialog__balance-label">YOUR BALANCE</p>
+            <div className="credits-dialog__balance-row">
+              <div className="credits-dialog__balance-amount">
+                {/* A plain <img>, not a mask — DP keeps the coin's own gold here
                 rather than tinting it with currentColor like the other icons. */}
-            <img
-              src="/assets/icons/ui/ic_credit.svg"
-              alt=""
-              className="credits-dialog__balance-icon"
-            />
-            <span className="credits-dialog__balance-number">{credits}</span>
-            <span className="credits-dialog__balance-unit">Credits</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="credits-dialog__scroll">
-        <p className="credits-dialog__section-label">Buy Credit Pack</p>
-
-        <div className="credits-dialog__packs">
-          {CREDIT_PACKS.map((p) => {
-            const active = p.id === selected;
-            const now = sale ? salePrice(p.price) : p.price;
-            return (
-              <div className="credits-dialog__pack-slot" key={p.id}>
-                {(p.badge || sale) && (
-                  <div className="credits-dialog__pack-tags">
-                    {p.badge && (
-                      <span
-                        className={`credits-dialog__tag credits-dialog__tag--${
-                          p.badge === "BEST VALUE" ? "purple" : "green"
-                        }`}
-                      >
-                        {p.badge}
-                      </span>
-                    )}
-                    {sale && (
-                      <span className="credits-dialog__tag credits-dialog__tag--pink">
-                        {displayDiscountPct(CREDIT_SALE_PCT)}% OFF
-                      </span>
-                    )}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  className={`credits-dialog__pack${active ? " credits-dialog__pack--selected" : ""}`}
-                  onClick={() => setSelected(p.id)}
-                  aria-pressed={active}
-                >
-                  <div className="credits-dialog__pack-info">
-                    <p className="credits-dialog__pack-label">Add Credit</p>
-                    <div className="credits-dialog__pack-credits">
-                      <DpIcon name="ic_credits" className="credits-dialog__pack-credits-icon" />
-                      <span>{p.credits.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <div className="credits-dialog__pack-price">
-                    {sale && <span className="credits-dialog__pack-original">{p.price}</span>}
-                    <span className="credits-dialog__pack-current">{now}</span>
-                  </div>
-                </button>
+                <img
+                  src="/assets/icons/ui/ic_credit.svg"
+                  alt=""
+                  className="credits-dialog__balance-icon"
+                />
+                <span className="credits-dialog__balance-number">{credits}</span>
+                <span className="credits-dialog__balance-unit">Credits</span>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          </div>
 
-        {/* CR-03: purchased credits are valid for 2 years (Business Model). DP's
+          <div className="credits-dialog__scroll">
+            <p className="credits-dialog__section-label">Buy Credit Pack</p>
+
+            <div className="credits-dialog__packs">
+              {CREDIT_PACKS.map((p) => {
+                const active = p.id === selected;
+                const now = sale ? salePrice(p.price) : p.price;
+                return (
+                  <div className="credits-dialog__pack-slot" key={p.id}>
+                    {(p.badge || sale) && (
+                      <div className="credits-dialog__pack-tags">
+                        {p.badge && (
+                          <span
+                            className={`credits-dialog__tag credits-dialog__tag--${
+                              p.badge === "BEST VALUE" ? "purple" : "green"
+                            }`}
+                          >
+                            {p.badge}
+                          </span>
+                        )}
+                        {sale && (
+                          <span className="credits-dialog__tag credits-dialog__tag--pink">
+                            {displayDiscountPct(CREDIT_SALE_PCT)}% OFF
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className={`credits-dialog__pack${active ? " credits-dialog__pack--selected" : ""}`}
+                      onClick={() => setSelected(p.id)}
+                      aria-pressed={active}
+                    >
+                      <div className="credits-dialog__pack-info">
+                        <p className="credits-dialog__pack-label">Add Credit</p>
+                        <div className="credits-dialog__pack-credits">
+                          <DpIcon name="ic_credits" className="credits-dialog__pack-credits-icon" />
+                          <span>{p.credits.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <div className="credits-dialog__pack-price">
+                        {sale && <span className="credits-dialog__pack-original">{p.price}</span>}
+                        <span className="credits-dialog__pack-current">{now}</span>
+                      </div>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* CR-03: purchased credits are valid for 2 years (Business Model). DP's
             copy says they "never expire", which contradicts it — WA's wording
             wins for the same reason its prices do. */}
-        <p className="credits-dialog__disclaimer">
-          Purchased credits are valid for 2 years. Non-refundable and lost upon account deletion.
-          Prices may vary by region.
-        </p>
-      </div>
+            <p className="credits-dialog__disclaimer">
+              Purchased credits are valid for 2 years. Non-refundable and lost upon account
+              deletion. Prices may vary by region.
+            </p>
+          </div>
 
-      {/* Designer fix, 2026-08-11: "Buy Now" only — the trailing "— $price"
+          {/* Designer fix, 2026-08-11: "Buy Now" only — the trailing "— $price"
           was never DP's copy (Figma node 1783:42502 just says "Buy Now"),
           and the price is already shown on the selected pack's own row
           above. */}
-      <button type="button" className="credits-dialog__cta" onClick={buy}>
-        Buy Now
-      </button>
+          <button type="button" className="credits-dialog__cta" onClick={buy}>
+            Buy Now
+          </button>
 
-      <div className="credits-dialog__footer">
-        <a href="#">Terms of Use</a>
-        <span>|</span>
-        <a href="#">Privacy Policy</a>
-      </div>
+          {/* Same treatment as `SubscribeModal`'s footer (2026-09-01) — real
+              `lib/legal.ts` URLs, new tab, `noopener`. Labels are unchanged:
+              "Terms of Use" is this file's existing wording and matches both
+              Settings and the twin dialog. */}
+          <div className="credits-dialog__footer">
+            <a href={TERMS_URL} target="_blank" rel="noopener noreferrer">
+              Terms of Use
+            </a>
+            <span aria-hidden="true">|</span>
+            <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+              Privacy Policy
+            </a>
+          </div>
         </>
       )}
     </DpDialog>

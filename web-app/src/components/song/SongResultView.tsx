@@ -116,7 +116,7 @@ function formatTime(seconds: number): string {
  * 2. **The rail becomes "Newly Released Songs"** over `NEW_SONGS`, which is
  *    DP's own `fromSongDetail` behaviour — the one thing DP does vary by origin.
  * 3. **Recreate, Publish, and Download are all dropped**, which DP does NOT do.
- *    Following DP exactly would have offered a paid `COST_SONG_RECREATE`
+ *    Following DP exactly would have offered a paid `songRecreateCost()`
  *    re-roll, a publish toggle, and a save-to-disk of someone else's track.
  *    Product owner decided 2026-08-07 (Recreate/Publish) and again on
  *    2026-08-19 (Download, correcting an over-broad 2026-08-14 removal that
@@ -588,7 +588,7 @@ export function SongResultView() {
                     {/* OWNER-ONLY, so absent on a community song. DP varies
                         nothing but the rail here, and following it exactly would
                         have offered a paid SONG-03 re-roll of a track the user
-                        does not own — charging COST_SONG_RECREATE to fork a
+                        does not own — charging `songRecreateCost()` to fork a
                         stranger's song into their History. Product owner decided
                         2026-08-07 to drop the two rather than port them.
                         "Use in Music Video" deliberately STAYS: it's what a

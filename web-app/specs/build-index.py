@@ -12,53 +12,76 @@ Dependency: `python3 -m pip install markdown`.
 from __future__ import annotations
 import html
 import pathlib
+import re
 import markdown
 
 SPECS = pathlib.Path(__file__).resolve().parent
 OUT = SPECS / "index.html"
 
+# ⚠️ **AC COUNTS ARE ASSERTED, NOT TYPED (2026-09-03).** The "N AC" figures in the
+# QA column below were hand-written and seven of ten had gone stale — the index
+# told QA the app shell had 8 criteria when it has 10, Profile 10 when it has 18.
+# QA plans coverage off this column, so an under-count is a silently narrowed test
+# plan. `verify_ac_counts()` at the bottom of this file now recounts every
+# `AC-<PREFIX>-NN` in each markdown and refuses to write the index if a row here
+# disagrees. Update the number and the spec in the same change, or the build fails.
+#
 # id, file (relative to specs/), name, status, dev, qa
 ROWS = [
     ("00", "00-overview.md", "Overview — READ FIRST", "reference",
      "Conventions, ID scheme, the global auth + credits model, and the feature-parity map vs App v3.0.",
      "Start here — global acceptance model, cross-area conventions, and the full TBD registry."),
     ("01", "areas/01-app-shell.md", "App Shell &amp; Global Chrome", "validated",
-     "AppShell, Sidebar / BottomBar, TopBar, HeaderActions, AccountMenu, CreditPill; responsive frame (sm/lg).",
-     "Chrome renders @390/768/1024/1440; credits badge + account menu; bottom-bar→sidebar switch. 8 AC."),
+     "AppShell, Sidebar, MobileTabBar / MobileHeader, per-route navbars, CreditPill, marketing Footer; six-tier responsive frame.",
+     "Chrome renders @320/375/768/1024/1440/1920; credits pill + Upgrade; sidebar↔tab-bar switch at 767px; footer Contact + Studio links. 10 AC."),
     ("02", "areas/02-mv-creation.md", "AI Music Video Creation", "golden sample",
-     "MvRoom → thinking → StoryboardEditor → creating → MvResult → MvEditor; MvFlowProvider; COST_STORYBOARD / RENDER / REGEN / COVER.",
-     "Full MV flow incl. sheets &amp; modes; credit charge + refund-on-fail; insufficient→IAP. 20 AC (reference sample)."),
+     "MvRoom → thinking → StoryboardEditor → creating → MvResult → MvEditor; MvFlowProvider; createMvCost / scriptCost / generateMvCost / recreateShotCost / COST_MERGE / COST_COVER.",
+     "Full MV flow incl. sheets &amp; modes; credit charge + refund-on-fail; insufficient→IAP; the 30s audio floor. 20 AC (reference sample)."),
     ("03", "areas/03-song-creation.md", "AI Song Creation", "validated",
-     "SongCompose (Simple/Custom, BPM/Key, Lyrics-Idea), creating, SongResultView / SongDetail; SongFlowProvider; COST_SONG=10.",
-     "Simple/Custom compose, Instrumental, Lyrics sheet, 30s free-preview gate, Create Song CTA. 13 AC."),
+     "SongCompose (Simple/Custom, Genre/Mood/Vocal, Idea + Lyrics fills), creating, SongResultView / SongDetailView; SongFlowProvider; songCost() = 6 vocal / 12 instrumental.",
+     "Simple/Custom compose, Instrumental, Lyrics sheet only when lyrics exist, Create Song CTA + its GL-01 gate. 17 AC."),
     ("04", "areas/04-explore-community.md", "Explore &amp; Community", "as-built",
-     "HomeView, ExploreView, WatchView, CommunitySongPlayer, CreatorView; community.ts seed.",
-     "Feeds render, watch, community song player, creator page. UI-only — curation/ranking is a backend track. 10 AC."),
+     "HomeView, MvExplore, CommunityMvPlayer, SongDetailView, CreatorProfile; community.ts seed.",
+     "Feeds render, watch, community song player, creator page. UI-only — curation/ranking is a backend track. 14 AC."),
     ("05", "areas/05-history.md", "History (My Creations)", "validated",
      "HistoryView; useHistory (live + seed merge); filters, ⋯ menu, publish / delete.",
      "Merged list, filters, ⋯ actions, publish/delete, share id. 9 AC."),
     ("06", "areas/06-profile-account.md", "Profile, Account &amp; Settings", "validated",
-     "ProfileView, edit profile, LanguageModal, SettingsView (legal / unsubscribe / delete).",
-     "Account hub, edit profile, language switch, settings destructive actions. 10 AC."),
+     "ProfileView, edit profile + avatar crop, LanguageModal, SettingsView (legal / unsubscribe / delete), FeedbackDialog.",
+     "Account hub, edit profile, language switch, Send Feedback (4 fields, 5 MB cap), settings destructive actions. 18 AC."),
     ("07", "areas/07-credits-iap.md", "Credits &amp; IAP", "validated",
      "CreditsProvider; Subscribe / BuyCredits / CreditsDetail modals; lib/user.ts pricing + store SKUs.",
-     "Subscriber-only gate, plan/pack selection + badges, per-modal disclaimers @4 widths. 9 AC. ★ Pricing updated 2026-07-24."),
+     "Subscriber-only gate, plan/pack selection + badges, per-modal disclaimers @6 widths. 12 AC. ★ Pricing confirmed 2026-09-01 (Web SKUs &amp; Pricing: Final)."),
     ("08", "areas/08-proof-of-creation.md", "Proof of Creation", "removed",
      "Removed 2026-07-24 — /proof route + ProofView deleted; no code remains.",
      "Confirm no Get Proof entry anywhere in History; nothing else to check."),
     ("09", "areas/09-auth-onboarding.md", "Auth &amp; Onboarding", "validated",
      "AuthProvider, AuthGuard, mock SignInModal; action-level auth gating (GL-02).",
-     "Mock sign-in gate, guarded routes, auth-gated actions (like/publish). Onboarding out of scope. 7 AC."),
+     "Mock sign-in gate, guarded routes, auth-gated actions (like/publish). Onboarding out of scope. 8 AC."),
     ("10", "areas/10-share.md", "Share", "validated",
      "Public /share/[id] page + the shared ShareDialog component.",
-     "Share dialog + public share-link page. Intended gating still open (TBD-GL-07). 6 AC."),
+     "Share dialog + public share-link page. Intended gating still open (TBD-GL-07). 7 AC."),
     ("11", "areas/11-credit-consumption.md", "Credit Consumption (RD)", "as-built",
      "MSR Credit Consume Form (credit_consume 1.0); main-action + subActions payload per scenario; cloud-config action map.",
-     "Which action/subActions each generation sends, charge-on-start + refund-on-fail, reserved actions. 2 TBD."),
+     "Which action/subActions each generation sends, charge-on-start + refund-on-fail, reserved actions. Rules only, no AC block — it IS storyboard spec S10 (PLAN.md D13). 1 blank: TBD-CC-06."),
+    # ⚠️ Added 2026-09-03. Area 12 has existed since 2026-09-02 and was missing
+    # from this list, so the ONE entry point RD and QA are given never linked it —
+    # a 300-line backend contract for five emails, invisible unless you already
+    # knew the filename. Nothing failed; the row simply was not written.
+    ("12", "areas/12-notifications-email.md", "Notification Emails (RD)", "as-built",
+     "No prototype code at all — a backend contract. Five email scenarios, their `.properties` key prefixes, triggers, recipients, dynamic fields and deep links.",
+     "Nothing here is clickable in the prototype. Read it for the trigger/timing/deep-link contract; emails 1–4 are RD's, email 5 is the payment company's. 8 AC."),
     ("OQ", "OPEN-QUESTIONS.md", "Open Questions", "reference",
      "Cross-area items still needing a PM/designer/RD decision — resolved items live in each area spec instead.",
      "Skim before a review — flags what's still genuinely undecided across areas."),
 ]
+
+# Own-area AC prefix per row id, for `verify_ac_counts()`. A row with no entry
+# (00, 08, OQ) declares no count and is not checked; 11 declares "no AC block".
+AC_PREFIX = {
+    "01": "SHELL", "02": "MV", "03": "SONG", "04": "EXP", "05": "HIST",
+    "06": "PROF", "07": "CR", "09": "AUTH", "10": "SHARE", "12": "MAIL",
+}
 
 # QA storyboard specs — screenshot-led walkthroughs (specs/storyboards/PLAN.md §2).
 # Unlike ROWS above these are NOT markdown: each is a pre-built, self-contained
@@ -71,7 +94,7 @@ STORYBOARDS = [
      "/song/create · /song/creating · /song/result", "7 paths / 32 shots"),
     ("S2", "mv-creation", "AI Music Video Creation", "v3 · 2026-09-02",
      "/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result", "8 paths / 44 shots"),
-    ("S3", "mv-edit", "MV Edit", "v1 · 2026-08-28",
+    ("S3", "mv-edit", "MV Edit", "v2 · 2026-09-03",
      "/mv/edit", "5 paths / 24 shots"),
     ("S4", "history", "History (My Creations)", "v2 · 2026-09-02",
      "/history", "7 paths / 27 shots"),
@@ -111,7 +134,46 @@ def render_md(path: pathlib.Path) -> str:
     return md.convert(text)
 
 
+def verify_ac_counts() -> None:
+    """Fail the build if a row's "N AC" claim disagrees with the spec it links to.
+
+    Added 2026-09-03 after seven of the ten counts had drifted, all downward:
+    App Shell said 8 and has 10, Song 13 → 17, Explore 10 → 14, Profile 10 → 18,
+    Credits 9 → 12, Auth 7 → 8, Share 6 → 7. Nobody mis-typed them; the specs
+    grew criteria and this file was not the thing anyone edited.
+
+    That matters more than a wrong number usually does, because the QA column IS
+    the coverage plan: a spec advertising 10 criteria when it has 18 quietly tells
+    a tester that eight of them are somebody else's problem. So this counts the
+    distinct `AC-<PREFIX>-NN` ids the file defines and refuses to write the index
+    on a mismatch — the count and the spec now move together or not at all.
+
+    Cross-area references are excluded by construction: only the area's OWN
+    prefix is counted, so `01`'s pointers at `AC-AUTH-05` / `AC-PROF-10` don't
+    inflate its total.
+    """
+    bad = []
+    for area, rel, name, _status, _dev, qa in ROWS:
+        prefix = AC_PREFIX.get(area)
+        if not prefix:
+            continue
+        claimed = re.search(r"(\d+)\s+AC\b", qa)
+        text = (SPECS / rel).read_text(encoding="utf-8")
+        actual = len(set(re.findall(rf"\bAC-{prefix}-\d+\b", text)))
+        if not claimed:
+            bad.append(f"  {area} {rel}: no \"N AC\" in the QA column, but the spec defines {actual}")
+        elif int(claimed.group(1)) != actual:
+            bad.append(f"  {area} {rel}: index says {claimed.group(1)} AC, spec defines {actual}")
+    if bad:
+        raise SystemExit(
+            "build-index: AC counts disagree with the specs —\n"
+            + "\n".join(bad)
+            + "\n\nFix the number in ROWS (or the spec), then re-run. See verify_ac_counts()."
+        )
+
+
 def main() -> None:
+    verify_ac_counts()
     docs = []
     for area, rel, name, status, dev, qa in ROWS:
         p = SPECS / rel

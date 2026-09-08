@@ -198,6 +198,10 @@
         <span class="nav-area">11</span><span class="nav-name">Credit Consumption (RD)</span>
         <span class="nav-dot st-warn"></span>
       </button>
+      <button class="nav-item" type="button" data-doc="12">
+        <span class="nav-area">12</span><span class="nav-name">Notification Emails (RD)</span>
+        <span class="nav-dot st-warn"></span>
+      </button>
       <button class="nav-item" type="button" data-doc="OQ">
         <span class="nav-area">OQ</span><span class="nav-name">Open Questions</span>
         <span class="nav-dot st-ref"></span>
@@ -248,29 +252,29 @@
         <td class="c-area">01</td>
         <td class="c-feat"><span class="feat-name">App Shell &amp; Global Chrome</span><span class="feat-open">Open spec →</span><div class="c-file">areas/01-app-shell.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
-        <td class="c-dev">AppShell, Sidebar / BottomBar, TopBar, HeaderActions, AccountMenu, CreditPill; responsive frame (sm/lg).</td>
-        <td class="c-qa">Chrome renders @390/768/1024/1440; credits badge + account menu; bottom-bar→sidebar switch. 8 AC.</td>
+        <td class="c-dev">AppShell, Sidebar, MobileTabBar / MobileHeader, per-route navbars, CreditPill, marketing Footer; six-tier responsive frame.</td>
+        <td class="c-qa">Chrome renders @320/375/768/1024/1440/1920; credits pill + Upgrade; sidebar↔tab-bar switch at 767px; footer Contact + Studio links. 10 AC.</td>
       </tr>
       <tr data-doc="02" tabindex="0" role="button" aria-label="Open AI Music Video Creation spec">
         <td class="c-area">02</td>
         <td class="c-feat"><span class="feat-name">AI Music Video Creation</span><span class="feat-open">Open spec →</span><div class="c-file">areas/02-mv-creation.md</div></td>
         <td><span class="badge st-base">golden sample</span></td>
-        <td class="c-dev">MvRoom → thinking → StoryboardEditor → creating → MvResult → MvEditor; MvFlowProvider; COST_STORYBOARD / RENDER / REGEN / COVER.</td>
-        <td class="c-qa">Full MV flow incl. sheets &amp; modes; credit charge + refund-on-fail; insufficient→IAP. 20 AC (reference sample).</td>
+        <td class="c-dev">MvRoom → thinking → StoryboardEditor → creating → MvResult → MvEditor; MvFlowProvider; createMvCost / scriptCost / generateMvCost / recreateShotCost / COST_MERGE / COST_COVER.</td>
+        <td class="c-qa">Full MV flow incl. sheets &amp; modes; credit charge + refund-on-fail; insufficient→IAP; the 30s audio floor. 20 AC (reference sample).</td>
       </tr>
       <tr data-doc="03" tabindex="0" role="button" aria-label="Open AI Song Creation spec">
         <td class="c-area">03</td>
         <td class="c-feat"><span class="feat-name">AI Song Creation</span><span class="feat-open">Open spec →</span><div class="c-file">areas/03-song-creation.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
-        <td class="c-dev">SongCompose (Simple/Custom, BPM/Key, Lyrics-Idea), creating, SongResultView / SongDetail; SongFlowProvider; COST_SONG=10.</td>
-        <td class="c-qa">Simple/Custom compose, Instrumental, Lyrics sheet, 30s free-preview gate, Create Song CTA. 13 AC.</td>
+        <td class="c-dev">SongCompose (Simple/Custom, Genre/Mood/Vocal, Idea + Lyrics fills), creating, SongResultView / SongDetailView; SongFlowProvider; songCost() = 6 vocal / 12 instrumental.</td>
+        <td class="c-qa">Simple/Custom compose, Instrumental, Lyrics sheet only when lyrics exist, Create Song CTA + its GL-01 gate. 17 AC.</td>
       </tr>
       <tr data-doc="04" tabindex="0" role="button" aria-label="Open Explore &amp; Community spec">
         <td class="c-area">04</td>
         <td class="c-feat"><span class="feat-name">Explore &amp; Community</span><span class="feat-open">Open spec →</span><div class="c-file">areas/04-explore-community.md</div></td>
         <td><span class="badge st-warn">as-built</span></td>
-        <td class="c-dev">HomeView, ExploreView, WatchView, CommunitySongPlayer, CreatorView; community.ts seed.</td>
-        <td class="c-qa">Feeds render, watch, community song player, creator page. UI-only — curation/ranking is a backend track. 10 AC.</td>
+        <td class="c-dev">HomeView, MvExplore, CommunityMvPlayer, SongDetailView, CreatorProfile; community.ts seed.</td>
+        <td class="c-qa">Feeds render, watch, community song player, creator page. UI-only — curation/ranking is a backend track. 14 AC.</td>
       </tr>
       <tr data-doc="05" tabindex="0" role="button" aria-label="Open History (My Creations) spec">
         <td class="c-area">05</td>
@@ -283,15 +287,15 @@
         <td class="c-area">06</td>
         <td class="c-feat"><span class="feat-name">Profile, Account &amp; Settings</span><span class="feat-open">Open spec →</span><div class="c-file">areas/06-profile-account.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
-        <td class="c-dev">ProfileView, edit profile, LanguageModal, SettingsView (legal / unsubscribe / delete).</td>
-        <td class="c-qa">Account hub, edit profile, language switch, settings destructive actions. 10 AC.</td>
+        <td class="c-dev">ProfileView, edit profile + avatar crop, LanguageModal, SettingsView (legal / unsubscribe / delete), FeedbackDialog.</td>
+        <td class="c-qa">Account hub, edit profile, language switch, Send Feedback (4 fields, 5 MB cap), settings destructive actions. 18 AC.</td>
       </tr>
       <tr data-doc="07" tabindex="0" role="button" aria-label="Open Credits &amp; IAP spec">
         <td class="c-area">07</td>
         <td class="c-feat"><span class="feat-name">Credits &amp; IAP</span><span class="feat-open">Open spec →</span><div class="c-file">areas/07-credits-iap.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">CreditsProvider; Subscribe / BuyCredits / CreditsDetail modals; lib/user.ts pricing + store SKUs.</td>
-        <td class="c-qa">Subscriber-only gate, plan/pack selection + badges, per-modal disclaimers @4 widths. 9 AC. ★ Pricing updated 2026-07-24.</td>
+        <td class="c-qa">Subscriber-only gate, plan/pack selection + badges, per-modal disclaimers @6 widths. 12 AC. ★ Pricing confirmed 2026-09-01 (Web SKUs &amp; Pricing: Final).</td>
       </tr>
       <tr data-doc="08" tabindex="0" role="button" aria-label="Open Proof of Creation spec">
         <td class="c-area">08</td>
@@ -305,21 +309,28 @@
         <td class="c-feat"><span class="feat-name">Auth &amp; Onboarding</span><span class="feat-open">Open spec →</span><div class="c-file">areas/09-auth-onboarding.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">AuthProvider, AuthGuard, mock SignInModal; action-level auth gating (GL-02).</td>
-        <td class="c-qa">Mock sign-in gate, guarded routes, auth-gated actions (like/publish). Onboarding out of scope. 7 AC.</td>
+        <td class="c-qa">Mock sign-in gate, guarded routes, auth-gated actions (like/publish). Onboarding out of scope. 8 AC.</td>
       </tr>
       <tr data-doc="10" tabindex="0" role="button" aria-label="Open Share spec">
         <td class="c-area">10</td>
         <td class="c-feat"><span class="feat-name">Share</span><span class="feat-open">Open spec →</span><div class="c-file">areas/10-share.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">Public /share/[id] page + the shared ShareDialog component.</td>
-        <td class="c-qa">Share dialog + public share-link page. Intended gating still open (TBD-GL-07). 6 AC.</td>
+        <td class="c-qa">Share dialog + public share-link page. Intended gating still open (TBD-GL-07). 7 AC.</td>
       </tr>
       <tr data-doc="11" tabindex="0" role="button" aria-label="Open Credit Consumption (RD) spec">
         <td class="c-area">11</td>
         <td class="c-feat"><span class="feat-name">Credit Consumption (RD)</span><span class="feat-open">Open spec →</span><div class="c-file">areas/11-credit-consumption.md</div></td>
         <td><span class="badge st-warn">as-built</span></td>
         <td class="c-dev">MSR Credit Consume Form (credit_consume 1.0); main-action + subActions payload per scenario; cloud-config action map.</td>
-        <td class="c-qa">Which action/subActions each generation sends, charge-on-start + refund-on-fail, reserved actions. 2 TBD.</td>
+        <td class="c-qa">Which action/subActions each generation sends, charge-on-start + refund-on-fail, reserved actions. Rules only, no AC block — it IS storyboard spec S10 (PLAN.md D13). 1 blank: TBD-CC-06.</td>
+      </tr>
+      <tr data-doc="12" tabindex="0" role="button" aria-label="Open Notification Emails (RD) spec">
+        <td class="c-area">12</td>
+        <td class="c-feat"><span class="feat-name">Notification Emails (RD)</span><span class="feat-open">Open spec →</span><div class="c-file">areas/12-notifications-email.md</div></td>
+        <td><span class="badge st-warn">as-built</span></td>
+        <td class="c-dev">No prototype code at all — a backend contract. Five email scenarios, their `.properties` key prefixes, triggers, recipients, dynamic fields and deep links.</td>
+        <td class="c-qa">Nothing here is clickable in the prototype. Read it for the trigger/timing/deep-link contract; emails 1–4 are RD's, email 5 is the payment company's. 8 AC.</td>
       </tr>
       <tr data-doc="OQ" tabindex="0" role="button" aria-label="Open Open Questions spec">
         <td class="c-area">OQ</td>
@@ -375,7 +386,7 @@
       <tr>
         <td class="c-area">S3</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">MV Edit</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-edit/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v1 · 2026-08-28</span></td>
+        <td><span class="badge st-ok">v2 · 2026-09-03</span></td>
         <td class="c-dev">/mv/edit</td>
         <td class="c-qa">5 paths / 24 shots</td>
       </tr>
@@ -3977,7 +3988,7 @@ price, and <code>CREDIT_SALE_PCT</code> below remains an unrelated sample of the
 <code>SubscribeModal</code> for a non-subscriber (also the safety net for the in-flow insufficient-balance path).<br>
   Only subscribers see <strong>Buy Credits</strong> (CR-06).<blockquote>
 <p><strong>Starting balance is now <code>DEFAULT_CREDITS = 10</code></strong> (was 390; product decision 2026-08-12,<br>
-<code>TBD-CR-06a</code>). <strong>10 does not cover any MV</strong> — the cheapest MV path is 220 — so a free account<br>
+<code>TBD-CR-06a</code>). <strong>10 does not cover any MV</strong> — the cheapest MV is <strong>105</strong> — so a free account<br>
 generates one vocal song (6) and then meets the paywall. That is the intended funnel, and it<br>
 <strong>reverses</strong> this line's old claim that the demo stays playable without subscribing. Because<br>
 <code>AGENTS.md</code> also calls this a CEO-demoable prototype, <code>startingCredits()</code> in <code>lib/user.ts</code><br>
@@ -3987,6 +3998,17 @@ build. e2e funds itself through the real subscribe flow (<code>fundAccount</code
 2026-08-11; CR-06 comes from the Business Model, not the comp, so the product owner reinstated<br>
 it and the code was reverted the same day. "As-built" holds again. Guarded by<br>
 <code>e2e</code>'s "3f / CR-06: a free account cannot reach Buy Credits". History in TBD-CR-10.</p>
+<p>⚠️ <strong>"cheapest MV" corrected 2026-09-03 — it said 220.</strong> That figure was <code>COST_STORYBOARD</code> 20 +<br>
+<code>COST_RENDER</code> 200, two constants deleted on <strong>2026-08-19</strong> when <code>areas/11</code>'s per-second pricing<br>
+landed. Since then there is no single MV price to quote: <code>createMvCost()</code> is <code>45 + rate × seconds</code><br>
+and the rate varies by MV type and resolution, so the floor is the cheapest COMBINATION — a<br>
+30-second song (the trim floor, <code>AC-MV-16</code>) as a <strong>storytelling</strong> MV at <strong>Standard</strong>/720p:<br>
+<code>45 + 2×30</code> = <strong>105</strong>. For comparison, storyboard-first is <strong>107</strong> (<code>scriptCost(30)</code> 12 +<br>
+<code>generateMvCost</code> 95) and the DEFAULT compose (singing/Standard) at 30s is <strong>195</strong>. The same<br>
+stale 220 was carried in <code>lib/user.ts</code>'s <code>DEFAULT_CREDITS</code> comment and <code>OPEN-QUESTIONS.md</code>;<br>
+all three are corrected, and the numbers are now pinned by<br>
+<code>src/lib/api/contract.surface.test.ts</code> ("the CHEAPEST reachable MV is 105") so the next<br>
+pricing change fails a test instead of leaving three documents behind.</p>
 </blockquote>
 </li>
 <li><strong>Discount presentation — UI elements only, <code>TBD-CR-07</code>.</strong> <code>BuyCreditsModal</code> renders, per pack, a<br>
@@ -5589,6 +5611,434 @@ ai_song_custom_vocal_refine                                          ← 移除
   Edit --&gt;|Merge MV| A6[&quot;merge_mv&lt;br/&gt;（省略 rule）&quot;]
 </code></pre>
 </article>
+<article class="doc" id="doc-12" data-name="Notification Emails (RD)" data-file="areas/12-notifications-email.md">
+<h1 id="area-12-notification-emails">Area 12 — Notification Emails</h1>
+<blockquote>
+<p>Read <code>../00-overview.md</code> first (conventions, ID scheme). <strong>As-built</strong>; ⚠️ = divergence /<br>
+correction, ❓ = a tracked <code>TBD-*</code>, 🔒 = mock/in-memory, 🔧 = backend work item for RD.</p>
+<p>⚠️ <strong>Backend note (G3): this entire area is a backend contract, not a built feature.</strong> The<br>
+prototype (<code>web-app/</code>) has <strong>no mail capability at all</strong> — no mail service, no send API, no<br>
+template engine. <code>email</code> exists only as a field on the mock <code>Profile</code> (<code>lib/user.ts</code> →<br>
+<code>AuthProvider</code>'s <code>DEFAULT_PROFILE</code>, area 06 §3.1). Nothing in this document is exercised by<br>
+clicking around the running app; it exists so RD can implement the real thing.</p>
+</blockquote>
+<hr>
+<h2 id="1-overview-scope">1. Overview &amp; scope</h2>
+<p>Source: <code>../../docs/RD-REQUEST-NOTIFICATION-EMAILS.md</code> (Chinese, with the English <code>.properties</code><br>
+copy blocks that ARE the RD contract for four of the five emails — read it in full before touching<br>
+this file; this spec references it rather than re-transcribing it, per the single-source rule).</p>
+<p><strong>Five email types are confirmed.</strong> Who sends each:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Email</th>
+<th>Sender</th>
+<th>In this spec?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Email verification</td>
+<td><strong>RD</strong> (already sending; this request adds Muse-specific copy)</td>
+<td>✅ MAIL-P1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Onboarding / Welcome</td>
+<td><strong>RD</strong> (re-requested — see below)</td>
+<td>✅ MAIL-P2</td>
+</tr>
+<tr>
+<td>3</td>
+<td>MV generation complete</td>
+<td><strong>RD</strong></td>
+<td>✅ MAIL-P3</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Storyboard generation complete</td>
+<td><strong>RD</strong></td>
+<td>✅ MAIL-P4</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Subscription confirmation</td>
+<td><strong>The payment company</strong> — see next paragraph</td>
+<td>✅ MAIL-P5 (reference only)</td>
+</tr>
+</tbody>
+</table>
+<p>Emails 1–4 are <strong>implemented by RD, with copy supplied by Marcom, ready 2026-09-09</strong>.</p>
+<p>⚠️ <strong>Email 5 (subscription confirmation) — supersession.</strong> The product owner's conclusion of<br>
+<strong>2026-09-01</strong> is: it is sent by <strong>the payment company — Stripe in the US, 2Checkout everywhere<br>
+else</strong>. This <strong>supersedes</strong> <code>docs/RD-REQUEST-NOTIFICATION-EMAILS.md</code>, which predates the US/Stripe<br>
+split and names <strong>only 2Checkout</strong> (its own closing section, "訂閱成功信", says the confirmation is<br>
+set up "in 2Checkout's back office"). Neither RD nor this app sends it, and neither implements it —<br>
+there is no copy to build against and no <code>.properties</code> block for it. It is listed here only so the<br>
+area's map is complete and so a future alignment pass (brand voice/signature/link colour) has<br>
+somewhere to start from; see <code>TBD-MAIL-03</code>.</p>
+<p><strong>In scope:</strong> the trigger/recipient/timing/dynamic-field contract for all five email types, the<br>
+<code>.properties</code> key names and subject lines RD implements against, and the one blocking technical<br>
+gap (deep-link cold-resolve) that stands between "RD ships the template" and "the link in the email<br>
+actually works." <strong>Out of scope, cross-referenced:</strong> the sign-up/verification UX itself (area 09),<br>
+the MV and storyboard job lifecycle that emails 3–4 fire from (area 02), and subscription purchase<br>
+(area 07). The full copy text (subject lines aside) lives in<br>
+<code>docs/RD-REQUEST-NOTIFICATION-EMAILS.md</code> — that document, not this one, is the copy source of<br>
+truth; do not re-transcribe its <code>.properties</code> bodies here or let them drift out of sync.</p>
+<p><strong>Brand-colour correction (already made in the RD request, recorded here for completeness):</strong> the<br>
+RD reference document's link colour was <code>#03ade2</code> (another product's theme colour); every link in<br>
+the four <code>.properties</code> blocks now uses Muse's own accent, <code>#a855f7</code> (<code>--accent</code>,<br>
+<code>token-aliases.css</code>). Underline and font-weight are unchanged from RD's original styling.</p>
+<p>❓ <strong>Signup-form assumption vs. the actual mock auth flow.</strong> Scenario 1's trigger is written as "the<br>
+user completes the sign-up form, the backend creates the account" — i.e. it presumes an<br>
+email/password (or at least email-collecting) sign-up step. The web mock has no such step today:<br>
+area 09 §1 records <strong>social-only sign-in</strong> (Continue with Apple / Continue with Google,<br>
+<code>SignInModal.tsx</code>), which collects no email address at all. <code>profile.email</code> is a static mock value<br>
+(<code>scott_wu@mail.com</code>, area 06 §3.1) editable only via the Send Feedback form, never captured at<br>
+"sign-up." This is a real gap between the RD request's premise and the current web auth model, not<br>
+something this file can resolve — flagged rather than silently reconciled; see <code>TBD-MAIL-04</code>.</p>
+<hr>
+<h2 id="2-scenario-map-rd-contract">2. Scenario map (RD contract)</h2>
+<p>All four RD-owned emails follow RD's existing <code>mail.&lt;scenario&gt;.&lt;field&gt; = text</code> <code>.properties</code><br>
+convention (FreeMarker-style), and every link uses:<br>
+<code>&lt;strong&gt;&lt;a href="{link}" rel="noopener" style="text-decoration: underline; color: #a855f7;" target="_blank"&gt;&lt;u&gt;text&lt;/u&gt;&lt;/a&gt;&lt;/strong&gt;</code>.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Scenario</th>
+<th><code>.properties</code> prefix</th>
+<th>Trigger</th>
+<th>Recipient</th>
+<th>Timing</th>
+<th>Dynamic fields</th>
+<th>Deep link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Verification</td>
+<td><code>mail.emailVerification.*</code></td>
+<td>Account created (new accounts only — not every sign-in)</td>
+<td>The address given at sign-up</td>
+<td>Immediately on account creation</td>
+<td><code>{userName}</code> <code>{link}</code> <code>{helpMailReciever}</code></td>
+<td>one-time verification token URL (RD-generated)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Onboarding / Welcome</td>
+<td><code>mail.welcome.*</code></td>
+<td>Email verified (account activated)</td>
+<td>Account email</td>
+<td>Immediately after MAIL-P1 completes</td>
+<td><code>{userName}</code> <code>{helpMailReciever}</code>, plus per-feature <code>{link}</code></td>
+<td><code>/mv/room</code>, <code>/song/create</code> (two feature CTAs)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>MV generation complete</td>
+<td><code>mail.task.done.mv.*</code></td>
+<td>MV job status → <code>done</code> (<code>resultUrl</code> produced)</td>
+<td>Account email</td>
+<td>On job completion (async — user may have left)</td>
+<td><code>{userName}</code> <code>{link}</code></td>
+<td><code>/mv/result?id={mv_id}</code> ⚠️ see §3</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Storyboard generation complete</td>
+<td><code>mail.task.done.storyboard.*</code></td>
+<td>Storyboard job status → <code>done</code>, <strong>before</strong> MV generation is triggered</td>
+<td>Account email</td>
+<td>On job completion (async)</td>
+<td><code>{userName}</code> <code>{link}</code></td>
+<td><code>/mv/storyboard?id={storyboard_id}</code> ⚠️ see §3</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Subscription confirmation</td>
+<td>— (no <code>.properties</code> here; payment company's own template)</td>
+<td>Successful subscription purchase</td>
+<td>Account email</td>
+<td>Payment-company-determined</td>
+<td>Payment-company-determined</td>
+<td>Payment-company-determined</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Subject lines</strong> (the one piece of full copy reproduced here, since a reader needs it to recognize<br>
+the email without opening the source doc — bodies are NOT reproduced, see §1):</p>
+<ul>
+<li>MAIL-P1: <em>"Verify Your Account"</em></li>
+<li>MAIL-P2: <em>"Welcome to YouCam Muse — Let's Get Creative!"</em></li>
+<li>MAIL-P3: <em>"Your AI Generated Music Video from YouCam Muse is ready!"</em></li>
+<li>MAIL-P4: <em>"Your Storyboard is Ready — Come Create Your Video!"</em></li>
+<li>MAIL-P5: not specified here (payment company's template).</li>
+</ul>
+<p>MAIL-P2's two feature CTAs (order matters — this is the deliberately-trimmed "just two features"<br>
+version, not RD's fuller welcome-email format):</p>
+<table>
+<thead>
+<tr>
+<th>Order</th>
+<th>Feature</th>
+<th>CTA copy</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01</td>
+<td>AI Music Video Creator</td>
+<td>"Try it Now"</td>
+<td><code>/mv/room</code></td>
+</tr>
+<tr>
+<td>02</td>
+<td>AI Song Composer</td>
+<td>"Try it Now"</td>
+<td><code>/song/create</code></td>
+</tr>
+</tbody>
+</table>
+<p>Both targets are reachable <strong>logged out</strong> — per the source doc's own note, sign-in is gated at the<br>
+Create button on each screen (area 09 AC-AUTH-08), not at the route, so these two links need no<br>
+guest-access workaround.</p>
+<hr>
+<h2 id="3-state-rules">3. State &amp; rules</h2>
+<ul>
+<li>🔒 <strong>Nothing here is implemented.</strong> <code>grep -rn 'fetch(' src</code> stays empty per <code>AGENTS.md</code>'s standing<br>
+  rule, and there is no mail-adjacent code anywhere in <code>src/</code> — no send call, no template renderer,<br>
+  no queue. <code>email</code> is read and written in exactly one place, the mock <code>Profile</code> object (area 06<br>
+  §3.1), and nothing in <code>src/</code> observes an account-created, email-verified, or job-completion event<br>
+  to trigger a send. This area exists purely as a backend spec for RD to build against.</li>
+<li><strong>RD's <code>done.ftl</code> placeholder structure was borrowed, not confirmed.</strong> The source doc notes RD<br>
+  supplied a reference template (<code>done.ftl</code>) believed to belong to the subscription-confirmation<br>
+  flow, but its placeholder shape (<code>${congratulation}</code>, <code>${content1}</code>, <code>${content2}</code>, …) matches the<br>
+<code>mail.task.done.*</code> family used for MAIL-P3/P4 instead. The source doc borrows that shape for<br>
+  MAIL-P3/P4 without RD confirming it is the actual file RD intends to reuse — flagged for RD to<br>
+  correct if it doesn't match (<code>TBD-MAIL-04</code>).</li>
+<li>⚠️ <strong>The deep links in MAIL-P3 and MAIL-P4 cannot cold-resolve today — this is the area's one real<br>
+  blocker.</strong> Verified by reading the code, not inferred from the source doc:</li>
+<li><strong><code>/mv/result</code> (<code>MvResult.tsx</code>):</strong> does read <code>?id=</code> (<code>useSearchParams().get("id")</code>), but only to<br>
+    compute <code>shareId</code> for the Share dialog (falling back to a matching <code>History</code> entry) — it is<br>
+    never used to look up or restore the result itself. The screen's actual guard is<br>
+<code>const { resultUrl, ... } = useMvFlow(); useEffect(() =&gt; { if (!resultUrl) router.replace(localePath(locale, "/mv/room")); }, ...); if (!resultUrl) return null;</code> —<br>
+    i.e. it depends entirely on <strong>in-memory flow state</strong> (<code>useMvFlow()</code>), which does not exist on a<br>
+    fresh tab/device/session. An MV-done email opened anywhere but the same in-memory session that<br>
+    generated it redirects straight to <code>/mv/room</code>, <code>?id=</code> and all.</li>
+<li><strong><code>/mv/storyboard</code> (<code>StoryboardEditor.tsx</code>):</strong> doesn't even read <code>?id=</code> — no <code>useSearchParams</code><br>
+    import at all. Its guard is a <strong>tolerant redirect</strong>: <code>useEffect(() =&gt; { if (storyboard) return; const t = setTimeout(() =&gt; router.replace(localePath(locale, "/mv/room")), 400); return () =&gt; clearTimeout(t); }, ...)</code> —<br>
+    it waits 400ms for <code>useMvFlow()</code>'s in-memory <code>storyboard</code> to hydrate, then redirects if it<br>
+    never did. Same failure mode: no in-memory state, no id-based lookup, redirect to <code>/mv/room</code>.</li>
+<li><code>?id=</code> <strong>does</strong> work today, but only for <strong>in-app</strong> navigation that sets flow state before<br>
+    pushing the route — e.g. <code>History</code>'s row click (<code>useOpenCreation.ts</code>, <code>HistoryView.tsx</code>) builds<br>
+    exactly these same URL shapes (<code>/mv/result?id=</code>, <code>/mv/storyboard?id=</code>). The email links reuse<br>
+    that URL <em>format</em> without the in-app navigation that makes it work. See <code>TBD-MAIL-01</code> — this is<br>
+    the RD warning already on record in the source document, verified against the current code<br>
+    rather than taken on faith.</li>
+<li><strong>No expiry reminder for MV results.</strong> MAIL-P3 deliberately omits any "download before it's<br>
+  deleted" language — Muse videos never expire, unlike some competitor products' finite-retention<br>
+  copy that the RD reference material was drafted against.</li>
+<li><strong>CTA copy in MAIL-P4 is deliberately not "Create MV."</strong> It reads "Review Your Storyboard"<br>
+  because the email lands the user on the storyboard <strong>review</strong> screen (<code>/mv/storyboard</code>,<br>
+<code>StoryboardEditor</code>, area 02) — "Create MV" is the button <em>on that screen</em> the user presses next,<br>
+  after reviewing, and using the same word for both would suggest the email itself starts<br>
+  generation.</li>
+</ul>
+<hr>
+<h2 id="4-journeys">4. Journeys</h2>
+<p>Nothing here is capturable as a screenshot or QA-walkable path — these are backend event<br>
+sequences, not UI flows. Each "journey" below is the trigger → send → (eventual) click sequence RD<br>
+implements.</p>
+<h3 id="mail-p1-verification">MAIL-P1 — Verification</h3>
+<ul>
+<li><strong>MAIL-P1-S1</strong> Account created (area 09 owns the actual sign-up/creation event, once one exists —<br>
+  see the ❓ note in §1) → RD sends <code>mail.emailVerification.*</code> immediately, to the address on file.</li>
+<li><strong>MAIL-P1-S2</strong> User clicks the verification link (one-time token, RD-issued and RD-validated;<br>
+  the token/expiry mechanics are entirely RD's, not specified by this app).</li>
+</ul>
+<h3 id="mail-p2-onboarding-welcome">MAIL-P2 — Onboarding / Welcome</h3>
+<ul>
+<li><strong>MAIL-P2-S1</strong> Verification (MAIL-P1) succeeds, account activated → RD sends <code>mail.welcome.*</code><br>
+  immediately.</li>
+<li><strong>MAIL-P2-S2</strong> User clicks either feature CTA → lands on <code>/mv/room</code> or <code>/song/create</code> logged out;<br>
+  gating happens at the Create button on that screen (area 09 AC-AUTH-08), not the route.</li>
+</ul>
+<h3 id="mail-p3-mv-generation-complete">MAIL-P3 — MV generation complete</h3>
+<ul>
+<li><strong>MAIL-P3-S1</strong> An MV render job (area 02 <code>MvFlowProvider</code>) transitions to <code>done</code> → RD sends<br>
+<code>mail.task.done.mv.*</code> to the account email, asynchronously (the user may no longer be on the<br>
+  page — this is the whole reason the email exists).</li>
+<li><strong>MAIL-P3-S2</strong> User clicks <strong>View Your Video Now</strong> → intended target <code>/mv/result?id={mv_id}</code>.<br>
+  ⚠️ <strong>Today this redirects to <code>/mv/room</code> instead of showing the result</strong> unless the click happens<br>
+  in the same in-memory session the MV was generated in — see §3 and <code>TBD-MAIL-01</code>.</li>
+</ul>
+<h3 id="mail-p4-storyboard-generation-complete">MAIL-P4 — Storyboard generation complete</h3>
+<ul>
+<li><strong>MAIL-P4-S1</strong> A storyboard job (area 02, the two-stage MV flow's first stage) transitions to<br>
+<code>done</code>, <strong>before</strong> the user has triggered actual MV generation → RD sends<br>
+<code>mail.task.done.storyboard.*</code> asynchronously.</li>
+<li><strong>MAIL-P4-S2</strong> User clicks <strong>Review Your Storyboard</strong> → intended target<br>
+<code>/mv/storyboard?id={storyboard_id}</code>. ⚠️ Same cold-resolve failure as MAIL-P3-S2 — see §3 and<br>
+<code>TBD-MAIL-01</code>.</li>
+</ul>
+<h3 id="mail-p5-subscription-confirmation-reference-only-not-this-apps-contract">MAIL-P5 — Subscription confirmation (reference only — not this app's contract)</h3>
+<ul>
+<li><strong>MAIL-P5-S1</strong> Subscription purchase succeeds (area 07 owns the purchase flow itself, mocked<br>
+  today via <code>subscribe(plan)</code>) → <strong>the payment company</strong> (Stripe US / 2Checkout elsewhere) sends<br>
+  its own confirmation, on its own template, outside RD's and this app's control. Nothing to<br>
+  implement or QA here.</li>
+</ul>
+<hr>
+<h2 id="5-error-edge-states">5. Error &amp; edge states</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Trigger</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MAIL-E1</strong></td>
+<td>MAIL-P3 link opened cold (new tab/device/session, or same tab reload)</td>
+<td><code>/mv/result</code>'s guard sees no <code>resultUrl</code> in <code>useMvFlow()</code> and <code>router.replace()</code>s to <code>/mv/room</code> — the video is never shown, regardless of a valid <code>?id=</code> in the URL. Blocks on <code>TBD-MAIL-01</code>.</td>
+</tr>
+<tr>
+<td><strong>MAIL-E2</strong></td>
+<td>MAIL-P4 link opened cold</td>
+<td><code>/mv/storyboard</code> waits 400ms for <code>useMvFlow()</code>'s <code>storyboard</code> to hydrate, finds nothing, and <code>router.replace()</code>s to <code>/mv/room</code> — <code>?id=</code> is never even read. Blocks on <code>TBD-MAIL-01</code>.</td>
+</tr>
+<tr>
+<td><strong>MAIL-E3</strong></td>
+<td>Any of the four RD-owned emails, in the prototype today</td>
+<td><strong>None are sent.</strong> There is no mail service to fail — this is a standing 🔒 state of the whole area, not a per-scenario edge case, until RD builds emails 1–4.</td>
+</tr>
+<tr>
+<td><strong>MAIL-E4</strong></td>
+<td>A signed-out visitor with no <code>email</code> ever collected (see §1 ❓ note)</td>
+<td>Scenario 1 has no address to send to under the current mock sign-in flow — moot until the sign-up premise in <code>TBD-MAIL-04</code> is resolved.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
+<p>These are <strong>RD-contract</strong> acceptance criteria — nothing here is verifiable against the running<br>
+prototype (§7 says so explicitly); they exist to give RD/QA a testable target once the backend is<br>
+built.</p>
+<ul>
+<li><strong>AC-MAIL-01</strong> — THE SYSTEM (prototype) SHALL NOT send any email under any circumstance — no mail<br>
+  service, send API, or template engine exists in <code>web-app/</code>. <em>(as-built; asserts an absence)</em></li>
+<li><strong>AC-MAIL-02</strong> — WHEN a new account is created, THE SYSTEM (RD backend) SHALL send<br>
+<code>mail.emailVerification.*</code> to the sign-up address immediately, populated with <code>{userName}</code>,<br>
+<code>{link}</code> (one-time token, expires in 24h per copy), and <code>{helpMailReciever}</code>.</li>
+<li><strong>AC-MAIL-03</strong> — WHEN email verification succeeds, THE SYSTEM (RD backend) SHALL send<br>
+<code>mail.welcome.*</code> to the account email immediately, with both feature CTAs pointing at <code>/mv/room</code><br>
+  and <code>/song/create</code> respectively.</li>
+<li><strong>AC-MAIL-04</strong> — WHEN an MV generation job reaches <code>done</code>, THE SYSTEM (RD backend) SHALL send<br>
+<code>mail.task.done.mv.*</code> to the account email, with <code>{link}</code> targeting <code>/mv/result?id={mv_id}</code>.</li>
+<li><strong>AC-MAIL-05</strong> — WHEN a storyboard generation job reaches <code>done</code> (and MV generation has not yet<br>
+  been triggered), THE SYSTEM (RD backend) SHALL send <code>mail.task.done.storyboard.*</code> to the account<br>
+  email, with <code>{link}</code> targeting <code>/mv/storyboard?id={storyboard_id}</code>.</li>
+<li><strong>AC-MAIL-06</strong> — THE SYSTEM SHALL NOT treat the subscription-confirmation email as this app's or<br>
+  RD's responsibility — it is sent by the payment company (Stripe US / 2Checkout elsewhere) on its<br>
+  own template, per the product owner's 2026-09-01 conclusion, which supersedes the source<br>
+  document's 2Checkout-only statement.</li>
+<li><strong>AC-MAIL-07</strong> — WHILE <code>/mv/result</code> or <code>/mv/storyboard</code> is opened via a <code>?id=</code> URL with <strong>no</strong><br>
+  matching in-memory flow state (<code>useMvFlow()</code>), THE SYSTEM SHALL <code>router.replace()</code> to <code>/mv/room</code><br>
+  rather than render the target content — i.e. <strong>the email links in AC-MAIL-04/05 do not work from<br>
+  a cold session today.</strong> This is the current, verified behaviour, not the desired end state; RD<br>
+  must add id-based resolution to both routes before those links are usable (<code>TBD-MAIL-01</code>).</li>
+<li><strong>AC-MAIL-08</strong> — All four RD-owned templates' link markup SHALL use <code>color: #a855f7</code> (Muse's<br>
+<code>--accent</code>), not the <code>#03ade2</code> in RD's original reference material.</li>
+</ul>
+<hr>
+<h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
+<p><strong>There is nothing to test in the running prototype for this area.</strong> Every item below is N/A<br>
+against <code>web-app/</code> as it stands today — no mail service exists to trigger, receive, or inspect an<br>
+email against. This checklist is for <strong>RD's implementation</strong>, once built:</p>
+<ul>
+<li>[ ] N/A in prototype — <strong>MAIL-P1</strong>: new-account creation sends verification mail with correct<br>
+<code>{userName}</code>/<code>{link}</code>/<code>{helpMailReciever}</code> (AC-02). <em>Backend-only; nothing to click here.</em></li>
+<li>[ ] N/A in prototype — <strong>MAIL-P2</strong>: verification success sends welcome mail; both feature CTAs<br>
+      resolve to <code>/mv/room</code> / <code>/song/create</code> (AC-03). <em>Backend-only.</em></li>
+<li>[ ] N/A in prototype — <strong>MAIL-P3</strong>: MV job <code>done</code> sends mail; <strong>link cold-open currently fails</strong><br>
+      (AC-07, <code>TBD-MAIL-01</code>) — do not mark this green until RD ships the id-resolution fix.</li>
+<li>[ ] N/A in prototype — <strong>MAIL-P4</strong>: storyboard job <code>done</code> sends mail; same cold-open caveat as<br>
+      MAIL-P3 (AC-07).</li>
+<li>[ ] N/A in prototype — <strong>MAIL-P5</strong>: confirm no Muse/RD branding drifts from the payment company's<br>
+      independently-configured confirmation email (AC-06) — not blocking, no owner assigned yet.</li>
+<li>[ ] <strong>AC-01</strong>: confirm <code>grep -rn 'fetch(' src</code> and a search for a mail/send API stay empty — the<br>
+      one thing this area's QA CAN check today is that nothing was accidentally half-built.</li>
+</ul>
+<hr>
+<h2 id="8-open-items-for-rd">8. Open items for RD</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Open item</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TBD-MAIL-01</strong></td>
+<td>🔧 <strong>Backend (RD), blocking.</strong> <code>/mv/result</code> and <code>/mv/storyboard</code> cannot cold-resolve a <code>?id=</code> today — both guard on in-memory <code>useMvFlow()</code> state only (verified in <code>MvResult.tsx</code> / <code>StoryboardEditor.tsx</code>, §3). RD must add id-based content resolution to both routes (fetch the MV/storyboard by id and populate the screen) before the MAIL-P3/P4 email links work from another device, tab, or session. Until then, those links are correctly-formatted URLs that redirect to <code>/mv/room</code>.</td>
+</tr>
+<tr>
+<td><strong>TBD-MAIL-02</strong></td>
+<td>🔧 <strong>Backend (RD), scheduled.</strong> Emails 1–4 are copy-complete and RD-scoped; target ready date <strong>2026-09-09</strong> per Marcom. Not yet built as of this writing (2026-09-01).</td>
+</tr>
+<tr>
+<td><strong>TBD-MAIL-03</strong></td>
+<td>🎨 <strong>Product/Marcom, non-blocking.</strong> Whether the payment company's subscription-confirmation template (Stripe US / 2Checkout elsewhere) should be brand-aligned with RD's four templates — product name, signature block, <code>#a855f7</code> link colour — is unresolved; the source document raises it only as a "for later, if it comes up" note.</td>
+</tr>
+<tr>
+<td><strong>TBD-MAIL-04</strong></td>
+<td>❓ <strong>Product/RD.</strong> MAIL-P1's trigger ("user completes the sign-up form") presumes an email-collecting sign-up step that does not exist in the web mock — area 09's sign-in is social-only (Apple/Google), collecting no email. Either a real email/password path is coming with the real backend (and this file's trigger description already anticipates it), or the trigger needs restating against whatever the real auth model turns out to be. Do not resolve by guessing; ask.</td>
+</tr>
+<tr>
+<td><strong>TBD-MAIL-05</strong></td>
+<td>❓ <strong>RD to confirm.</strong> The source document borrows RD's <code>done.ftl</code> reference template's placeholder shape for MAIL-P3/P4 without confirming that file is actually the one RD intends to reuse for these two scenarios (§3). If it isn't, the <code>.properties</code> key names in §2 may need to move to a different template family.</td>
+</tr>
+</tbody>
+</table>
+<p>See also global: <code>TBD-GL-04</code> (production persistence — relevant once RD wires real job-completion<br>
+events to trigger MAIL-P3/P4).</p>
+<hr>
+<h2 id="9-flow-diagram">9. Flow diagram</h2>
+<pre><code class="language-mermaid">flowchart TD
+  Signup[&quot;Account created (area 09)&quot;] --&gt;|RD sends| V[&quot;MAIL-P1: mail.emailVerification.*&quot;]
+  V --&gt;|user clicks link, verifies| Welcome[&quot;MAIL-P2: mail.welcome.* (RD sends)&quot;]
+  Welcome --&gt;|feature CTA| Room[&quot;/mv/room or /song/create&quot;]
+
+  SBJob[&quot;Storyboard job done (area 02)&quot;] --&gt;|RD sends| SBMail[&quot;MAIL-P4: mail.task.done.storyboard.*&quot;]
+  SBMail --&gt;|&quot;Review Your Storyboard&quot; link| SBLink{&quot;/mv/storyboard?id= — in-memory flow state present?&quot;}
+  SBLink --&gt;|yes, same session| SBOK[&quot;Storyboard renders&quot;]
+  SBLink --&gt;|no — cold link, TBD-MAIL-01| SBFail[&quot;router.replace → /mv/room&quot;]
+
+  MvJob[&quot;MV render job done (area 02)&quot;] --&gt;|RD sends| MvMail[&quot;MAIL-P3: mail.task.done.mv.*&quot;]
+  MvMail --&gt;|&quot;View Your Video Now&quot; link| MvLink{&quot;/mv/result?id= — in-memory flow state present?&quot;}
+  MvLink --&gt;|yes, same session| MvOK[&quot;Result renders&quot;]
+  MvLink --&gt;|no — cold link, TBD-MAIL-01| MvFail[&quot;router.replace → /mv/room&quot;]
+
+  Sub[&quot;Subscription purchased (area 07)&quot;] --&gt;|payment company sends, NOT RD| SubMail[&quot;MAIL-P5: payment company's own template&quot;]
+</code></pre>
+<hr>
+<p><strong>Decisions (as-built):</strong> five email types confirmed; four (verification, welcome, MV done,<br>
+storyboard done) are RD-implemented with Marcom copy, ready 2026-09-09; the fifth (subscription<br>
+confirmation) is the payment company's — Stripe US / 2Checkout elsewhere — <strong>not</strong> RD's or this<br>
+app's, superseding the source document's 2Checkout-only statement. The prototype implements none of<br>
+this; it is a backend contract only. The one blocking technical gap is real: neither <code>/mv/result</code><br>
+nor <code>/mv/storyboard</code> can cold-resolve an <code>id</code>, so MAIL-P3/P4's links do not work outside the<br>
+generating session until RD adds that resolution (<code>TBD-MAIL-01</code>).</p>
+</article>
 <article class="doc" id="doc-OQ" data-name="Open Questions" data-file="OPEN-QUESTIONS.md">
 <h1 id="open-questions">待確認事項總表(Open Questions — 仍待處理項目)</h1>
 <blockquote>
@@ -5666,7 +6116,7 @@ section」,不是「小的 UI 問題」。</strong></p>
 </tr>
 <tr>
 <td>~~<strong>5</strong>~~</td>
-<td>✅ <strong>2026-08-12 結案</strong> — <code>DEFAULT_CREDITS = 10</code>。⚠️ 10 <strong>做不出任何 MV</strong>(最便宜 220),免費帳號生一首人聲歌就撞到付費牆 —— 這是刻意的漏斗。demo 另有 <code>NEXT_PUBLIC_DEMO_CREDITS</code> 環境變數可覆寫。</td>
+<td>✅ <strong>2026-08-12 結案</strong> — <code>DEFAULT_CREDITS = 10</code>。⚠️ 10 <strong>做不出任何 MV</strong>(最便宜 <strong>105</strong> —— 2026-09-03 更正,原本寫 220,那是已於 2026-08-19 刪除的 <code>COST_STORYBOARD</code> 20 + <code>COST_RENDER</code> 200;改成依秒計價後已無單一 MV 價格,下限是最便宜的組合:30 秒 storytelling / Standard,<code>45 + 2×30</code>。storyboard 路線 107,預設 compose(singing/Standard)30 秒是 195。已由 <code>contract.surface.test.ts</code> 鎖住),免費帳號生一首人聲歌就撞到付費牆 —— 這是刻意的漏斗。demo 另有 <code>NEXT_PUBLIC_DEMO_CREDITS</code> 環境變數可覆寫。</td>
 <td></td>
 </tr>
 </tbody>

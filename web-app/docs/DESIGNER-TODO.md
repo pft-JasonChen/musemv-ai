@@ -924,7 +924,7 @@ Custom tab 按下 **Enhance** 會開一個小選單,標題「What would you like
 
 ---
 
-### A29. Footer 剩下 3 條連結是 `href="#"` —— 不擋開發(2026-09-02 縮小到 3 條)
+### A29. Footer 剩下 3 條連結是 `href="#"` —— 不擋開發(2026-09-02 縮小到 3 條;2026-09-03 待給的**網址**只剩 1 個)
 
 2026-08-27 依產品負責人指示移除 **Pricing / Blogs / Storybook Creator** 三條(V1 不做:WA 沒有
 `/blog`、沒有定價頁,也沒有 Storybook Creator 這個產品)。移除後 footer 剩下:
@@ -963,6 +963,33 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
 > ⚠️ **而且不只 footer。** `BuyCreditsModal.tsx:220,222` 底部還有 **Terms of Use** 與
 > **Privacy Policy** 兩條同性質的 `href="#"`,本則從來沒有算進去。拍板網址時請一起給,
 > 實際上是 **5 個目的地**。
+>
+> ✅ **2026-09-03 更正:那兩條根本不需要拍板,已接上。** 上面「5 個目的地」把
+> `BuyCreditsModal` 的兩條也算成「等外部網址」,但 `TERMS_URL` / `PRIVACY_URL` 從 PROF-06 /
+> AUTH-03 起就在 `src/lib/legal.ts`,而且**已經活在四個地方**,其中一個正是這個對話框的
+> 雙胞胎 —— 2026-09-01 產品負責人把 `SubscribeModal` 的 footer 換成的就是這兩個常數
+> (那邊的註解直接稱 DP 的 `#` 是 dead)。那一輪只是沒改到隔壁檔案,所以兩個 IAP 對話框
+> 用同一個 footer,一個能點、一個不能。這次補上,不是新決定一個目的地。
+> 由 `e2e` 的「the two IAP dialogs' legal footers agree」守住(斷言的是**兩者一致**,
+> 不是斷言某個網址,所以之後任一邊改動而另一邊沒跟上都會紅)。
+>
+> **✅ 產品負責人 2026-09-03 已裁示:footer 三條全部維持 inert。**
+> footer 的 Terms of Service / Privacy Policy 和上面剛接上的那兩條**是同樣的兩個目的地**,
+> 而 `lib/legal.ts` 的網址就在那裡 —— 所以這是「要不要用」的決定,不是「有沒有」的問題。
+> 裁示是**不用**:`AC-SHELL-10` 與守著它的 e2e(斷言三條都是 `href="#"`)**都不動**,
+> `Footer.tsx` 也不動。
+>
+> **所以本則的計數要改口徑,不是改數字。** 「還缺 N 個目的地」這個講法一路把兩種不同的東西
+> 混在一起數:
+>
+> | | 條目 | 狀態 |
+> | --- | --- | --- |
+> | **真的缺網址** | FAQ | 🟡 **1 條** —— 產品負責人確認是 V1 連結,頁面還沒好 |
+> | **有網址,但裁示不接** | footer Terms of Service · Privacy Policy | ⚪ 2 條 —— 2026-09-03 決定維持 inert,不是待辦 |
+> | **有網址,已接** | `BuyCreditsModal` Terms of Use · Privacy Policy | ✅ 2 條 —— 見上,2026-09-03 |
+>
+> 也就是說,**這一則真正還在等的只有 FAQ 一個網址**。另外四條都已經有答案了 —— 兩條接上、
+> 兩條刻意不接。下一個 session 不要再把它讀成「還缺 5 個網址」。
 
 > ⚠️ **這三條是「會隨版本回來」的偏移(deviation-that-decays)。** 下一次 DP 交稿如果又出現
 > Pricing / Blogs / Storybook Creator,那是 DP 走在 V1 範圍前面,不是 DP 在糾正我們 —— 請再移除一次。

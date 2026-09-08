@@ -297,10 +297,19 @@ root), `MvDetail`, `SongDetail`, `LyricsPanel` (SongDetail was its last consumer
 `ui/LyricsSheet`. The only logic that went with them is `FREE_PREVIEW_SEC`, already cancelled by
 S3.
 
-**7f. HALF CLOSED 2026-08-06.** `HistoryView.tsx`'s `rowHref` is now locale-prefixed and guarded
-(`e2e` → "item 3: the row href matches where the click actually goes"). Still open:
-`SettingsView.tsx:170` does `router.push("/")`. Same shape R-9 exists to prevent, invisible when
-testing in English.
+**7f. ~~HALF CLOSED 2026-08-06~~ ✅ FULLY CLOSED 2026-09-03.** `HistoryView.tsx`'s `rowHref` was
+locale-prefixed and guarded in 2026-08-06's half (`e2e` → "item 3: the row href matches where the
+click actually goes"). The other half — Delete Account's `router.push("/")` in `SettingsView.tsx`
+— is now `router.push(localePath(locale, "/"))`. It was the last raw unprefixed navigation in
+`src/`: `grep -rn 'router\.push("\|router\.replace("' src` returns only a comment now.
+
+Worth recording why it survived three weeks: the file **already imported `localePath` and
+`useLocale`**, and used them correctly on the line 100 rows above (sign-out) and in
+`DetailNavbar`'s `fallbackPath`. So the defect was not "this file doesn't know about locales", it
+was one call site inside a `setTimeout` inside an `onClick` — and in English the cookie redirect
+lands you on the right page anyway, so nothing looks wrong to anyone testing it. That is R-9's
+whole thesis, and `guard-greps.sh` cannot see it: the rule greps for a literal `<a href="/`, not
+for `router.push`.
 
 **7g. CLOSED 2026-08-06 — answered "show both, by state".** The rails now follow DP: **Trending**
 when logged out or when the user has made nothing, **My Creations** over `useHistory()` once
@@ -381,7 +390,52 @@ lyrics, guarded by an e2e that creates a Simple-mode song and asserts the contro
 
 ---
 
-## 9. `/mv/edit`'s cost sentence renders `(26credits)` with no space (found 2026-08-28, S3 capture)
+## 9. ~~`/mv/edit`'s cost sentence renders `(26credits)` with no space~~ ✅ FIXED 2026-09-03
+
+> **Closed, and the cause was not what the entry below assumes.** This entry (rightly) refused to
+> let anyone "fix it by reasoning about JSX whitespace rules" and demanded a browser repro first.
+> Both were done — and then the compiled bundle was read, which is what actually settles it. SWC
+> emitted the children as
+>
+> ```js
+> ["Recreate (", sceneCost, "credits) … saved — Merge MV (", COST_MERGE, " credits) re-renders …"]
+> ```
+>
+> The two halves are not symmetric in the SOURCE the way the entry assumed. The text node after
+> `{COST_MERGE}` has a whitespace-only second line, which JSX drops, leaving an effectively
+> single-line node whose leading space survives. The node after `{sceneCost}` spans two NON-empty
+> source lines, and SWC trims the leading whitespace of the joined result. **So the trigger is
+> where Prettier happened to WRAP the sentence, not the expression before it** — which means
+> either half could have lost its space on any future reflow, and a `{" "}` would only have fixed
+> today's wrap.
+>
+> **What shipped:** `MvEditor.tsx` builds the sentence from string literals, so there is no JSX
+> text node left for a formatter to re-wrap. Live DOM now reads
+> `"Recreate (26 credits) … Merge MV (10 credits) …"`, confirmed on screen in the re-captured
+> `13_scene_recreated_version.png`, not just in `textContent`. Guarded by `e2e`'s
+> **"TODO#9: the MV-08 sentence spaces BOTH credit figures, not just the flat one"**, which
+> asserts the shape (`two "(N credits)" figures`, never `\d+credits`) rather than the literal 26,
+> because `recreateShotCost()` moves with the scene. Mutation-tested both ways: red with the JSX
+> form restored, green with it fixed.
+>
+> **S3 was re-captured in the same change** — all 24 shots, `build_spec.py` bumped to v2 and the
+> flowchart stamp with it. The `strings_ignore` entry did NOT go away as this entry predicted, but
+> its reason changed completely: `lint_spec.py`'s `_ENT` map rewrites the spec's `&mdash;` to an
+> ASCII hyphen while the source carries a real U+2014, so that one string can never byte-match
+> whatever the copy says. The bug-tolerating comment on it is replaced by that explanation, and
+> the `limits` bullet telling QA the missing space was deliberate is deleted.
+>
+> **Two things the re-capture turned up that were not this bug.** (1) The old screenshots were
+> *also* stale on the sidebar logo — it changed after 2026-08-28 and nothing had re-captured S3
+> since. (2) `specs/storyboards/mv-edit/` and `specs/storyboards/credits-iap/` were the two capture
+> scripts that never adopted `capture_lib.chromium_path()`, so **S3 and S5 could not be re-captured
+> at all on a sandboxed image** — the launch died on a build-number mismatch with a message telling
+> you to run `playwright install`. Both now use the shared resolver. S3's insufficient-balance step
+> also waited a flat 2500ms against a 2200ms `setTimeout`; under load the click landed on a still-
+> disabled Merge and the run died 30s later on a selector, reading exactly like a broken credits
+> gate. It now waits for `.mv-edit__merge-btn:not([disabled])`.
+
+### 9.1 Original entry (2026-08-28), kept for the repro it insisted on
 
 **Deferred by the product owner on 2026-08-28: fix it LATER, after the S3 spec landed.** The S3
 (`mv-edit`) storyboard quotes and photographs this sentence **verbatim, bug included**, with a

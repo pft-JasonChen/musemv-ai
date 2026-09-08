@@ -84,8 +84,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Music Video Edit',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video Edit',
-    'author': 'Jason Chen', 'date': '2026-08-28', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-09-03', 'status': 'Draft',
+    'version': 'v2',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -247,12 +247,11 @@ cfg = {
                     'user': 'Clicks Recreate.',
                     'system': 'The scene&rsquo;s video is OVERWRITTEN directly and a thumbnail is added to the scene-version history row.',
                     'exact': [
-                        'Sublabel below the editor: &ldquo;Recreate (26credits) replaces a scene directly. Edits aren&rsquo;t saved &mdash; Merge MV (10 credits) re-renders the video with your changes.&rdquo;',
+                        'Sublabel below the editor: &ldquo;Recreate (26 credits) replaces a scene directly. Edits aren&rsquo;t saved &mdash; Merge MV (10 credits) re-renders the video with your changes.&rdquo;',
                     ],
                     'limits': [
                         ('No &ldquo;pick which take&rdquo; tray, no undo.', 'AC-MV-12 &mdash; same rule as the cover, per-scene.'),
                         'The scene-version row is a record of past generations, not a picker.',
-                        ('The sublabel above is quoted verbatim, rendering bug included.', 'No space before &ldquo;credits&rdquo; after the dynamic number, unlike Merge&rsquo;s flat one &mdash; a live app bug, not a spec typo (D-02).'),
                     ],
                     'focus': [{'box': [22.6, 37.0, 28.0, 3.6], 'type': 'info', 'label': 'Generated scene history'}],
                 },
@@ -450,7 +449,7 @@ cfg = {
 
     'decisions': [
         ('D-01', 'The area spec said Merge charges `COST_RENDER` (200) and that the flat `COST_MERGE` (10) had been removed &mdash; which does the running code actually do?', 'Neither claim held: `COST_RENDER` does not exist anywhere in `src/lib/mv/types.ts` (removed 2026-08-19 along with `COST_STORYBOARD`/`COST_REGEN`), and `COST_MERGE = 10` was never removed &mdash; confirmed live (the Merge pill reads &ldquo;10&rdquo;; the balance drops by exactly 10 across P5-S1&rarr;P5-S3). The scene Recreate cost is similarly not a flat 20 &mdash; it is `recreateShotCost`, a per-shot rate (26 in this capture). `specs/areas/02-mv-creation.md` is corrected in place (&sect;3 Costs, the MV-P5 docstring, its Merge-MV bullet, AC-MV-12/13/19, &sect;7) under this programme&rsquo;s D11 rule.'),
-        ('D-02', 'The Recreate/Merge sublabel sentence reads &ldquo;(26credits)&rdquo; with no space before a DYNAMIC number but &ldquo;(10 credits)&rdquo; with one before Merge&rsquo;s flat number, even though the JSX source has an identical literal space in both places &mdash; typo in this spec, or a real app bug?', 'A real, reproducible app bug &mdash; confirmed via a direct DOM `textContent` read (not a screenshot/font artifact) across two different scenes and cost values, always missing before the dynamic number. Quoted verbatim in `exact` (P3-S4) rather than silently corrected, with a `strings_ignore` entry; filed to the product owner in this session&rsquo;s report (no `src/` authority for this build).'),
+        ('D-02', 'The Recreate/Merge sublabel sentence reads &ldquo;(26credits)&rdquo; with no space before a DYNAMIC number but &ldquo;(10 credits)&rdquo; with one before Merge&rsquo;s flat number, even though the JSX source has an identical literal space in both places &mdash; typo in this spec, or a real app bug?', '&#9989; <strong>Answered, then FIXED 2026-09-03.</strong> It was a real app bug &mdash; this spec quoted it verbatim (v1, 2026-08-28) because the build had no <code>src/</code> authority, and the product owner deferred the fix until this spec had landed. The cause was never the expression: <code>SWC</code> strips the leading space of a JSX text node whose run spans two non-empty source lines, so the trigger was where Prettier had wrapped the sentence, and either half could have lost its space on the next reflow. <code>MvEditor.tsx</code> now builds the sentence from string literals instead of JSX text, the screenshots and the <code>exact</code> quote are re-captured at &ldquo;(26 credits)&rdquo;, and <code>e2e</code>&rsquo;s &ldquo;TODO#9&rdquo; asserts BOTH figures keep their space (mutation-tested both ways). The <code>strings_ignore</code> entry survives for an unrelated reason &mdash; the linter&rsquo;s em-dash normalization &mdash; noted there.'),
         ('D-03', 'The mobile top-of-page capture (`14_mobile_top_a16`) shows the Recreate/Merge sublabel and the floating Merge bar sorted ABOVE the STORYBOARD section &mdash; new finding, or already known?', 'Already known &mdash; `DESIGNER-TODO` A16, the same `display: contents`-with-no-`order` defect as `/mv/storyboard`&rsquo;s FloatingCTA spacer. Captured (P3-S5, P3-S8) as the evidence this screen was scoped to produce (`PLAN.md`, S3 scope note 1); not fixed here.'),
         ('D-04', '&ldquo;Unpublish to edit&rdquo; (MV-E7) blocks Edit MV on a published MV &mdash; does this spec walk that boundary?', 'No &mdash; it is asserted on `/mv/result` (S2&rsquo;s P8) and in History&rsquo;s menu (S4&rsquo;s P4). This spec names the precondition in the Error States table and captures nothing, the same neighbour-boundary convention shell-auth used for territory it does not own.'),
         ('D-05', 'Which History row demonstrates the fabricated Edit MV entry (P1-S4/S5)?', '&ldquo;Cinematic Night&rdquo;, a done-MV seed row with 0 plays/likes/shares &mdash; picked because it is a plain, never-engaged-with fixture, not because of anything about its content.'),
@@ -506,13 +505,13 @@ cfg = {
         os.path.join(WEB_APP, 'src', 'components', 'providers', 'MvFlowProvider.tsx'),
     ],
     'strings_ignore': [
-        # This sentence is quoted VERBATIM including a live, reproducible app bug
-        # (a missing space before "credits" after the DYNAMIC cost number, present
-        # after the flat one) — the source has an identical literal space in both
-        # spots, so the rendered string can never byte-match the JSX. Confirmed via
-        # a direct DOM textContent read across two different scenes/costs, not a
-        # screenshot artifact. See decision D-02.
-        'Recreate (26credits) replaces a scene directly. Edits aren&rsquo;t saved &mdash; Merge MV (10 credits) re-renders the video with your changes.',
+        # ✅ **The app bug this entry existed for is FIXED (2026-09-03, TODO.md #9)**
+        # and the quoted string now reads "(26 credits)". The entry itself stays for a
+        # DIFFERENT and permanent reason: `lint_spec.py`'s `_ENT` map rewrites this
+        # spec's `&mdash;` to an ASCII hyphen before comparing, while `MvEditor.tsx`
+        # carries a real U+2014 em dash — so the two can never byte-match whatever the
+        # copy says. Same normalization mismatch as the `00:00&ndash;00:09` entry below.
+        'Recreate (26 credits) replaces a scene directly. Edits aren&rsquo;t saved &mdash; Merge MV (10 credits) re-renders the video with your changes.',
         # `MvEditor.tsx` passes this as a JSX prop value —
         # `<DetailNavbar title="Edit Music Video" .../>` — not as rendered JSX text.
         # lint_spec.py's `plain()` strips anything that looks like an HTML/JSX tag,
