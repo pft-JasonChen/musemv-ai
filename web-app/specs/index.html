@@ -154,6 +154,10 @@
         <span class="nav-area">00</span><span class="nav-name">Overview — READ FIRST</span>
         <span class="nav-dot st-ref"></span>
       </button>
+      <button class="nav-item" type="button" data-doc="CL">
+        <span class="nav-area">CL</span><span class="nav-name">Spec Change Log — what moved, and where</span>
+        <span class="nav-dot st-ref"></span>
+      </button>
       <button class="nav-item" type="button" data-doc="01">
         <span class="nav-area">01</span><span class="nav-name">App Shell &amp; Global Chrome</span>
         <span class="nav-dot st-ok"></span>
@@ -243,6 +247,13 @@
         <td><span class="badge st-ref">reference</span></td>
         <td class="c-dev">Conventions, ID scheme, the global auth + credits model, and the feature-parity map vs App v3.0.</td>
         <td class="c-qa">Start here — global acceptance model, cross-area conventions, and the full TBD registry.</td>
+      </tr>
+      <tr data-doc="CL" tabindex="0" role="button" aria-label="Open Spec Change Log — what moved, and where spec">
+        <td class="c-area">CL</td>
+        <td class="c-feat"><span class="feat-name">Spec Change Log — what moved, and where</span><span class="feat-open">Open spec →</span><div class="c-file">CHANGELOG-SPEC.md</div></td>
+        <td><span class="badge st-ref">reference</span></td>
+        <td class="c-dev">Bug/decision code &rarr; the AC and storyboard IDs that moved &rarr; the code file &rarr; the test. Says explicitly whether the wire contract moved (and links docs/CHANGELOG-RD.md when it did).</td>
+        <td class="c-qa">Read this after a fix lands: it names the criteria that changed and flags which storyboard screenshots are now stale.</td>
       </tr>
       <tr data-doc="01" tabindex="0" role="button" aria-label="Open App Shell &amp; Global Chrome spec">
         <td class="c-area">01</td>
@@ -361,14 +372,14 @@
       <tr>
         <td class="c-area">S1</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/song-creation/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">AI Song Creation</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/song-creation/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v3 · 2026-09-02</span></td>
+        <td><span class="badge st-ok">v4 · 2026-09-09</span></td>
         <td class="c-dev">/song/create · /song/creating · /song/result</td>
         <td class="c-qa">7 paths / 32 shots</td>
       </tr>
       <tr>
         <td class="c-area">S2</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/mv-creation/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">AI Music Video Creation</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-creation/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v3 · 2026-09-02</span></td>
+        <td><span class="badge st-ok">v4 · 2026-09-09</span></td>
         <td class="c-dev">/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result</td>
         <td class="c-qa">8 paths / 44 shots</td>
       </tr>
@@ -410,7 +421,7 @@
       <tr>
         <td class="c-area">S8</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/explore-community/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Explore &amp; Community</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/explore-community/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v1 · 2026-09-01</span></td>
+        <td><span class="badge st-ok">v2 · 2026-09-09</span></td>
         <td class="c-dev">/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator</td>
         <td class="c-qa">7 paths / 38 shots</td>
       </tr>
@@ -458,8 +469,14 @@
 here now renders the designer prototype's markup and stylesheets, except <code>/mv/creating</code> and<br>
 <code>/share</code>, which were deliberately left on the old UI. Where a UI slice deliberately diverged from<br>
 a criterion below, the criterion is <strong>annotated in place rather than rewritten away</strong> — look for<br>
-⚠️ in areas 02, 03 and 07. Change log for RD: <code>../docs/CHANGELOG-RD.md</code>; the migration's own<br>
-record: <code>../docs/archive/redesign-migration-plan.md</code>.</p>
+⚠️ in areas 02, 03 and 07.</p>
+<p><strong>Three change logs, three different questions — pick the right one:</strong><br>
+<code>CHANGELOG-SPEC.md</code> (this folder) is the one to read after a fix lands — it maps a bug code to the<br>
+<strong>criteria and storyboard steps that moved</strong>, and to the code and the test.<br>
+<code>../docs/CHANGELOG-RD.md</code> covers the <strong>wire contract only</strong> (C1–C8); a UI or copy change never<br>
+appears there, which is why the first file exists. Each storyboard carries its <strong>own</strong> Changelog<br>
+section plus <code>NEW · vN</code> badges on the steps that moved — that is the finest grain, and where a<br>
+stale screenshot is recorded. The migration's own record: <code>../docs/archive/redesign-migration-plan.md</code>.</p>
 </blockquote>
 <hr>
 <h2 id="0-how-to-read-these-specs">0. How to read these specs</h2>
@@ -983,6 +1000,239 @@ no mail capability at all; this is a backend contract only, and its links to <co
 </tbody>
 </table>
 </article>
+<article class="doc" id="doc-CL" data-name="Spec Change Log — what moved, and where" data-file="CHANGELOG-SPEC.md">
+<h1 id="changelog-spec-what-moved-in-these-specs-and-where">CHANGELOG-SPEC — what moved in these specs, and where</h1>
+<blockquote>
+<p><strong>For RD and QA.</strong> One row per change, newest first. Each row names the <strong>bug/decision code</strong>, the<br>
+<strong>spec IDs</strong> that moved, the <strong>code</strong> that implements it, and the <strong>test</strong> that holds it — so you can<br>
+get from "what changed?" to the exact file without diffing.</p>
+</blockquote>
+<h2 id="what-belongs-here-and-what-does-not">What belongs here, and what does not</h2>
+<p>There are three change logs in this repo and they answer three different questions. Reaching for the<br>
+wrong one is why this file exists.</p>
+<table>
+<thead>
+<tr>
+<th>Log</th>
+<th>Question it answers</th>
+<th>Audience</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>This file</strong></td>
+<td>"Which acceptance criteria / storyboard steps changed, and where is the code and the test?"</td>
+<td>RD + QA</td>
+</tr>
+<tr>
+<td><code>../docs/CHANGELOG-RD.md</code></td>
+<td>"Did the <strong>wire contract</strong> move?" — C1–C8 only (<code>MuseApi</code>, Zod schemas, hook keys, routes, costs)</td>
+<td>RD</td>
+</tr>
+<tr>
+<td>Each storyboard's own <strong>Changelog</strong> section</td>
+<td>"Which screenshots and steps in <em>this</em> walkthrough are stale?" — plus the <code>NEW · vN</code> badges inline</td>
+<td>QA</td>
+</tr>
+</tbody>
+</table>
+<p><code>CHANGELOG-RD.md</code> is deliberately narrow: a UI or copy change never appears there no matter how large,<br>
+and a criterion can flip meaning without touching a single byte of contract. That is exactly the gap<br>
+this file covers. When a change does both, it appears in both, and the row below says so.</p>
+<p><strong>A storyboard's own Changelog is the finer-grained one</strong> and worth opening second: it badges the<br>
+individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
+recorded. This file points you at which storyboards to open.</p>
+<hr>
+<h2 id="2026-09-09-three-product-owner-bug-reports">2026-09-09 — three product-owner bug reports</h2>
+<p>Commit <code>a523f05</code>. All three were reported against the running prototype. <strong>One contract change between<br>
+them</strong> (<code>SongResult.lyricsLrc</code>); the other two are behaviour-only.</p>
+<h3 id="ymw260902p0002-watch-played-muted"><code>YMW260902P0002</code> — <code>/watch</code> played muted</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><strong><code>AC-EXP-04</code></strong> changed (area 04). Was "play the MV <strong>muted</strong>"; now "play the MV <strong>with sound on</strong>", plus a new fallback clause.</td>
+</tr>
+<tr>
+<td><strong>Storyboard</strong></td>
+<td><strong>S8 Explore &amp; Community v2</strong> → <code>P4-S1</code>. Screenshot 16 predates the change and is flagged in that step.</td>
+</tr>
+<tr>
+<td><strong>Also</strong></td>
+<td>area 04 §2 route table, §3.3, <code>EXP-P4-S1</code>, and the EXP-P4 review checklist line.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>src/components/community/CommunityMvPlayer.tsx</code> — the <code>muted</code> state's default and the new <code>startPlayback()</code>.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>e2e/watch-autoplay-sound.spec.ts</code> (the sound-on default — its own spec file, see below) · <code>YMW260902P0002: when autoplay-with-sound is REFUSED, the MV still plays</code> in <code>e2e/behaviour-regressions.spec.ts</code> (the fallback).</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The fallback clause is the part to read before testing this.</strong> A browser only permits autoplay <em>with<br>
+sound</em> while the document has user activation, and the click that opened <code>/watch</code> belongs to the<br>
+<em>previous</em> document — it does not carry across a navigation. So an unmuted <code>play()</code> can be refused, and<br>
+the criterion now says what happens then: the player mutes, keeps playing, and the mute control<br>
+reflects it. <strong>It never leaves the video paused</strong>, which would be worse than the reported bug.</p>
+<p>Two consequences for QA:</p>
+<ul>
+<li><strong>Behaviour is legitimately environment-dependent.</strong> On a browser that refuses (a cold profile, a<br>
+  first visit) you may correctly see a muted-but-playing video with the control offering "Unmute". That<br>
+  is the fallback, not the bug. The bug was a <em>paused-or-silent</em> video whose control offered "Unmute"<br>
+  and never played with sound after you pressed it.</li>
+<li><strong>Only the CURRENT video is unmuted.</strong> <code>/watch</code> keeps three permanently-mounted <code>&lt;video&gt;</code> slots for<br>
+  the swipe feed; the two off-screen neighbours stay muted by design, or three tracks would play at<br>
+  once. Asserted separately in <code>watch-autoplay-sound.spec.ts</code>.</li>
+</ul>
+<h3 id="ymw260903p0005-a-lyric-line-could-not-be-clicked-to-seek"><code>YMW260903P0005</code> — a lyric line could not be clicked to seek</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><strong><code>AC-SONG-18</code> NEW</strong> (area 03). Also <code>AC-EXP-05</code> and <code>SONG-P3-S2</code> / <code>EXP-P5-S1</code> amended to name it.</td>
+</tr>
+<tr>
+<td><strong>Storyboard</strong></td>
+<td><strong>S1 AI Song Creation v4</strong> → <code>P2-S11</code> (desktop inline panel), <code>P7-S3</code> (Lyrics sheet).</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>src/lib/mv/lyrics.ts</code> (<code>parseLrc</code>, <code>timedLyrics</code>) · <code>src/components/ui/LyricsSheet.tsx</code> · <code>src/components/song/SongResultView.tsx</code> · <code>src/components/song/SongDetailView.tsx</code> · <code>src/styles/lyric-seek.css</code>.</td>
+</tr>
+<tr>
+<td><strong>Fixtures</strong></td>
+<td><code>src/lib/mv/community.ts</code> (<code>NEON_STATIC_LRC</code>, <code>lyricsLrcForTitle</code>, <code>timedSongAudio</code>) · <code>src/lib/mv/mock.ts</code> (<code>h-neon-static</code>) · <code>public/assets/songs/Neon Static.mp3</code> · <code>public/assets/images/album-art/album_neon_static.png</code>.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>five <code>YMW260903P0005</code> cases in <code>e2e/behaviour-regressions.spec.ts</code> · <code>src/lib/mv/lyrics.test.ts</code>.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>✅ <strong>YES — <code>SongResult.lyricsLrc</code>.</strong> See <code>../docs/CHANGELOG-RD.md</code> 2026-09-09 for the one field RD must populate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Where the timestamps come from, because there are two sources and they are not equivalent:</strong></p>
+<ul>
+<li><strong>Real</strong> per-line timing, where the result carries it — <code>SongResult.lyricsLrc</code>, the LRC block the AI<br>
+  Song backend already returns as <code>timestamps.lyrics_lrc_timestamps</code>.</li>
+<li><strong>Derived</strong> timing otherwise — the lines spread evenly across the track duration. Not new: this is<br>
+  what has always driven the current-line highlight.</li>
+</ul>
+<p><strong>Click-to-seek is offered on every song, not only timed ones.</strong> The highlight already asserts a<br>
+line↔time correspondence on an untimed song, so seeking to the same estimate is consistent with what<br>
+the screen is already showing; withholding the control would leave the reported bug in place for every<br>
+song a user actually generates. What real timing changes is <em>accuracy</em>.</p>
+<p><strong>🔒 In the prototype exactly ONE song has real timing</strong> — the vendored <code>Neon Static</code> sample the product<br>
+owner supplied (audio, cover and LRC). Two ways to reach it:</p>
+<ul>
+<li>as the signed-in user's own creation — <code>/history</code> or the <code>/song/create</code> rail → <code>/song/result?id=h-neon-static</code></li>
+<li>as a catalog song — <code>/explore/songs</code> → <code>/song/result?id=sp-neon-static&amp;from=song-detail</code>, or <code>/song/play?id=sp-neon-static</code> on a phone</li>
+</ul>
+<p>It plays its <strong>own</strong> mp3, not one of the two shared demo tracks: cues measured against one track land<br>
+on the wrong beats of another.</p>
+<p><strong>Where an LRC exists it is also what gets DISPLAYED</strong>, and the sung lines differ from the written ones<br>
+on purpose — <code>Neon Static</code> sings "System failing / Pulse is low" as two lines, adds a "Go, go, go…"<br>
+ad-lib that is in no written line, contracts "There is" to "There's", and drops the<br>
+<code>[intro]</code>/<code>[verse]</code>/<code>[chorus]</code> tags. <strong>So the same song can show a different line count in the lyrics<br>
+panel than in the lyrics you typed. That is specified, not a defect.</strong></p>
+<p><strong>No pixels moved.</strong> The lines became <code>&lt;button&gt;</code>s styled back to their exact previous appearance<br>
+(<code>lyric-seek.css</code> is a reset only), so the visual baselines are unchanged and the storyboard<br>
+screenshots are still accurate about how the panel <em>looks</em> — and silent about the new affordance.<br>
+Hover / press / focus states have no design yet: <code>../docs/DESIGNER-TODO.md</code> <strong>A31</strong>.</p>
+<h3 id="ymw260902p0013-the-song-pages-rail-showed-trending-where-the-mv-page-showed-my-creations"><code>YMW260902P0013</code> — the song page's rail showed Trending where the MV page showed My Creations</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><strong><code>AC-SONG-19</code> NEW</strong> (area 03) and <strong><code>AC-MV-21</code> NEW</strong> (area 02). The full reasoning is written once, in <code>AC-SONG-19</code>.</td>
+</tr>
+<tr>
+<td><strong>Storyboard</strong></td>
+<td><strong>S1 AI Song Creation v4</strong> → <code>P6-S1</code>; <strong>S2 AI Music Video Creation v4</strong> → <code>P7-S1</code>, <code>P7-S2</code>. ⚠️ S2's screenshot 32 is now stale — flagged in that step.</td>
+</tr>
+<tr>
+<td><strong>Also</strong></td>
+<td><code>MV-P1-S0</code> (area 02) and <code>SONG-P1-S0</code> (area 03) route-step rows; <code>SHELL-E1</code> (area 01 §5) gains a second surface.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>src/components/history/useMyCreations.ts</code> <strong>NEW</strong> · <code>src/components/mv/MvRoom.tsx</code> · <code>src/components/song/SongCompose.tsx</code>.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>YMW260902P0013: signed in, BOTH create rails show My Creations</code> · <code>… signed OUT, both create rails still fall back to Trending</code> · <code>items 4/5: generating a song adds it to /song/create's rail</code> · <code>3g / R9</code> and <code>G7 3g-3</code> rewritten.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None. <code>useMyCreations</code> is a plain hook, <strong>not</strong> a C4 provider — no provider return key changed.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What the defect actually was, because the diagnosis is counter-intuitive.</strong> The two rails were already<br>
+running <em>identical</em> code over the <em>same</em> source: the session-local <code>HistoryProvider</code>, which starts<br>
+<strong>empty</strong>. So a signed-in user saw "My Creations" on whichever create screen they had just generated<br>
+something on, and "Trending" on the other. The reporter had made an MV and no song. <strong>The code was the<br>
+same and the data was lopsided</strong> — there was never a difference between the two screens to find.</p>
+<p>Both rails now read <code>useMyCreations()</code>: live session jobs <strong>merged with the same<br>
+seeded creations <code>/history</code> has always shown</strong>. Two exclusions, and both matter for testing:</p>
+<ul>
+<li><code>status: "done"</code> only — a rail row navigates straight to a result screen, so a processing or failed<br>
+  row has nothing to open.</li>
+<li><code>source: "community"</code> excluded — <code>h-whispers-past</code> is a community song that appears in History, not<br>
+  something the user made, and a rail titled "My Creations" must not claim it.</li>
+</ul>
+<p>The "has at least one creation" condition <strong>survives</strong>, but only to keep a signed-<strong>out</strong> visitor on<br>
+Trending. (<code>/mv/room</code> is not auth-guarded — it is the marketing navbar's "Start for Free" destination —<br>
+so that state is reachable.) DP's literal <code>isSignedIn</code> plus an empty-state card was shipped and<br>
+reverted on 2026-08-07: a "My Creations" heading over a blank card read as broken rather than empty.</p>
+<p><strong>One known, unfixed side effect, now visible.</strong> The rail flashes the signed-out branch for a frame on a<br>
+signed-in reload, because every route is prerendered with <code>authStore.getServerSnapshot() === false</code>.<br>
+This is <strong><code>SHELL-E1</code></strong>, the same pre-hydration swap the navbar's Login ↔ credit-pill has — it was<br>
+invisible here only because both branches used to render the same thing. A backend-less prototype has<br>
+no server-side auth to fix it with. Recorded in area 01 §5, <strong>not</strong> worked around. If you write an<br>
+automated check against these rails, assert the rail's title before counting its rows.</p>
+<hr>
+<h2 id="notes-for-whoever-adds-the-next-row">Notes for whoever adds the next row</h2>
+<ul>
+<li><strong>Name the IDs, not the screens.</strong> "the rail changed" costs the reader a search; "<code>AC-MV-21</code>,<br>
+<code>P7-S1</code>" does not.</li>
+<li><strong>Say when there is no contract change</strong>, explicitly. "Contract: none" is information; an absent row<br>
+  is ambiguous, and <code>CHANGELOG-RD.md</code> makes the same demand for the same reason.</li>
+<li><strong>Bump the storyboard's <code>version</code> when its content changes</strong> and badge the changed steps with<br>
+<code>since: 'vN'</code>. The version bump is enforced: <code>spec_builder</code> fails the build if the flowchart's<br>
+<code>matches spec vN</code> stamp does not move with it, which is what forces someone to re-read the diagram.<br>
+  Then update that storyboard's row in <code>build-index.py</code>'s <code>STORYBOARDS</code> list so the index shows the<br>
+  new version, and re-run <code>python specs/build-index.py</code>.</li>
+<li><strong>Flag a stale screenshot in the step itself</strong>, not only here. A reader who opens the storyboard<br>
+  should not have to have read this file first.</li>
+</ul>
+</article>
 <article class="doc" id="doc-01" data-name="App Shell &amp; Global Chrome" data-file="areas/01-app-shell.md">
 <h1 id="area-01-app-shell-global-chrome">Area 01 — App Shell &amp; Global Chrome</h1>
 <blockquote>
@@ -1340,7 +1590,7 @@ for the reasoning. <code>AC-SHELL-09</code> is corrected to match.</p>
 <tr>
 <td><strong>SHELL-E1</strong></td>
 <td>Pre-hydration (SSR/first paint)</td>
-<td>⚠️ <strong>Re-opened 2026-08-27.</strong> The SHELL-04 fix (2026-07-23) was a fixed-height placeholder in <code>HeaderActions</code>, which was never reachable and is now deleted. In the navbars users actually see, <code>hydrated</code> guards only the Upgrade crown (<code>RoomNavbar.tsx:105</code>, <code>MobileHeader.tsx:69</code>); the <strong>Login ↔ credit-pill swap itself is not guarded</strong> in <code>RoomNavbar</code>/<code>DetailNavbar</code>, so a signed-in reload can still paint the logged-out control for a frame. Not fixed — flagged to the product owner with the deletion.</td>
+<td>⚠️ <strong>Re-opened 2026-08-27.</strong> The SHELL-04 fix (2026-07-23) was a fixed-height placeholder in <code>HeaderActions</code>, which was never reachable and is now deleted. In the navbars users actually see, <code>hydrated</code> guards only the Upgrade crown (<code>RoomNavbar.tsx:105</code>, <code>MobileHeader.tsx:69</code>); the <strong>Login ↔ credit-pill swap itself is not guarded</strong> in <code>RoomNavbar</code>/<code>DetailNavbar</code>, so a signed-in reload can still paint the logged-out control for a frame. Not fixed — flagged to the product owner with the deletion.  <strong>Second surface, found 2026-09-09 (<code>YMW260902P0013</code>):</strong> the two create screens' side rails are the same class of flash. Every route is prerendered with <code>authStore.getServerSnapshot() === false</code>, so the served HTML always contains the SIGNED-OUT rail — 7 Trending rows — and it swaps to "My Creations" on hydration. It was there before, just invisible: until that fix a signed-in user with no session creations ALSO saw Trending, so the two states were identical and nothing appeared to move. Same root cause and same unavailable fix (a backend-less prototype cannot know auth server-side), so it is recorded here rather than papered over. It is also load-bearing knowledge for tests: an e2e that counts rail rows straight after <code>goto</code> counts the pre-hydration 7 — assert the rail's TITLE first (see <code>items 4/5: generating a song adds it to /song/create's rail</code>).</td>
 </tr>
 <tr>
 <td><strong>SHELL-E2</strong></td>
@@ -1588,9 +1838,9 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <tbody>
 <tr>
 <td><strong>MV-P1-S0</strong></td>
-<td>Arrive at <code>/mv/room</code> — desktop <strong>side rail</strong> (2026-08-06)</td>
-<td>Two modes, following DP: <strong>"Trending MVs"</strong> over <code>NEW_MVS</code> with a "See all" → <code>/explore/mvs</code>, or <strong>"My Creations"</strong> over the user's own finished MVs from <code>useHistory()</code>, with <strong>no</strong> "See all" (DP renders none in that branch) and each row opening <code>/mv/result?id=</code> via the shared seed-then-navigate.</td>
-<td>The My Creations branch needs <code>loggedIn</code> <strong>and</strong> ≥1 completed MV — DP keys on sign-in alone because its fixture is never empty; WA's list is real and starts empty. 🔒 History is in-memory, so a reload puts the rail back to Trending.</td>
+<td>Arrive at <code>/mv/room</code> — desktop <strong>side rail</strong> (2026-08-06; source corrected 2026-09-09)</td>
+<td>Two modes, following DP: <strong>"Trending MVs"</strong> over <code>NEW_MVS</code> with a "See all" → <code>/explore/mvs</code>, or <strong>"My Creations"</strong> over the user's own finished MVs, with <strong>no</strong> "See all" (DP renders none in that branch) and each row opening <code>/mv/result?id=</code> via the shared seed-then-navigate.</td>
+<td>The My Creations branch needs ≥1 completed MV. Since <code>YMW260902P0013</code> the list is <code>useMyCreations("mv")</code> — live session jobs <strong>merged with the same seeded creations <code>/history</code> shows</strong> — so a signed-in user sees it immediately and this screen no longer disagrees with <code>/song/create</code> purely because of which flow they happened to run (area 03, <code>AC-SONG-19</code>). 🔒 The live half is still in-memory, so a reload leaves only the seeded half.</td>
 </tr>
 <tr>
 <td><strong>MV-P1-S1</strong></td>
@@ -1781,6 +2031,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>AC-MV-19</strong> — WHEN storyboard or render generation starts, THE SYSTEM SHALL charge the matching cost (<code>scriptCost</code>/<code>createMvCost</code>/<code>generateMvCost</code> for storyboard/direct/generate, or the flat <code>COST_MERGE</code> for an Edit-MV Merge — ⚠️ corrected 2026-08-28 during the S3 storyboard-spec capture; <code>COST_STORYBOARD</code>/<code>COST_RENDER</code> named here previously do not exist in the codebase, see the §3 Costs correction) and refund on failure; and WHEN the balance is insufficient at the CTA (mode select / Generate MV / Merge), it SHALL route to the buy-credits IAP (GL-01).</li>
 <li><strong>AC-MV-17b</strong> — THE SYSTEM SHALL render <code>/mv/room</code>, <code>/mv/storyboard</code>, <code>/mv/result</code>, <code>/mv/edit</code> at 320/375/768/1024/1440/1920px with no overflow. <em>(visual)</em> <em>(Renumbered 2026-08-19 — <code>AC-MV-17</code> was used twice; the audio-import criterion above keeps the plain id. Widths updated to the six-tier set the code and <code>visual-baseline.spec.ts</code> actually use.)</em></li>
 <li><strong>AC-MV-20</strong> — WHEN a local audio file is imported (MV-P6-B) AND its probed duration is <code>&gt;0s</code> and <code>&lt;MIN_TRIM_SEC</code> (30s), THE SYSTEM SHALL reject the import with the toast <code>Audio must be at least 30 seconds.</code> and SHALL NOT open Trim; a probed duration of exactly <code>0</code> (probe failure, not a zero-length file) SHALL NOT be rejected by this rule. <em>(New 2026-09-01, MV-01/MV-E8. This is the upload-time half of the same 30s floor AC-MV-16 already enforces at Trim-selection time — both read <code>MIN_TRIM_SEC</code>, exported from <code>TrimAudioModal</code> and imported by <code>MvRoom</code>, so the two cannot drift to different numbers.)</em></li>
+<li><strong>AC-MV-21</strong> <em>(new 2026-09-09, <code>YMW260902P0013</code>)</em> — WHILE the user is signed in, <code>/mv/room</code>'s side rail SHALL show <strong>My Creations</strong> over their own finished MVs (<code>useMyCreations("mv")</code>: live session jobs merged with the seeded creations <code>/history</code> shows, <code>status: "done"</code> only, community-sourced rows excluded), and SHALL behave identically to <code>/song/create</code>'s rail. WHEN they are signed out, or have no finished MVs at all, it SHALL fall back to <strong>Trending MVs</strong> with "See all". <em>The reasoning — why the two screens appeared to disagree when the code was identical — is written once, in area 03 <code>AC-SONG-19</code>.</em></li>
 </ul>
 <hr>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
@@ -2160,7 +2411,7 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <p>Screens to capture later: <code>/song/create</code> (Simple + Custom), <code>/song/creating</code>, <code>/song/result</code>, Lyrics sheet.</p>
 <h3 id="song-p1-compose">SONG-P1 — Compose</h3>
 <ul>
-<li><strong>SONG-P1-S0 (side rail, 2026-08-06)</strong> Same two-mode aside as <code>/mv/room</code> (area 02 MV-P1-S0): <strong>"Trending Songs"</strong> over <code>TOP_PICKS_SONGS</code> with a "See all" → <code>/explore/songs</code>, or <strong>"My Creations"</strong> over the user's own finished songs from <code>useHistory()</code>, no "See all", each row opening <code>/song/result?id=</code>. Requires <code>loggedIn</code> <strong>and</strong> at least one completed song.</li>
+<li><strong>SONG-P1-S0 (side rail, 2026-08-06; source corrected 2026-09-09)</strong> Same two-mode aside as <code>/mv/room</code> (area 02 MV-P1-S0): <strong>"Trending Songs"</strong> over <code>TOP_PICKS_SONGS</code> with a "See all" → <code>/explore/songs</code>, or <strong>"My Creations"</strong> over the user's own finished songs, no "See all", each row opening <code>/song/result?id=</code>. Requires <code>loggedIn</code> <strong>and</strong> at least one completed song — and since <code>YMW260902P0013</code> "the user's own finished songs" means <code>useMyCreations("song")</code>: the live session jobs <strong>merged with the same seeded creations <code>/history</code> shows</strong>, not the session jobs alone. See <code>AC-SONG-19</code>.</li>
 <li><strong>SONG-P1-S1</strong> Arrive <code>/song/create</code> (<strong>guest-reachable</strong> — the route guard was removed 2026-08-12, the gate is on the Create Song button; see <code>SONG-E3</code> / <code>AC-AUTH-08</code>); <strong>Simple</strong> tab default; <strong>Create Song</strong> disabled until <code>describe</code> non-empty. Hint "Describe your song to continue."</li>
 <li><strong>SONG-P1-S2</strong> Toggle <strong>Instrumental</strong> (both modes). Simple: describe + <strong>Idea</strong> fill + Enhance. Toggling <strong>never changes the text</strong> in either box — see <code>AC-SONG-02</code>.</li>
 <li><strong>SONG-P1-S3</strong> Switch to <strong>Custom</strong>: free-form <strong>Lyrics</strong> textarea (or "No lyrics needed" when Instrumental) + <strong>Idea</strong>/<strong>Lyrics</strong> sample fills (Idea survives Instrumental, Lyrics does not) / <strong>Enhance</strong> (survives Instrumental, but drops its chooser there — <code>AC-SONG-14</code>); <strong>GENRE / MOOD / VOCAL chips — all three optional, single-select, tap-to-clear, and all three render with NOTHING selected on arrival</strong> (product owner, 2026-09-01: GENRE and MOOD gained clearing, VOCAL already had it; separately, and later the same day, GENRE/MOOD's pre-filled <code>"Pop"</code>/<code>"Uplifting"</code> seeds were also removed — see §1/§3); <strong>VOCAL disappears from the DOM entirely while Instrumental is ON</strong> and its stored value is cleared, reappearing empty (not restored) when Instrumental goes back OFF — see §3, <code>AC-SONG-15</code>–<code>17</code>; optional Title. Custom CTA always enabled. <em>(No BPM/Key row since 3j — §1.)</em></li>
@@ -2174,7 +2425,7 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <h3 id="song-p3-result">SONG-P3 — Result</h3>
 <ul>
 <li><strong>SONG-P3-S1</strong> Player autoloads; play/pause, drag-to-seek, prev/next through <strong>My Creations</strong>, volume/mute on desktop. Playback is not capped (SONG-02 cancelled).</li>
-<li><strong>SONG-P3-S2</strong> <strong>Lyrics</strong> → the shared <code>LyricsSheet</code> (synced highlight + mini player) — only when lyrics exist. In practice this means <strong>Custom mode + non-instrumental + typed lyrics</strong>; Simple mode never sets <code>lyrics</code>, so a Simple-mode result has no Lyrics sheet.</li>
+<li><strong>SONG-P3-S2</strong> <strong>Lyrics</strong> → the shared <code>LyricsSheet</code> (synced highlight + mini player) — only when lyrics exist. In practice this means <strong>Custom mode + non-instrumental + typed lyrics</strong>; Simple mode never sets <code>lyrics</code>, so a Simple-mode result has no Lyrics sheet. Every line in the sheet, and in the desktop inline panel, <strong>seeks to its own timestamp</strong> on click (<code>AC-SONG-18</code>, 2026-09-09).</li>
 <li><strong>SONG-P3-S3</strong> <strong>Share</strong> → <code>ShareDialog</code>; <strong>Download</strong> saves the mp3 (desktop). <strong>Use in Music Video</strong> → <code>/mv/room</code> with the song pre-loaded (incl. lyrics). <strong>Recreate</strong> → charges a normal generation (6 / 12) and regenerates (<code>/song/creating</code>), keeping the prior song in History (SONG-03).</li>
 <li><strong>SONG-P3-S4</strong> <strong>Publish</strong> toggle publishes the song to the community immediately when switched on — sign-in required, <strong>no confirm step</strong> (GL-02; MV's equivalent does confirm, MV-12).</li>
 </ul>
@@ -2231,6 +2482,22 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <li><strong>AC-SONG-05</strong> — WHILE the song job is <code>processing</code>, THE SYSTEM SHALL show progress, step, an estimate, and View Later → <code>/history</code>; on <code>done</code> navigate to <code>/song/result</code>.</li>
 <li><strong>AC-SONG-11</strong> — WHEN <code>/song/result</code> is reached from a <code>/history</code> row, THE SYSTEM SHALL show that row's song (flow state is seeded by <code>useOpenCreation</code>, area 05) and carry the row id in <code>?id=</code> so Share builds that row's link. THE SYSTEM SHALL expose a <strong>Back</strong> control on this stage — DP switches it from <code>RoomNavbar</code> to <code>DetailNavbar backHref="/history"</code> — going <code>router.back()</code> with <code>/history</code> as the fallback. <em>(An earlier song has no stored genre/mood, so the genre · mood line is omitted rather than invented.)</em></li>
 <li><strong>AC-SONG-06</strong> — WHEN <code>/song/result</code> loads, THE SYSTEM SHALL expose drag-to-seek, prev/next across My Creations, Share, Download, a Lyrics sheet (when lyrics exist), a Publish toggle, Use in Music Video, and Recreate. Playback SHALL NOT be capped for any account.</li>
+<li><strong>AC-SONG-18</strong> <em>(new 2026-09-09, <code>YMW260903P0005</code>)</em> — WHEN lyrics are shown on <code>/song/result</code> (the desktop inline panel <strong>and</strong> the Lyrics sheet), THE SYSTEM SHALL make each line an operable control that <strong>seeks playback to that line's start time</strong>, and SHALL highlight the line whose time has been reached.<blockquote>
+<p><strong>Where the times come from, because the two sources are not equivalent.</strong></p>
+<p>· <strong>Real</strong> per-line timing, WHERE the result carries it: <code>SongResult.lyricsLrc</code>, an LRC block (<code>[mm:ss.cc]line</code>) that the AI Song backend already returns as <code>timestamps.lyrics_lrc_timestamps</code>. Added to the contract for this criterion — C2 additive, <code>docs/CHANGELOG-RD.md</code> 2026-09-09.<br>
+· <strong>Derived</strong> timing OTHERWISE: the non-empty lines spread evenly across the track's duration. This is not new — it is what has always driven the highlight — and it is why click-to-seek is offered on every song rather than only on timed ones. The highlight already asserts a line↔time correspondence; seeking to the same estimate is consistent with what the screen shows, whereas withholding the control would leave the reported bug in place for every song a user actually generates. What real timing changes is <strong>accuracy</strong>, not whether the affordance exists.</p>
+<p>WHERE an LRC exists it is also what gets <strong>displayed</strong>: the sung line list can split, repeat or ad-lib where the written <code>lyrics</code> does not, and drops <code>[verse]</code>/<code>[chorus]</code> section tags. Aligning the two would mean inventing a mapping.</p>
+<p>🔒 In the prototype exactly ONE song has real timing — the vendored <code>Neon Static</code> sample (product owner, 2026-09-09: audio, cover and LRC), reachable as a seeded creation (<code>h-neon-static</code>) and as a catalog song (<code>sp-neon-static</code>). It plays its own mp3 rather than one of the two shared demo tracks, because cues measured against one track land on the wrong beats of another.<br>
+The same rule applies to <code>/song/play</code>'s Lyrics sheet — see <code>AC-EXP-05</code>.</p>
+</blockquote>
+</li>
+<li><strong>AC-SONG-19</strong> <em>(new 2026-09-09, <code>YMW260902P0013</code>)</em> — WHILE the user is signed in, <code>/song/create</code>'s side rail SHALL show <strong>My Creations</strong> over their own finished songs, and SHALL behave identically to <code>/mv/room</code>'s rail (area 02, <code>AC-MV-21</code>). WHEN they are signed out, or have no finished songs at all, it SHALL fall back to <strong>Trending Songs</strong> with "See all".<blockquote>
+<p><strong>What the reported defect actually was.</strong> Both rails already ran the same condition over the same source — the session-local <code>HistoryProvider</code>, which starts EMPTY. So a signed-in user saw "My Creations" on whichever create screen they had just generated something on, and "Trending" on the other; the reporter had made an MV and no song, and the two pages looked like they disagreed. The code was identical and the DATA was lopsided.</p>
+<p>The fix gives both rails the source <code>/history</code> has always had (<code>useMyCreations</code>): live session jobs <strong>plus</strong> the seeded creations. A <code>status: "done"</code> filter and a <code>source: "community"</code> exclusion apply — a rail titled "My Creations" must not claim a community song that merely appears in History (<code>h-whispers-past</code>), and a processing or failed row has no result screen to open.</p>
+<p>The "at least one finished song" guard <strong>survives</strong> for the signed-out case, and because the alternative was tried: DP's literal <code>isSignedIn</code> plus an empty-state card was shipped and reverted on 2026-08-07 — a "My Creations" heading over a blank card read as broken rather than empty.<br>
+<strong>Known, unfixed, and now VISIBLE: the rail flashes the signed-out branch for a frame on a signed-in reload.</strong> Every route is prerendered with <code>authStore.getServerSnapshot() === false</code>, so the served HTML carries "Trending Songs" and 7 community rows, and hydration swaps it. This is not new — it is <code>SHELL-E1</code>, the same pre-hydration swap the navbar's Login ↔ credit-pill has — but it used to be invisible here, because before this criterion a signed-in user with no session creations saw Trending too, so both states rendered the same thing. A backend-less prototype has no server-side auth to fix it with; recorded in area 01 §5 rather than worked around.</p>
+</blockquote>
+</li>
 <li><em>(b)</em> ~~"<strong>and no Like</strong>"~~ — <strong>WITHDRAWN 2026-08-19.</strong> The product owner decided a user MAY like their own work, so the ported Like is correct and this clause was the mistake. <code>TBD-SONG-08</code> closed.</li>
 <li><em>(c)</em> the 30s cap it required is cancelled by S3 (§1) — already decided.</li>
 <li><strong>AC-SONG-11b</strong> — ⚠️ <strong>SUPERSEDED by plan S4 (slice 3j) — the code deliberately does not satisfy this.</strong> It required a BPM slider (60–200) and a Key selector in Custom mode; both controls are removed. What remains true: the free-form Lyrics / Idea textarea, and <code>songCompose.{bpm,key}</code> persisting their defaults. Reinstating the controls, or deleting the fields (a C8 PR), are the two open resolutions — this AC stays on the page so neither happens by accident. <em>(Renumbered from a second <code>AC-SONG-11</code> on 2026-08-19; the history-entry criterion above keeps the plain id.)</em></li>
@@ -2380,7 +2647,7 @@ still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 </tr>
 <tr>
 <td><code>/watch</code> → <code>community/CommunityMvPlayer</code></td>
-<td>3:4 video player, like/share, Create MV, YCM watermark on official videos (2026-09-01)</td>
+<td>3:4 video player (sound on by default, 2026-09-09), like/share, Create MV, YCM watermark on official videos (2026-09-01)</td>
 <td><code>useSearchParams().id</code>, <code>useMvFlow().setCompose</code>, local play/mute/like</td>
 <td><strong>none</strong></td>
 </tr>
@@ -2487,7 +2754,8 @@ they moved into the page body with that rail. Captured at S8 <code>P3-S1</code>.
 <h3 id="33-mv-player-watch">3.3 MV player — <code>/watch</code></h3>
 <ul>
 <li><code>/watch</code> reads <code>?id</code> → <code>getCommunityMv(id) ?? NEW_MVS[0]</code>; stage sized to the item's own ratio<br>
-  (<code>mvCoverRatio()</code> — 3:4 or 4:3, <code>AC-EXP-04</code>), autoplay <strong>muted</strong> loop; floating title + creator →<br>
+  (<code>mvCoverRatio()</code> — 3:4 or 4:3, <code>AC-EXP-04</code>), autoplay loop <strong>with sound on</strong> (falling back to<br>
+  muted only if the browser refuses — <code>YMW260902P0002</code>, see <code>AC-EXP-04</code>); floating title + creator →<br>
 <code>/creator</code>; <strong>Like</strong> (local), <strong>Share</strong> (<code>ShareDialog</code>); <strong>Create Music Video</strong> → <code>setCompose</code><br>
   (mvType + prompt + <code>matchedSong</code> + title) → <code>/mv/room</code> (area 02); a transport row with<br>
   play/pause, a keyboard-operable <code>SeekBar</code>, mute and fullscreen; and <strong><code>MvGridSections</code> below the<br>
@@ -2717,7 +2985,7 @@ on future fixture edits, and on RD's real catalog.</p>
 </ul>
 <h3 id="exp-p4-watch-mv-player">EXP-P4 — Watch (MV player)</h3>
 <ul>
-<li><strong>EXP-P4-S1</strong> <code>/watch?id</code>: 3:4 player (autoplay muted, tap to pause, mute toggle). Missing/invalid id → falls back to <code>NEW_MVS[0]</code>.</li>
+<li><strong>EXP-P4-S1</strong> <code>/watch?id</code>: 3:4 player (autoplay <strong>with sound</strong>, tap to pause, mute toggle). Missing/invalid id → falls back to <code>NEW_MVS[0]</code>. <em>(Sound-on since 2026-09-09, <code>YMW260902P0002</code>; the muted fallback when autoplay-with-sound is refused is part of <code>AC-EXP-04</code>.)</em></li>
 <li><strong>EXP-P4-S2</strong> Creator → <code>/creator</code>; Like (local); Share (<code>ShareDialog</code>); <strong>Create Music Video</strong> → <code>/mv/room</code> pre-filled from this MV.</li>
 <li><strong>EXP-P4-S3</strong> <em>(new 2026-09-01)</em> WHEN the MV is official (<code>isOfficialMv(mv)</code> — one of the eight <code>HERO_MVS</code>), the YCM watermark overlays the video for the duration of playback, positioned against the video's own rendered rect; a user-submitted MV never shows it. See §3.3, <code>AC-EXP-10</code>.</li>
 <li><strong>EXP-P4-S4</strong> <em>(new 2026-09-01)</em> Drag vertically on the video stage past the swipe threshold → commits to the next (up) or previous (down) item in <code>MV_LIST</code>, updating the URL via <code>router.replace</code> without a full navigation; below threshold, springs back; an id outside <code>MV_LIST</code> (e.g. from <code>/creator</code>) never commits. <em>(Briefly flagged as contested on 2026-09-01; the product owner confirmed the same<br>
@@ -2725,7 +2993,7 @@ on future fixture edits, and on RD's real catalog.</p>
 </ul>
 <h3 id="exp-p5-song-play-community">EXP-P5 — Song play (community)</h3>
 <ul>
-<li><strong>EXP-P5-S1</strong> <code>/song/play?id</code>: disc + <strong>real <code>&lt;audio&gt;</code> progress</strong>; Prev/Next cycle the playlist; seek; Like/Share; Lyrics sheet. <em>("simulated progress" corrected 2026-08-19 — real audio landed 2026-08-05, see AC-EXP-05.)</em></li>
+<li><strong>EXP-P5-S1</strong> <code>/song/play?id</code>: disc + <strong>real <code>&lt;audio&gt;</code> progress</strong>; Prev/Next cycle the playlist; seek; Like/Share; Lyrics sheet, <strong>each line of which seeks to its own timestamp</strong> (2026-09-09, <code>YMW260903P0005</code>). <em>("simulated progress" corrected 2026-08-19 — real audio landed 2026-08-05, see AC-EXP-05.)</em></li>
 <li><strong>EXP-P5-S2</strong> <strong>Create AI Song</strong> → <code>/song/create</code> pre-filled (genre/mood/title/lyrics).</li>
 </ul>
 <h3 id="exp-p6-creator-profile">EXP-P6 — Creator profile</h3>
@@ -2822,11 +3090,13 @@ detail.</p>
 </details>
 </blockquote>
 </li>
-<li><strong>AC-EXP-04</strong> — WHEN <code>/watch</code> loads, THE SYSTEM SHALL play the MV muted in <strong>its own aspect ratio — 3:4 or 4:3, per the item's cover ratio</strong> (<code>mvCoverRatio()</code>, <code>lib/mv/community.ts</code>) — with play/pause + mute, and expose Like, Share, and <strong>Create Music Video</strong> → <code>/mv/room</code> pre-filled.<blockquote>
+<li><strong>AC-EXP-04</strong> — WHEN <code>/watch</code> loads, THE SYSTEM SHALL play the MV <strong>with sound on</strong> in <strong>its own aspect ratio — 3:4 or 4:3, per the item's cover ratio</strong> (<code>mvCoverRatio()</code>, <code>lib/mv/community.ts</code>) — with play/pause + mute, and expose Like, Share, and <strong>Create Music Video</strong> → <code>/mv/room</code> pre-filled. WHERE the browser refuses to autoplay with sound, THE SYSTEM SHALL fall back to muted playback with the mute control reflecting that, rather than leaving the video paused.<blockquote>
+<p><strong>Changed 2026-09-09 — <code>YMW260902P0002</code>, product owner.</strong> This required "muted" playback until now, and the reported defect is exactly that: opening a Trending MV from Home landed on a silent video, when hearing the song is the point of the screen. Sound is now ON by default.</p>
+<p>The fallback clause is not hedging. A browser only permits autoplay <strong>with sound</strong> while the document has user activation, and the click that opened this screen belongs to the PREVIOUS document — it does not carry across the navigation. So an unmuted <code>play()</code> can be rejected, and the alternatives on rejection are "playing but silent" or "not playing at all". The first is the old behaviour; the second is worse than the bug. <code>CommunityMvPlayer</code>'s <code>startPlayback</code> therefore always tries unmuted FIRST and only mutes if refused, and moves the mute button's state with it so the control never claims sound is on when it is not.</p>
 <p><em>Corrected 2026-08-19: this said "in 3:4" flatly. The stage has always sized itself to the item, and the fixtures alternate 3:4 / 4:3 on purpose, because real community MVs are not all portrait. Confirmed by the product owner as intended, not a defect.</em></p>
 </blockquote>
 </li>
-<li><strong>AC-EXP-05</strong> — WHEN <code>/song/play</code> loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community) and present the disc player with <strong>real <code>&lt;audio&gt;</code> progress</strong>, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist, and <strong>Create AI Song</strong> → <code>/song/create</code> pre-filled — below 768px in the full-screen <code>MobileNowPlaying</code>, and at 768px and above on <code>/song/result</code>, which the row click navigates to. Playback SHALL NOT be capped for free accounts.<blockquote>
+<li><strong>AC-EXP-05</strong> — WHEN <code>/song/play</code> loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community) and present the disc player with <strong>real <code>&lt;audio&gt;</code> progress</strong>, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist (<strong>each line seeks to its own timestamp</strong> since 2026-09-09 - <code>YMW260903P0005</code>, specified in area 03 <code>AC-SONG-18</code>), and <strong>Create AI Song</strong> → <code>/song/create</code> pre-filled — below 768px in the full-screen <code>MobileNowPlaying</code>, and at 768px and above on <code>/song/result</code>, which the row click navigates to. Playback SHALL NOT be capped for free accounts.<blockquote>
 <p><strong>Amended 2026-08-07 (DP drop <code>2670ed2</code>) — the requirements are unchanged, only WHERE desktop satisfies them.</strong> Drop 2 deleted the desktop Now Playing column, so this screen no longer carries the disc player at ≥768px; <code>/song/result</code> does, and <code>AC-EXP-03</code>'s row click is what reaches it. Every one of the five requirements above still holds at every width. This was very nearly recorded as "adopting drop 2 deletes four of AC-EXP-05's five requirements" — a conclusion reached by reading a CSS diff rather than DP's markup, and caught by the product owner running the prototype.<br>
 <strong>Rewritten 2026-08-05 by the designer-UI migration (Slice 3b). Three changes, all deliberate:</strong></p>
 <ol>
@@ -2882,7 +3152,7 @@ playback IS asserted, by <code>AC-EXP-05</code> above — corrected 2026-09-01, 
 <li>[ ] <strong>EXP-P1</strong>: rails render in seed order; hero + New-Songs Create gate via sign-in; cards route correctly (AC-01/02/03).</li>
 <li>[ ] <strong>EXP-P2</strong>: grid → <code>/watch?id</code> → Create MV → /mv/room (AC-03/04).</li>
 <li>[ ] <strong>EXP-P3</strong>: song lists → player; Create → /song/create pre-filled (AC-03); tab bar reads All · Pop · Hip-Hop · R&amp;B · Rock · Jazz · Electronic · Rap · Classical · Country, every tab non-empty.</li>
-<li>[ ] <strong>EXP-P4</strong>: /watch autoplay muted 3:4; play/mute/like/share; Create MV pre-fills (AC-04); bad id → NEW_MVS[0] (AC-07, E1); a <code>HERO_MVS</code> id shows the YCM watermark, a <code>NEW_MVS</code>/<code>TRENDING_MVS</code>/<code>CREATOR_MVS</code> id does not (AC-10); ❓ vertical drag on the stage swipes to next/prev MV (AC-11, contested — see §3.3 before treating this as a requirement).</li>
+<li>[ ] <strong>EXP-P4</strong>: /watch autoplay 3:4 with SOUND ON (muted only as the blocked-autoplay fallback, <code>YMW260902P0002</code>); play/mute/like/share; Create MV pre-fills (AC-04); bad id → NEW_MVS[0] (AC-07, E1); a <code>HERO_MVS</code> id shows the YCM watermark, a <code>NEW_MVS</code>/<code>TRENDING_MVS</code>/<code>CREATOR_MVS</code> id does not (AC-10); ❓ vertical drag on the stage swipes to next/prev MV (AC-11, contested — see §3.3 before treating this as a requirement).</li>
 <li>[ ] <strong>EXP-P5</strong>: real <code>&lt;audio&gt;</code> progress; Prev/Next cycle; Lyrics; Create AI Song pre-fills (AC-05).</li>
 <li>[ ] <strong>EXP-P6</strong>: creator tabs + rows open players; self=1 shows MOCK_USER (AC-06); <code>?demo=1</code> + <code>profileEmpty</code> shows the empty block, with the subtitle/CTA only in self mode (AC-12).</li>
 <li>[ ] <strong>AC-13</strong>: <code>?demo=1</code> + <code>feedEmpty</code> → all three home rails, both explore catalogs and the song<br>

@@ -47,7 +47,7 @@ assets/
 `ic_account` `ic_add` `ic_alert` `ic_arrow_left` `ic_arrow_right` `ic_camera` `ic_certified` `ic_check` `ic_chevron-left` `ic_chevron-right` `ic_circle` `ic_circle_check` `ic_circle_radio` `ic_clock` `ic_close` `ic_compass_OL` `ic_credit` `ic_crown` `ic_delete` `ic_dislike_off` `ic_dislike_on` `ic_download` `ic_edit` `ic_expand` `ic_favorite_off` `ic_favorite_on` `ic_flash` `ic_hd` `ic_headphones` `ic_history_OL` `ic_home` `ic_info` `ic_language` `ic_lightbulb` `ic_like_off` `ic_like_on` `ic_link` `ic_log_out` `ic_media` `ic_more` `ic_notification` `ic_pause` `ic_play` `ic_publish` `ic_rectangle_hor` `ic_rectangle_ver` `ic_refresh` `ic_reload` `ic_script` `ic_send` `ic_settings` `ic_share` `ic_shrink` `ic_singing_mic` `ic_skip_back` `ic_skip_forward` `ic_song` `ic_song_ai` `ic_song_list` `ic_speaker_off` `ic_speaker_on` `ic_square` `ic_star` `ic_timer` `ic_unlimited` `ic_upload` `ic_video` `ic_video_ai`
 
 ### `images/album-art/`
-`album_01.jpg` ～ `album_14.jpg`（14 張歌曲封面）
+`album_01.jpg` ～ `album_14.jpg`（14 張歌曲封面）＋`album_neon_static.png`（`Neon Static` 專用封面，見下方 `songs/` 的說明）
 
 ### `images/banner/`
 `img_banner_newer.jpg`
@@ -63,6 +63,16 @@ assets/
 |---|---|
 | `Party Dance.mp3` | 示範用歌曲 1 |
 | `Top Flow Production - Party.mp3` | 示範用歌曲 2 |
+| `Neon Static.mp3` | **真實 AI Song 結果樣本**（2026-09-09，產品負責人提供） |
+
+> `Neon Static` 不只是多一首 demo 音樂：它是 prototype 裡**唯一有真實每行歌詞時間軸（LRC）**的歌，
+> 「點歌詞跳到指定時間點」（`YMW260903P0005`）就是靠它 demo 的。三個檔案必須**一起**更新：
+>
+> - `songs/Neon Static.mp3` — 音訊。時間軸是對這一條量的，換成別的檔每一行都會對不上。
+> - `images/album-art/album_neon_static.png` — 封面。來源檔名叫 `cover.jpeg`，但內容其實是
+>   PNG（816×816），所以副檔名跟著內容而不是原檔名；也因此不遵循上面 `album_[nn].jpg`
+>   的命名規則 — 它是特定歌曲的封面，不是通用的第 15 張。
+> - LRC 本體 — 不在這個資料夾，在 `src/lib/mv/community.ts` 的 `NEON_STATIC_LRC`。
 
 ### `videos/mv-preview/`
 | 檔案 | 說明 |

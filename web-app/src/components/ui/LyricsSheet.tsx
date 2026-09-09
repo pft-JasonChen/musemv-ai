@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { useIsMounted } from "@/lib/ssr";
+import { activeLineIndex, type TimedLine } from "@/lib/mv/lyrics";
 
 /**
  * ── MIGRATED FROM DP `LyricsSheet` (plan Phase 3, slice 3b) ──────────────────
@@ -18,11 +19,25 @@ import { useIsMounted } from "@/lib/ssr";
  * belongs to those slices. So the two coexist for now — this one on the migrated
  * screen, that one everywhere else.
  *
- * PLAIN STRINGS, NOT WA's `TimedLine[]`. DP highlights the "current" line by
- * estimating it from playback position (no per-line timestamps exist for
- * generated lyrics), which is what `LyricsSheet.css` is built around. WA's
- * `buildTimedLines` computes the same estimate a different way; carrying DP's
- * version keeps this component a file-level copy of the drop.
+ * ── LINES ARE NOW TIMED, AND CLICKABLE (YMW260903P0005, 2026-09-09) ─────────
+ *
+ * This used to take PLAIN STRINGS and estimate the "current" line from
+ * playback position — DP's own approach, on the grounds that no per-line
+ * timestamps existed. They do now: the AI Song result carries an LRC block
+ * (`SongResult.lyricsLrc`), so the caller passes `lines: TimedLine[]` and the
+ * highlight comes from real cues where they exist.
+ *
+ * `lib/mv/lyrics.ts`'s `timedLyrics()` is what builds that list, and it still
+ * falls back to DP's even spread for a song with no LRC — so nothing about
+ * this screen's *appearance* changed for those songs, and the highlight is
+ * bit-for-bit the same index it used to compute (last line whose `t` has been
+ * reached ≡ `floor(currentTime / duration * lineCount)` when the times ARE
+ * that spread).
+ *
+ * `onSeek` is optional. With it, each line is a real `<button>` — see
+ * `lyric-seek.css` for why that needs three lines of CSS and why they are not
+ * in `designer/`. Without it the lines stay `<p>`, which is what keeps a
+ * read-only caller from advertising an affordance it cannot honour.
  *
  * ── ALWAYS MOUNTED, `inert` WHEN CLOSED — AND WHY, BECAUSE IT MATTERS ────────
  *
@@ -48,33 +63,41 @@ export function LyricsSheet({
   isOpen,
   title,
   cover,
-  lyricLines,
+  lines,
   currentTime,
   duration,
   playing,
   onTogglePlay,
+  onSeek,
   onClose,
 }: {
   isOpen: boolean;
   title: string;
   cover: string;
-  lyricLines: string[];
+  /** Display lines with their start times — `timedLyrics()` builds these. */
+  lines: TimedLine[];
   currentTime: number;
   duration: number;
   playing: boolean;
   onTogglePlay: () => void;
+  /** Omit to render the lyrics read-only (no click-to-seek). */
+  onSeek?: (seconds: number) => void;
   onClose: () => void;
 }) {
-  const activeLineRef = useRef<HTMLParagraphElement>(null);
-  const activeLineIndex = Math.min(
-    lyricLines.length - 1,
-    Math.floor((duration ? currentTime / duration : 0) * lyricLines.length),
-  );
+  // A callback ref, not an object ref, because the active line is a `<button>`
+  // in the seekable case and a `<p>` in the read-only one — one `useRef<T>`
+  // cannot be assigned to both without widening T to something neither
+  // element accepts.
+  const activeLineRef = useRef<HTMLElement | null>(null);
+  const setActiveLine = (el: HTMLElement | null) => {
+    activeLineRef.current = el;
+  };
+  const active = activeLineIndex(lines, currentTime);
   const mounted = useIsMounted();
 
   useEffect(() => {
     if (isOpen) activeLineRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [activeLineIndex, isOpen]);
+  }, [active, isOpen]);
 
   if (!mounted || typeof document === "undefined") return null;
 
@@ -126,15 +149,31 @@ export function LyricsSheet({
         <div className="lyrics-sheet__divider" />
 
         <div className="lyrics-sheet__lines">
-          {lyricLines.map((line, index) => (
-            <p
-              key={index}
-              ref={index === activeLineIndex ? activeLineRef : undefined}
-              className={`lyrics-sheet__line${index === activeLineIndex ? " lyrics-sheet__line--active" : ""}`}
-            >
-              {line}
-            </p>
-          ))}
+          {lines.map((l, index) => {
+            const className = `lyrics-sheet__line${index === active ? " lyrics-sheet__line--active" : ""}`;
+            // A `<button>` only when it can actually do something. `type` is
+            // explicit because this sheet can be portalled inside a form on
+            // the result screen, where the default `submit` would navigate.
+            return onSeek ? (
+              <button
+                key={index}
+                type="button"
+                ref={index === active ? setActiveLine : undefined}
+                className={className}
+                onClick={() => onSeek(l.t)}
+              >
+                {l.line}
+              </button>
+            ) : (
+              <p
+                key={index}
+                ref={index === active ? setActiveLine : undefined}
+                className={className}
+              >
+                {l.line}
+              </p>
+            );
+          })}
         </div>
       </div>
     </div>,

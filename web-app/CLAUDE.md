@@ -427,6 +427,20 @@ a detail screen:**
 
 ## Error log (one line per user correction; fold recurring lessons into an AGENTS.md rule)
 
+- 2026-09-09: blocked Stop with "port 3100 is already used" — occurrence SEVEN. I did not run
+  `npm run e2e` and I did not use a wide `--grep`, so I thought I was outside the rule; I ran FOUR
+  spec files (212 tests) with `run_in_background: true`, reasoning that a deliberate background run
+  would notify me instead of surprising me. That is the same collision with a different label: the
+  run holds `:3100` for ~20 minutes either way, and the Stop hook can fire at any point inside it.
+  **Backgrounding changes who is surprised, not who holds the port.** Rule sharpened in `AGENTS.md`:
+  the boundary is whether the run will be FINISHED before you stop, not how it was launched — and
+  since the hook's `npm run e2e` already covers every non-`@visual` spec, a broad by-hand run is
+  mostly re-doing its work early. Also corrected a note I had just written in the same session
+  claiming the missing `-win32` screenshots make the hook red: they do not, because `npm run e2e`
+  is `--grep-invert @visual`. I asserted that from one by-hand `@visual` failure without reading
+  the npm script — the same "measure the thing before writing it down" mistake as the 2026-08-07
+  entry below.
+
 - 2026-08-19: blocked Stop with "port 3100 is already used" — occurrence SIX. I did not run
   `npm run e2e`, so I thought I was inside the rule; I ran ONE spec file with `--grep`, which the
   rule explicitly permits. But the grep was an inverted match that selected ~110 of the file's 141

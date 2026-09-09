@@ -279,6 +279,24 @@ export interface HistorySample {
 }
 
 export const HISTORY_SAMPLES: HistorySample[] = [
+  // The vendored `Neon Static` result (2026-09-09). First row because it is
+  // the one creation whose lyrics carry REAL per-line timing, so it is what
+  // demonstrates YMW260903P0005 on `/song/result` — the screen the bug was
+  // filed against — reached the way a user reaches their own song: History
+  // row, or the "My Creations" rail on `/song/create`. `useOpenCreation` picks
+  // up its audio and its LRC by title (`timedSongAudio`/`lyricsLrcForTitle`).
+  {
+    id: "h-neon-static",
+    kind: "song",
+    title: "Neon Static",
+    thumb: "/assets/images/album-art/album_neon_static.png",
+    status: "done",
+    date: "2026-09-09",
+    plays: 42,
+    likes: 11,
+    shares: 4,
+    liked: false,
+  },
   // Dated today so the public share page is easy to demo from History (see resolveShare).
   {
     id: "h-cinematic-night",

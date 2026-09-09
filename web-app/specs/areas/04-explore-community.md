@@ -50,7 +50,7 @@ still local, non-persistent (real counters → `TBD-EXP-08`).
 | `/` → `home/HomeView`                    | hero + tool selector (a phone pair and a desktop pair), Trending MVs, Top Picks, New Songs, per-row like/share/create  | `useAuth().requireLogin`, `useSongFlow().patchSongCompose`, local like map | **none** (seed) |
 | `/explore/mvs` → `community/MvExplore`   | grid of all MVs → `/watch?id=`                                                                                         | —                                                                          | **none**        |
 | `/explore/songs` → `song/SongDetailView` | one tabbed list (All + the nine creation `GENRES`, hardcoded — 2026-09-01, was derived) → Now Playing / player; Create | `useSongFlow().patchSongCompose`                                           | **none**        |
-| `/watch` → `community/CommunityMvPlayer` | 3:4 video player, like/share, Create MV, YCM watermark on official videos (2026-09-01)                                 | `useSearchParams().id`, `useMvFlow().setCompose`, local play/mute/like     | **none**        |
+| `/watch` → `community/CommunityMvPlayer` | 3:4 video player (sound on by default, 2026-09-09), like/share, Create MV, YCM watermark on official videos (2026-09-01)  | `useSearchParams().id`, `useMvFlow().setCompose`, local play/mute/like     | **none**        |
 | `/song/play` → `song/SongDetailView`     | disc player (**real `<audio>`**), prev/next, like/share, Lyrics, Create AI Song                                        | `useSearchParams().id`, `useSongFlow().patchSongCompose`, local idx        | **none**        |
 | `/creator` → `community/CreatorProfile`  | header + stats + MV/Songs tabs + rows                                                                                  | `useSearchParams().{self,tab}`                                             | **none**        |
 
@@ -143,7 +143,8 @@ The rails:
 ### 3.3 MV player — `/watch`
 
 - `/watch` reads `?id` → `getCommunityMv(id) ?? NEW_MVS[0]`; stage sized to the item's own ratio
-  (`mvCoverRatio()` — 3:4 or 4:3, `AC-EXP-04`), autoplay **muted** loop; floating title + creator →
+  (`mvCoverRatio()` — 3:4 or 4:3, `AC-EXP-04`), autoplay loop **with sound on** (falling back to
+  muted only if the browser refuses — `YMW260902P0002`, see `AC-EXP-04`); floating title + creator →
   `/creator`; **Like** (local), **Share** (`ShareDialog`); **Create Music Video** → `setCompose`
   (mvType + prompt + `matchedSong` + title) → `/mv/room` (area 02); a transport row with
   play/pause, a keyboard-operable `SeekBar`, mute and fullscreen; and **`MvGridSections` below the
@@ -366,7 +367,7 @@ Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/son
 
 ### EXP-P4 — Watch (MV player)
 
-- **EXP-P4-S1** `/watch?id`: 3:4 player (autoplay muted, tap to pause, mute toggle). Missing/invalid id → falls back to `NEW_MVS[0]`.
+- **EXP-P4-S1** `/watch?id`: 3:4 player (autoplay **with sound**, tap to pause, mute toggle). Missing/invalid id → falls back to `NEW_MVS[0]`. _(Sound-on since 2026-09-09, `YMW260902P0002`; the muted fallback when autoplay-with-sound is refused is part of `AC-EXP-04`.)_
 - **EXP-P4-S2** Creator → `/creator`; Like (local); Share (`ShareDialog`); **Create Music Video** → `/mv/room` pre-filled from this MV.
 - **EXP-P4-S3** _(new 2026-09-01)_ WHEN the MV is official (`isOfficialMv(mv)` — one of the eight `HERO_MVS`), the YCM watermark overlays the video for the duration of playback, positioned against the video's own rendered rect; a user-submitted MV never shows it. See §3.3, `AC-EXP-10`.
 - **EXP-P4-S4** _(new 2026-09-01)_ Drag vertically on the video stage past the swipe threshold → commits to the next (up) or previous (down) item in `MV_LIST`, updating the URL via `router.replace` without a full navigation; below threshold, springs back; an id outside `MV_LIST` (e.g. from `/creator`) never commits. _(Briefly flagged as contested on 2026-09-01; the product owner confirmed the same
@@ -374,7 +375,7 @@ Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/son
 
 ### EXP-P5 — Song play (community)
 
-- **EXP-P5-S1** `/song/play?id`: disc + **real `<audio>` progress**; Prev/Next cycle the playlist; seek; Like/Share; Lyrics sheet. _("simulated progress" corrected 2026-08-19 — real audio landed 2026-08-05, see AC-EXP-05.)_
+- **EXP-P5-S1** `/song/play?id`: disc + **real `<audio>` progress**; Prev/Next cycle the playlist; seek; Like/Share; Lyrics sheet, **each line of which seeks to its own timestamp** (2026-09-09, `YMW260903P0005`). _("simulated progress" corrected 2026-08-19 — real audio landed 2026-08-05, see AC-EXP-05.)_
 - **EXP-P5-S2** **Create AI Song** → `/song/create` pre-filled (genre/mood/title/lyrics).
 
 ### EXP-P6 — Creator profile
@@ -433,9 +434,13 @@ Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/son
   > _"…and at 768px and above, select that song in the Now Playing column **without navigating**."_ — correct for one day. This is the error log's "a test can hold a decision in place after the decision is wrong": 3b pinned the swap with an e2e assertion, and when drop 2 reversed the decision the assertion had to move with the criterion rather than argue against it.
   >
   > </details>
-- **AC-EXP-04** — WHEN `/watch` loads, THE SYSTEM SHALL play the MV muted in **its own aspect ratio — 3:4 or 4:3, per the item's cover ratio** (`mvCoverRatio()`, `lib/mv/community.ts`) — with play/pause + mute, and expose Like, Share, and **Create Music Video** → `/mv/room` pre-filled.
+- **AC-EXP-04** — WHEN `/watch` loads, THE SYSTEM SHALL play the MV **with sound on** in **its own aspect ratio — 3:4 or 4:3, per the item's cover ratio** (`mvCoverRatio()`, `lib/mv/community.ts`) — with play/pause + mute, and expose Like, Share, and **Create Music Video** → `/mv/room` pre-filled. WHERE the browser refuses to autoplay with sound, THE SYSTEM SHALL fall back to muted playback with the mute control reflecting that, rather than leaving the video paused.
+  > **Changed 2026-09-09 — `YMW260902P0002`, product owner.** This required "muted" playback until now, and the reported defect is exactly that: opening a Trending MV from Home landed on a silent video, when hearing the song is the point of the screen. Sound is now ON by default.
+  >
+  > The fallback clause is not hedging. A browser only permits autoplay **with sound** while the document has user activation, and the click that opened this screen belongs to the PREVIOUS document — it does not carry across the navigation. So an unmuted `play()` can be rejected, and the alternatives on rejection are "playing but silent" or "not playing at all". The first is the old behaviour; the second is worse than the bug. `CommunityMvPlayer`'s `startPlayback` therefore always tries unmuted FIRST and only mutes if refused, and moves the mute button's state with it so the control never claims sound is on when it is not.
+  >
   > _Corrected 2026-08-19: this said "in 3:4" flatly. The stage has always sized itself to the item, and the fixtures alternate 3:4 / 4:3 on purpose, because real community MVs are not all portrait. Confirmed by the product owner as intended, not a defect._
-- **AC-EXP-05** — WHEN `/song/play` loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community) and present the disc player with **real `<audio>` progress**, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist, and **Create AI Song** → `/song/create` pre-filled — below 768px in the full-screen `MobileNowPlaying`, and at 768px and above on `/song/result`, which the row click navigates to. Playback SHALL NOT be capped for free accounts.
+- **AC-EXP-05** — WHEN `/song/play` loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community) and present the disc player with **real `<audio>` progress**, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist (**each line seeks to its own timestamp** since 2026-09-09 - `YMW260903P0005`, specified in area 03 `AC-SONG-18`), and **Create AI Song** → `/song/create` pre-filled — below 768px in the full-screen `MobileNowPlaying`, and at 768px and above on `/song/result`, which the row click navigates to. Playback SHALL NOT be capped for free accounts.
   > **Amended 2026-08-07 (DP drop `2670ed2`) — the requirements are unchanged, only WHERE desktop satisfies them.** Drop 2 deleted the desktop Now Playing column, so this screen no longer carries the disc player at ≥768px; `/song/result` does, and `AC-EXP-03`'s row click is what reaches it. Every one of the five requirements above still holds at every width. This was very nearly recorded as "adopting drop 2 deletes four of AC-EXP-05's five requirements" — a conclusion reached by reading a CSS diff rather than DP's markup, and caught by the product owner running the prototype.
   > **Rewritten 2026-08-05 by the designer-UI migration (Slice 3b). Three changes, all deliberate:**
   >
@@ -487,7 +492,7 @@ Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/son
 - [ ] **EXP-P1**: rails render in seed order; hero + New-Songs Create gate via sign-in; cards route correctly (AC-01/02/03).
 - [ ] **EXP-P2**: grid → `/watch?id` → Create MV → /mv/room (AC-03/04).
 - [ ] **EXP-P3**: song lists → player; Create → /song/create pre-filled (AC-03); tab bar reads All · Pop · Hip-Hop · R&B · Rock · Jazz · Electronic · Rap · Classical · Country, every tab non-empty.
-- [ ] **EXP-P4**: /watch autoplay muted 3:4; play/mute/like/share; Create MV pre-fills (AC-04); bad id → NEW_MVS[0] (AC-07, E1); a `HERO_MVS` id shows the YCM watermark, a `NEW_MVS`/`TRENDING_MVS`/`CREATOR_MVS` id does not (AC-10); ❓ vertical drag on the stage swipes to next/prev MV (AC-11, contested — see §3.3 before treating this as a requirement).
+- [ ] **EXP-P4**: /watch autoplay 3:4 with SOUND ON (muted only as the blocked-autoplay fallback, `YMW260902P0002`); play/mute/like/share; Create MV pre-fills (AC-04); bad id → NEW_MVS[0] (AC-07, E1); a `HERO_MVS` id shows the YCM watermark, a `NEW_MVS`/`TRENDING_MVS`/`CREATOR_MVS` id does not (AC-10); ❓ vertical drag on the stage swipes to next/prev MV (AC-11, contested — see §3.3 before treating this as a requirement).
 - [ ] **EXP-P5**: real `<audio>` progress; Prev/Next cycle; Lyrics; Create AI Song pre-fills (AC-05).
 - [ ] **EXP-P6**: creator tabs + rows open players; self=1 shows MOCK_USER (AC-06); `?demo=1` + `profileEmpty` shows the empty block, with the subtitle/CTA only in self mode (AC-12).
 - [ ] **AC-13**: `?demo=1` + `feedEmpty` → all three home rails, both explore catalogs and the song

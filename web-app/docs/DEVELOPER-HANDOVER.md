@@ -49,7 +49,10 @@ src/
 │   ├── mv/
 │   │   ├── types.ts        #   domain constants/rules; re-exports entity types
 │   │   ├── mock.ts         #   static fixtures (sample songs, templates, history seeds)
-│   │   └── community.ts    #   community seed data (feature undefined — TODO.md #1)
+│   │   ├── community.ts    #   community seed data (feature undefined — TODO.md #1);
+│   │   │                   #   also the vendored `Neon Static` sample + its real LRC
+│   │   └── lyrics.ts       #   lyric line TIMING — parses SongResult.lyricsLrc (real,
+│   │                       #   per-line), else spreads lines evenly across the duration
 │   ├── authStore.ts        #   mock auth boolean, persisted to localStorage["muse_auth"]
 │   ├── user.ts             #   mock user + credit packs
 │   └── download.ts         #   client download helper

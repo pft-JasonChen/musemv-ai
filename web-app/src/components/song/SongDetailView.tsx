@@ -29,10 +29,12 @@ import {
   CREATOR_SONGS,
   TOP_PICKS_SONGS,
   getCommunitySong,
+  lyricsLrcForTitle,
   songAudioUrl,
   songResultFromCommunity,
   type CommunitySong,
 } from "@/lib/mv/community";
+import { timedLyrics, type TimedLine } from "@/lib/mv/lyrics";
 import { GENRES } from "@/lib/mv/mock";
 import { useDemoFlag } from "@/components/demo/useDemo";
 import { FeedEmpty } from "@/components/community/FeedEmpty";
@@ -195,10 +197,25 @@ function songsForTab(tab: Tab): readonly CommunitySong[] {
 // and `Sidebar.tsx` each already follow for this exact helper.
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-const FALLBACK_LYRICS = ["♪ No lyrics available for this one yet ♪"];
+const FALLBACK_LYRICS: TimedLine[] = [{ t: 0, line: "♪ No lyrics available for this one yet ♪" }];
 
-const linesOf = (song: CommunitySong): string[] => {
-  const lines = (song.lyrics ?? "").split("\n").filter((l) => l.trim().length > 0);
+/**
+ * The sheet's display lines WITH their start times (YMW260903P0005) — real
+ * per-line timing for a song that has an LRC (`Neon Static`), the even spread
+ * across `durationSec` for every other one. See `lib/mv/lyrics.ts`.
+ *
+ * The LRC is looked up by TITLE rather than read off `CommunitySong`, matching
+ * how this file already gets a song's audio (`songAudioUrl`): the catalog is
+ * presentation fixture data and stays at the frozen C2 shape, while the real
+ * wire field lives on `SongResult`.
+ *
+ * The no-lyrics placeholder keeps its `t: 0` and is therefore "seekable" to
+ * the start. That is deliberate over suppressing `onSeek` for it: a single
+ * decorative row that silently does nothing is a smaller lie than one whose
+ * hover state says it is a control on some songs and not others.
+ */
+const timedLinesOf = (song: CommunitySong, durationSec: number): TimedLine[] => {
+  const lines = timedLyrics(song.lyrics, lyricsLrcForTitle(song.title), durationSec);
   return lines.length ? lines : FALLBACK_LYRICS;
 };
 
@@ -450,11 +467,15 @@ function MobileNowPlaying({
           isOpen={showLyrics}
           title={song.title}
           cover={song.cover}
-          lyricLines={linesOf(song)}
+          lines={timedLinesOf(song, duration)}
           currentTime={currentTime}
           duration={duration}
           playing={playing}
           onTogglePlay={onTogglePlay}
+          // YMW260903P0005 — tapping a lyric seeks. `useSeek`'s own `seek`,
+          // the same one the progress bar above uses, so the two can never
+          // disagree about clamping or about which element they drive.
+          onSeek={seek}
           onClose={() => setShowLyrics(false)}
         />
       )}

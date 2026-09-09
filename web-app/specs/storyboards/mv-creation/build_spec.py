@@ -101,8 +101,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Music Video (MV) Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video',
-    'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
-    'version': 'v3',
+    'author': 'Jason Chen', 'date': '2026-09-09', 'status': 'Draft',
+    'version': 'v4',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -598,23 +598,25 @@ cfg = {
             'id': 'p7-side-rail', 'num': 7,
             'name': 'Trending MVs vs My Creations',
             'desc': 'One independent screen &mdash; not a continuation of P5 or P6.',
-            'entry': 'Signed-in user with &ge;1 completed MV revisits /mv/room', 'outcome': 'Side rail shows My Creations',
+            'entry': 'Signed-in user revisits /mv/room', 'outcome': 'Side rail shows My Creations',
             'steps': [
                 {
-                    'shot': '32_side_rail_trending.png', 'num': 1,
-                    'user': 'A signed-in user with zero completed MVs (or a fresh page load) arrives at /mv/room.',
+                    'shot': '32_side_rail_trending.png', 'num': 1, 'since': 'v4',
+                    'user': 'A SIGNED-OUT visitor arrives at /mv/room (it is not auth-gated &mdash; it is the marketing Navbar&rsquo;s &ldquo;Start for Free&rdquo; destination).',
                     'system': 'The side rail shows &ldquo;Trending MVs&rdquo; with a &ldquo;See all&rdquo; link to /explore/mvs.',
-                    'limits': [('History is in-memory only, so a page reload puts the rail back to Trending even after generating an MV (prototype_deltas).',
+                    'limits': [('&#9888; SCREENSHOT STALE, 2026-09-09 (YMW260902P0013). This step used to read &ldquo;a signed-in user with zero completed MVs&rdquo;, and the capture was taken that way &mdash; signed in. That state no longer exists: the rail now reads live session jobs MERGED with the seeded creations /history shows, so a signed-in user sees My Creations immediately. The Trending fallback is now the SIGNED-OUT state, and this shot needs re-capturing signed out. See AC-MV-21 / AC-SONG-19.',
+                                'The pixels are still right &mdash; the same rail, the same &ldquo;See all&rdquo; &mdash; but the caption above them describes a state the app can no longer reach. Not silently rewritten to match, because that would make a stale capture look verified.'),
+                               ('History&rsquo;s LIVE half is in-memory only, so a page reload drops a just-generated MV. The seeded half survives, so the rail no longer falls all the way back to Trending (prototype_deltas).',
                                 'A real backend would keep the account&rsquo;s own completed MVs across a reload.')],
                     'focus': [{'box': [89.5, 10.9, 7.0, 4.0], 'type': 'action', 'label': 'See all'}],
                 },
                 {
-                    'shot': '33_side_rail_my_creations.png', 'num': 2,
+                    'shot': '33_side_rail_my_creations.png', 'num': 2, 'since': 'v4',
                     'user': 'Generates one MV in-session (client-side navigation only, no reload), then returns to /mv/room via Recreate.',
                     'system': 'The rail swaps to &ldquo;My Creations&rdquo;, listing that MV.',
                     'exact': ['Section label: &ldquo;My Creations&rdquo;'],
                     'limits': [
-                        'The swap needs BOTH conditions &mdash; signed in AND at least one completed MV; either alone still shows Trending MVs.',
+                        'Corrected 2026-09-09 (YMW260902P0013): the swap needs signing in, and the &ldquo;at least one creation&rdquo; condition is now satisfied by the SEEDED creations, so it is no longer a second hurdle a signed-in user has to clear. It survives only to keep a signed-out visitor on Trending.',
                         'My Creations drops the &ldquo;See all&rdquo; link that Trending MVs has.',
                     ],
                 },
@@ -691,8 +693,8 @@ cfg = {
         ('CREATING', '/mv/creating after direct mode or Generate MV', 'Progress ring, step label, estimate, View Later', '&rarr; RESULT on done &middot; &rarr; FAILED on mock failure', 'On job outcome'),
         ('RESULT', '/mv/result after a successful job', 'Player, Like/Dislike, Share, Download, Publish toggle, Recreate, Edit MV / Unpublish to edit, Detail panel', '&rarr; MODE_SELECT via Recreate (returns to /mv/room) &middot; &rarr; History via Back', 'On navigation away'),
         ('FAILED', '/mv/thinking or /mv/creating after a mock failure', 'Generation Failed message; /mv/thinking shows Back only, /mv/creating shows Back + Retry', '&rarr; CREATING via Retry (creating only) &middot; &rarr; /mv/room via Back', 'On Retry (creating only) or Back'),
-        ('Side rail: Trending MVs', 'Default &mdash; signed out, or signed in with zero completed MVs', 'NEW_MVS with a &ldquo;See all&rdquo; link (P7-S1)', '&rarr; My Creations once both conditions below are met', '&mdash;'),
-        ('Side rail: My Creations', 'Signed in AND &ge;1 completed MV', 'The user&rsquo;s own finished MVs, no &ldquo;See all&rdquo; (P7-S2)', '&rarr; Trending MVs on sign-out or reload (History is in-memory)', '&mdash;'),
+        ('Side rail: Trending MVs', 'SIGNED OUT (corrected 2026-09-09 &mdash; was &ldquo;or signed in with zero completed MVs&rdquo;)', 'NEW_MVS with a &ldquo;See all&rdquo; link (P7-S1)', '&rarr; My Creations on sign-in', '&mdash;'),
+        ('Side rail: My Creations', 'Signed in (useMyCreations: live jobs + the seeded creations /history shows)', 'The user&rsquo;s own finished MVs, no &ldquo;See all&rdquo; (P7-S2)', '&rarr; Trending MVs on sign-out only; a reload drops just the live half', '&mdash;'),
     ],
 
     'errors': [
@@ -781,7 +783,7 @@ cfg = {
         ('AC-HIST-01', 'History shows live jobs prepended to the seed list under All.', ['P1-S15', 'P2-S6']),
         ('AC-HIST-03', 'A done row shows a Done status pill.', ['P1-S15', 'P2-S6']),
         ('GL-01', 'When credits are below the generation cost, the CTA routes to the buy-credits IAP instead of starting generation.', ['P6-S1']),
-        ('MV-P1-S0', 'The compose side rail shows Trending MVs by default, swapping to My Creations once the user is signed in with at least one completed MV.', ['P7-S1', 'P7-S2']),
+        ('MV-P1-S0', 'The compose side rail shows Trending MVs to a signed-out visitor and My Creations to a signed-in user, over their own finished MVs (live session jobs merged with the seeded creations /history shows). Corrected 2026-09-09, YMW260902P0013 / AC-MV-21.', ['P7-S1', 'P7-S2']),
     ],
 
     'prototype_deltas': [
@@ -824,6 +826,41 @@ cfg = {
         ('D-09', 'A real bug found while capturing (StoryboardGenerationScreen double-starting the storyboard job under Strict Mode) &mdash; fix now or document?', 'Fixed (`e739c4e`, 2026-08-27) &mdash; a one-file fix with an obvious e2e guard (PLAN.md D10). Same `started` ref pattern `GenerationView.tsx` already carries for the other two generation screens. The owed regression test was written and mutation-tested in both directions in this same session.'),
         ('D-10', 'Voided capture run 1 &mdash; reuse any of its 44 screenshots?', 'No &mdash; all void (PLAN.md &ldquo;S2 scope&rdquo;). They photographed a control (Enhance on /mv/room) the product owner had already removed from V1 the day after that run captured. Every screenshot in this spec is a fresh capture against the rebased tree; filenames were renumbered rather than left with a gap where the Enhance shot used to be.'),
         ('D-11', 'Viewport scope?', 'Desktop 1440 only (D8, PLAN.md programme decision) &mdash; the phone chrome and /mv/edit&rsquo;s MobileSceneDetail get no QA storyboard here.'),
+    ],
+
+    'changelog': [   # newest first — (version, date, what changed)
+        ('v4', '2026-09-09',
+         '<b>YMW260902P0013 &mdash; the two create screens&rsquo; side rails disagreed.</b> '
+         'Changed: <b>P7-S1</b> and <b>P7-S2</b>, the two <b>Side rail</b> rows of the States table, '
+         'and the compose-side-rail row of the Criteria table; new criterion <b>AC-MV-21</b> in '
+         '<code>specs/areas/02-mv-creation.md</code>. '
+         'The report was that /song/create showed Trending Songs while this screen showed My '
+         'Creations. Both rails were running IDENTICAL code over the same source &mdash; the '
+         'session-local History, which starts EMPTY &mdash; so a signed-in user saw My Creations only '
+         'on whichever create screen they had just generated something on. The code was the same and '
+         'the data was lopsided. '
+         'Both now read <code>useMyCreations()</code>: live session jobs merged with the same seeded '
+         'creations /history shows (<code>status: &quot;done&quot;</code> only, and community-sourced '
+         'rows excluded &mdash; a rail titled My Creations must not claim '
+         '<code>h-whispers-past</code>). So signing in is the only condition a real user has to meet; '
+         'the &ldquo;at least one creation&rdquo; test survives only to keep a signed-OUT visitor on '
+         'Trending MVs. '
+         'Code: <code>src/components/history/useMyCreations.ts</code>, '
+         '<code>src/components/mv/MvRoom.tsx</code>. '
+         'Tests: <code>YMW260902P0013: signed in, BOTH create rails show My Creations</code> and '
+         '<code>&hellip; signed OUT, both create rails still fall back to Trending</code> in '
+         '<code>e2e/behaviour-regressions.spec.ts</code>; <code>3g / R9</code> and '
+         '<code>G7 3g-3</code> were rewritten there for the same reason. '
+         '&#9888; <b>Screenshot 32 is now stale</b> &mdash; it was captured signed IN with no '
+         'creations, a state that no longer exists. The Trending fallback is the signed-OUT state now; '
+         'see P7-S1. Screenshot 33 is still current. '
+         'Also recorded, because this fix made it visible rather than introducing it: the rail flashes '
+         'the signed-out branch for one frame on a signed-in reload, since every route is prerendered '
+         'with auth false. That is <code>SHELL-E1</code> &mdash; see '
+         '<code>specs/areas/01-app-shell.md</code> &sect;5. '
+         'Flowchart re-read against v4 and unchanged: it cites <code>P7-S1/S2</code> for '
+         '&ldquo;Side rail Trending MVs, or My Creations&rdquo;, which is still true.'),
+        ('v3', '2026-09-02', 'Prior revision &mdash; see the file header for its own change notes.'),
     ],
 
     'references': [

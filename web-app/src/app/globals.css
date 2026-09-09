@@ -20,6 +20,10 @@
    counterpart (it comes from YouCam Online Editor's live popup), but renders
    through DP's `DpDialog` shell, so it needs that shell's class names. */
 @import "../styles/consent-dialog.css";
+/* Same call again: click-a-lyric-to-seek turns DP's `<p>` lyric lines into
+   `<button>`s, and a button needs the reset DP's own rules never had to
+   carry. Reset only — see the file's header. */
+@import "../styles/lyric-seek.css";
 
 /* Map design tokens -> Tailwind v4 theme so utilities resolve to our tokens. */
 @theme inline {

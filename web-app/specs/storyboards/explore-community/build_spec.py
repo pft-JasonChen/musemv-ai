@@ -63,8 +63,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Explore &amp; Community',
     'breadcrumb': 'YouCam Muse Web &rarr; Explore &amp; Community',
-    'author': 'Jason Chen', 'date': '2026-09-01', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-09-09', 'status': 'Draft',
+    'version': 'v2',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -366,17 +366,19 @@ cfg = {
             'outcome': 'The visitor watches, swipes on through the feed, or leaves to create their own MV',
             'steps': [
                 {
-                    'shot': '16_watch_player.png', 'num': 1,
+                    'shot': '16_watch_player.png', 'num': 1, 'since': 'v2',
                     'user': 'Opens an MV.',
-                    'system': 'The video plays muted on a stage sized to the item, with the title, creator and actions floating over it and a transport below.',
+                    'system': 'The video plays WITH SOUND ON, on a stage sized to the item, with the title, creator and actions floating over it and a transport below.',
                     'exact': [
                         'Primary action: &ldquo;Create MV&rdquo;',
                         'Control labels: &ldquo;Like&rdquo;, &ldquo;Share&rdquo;, &ldquo;Mute&rdquo;, &ldquo;Fullscreen&rdquo;',
                     ],
                     'limits': [
+                        ('&#9888; SCREENSHOT PREDATES v2 (YMW260902P0002). It was captured while the player still started MUTED, so its transport control reads &ldquo;Unmute&rdquo;; with sound on by default it reads &ldquo;Mute&rdquo;, which is what the label list above now names. Everything else in the shot is current.',
+                         'Re-capture 16_watch_player.png on the next screenshot pass. Listed here rather than left for a reader to notice, because a label list that happens to match is not evidence the image does.'),
                         ('The stage takes the item&rsquo;s OWN aspect ratio &mdash; 3:4 or 4:3 &mdash; not a fixed one.',
                          'AC-EXP-04. The catalog deliberately mixes the two; there is no viewer control to switch them.'),
-                        ('Playback starts muted, and the transport offers play/pause, seek, mute and fullscreen.',
+                        ('Playback starts with sound on (2026-09-09, YMW260902P0002 &mdash; muted only if the browser refuses to autoplay with sound), and the transport offers play/pause, seek, mute and fullscreen.',
                          'AC-EXP-04. The seek control is keyboard-operable.'),
                         ('The primary action reads &ldquo;Create MV&rdquo; here and &ldquo;Create Music Video&rdquo; on a narrow layout.',
                          'Two labels shown one at a time, not a rename.'),
@@ -822,7 +824,7 @@ cfg = {
         ('AC-EXP-01', 'WHEN the home page loads, THE SYSTEM SHALL render the hero, the tool selector and the three seed rails in seed order &mdash; and SHALL mount the narrow treatment of the hero and tool selector below 768px and the desktop treatment at or above it.', ['P1-S1', 'P1-S2']),
         ('AC-EXP-02', 'WHEN a hero CTA, a tool-selector card, or a row Create is pressed, THE SYSTEM SHALL run the sign-in gate and, on success, navigate to the create flow with the song pre-filled.', ['P1-S8', 'P3-S5']),
         ('AC-EXP-03', 'WHEN an MV card is pressed anywhere, THE SYSTEM SHALL open the MV player for it. WHEN a song row is pressed on /explore/songs at 768px and above, THE SYSTEM SHALL navigate to the result-stage player; WHEN the row&rsquo;s album art is pressed instead, THE SYSTEM SHALL preview it in the bottom bar WITHOUT navigating.', ['P1-S5', 'P2-S2', 'P3-S3', 'P3-S4']),
-        ('AC-EXP-04', 'WHEN the MV player loads, THE SYSTEM SHALL play the MV muted in the item&rsquo;s OWN aspect ratio, with play/pause and mute, and expose Like, Share and Create Music Video pre-filling the MV create flow.', ['P4-S1', 'P4-S10']),
+        ('AC-EXP-04', 'WHEN the MV player loads, THE SYSTEM SHALL play the MV WITH SOUND ON in the item&rsquo;s OWN aspect ratio, with play/pause and mute, and expose Like, Share and Create Music Video pre-filling the MV create flow. Where the browser refuses to autoplay with sound, it SHALL fall back to muted playback rather than leaving the video paused.', ['P4-S1', 'P4-S10']),
         ('AC-EXP-05', 'WHEN the song player loads, THE SYSTEM SHALL resolve the id to the correct playlist, present real audio progress with Previous/Next, Like/Share and a lyrics sheet where one exists, and SHALL NOT cap playback for free accounts.', ['P3-S3', 'P5-S2', 'P5-S3'], 'The disc player and the lyrics sheet live on the result-stage player (P3-S4&rsquo;s destination, owned by S1) and in the narrow layout&rsquo;s full-screen player, which is outside this spec&rsquo;s desktop-only scope (D8). The playlist resolution, the real audio and the absence of a cap are all covered by the steps listed.'),
         ('AC-EXP-06', 'WHEN the creator profile loads, THE SYSTEM SHALL show the profile header and stats and the Music Videos / Songs tabs, whose rows open the respective players; the self variant SHALL show the signed-in user&rsquo;s identity.', ['P6-S1', 'P6-S3']),
         ('AC-EXP-07', 'WHEN an id is missing or invalid on either player, THE SYSTEM SHALL fall back to a default item without crashing.', [], 'The MISSING-id half produces P4-S1&rsquo;s screen on a different item, so a screenshot of it would be indistinguishable; it is listed in the error table instead. The INVALID-id half is not a fallback at all &mdash; it is the not-found state, specified by AC-EXP-09 at P4-S11 and P5-S4.'),
@@ -901,6 +903,24 @@ cfg = {
         ('D-09', 'The three Home rails and /explore/songs&rsquo; list had NO empty state, and /explore/mvs had an older, different one. Build now, or wait for a design?', 'Build now, reusing /creator&rsquo;s block &mdash; product owner, 2026-09-01, explicitly &ldquo;do not wait for a drawing&rdquo;. All five feed surfaces now share it (P7). One thing was decided rather than inherited and is flagged for confirmation: the VISUAL is /creator&rsquo;s, but the COPY is the existing feed empty state&rsquo;s (&ldquo;Nothing here yet&rdquo; / &ldquo;Be the first to create!&rdquo;) rather than /creator&rsquo;s &ldquo;No works released yet&rdquo;, which is about one person&rsquo;s own output and reads wrong on a global feed. Both strings were already approved; inventing a third would have put an unsourced product decision into this spec. No CTA, because a feed has no owner for the /creator rule to key off.'),
         ('D-10', 'What happens to the Curation PRD&rsquo;s ranking layer now that its layout half is superseded?', 'The RULES stand and the NUMBERS do not &mdash; product owner, 2026-09-01. The scoring design is still what the backend will implement, so the spec keeps pointing at the PDF for it; but its two self-contradictions mean no weight in that document can be quoted as authoritative, and the values have to be reissued before anyone builds against them. That is why Q-01 stays open on the numbers alone.'),
         ('D-11', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo, same as S1 and S3 through S7.'),
+    ],
+
+    'changelog': [   # newest first — (version, date, what changed)
+        ('v2', '2026-09-09',
+         '<b>YMW260902P0002 &mdash; /watch now plays WITH SOUND ON.</b> '
+         'Changed: <b>P4-S1</b> (system line + a new limits row) and <b>AC-EXP-04</b>. '
+         'Was &ldquo;play the MV muted&rdquo;; a Trending MV opened from Home landed on a silent video. '
+         'AC-EXP-04 also gains a fallback clause: where the browser refuses to autoplay with sound '
+         '(no user activation carries across a navigation), the player mutes and reflects that in the '
+         'mute control rather than leaving the video paused. '
+         'Code: <code>src/components/community/CommunityMvPlayer.tsx</code> (<code>startPlayback</code>). '
+         'Tests: <code>e2e/watch-autoplay-sound.spec.ts</code> (the sound-on default, in its own file '
+         'because it needs a browser launched with <code>--autoplay-policy=no-user-gesture-required</code>) '
+         'and <code>YMW260902P0002: when autoplay-with-sound is REFUSED</code> in '
+         '<code>e2e/behaviour-regressions.spec.ts</code> (the fallback). '
+         'Flowchart re-read against v2 and unchanged &mdash; it draws paths and cites step IDs, and '
+         'restates nothing about playback. Screenshot 16 predates the change; see P4-S1.'),
+        ('v1', '2026-09-01', 'Initial spec.'),
     ],
 
     'references': [

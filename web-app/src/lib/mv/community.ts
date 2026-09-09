@@ -6,6 +6,10 @@
 // existing imports keep working.
 import type { CommunityCreator, CommunityMv, CommunitySong, SongResult } from "@/lib/api/schemas";
 import { HERO_ITEMS } from "@/components/home/heroItems";
+// The vendored `Neon Static` sample is the signed-in user's OWN published
+// song — it is also a `HISTORY_SAMPLES` creation — so its catalog row is
+// attributed to them rather than to an invented creator name.
+import { MOCK_USER } from "@/lib/user";
 
 export type { Badge, CommunityCreator, CommunityMv, CommunitySong } from "@/lib/api/schemas";
 
@@ -409,10 +413,88 @@ const LYRICS: Record<string, string> = {
   // state currently has no design at all — the whole lyrics area just vanishes.
   // Do not "fix" this by adding an entry; the gap is the point until a design
   // for the empty state exists.
+  // The one REAL song in this map — the product owner's own AI Song result
+  // (2026-09-09). Its written lyrics, minus the `[intro]`/`[verse]`/`[chorus]`
+  // section tags, which every other entry here is also without and which
+  // would otherwise render as literal "[verse]" rows in the lyrics panel.
+  // Its SUNG lines and their timing are `NEON_STATIC_LRC` below, and they
+  // deliberately differ — see that constant's comment.
+  "Neon Static":
+    "Wires hum beneath the floor\nShadows dance behind the door\nSystem failing, pulse is low\nNowhere left for us to go\n\nLost in neon static\nFading in the dark\nDigital erratic\nTracing every spark\n\nGlitch inside the rhythm now\nBroken code, we disavow\nSignals bleeding through the black\nThere is no way turning back\n\nLost in neon static\nFading in the dark\nDigital erratic\nTracing every spark\n\nVoltage rising, hold on tight\nDissolving in the velvet night\n\nLost in neon static\nFading in the dark\nDigital erratic\nTracing every spark",
   "Acoustic Folk":
     "Picking up my guitar by the fire\nSinging songs that lift me higher\nSimple words and honest chords\nThis is all I need, no more\n\nEvery chord I strum for you\nSimple, honest, always true\nNothing fancy, nothing grand\nJust this music, just this hand\n\nWooden porch and evening air\nSongs I've carried everywhere\nEvery story that I hold\nTurns to music, turns to gold\n\nEvery chord I strum for you\nSimple, honest, always true\nNothing fancy, nothing grand\nJust this music, just this hand",
 };
 const lyr = (t: string) => LYRICS[t];
+
+// ── THE ONE SONG WITH REAL TIMING (YMW260903P0005) ──────────────────────────
+//
+// Everything in `LYRICS` above is mock prose with no timing: the "current
+// line" highlight on those songs comes from spreading the lines evenly across
+// the duration (`lib/mv/lyrics.ts`). `Neon Static` is different — it is a REAL
+// AI Song result supplied by the product owner on 2026-09-09, vendored whole:
+//
+//   · `public/assets/songs/Neon Static.mp3`                 (the audio)
+//   · `public/assets/images/album-art/album_neon_static.png` (its cover)
+//   · the LRC below, verbatim from the result's own
+//     `timestamps.lyrics_lrc_timestamps`
+//
+// So this is the song that demonstrates click-a-lyric-to-seek landing on the
+// beat rather than near it. Note it is NOT a re-encoding of the prose lyrics
+// and MUST NOT be "tidied" into one: "System failing, pulse is low" is sung as
+// two lines, "Go, go, go, go, go" exists only in the performance, "There is"
+// is sung "There's", and the `[verse]`/`[chorus]` tags are not sung at all.
+// Where an LRC exists it is what the screens display (see `parseLrc`).
+//
+// The cover is a `.png` despite the source file's `.jpeg` name — it is a real
+// PNG (816×816), so the extension follows the bytes, not the label.
+const NEON_STATIC_LRC = `[00:14.94]Wires hum beneath the floor
+[00:18.78]Shadows dance behind the door
+[00:21.84]System failing
+[00:25.34]Pulse is low
+[00:30.08]Nowhere left for us to go
+[00:33.66]Go, go, go, go, go
+[00:35.70]Lost in neon static
+[00:39.42]Fading in the dark
+[00:43.24]Digital erratic
+[00:46.90]Tracing every spark
+[00:52.54]Glitch inside the rhythm now
+[00:56.12]Broken code we disavow
+[01:00.02]Signals bleeding through the black
+[01:03.18]There's no way turning back
+[01:07.56]Lost in neon static
+[01:11.34]Fading in the dark
+[01:15.06]Digital erratic
+[01:18.78]Tracing every spark
+[01:24.92]Voltage rising, hold on tight
+[01:32.48]Dissolving in the velvet night
+[01:43.18]Lost in neon static
+[01:46.98]Fading in the dark
+[01:50.78]Digital erratic
+[01:54.46]Tracing every spark`;
+
+/** This song's own audio and cover, referenced from more than one fixture. */
+const NEON_STATIC_AUDIO = "/assets/songs/Neon%20Static.mp3";
+export const NEON_STATIC_COVER = "/assets/images/album-art/album_neon_static.png";
+export const NEON_STATIC_TITLE = "Neon Static";
+
+/**
+ * Real per-line timing for a song TITLE, or `undefined` when it has none.
+ *
+ * Title-keyed for exactly the reason `lyricsForTitle` is: History rows carry a
+ * title and no catalog id, so this is the only key both sides share.
+ */
+export function lyricsLrcForTitle(title: string): string | undefined {
+  return title === NEON_STATIC_TITLE ? NEON_STATIC_LRC : undefined;
+}
+
+/**
+ * A song whose lyrics are timed has to play the audio those timestamps were
+ * measured against — the derived `songAudioUrl` alternation below would hand
+ * it one of the two generic demo tracks and every cue would land on silence.
+ */
+export function timedSongAudio(title: string): string | undefined {
+  return title === NEON_STATIC_TITLE ? NEON_STATIC_AUDIO : undefined;
+}
 
 /**
  * Mock lyrics for a song TITLE, or `undefined` when there are none.
@@ -429,6 +511,26 @@ export function lyricsForTitle(title: string): string | undefined {
 }
 
 export const TOP_PICKS_SONGS: CommunitySong[] = [
+  // FIRST on purpose (2026-09-09): this is the only song in the prototype with
+  // real per-line timing, so it is the one that demonstrates YMW260903P0005's
+  // click-a-lyric-to-seek. Burying it behind eight mock entries would make the
+  // fix undemonstrable without a URL. Its own audio/cover/LRC are the vendored
+  // ones — see `NEON_STATIC_LRC` above.
+  {
+    id: "sp-neon-static",
+    title: NEON_STATIC_TITLE,
+    cover: NEON_STATIC_COVER,
+    tags: "Electronic · Dark",
+    genre: "Electronic",
+    mood: "Dark",
+    creator: MOCK_USER.name,
+    plays: 3800,
+    likes: 860,
+    shares: 104,
+    date: "2026-09-09",
+    badge: "NEW",
+    lyrics: lyr(NEON_STATIC_TITLE),
+  },
   {
     id: "sp-pop-anthem",
     title: "Pop Anthem",
@@ -1173,16 +1275,24 @@ const AUDIO = [
   "/assets/songs/Top%20Flow%20Production%20-%20Party.mp3", // 114s
 ] as const;
 
+// A song with its OWN audio is excluded from the alternation rather than
+// overridden after the fact, and that is not a style choice: the alternation
+// is `i % 2` over a concatenated list, so a song inserted anywhere but the
+// very end would shift every later song onto the other mp3. Filtering first
+// means `Neon Static` sits at the head of TOP_PICKS_SONGS without changing
+// what a single other song sounds like. (`timedSongAudio` is the override
+// itself — see its comment for why a timed song must keep its own track.)
 const AUDIO_BY_ID = new Map<string, string>(
-  [...TOP_PICKS_SONGS, ...NEW_SONGS, ...CREATOR_SONGS].map((s, i) => [
-    s.id,
-    AUDIO[i % AUDIO.length],
-  ]),
+  [...TOP_PICKS_SONGS, ...NEW_SONGS, ...CREATOR_SONGS]
+    .filter((s) => !timedSongAudio(s.title))
+    .map((s, i) => [s.id, AUDIO[i % AUDIO.length]]),
 );
 
 /** Playable audio URL for a community song. Unknown ids fall back to the first track. */
 export function songAudioUrl(id: string): string {
-  return AUDIO_BY_ID.get(id) ?? AUDIO[0];
+  const song = getCommunitySong(id);
+  const own = song && timedSongAudio(song.title);
+  return own ?? AUDIO_BY_ID.get(id) ?? AUDIO[0];
 }
 
 /**
@@ -1211,6 +1321,11 @@ export function songResultFromCommunity(song: CommunitySong): SongResult {
     audioUrl: songAudioUrl(song.id),
     instrumental: false,
     lyrics: song.lyrics,
+    // Derived here rather than stored on `CommunitySongSchema`, the same call
+    // `songAudioUrl`/`mvCoverRatio` above already make: the catalog is
+    // presentation fixture data, whereas `SongResult.lyricsLrc` is the real
+    // wire field RD will populate (C2, see docs/CHANGELOG-RD.md).
+    lyricsLrc: lyricsLrcForTitle(song.title),
   };
 }
 

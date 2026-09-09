@@ -7,7 +7,7 @@ import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
-import { lyricsForTitle } from "@/lib/mv/community";
+import { lyricsForTitle, lyricsLrcForTitle, timedSongAudio } from "@/lib/mv/community";
 import { SAMPLE_AUDIO, SAMPLE_RESULT_VIDEO, mockStoryboard } from "@/lib/mv/mock";
 
 /**
@@ -74,7 +74,13 @@ export function useOpenCreation() {
           genre: "",
           mood: "",
           durationSec: 0,
-          audioUrl: c.resultUrl ?? SAMPLE_AUDIO,
+          // `timedSongAudio` first: a song whose lyrics carry real per-line
+          // timing has to play the track those timestamps were measured
+          // against, or every cue lands on the wrong beat of a generic demo
+          // mp3 (YMW260903P0005). It only answers for the vendored sample;
+          // everything else keeps the existing resultUrl-or-SAMPLE_AUDIO
+          // order exactly.
+          audioUrl: timedSongAudio(c.title) ?? c.resultUrl ?? SAMPLE_AUDIO,
           instrumental: false,
           // Looked up by title from the mock catalogue. This was missing entirely,
           // so every song opened from History rendered without a lyrics panel —
@@ -82,6 +88,11 @@ export function useOpenCreation() {
           // was removed (2026-08-19). A title with no entry stays undefined on
           // purpose: a Simple-mode song genuinely has no lyrics.
           lyrics: lyricsForTitle(c.title),
+          // Same title lookup, same reason it is a lookup and not a stored
+          // field: History carries a title and no catalog id. Undefined for
+          // every song but the vendored sample, which is what makes the
+          // lyrics panel fall back to its even-spread estimate.
+          lyricsLrc: lyricsLrcForTitle(c.title),
         });
         router.push(localePath(locale, creationHref(c)));
         return;
