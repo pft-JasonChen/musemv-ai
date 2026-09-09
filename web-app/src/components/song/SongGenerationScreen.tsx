@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { RoomNavbar } from "@/components/shell/RoomNavbar";
+import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
@@ -77,11 +77,10 @@ export function SongGenerationScreen() {
 
   return (
     <>
-      <RoomNavbar
-        title="AI Song"
-        mobileBackHref="/song/create"
-        className="room-navbar__top--tight"
-      />
+      {/* The creation form uses RoomNavbar because it is a room entry. This is
+          a process/detail stage, so it needs DetailNavbar's back affordance at
+          every breakpoint—not RoomNavbar's mobile-only back variant. */}
+      <DetailNavbar title="AI Song" fallbackPath="/song/create" />
 
       <div className="song-create">
         <div className="song-create__panel song-create__panel--full">

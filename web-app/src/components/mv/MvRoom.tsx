@@ -98,7 +98,7 @@ import {
 export function MvRoom() {
   const router = useRouter();
   const { compose, setCompose, patchCompose, resetForNewMv } = useMvFlow();
-  const { requireLogin } = useAuth();
+  const { loggedIn, profile, requireLogin } = useAuth();
   const openCreation = useOpenCreation();
   const { credits } = useCredits();
   const { locale } = useLocale();
@@ -143,6 +143,10 @@ export function MvRoom() {
   const [consentOpen, setConsentOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioFileRef = useRef<HTMLInputElement>(null);
+  // Apply the signed-in profile name only once. A later edit—including an
+  // intentionally empty value—belongs to the user and must not be overwritten
+  // every time the Settings sheet opens.
+  const authorDefaultApplied = useRef(false);
 
   const ready = isComposeReady(compose);
 
@@ -249,6 +253,20 @@ export function MvRoom() {
   }
   function setPhotoName(index: number, name: string) {
     setPhotoNames((names) => names.map((n, i) => (i === index ? name : n)));
+  }
+  function openSettings() {
+    if (loggedIn && !authorDefaultApplied.current) {
+      authorDefaultApplied.current = true;
+      if (!compose.settings.author.text.trim()) {
+        patchCompose({
+          settings: {
+            ...compose.settings,
+            author: { ...compose.settings.author, text: profile.name },
+          },
+        });
+      }
+    }
+    setSettingsOpen(true);
   }
   function selectMode(mode: MvMode) {
     // GL-01: block generation when the balance can't cover the mode's cost and
@@ -621,7 +639,7 @@ export function MvRoom() {
             <button
               type="button"
               className="mv-create__settings"
-              onClick={() => setSettingsOpen(true)}
+              onClick={openSettings}
               // Its visible content is just the current setting tags, which makes a poor
               // accessible name; the label also gives e2e a stable handle (G5-d #7).
               aria-label="Open MV settings"

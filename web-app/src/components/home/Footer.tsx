@@ -6,6 +6,7 @@ import { FeedbackDialog } from "@/components/profile/FeedbackDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
+import { PRIVACY_URL, TERMS_URL } from "@/lib/legal";
 
 /**
  * DP's `Footer` (Figma "Website Footer", node 1330:22087) — shown on Home and
@@ -37,11 +38,9 @@ import { localePath } from "@/lib/i18n/config";
  * (Same standing-deviation shape as `/mv/room`'s `Ideas` button, per
  * `CLAUDE.md`.)
  *
- * **FAQ deliberately stays as a placeholder.** The product owner confirmed it
- * IS a V1 link and will supply the destination later, so "Support" keeps its
- * column with a single entry. FAQ, Terms of Service and Privacy Policy are
- * still `href="#"` — tracked as `DESIGNER-TODO` A29, which is now down to
- * those three plus the same pair inside `BuyCreditsModal`.
+ * FAQ now routes to the app's locale-aware `/faq` page. Terms of Service and
+ * Privacy Policy use the shared production URLs in `lib/legal.ts`. The two
+ * dead legal links in `BuyCreditsModal` remain a separate outstanding surface.
  */
 
 /**
@@ -74,21 +73,21 @@ const STUDIO_LINKS: ReadonlyArray<readonly [label: string, href: string]> = [
  * column existed to hold open; `/faq` is that page, so it moves out of the
  * `href="#"` list and into the same `next/link` + `localePath()` treatment as
  * Studio's two entries (R-9 — a bare anchor would drop the locale prefix and
- * look perfect only in English). `DESIGNER-TODO` A29 is down to Terms of
- * Service and Privacy Policy plus the same pair inside `BuyCreditsModal`.
+ * look perfect only in English).
  */
 const SUPPORT_LINKS: ReadonlyArray<readonly [label: string, href: string]> = [
   ["FAQ", "/faq"],
 ];
 
 /**
- * **Contact** is the ONLY footer link with a destination (2026-09-01) — it is
- * a `<button>`, not an `<a href="#">`, because it opens a dialog rather than
- * navigating. The other two in this column (Terms of Service, Privacy Policy)
- * and FAQ above are still placeholders awaiting their URLs (`DESIGNER-TODO`
- * A29), so they stay anchors and are rendered from this list.
+ * **Contact** is a `<button>`, not an anchor, because it opens a dialog rather
+ * than navigating. The legal entries use RD's Perfect Corp forwarder URLs;
+ * both the `locale` and `type` query parameters are required.
  */
-const COMPANY_LINKS = ["Terms of Service", "Privacy Policy"];
+const COMPANY_LINKS: ReadonlyArray<readonly [label: string, href: string]> = [
+  ["Terms of Service", TERMS_URL],
+  ["Privacy Policy", PRIVACY_URL],
+];
 
 export function Footer() {
   const [fbOpen, setFbOpen] = useState(false);
@@ -127,9 +126,15 @@ export function Footer() {
             </div>
             <div className="footer__column">
               <p className="footer__column-title">Company</p>
-              {COMPANY_LINKS.map((link) => (
-                <a key={link} className="footer__link" href="#">
-                  {link}
+              {COMPANY_LINKS.map(([label, href]) => (
+                <a
+                  key={label}
+                  className="footer__link"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {label}
                 </a>
               ))}
               {/* Same `.footer__link` class as its neighbours so it is

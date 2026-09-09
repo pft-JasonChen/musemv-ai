@@ -1,7 +1,11 @@
 // PROF-06 / AUTH-03: canonical Terms of Use & Privacy Policy links, reused by
-// both Settings and the sign-in modal (same link set, wired once). These are the
-// production YouCam legal pages; localization can be layered on later — the app's
-// locale codes are product codes (enu/jpn/…), not URL-ready, so the links are
-// locale-agnostic for now. RD: confirm the exact production URLs.
-export const TERMS_URL = "https://www.youcam.com/legal/terms-of-service";
-export const PRIVACY_URL = "https://www.youcam.com/legal/privacy-policy";
+// Settings, auth/consent dialogs, purchase surfaces, and the site footer.
+//
+// RD confirmed 2026-09-09 that Perfect Corp's forwarder requires BOTH query
+// parameters to select the right localized document. These are deliberately
+// fixed to `eu_US`: Muse's product locale codes (enu/jpn/…) are not accepted by
+// this endpoint, so do not substitute the active app locale here.
+const LEGAL_FORWARD_URL = "https://www.perfectcorp.com/prog/ap/beauty-circle/forward.jsp";
+
+export const TERMS_URL = `${LEGAL_FORWARD_URL}?locale=eu_US&type=terms`;
+export const PRIVACY_URL = `${LEGAL_FORWARD_URL}?locale=eu_US&type=privacy-policy`;
