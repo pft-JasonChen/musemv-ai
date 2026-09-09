@@ -3853,14 +3853,37 @@
   }
 }
 
-/* Product owner, 2026-09-07 — `.mv-create__settings-chevron` (the chip-row
-   expand/collapse arrow, e.g. Watermark's settings chip) was a muted
-   `rgba(255, 255, 255, 0.35)`; now full opaque white, matching every other
-   chevron/arrow icon in this app's chip rows. Bare class, base rule in
-   `MVCreatePage.css` (loaded via `designer.css` before this file), so this
-   wins the cascade tie without needing a compound selector. */
+/* Product owner, 2026-09-07 — `.mv-create__settings-chevron` (the trailing
+   "open Settings" arrow on the Settings row's own button, `MvRoom.tsx`) was
+   a muted `rgba(255, 255, 255, 0.35)`; now full opaque white, matching
+   every other chevron/arrow icon in this app's chip rows. Bare class, base
+   rule in `MVCreatePage.css` (loaded via `designer.css` before this file),
+   so this wins the cascade tie without needing a compound selector.
+
+   Follow-up, 2026-09-09 — Figma "AI MV — Feature Room" (node 1330:24550)
+   has this chevron sitting inside its own circular badge ("Next", node
+   3780:147141: 22px, `background: var(--color-white-15)`, 3px padding
+   around a 16px glyph), not bare on the row background the way it had been
+   ported. `MVCreatePage.css` never gave it one — nothing to override here,
+   a new wrapper (`.mv-create__settings-chevron-badge`, `MvRoom.tsx`) was
+   needed instead, so this rule and the size drop below are both WA
+   additions rather than corrections of a DP value. Only consumer on
+   either create page — Song Create has no equivalent settings row. */
 .mv-create__settings-chevron {
+  width: 16px;
+  height: 16px;
   background-color: var(--neutral-dark-100);
+}
+
+.mv-create__settings-chevron-badge {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 34px;
+  background: var(--white-15);
 }
 
 /* Product owner, 2026-09-07 — "Top Picks Music Videos" on `/watch` and

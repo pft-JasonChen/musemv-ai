@@ -636,7 +636,9 @@ export function MvRoom() {
                   </span>
                 ))}
               </div>
-              <DpIcon name="ic_chevron-right" className="mv-create__settings-chevron" />
+              <span className="mv-create__settings-chevron-badge">
+                <DpIcon name="ic_chevron-right" className="mv-create__settings-chevron" />
+              </span>
             </button>
           </div>
 
