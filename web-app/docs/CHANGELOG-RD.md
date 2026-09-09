@@ -67,6 +67,57 @@ keeps that schema at zero diff.
 
 ---
 
+## 2026-09-07 — **C1 + C2 + C7 MOVE** — new `/faq` route and its CMS-backed content endpoint
+
+**Surfaces: C1, C2 and C7 all change. All three are ADDITIVE — nothing existing was
+renamed, removed, or retyped.**
+
+**C1 — `MuseApi` gains one method:**
+
+```ts
+getFaq(locale: Locale): Promise<FaqDocument>;
+```
+
+This is **the only locale-varying call in the contract.** Every other screen's copy is
+baked into the bundle; the FAQ body is authored in the CMS and served one document per
+language, so `locale` is a real parameter rather than a formality.
+
+**C2 — `schemas.ts` gains five exports:** `FaqItemSchema`, `FaqSectionSchema`,
+`FaqDocumentSchema`, `FaqResponseSchema` and the constant `FAQ_SECTION_COMPONENT`
+(plus the inferred types). They mirror the CMS payload **field for field**, including
+fields the UI never reads (`status`, `publishedAt`, `appName`, `androidAnswer`) — so that
+RD parses the real response with these schemas directly instead of writing a mapping layer.
+
+**C7 — one new URL:** `/faq` (and `/<locale>/faq` for the eight prefixed locales). No
+existing route moved. It is a marketing surface: `AppShell` now mounts DP's `Navbar` +
+`Footer` for it as well as for `/`.
+
+**RD action required:**
+
+1. **Point `getFaq` at the real endpoint.** The sample response is
+   `{ id, attributes: { … } }` — parse it with `FaqResponseSchema` and return
+   `.attributes`, which is what the method is typed as. `src/lib/faq/fixture.ts` is the
+   mock's only data source and is deleted wholesale when you do.
+2. **Send the locale as the CMS's own code.** `languages.languages` in the payload is
+   `"ENU"` — the same nine-code product scheme as `LOCALES`, upper-cased. **Not BCP-47**,
+   so `locale.toUpperCase()` is the whole mapping; no lookup table is needed.
+3. **Serve only PUBLISHED documents.** The sample RD supplied has `publishedAt: null` and
+   `status: "Draft"`. Those two fields are deliberately kept in `FaqDocumentSchema` so the
+   filter has something to filter on — the front end does not filter on them today.
+4. **Do not assume `sections[]` is homogeneous.** The CMS models a page as a list of
+   arbitrary section components. Today every entry is `apps-page.section-category-faq`
+   (exported as `FAQ_SECTION_COMPONENT`); an author adding a hero or rich-text block would
+   land a section with no `categoryFaqList` at all. The UI filters on that string and skips
+   what it cannot render — a real client must not map blindly.
+
+**Two content notes that are NOT code issues** (they belong to whoever authors the CMS,
+and are recorded in `src/lib/faq/fixture.ts`'s header so nobody "fixes" them in the
+fixture): every `webAnswer` is currently a byte-for-byte copy of its `iosAnswer`, so the
+web page tells users to visit the App Store and to "tap" things; and question id 26 has
+lost its arrow glyphs. The front end renders exactly what the CMS returns.
+
+---
+
 ## 2026-09-07 — **NO CONTRACT CHANGE** — home-page mobile spacing, AI MV/Song desktop centering, three color/copy fixes
 
 **Surfaces: none of C1–C8 moved.** Everything below is CSS (`designer-overrides.css`,

@@ -16,6 +16,13 @@ tsconfig.tsbuildinfo
 # Per-machine session checkpoints written by .claude/hooks/write-handoff.sh
 .claude/session-log/
 
+# Per-machine Claude Code overrides. `settings.json` is the SHARED contract
+# (hooks, permissions) and stays in git; this one carries machine-specific
+# values — e.g. a Windows box whose Claude Code session PATH does not include
+# `C:\Program Files\nodejs`, so every hook died on "npm: command not found".
+# Absolute local paths must never reach the shared file.
+.claude/settings.local.json
+
 # Playwright MCP capture artifacts (console logs / page dumps from spec screenshot runs)
 .playwright-mcp/
 # yco-spec downscaled review copies (regenerated on every capture; PNG is canonical)

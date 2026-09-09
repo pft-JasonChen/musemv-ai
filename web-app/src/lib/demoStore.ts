@@ -107,6 +107,12 @@ export const DEMO_FLAGS = [
     hint: 'Same failure as typing "[fail]" in a description',
     status: "live" as FlagStatus,
   },
+  {
+    key: "faqSearchEmpty",
+    label: "FAQ search — no matches",
+    hint: "/faq — forces the empty result state whatever is typed",
+    status: "live" as FlagStatus,
+  },
 ] as const satisfies readonly {
   key: string;
   label: string;

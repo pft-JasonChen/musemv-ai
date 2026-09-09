@@ -1,0 +1,458 @@
+/* ============================================================================
+   faq-page.css — the FAQ / help centre screen.
+
+   ── WHY THIS IS NOT IN src/styles/designer/ ───────────────────────────────
+   Everything in that folder is byte-identical to a file in
+   `designer-prototype/`, and `scripts/check-designer-css.mjs` fails the build
+   if it is not. DP has no FAQ page, so there is nothing to be identical TO.
+   This lives beside `consent-dialog.css` and `community-profile-mv-preview.css`
+   instead — the existing home for WA-authored CSS.
+
+   ── BUT IT IS WRITTEN IN DP's VOCABULARY, ON PURPOSE ──────────────────────
+   The product owner's instruction (2026-09-07) was to derive this from the
+   designer's own work so that, if it passes review, it ships as-is and the
+   designer never has to draw it. So every value below is either a token or a
+   measurement lifted from a named DP rule, and each block says which one:
+
+     · page container      ← .blog-page          (BlogPage.css)
+     · category label      ← .blog-card__category / .blog-three__section-label
+     · category card       ← .blog-card          (1px --neutral-dark-24 on 09)
+     · category tabs       ← the shared `.tabs` component, unrestyled — the
+                             same one `/explore/songs` uses for its genre tags
+     · row hover + chevron ← .list-item          (ListItem.css)
+     · search field        ← .account-edit__field input (AccountPage.css)
+     · phone bar           ← .detail-navbar__top (DetailNavbar.css, mobile)
+
+   If a future drop DOES ship an FAQ stylesheet, this file is deleted whole
+   rather than merged — that is the point of keeping it separate.
+
+   ── THE PHONE BAR IS NOT OPTIONAL ─────────────────────────────────────────
+   AppLayout.css hides BOTH `.navbar` and `.footer` below 767px, so a phone
+   gets no marketing chrome at all here. Without `.faq-page__phone-bar` this
+   route would be enterable and not leavable — the A5 defect, which this repo
+   has now shipped once per screen five times over.
+   ========================================================================= */
+
+.faq-page {
+  width: min(100% - 32px, 1160px);
+  margin: 0 auto;
+  padding: 0 0 96px;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+}
+
+/* ── Phone-only back + title bar ────────────────────────────────────────── */
+/* Same sticky/blur box and the same 28px/1fr/28px grid as
+   `.detail-navbar` + `.detail-navbar__top`'s mobile block, so this reads as
+   the same bar every other detail screen uses rather than a second design. */
+.faq-page__phone-bar {
+  display: none;
+}
+
+.faq-page__phone-back {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+.faq-page__phone-back-icon {
+  width: 20px;
+  height: 20px;
+  background: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.faq-page__phone-title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-s);
+}
+
+/* ── Head ───────────────────────────────────────────────────────────────── */
+.faq-page__head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 0 28px;
+}
+
+/* DP sizes its editorial headings with clamp() rather than a token — see
+   `.blog-one__lead-copy h2` — so a clamp is in-language here. */
+.faq-page__title {
+  margin: 0;
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.faq-page__subtitle {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--neutral-dark-64);
+  font-size: var(--font-body-m);
+  line-height: var(--line-height-body-m);
+}
+
+/* ── Search ─────────────────────────────────────────────────────────────── */
+.faq-page__search {
+  position: relative;
+  margin-top: 4px;
+  max-width: 480px;
+}
+
+/* NO LEADING MAGNIFIER, AND THAT IS NOT AN OVERSIGHT: the icon set ships 94
+   glyphs and none of them is a search icon (checked 2026-09-07). Drawing one
+   here would be adding an asset to the design system, which is an ASK FIRST
+   change — so the field leads with its placeholder instead, and the missing
+   glyph is a question for the designer rather than a gap papered over. */
+
+/* Border/height/background from `.account-edit__field input`; only the radius
+   differs (pill, because this is a search rather than a form field). */
+.faq-page__search input {
+  width: 100%;
+  height: 48px;
+  padding: 0 44px 0 20px;
+  box-sizing: border-box;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  outline: none;
+  color: var(--neutral-dark-100);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+}
+
+.faq-page__search input::placeholder {
+  color: var(--neutral-dark-54);
+}
+
+.faq-page__search-clear {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: var(--white-15);
+  cursor: pointer;
+}
+
+.faq-page__search-clear span {
+  width: 12px;
+  height: 12px;
+  background: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* ── Body: category tabs + sections ─────────────────────────────────────── */
+/* The tab bar is the shared `.tabs` component (`Tabs` from RoomNavbar), which
+   brings its own pill styling and its own `flex-wrap: wrap` — exactly what
+   `/explore/songs` renders above its song list. Nothing here restyles it; the
+   whole point is that the two screens share one component. */
+.faq-page__body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.faq-page__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
+}
+
+.faq-page__result-count {
+  margin: 0 0 -12px;
+  color: var(--neutral-dark-64);
+  font-size: var(--font-body-m);
+  line-height: var(--line-height-body-m);
+}
+
+/* `scroll-margin-top` keeps a `#faq-…` deep link or a rail jump clear of the
+   sticky bar above it; without it the heading lands underneath the chrome. */
+.faq-section {
+  scroll-margin-top: 80px;
+}
+
+.faq-section__label {
+  margin: 0 0 10px;
+  color: var(--color-accent-purple);
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-label-s);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* `.blog-card`'s box. */
+.faq-section__card {
+  overflow: hidden;
+  border: 1px solid var(--neutral-dark-24);
+  border-radius: var(--radius-lg);
+  background: var(--neutral-dark-09);
+}
+
+/* ── One question ──────────────────────────────────────────────────────── */
+.faq-item {
+  scroll-margin-top: 80px;
+}
+
+.faq-item + .faq-item {
+  border-top: 1px solid var(--white-15);
+}
+
+/* Native <details>/<summary> is deliberate: it gives keyboard operation and
+   the open/closed state for free, and Chrome's find-in-page can reach text
+   inside a CLOSED panel and open it — which is the whole reason this screen
+   keeps all 31 answers on one page instead of filtering to one category. A
+   hand-rolled aria-expanded div would forfeit that silently. */
+.faq-item__summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  list-style: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.faq-item__summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item__summary:hover {
+  background-color: var(--white-15);
+}
+
+.faq-item__question {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-title-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-xs);
+}
+
+/* `.list-item__chevron`'s size and colour; the rotation is this file's own. */
+.faq-item__chevron {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background-color: var(--neutral-dark-64);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  transition: transform 0.2s ease;
+}
+
+.faq-item[open] .faq-item__chevron {
+  transform: rotate(180deg);
+}
+
+/* The top padding is NOT zero, and that is the fix for a real crowding bug
+   (reported 2026-09-07). The summary's own 16px bottom padding was the entire
+   gap between an open question and the first line of its answer, which reads as
+   cramped once the question wraps to two lines — the answer looks like it is
+   still part of the heading. 8px here makes it 24px, enough to separate them
+   without opening a hole the closed state does not have. */
+.faq-item__answer {
+  padding: 8px 20px 20px;
+  color: var(--neutral-dark-84);
+  font-size: var(--font-body-m);
+  line-height: var(--line-height-body-m);
+}
+
+.faq-item__answer p {
+  margin: 0 0 12px;
+}
+
+.faq-item__answer ul,
+.faq-item__answer ol {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+.faq-item__answer li {
+  margin-bottom: 6px;
+}
+
+.faq-item__answer > :last-child {
+  margin-bottom: 0;
+}
+
+/* ── Search: no results ─────────────────────────────────────────────────── */
+.faq-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 56px 24px;
+  border: 1px solid var(--neutral-dark-24);
+  border-radius: var(--radius-lg);
+  background: var(--neutral-dark-09);
+  text-align: center;
+}
+
+.faq-page__empty strong {
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-s);
+}
+
+.faq-page__empty p {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--neutral-dark-64);
+  font-size: var(--font-body-m);
+  line-height: var(--line-height-body-m);
+}
+
+/* ── Still need help ───────────────────────────────────────────────────── */
+.faq-page__contact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 40px;
+  padding: 24px;
+  border: 1px solid var(--neutral-dark-24);
+  border-radius: var(--radius-lg);
+  background: var(--neutral-dark-09);
+}
+
+.faq-page__contact-copy strong {
+  display: block;
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-s);
+}
+
+.faq-page__contact-copy span {
+  color: var(--neutral-dark-64);
+  font-size: var(--font-body-m);
+  line-height: var(--line-height-body-m);
+}
+
+/* ── 375 and up ─────────────────────────────────────────────────────────── */
+@media (min-width: 375px) {
+  .faq-page__head {
+    padding: 28px 0 32px;
+  }
+}
+
+/* ── Tablet: DP's own 768 gutter ────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .faq-page {
+    width: min(100% - 64px, 1160px);
+  }
+
+  .faq-page__head {
+    padding: 40px 0 36px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .faq-page {
+    width: min(100% - 120px, 1160px);
+  }
+
+  .faq-page__sections {
+    gap: 40px;
+  }
+}
+
+/* ── Phone: marketing chrome is hidden, so draw our own bar ─────────────── */
+@media (max-width: 767px) {
+  /* ── MATCHES THE OTHER MOBILE HEADERS EXACTLY (fix, 2026-09-07) ─────────
+     This used to copy `.detail-navbar`'s DESKTOP rule — a dark-to-transparent
+     gradient plus `backdrop-filter: blur(8px)` — which made it the only
+     translucent header on any phone screen in the app.
+
+     Both existing patterns are SOLID, and they agree with each other to the
+     pixel. Measured at 390px: `.detail-navbar` on /settings and
+     `.mv-detail__mobile-header` on /explore/mvs both compute to
+     `rgb(9, 9, 11)`, `background-image: none`, no blur, a 1px
+     rgba(255,255,255,0.09) bottom border and 50px tall.
+     `.mv-detail__mobile-header`'s own comment says it outright: "solid
+     Neutral/Dark/04 fill (not a gradient)".
+
+     The gradient version does exist — `.mv-player__mobile-header` — but that
+     one is `position: absolute` OVER a playing video, where a solid bar would
+     crop the frame. It is not the page-header pattern. */
+  .faq-page__phone-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 28px 1fr 28px;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    margin: 0 -16px;
+    padding: 10px 16px 0;
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  /* The phone bar already names the screen, so the big title would say it
+     twice in the space a phone can least afford it. */
+  .faq-page__title {
+    display: none;
+  }
+
+  .faq-page__head {
+    padding: 16px 0 20px;
+  }
+
+  .faq-item__summary {
+    padding: 14px 16px;
+  }
+
+  .faq-item__question {
+    font-size: var(--font-body-l);
+    line-height: var(--line-height-body-l);
+  }
+
+  .faq-item__answer {
+    padding: 8px 16px 16px;
+  }
+
+  .faq-page__contact {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -68,7 +68,18 @@ const STUDIO_LINKS: ReadonlyArray<readonly [label: string, href: string]> = [
   ["Music Video Creator", "/mv/room"],
   ["Song Composer", "/song/create"],
 ];
-const SUPPORT_LINKS = ["FAQ"];
+
+/**
+ * **FAQ now has a destination** (2026-09-07). It was the placeholder this
+ * column existed to hold open; `/faq` is that page, so it moves out of the
+ * `href="#"` list and into the same `next/link` + `localePath()` treatment as
+ * Studio's two entries (R-9 — a bare anchor would drop the locale prefix and
+ * look perfect only in English). `DESIGNER-TODO` A29 is down to Terms of
+ * Service and Privacy Policy plus the same pair inside `BuyCreditsModal`.
+ */
+const SUPPORT_LINKS: ReadonlyArray<readonly [label: string, href: string]> = [
+  ["FAQ", "/faq"],
+];
 
 /**
  * **Contact** is the ONLY footer link with a destination (2026-09-01) — it is
@@ -108,10 +119,10 @@ export function Footer() {
             </div>
             <div className="footer__column">
               <p className="footer__column-title">Support</p>
-              {SUPPORT_LINKS.map((link) => (
-                <a key={link} className="footer__link" href="#">
-                  {link}
-                </a>
+              {SUPPORT_LINKS.map(([label, href]) => (
+                <Link key={label} className="footer__link" href={localePath(locale, href)}>
+                  {label}
+                </Link>
               ))}
             </div>
             <div className="footer__column">

@@ -13,6 +13,7 @@
 // into the same polling contract.
 
 import type {
+  FaqDocument,
   FeedbackReceipt,
   FeedbackTicket,
   MvCreateRequest,
@@ -21,6 +22,7 @@ import type {
   SongJob,
   Storyboard,
 } from "./schemas";
+import type { Locale } from "@/lib/i18n/config";
 
 /** Context that selects the tone/format of an AI prompt enhancement. */
 export type EnhanceKind = "mv" | "song" | "lyrics" | "storyboard" | "scene" | "cover";
@@ -68,4 +70,22 @@ export interface MuseApi {
    * two ids in `@/lib/feedback` that are still `null` (TBD-PROF-06).
    */
   submitFeedback(input: FeedbackTicket): Promise<FeedbackReceipt>;
+  /**
+   * Fetch the FAQ document for `locale`.
+   *
+   * ── THE ONLY LOCALE-VARYING ENDPOINT IN THE CONTRACT ─────────────────
+   * Every other screen's copy is baked into the bundle; this one's body is
+   * authored in the CMS and served one document per language, so `locale` is
+   * a real parameter rather than a formality. The CMS's own language code
+   * (`languages.languages`, e.g. "ENU") is this same nine-code product
+   * scheme upper-cased — NOT BCP-47 — so RD can send `locale.toUpperCase()`
+   * and does not need a mapping table.
+   *
+   * RD: the sample response is `{ id, attributes: { … } }`; parse it with
+   * `FaqResponseSchema` and return `.attributes`, which is what this is
+   * typed as. Serve only PUBLISHED documents — the sample has
+   * `publishedAt: null` / `status: "Draft"`, and those fields are kept in
+   * the schema so the filter has something to filter on.
+   */
+  getFaq(locale: Locale): Promise<FaqDocument>;
 }
