@@ -62,6 +62,57 @@ const KNOWN_CONTRAST_PILLS = [
   // gated verbatim, so the fix has to land upstream in the drop.
   ".community-profile__stats span",
   ".community-profile__copy time",
+
+  // ── ADDED 2026-09-09 ──────────────────────────────────────────────────────
+  // Six selectors, three defect families, THIRTEEN routes. All of them are
+  // `color-contrast` and nothing else: a full axe sweep of all 21 discovered
+  // routes produced exactly one violation id, on 13 routes, and every offending
+  // rule lives in `src/styles/designer/` — i.e. all of it is DP-authored colour
+  // in a stylesheet that is gated VERBATIM, so none of it can be fixed here.
+  // (The 8 clean routes are genuinely clean, not excluded into silence.)
+  //
+  // Product owner, 2026-09-09: exclude all six, referencing the two entries
+  // that already own them. NOT a new design decision — see per-family notes.
+
+  // FAMILY 1 — white on the brand accent #A855F7 at 3.95:1 (12px).
+  // `/` and `/faq` (the primary CTA label) and `/watch` (the desktop Create-MV
+  // CTA). This is `TODO.md` #2 to the decimal place, and #2 was closed
+  // ⚪ WON'T FIX by the product owner on 2026-09-01 with the explicit
+  // instruction "do not treat a future session's re-discovery of this contrast
+  // ratio as a new finding". So these are new SELECTORS of an already-decided
+  // defect, not a new one. Only the accent-backed sizes are excluded —
+  // `.button--large.button--primary` is `var(--gradient-mv)`, a different
+  // background, and stays gated.
+  ".button--medium.button--primary > .button__label",
+  ".button--small.button--primary > .button__label",
+  ".mv-player__cta-desktop",
+
+  // FAMILY 2 — low-opacity secondary text on a dark surface. This is the OTHER
+  // half of DESIGNER-TODO A1's stated systemic cause ("低不透明度的次要文字壓在
+  // 深色卡片上"), and A1's fix option 1 already names the remedy: raise the
+  // secondary-text alpha from 40% to ~60%, exactly what was done to
+  // `.tabs__tab` and shipped. Not applied here because the remedy belongs in
+  // DP's own stylesheets (these two rules are `rgba(255,255,255,0.4)` inside
+  // verbatim `MVCreatePage.css` / `SongCreatePage.css`) and because doing it in
+  // an override would move pixels on 9 routes whose `-linux` visual baselines
+  // cannot be re-recorded on Windows. 3.84:1 on 9 routes.
+  ".mv-create__char-count",
+  ".song-create__char-count",
+  // Same family, worst ratio in the whole sweep — 2.39:1 — and a fourth
+  // MECHANISM: not a colour at all but `opacity: 0.3` on an already-dim chip
+  // (`MVCreatePage.css`). Worth calling out to the designer separately: an
+  // opacity multiplier cannot be fixed by choosing a better foreground colour.
+  ".mv-create__settings-chip--dim",
+
+  // FAMILY 3 — `.badge--failed`, `--pf-red` #ff2600 on a 20% tint of itself,
+  // 3.53:1 at 9px bold, on `/creator`. This is A1's OWN third table row, which
+  // A1 recorded as "尚未被 axe 量到 (它只出現在 /history,仍在覆蓋缺口裡)" —
+  // unmeasured because it only appeared on an auth-guarded route that axe sees
+  // only as a sign-in modal. `/creator` is not guarded, so the coverage gap has
+  // closed on it and A1's prediction came true a second time (the first was
+  // `.tabs__tab--active` arriving via `/explore/songs`, noted above).
+  // Pre-existing and newly visible — not a regression.
+  ".badge--failed",
 ];
 
 for (const route of routes) {

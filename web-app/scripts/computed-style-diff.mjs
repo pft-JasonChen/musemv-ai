@@ -29,8 +29,11 @@
 import { chromium } from "@playwright/test";
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const WA_ROOT = resolve(new URL("..", import.meta.url).pathname);
+// See check-designer-css.mjs — `.pathname` gives "/C:/..." on Windows and resolve()
+// doubles the drive letter into a path that never exists.
+const WA_ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const argv = process.argv.slice(2);
 const cmd = argv[0];
 const flag = (n, d) => {

@@ -34,8 +34,14 @@
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const WA_ROOT = resolve(new URL("..", import.meta.url).pathname);
+// `new URL("..", import.meta.url).pathname` is "/C:/..." on Windows, and resolve()
+// turns that into "C:\C:\..." — a path that never exists. So DESIGNER_DIR was absent,
+// this script printed "no src/styles/designer/ yet" and exited 0 with 46 stylesheets
+// sitting right there: gate D1 silently passed on every Windows session (measured
+// 2026-09-09). fileURLToPath is the portable conversion; do not go back to .pathname.
+const WA_ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const DESIGNER_DIR = join(WA_ROOT, "src", "styles", "designer");
 const DP_ROOT = resolve(WA_ROOT, "..", "designer-prototype");
 const STRICT = process.argv.includes("--strict");

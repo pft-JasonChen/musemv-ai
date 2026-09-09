@@ -248,6 +248,32 @@ House style in one line:
   screenshot specs title every test `@visual …` (`visual-baseline.spec.ts`,
   `dialog-visual.spec.ts`), so the gate and the Stop hook deliberately skip them. Worth knowing
   before you reason about what a green hook proves: it proves behaviour and axe, never pixels.
+  **But `dialog-visual.spec.ts` is not entirely `@visual`** — 3 of its tests are not, so that file
+  IS partly in the gate despite its name. Counted 2026-09-09: the gate runs **225** tests —
+  a11y 21 · behaviour-regressions 190 · backdrop-filter 6 · dialog-visual 3 · mv-flow 1 ·
+  song-flow 1 · watch-autoplay-sound 2. `--list` is the only honest way to know; don't infer the
+  set from a filename.
+- **On THIS machine the gate's own run takes ~23 minutes at 4 workers, and a single-worker
+  32-test shard blew past the Bash tool's 10-minute cap** (measured 2026-09-09). Two things follow.
+  A failing test is far more expensive than a passing one — each burns its 30s test timeout plus
+  20s expect timeouts, so a red suite is several times slower than a green one, which is why the
+  first sweep of a broken tree feels pathological. And **the JSON reporter buffers everything to
+  the end**, so a backgrounded `--reporter=json` run gives you no progress and no partial results:
+  if you must background a run, use `--reporter=line` into a log file so you can watch it, and
+  wait for it before you stop (`AGENTS.md`'s port-3100 rule, occurrences 4-7).
+- **Two Stop-hook gates were SILENT NO-OPS on Windows until 2026-09-09, and one of them reported
+  success.** `scripts/*.mjs` derived their root with `resolve(new URL("..", import.meta.url)
+  .pathname)`, which on Windows yields `/C:/…` and resolves to `C:\C:\…` — a path that never
+  exists. So `check-designer-css.mjs` (D1) printed "no src/styles/designer/ yet — nothing to
+  check" and **exited 0 with 46 gated stylesheets sitting right there**, and
+  `build-token-map.mjs --check` (G2-a) exited 1, which `stop-verify.sh` reports as the benign
+  "designer prototype is not on this machine" skip. Fixed with `fileURLToPath`; both now run and
+  are mutation-tested. Two follow-on traps came out of it, both false-positive machines:
+  `rel()` stripped the repo root with a hardcoded `/`, so Windows leaked ABSOLUTE paths into the
+  committed `docs/token-map.*`; and the repo is checked out `core.autocrlf=true`, so the
+  working-tree copy has CRLF while the generator writes LF — G2-a's comparison now normalises both
+  line endings and the date. **If a gate here ever says "nothing to check", verify that is true
+  before believing it.**
 - **On Windows the screenshot specs cannot pass at all, and that is a NON-ISSUE for the gate
   precisely because of the line above.** Playwright suffixes every snapshot with the platform and
   this repo keeps `-linux` (canonical) plus an unmaintained `-darwin` set; there is no `-win32`

@@ -250,9 +250,22 @@ The rails:
   > no indication which song had been shared, because the only thing that ever consumed the
   > resolved id was the player bar, and that opens on playback. Product owner: **mark the row, do
   > not auto-play** — autoplay was rejected because browsers block it without a user gesture, so
-  > it would have opened a silent bar and looked broken a different way. Guarded in both
-  > directions by `e2e/behaviour-regressions.spec.ts` ("a /song/play deep link MARKS its row
-  > without auto-playing"): one marked row, and no media element playing. Captured at S8 `P5-S1`.
+  > it would have opened a silent bar and looked broken a different way.
+  >
+  > ⚠️ **The "do not auto-play" half is WITHDRAWN (product owner, 2026-09-09). Only "mark the
+  > row" stands.** It contradicted an earlier standing decision that was never removed from the
+  > code: 2026-08-13, `SongDetailView`'s `skipFirstAutoplayRef` — a cold load **with** an explicit
+  > `?id=` autoplays, because that is "a real request for that song, not just browsing the list".
+  > The code always did that, so the guard's "nothing is playing" half only passed when Chromium
+  > refused the unmuted `play()`; it measured **browser policy**, not this screen, and was flaky
+  > (3 fails / 1 pass over four single-worker runs, at HEAD too). `paused` also flips to `false`
+  > synchronously when `play()` is called, before the rejection lands, so the assertion was
+  > reading inside that window. **A `/song/play?id=` deep link marks the row AND autoplays**, with
+  > the documented muted fallback when the browser refuses. The 2026-09-01 rationale above was not
+  > wrong about browsers — it is the reason the fallback exists — it was wrong that the code had
+  > ever stopped autoplaying. Guarded now by the marker only: `e2e/behaviour-regressions.spec.ts`
+  > ("a /song/play deep link MARKS its row"), one marked row naming the linked song, with nothing
+  > that depends on this browser's autoplay policy. Captured at S8 `P5-S1`.
   > ⚠️ **Correction to the bullets above, 2026-09-01 (D11).** Two of them describe the pre-drop-2
   > desktop column: the **disc cover** and the **desktop Lyrics overlay** are not on this screen at
   > either URL. DP drop `2670ed2` deleted the desktop Now Playing column, and `AC-EXP-05`'s own

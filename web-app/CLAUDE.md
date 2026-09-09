@@ -427,6 +427,24 @@ a detail screen:**
 
 ## Error log (one line per user correction; fold recurring lessons into an AGENTS.md rule)
 
+- 2026-09-10: started the e2e triage baseline as a backgrounded `--shard=1/7 --reporter=json` run.
+  The JSON reporter **buffers everything to the end**, so after 15 minutes I had zero output, zero
+  partial results, and a `next start` holding :3100 that I could not reason about — the
+  occurrence-4-7 shape again, just one step earlier (I had not blocked Stop yet, but I had made
+  myself unable to tell). Killed it and restarted with `--reporter=line` into a log file, which
+  gave per-test progress and let me watch failures land. Rule added to `AGENTS.md` → Tests: if you
+  must background a run, use the line reporter into a log and wait for it; also that this machine
+  takes ~23 min at 4 workers and a 32-test single-worker shard exceeds the Bash cap, because a
+  FAILING test costs several times a passing one.
+- 2026-09-10: two smaller ones from the same session. I told the product owner the a11y group was
+  "4 selectors / 3 defect families" when it was **6** — I had counted the families and then not
+  re-counted the selectors before putting a number in a question. And I inherited the brief's
+  "all 45 are PRE-EXISTING, none introduced by `a523f05`" and repeated it while triaging; it is
+  wrong for at least one — `G5-d#8 publish` broke *because* `a523f05` inserted the `h-neon-static`
+  song fixture at the top of `HISTORY_SAMPLES`, and only an MV opens the publish confirm. The
+  brief's own method (re-check against HEAD) had sampled 10 of 45, so its conclusion was never
+  load-bearing for the other 35. **A measured claim about a subset is not a claim about the set.**
+
 - 2026-09-09: blocked Stop with "port 3100 is already used" — occurrence SEVEN. I did not run
   `npm run e2e` and I did not use a wide `--grep`, so I thought I was outside the rule; I ran FOUR
   spec files (212 tests) with `run_in_background: true`, reasoning that a deliberate background run

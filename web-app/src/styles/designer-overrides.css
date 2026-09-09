@@ -622,9 +622,17 @@
 /* Product owner, 2026-09-01 — a shared `/song/play?id=` link used to land the
    recipient on the plain browse list with NOTHING marking which song the link
    named: the player bar only opens once playback starts, so until then the id
-   was invisible. The decision was "mark the row, but do not auto-play", so
-   this is a resting highlight and not a playing state — `.top-song__title
-   --playing` (below) still owns that, and the album art keeps its play glyph.
+   was invisible. This is a resting highlight and not a playing state —
+   `.top-song__title--playing` (below) still owns that, and the album art keeps
+   its play glyph.
+
+   The original decision also said "but do not auto-play". **That half was
+   WITHDRAWN by the product owner on 2026-09-09**: it contradicted the
+   2026-08-13 rule in `SongDetailView`'s `skipFirstAutoplayRef` (an explicit
+   `?id=` IS a request for that song), the code had always autoplayed, and the
+   e2e assertion only ever passed when Chromium refused the unmuted `play()`.
+   A deep link autoplays; this highlight still marks the row either way, which
+   is why the rule below is unaffected. See `specs/CHANGELOG-SPEC.md`.
    Same surface as `:hover` on purpose: the row IS the one you would click. */
 .top-song--selected {
   background-color: var(--white-15);
@@ -3924,4 +3932,35 @@
 .mv-detail__grid-section--primary:hover .mv-top-picks-next {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* DESIGNER-TODO A32, found 2026-09-09 — DP styles `.room-navbar__mobile-back`
+   ONLY inside `@media (max-width: 767px)`, but both DP's RoomNavbar.tsx and
+   ours render the link at EVERY width whenever `mobileBackHref` is set. So at
+   >=768px it is an unstyled anchor carrying `aria-label="Back"` and pointing at
+   the site root (spelled out that way on purpose — writing the tag literally
+   here trips `guard-greps.sh`'s R-9 check, which cannot tell prose from
+   markup): measured at 1440 as display:block, box 0x0, its
+   `.room-navbar__mobile-back-icon` 0x0 with a
+   mask-image and `background-color: rgba(0,0,0,0)` — and `focusable = true`.
+
+   That is a real defect, not just a test artifact: a keyboard-reachable,
+   screen-reader-announced back control that no sighted user can see, on every
+   route that passes `mobileBackHref` — `/mv/room`, `/profile` and
+   `/song/create` as of 2026-09-10 (`/song/creating` was a fourth until it
+   moved to `DetailNavbar`, which has its own back at every width). It is also
+   the SINGLE cause of all three
+   mask-icon sweeps going red (3f on /profile, 3g-2 in the Choose Song sheet,
+   3j on /song/create) — one bug reported six times, which is exactly what the
+   sweep was built to collapse.
+
+   Hiding it above the phone breakpoint is DP's own evident intent (it styles
+   the control for phones and nothing else) and is pixel-neutral, since the
+   element already paints nothing there. DELETE THIS if a drop ships either the
+   `display: none` itself or a component that stops rendering the link on
+   desktop. */
+@media (min-width: 768px) {
+  .room-navbar__mobile-back {
+    display: none;
+  }
 }

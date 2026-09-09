@@ -27,9 +27,9 @@
 
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { COST_MERGE, COST_RECREATE } from "../src/lib/mv/types";
+import { COST_FROM_SCRIPT, COST_MERGE, COST_RECREATE } from "../src/lib/mv/types";
 import { SONG_IDEA_PROMPTS, LYRIC_PRESETS } from "../src/lib/mv/songIdeas";
-import { DEFAULT_CREDITS } from "../src/lib/user";
+import { DEFAULT_CREDITS, SUBSCRIPTION_PLANS } from "../src/lib/user";
 import { DEFAULT_LOCALE, HTML_LANG, LOCALES, localePath } from "../src/lib/i18n/config";
 
 const MV_DESCRIPTION = "A glamorous neon-lit night drive through the city.";
@@ -522,6 +522,25 @@ test("G5-d#7 Pro gate: High resolution is locked for a free account", async ({ p
   await expect(dialog.getByRole("button", { name: /^Standard/ })).toBeVisible();
 });
 
+test("YMW260907P0011: MV settings default to the signed-in name and keep edits", async ({
+  page,
+}) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+
+  await page.getByRole("button", { name: "Open MV settings" }).click();
+  await sheetSettled(page);
+  const author = page.getByPlaceholder("Enter author name");
+  await expect(author).toHaveValue("Scott Wu");
+
+  await author.fill("Custom Artist");
+  await page.locator(".mv-sheet__footer-btn--confirm").click();
+  await page.getByRole("button", { name: "Open MV settings" }).click();
+  await sheetSettled(page);
+  await expect(page.getByPlaceholder("Enter author name")).toHaveValue("Custom Artist");
+});
+
 // ── G5-d #7, PREVIEW HALF: INVERTED BY SLICE 3b (plan §5) ───────────────────
 //
 // This test used to assert the 30s cap EXISTED. §1.4 cancelled that gate long
@@ -608,7 +627,19 @@ test("G5-d#8 publish: MV publish confirms, then enters reviewing", async ({ page
   // (`HistoryView.tsx:631-643`). The old `getByRole("button", …)` could never
   // match, so this test had been red independently of anything the credit work
   // touched — found while clearing the pre-existing failures on 2026-08-19.
-  await page.getByRole("button", { name: "Options" }).first().click();
+  //
+  // ── AND `.first()` WAS NOT ENOUGH (fixed 2026-09-09) ─────────────────────
+  // Only an MV opens a confirm dialog: `togglePublishSong` flips a song
+  // instantly and `togglePublishMv` is the one that calls `setPubConfirm`.
+  // This test took the FIRST row's menu, which was an MV until `a523f05`
+  // inserted the `h-neon-static` song fixture at the top of `HISTORY_SAMPLES`
+  // for the lyrics-timing work — so it started flipping a song and waiting
+  // 20s for a dialog that correctly never opens. Filter to the MV tab and
+  // name the row, so a future fixture insertion cannot silently retarget it.
+  await page.getByRole("button", { name: "Music Videos", exact: true }).click();
+  const mvRow = page.locator(".history-card").filter({ hasText: "Cinematic Night" }).first();
+  await expect(mvRow).toBeVisible();
+  await mvRow.getByRole("button", { name: "Options" }).click();
   await page
     .getByRole("switch", { name: /^Publish$/ })
     .first()
@@ -761,7 +792,17 @@ test("R12 shell: just below the cutover swaps sidebar for the mobile bars", asyn
   await page.goto("/history");
   await expect(page.locator(".sidebar")).toBeHidden();
   await expect(page.locator(".mobile-tabbar")).toBeVisible();
-  await expect(page.locator(".mobile-header")).toBeVisible();
+  // Retargeted 2026-09-09. This asserted `.mobile-header` visible, which
+  // /history stopped mounting on 2026-08-23 (product owner, "same div on both
+  // desktop and mobile"): `isHome` alone now decides `MobileHeader`, while
+  // `MOBILE_TAB_ROUTES` still decides `MobileTabBar` — see the two comment
+  // blocks above `MOBILE_TAB_ROUTES` in AppShell.tsx. `RoomNavbar` absorbed the
+  // header's job into `.room-navbar__top` via `mobileHeaderActions`, so THAT is
+  // the element carrying it now. Measured at 375: `.mobile-header` absent,
+  // `.room-navbar__top` 360x56, `.room-navbar__mobile-actions` 64x30.
+  await expect(page.locator(".mobile-header")).toHaveCount(0);
+  await expect(page.locator(".room-navbar__top")).toBeVisible();
+  await expect(page.locator(".room-navbar__mobile-actions")).toBeVisible();
 });
 
 test("R12 shell: 700px is mobile now — this is the 640->767 change itself", async ({ page }) => {
@@ -788,7 +829,16 @@ test("S13 mobile IA: the bar is Explore / Create / History — Profile is not on
   // Profile left the bottom bar (5 -> 3). Losing it here without a replacement
   // would strand the account on phones, so assert both halves of that change.
   await expect(bar.getByText("Profile")).toHaveCount(0);
-  await expect(page.locator(".mobile-header").getByRole("link", { name: "Account" })).toBeVisible();
+  // The account link is still here and still a plain link to /profile — but it
+  // moved out of `.mobile-header`, which /history stopped mounting on
+  // 2026-08-23 (see R12's note above and AppShell.tsx). It now sits in
+  // `RoomNavbar`'s `mobileHeaderActions`, which keeps the `mobile-header__*`
+  // class names. Scoped to that container so this still proves the replacement
+  // exists rather than matching any /profile link anywhere on the page — which
+  // is the half of S13 that matters: losing it would strand the account.
+  await expect(
+    page.locator(".room-navbar__mobile-actions").getByRole("link", { name: "Account" }),
+  ).toBeVisible();
 });
 
 test("S13 mobile IA: the + tab opens the create sheet with both creators", async ({ page }) => {
@@ -989,29 +1039,53 @@ for (const width of [320, 375, 767, 768, 1440]) {
   });
 }
 
-test("A4: the override restores the tabs row only, not the whole navbar", async ({ page }) => {
-  // The title/credits/Upgrade row must STAY hidden on phones — MobileHeader
-  // carries those, and showing both would double them up. If this goes red the
-  // override has widened beyond what was decided.
+test("A4: the override restores the tabs row, and the navbar now carries the header too", async ({
+  page,
+}) => {
+  // ── THIS TEST'S PREMISE WAS INVERTED BY A PRODUCT DECISION (2026-09-09) ────
+  // It used to read: "the title/credits/Upgrade row must STAY hidden on phones
+  // — MobileHeader carries those, and showing both would double them up."
+  // That double-header was real, and on 2026-08-23 the product owner resolved
+  // it the OTHER way round ("same div on both desktop and mobile"): /history
+  // stopped mounting `MobileHeader` at all, and `.room-navbar__top` took over
+  // its job through `mobileHeaderActions`. So the row that had to be hidden is
+  // now the row that has to be THERE, and the element that had to be there is
+  // gone. Measured at 375: tabs 360x42, `__top` 360x56, no `.mobile-header`.
+  //
+  // A4's own half is unchanged and still first: the override must restore the
+  // TABS row, which DP's mobile rule deleted (slice 2b lost History's filter
+  // tabs on phones and six re-recorded baselines absorbed it silently).
   await login(page);
   await page.setViewportSize({ width: 375, height: 900 });
   await page.goto("/history");
   await expect(page.locator(".room-navbar__tabs")).toBeVisible();
-  await expect(page.locator(".room-navbar__top")).toBeHidden();
-  await expect(page.locator(".mobile-header")).toBeVisible();
+  await expect(page.locator(".room-navbar__top")).toBeVisible();
+  // Still exactly ONE header on a phone — the thing the old assertion was
+  // protecting. It is just a different element now.
+  await expect(page.locator(".mobile-header")).toHaveCount(0);
+  await expect(page.locator(".room-navbar__mobile-actions")).toBeVisible();
 });
 
 test("A4: a navbar with no tabs stays hidden on mobile, exactly as DP intends", async ({
   page,
 }) => {
   // /explore/mvs passes no tabsSlot, so its DetailNavbar is pure chrome and the
-  // `:has()` scoping must leave DP's rule alone. Mobile back navigation is a
-  // separate open question (DESIGNER-TODO A5) — this asserts we did NOT quietly
-  // answer it here.
+  // `:has()` scoping must leave DP's rule alone. That half is unchanged and is
+  // what this test is for.
   await page.setViewportSize({ width: 375, height: 900 });
   await page.goto("/explore/mvs");
   await expect(page.locator(".detail-navbar")).toBeHidden();
-  await expect(page.locator(".mobile-tabbar")).toBeVisible();
+  // Retargeted 2026-09-09: the second assertion said `.mobile-tabbar` is
+  // visible here. The 2026-08-22 "layer 1" decision (product owner) replaced
+  // the per-page `:has()` overrides with a general rule — the tab bar and the
+  // generic header show ONLY on the routes `MobileTabBar` links to, and
+  // `MOBILE_TAB_ROUTES` is Home + /history. Every other route hides both and
+  // shows its own back+title bar instead, which for this screen is
+  // `.mv-detail__mobile-header` (measured 360x50 at 375). So the tab bar being
+  // ABSENT is now the rule, and the screen is still leavable — the A5 concern
+  // the old comment flagged as unanswered has since been answered upstream.
+  await expect(page.locator(".mobile-tabbar")).toHaveCount(0);
+  await expect(page.locator(".mv-detail__mobile-header")).toBeVisible();
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1069,15 +1143,43 @@ test("drop 2 desktop: the album art previews in place without navigating", async
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/explore/songs");
 
-  await expect(page.locator(".song-bar")).toHaveCount(0);
+  // ── PRESENCE IS NOT THE QUESTION ANY MORE (retargeted 2026-09-09) ─────────
+  // This used `toHaveCount(0)` for "no bar". Product owner, 2026-08-14: the bar
+  // is ALWAYS MOUNTED whenever there is an `activeSong` — `open` carries what
+  // the old conditional did — so its own slide transition has something to
+  // animate to and from in both directions (see SongDetailView.tsx's comment at
+  // the mount site). Measured here at 1440: the count is 1 in all three states,
+  // and "closed" means parked at `top: 900` on a 900px viewport, i.e. exactly
+  // one viewport-height off the bottom.
+  //
+  // The old first assertion passed only by RACING HYDRATION — `toHaveCount(0)`
+  // resolves the instant it is true, and straight after `goto` the bar has not
+  // mounted yet. So it went green for a reason unrelated to what it claimed,
+  // while the identical assertion after Close failed. Measure position, which
+  // is what "previews in place" actually means, and which the 2026-09-01
+  // deep-link test below already does for the same element and the same reason.
+  const bar = page.locator(".song-bar");
+  const parked = async (label: string) => {
+    const box = await settledBox(bar);
+    expect(box.y, `the bar should be parked off the bottom (${label})`).toBeGreaterThanOrEqual(
+      page.viewportSize()!.height - 1,
+    );
+  };
+
+  await parked("cold");
   await page.locator(".top-song__album-art").nth(1).click();
 
-  await expect(page.locator(".song-bar")).toBeVisible();
+  await expect(bar).toHaveClass(/song-bar--visible/);
+  const raised = await settledBox(bar);
+  expect(raised.y, "the bar should be raised into view").toBeLessThan(
+    page.viewportSize()!.height - 1,
+  );
   await expect(page).toHaveURL(/\/explore\/songs$/);
 
   // Closing it puts the page back, so the bar cannot strand the list.
   await page.getByRole("button", { name: "Close player" }).click();
-  await expect(page.locator(".song-bar")).toHaveCount(0);
+  await expect(bar).not.toHaveClass(/song-bar--visible/);
+  await parked("after Close player");
 });
 
 test("drop 2: a community song id deep-links into /song/result with no flow state", async ({
@@ -1165,16 +1267,26 @@ test("3b mobile: a cold ?id= deep link's Back falls back into the app, not out o
 });
 
 test("3b: ?tab= selects that tab, and Trending is not offered", async ({ page }) => {
+  // Retargeted 2026-09-09. This asked for `?tab=New Releases`, which stopped
+  // existing on 2026-09-01: the tab bar is now "All" + the nine creation
+  // `GENRES` ("tag please match creation" — see the TABS comment in
+  // SongDetailView.tsx and `specs/areas/04` EXP-P3-S1). The test was pinning
+  // the pre-reversal tab set, so it named a button that is no longer rendered.
+  // Both halves of the original intent survive unchanged: `?tab=` must select
+  // that tab, and Trending must not be offered.
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/explore/songs?tab=New%20Releases");
+  await page.goto("/explore/songs?tab=Pop");
 
-  await expect(page.getByRole("button", { name: "New Releases" })).toHaveAttribute(
+  // `exact` throughout: role-name matching is substring by default and every
+  // row also renders "Pop Anthem" plus its Play/Like/Share controls, so a
+  // loose "Pop" resolves to several elements and fails on strict mode.
+  await expect(page.getByRole("button", { name: "Pop", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
   // DP ships four tabs and admits three are fake. Trending has no real data
   // behind it, so it was deliberately not built (DESIGNER-TODO A7).
-  await expect(page.getByRole("button", { name: "Trending" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Trending", exact: true })).toHaveCount(0);
 });
 
 test("3b: switching a browse filter does not change what is playing", async ({ page }) => {
@@ -1195,12 +1307,16 @@ test("3b: switching a browse filter does not change what is playing", async ({ p
   await expect(nowPlaying).toBeVisible();
   const before = await nowPlaying.innerText();
 
-  // No song clicked — only the filter changes.
-  await page.getByRole("button", { name: "New Releases" }).click();
-  await expect(page.locator(".tabs__tab--active")).toHaveText("New Releases");
+  // No song clicked — only the filter changes. Retargeted 2026-09-09 from
+  // "New Releases"/"Top Picks" onto two of the nine genre tabs that replaced
+  // them on 2026-09-01; the bug guarded is identical, and a genre tab is a
+  // STRONGER case for it than the old ones were — "Jazz" holds 2 of the
+  // catalog's songs and need not contain what is currently playing at all.
+  await page.getByRole("button", { name: "Pop", exact: true }).click();
+  await expect(page.locator(".tabs__tab--active")).toHaveText("Pop");
   await expect(nowPlaying).toHaveText(before);
 
-  await page.getByRole("button", { name: "Top Picks" }).click();
+  await page.getByRole("button", { name: "Jazz", exact: true }).click();
   await expect(nowPlaying).toHaveText(before);
 });
 
@@ -1209,9 +1325,17 @@ test("3b: a tab switch changes the list", async ({ page }) => {
   await page.goto("/explore/songs");
   const rows = page.locator(".top-song");
   const all = await rows.count();
+  expect(all).toBeGreaterThan(2); // "All" is the whole catalog, so this is a real baseline
 
-  await page.getByRole("button", { name: "Top Picks" }).click();
-  await expect(rows).not.toHaveCount(all); // All = both catalogs, Top Picks = one
+  // Retargeted 2026-09-09: "Top Picks" was replaced by the nine genre tabs on
+  // 2026-09-01. "All" is now `ALL_COMMUNITY_SONGS` and a genre tab filters it
+  // by `song.genre` (`songsForTab` in SongDetailView.tsx), so Jazz — the
+  // smallest bucket at 2 songs — must be strictly fewer rows than All. Asserting
+  // "fewer" rather than "different" is tighter than the original and still
+  // fixture-order independent.
+  await page.getByRole("button", { name: "Jazz", exact: true }).click();
+  await expect(page.locator(".tabs__tab--active")).toHaveText("Jazz");
+  expect(await rows.count()).toBeLessThan(all);
 });
 
 test("3b / EXP-09: a creator song id lists the creator's playlist", async ({ page }) => {
@@ -1225,18 +1349,26 @@ test("3b / EXP-09: a creator song id lists the creator's playlist", async ({ pag
   // The LIST is the assertion, not a player panel — that was always what EXP-09
   // is about, and it is the half drop 2 left untouched. The requested song has
   // to BE in it; asserting which row comes first only pins the fixture order.
-  // `exact` matters: every row also has "Play/Like/Share <title>" controls, so a
-  // substring match resolves to four elements and fails on strict mode.
-  await expect(page.getByRole("button", { name: "Midnight Drive", exact: true })).toBeVisible();
+  //
+  // Retargeted 2026-09-09 off `getByRole("button", { name: <title> })`. That
+  // stopped resolving on 2026-08-11, when the designer asked for a row-wide
+  // click and `TopSongListItem`'s title became an unconditional `<p>` with the
+  // click handler on the row (`.top-song--clickable`) — the same change that
+  // stranded the landing-page New Songs test. A row's only `<button>`s are now
+  // Play/Like/Share/Create, so a title never matches the button role. Reading
+  // the title element directly is also closer to what EXP-09 means by "lists".
+  const rowTitles = page.locator(".top-song__title");
+  await expect(rowTitles.filter({ hasText: /^Midnight Drive$/ })).toHaveCount(1);
   // And it is the creator's playlist, not the community catalog behind it —
   // `cps-*` ids belong to none of the three tabs, which is the whole point.
-  await expect(page.getByRole("button", { name: "Golden Hour", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pop Anthem", exact: true })).toHaveCount(0);
+  await expect(rowTitles.filter({ hasText: /^Golden Hour$/ })).toHaveCount(1);
+  await expect(rowTitles.filter({ hasText: /^Pop Anthem$/ })).toHaveCount(0);
   // No tab drives this list, so none may claim to be selected.
   await expect(page.locator(".tabs__tab--active")).toHaveCount(0);
 
-  // Clicking a tab switches back to the community catalog.
-  await page.getByRole("button", { name: "Top Picks" }).click();
+  // Clicking a tab switches back to the community catalog. Retargeted
+  // 2026-09-09: "Top Picks" was replaced by the nine genre tabs on 2026-09-01.
+  await page.getByRole("button", { name: "Pop", exact: true }).click();
   await expect(page.locator(".tabs__tab--active")).toHaveCount(1);
 });
 
@@ -1316,17 +1448,35 @@ test("drop 2 / A4: the song screen trades its phone tabs for a phone back contro
   // recorded rather than hidden: WA's three tabs are three different catalogs,
   // so a phone user now reaches the "All" catalog only. Asserting the loss
   // deliberately is what stops it being re-"fixed" by the next session.
+  // ── AND IT WAS REVERSED AGAIN ON 2026-08-19 (updated 2026-09-09) ──────────
+  // The paragraph above is history now. `designer-overrides.css` records the
+  // next turn: "the Top Picks rail and the heading+tabs block are no longer
+  // mobile-hidden … the product owner has since asked for the SAME structure
+  // (rail, heading, tabs, sticky behavior) at every width". The tabs also moved
+  // out of `DetailNavbar`'s `tabsSlot` into the page body on 2026-08-18, so
+  // `tabsSlot`'s "not designed for mobile yet" rule no longer reaches them.
+  // So the documented cost — "a phone user reaches the All catalog only" — is
+  // PAID BACK, and asserting `.tabs` hidden was pinning the middle state of a
+  // three-step decision.
   await page.setViewportSize({ width: 375, height: 900 });
   await page.goto("/explore/songs");
 
-  await expect(page.locator(".tabs")).toBeHidden();
+  // Tabs are present on a phone, and in the page body rather than the navbar.
+  await expect(page.locator(".song-detail-page__list-heading .tabs")).toBeVisible();
+  // The navbar's own tabs slot stays empty/hidden — that half never changed.
+  await expect(page.locator(".detail-navbar__tabs")).toHaveCount(0);
 
-  // NO phone back here, and that is not the A5 bug — this screen passes
-  // `hideMobileBar` on purpose because it is a mobile tab-bar destination, so
-  // there is nothing to be trapped in. (The screens that DO need one are swept
-  // by the A5 loop below, against `DETAIL_NAVBAR_ROUTES`.) The way out is the
-  // tab bar, so assert that it is actually there.
-  await expect(page.locator(".mobile-tabbar")).toBeVisible();
+  // There IS a phone back here now, and the tab bar is gone — both because of
+  // the 2026-08-22 "layer 1" decision (updated 2026-09-09). `MobileTabBar` was
+  // cut to the routes it links to (`MOBILE_TAB_ROUTES` = Home + /history), and
+  // every other route was given its own back+title bar instead; this screen
+  // reuses `/explore/mvs`'s `.mv-detail__mobile-header` (measured 352x50 at
+  // 375). The old assertion said the way out was the tab bar, which is exactly
+  // what stopped being true — so assert the control that replaced it, or this
+  // screen could lose its only exit with nothing going red.
+  await expect(page.locator(".mobile-tabbar")).toHaveCount(0);
+  await expect(page.locator(".mv-detail__mobile-header")).toBeVisible();
+  await expect(page.locator(".mv-detail__mobile-back")).toBeVisible();
 
   // And the list itself must still be there — the failure mode this whole
   // family of tests exists for is chrome with nothing under it. `/explore/songs`
@@ -1395,10 +1545,21 @@ for (const route of DETAIL_NAVBAR_ROUTES) {
 }
 
 test("A5: a mobile tab-bar destination does NOT get a phone back row", async ({ page }) => {
-  // The opt-out has to be real, or every Explore screen gains a useless row.
+  // The opt-out has to be real, or a screen the bottom bar already reaches
+  // gains a useless row.
+  //
+  // Retargeted 2026-09-09 from /explore/mvs to /history, because the SET of
+  // mobile tab-bar destinations changed under it. The 2026-08-22 "layer 1"
+  // decision cut `MobileTabBar` down to the routes it actually links to
+  // (`MOBILE_TAB_ROUTES` = Home + /history) and gave every OTHER route its own
+  // back+title bar on purpose — so /explore/mvs now correctly HAS a back
+  // control (measured: 1 at 375, in `.mv-detail__mobile-header`) and is no
+  // longer an example of this rule at all. /history is: it is a genuine tab-bar
+  // destination, and it has no back control (measured: 0).
   await login(page);
   await page.setViewportSize({ width: 375, height: 800 });
-  await page.goto("/explore/mvs");
+  await page.goto("/history");
+  await expect(page.locator(".mobile-tabbar")).toBeVisible(); // it really is a tab-bar destination
   await expect(backControl(page)).toHaveCount(0);
 });
 
@@ -1508,13 +1669,24 @@ test("3c / G7-1: the Muse Pro row keeps a visible Subscribe CTA, not just a chev
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/profile");
 
-  const pill = page.locator(".account-page__rows .badge").first();
+  // Retargeted 2026-09-09. G7's finding still stands — the row must not be a
+  // bare chevron indistinguishable from Language — but the product owner
+  // replaced the control on 2026-08-14 (ProfileView.tsx documents it at the
+  // render site): the subtle `badge--purple` "Subscribe"/"Manage" pill is gone,
+  // and a not-yet-subscribed user now gets a solid white "Upgrade" pill
+  // (`.button--secondary`, matching Sidebar's own Upgrade). A subscribed user
+  // gets NO pill, deliberately — the row itself is still the click target — so
+  // this test only describes the signed-in-but-free state `login()` produces.
+  // The old `.badge` locator therefore matched nothing.
+  const pill = page.locator(".account-page__rows .button--secondary").first();
   await expect(pill).toBeVisible();
-  await expect(pill).toHaveText(/Subscribe|Manage/);
+  await expect(pill).toHaveText("Upgrade");
 
-  // An invented modifier would still render — assert it actually picked up styling.
+  // An invented modifier would still render — assert it actually picked up
+  // styling. Unchanged in spirit: a transparent pill is the failure this
+  // catches, whichever class provides the fill.
   const bg = await pill.evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(bg, "the pill must resolve to a real Badge.css modifier").not.toBe("rgba(0, 0, 0, 0)");
+  expect(bg, "the pill must resolve to a real button modifier").not.toBe("rgba(0, 0, 0, 0)");
 });
 
 test("3c / G7-2: every control on the account screens meets the 24x24 AA floor", async ({
@@ -1821,17 +1993,45 @@ test("3f / S20: the plan prices are WA's, not DP's — including the period suff
   await openCreditsDetail(page);
   await page.getByRole("button", { name: /Get Muse Pro|Buy More/ }).click();
 
-  const cards = page.locator(".upgrade-dialog__card");
-  await expect(cards).toHaveCount(3);
-  for (const [i, price, period] of [
-    [0, "$19.99", "/ week"],
-    [1, "$29.99", "/ week"],
-    [2, "$59.99", "/ year"],
-  ] as const) {
-    await expect(cards.nth(i).locator(".upgrade-dialog__price")).toContainText(price);
-    await expect(cards.nth(i).locator(".upgrade-dialog__price-period")).toHaveText(period);
+  // ── REWRITTEN 2026-09-09: THE PLAN MODEL CHANGED UNDER THIS TEST ──────────
+  // It asserted three cards at once — $19.99/wk, $29.99/wk, $59.99/yr — and
+  // that "$9.99" appears nowhere. All three assumptions are now wrong:
+  //   · `SUBSCRIPTION_PLANS` holds SIX plans, three cadences x two tiers, and
+  //     the dialog shows only `plansForDuration` behind a `DurationTabs`
+  //     tablist. So the visible count is 2, never 3.
+  //   · $9.99 is now WA's own Weekly Basic price, not DP's error. Asserting it
+  //     is absent would fail on correct data.
+  //   · $19.99 is not a price in the table at all any more.
+  // What S20 is actually FOR survives all of that: DP hardcodes one price and
+  // renders a literal "/ week" on every card, Yearly included. So drive the
+  // cadence tabs and check every visible card against `SUBSCRIPTION_PLANS`
+  // itself — that catches a hardcoded period on any cadence, and cannot go
+  // stale the next time a price moves.
+  const tabs = page.getByRole("tablist", { name: "Billing period" });
+  await expect(tabs).toBeVisible();
+
+  for (const cadence of ["Weekly", "Monthly", "Yearly"] as const) {
+    await tabs.getByRole("tab", { name: cadence, exact: true }).click();
+    const expected = SUBSCRIPTION_PLANS.filter((p) => p.cadence === cadence);
+    expect(expected.length, `${cadence} must have plans to show`).toBeGreaterThan(0);
+
+    // `--plans` is the multi-card grid; the already-subscribed branch has its
+    // own single-card `.upgrade-dialog__cards`, which this state never renders.
+    const cards = page.locator(".upgrade-dialog__cards--plans .upgrade-dialog__card");
+    await expect(cards).toHaveCount(expected.length);
+
+    for (const [i, plan] of expected.entries()) {
+      await expect(cards.nth(i).locator(".upgrade-dialog__price")).toContainText(plan.price);
+      // The DP bug in one assertion: the suffix has to be THIS plan's period.
+      await expect(cards.nth(i).locator(".upgrade-dialog__price-period")).toHaveText(
+        `/ ${plan.per}`,
+      );
+    }
   }
-  await expect(page.getByText("$9.99")).toHaveCount(0);
+
+  // The specific shape of DP's defect: no card may say "week" on a yearly plan.
+  await tabs.getByRole("tab", { name: "Yearly", exact: true }).click();
+  await expect(page.locator(".upgrade-dialog__cards--plans")).not.toContainText("/ week");
 });
 
 test("3f / CR-06: a free account cannot reach Buy Credits", async ({ page }) => {
@@ -2463,12 +2663,24 @@ test("3h: both stages render DP's blocks, not the old Tailwind layout", async ({
   // The six sections DP's phone reorder addresses by class. A missing modifier
   // does not break the desktop layout at all — it silently drops that section to
   // the end of the single-column phone sequence, which is invisible at 1440.
-  for (const mod of ["visual-style", "story", "story-line", "char-image", "mv-song", "lyrics"]) {
+  // FIVE, not six, since 2026-08-14: the product owner moved the character
+  // reference photo INTO Visual Style (one Figma "VISUAL STYLE" label covering
+  // both, node 1344:26880), so `.mv-storyboard__section--char-image` no longer
+  // exists — StoryboardEditor.tsx says so at the top. The test still listed it
+  // and so failed on the one modifier that was deliberately deleted.
+  for (const mod of ["visual-style", "story", "story-line", "mv-song", "lyrics"]) {
     await expect(
       page.locator(`.mv-storyboard__section--${mod}`),
       `section modifier --${mod} must survive the port`,
     ).toHaveCount(1);
   }
+  // The deletion is only safe because the photo box itself moved rather than
+  // going away — assert where it landed, or "five sections" would also pass if
+  // the character image had simply been dropped.
+  await expect(page.locator(".mv-storyboard__section--char-image")).toHaveCount(0);
+  await expect(
+    page.locator(".mv-storyboard__section--visual-style .mv-storyboard__char-image"),
+  ).toHaveCount(1);
 });
 
 test("3h: every mask icon on both storyboard stages has something to clip", async ({ page }) => {
@@ -2477,6 +2689,10 @@ test("3h: every mask icon on both storyboard stages has something to clip", asyn
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/mv/room");
+  // Same `DEFAULT_CREDITS` 390 → 10 gap as `renderToResult` (see its comment):
+  // a storyboard is `COST_STORYBOARD` 20, so without this the CTA routes to the
+  // IAP upsell and neither stage is ever reached. Added 2026-09-09.
+  await fundAccount(page);
   await composeMv(page);
   await page.getByRole("button", { name: "Create Music Video" }).click();
   await page.getByText("Create Storyboard First").click();
@@ -2521,6 +2737,7 @@ test("3h: STORY LINE collapses, and the scenes are the job's, not DP's mock", as
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/mv/room");
+  await fundAccount(page); // COST_STORYBOARD 20 > DEFAULT_CREDITS 10 — see renderToResult
   await composeMv(page);
   await page.getByRole("button", { name: "Create Music Video" }).click();
   await page.getByText("Create Storyboard First").click();
@@ -2556,9 +2773,30 @@ test("3h / GL-01: the storyboard CTA still states its cost and still gates on it
   await page.getByText("Create Storyboard First").click();
   await page.waitForURL("**/mv/storyboard");
 
-  const cta = page.locator(".mv-storyboard__cta");
+  // ── TWO THINGS MOVED UNDER THIS TEST (retargeted 2026-09-09) ──────────────
+  // 1. `.mv-storyboard__cta` resolves to TWO elements now, so the bare locator
+  //    was a strict-mode violation. That is by design: `FloatingCTA` in
+  //    `adaptive` mode (opted into 2026-08-14) always renders an inline copy of
+  //    its children to MEASURE, plus the floating copy — the inline one is
+  //    `visibility: hidden` + `aria-hidden` + `inert` while floating. Querying
+  //    by ROLE picks exactly the user-facing one, because `aria-hidden` removes
+  //    the measuring copy from the accessibility tree.
+  // 2. The cost is no longer 200. Spec 11 §3.4 prices this route as
+  //    `COST_FROM_SCRIPT` 35 + a per-SECOND rate over the trimmed song, and
+  //    StoryboardEditor.tsx spells out "it is not a constant". The fixture song
+  //    is minutes long, so the CTA reads 475 here — pinning 200 was asserting a
+  //    price the product had deliberately replaced.
+  const cta = page.getByRole("button", { name: /Create MV/ });
+  await expect(cta).toHaveCount(1);
   await expect(cta).toContainText("Create MV");
-  await expect(cta).toContainText("200");
+
+  // What DP actually lacks — and therefore what is worth guarding — is that the
+  // CTA states a price AT ALL. Assert a real number rather than a literal, so
+  // this keeps holding when the per-second rate or the fixture length changes.
+  const shown = ((await cta.innerText()).match(/\d+/) ?? [])[0];
+  expect(shown, "the CTA must state its credit cost").toBeTruthy();
+  expect(Number(shown), "and it must include the per-second component, not just the 35 base").
+    toBeGreaterThan(COST_FROM_SCRIPT);
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2568,6 +2806,16 @@ test("3h / GL-01: the storyboard CTA still states its cost and still gates on it
 /** Compose an MV and take the direct-render path all the way to /mv/result. */
 async function renderToResult(page: Page) {
   await page.goto("/mv/room");
+  // Fund BEFORE composing. `DEFAULT_CREDITS` dropped 390 → 10 on 2026-08-12
+  // (`TBD-CR-06a`) and a direct render is `COST_RENDER` 200, so from that day
+  // this helper stopped at the IAP upsell and every one of its six callers died
+  // on `waitForURL("**/mv/result")` after the full 60s — a timeout that reads
+  // like a broken render pipeline and is really the paywall doing its job.
+  // `mv-flow.spec.ts` was fixed for exactly this and says so in its own comment;
+  // this helper was missed. Must be after the `goto` and before any navigation:
+  // the balance is in-memory React state, so a page load resets it to 10 (see
+  // `fundAccount`'s own doc comment).
+  await fundAccount(page);
   await composeMv(page);
   await page.getByRole("button", { name: "Create Music Video" }).click();
   await page.getByText("Create MV Directly").click();
@@ -2647,13 +2895,28 @@ test("3i / MV-12 + MV-13: publish confirms first, and blocks Edit until unpublis
     "true",
   );
 
-  // MV-13: the Edit slot is now Unpublish, not gone.
+  // ── MV-13, REWRITTEN 2026-09-09 ───────────────────────────────────────────
+  // This asserted the Edit slot becomes an "Unpublish to edit" button. The
+  // product owner changed that on 2026-08-28: MV-13 still holds (you cannot
+  // edit while under review or live) but "the control now DISAPPEARS instead of
+  // becoming 'Unpublish to edit'. The ONLY way back to editable is the Publish
+  // toggle itself" — MvResult.tsx says so at the render site, and there is no
+  // such button anywhere in `src/` any more. So the test was holding a decision
+  // that had already been reversed, which is the failure mode this repo's error
+  // log records three times.
   await expect(page.getByRole("button", { name: "Edit MV", exact: true })).toHaveCount(0);
-  const unpublish = page.getByRole("button", { name: "Unpublish to edit" });
-  await expect(unpublish).toBeVisible();
+  // Pin the reversal itself, so re-introducing the old control is also a
+  // failure and not a silent "fix".
+  await expect(page.getByRole("button", { name: "Unpublish to edit" })).toHaveCount(0);
 
-  // Unpublishing is immediate — no second confirm — and Edit comes back.
-  await unpublish.click();
+  // Unpublishing is immediate — no second confirm — and Edit comes back. The
+  // toggle is now the only route back, which is exactly what makes it worth
+  // asserting here.
+  await page.getByRole("switch", { name: "Publish to community" }).click();
+  await expect(page.getByRole("switch", { name: "Publish to community" })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
   await expect(page.getByRole("button", { name: "Edit MV", exact: true })).toBeVisible();
 });
 
@@ -2701,6 +2964,10 @@ test("3j: all three song stages render DP's blocks", async ({ page }) => {
 
   await expect(page.locator(".song-processing__wave")).toBeVisible();
   await expect(page.locator(".song-processing__progress-fill")).toBeVisible();
+  // YMW260908P0016: the process page needs a desktop back affordance too;
+  // RoomNavbar's back variant only exists below 768px.
+  await expect(page.locator(".detail-navbar__back")).toBeVisible();
+  await expect(page.locator(".detail-navbar__back")).toHaveAttribute("href", "/song/create");
 
   await page.waitForURL("**/song/result", { timeout: 30_000 });
   await expect(page.locator(".song-result__player")).toBeVisible();
@@ -2903,8 +3170,19 @@ test("3k: /mv/edit renders DP's blocks, and the scene editor is its own section"
 test("3k: the desktop scene editor does not leak onto phones", async ({ page }) => {
   test.slow();
   await login(page);
-  await page.setViewportSize({ width: 375, height: 900 });
+  // ── DRIVE THE FLOW AT DESKTOP, THEN SHRINK (fixed 2026-09-09) ─────────────
+  // This set 375 first, and `openEditor` -> `fundAccount` clicks
+  // `getByRole("button", { name: "Upgrade" })`. /mv/room passes no
+  // `mobileHeaderActions`, so at 375 its only "Upgrade" button is the DESKTOP
+  // `.upgrade-button` inside `.room-navbar__actions`, which CSS hides below the
+  // cutover — `.click()` then waited for a permanently invisible element and
+  // burned the full 90s. Funding is a precondition, not the thing under test,
+  // so take it at a width where the control exists and resize afterwards. The
+  // phone layout here is CSS plus a `useMediaQuery` branch, and both re-evaluate
+  // on resize, so the assertions below still describe a real 375px render.
   await openEditor(page);
+  await page.setViewportSize({ width: 375, height: 900 });
+  await expect(page.locator(".mv-edit__panel")).toBeVisible();
 
   await expect(page.locator(".mv-edit__section--scene-editor")).toBeHidden();
   await expect(page.locator(".mv-edit__preview")).toBeHidden();
@@ -3456,9 +3734,18 @@ test("landing page: a New Songs row splits title-navigates from art-previews", a
   await expect(page.locator(".song-bar")).toBeVisible();
   await expect(page).toHaveURL(/\/(enu)?\/?$/);
 
-  // Title: navigates.
-  await page.locator(".new-songs__item .list-item__title--button").first().click();
-  await page.waitForURL(/\/song\/play\?id=/);
+  // Title: navigates. Retargeted 2026-09-09 — this was stale in BOTH halves.
+  // (1) `.list-item__title--button` has not been rendered since 2026-08-11,
+  //     when the designer asked for a row-wide click: `ListItem`'s title became
+  //     an unconditional `<p>` and `onSelect` moved to the row. The class now
+  //     survives only in DP's verbatim CSS and is documented as dead in
+  //     `designer-overrides.css`, so the click waited 30s for nothing.
+  // (2) The destination moved too. `openSong` sends a DESKTOP click to
+  //     `/song/result?id=…&from=home` and only a phone to `/song/play?id=` —
+  //     and this test runs at 1440, so it was asserting the phone route.
+  // The behaviour under guard is unchanged: art previews, the row navigates.
+  await page.locator(".new-songs__item .list-item__title").first().click();
+  await page.waitForURL(/\/song\/result\?id=.*from=home/);
 });
 
 test("landing page: New Songs' Create requires login", async ({ page }) => {
@@ -3715,9 +4002,16 @@ test("consent: accepting opens the picker, and the rest of the session skips the
   // — but only via CLIENT-SIDE navigation. `page.goto` is a document load and
   // resets it, which is the intended "once per session, not once per account"
   // boundary, so this leaves and returns the way a user does.
-  await page.getByRole("link", { name: "History" }).click();
+  // Scope both hops to the sidebar (fixed 2026-09-09). Unscoped, the second
+  // one is a strict-mode violation: `/history` renders a second "AI Music
+  // Video" link besides the sidebar's, so the locator resolved to 2 elements.
+  // The sidebar is also the honest thing to click — the point of these two
+  // hops is that a CLIENT-SIDE navigation must not reset `hasFaceConsent()`,
+  // and the sidebar is how a user makes one.
+  const sidebar = page.locator(".sidebar");
+  await sidebar.getByRole("link", { name: "History" }).click();
   await page.waitForURL("**/history");
-  await page.getByRole("link", { name: "AI Music Video" }).click();
+  await sidebar.getByRole("link", { name: "AI Music Video" }).click();
   await page.waitForURL("**/mv/room");
   await add.click();
   await expect(overlay).toHaveCount(0);
@@ -3808,7 +4102,11 @@ test("TODO#8a: a guest liking a Home song rail row is gated, not silently accept
   await expect(like).toHaveAttribute("aria-pressed", "false");
 
   await like.click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+  // Name the dialog (fixed 2026-09-09). A bare `getByRole("dialog")` resolved
+  // to 2 elements and failed on strict mode — the landing page mounts another
+  // dialog besides the sign-in modal. Naming it also makes the assertion say
+  // what it means: a guest must hit the SIGN-IN gate, not merely some dialog.
+  await expect(page.getByRole("dialog", { name: /sign in/i })).toBeVisible();
   // and the like did NOT go through behind the modal
   await expect(like).toHaveAttribute("aria-pressed", "false");
 });
@@ -3927,10 +4225,19 @@ test("Custom Enhance opens the two-mode menu, and is not a dead button", async (
   await box.fill("a hopeful song about leaving home");
   const enhance = page.locator(".song-create__enhance-btn").first();
   await expect(enhance).toBeVisible();
-  await expect(enhance).toHaveAttribute("aria-expanded", "false");
+
+  // Retargeted 2026-09-09: this asserted `aria-expanded` false-then-true on the
+  // button. The 2026-08-25 fix did not give it that attribute — `EnhanceButton`'s
+  // `bem` branch renders a plain button and a sibling `DpDialog`, so
+  // `aria-expanded` was never present and the assertion could not pass in
+  // either state. The dialog's own presence is the real signal, and this test
+  // already checked it; the attribute check was just noise that outlived the
+  // implementation it described.
+  await expect(page.getByRole("dialog", { name: "What would you like to enhance?" })).toHaveCount(
+    0,
+  );
 
   await enhance.click();
-  await expect(enhance).toHaveAttribute("aria-expanded", "true");
   const dialog = page.getByRole("dialog", { name: "What would you like to enhance?" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText("Refine Idea")).toBeVisible();
@@ -3939,9 +4246,23 @@ test("Custom Enhance opens the two-mode menu, and is not a dead button", async (
   // The gradient tiles are the design's whole point, and a mask glyph with no
   // background to clip is the repo's recurring invisible-icon bug — so assert
   // both tiles actually paint (2026-08-26, app prototype's Enhance sheet).
-  await expect(dialog.locator(".enhance-dialog__opt-ico--idea")).toBeVisible();
-  await expect(dialog.locator(".enhance-dialog__opt-ico--lyrics")).toBeVisible();
-  for (const g of await dialog.locator(".enhance-dialog__opt-glyph").all()) {
+  // Class names corrected 2026-09-09: these read `__opt-ico--idea` /
+  // `__opt-glyph`, which are not what `EnhanceButton` renders or what
+  // `designer-overrides.css` styles — the real names are `__option-icon--*`
+  // and `__option-icon-glyph`. Abbreviated selectors that match nothing make
+  // `toBeVisible()` fail in a way indistinguishable from the tile not painting.
+  for (const mod of ["idea", "lyrics"]) {
+    const tile = dialog.locator(`.enhance-dialog__option-icon--${mod}`);
+    await expect(tile).toBeVisible();
+    // The tiles are GRADIENTS (`background-image`), so a `backgroundColor`
+    // check would read transparent on a perfectly good tile. Assert the thing
+    // that is actually the design.
+    const img = await tile.evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(img, `the ${mod} tile must paint its gradient`).toContain("gradient");
+  }
+  for (const g of await dialog.locator(".enhance-dialog__option-icon-glyph").all()) {
+    // The glyph IS a mask, so here `backgroundColor` is the right property —
+    // no background means nothing to clip, the repo's recurring silent bug.
     const bg = await g.evaluate((el) => getComputedStyle(el).backgroundColor);
     expect(bg).not.toBe("rgba(0, 0, 0, 0)");
     const box = await g.boundingBox();
@@ -4250,12 +4571,29 @@ test("2026-09-01: /watch swipes vertically to the next MV and syncs the URL", as
 // exactly the shape that gets deleted by the next cleanup pass for free.
 // ─────────────────────────────────────────────────────────────────────────────
 
-test("2026-09-01: a /song/play deep link MARKS its row without auto-playing", async ({ page }) => {
+test("2026-09-01: a /song/play deep link MARKS its row", async ({ page }) => {
   // Product owner: a shared song link used to land the recipient on the plain
   // browse list with NOTHING indicating which song the link had named — the
-  // player bar only opens once playback starts. The decision was "mark the
-  // row, do not auto-play", so this asserts BOTH halves. Asserting only the
-  // marker would let an auto-play regression through, and vice versa.
+  // player bar only opens once playback starts. So: mark the row.
+  //
+  // ── THE "DO NOT AUTO-PLAY" HALF IS WITHDRAWN (product owner, 2026-09-09) ──
+  // This test used to assert both halves, and the second half was FLAKY — 3
+  // fails / 1 pass over four single-worker runs, at HEAD too. The reason is
+  // worth keeping, because it is not a timing nit: two decisions contradicted
+  // each other and the code implemented the older one.
+  //   · 2026-08-13 — `SongDetailView`'s `skipFirstAutoplayRef` is
+  //     `useRef(!requestedSong)`, i.e. an explicit `?id=` deep link is DESIGNED
+  //     to autoplay ("a real request for that song, not just browsing").
+  //   · 2026-09-01 — "mark the row, but do not auto-play".
+  // The code never stopped autoplaying, so "nothing is playing" only held when
+  // Chromium REFUSED the unmuted `play()` — and `paused` flips to false
+  // synchronously when `play()` is called, before the rejection lands, so the
+  // assertion was reading inside that window. It was measuring browser policy,
+  // not product behaviour (the same trap as `watch-autoplay-sound.spec.ts`).
+  // The product owner resolved it on 2026-09-09 in favour of 2026-08-13: a deep
+  // link DOES autoplay. The clause is withdrawn — see `specs/CHANGELOG-SPEC.md`
+  // — so the marker is the whole assertion now, and nothing here may depend on
+  // whether this browser happens to allow autoplay.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/song/play?id=sp-pop-anthem");
@@ -4268,19 +4606,11 @@ test("2026-09-01: a /song/play deep link MARKS its row without auto-playing", as
   await expect(marked).toHaveCount(1);
   await expect(marked).toContainText("Pop Anthem");
 
-  // …and nothing is playing: the bar is still parked below the fold, and no
-  // media element has started. `toBeVisible()` is TRUE for the parked bar —
-  // it is translated, not hidden — so this measures its position instead.
-  const barTop = await page.evaluate(() => {
-    const b = document.querySelector(".song-bar");
-    return b ? b.getBoundingClientRect().top : null;
-  });
-  expect(barTop).not.toBeNull();
-  expect(barTop!).toBeGreaterThanOrEqual(page.viewportSize()!.height - 1);
-  const anyPlaying = await page.evaluate(() =>
-    [...document.querySelectorAll("audio, video")].some((m) => !(m as HTMLMediaElement).paused),
-  );
-  expect(anyPlaying).toBe(false);
+  // The marker must name the song the LINK did, not just "some row is marked" —
+  // that is the whole defect this guards, and it is browser-policy independent.
+  await expect(marked).toHaveCount(1);
+  const others = page.locator(".song-detail__list-item .top-song:not(.top-song--selected)");
+  expect(await others.count(), "only the linked row may be marked").toBeGreaterThan(0);
 });
 
 test("2026-09-01: feedEmpty gives every feed surface an empty state", async ({ page }) => {
@@ -4380,13 +4710,18 @@ test("2026-09-02: the footer's Studio links navigate, and keep the locale prefix
   await studio.getByRole("link", { name: "Song Composer" }).click();
   await expect(page).toHaveURL(/\/song\/create$/);
 
-  // The three that are still placeholders MUST stay placeholders: this test
-  // would otherwise pass against a footer where someone quietly invented URLs
-  // for FAQ / Terms of Service / Privacy Policy (DESIGNER-TODO A29).
+  // FAQ is internal and locale-aware. RD supplied the two external legal URLs
+  // and confirmed that BOTH query parameters are required by the forwarder.
   await page.goto("/");
-  for (const label of ["FAQ", "Terms of Service", "Privacy Policy"]) {
-    await expect(page.locator(`.footer__link:text-is("${label}")`)).toHaveAttribute("href", "#");
-  }
+  await expect(page.locator('.footer__link:text-is("FAQ")')).toHaveAttribute("href", "/faq");
+  await expect(page.locator('.footer__link:text-is("Terms of Service")')).toHaveAttribute(
+    "href",
+    "https://www.perfectcorp.com/prog/ap/beauty-circle/forward.jsp?locale=eu_US&type=terms",
+  );
+  await expect(page.locator('.footer__link:text-is("Privacy Policy")')).toHaveAttribute(
+    "href",
+    "https://www.perfectcorp.com/prog/ap/beauty-circle/forward.jsp?locale=eu_US&type=privacy-policy",
+  );
 });
 
 test("2026-09-02: the avatar crop dialog opens ON TOP of the Edit Profile modal", async ({

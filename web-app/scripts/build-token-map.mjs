@@ -23,8 +23,9 @@
  *   the review has somewhere to start rather than a wall of 400 variables.
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, resolve, relative, sep } from "node:path";
 import { homedir } from "node:os";
+import { fileURLToPath } from "node:url";
 
 const args = process.argv.slice(2);
 const flag = (name, fallback) => {
@@ -32,7 +33,12 @@ const flag = (name, fallback) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : fallback;
 };
 const CHECK = args.includes("--check");
-const WA_ROOT = resolve(new URL("..", import.meta.url).pathname);
+// `new URL("..", import.meta.url).pathname` is "/C:/..." on Windows, and resolve()
+// turns that into "C:\C:\..." — a path that never exists. G2-a then failed to find
+// token-aliases.css and exited 1, which the Stop hook reports as the benign "designer
+// prototype is not on this machine" skip — so the token map went unchecked on every
+// Windows session, with a misleading reason (measured 2026-09-09).
+const WA_ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 
 // DP now lives IN the repo (`designer-prototype/`, vendored 2026-08-04 from
 // github.com/marukox1105/YCM — see its PROVENANCE.md). Before that it was expected at
@@ -73,7 +79,12 @@ const OUT_JSON = join(WA_ROOT, "docs", "token-map.json");
  * this is the same problem the author already solved once.
  */
 const REPO_ROOT = resolve(WA_ROOT, "..");
-const rel = (p) => p.replace(REPO_ROOT + "/", "");
+// Must emit the SAME string on every platform — it is written into docs/token-map.md
+// and .json, which G2-a then compares byte-for-byte. A `p.replace(REPO_ROOT + "/", "")`
+// matched nothing on Windows (the path separator is "\"), so the absolute machine path
+// leaked into the committed doc and G2-a reported "tokens moved" when nothing had —
+// the counts were identical (measured 2026-09-09).
+const rel = (p) => relative(REPO_ROOT, p).split(sep).join("/");
 
 // ── parse ───────────────────────────────────────────────────────────────────
 /**
@@ -425,9 +436,18 @@ if (CHECK) {
   const stale = [];
   for (const [p, next] of [[OUT_MD, md], [OUT_JSON, JSON.stringify(json, null, 2) + "\n"]]) {
     const cur = existsSync(p) ? readFileSync(p, "utf8") : "";
-    // Ignore the date line so a re-run on a later day is not a "diff".
-    const strip = (s) => s.replace(/Generated \d{4}-\d{2}-\d{2}/, "").replace(/"generated": "[^"]*"/, "");
-    if (strip(cur) !== strip(next)) stale.push(p.replace(WA_ROOT + "/", ""));
+    // Ignore the date line so a re-run on a later day is not a "diff", and normalise
+    // line endings so the check measures CONTENT. This repo is checked out with
+    // core.autocrlf=true on Windows, so the working-tree copy has CRLF while this
+    // script always writes LF — without the normalise, G2-a reported "tokens moved"
+    // on every Windows session with not one token changed (measured 2026-09-09). Same
+    // class of false positive as the absolute-path bug documented on `rel` above.
+    const strip = (s) =>
+      s
+        .replace(/\r\n/g, "\n")
+        .replace(/Generated \d{4}-\d{2}-\d{2}/, "")
+        .replace(/"generated": "[^"]*"/, "");
+    if (strip(cur) !== strip(next)) stale.push(relative(WA_ROOT, p).split(sep).join("/"));
   }
   if (stale.length) {
     console.error(`[G2-a FAIL] token map is stale: ${stale.join(", ")}`);

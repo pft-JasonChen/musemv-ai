@@ -57,6 +57,29 @@ axe 實測(WCAG AA,小型文字需 **4.5:1**):
 - **這條現在是唯一還靠排除清單活著的 DP 對比問題**;`.badge--failed` 尚未被 axe 量到
   (它只出現在 `/history`,仍在覆蓋缺口裡)。
 
+**進度(2026-09-09):A1 的預測第三次成真 —— 而且 `.badge--failed` 終於被 axe 量到了。**
+把 axe 掃過全部 21 條 route 之後,**13 條**紅,而且**只有 `color-contrast` 這一種 violation**
+(其餘 8 條真的乾淨)。全部落在 `src/styles/designer/` 裡,也就是逐位元組複製、不能在這邊改的檔案。
+上表三個成因各自多了新的 selector:
+
+| 新出現的 selector | 前景 / 背景 | 實測 | 屬於 |
+| --- | --- | --- | --- |
+| `.button--primary > .button__label`(`/`、`/faq`)、`.mv-player__cta-desktop`(`/watch`) | `#ffffff` on `#a855f7` | **3.95:1** | 白字壓品牌紫 —— 與 `.tabs__tab--active` 同一個數字 |
+| `.mv-create__char-count` / `.song-create__char-count`(9 條 route) | `rgba(255,255,255,.4)` on `#151519` | **3.84:1** | 低不透明度次要文字 —— A1 選項 1 的 `.4 → .6` 正是這個 |
+| `.mv-create__settings-chip--dim` | 疊 `opacity: 0.3` on `#202025` | **2.39:1** | 同一類,但**第四種機制**:不是顏色,是 opacity 乘上去的 |
+| `.badge--failed > span`(`/creator`) | `#ff2600` on `#4d221f` | **3.53:1** | **就是上表第三列**,只是第一次被量到 |
+
+- **`.badge--failed` 之前寫「尚未被 axe 量到(只出現在 `/history`,仍在覆蓋缺口裡)」 —— `/creator`
+  沒有 `AuthGuard`,所以缺口在它身上關掉了**,和 2026-08-05 `.tabs__tab--active` 靠
+  `/explore/songs` 現形是完全一樣的過程。**不是新缺陷,是舊缺陷終於被看見。**
+- 白字壓 `#a855f7` 那一組:`TODO.md` #2 已於 **2026-09-01 由產品負責人結案為 ⚪ WON'T FIX**,
+  並明寫「不要把日後重新發現這個對比值當成新發現」。所以那兩個 selector 是**已決事項的新
+  selector**,不是新決定。
+- 依 A1 選項 2 的慣例,六個 selector 都已加進 `a11y.spec.ts` 的 `KNOWN_CONTRAST_PILLS`,
+  每一個都有註解指回這裡或 `TODO.md` #2。**沒有自己挑任何顏色。** 排除範圍經過 mutation
+  測試:五條 route 各自注入一張沒有 `alt` 的圖,axe 依然抓得到 —— 排除的是元素,不是整頁。
+- **`opacity: 0.3` 那一項請單獨看**:換前景色救不了它,乘法是乘在整個元素上的。
+
 - **剩下兩項需要的決定(擇一):**
   1. 調整品牌紫上的文字處理(加深底色、或改用深色文字、或加大字級到 ≥18px 讓門檻降為 3:1);
      次要文字不透明度從 40% 提高到約 60%;Failed badge 提高文字亮度或加深底色;或
@@ -1042,6 +1065,31 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
    會有 `Go, go, go...` 這種即興句，也不含 `[verse]` / `[chorus]` 標籤。硬要對齊兩邊等於
    自己發明一套對應關係。所以同一首歌在「歌詞面板」看到的行數可能和寫下來的歌詞不同 ——
    這是刻意的，`AC-SONG-18` 有寫。
+
+### A32. `RoomNavbar` 的手機返回鍵在桌機寬度變成一個「看不見但可以 Tab 到」的控制項（2026-09-09）
+
+**這是 DP 自己的瑕疵，不是移植走鐘 —— DP 的 `RoomNavbar.tsx` 也一樣。**
+
+`RoomNavbar.css` 只在 `@media (max-width: 767px)` 裡定義 `.room-navbar__mobile-back`
+與 `.room-navbar__mobile-back-icon`，但兩邊的 React（DP 的和我們的）只要 `mobileBackHref`
+有值就在**所有寬度**都 render 那個 `<a>`。所以 ≥768px 時它是一個沒有任何規則命中的
+`<a aria-label="Back" href="/">`。
+
+1440px 實測：`display: block`、外框 **0×0**、裡面的 icon **0×0** 且
+`background-color: rgba(0,0,0,0)`（有 `mask-image`，沒有底色可以裁），而
+**`focusable = true`**。
+
+- **影響**：視覺上完全看不到，但**鍵盤 Tab 得到、螢幕閱讀器唸得出來**的返回鍵，出現在所有
+  傳 `mobileBackHref` 的畫面上 —— 2026-09-10 為 `/mv/room`、`/profile`、`/song/create`
+  （`/song/creating` 原本也是，後來改用 `DetailNavbar`，它每個寬度都有自己的返回鍵）。
+- **也是三個 mask-icon 掃描同時變紅的唯一成因**：3f 在 `/profile`、3g-2 在 Choose Song
+  sheet、3j 在 `/song/create` —— 同一個 bug 被回報六次，而那個掃描本來就是為了把這種事
+  收斂成一次。
+- **我們的處理**：`designer-overrides.css` 在 `@media (min-width: 768px)` 把它
+  `display: none`。這正是 DP 自己的意圖（它只為手機定義樣式），而且**不動任何像素** ——
+  那個元素在桌機本來就什麼都不畫。
+- **請設計師做的**：在 `RoomNavbar.css` 補上桌機的 `display: none`，或讓 component 在桌機
+  不要 render 它。下一次交稿只要有任一種，我們就刪掉 override。
 
 ---
 

@@ -60,6 +60,21 @@ Once decided: add the token, restyle the pills, delete the exclusions.
 > intentional**, not a placeholder pending a design-owner reply — do not treat
 > a future session's re-discovery of this contrast ratio as a new finding, and
 > do not remove the exclusion without a new product decision to reopen it.
+>
+> **2026-09-09 — two more selectors of the SAME defect were added, under that
+> ruling.** A full axe sweep of all 21 routes found white-on-`#a855f7` at the
+> identical **3.95:1** on `.button--primary > .button__label` (`/`, `/faq`) and
+> `.mv-player__cta-desktop` (`/watch`). Per the paragraph above these are new
+> *selectors* of an already-decided defect, so they were excluded rather than
+> raised again. Only the accent-backed sizes are excluded —
+> `.button--large.button--primary` is `var(--gradient-mv)`, a different
+> background, and stays gated. The same sweep surfaced three other contrast
+> families that are NOT covered by this ruling and are still open in
+> `docs/DESIGNER-TODO.md` **A1**: the `rgba(255,255,255,.4)` char-counts
+> (3.84:1), `.mv-create__settings-chip--dim` (an `opacity: 0.3` multiplier,
+> 2.39:1 — the worst in the sweep), and `.badge--failed` (3.53:1, A1's own
+> third table row, finally on a route axe can see). Those four are excluded
+> with comments pointing at A1, not at this entry.
 
 ## 3. Dev-dependency audit findings (tooling only, not shipped code)
 

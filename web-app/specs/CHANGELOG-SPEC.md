@@ -25,6 +25,63 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-09-10 — e2e triage: one criterion withdrawn, plus a spec/code divergence to settle
+
+No feature work. The `npm run e2e` gate was failing **46 of 225** on the Windows dev machine, which
+blocked the Stop hook in every session. Triaging it turned up one product decision to withdraw, one
+divergence RD/QA need to know about, and a long tail of tests that had outlived decisions already
+taken. **Only the two rows below change what the product is supposed to do**; everything else was a
+test catching up with a decision the code had already implemented.
+
+### `/song/play?id=` — "do not auto-play" is WITHDRAWN
+
+| | |
+| --- | --- |
+| **Criteria** | Area 04 §3's `/song/play` deep-link note (the `P5-S1` block). The **"mark the row"** half stands; the **"do not auto-play"** half is withdrawn. |
+| **Why** | It contradicted the 2026-08-13 rule still live in the code — `SongDetailView`'s `skipFirstAutoplayRef` makes an explicit `?id=` autoplay ("a real request for that song"). The code never stopped autoplaying, so the guard's "nothing is playing" half only passed when Chromium **refused** the unmuted `play()`. It was measuring browser policy, and it was flaky: 3 fails / 1 pass over four single-worker runs, at HEAD too. |
+| **Decision** | Product owner, 2026-09-09: **2026-08-13 wins.** A deep link marks the row **and** autoplays, with the documented muted fallback where the browser refuses. |
+| **Code** | Unchanged — this is the case where the CODE was right and two docs disagreed. |
+| **Tests** | `2026-09-01: a /song/play deep link MARKS its row` (renamed; the media-playing assertions removed, marker assertions strengthened) in `e2e/behaviour-regressions.spec.ts`. Mutation-tested both ways. |
+| **Contract** | None. |
+
+### ⚠️ OPEN — `MV-13` "Unpublish to edit": the spec and the code disagree
+
+**Not resolved here. RD/QA should treat the code as current and the spec as pending an answer.**
+
+| | |
+| --- | --- |
+| **Spec says** | `AC-MV-10`, `MV-P4-S4`, `MV-E7`, the MV-P4 review checklist (area 02) and area 05 §'s History CTA row all say a published/in-review MV replaces **Edit MV** with a neutral **"Unpublish to edit"** action. `TBD-MV-13`. |
+| **Code does** | `MvResult.tsx`: "MV-13 still applies (can't edit while under review or live) — but the control now **disappears** instead of becoming 'Unpublish to edit'. The ONLY way back to editable is the Publish toggle itself", attributed to the product owner on **2026-08-28**. There is no "Unpublish to edit" string anywhere in `src/`. |
+| **Effect** | The 2026-08-28 decision landed in code and in one comment, and never reached the five spec locations. The e2e guard was still asserting the spec's wording and had been red ever since. |
+| **Done here** | The test now pins the CODE (and asserts the old control is absent, so re-introducing it also fails). **The five spec locations are deliberately left untouched** — per `AGENTS.md`, a spec/code divergence gets flagged, not silently overwritten. |
+| **Needs** | A one-line ruling: either the spec is amended to "the control disappears", or the code restores the pill. History (area 05) has the same rule and must move with it. |
+
+### Tests that were pinning superseded decisions (no criterion moved)
+
+Recorded so nobody re-derives them. Each was red because a **product decision had already changed**
+and the guard still described the old behaviour — the failure mode this repo's error log lists three
+times over. All are in `e2e/behaviour-regressions.spec.ts` unless noted.
+
+| Decision that moved | When | Test that was still asserting the old one |
+| --- | --- | --- |
+| `/explore/songs` tabs = "All" + the nine creation `GENRES` (was New Releases / Top Picks) | 2026-09-01 | `3b: ?tab= …`, `3b: switching a browse filter …`, `3b: a tab switch changes the list`, `3b / EXP-09` |
+| Row-wide click: `ListItem`/`TopSongListItem` titles became plain `<p>`, `onSelect` moved to the row | 2026-08-11 | `landing page: a New Songs row splits …` (also asserted the phone route at 1440), `3b / EXP-09` |
+| `SongPlayBar` is always mounted; `open` parks it off-screen instead of unmounting | 2026-08-14 | `drop 2 desktop: the album art previews in place …` (its "no bar" check had been passing only by racing hydration) |
+| "layer 1": `MobileTabBar` only on Home + `/history`; every other route gets its own back+title bar | 2026-08-22 | `A4: a navbar with no tabs …`, `A5: a mobile tab-bar destination …`, `drop 2 / A4: the song screen …` |
+| `/history` stopped mounting `MobileHeader`; `RoomNavbar` absorbs it via `mobileHeaderActions` | 2026-08-23 | `R12 shell: just below the cutover …`, `S13 mobile IA: the bar is Explore …`, `A4: the override restores the tabs row …` (premise inverted) |
+| `/explore/songs`' Top Picks rail + heading/tabs are shown at **every** width | 2026-08-19 | `drop 2 / A4: the song screen …` — and a stale comment in `SongDetailView.tsx`, corrected here |
+| Muse Pro row's pill: `badge--purple` "Subscribe/Manage" → `.button--secondary` "Upgrade"; none when subscribed | 2026-08-14 | `3c / G7-1: the Muse Pro row …` |
+| Subscription plans: 6 plans / 3 cadences behind a `DurationTabs` tablist (was 3 cards at once); `$9.99` is now a real WA price | — | `3f / S20: the plan prices are WA's …` — rewritten data-driven over `SUBSCRIPTION_PLANS`; mutation-tested by re-introducing DP's hardcoded `/ week` |
+| Character Image folded into the Visual Style section (`--char-image` modifier deleted) | 2026-08-14 | `3h: both stages render DP's blocks …` |
+| Storyboard render cost is `COST_FROM_SCRIPT` 35 + a per-**second** rate, not a flat 200 | spec 11 §3.4 | `3h / GL-01: the storyboard CTA …` (also hit `FloatingCTA`'s two copies of its children) |
+| `EnhanceButton`'s chooser is a `DpDialog`; the button never had `aria-expanded` | 2026-08-25 | `Custom Enhance opens the two-mode menu …` (also used class names that never existed) |
+
+Two more were not stale but **environmental / fixture-order**: six `renderToResult` callers and two
+`3h` tests never funded the account, so every one of them died at the IAP paywall after
+`DEFAULT_CREDITS` dropped 390 → 10 on 2026-08-12 (`mv-flow.spec.ts` was fixed for this and says so;
+these were missed); and `G5-d#8 publish` took the FIRST history row, which became a **song** when
+`a523f05` inserted the `h-neon-static` fixture at the top — only an MV opens the publish confirm.
+
 ## 2026-09-09 — three product-owner bug reports
 
 Commit `a523f05`. All three were reported against the running prototype. **One contract change between

@@ -145,10 +145,16 @@ import { SongPlayBar } from "@/components/song/SongPlayBar";
  *
  * Tabs moving out of `DetailNavbar` does not change `tabsSlot`'s own mobile
  * rule: `DetailNavbar.css` hides it below 768px "not designed for mobile
- * yet" (product owner), and that reasoning didn't change just because the
- * tabs changed address — `designer-overrides.css` hides both the rail and
- * the heading+tabs block at the same breakpoint, so a phone still sees
- * exactly today's plain single-column list with no header and no filter.
+ * yet" (product owner). What DID change, one day later:
+ *
+ * **2026-08-19 — the rail and the heading+tabs block are NO LONGER
+ * mobile-hidden.** The product owner asked for the same structure (rail,
+ * heading, tabs, sticky behavior) at EVERY width, so `designer-overrides.css`
+ * simply has no rule hiding them any more — see its own comment above
+ * `.top-picks__item`. A phone therefore gets the header and the filter, not
+ * "today's plain single-column list". This paragraph claimed the opposite
+ * until 2026-09-09, when the `drop 2 / A4` e2e guard was found asserting the
+ * withdrawn behaviour and the two records were reconciled against the CSS.
  * (2026-08-19: those two used to share one wrapper div `designer-overrides.css`
  * could hide in one rule; the wrapper is gone — see that file's own comment
  * on why the sticky heading needed `.song-detail-page` as its direct parent
