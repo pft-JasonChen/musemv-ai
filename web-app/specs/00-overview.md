@@ -11,8 +11,15 @@
 > here now renders the designer prototype's markup and stylesheets, except `/mv/creating` and
 > `/share`, which were deliberately left on the old UI. Where a UI slice deliberately diverged from
 > a criterion below, the criterion is **annotated in place rather than rewritten away** — look for
-> ⚠️ in areas 02, 03 and 07. Change log for RD: `../docs/CHANGELOG-RD.md`; the migration's own
-> record: `../docs/archive/redesign-migration-plan.md`.
+> ⚠️ in areas 02, 03 and 07.
+>
+> **Three change logs, three different questions — pick the right one:**
+> `CHANGELOG-SPEC.md` (this folder) is the one to read after a fix lands — it maps a bug code to the
+> **criteria and storyboard steps that moved**, and to the code and the test.
+> `../docs/CHANGELOG-RD.md` covers the **wire contract only** (C1–C8); a UI or copy change never
+> appears there, which is why the first file exists. Each storyboard carries its **own** Changelog
+> section plus `NEW · vN` badges on the steps that moved — that is the finest grain, and where a
+> stale screenshot is recorded. The migration's own record: `../docs/archive/redesign-migration-plan.md`.
 
 ---
 

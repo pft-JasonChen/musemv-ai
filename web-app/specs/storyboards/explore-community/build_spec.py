@@ -63,8 +63,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Explore &amp; Community',
     'breadcrumb': 'YouCam Muse Web &rarr; Explore &amp; Community',
-    'author': 'Jason Chen', 'date': '2026-09-01', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-09-09', 'status': 'Draft',
+    'version': 'v2',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -366,7 +366,7 @@ cfg = {
             'outcome': 'The visitor watches, swipes on through the feed, or leaves to create their own MV',
             'steps': [
                 {
-                    'shot': '16_watch_player.png', 'num': 1,
+                    'shot': '16_watch_player.png', 'num': 1, 'since': 'v2',
                     'user': 'Opens an MV.',
                     'system': 'The video plays WITH SOUND ON, on a stage sized to the item, with the title, creator and actions floating over it and a transport below.',
                     'exact': [
@@ -374,6 +374,8 @@ cfg = {
                         'Control labels: &ldquo;Like&rdquo;, &ldquo;Share&rdquo;, &ldquo;Mute&rdquo;, &ldquo;Fullscreen&rdquo;',
                     ],
                     'limits': [
+                        ('&#9888; SCREENSHOT PREDATES v2 (YMW260902P0002). It was captured while the player still started MUTED, so its transport control reads &ldquo;Unmute&rdquo;; with sound on by default it reads &ldquo;Mute&rdquo;, which is what the label list above now names. Everything else in the shot is current.',
+                         'Re-capture 16_watch_player.png on the next screenshot pass. Listed here rather than left for a reader to notice, because a label list that happens to match is not evidence the image does.'),
                         ('The stage takes the item&rsquo;s OWN aspect ratio &mdash; 3:4 or 4:3 &mdash; not a fixed one.',
                          'AC-EXP-04. The catalog deliberately mixes the two; there is no viewer control to switch them.'),
                         ('Playback starts with sound on (2026-09-09, YMW260902P0002 &mdash; muted only if the browser refuses to autoplay with sound), and the transport offers play/pause, seek, mute and fullscreen.',
@@ -901,6 +903,24 @@ cfg = {
         ('D-09', 'The three Home rails and /explore/songs&rsquo; list had NO empty state, and /explore/mvs had an older, different one. Build now, or wait for a design?', 'Build now, reusing /creator&rsquo;s block &mdash; product owner, 2026-09-01, explicitly &ldquo;do not wait for a drawing&rdquo;. All five feed surfaces now share it (P7). One thing was decided rather than inherited and is flagged for confirmation: the VISUAL is /creator&rsquo;s, but the COPY is the existing feed empty state&rsquo;s (&ldquo;Nothing here yet&rdquo; / &ldquo;Be the first to create!&rdquo;) rather than /creator&rsquo;s &ldquo;No works released yet&rdquo;, which is about one person&rsquo;s own output and reads wrong on a global feed. Both strings were already approved; inventing a third would have put an unsourced product decision into this spec. No CTA, because a feed has no owner for the /creator rule to key off.'),
         ('D-10', 'What happens to the Curation PRD&rsquo;s ranking layer now that its layout half is superseded?', 'The RULES stand and the NUMBERS do not &mdash; product owner, 2026-09-01. The scoring design is still what the backend will implement, so the spec keeps pointing at the PDF for it; but its two self-contradictions mean no weight in that document can be quoted as authoritative, and the values have to be reissued before anyone builds against them. That is why Q-01 stays open on the numbers alone.'),
         ('D-11', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo, same as S1 and S3 through S7.'),
+    ],
+
+    'changelog': [   # newest first — (version, date, what changed)
+        ('v2', '2026-09-09',
+         '<b>YMW260902P0002 &mdash; /watch now plays WITH SOUND ON.</b> '
+         'Changed: <b>P4-S1</b> (system line + a new limits row) and <b>AC-EXP-04</b>. '
+         'Was &ldquo;play the MV muted&rdquo;; a Trending MV opened from Home landed on a silent video. '
+         'AC-EXP-04 also gains a fallback clause: where the browser refuses to autoplay with sound '
+         '(no user activation carries across a navigation), the player mutes and reflects that in the '
+         'mute control rather than leaving the video paused. '
+         'Code: <code>src/components/community/CommunityMvPlayer.tsx</code> (<code>startPlayback</code>). '
+         'Tests: <code>e2e/watch-autoplay-sound.spec.ts</code> (the sound-on default, in its own file '
+         'because it needs a browser launched with <code>--autoplay-policy=no-user-gesture-required</code>) '
+         'and <code>YMW260902P0002: when autoplay-with-sound is REFUSED</code> in '
+         '<code>e2e/behaviour-regressions.spec.ts</code> (the fallback). '
+         'Flowchart re-read against v2 and unchanged &mdash; it draws paths and cites step IDs, and '
+         'restates nothing about playback. Screenshot 16 predates the change; see P4-S1.'),
+        ('v1', '2026-09-01', 'Initial spec.'),
     ],
 
     'references': [

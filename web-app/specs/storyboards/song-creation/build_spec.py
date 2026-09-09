@@ -119,8 +119,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Song Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Song',
-    'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
-    'version': 'v3',
+    'author': 'Jason Chen', 'date': '2026-09-09', 'status': 'Draft',
+    'version': 'v4',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -397,7 +397,7 @@ cfg = {
                     'summary': 'Waits for generation to finish (same screen as P1-S6).',
                 },
                 {
-                    'shot': '08_custom_result_lyrics.png', 'num': 11,
+                    'shot': '08_custom_result_lyrics.png', 'num': 11, 'since': 'v4',
                     'user': 'Generation finishes.',
                     'system': 'Navigates to /song/result with the full lyric sheet shown alongside the player.',
                     'exact': ['Genre &middot; mood line format: &ldquo;Pop &middot; Uplifting&rdquo;'],
@@ -515,7 +515,7 @@ cfg = {
             'entry': 'Signed-in user revisits /song/create', 'outcome': 'Side rail shows My Creations',
             'steps': [
                 {
-                    'shot': '15_my_creations_rail.png', 'num': 1,
+                    'shot': '15_my_creations_rail.png', 'num': 1, 'since': 'v4',
                     'user': 'A signed-in user revisits /song/create.',
                     'system': 'The side rail shows &ldquo;My Creations&rdquo; (their own finished songs) in place of &ldquo;Trending Songs&rdquo;.',
                     'exact': ['Section label: &ldquo;My Creations&rdquo;'],
@@ -557,7 +557,7 @@ cfg = {
                     ],
                 },
                 {
-                    'shot': '25_result_lyrics_sheet.png', 'num': 3,
+                    'shot': '25_result_lyrics_sheet.png', 'num': 3, 'since': 'v4',
                     'user': 'Taps the Lyrics icon.',
                     'system': 'A separate Lyrics sheet opens as its own overlay, with its own mini player. Every line is a control: tapping one seeks playback to that line.',
                     'exact': ['Title: &ldquo;Lyrics&rdquo;'],
@@ -722,6 +722,48 @@ cfg = {
         ('D-09', 'Recreate always bounced to /song/create instead of regenerating &mdash; fix now or document?', 'Fixed (2026-08-25) &mdash; unlike Enhance, this was a complete feature broken by a state/navigation race in SongResultView.tsx, not a placeholder. Patched with a ref guard; re-verified live that Recreate now charges, keeps the prior song in History, and regenerates correctly.'),
         ('D-10', 'Prev/Next never shows enabled, even with 2 real completed songs &mdash; fix or document?', 'Documented only (2026-08-25) &mdash; root cause is a shared mock audio fixture (every song plays the same file), not a logic bug. A real fix needs additional distinct audio assets, which is content/asset work outside this spec&rsquo;s scope.'),
         ('D-11', 'How to fold ~20 newly-found QA gaps into P1/P2 without a separate "compose controls" path?', 'Inserted as new steps directly into P1/P2 (they are sub-interactions of the same screens those paths already walk through), and added one new path, P7, touring /song/result&rsquo;s remaining controls from an already-generated result. Every cross-reference (criteria, the flow diagram, cited step IDs) was updated for the resulting renumbering.'),
+    ],
+
+    'changelog': [   # newest first — (version, date, what changed)
+        ('v4', '2026-09-09',
+         '<b>Two bug fixes, both on /song/result and the compose side rail.</b><br><br>'
+         '<b>YMW260903P0005 &mdash; clicking a lyric jumps to that timestamp.</b> '
+         'Changed: <b>P2-S11</b> (the desktop inline lyrics panel), <b>P7-S3</b> (the Lyrics sheet) '
+         'and a new criterion <b>AC-SONG-18</b> in <code>specs/areas/03-song-creation.md</code>. '
+         'Every line is now an operable control that seeks. Timing comes from the result&rsquo;s own '
+         'LRC where the backend supplies one (<code>SongResult.lyricsLrc</code> &mdash; a NEW wire '
+         'field, see <code>docs/CHANGELOG-RD.md</code> 2026-09-09), and otherwise from spreading the '
+         'lines evenly across the duration, which is the estimate that has always driven the '
+         'highlight. In the prototype exactly one song carries real timing: the vendored '
+         '<code>Neon Static</code> sample (<code>h-neon-static</code> as a creation, '
+         '<code>sp-neon-static</code> in the catalog). '
+         'Code: <code>src/lib/mv/lyrics.ts</code>, <code>src/components/ui/LyricsSheet.tsx</code>, '
+         '<code>src/components/song/SongResultView.tsx</code>, <code>src/styles/lyric-seek.css</code>. '
+         'Tests: five <code>YMW260903P0005</code> cases in '
+         '<code>e2e/behaviour-regressions.spec.ts</code> + <code>src/lib/mv/lyrics.test.ts</code>. '
+         'NOTE the markup is pixel-identical (the lines became <code>&lt;button&gt;</code>s styled back '
+         'to their previous appearance), so screenshots 08 and 25 are still accurate about what the '
+         'screen LOOKS like and silent about the new affordance. Hover/press states have no design '
+         'yet &mdash; <code>docs/DESIGNER-TODO.md</code> A31.<br><br>'
+         '<b>YMW260902P0013 &mdash; the side rail showed Trending Songs where /mv/room showed My '
+         'Creations.</b> Changed: <b>P6-S1</b>, the <b>Side rail</b> rows of the States table, and '
+         'compose-side-rail row of the Criteria table; new criterion <b>AC-SONG-19</b>. '
+         'Both rails ran identical code over the '
+         'session-local History, which starts EMPTY &mdash; so a signed-in user saw My Creations only '
+         'on the screen they had just generated on. They now read '
+         '<code>useMyCreations()</code>: live session jobs merged with the same seeded creations '
+         '/history shows. Signing in is the only condition a real user has to meet; the '
+         '&ldquo;at least one creation&rdquo; test survives to keep a signed-OUT visitor on Trending. '
+         'Code: <code>src/components/history/useMyCreations.ts</code>, '
+         '<code>src/components/song/SongCompose.tsx</code>. '
+         'Tests: two <code>YMW260902P0013</code> cases (signed in / signed out) plus '
+         '<code>items 4/5: generating a song adds it to /song/create&rsquo;s rail</code>. '
+         'Screenshot 15 still shows the right screen; it is now reached by signing in rather than by '
+         'generating first.<br><br>'
+         'Flowchart re-read against v4 and unchanged: it cites <code>P6-S1</code> for '
+         '&ldquo;Side rail Trending Songs, or My Creations&rdquo; and <code>P1-S7, P2-S11</code> for '
+         '&ldquo;Lyrics panel on Custom only&rdquo;, both still true.'),
+        ('v3', '2026-09-02', 'Prior revision &mdash; see the file header for its own change notes.'),
     ],
 
     'references': [

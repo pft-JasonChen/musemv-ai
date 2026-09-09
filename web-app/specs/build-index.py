@@ -22,6 +22,9 @@ ROWS = [
     ("00", "00-overview.md", "Overview — READ FIRST", "reference",
      "Conventions, ID scheme, the global auth + credits model, and the feature-parity map vs App v3.0.",
      "Start here — global acceptance model, cross-area conventions, and the full TBD registry."),
+    ("CL", "CHANGELOG-SPEC.md", "Spec Change Log — what moved, and where", "reference",
+     "Bug/decision code &rarr; the AC and storyboard IDs that moved &rarr; the code file &rarr; the test. Says explicitly whether the wire contract moved (and links docs/CHANGELOG-RD.md when it did).",
+     "Read this after a fix lands: it names the criteria that changed and flags which storyboard screenshots are now stale."),
     ("01", "areas/01-app-shell.md", "App Shell &amp; Global Chrome", "validated",
      "AppShell, Sidebar / BottomBar, TopBar, HeaderActions, AccountMenu, CreditPill; responsive frame (sm/lg).",
      "Chrome renders @390/768/1024/1440; credits badge + account menu; bottom-bar→sidebar switch. 8 AC."),
@@ -67,9 +70,9 @@ ROWS = [
 #
 # id, slug, name, version/date, routes, paths/shots
 STORYBOARDS = [
-    ("S1", "song-creation", "AI Song Creation", "v3 · 2026-09-02",
+    ("S1", "song-creation", "AI Song Creation", "v4 · 2026-09-09",
      "/song/create · /song/creating · /song/result", "7 paths / 32 shots"),
-    ("S2", "mv-creation", "AI Music Video Creation", "v3 · 2026-09-02",
+    ("S2", "mv-creation", "AI Music Video Creation", "v4 · 2026-09-09",
      "/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result", "8 paths / 44 shots"),
     ("S3", "mv-edit", "MV Edit", "v1 · 2026-08-28",
      "/mv/edit", "5 paths / 24 shots"),
@@ -81,7 +84,7 @@ STORYBOARDS = [
      "sidebar / tab bar · route navbars · SignInModal · marketing footer", "8 paths / 27 shots"),
     ("S7", "profile-account", "Profile, Account &amp; Settings", "v2 · 2026-09-02",
      "/profile · /settings · edit profile · Send Feedback", "6 paths / 23 shots"),
-    ("S8", "explore-community", "Explore &amp; Community", "v1 · 2026-09-01",
+    ("S8", "explore-community", "Explore &amp; Community", "v2 · 2026-09-09",
      "/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator", "7 paths / 38 shots"),
     ("S9", "share", "Share", "v1 · 2026-09-01",
      "/share · ShareDialog", "5 paths / 15 shots"),
