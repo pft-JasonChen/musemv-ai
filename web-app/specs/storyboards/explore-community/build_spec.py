@@ -368,7 +368,7 @@ cfg = {
                 {
                     'shot': '16_watch_player.png', 'num': 1,
                     'user': 'Opens an MV.',
-                    'system': 'The video plays muted on a stage sized to the item, with the title, creator and actions floating over it and a transport below.',
+                    'system': 'The video plays WITH SOUND ON, on a stage sized to the item, with the title, creator and actions floating over it and a transport below.',
                     'exact': [
                         'Primary action: &ldquo;Create MV&rdquo;',
                         'Control labels: &ldquo;Like&rdquo;, &ldquo;Share&rdquo;, &ldquo;Mute&rdquo;, &ldquo;Fullscreen&rdquo;',
@@ -376,7 +376,7 @@ cfg = {
                     'limits': [
                         ('The stage takes the item&rsquo;s OWN aspect ratio &mdash; 3:4 or 4:3 &mdash; not a fixed one.',
                          'AC-EXP-04. The catalog deliberately mixes the two; there is no viewer control to switch them.'),
-                        ('Playback starts muted, and the transport offers play/pause, seek, mute and fullscreen.',
+                        ('Playback starts with sound on (2026-09-09, YMW260902P0002 &mdash; muted only if the browser refuses to autoplay with sound), and the transport offers play/pause, seek, mute and fullscreen.',
                          'AC-EXP-04. The seek control is keyboard-operable.'),
                         ('The primary action reads &ldquo;Create MV&rdquo; here and &ldquo;Create Music Video&rdquo; on a narrow layout.',
                          'Two labels shown one at a time, not a rename.'),
@@ -822,7 +822,7 @@ cfg = {
         ('AC-EXP-01', 'WHEN the home page loads, THE SYSTEM SHALL render the hero, the tool selector and the three seed rails in seed order &mdash; and SHALL mount the narrow treatment of the hero and tool selector below 768px and the desktop treatment at or above it.', ['P1-S1', 'P1-S2']),
         ('AC-EXP-02', 'WHEN a hero CTA, a tool-selector card, or a row Create is pressed, THE SYSTEM SHALL run the sign-in gate and, on success, navigate to the create flow with the song pre-filled.', ['P1-S8', 'P3-S5']),
         ('AC-EXP-03', 'WHEN an MV card is pressed anywhere, THE SYSTEM SHALL open the MV player for it. WHEN a song row is pressed on /explore/songs at 768px and above, THE SYSTEM SHALL navigate to the result-stage player; WHEN the row&rsquo;s album art is pressed instead, THE SYSTEM SHALL preview it in the bottom bar WITHOUT navigating.', ['P1-S5', 'P2-S2', 'P3-S3', 'P3-S4']),
-        ('AC-EXP-04', 'WHEN the MV player loads, THE SYSTEM SHALL play the MV muted in the item&rsquo;s OWN aspect ratio, with play/pause and mute, and expose Like, Share and Create Music Video pre-filling the MV create flow.', ['P4-S1', 'P4-S10']),
+        ('AC-EXP-04', 'WHEN the MV player loads, THE SYSTEM SHALL play the MV WITH SOUND ON in the item&rsquo;s OWN aspect ratio, with play/pause and mute, and expose Like, Share and Create Music Video pre-filling the MV create flow. Where the browser refuses to autoplay with sound, it SHALL fall back to muted playback rather than leaving the video paused.', ['P4-S1', 'P4-S10']),
         ('AC-EXP-05', 'WHEN the song player loads, THE SYSTEM SHALL resolve the id to the correct playlist, present real audio progress with Previous/Next, Like/Share and a lyrics sheet where one exists, and SHALL NOT cap playback for free accounts.', ['P3-S3', 'P5-S2', 'P5-S3'], 'The disc player and the lyrics sheet live on the result-stage player (P3-S4&rsquo;s destination, owned by S1) and in the narrow layout&rsquo;s full-screen player, which is outside this spec&rsquo;s desktop-only scope (D8). The playlist resolution, the real audio and the absence of a cap are all covered by the steps listed.'),
         ('AC-EXP-06', 'WHEN the creator profile loads, THE SYSTEM SHALL show the profile header and stats and the Music Videos / Songs tabs, whose rows open the respective players; the self variant SHALL show the signed-in user&rsquo;s identity.', ['P6-S1', 'P6-S3']),
         ('AC-EXP-07', 'WHEN an id is missing or invalid on either player, THE SYSTEM SHALL fall back to a default item without crashing.', [], 'The MISSING-id half produces P4-S1&rsquo;s screen on a different item, so a screenshot of it would be indistinguishable; it is listed in the error table instead. The INVALID-id half is not a fallback at all &mdash; it is the not-found state, specified by AC-EXP-09 at P4-S11 and P5-S4.'),

@@ -23,6 +23,50 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-09 — **C2 ADDITIVE** — `SongResult.lyricsLrc`, per-line lyric timing (YMW260903P0005)
+
+**Surface: C2** (`src/lib/api/schemas.ts`). One new OPTIONAL field on `SongResultSchema`,
+which also changes `SongJobSchema`'s snapshot because it embeds `SongResultSchema`. Nothing
+else in C1–C8 moved: no `MuseApi` method changed shape, no provider hook key, no route, no
+cost constant.
+
+```ts
+SongResultSchema = z.object({
+  …,
+  lyricsLrc: z.string().optional(),   // NEW
+});
+```
+
+**What it is.** Per-line lyric timing, LRC format (`[mm:ss.cc]line`, newline-separated) —
+exactly the string the AI Song backend already returns in
+`timestamps.lyrics_lrc_timestamps`. It was added because the product owner reported that a
+song result now carries timestamps and the web player could not use them: clicking a lyric
+line did nothing (YMW260903P0005). It now seeks to that line.
+
+**RD action required — one field to populate.** Map
+`result.timestamps.lyrics_lrc_timestamps` onto `lyricsLrc`, verbatim, no parsing or
+re-formatting on your side; `src/lib/mv/lyrics.ts` (`parseLrc`) is the only reader and it
+handles both `[mm:ss.cc]` and `[mm:ss]`, ignores untimed lines such as `[verse]`, and sorts
+by time. Nothing breaks if you do not: the field is optional and every screen falls back to
+spreading `lyrics` evenly across `durationSec`, which is what they all did before.
+
+**Two things NOT to assume about it.**
+
+- **It is not a re-encoding of `lyrics`, and the two may disagree in both directions.** The
+  sample the product owner supplied splits one written line into two sung ones, adds an
+  ad-lib that is in no written line, contracts "There is" to "There's", and drops the
+  `[intro]`/`[verse]`/`[chorus]` section tags. **Where `lyricsLrc` is present it is what the
+  screens display**, so do not try to align it against `lyrics` before sending it.
+- **It is per-LINE, not per-word.** If the backend ever exposes word-level timing that is a
+  second field and a second decision, not a change to this one.
+
+**Not on `CommunitySongSchema`.** The community catalog is presentation fixture data, so the
+prototype derives a catalog song's LRC in `lib/mv/community.ts`
+(`lyricsLrcForTitle`) — the same call `songAudioUrl` and `mvCoverRatio` already make, and it
+keeps that schema at zero diff.
+
+---
+
 ## 2026-09-07 — **NO CONTRACT CHANGE** — home-page mobile spacing, AI MV/Song desktop centering, three color/copy fixes
 
 **Surfaces: none of C1–C8 moved.** Everything below is CSS (`designer-overrides.css`,

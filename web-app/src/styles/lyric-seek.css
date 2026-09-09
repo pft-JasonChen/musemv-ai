@@ -1,0 +1,67 @@
+/* ============================================================================
+   lyric-seek.css — a lyric line is a BUTTON now (YMW260903P0005, 2026-09-09).
+
+   WHY THIS ISN'T IN `src/styles/designer/`
+     Everything there is byte-identical to the drop and `npm run designer:check`
+     enforces it. DP's lyric lines are `<p>`s, because DP has no click-to-seek —
+     so `.lyrics-sheet__line` / `.song-result__lyrics-inline-line` carry no
+     button reset. Adding one to those files would fail the check and be
+     reverted by the next re-sync.
+
+   WHY IT ISN'T IN `designer-overrides.css` EITHER
+     That file's rule 1 is "only for a defect already written up in
+     DESIGNER-TODO". This is not a defect in DP's CSS; it is a control DP does
+     not have. Same call, and same reasoning, as
+     `community-profile-mv-preview.css` and `consent-dialog.css`: WA-authored
+     CSS that has to use DP's class names, so it gets its own file.
+
+   WHY IT IS ONLY A RESET
+     The two line classes already set every visual property that matters —
+     colour/opacity, font family/size/weight, padding, margin, and the 0.2s
+     transition into the `--active` state. A `<button>` inherits none of a
+     `<p>`'s defaults though, so without this the lines would render centred,
+     boxed, in the UA's own font. Nothing here changes how a line LOOKS: the
+     seekable and read-only renderings are pixel-identical, which is what keeps
+     the visual baselines honest about a behaviour-only change.
+
+     Deliberately absent: `:focus-visible`. `globals.css` already applies the
+     focus ring to every `button` globally — re-adding it per component is
+     called out there as the thing not to do.
+   ========================================================================== */
+
+button.lyrics-sheet__line,
+button.song-result__lyrics-inline-line {
+  /* `display: block` + `width: 100%` so the hit target is the whole row, not
+     just the glyphs — a one-word lyric line is otherwise a ~40px target. */
+  display: block;
+  width: 100%;
+  appearance: none;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* `line-height` is set on ONE of the two classes only, and the difference is
+   the whole reason these are separate rules.
+
+   Chrome's UA stylesheet styles `button` with the `font` SHORTHAND, which
+   resets `line-height` to `normal`. A UA declaration loses to any author one —
+   so `.song-result__lyrics-inline-line`, which declares `line-height: 26px`
+   itself, needs nothing. `.lyrics-sheet__line` declares no line-height at all
+   and relies on inheritance, which a UA declaration DOES beat, so the sung
+   lines would sit tighter than the written ones without this.
+
+   It must not be in the shared rule above: `button.<class>` is (0,1,1) and
+   would then override the 26px the other class is deliberately setting. */
+button.lyrics-sheet__line {
+  line-height: inherit;
+}
+
+/* `.song-result__lyrics-inline-line` sets `margin: 0 0 8px` and no padding;
+   the reset keeps the margin, but a button's UA padding would add space the
+   `<p>` never had. `.lyrics-sheet__line`'s own `padding: 6px 0` is intentional
+   and stays. */
+button.song-result__lyrics-inline-line {
+  padding: 0;
+}

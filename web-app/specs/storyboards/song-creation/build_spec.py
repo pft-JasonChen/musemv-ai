@@ -404,6 +404,8 @@ cfg = {
                     'limits': [
                         'Custom mode plus typed lyrics is what produces the Lyrics panel &mdash; Simple mode never does (P1-S7).',
                         'Section markers ([intro], [verse], [chorus], [bridge], [outro]) render as their own lines, same as typed.',
+                        ('Since 2026-09-09 (YMW260903P0005 / AC-SONG-18) every line here seeks to its own timestamp on click. Pixel-identical to this capture &mdash; the change is the affordance, not the appearance.',
+                         'For a song the backend has timed, the DISPLAYED lines come from the LRC rather than from the typed text, and the two can differ: the sung line list splits, repeats and ad-libs, and carries no section markers. In the prototype only the vendored Neon Static sample is timed that way.'),
                     ],
                 },
                 {
@@ -510,15 +512,16 @@ cfg = {
             'id': 'p6-my-creations-rail', 'num': 6,
             'name': 'Trending Songs vs My Creations',
             'desc': 'One independent screen &mdash; not a continuation of P4 or P5.',
-            'entry': 'Signed-in user with &ge;1 completed song revisits /song/create', 'outcome': 'Side rail shows My Creations',
+            'entry': 'Signed-in user revisits /song/create', 'outcome': 'Side rail shows My Creations',
             'steps': [
                 {
                     'shot': '15_my_creations_rail.png', 'num': 1,
-                    'user': 'A signed-in user with at least one completed song revisits /song/create.',
+                    'user': 'A signed-in user revisits /song/create.',
                     'system': 'The side rail shows &ldquo;My Creations&rdquo; (their own finished songs) in place of &ldquo;Trending Songs&rdquo;.',
                     'exact': ['Section label: &ldquo;My Creations&rdquo;'],
                     'limits': [
-                        'The swap needs BOTH conditions &mdash; signed in AND at least one completed song; either alone still shows Trending Songs.',
+                        ('Rewritten 2026-09-09 (YMW260902P0013). This step used to require BOTH signing in AND having generated a song, and that was the reported defect: the rail read only the in-session History, which starts empty, so a signed-in user saw My Creations on whichever create screen they had just used and Trending Songs on the other. The two pages looked like they disagreed while running identical code.',
+                         'Both rails now read useMyCreations &mdash; live session jobs merged with the same seeded creations /history shows &mdash; so signing in is the only condition a real user has to meet. The &ldquo;at least one creation&rdquo; test survives to keep a SIGNED-OUT visitor on Trending Songs. See AC-SONG-19 / AC-MV-21.'),
                         'My Creations drops the &ldquo;See all&rdquo; link that Trending Songs has; each row opens that song&rsquo;s own result page instead.',
                     ],
                 },
@@ -556,11 +559,13 @@ cfg = {
                 {
                     'shot': '25_result_lyrics_sheet.png', 'num': 3,
                     'user': 'Taps the Lyrics icon.',
-                    'system': 'A separate Lyrics sheet opens as its own overlay, with its own mini player.',
+                    'system': 'A separate Lyrics sheet opens as its own overlay, with its own mini player. Every line is a control: tapping one seeks playback to that line.',
                     'exact': ['Title: &ldquo;Lyrics&rdquo;'],
                     'limits': [
                         ('This is a DIFFERENT surface from the always-visible inline lyrics panel (P2-S10).',
                          'Both exist at once on desktop; the icon only ever appears when the song has lyrics, same gate as the inline panel (AC-SONG-06).'),
+                        ('&#9888; SCREENSHOT PREDATES click-to-seek (added 2026-09-09, YMW260903P0005 / AC-SONG-18). The pixels are unchanged &mdash; the lines became &lt;button&gt;s styled back to their exact previous appearance &mdash; so this capture is still accurate about what the sheet LOOKS like, and silent about the affordance.',
+                         'A line&rsquo;s time comes from the result&rsquo;s own LRC (SongResult.lyricsLrc) where the backend supplies one, and otherwise from spreading the lines evenly across the duration &mdash; the same estimate that has always driven the highlight. See A31 for the hover/press/focus states, which have no design yet.'),
                     ],
                 },
                 {
@@ -615,8 +620,8 @@ cfg = {
         ('GENERATING', '/song/creating after Create Song', 'Progress ring, step label, estimate, View Later', '&rarr; RESULT on done &middot; &rarr; FAILED on mock failure', 'On job outcome'),
         ('RESULT', '/song/result after a successful job', 'Player, transport, Like/Share/Download, Publish toggle, My Creations rail; Lyrics panel only when lyrics exist', '&rarr; GENERATING via Recreate &middot; &rarr; History via Back', 'On navigation away'),
         ('FAILED', '/song/creating after a mock failure', 'Generation Failed message, Retry, Back', '&rarr; GENERATING via Retry &middot; &rarr; EMPTY/READY via Back', 'On Retry or Back'),
-        ('Side rail: Trending Songs', 'Default &mdash; signed out, or signed in with zero completed songs', 'TOP_PICKS_SONGS with a &ldquo;See all&rdquo; link (P6-S1)', '&rarr; My Creations once both conditions below are met', '&mdash;'),
-        ('Side rail: My Creations', 'Signed in AND &ge;1 completed song', 'The user&rsquo;s own finished songs, no &ldquo;See all&rdquo; (P6-S1)', '&rarr; Trending Songs on sign-out (no completed songs is not reachable once one exists)', '&mdash;'),
+        ('Side rail: Trending Songs', 'SIGNED OUT (corrected 2026-09-09 &mdash; was &ldquo;or signed in with zero completed songs&rdquo;)', 'TOP_PICKS_SONGS with a &ldquo;See all&rdquo; link (P6-S1)', '&rarr; My Creations on sign-in', '&mdash;'),
+        ('Side rail: My Creations', 'Signed in (useMyCreations: live jobs + the seeded creations /history shows)', 'The user&rsquo;s own finished songs, no &ldquo;See all&rdquo; (P6-S1)', '&rarr; Trending Songs on sign-out only', '&mdash;'),
     ],
 
     'errors': [
@@ -684,7 +689,7 @@ cfg = {
         ('AC-HIST-03', 'A done row shows a Done status pill.', ['P1-S8', 'P2-S12']),
         ('AC-SONG-01b', 'Logged-out users see the full compose screen with no sign-in modal; the modal opens only on Create Song, and the insufficient-credit upsell never shows to a guest.', ['P4-S1', 'P4-S2']),
         ('GL-01', 'When credits are below the generation cost, the CTA routes to the buy-credits IAP instead of starting generation.', ['P5-S1']),
-        ('SONG-P1-S0', 'The compose side rail shows Trending Songs by default, swapping to My Creations once the user is signed in with at least one completed song.', ['P6-S1']),
+        ('SONG-P1-S0', 'The compose side rail shows Trending Songs to a signed-out visitor and My Creations to a signed-in user, over their own finished songs (live session jobs merged with the seeded creations /history shows). Corrected 2026-09-09, YMW260902P0013 / AC-SONG-19.', ['P6-S1']),
     ],
 
     'prototype_deltas': [

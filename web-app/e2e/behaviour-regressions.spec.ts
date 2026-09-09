@@ -1550,23 +1550,70 @@ test("3c / G7-2: every control on the account screens meets the 24x24 AA floor",
 // Slice 3d — /watch migrated to DP's MVDetailPage player half
 // ════════════════════════════════════════════════════════════════════════════
 
-test("3d / AC-EXP-04: /watch plays muted with play/pause, mute, Like, Share and Create", async ({
+/**
+ * `:not([aria-hidden])` is what picks the CURRENT video, and every assertion
+ * below needs it: the three-slot swipe track means a bare `.mv-player__video`
+ * matches THREE elements, two of them the off-screen neighbours, which are
+ * muted by design. The pre-2026-09-09 form of the mute assertion used the bare
+ * selector and so could not tell "the MV is muted" from "a neighbour is".
+ */
+const CURRENT_MV_VIDEO = ".mv-player__video:not([aria-hidden])";
+
+test("3d / AC-EXP-04: /watch exposes play/pause, mute, Like, Share and Create", async ({
   page,
 }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/watch");
 
-  // Muted 3:4 playback is the AC, so assert the element state, not the pixels —
-  // headless chromium has no H.264 decoder and paints the stage black.
-  const video = page.locator(".mv-player__video");
-  await expect(video).toHaveJSProperty("muted", true);
+  // Element state, not pixels — headless chromium has no H.264 decoder and
+  // paints the stage black (see AGENTS.md).
+  await expect(page.locator(CURRENT_MV_VIDEO)).toHaveJSProperty("paused", false);
 
   await expect(page.getByRole("button", { name: /Pause|Play/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Mute|Unmute/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Mute|Unmute/ }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Like" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Share" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Create MV/ })).toBeVisible();
+});
+
+/**
+ * The SOUND-ON DEFAULT half of AC-EXP-04 is asserted in
+ * `e2e/watch-autoplay-sound.spec.ts`, not here, and the reason is a Playwright
+ * constraint rather than a preference: proving it needs a browser launched with
+ * `--autoplay-policy=no-user-gesture-required`, and `test.use({ launchOptions })`
+ * is only legal at the top level of a spec FILE — "it forces a new worker".
+ * Every other test in this file should keep the strict default, because that is
+ * the state the muted fallback below exists for.
+ */
+test("YMW260902P0002: when autoplay-with-sound is REFUSED, the MV still plays", async ({
+  page,
+}) => {
+  // The other half of AC-EXP-04, in the default (strict) browser: this file
+  // sets no autoplay flag, so Chromium blocks the unmuted `play()` and
+  // `startPlayback`'s fallback is what is being measured here.
+  //
+  // Two things have to hold, and only together — either alone is satisfiable
+  // by a bug. The video must be PLAYING (a paused first frame is worse than
+  // the silent playback the bug reported), and the mute button must AGREE with
+  // the element, so the control never claims sound is on when it is not.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/watch");
+
+  const video = page.locator(CURRENT_MV_VIDEO);
+  await expect(video).toHaveJSProperty("paused", false);
+  const muted = await video.evaluate((v: HTMLVideoElement) => v.muted);
+  await expect(page.getByRole("button", { name: muted ? "Unmute" : "Mute" }).first()).toBeVisible();
+
+  // And a real user gesture gets the sound the default was asking for — which
+  // is the escape hatch that makes the fallback acceptable rather than a
+  // second silent failure.
+  if (muted) {
+    await page.getByRole("button", { name: "Unmute" }).first().click();
+    await expect(video).toHaveJSProperty("muted", false);
+    await expect(video).toHaveJSProperty("paused", false);
+  }
 });
 
 test("3d: the seek bar is operable by keyboard, not just pointer", async ({ page }) => {
@@ -2097,13 +2144,37 @@ test("3g / S2: the trim entry point survived the migration", async ({ page }) =>
 });
 
 test("3g / R9: the create-screen rail links carry the locale prefix", async ({ page }) => {
-  await login(page);
+  // BOTH branches of the rail, because they have different link sets and only
+  // one is reachable per auth state. Signed in it is "My Creations" (row links
+  // into the user's own results, and DP renders NO "See all"); signed out it is
+  // "Trending MVs" (community rows plus a "See all").
+  //
+  // Rewritten 2026-09-09 (YMW260902P0013). It used to check both an item href
+  // AND `.mv-create__side-see-all` in one signed-in pass — which worked only
+  // while a signed-in user still saw Trending, i.e. while the reported bug was
+  // present. Now that signing in shows My Creations, that "See all" does not
+  // exist and the old assertion failed on a screen that is behaving correctly.
+  // R9's actual claim — every rail link carries the prefix — is unchanged, and
+  // is now checked in the state each link actually appears in.
   await page.setViewportSize({ width: 1440, height: 900 });
+
+  // Signed OUT: Trending, with See all. `/mv/room` is deliberately not
+  // auth-guarded, which is what makes this state reachable.
   await page.goto("/jpn/mv/room");
-  await expect(page.locator(".mv-create__side-item").first()).toHaveAttribute("href", /^\/jpn\//);
   await expect(page.locator(".mv-create__side-see-all")).toHaveAttribute(
     "href",
     "/jpn/explore/mvs",
+  );
+  await expect(page.locator(".mv-create__side-item").first()).toHaveAttribute("href", /^\/jpn\//);
+
+  // Signed IN: My Creations. Same prefix requirement, different destination —
+  // and this is the branch a real user is almost always in.
+  await login(page);
+  await page.goto("/jpn/mv/room");
+  await expect(page.locator(".mv-create__side-title")).toHaveText("My Creations");
+  await expect(page.locator(".mv-create__side-item").first()).toHaveAttribute(
+    "href",
+    /^\/jpn\/mv\/result\?id=/,
   );
 });
 
@@ -3016,6 +3087,20 @@ test("G7 3g-3: a rail titled for the user's own work does not show other people'
   // 2026-08-06: the rail now has TWO modes again (items 4/5), so the pairing is
   // checked against the ITEM hrefs rather than "See all" — DP drops "See all"
   // entirely in the My Creations branch, so its absence is not evidence.
+  //
+  // ── WAIT OUT SHELL-E1 BEFORE READING, added 2026-09-09 ────────────────────
+  // Every route is prerendered with `authStore.getServerSnapshot() === false`,
+  // so the served HTML always carries the SIGNED-OUT rail and hydration swaps
+  // it. Reading the title and then the hrefs tore across that boundary: this
+  // test caught "Trending MVs" paired with `/mv/result` hrefs and reported a
+  // lie that was never on screen for a single frame.
+  //
+  // It passed before `YMW260902P0013` only because both branches then rendered
+  // Trending for this account, so there was nothing to tear. The signed-out
+  // half of the pairing has its own test now ("YMW260902P0013: signed OUT,
+  // both create rails still fall back to Trending" asserts those rows do NOT
+  // point at a result screen), so waiting for the settled signed-in title here
+  // narrows this test's state rather than dropping half its coverage.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
 
@@ -3024,47 +3109,95 @@ test("G7 3g-3: a rail titled for the user's own work does not show other people'
     ["/song/create", ".song-create__side-title", ".song-create__side-item", "/song/result"],
   ] as const) {
     await page.goto(url);
-    const title = (await page.locator(rail).innerText()).trim();
+    await expect(page.locator(rail)).toHaveText("My Creations");
     const hrefs = await page
       .locator(item)
       .evaluateAll((els) => els.map((e) => e.getAttribute("href") ?? ""));
     expect(hrefs.length, `${url} rail has no items`).toBeGreaterThan(0);
     for (const href of hrefs) {
-      if (/my creations/i.test(title)) {
-        expect(href, `"${title}" on ${url} must lead to the user's own work`).toContain(own);
-      } else {
-        expect(href, `"${title}" on ${url} must lead to community content`).not.toContain(own);
-      }
+      expect(href, `"My Creations" on ${url} must lead to the user's own work`).toContain(own);
     }
   }
 });
 
-test("items 4/5: a signed-in user with nothing generated still sees Trending", async ({ page }) => {
-  // DP can key this on `isSignedIn` alone because its MY_CREATIONS fixture is
-  // never empty. WA's comes from real (session-local) History, so the signed-in
-  // branch has to also require that the user HAS something — otherwise the rail
-  // is a "My Creations" heading over nothing.
+test("YMW260902P0013: signed in, BOTH create rails show My Creations", async ({ page }) => {
+  // ── THIS TEST USED TO ASSERT THE OPPOSITE, AND THAT WAS THE BUG ───────────
+  //
+  // It read "a signed-in user with nothing generated still sees Trending" on
+  // both rails. True of the code, and it was the reported defect: the rails
+  // read ONLY the session-local History, which starts empty, so a signed-in
+  // user saw "My Creations" on whichever screen they had just generated
+  // something on and "Trending" on the other. The reporter had made an MV and
+  // no song, so the two pages looked like they disagreed (YMW260902P0013).
+  //
+  // Both rails now read `useMyCreations`, which merges live jobs with the same
+  // seeded creations `/history` has always shown — so this asserts the pair
+  // AGREE, which is what was actually asked for. The old assertion moved with
+  // the decision rather than holding it in place (the error log's "a test can
+  // hold a decision in place long after the decision is wrong").
   await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+
+  for (const [url, title, item, own] of [
+    ["/mv/room", ".mv-create__side-title", ".mv-create__side-item", "/mv/result"],
+    ["/song/create", ".song-create__side-title", ".song-create__side-item", "/song/result"],
+  ] as const) {
+    await page.goto(url);
+    await expect(page.locator(title)).toHaveText("My Creations");
+    // DP renders no "See all" in this branch.
+    await expect(page.locator(`${title.replace("-title", "-see-all")}`)).toHaveCount(0);
+    // The rows have to BE creations, not just be labelled as them — the 3g-3
+    // finding was exactly a true heading over other people's fixtures.
+    const hrefs = await page
+      .locator(item)
+      .evaluateAll((els) => els.map((e) => e.getAttribute("href") ?? ""));
+    expect(hrefs.length, `${url} rail is empty`).toBeGreaterThan(0);
+    for (const href of hrefs) expect(href).toContain(own);
+  }
+});
+
+test("YMW260902P0013: signed OUT, both create rails still fall back to Trending", async ({
+  page,
+}) => {
+  // The half of the two-mode rail that did NOT change, and the reason the
+  // `length > 0` guard survives rather than being replaced by a bare
+  // `loggedIn`: a visitor has no creations, so the heading would be over
+  // nothing. `/mv/room` is deliberately not auth-guarded (it is the marketing
+  // Navbar's "Start for Free" destination), which is what makes this state
+  // reachable at all. NOTE: no `login(page)` here — that is the point.
   await page.setViewportSize({ width: 1440, height: 950 });
 
   await page.goto("/mv/room");
   await expect(page.locator(".mv-create__side-title")).toHaveText("Trending MVs");
   await expect(page.locator(".mv-create__side-see-all")).toBeVisible();
-
-  await page.goto("/song/create");
-  await expect(page.locator(".song-create__side-title")).toHaveText("Trending Songs");
-  await expect(page.locator(".song-create__side-see-all")).toBeVisible();
+  for (const href of await page
+    .locator(".mv-create__side-item")
+    .evaluateAll((els) => els.map((e) => e.getAttribute("href") ?? ""))) {
+    expect(href).not.toContain("/mv/result");
+  }
 });
 
-test("items 4/5: generating a song flips /song/create's rail to My Creations", async ({ page }) => {
-  // The other half of the pair, and the one that would silently rot: the rail
-  // only changes once History has a completed entry, and History is in-memory,
-  // so this has to be driven through a real generation in the same page context.
+test("items 4/5: generating a song adds it to /song/create's rail", async ({ page }) => {
+  // The live-job half of `useMyCreations`, and the one that would silently rot:
+  // a fresh generation has to reach the rail through the in-memory
+  // `HistoryProvider`, not through the seed.
+  //
+  // Asserting the COUNT GREW, not the title: since YMW260902P0013 the title
+  // already reads "My Creations" before the generation (the seeded creations),
+  // so a title assertion could no longer tell the live path from the seed.
   test.slow();
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/song/create");
-  await expect(page.locator(".song-create__side-title")).toHaveText("Trending Songs");
+  // WAIT FOR THE RAIL TO SETTLE BEFORE COUNTING, and the reason is worth
+  // knowing: every route is prerendered with `authStore.getServerSnapshot()`
+  // === false, so the served HTML always shows the SIGNED-OUT rail — 7
+  // Trending Songs — and it swaps to My Creations on hydration. Counting
+  // straight after `goto` captured that 7 and then expected 8 where the real
+  // answer was 4. Asserting the title first is what pins the count to the
+  // branch this test is about.
+  await expect(page.locator(".song-create__side-title")).toHaveText("My Creations");
+  const before = await page.locator(".song-create__side-item").count();
 
   await page
     .getByPlaceholder(/A bittersweet love song/)
@@ -3073,14 +3206,18 @@ test("items 4/5: generating a song flips /song/create's rail to My Creations", a
   await page.waitForURL("**/song/result", { timeout: 30_000 });
 
   // IN-APP navigation, deliberately. History is in-memory (`HistoryProvider`),
-  // so a `page.goto` here would reload the app, empty it, and the rail would
-  // correctly read "Trending Songs" again — a green-looking test measuring the
-  // wrong thing.
+  // so a `page.goto` here would reload the app and empty it — the rail would
+  // fall back to the seed alone and the count would not have grown, a
+  // green-looking test measuring the wrong thing.
   await page.locator(".sidebar__nav-item[href$='/song/create']").click();
   await page.waitForURL("**/song/create");
   await expect(page.locator(".song-create__side-title")).toHaveText("My Creations");
-  // DP renders no "See all" in this branch.
-  await expect(page.locator(".song-create__side-see-all")).toHaveCount(0);
+  await expect(page.locator(".song-create__side-item")).toHaveCount(before + 1);
+  // The live job is FIRST — newest work at the top, ahead of the seed.
+  await expect(page.locator(".song-create__side-item").first()).not.toHaveAttribute(
+    "href",
+    /h-neon-static/,
+  );
 });
 
 test("G7 3k-1: MV Edit still explains why Merge is disabled", async ({ page }) => {
@@ -4308,4 +4445,171 @@ test("2026-09-02: the avatar crop dialog opens ON TOP of the Edit Profile modal"
   await page.locator(".face-picker__confirm").click();
   await expect(page.locator(".face-picker-overlay")).toHaveCount(0);
   await expect(page.locator('[role="dialog"][aria-label="Edit Profile"]')).toBeVisible();
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// YMW260903P0005 — clicking a lyric jumps to that timestamp
+//
+// Two halves, and they fail differently, so both are asserted:
+//   · the CONTROL — a lyric line is a real button that seeks. This is what the
+//     bug reported missing on `/song/result` and `/song/play`.
+//   · the DATA — the vendored `Neon Static` sample's timing is REAL (its own
+//     LRC, played against its own mp3). If that ever stops resolving,
+//     `timedLyrics()` silently degrades to the even-spread estimate and the
+//     click still "works", just against invented times. That is the failure
+//     mode worth a test, because nothing about it looks broken on screen.
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Its own audio, and the first/last cue from `NEON_STATIC_LRC`. */
+const NEON_STATIC_AUDIO = "Neon%20Static.mp3";
+const NEON_FIRST_CUE = 14.94;
+const NEON_LAST_CUE = 114.46;
+
+/** `<audio>`'s real duration, once metadata has landed. */
+function audioDuration(page: Page): Promise<number> {
+  return page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        const a = document.querySelector("audio")!;
+        if (a.duration > 0) return resolve(a.duration);
+        a.addEventListener("loadedmetadata", () => resolve(a.duration), { once: true });
+      }),
+  );
+}
+
+const currentTime = (page: Page) =>
+  page.evaluate(() => document.querySelector("audio")!.currentTime);
+
+test("YMW260903P0005: a lyric line on /song/result seeks to its own timestamp", async ({
+  page,
+}) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  // The community cold-resolve path, so this needs no flow state (drop 2).
+  await page.goto("/song/result?id=sp-neon-static&from=song-detail");
+
+  const lines = page.locator("button.song-result__lyrics-inline-line");
+  // A BUTTON, not a `<p onClick>`: the tag IS the assertion, because the
+  // markup and every pixel are deliberately unchanged by this fix, so only the
+  // a11y contract can prove the affordance exists (same reasoning as TODO#5's
+  // seek-bar sweep).
+  await expect(lines.first()).toBeVisible();
+  const count = await lines.count();
+  expect(count, "no seekable lyric lines").toBeGreaterThan(5);
+  await audioDuration(page);
+
+  const target = count - 1; // the last cue: furthest from wherever playback is
+  const label = (await lines.nth(target).innerText()).trim();
+  await lines.nth(target).click();
+  // Generous window: playback is running, so the read is "the cue plus however
+  // long the round-trip took", never the cue exactly.
+  const seeked = await currentTime(page);
+  expect(seeked).toBeGreaterThan(NEON_LAST_CUE - 1);
+  expect(seeked).toBeLessThan(NEON_LAST_CUE + 5);
+
+  // ...and the highlight follows the same cue list, so the two cannot disagree
+  // about which line is current.
+  await expect(page.locator(".song-result__lyrics-inline-line--active")).toHaveText(label);
+});
+
+test("YMW260903P0005: the Lyrics SHEET seeks too, on /song/play", async ({ page }) => {
+  // The sheet is the only lyrics surface `/song/play` has (drop 2 deleted the
+  // desktop Now Playing column), and it lives inside a phone-only full-screen
+  // player — so this is the one assertion that must run at 375.
+  await login(page);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/song/play?id=sp-neon-static");
+
+  await page.getByRole("button", { name: "Show lyrics" }).click();
+  const lines = page.locator("button.lyrics-sheet__line");
+  await expect(lines.first()).toBeVisible();
+  // Settle the sheet before touching it: the overlay fades over 300ms and
+  // `toBeVisible()` is true at opacity 0 (the 3g-2 lesson).
+  await expect
+    .poll(async () =>
+      page.evaluate(
+        () => getComputedStyle(document.querySelector(".lyrics-sheet-overlay")!).opacity,
+      ),
+    )
+    .toBe("1");
+  await audioDuration(page);
+
+  await lines.first().click();
+  const seeked = await currentTime(page);
+  expect(seeked).toBeGreaterThan(NEON_FIRST_CUE - 1);
+  expect(seeked).toBeLessThan(NEON_FIRST_CUE + 5);
+});
+
+test("YMW260903P0005: the timed sample plays ITS OWN audio, not a shared demo mp3", async ({
+  page,
+}) => {
+  // Every other song in the catalog is assigned one of two generic demo mp3s
+  // (`songAudioUrl`'s alternation). If `Neon Static` were handed one of those,
+  // its real cues would land on the wrong beats of the wrong track — the sample
+  // would be a WORSE demo than the estimate it replaced, and nothing on screen
+  // would look wrong.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/result?id=sp-neon-static&from=song-detail");
+
+  await expect
+    .poll(async () => page.evaluate(() => document.querySelector("audio")?.currentSrc ?? ""))
+    .toContain(NEON_STATIC_AUDIO);
+
+  // And the cues fit inside the track. A sample whose last cue is past the end
+  // of its own audio is unseekable at exactly the line most likely to be tried.
+  expect(await audioDuration(page)).toBeGreaterThan(NEON_LAST_CUE);
+});
+
+test("YMW260903P0005: a song with NO real timing is still click-to-seek", async ({ page }) => {
+  // The deliberate scope call, and the one a future session is most likely to
+  // "fix" the wrong way. Only the vendored sample has real per-line timing;
+  // every other song's lines are spread evenly across its duration. That
+  // estimate ALREADY drives the highlight and always has, so clicking a line
+  // seeks to the same estimate the highlight is already asserting — offering
+  // the control there is consistent, not a fabrication. Suppressing it would
+  // leave the reported bug in place for every song a user actually generates.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/result?id=sp-pop-anthem&from=song-detail");
+
+  const lines = page.locator("button.song-result__lyrics-inline-line");
+  await expect(lines.first()).toBeVisible();
+  const count = await lines.count();
+  const duration = await audioDuration(page);
+
+  const target = count - 1;
+  await lines.nth(target).click();
+  const seeked = await currentTime(page);
+  const expected = (target / count) * duration;
+  expect(seeked).toBeGreaterThan(expected - 1);
+  expect(seeked).toBeLessThan(expected + 5);
+});
+
+test("YMW260903P0005: My Creations -> the result screen carries the real timing", async ({
+  page,
+}) => {
+  // The path the bug was filed against — "the RESULT now supports timestamp".
+  // A creation opened from the rail is seeded through `useOpenCreation`, which
+  // looks the LRC and the audio up BY TITLE; the community cold-resolve path
+  // above goes through `songResultFromCommunity` instead. Two different
+  // lookups, so one passing is not evidence about the other.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+
+  await page.locator(".song-create__side-item[href*='h-neon-static']").click();
+  await page.waitForURL("**/song/result?id=h-neon-static");
+
+  await expect
+    .poll(async () => page.evaluate(() => document.querySelector("audio")?.currentSrc ?? ""))
+    .toContain(NEON_STATIC_AUDIO);
+  await audioDuration(page);
+
+  const lines = page.locator("button.song-result__lyrics-inline-line");
+  await expect(lines.first()).toHaveText("Wires hum beneath the floor");
+  await lines.first().click();
+  const seeked = await currentTime(page);
+  expect(seeked).toBeGreaterThan(NEON_FIRST_CUE - 1);
+  expect(seeked).toBeLessThan(NEON_FIRST_CUE + 5);
 });

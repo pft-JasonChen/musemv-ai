@@ -14,7 +14,13 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
-import { getCommunityMv, isOfficialMv, mvCoverRatio, NEW_MVS, TRENDING_MVS } from "@/lib/mv/community";
+import {
+  getCommunityMv,
+  isOfficialMv,
+  mvCoverRatio,
+  NEW_MVS,
+  TRENDING_MVS,
+} from "@/lib/mv/community";
 import { CommunityEmpty } from "@/components/community/EmptyState";
 import { MvGridSections } from "@/components/community/MvGridSections";
 
@@ -74,10 +80,12 @@ import { MvGridSections } from "@/components/community/MvGridSections";
  * transport. Those four are genuinely gone.
  *
  * That was checked against the spec rather than assumed. **AC-EXP-04** requires
- * muted 3:4 playback with play/pause + mute, and Like, Share and Create Music
- * Video pre-filling `/mv/room` — all present. The badge/meta/stats/prompt are
- * not in any AC, so this is a redesign, not a silent spec regression. Recorded
- * in `DESIGNER-TODO.md` so the designer sees what the port costs.
+ * playback in the item's own ratio with play/pause + mute, and Like, Share and
+ * Create Music Video pre-filling `/mv/room` — all present. (It required MUTED
+ * playback until 2026-09-09; see the `muted` state below.) The
+ * badge/meta/stats/prompt are not in any AC, so this is a redesign, not a
+ * silent spec regression. Recorded in `DESIGNER-TODO.md` so the designer sees
+ * what the port costs.
  *
  * DP also ADDS a seek bar and fullscreen. The seek bar goes through `SeekBar`,
  * which is keyboard-operable — DP's is pointer-only, the defect G7 logged
@@ -197,7 +205,20 @@ export function CommunityMvPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(true);
-  const [muted, setMuted] = useState(true);
+  // ── SOUND ON BY DEFAULT (YMW260902P0002) ──────────────────────────────────
+  // Was `true`: clicking a Trending MV on Home landed on a silent video, and
+  // the whole point of the screen is to hear the song the MV was made for.
+  //
+  // The reason it was muted is real, though, and is why `startPlayback` below
+  // exists rather than a bare `useState(false)`: a browser only allows
+  // autoplay WITH sound when the document has user activation, and the click
+  // that opened this screen belongs to the PREVIOUS document — it does not
+  // carry across the navigation. So an unmuted `play()` can reject with
+  // `NotAllowedError`, which would leave a paused first frame instead of a
+  // silent playing one — a worse outcome than the bug. Every play attempt
+  // therefore tries unmuted FIRST and only falls back to muted if the browser
+  // refuses, keeping `muted` state and the mute button honest either way.
+  const [muted, setMuted] = useState(false);
   const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   // See this file's "REWRITTEN AS A 3-SLOT ROTATING TRACK" header comment.
@@ -303,16 +324,22 @@ export function CommunityMvPlayer() {
     loadSlot(0, itemAt(mvIndex, -1));
     loadSlot(1, itemAt(mvIndex, 0));
     loadSlot(2, itemAt(mvIndex, 1));
-    const curr = slotVideoRefs.current[1];
-    if (curr) {
-      curr.muted = muted;
-      void curr.play().then(
-        () => setPlaying(true),
-        () => setPlaying(false),
-      );
-    }
+    startPlayback(slotVideoRefs.current[1]);
     lastSyncedIdRef.current = mv.id;
   }
+
+  // The no-defined-neighbour path (`mvIndex < 0`) has no `resyncSlots` to
+  // start it — only the `autoPlay` attribute, which a browser silently
+  // refuses for an UNMUTED video with no user activation. Routing it through
+  // `startPlayback` gives it the same muted fallback the slot path has, so it
+  // never sits on a frozen first frame (YMW260902P0002).
+  useEffect(() => {
+    if (mvIndex >= 0) return;
+    startPlayback(videoRef.current);
+    // Per-id, exactly like the slots' own resync below — not on every mute
+    // toggle, which would restart a paused video.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mv.id, mvIndex]);
 
   useEffect(() => {
     if (mvIndex < 0 || lastSyncedIdRef.current === mv.id) return;
@@ -323,17 +350,42 @@ export function CommunityMvPlayer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mv.id, mvIndex]);
 
+  /**
+   * Start `v` at the current mute setting, falling back to muted if the
+   * browser refuses to autoplay with sound (YMW260902P0002 — see the `muted`
+   * state's own comment for why the fallback is not optional).
+   *
+   * Every rejection is handled: an unhandled `play()` rejection is a console
+   * error, and the R-2 specs assert the console is empty (the 3b lesson).
+   */
+  function startPlayback(v: HTMLVideoElement | null) {
+    if (!v) return;
+    v.muted = muted;
+    void v.play().then(
+      () => setPlaying(true),
+      () => {
+        if (v.muted) {
+          setPlaying(false);
+          return;
+        }
+        // Autoplay-with-sound was blocked. Retry muted so the MV still plays
+        // — and move `muted` state with it, so the button offers "Unmute"
+        // rather than claiming sound is already on.
+        v.muted = true;
+        setMuted(true);
+        void v.play().then(
+          () => setPlaying(true),
+          () => setPlaying(false),
+        );
+      },
+    );
+  }
+
   function togglePlay() {
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
-      // A cold load has no user activation, so play() can reject with
-      // NotAllowedError. An unhandled rejection is a console error, and the R-2
-      // specs assert the console is empty (the 3b lesson).
-      void v.play().then(
-        () => setPlaying(true),
-        () => setPlaying(false),
-      );
+      startPlayback(v);
     } else {
       v.pause();
       setPlaying(false);
@@ -396,13 +448,7 @@ export function CommunityMvPlayer() {
     const newFeedIdx = (feedIdx + direction + MV_LIST.length) % MV_LIST.length;
 
     const promoted = slotVideoRefs.current[newRoles[1]];
-    if (promoted) {
-      promoted.muted = muted;
-      void promoted.play().then(
-        () => setPlaying(true),
-        () => setPlaying(false),
-      );
-    }
+    startPlayback(promoted);
     setCurrentTime(promoted?.currentTime ?? 0);
     setDuration(promoted?.duration ?? 0);
 

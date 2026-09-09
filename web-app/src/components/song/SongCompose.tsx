@@ -13,10 +13,9 @@ import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { useHistory } from "@/components/providers/HistoryProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { creationHref, useOpenCreation } from "@/components/history/useOpenCreation";
-import { MOCK_USER } from "@/lib/user";
+import { useMyCreations } from "@/components/history/useMyCreations";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { GENRES, MOODS, VOCALS } from "@/lib/mv/mock";
@@ -105,14 +104,20 @@ export function SongCompose() {
   const router = useRouter();
   const { locale } = useLocale();
   const { songCompose: s, patchSongCompose: patch, resetForNewSong } = useSongFlow();
-  const { loggedIn, requireLogin } = useAuth();
-  const { history } = useHistory();
+  const { requireLogin } = useAuth();
   const openCreation = useOpenCreation();
   const { credits } = useCredits();
 
   // Items 4/5 (2026-08-06) — see the rail's note in `MvRoom.tsx`.
-  const mySongs = history.filter((h) => h.kind === "song" && h.status === "completed");
-  const showMine = loggedIn && mySongs.length > 0;
+  // YMW260902P0013 — this rail showed "Trending Songs" while `/mv/room` showed
+  // "My Creations", which looked like the two screens disagreeing. They ran
+  // identical code; what differed was the DATA, because both read only the
+  // session-local History and the reporter had generated an MV and no song.
+  // `useMyCreations` merges that with the same seeded creations `/history`
+  // shows, so signed in ⇒ my creation songs, on both screens. Full reasoning
+  // in that hook; `loggedIn` is folded into it.
+  const mySongs = useMyCreations("song");
+  const showMine = mySongs.length > 0;
   const [buyOpen, setBuyOpen] = useState(false);
   const [tipOpen, setTipOpen] = useState(false);
   const ready = isSongReady(s);
@@ -550,18 +555,19 @@ export function SongCompose() {
                   >
                     {/* Figma node 1351:28869 (1367:34073, reused for "My
                         Creations" too) — same community-style row as
-                        Trending Songs below. `HistoryItem` has no
-                        plays/likes/shares (see HistoryProvider.tsx), so
-                        these are genuinely 0 for a just-created, unpublished
-                        song — not a fabricated stand-in for real data. */}
+                        Trending Songs below. Stats come from
+                        `useMyCreations`: real numbers for a seeded creation,
+                        and genuinely 0 for a just-created unpublished one
+                        (`HistoryItem` carries no stats, see
+                        HistoryProvider.tsx) — not a fabricated stand-in. */}
                     <ListItem
                       variant="community"
                       title={song.title}
                       coverImage={song.thumb}
-                      username={MOCK_USER.name}
-                      plays={0}
-                      likes={0}
-                      shares={0}
+                      username={song.username}
+                      plays={song.plays}
+                      likes={song.likes}
+                      shares={song.shares}
                     />
                   </Link>
                 ))
