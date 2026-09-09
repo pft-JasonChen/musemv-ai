@@ -53,15 +53,27 @@ const CASES = [
     selector: ".sidebar",
     width: 1440,
   },
+  /**
+   * ⚠️ THESE TWO MUST POINT AT A ROUTE THAT ACTUALLY MOUNTS THEM, and for a
+   * while they did not. Both said `/explore/mvs`, which was correct when the
+   * spec was written — `MobileHeader`/`MobileTabBar` then mounted on every
+   * route. The 2026-08-22 "layer 1" change (see `AppShell.tsx`) narrowed that
+   * to `MobileHeader` on `/` only and `MobileTabBar` on `/` + `/history`, and
+   * the spec was not updated with it, so `toBeAttached()` could never pass on
+   * ANY platform. Found 2026-09-07, the first time e2e ran on this machine.
+   *
+   * `/` mounts both, so both cases use it. If the mounting rule narrows again,
+   * this is the list to revisit.
+   */
   {
     stylesheet: "MobileTabBar.css",
-    route: "/explore/mvs",
+    route: "/",
     selector: ".mobile-tabbar",
     width: 375,
   },
   {
     stylesheet: "MobileHeader.css",
-    route: "/explore/mvs",
+    route: "/",
     selector: ".mobile-header",
     width: 375,
   },
