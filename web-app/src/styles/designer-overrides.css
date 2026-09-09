@@ -2485,10 +2485,14 @@
   background: var(--neutral-dark-14, #212127);
 }
 
+/* Product owner, 2026-09-09 — was `var(--neutral-dark-64, #9c9cab)` (dim
+   gray); Figma "Share Page - Empty" (node 3738:70778) has this glyph as
+   solid white (`Neutral/Dark/100`), full-strength against its `--neutral-
+   dark-14` badge circle same as every other icon on this page. */
 .share-page__expired-icon-glyph {
   width: 34px;
   height: 34px;
-  background-color: var(--neutral-dark-64, #9c9cab);
+  background-color: var(--neutral-dark-100, #fff);
   mask-repeat: no-repeat;
   mask-position: center;
   mask-size: contain;
@@ -2510,6 +2514,13 @@
   color: var(--neutral-dark-64, #9c9cab);
   font-family: var(--font-family-primary);
   font-size: 14px;
+}
+
+/* Product owner, 2026-09-09 — spacing to the new "Try YouCam Muse" CTA
+   below, matching Figma's 24px gap between the message group and the
+   button row (node 3738:70778's "Error Message" auto-layout). */
+.share-page__expired-actions {
+  margin-top: 24px;
 }
 
 /* ── Shared controller pieces (song + MV) ─────────────────────────────── */
