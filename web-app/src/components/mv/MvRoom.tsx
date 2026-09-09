@@ -19,10 +19,9 @@ import { TemplateSheet } from "./TemplateSheet";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { useHistory } from "@/components/providers/HistoryProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { creationHref, useOpenCreation } from "@/components/history/useOpenCreation";
-import { MOCK_USER } from "@/lib/user";
+import { useMyCreations } from "@/components/history/useMyCreations";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
@@ -99,20 +98,24 @@ import {
 export function MvRoom() {
   const router = useRouter();
   const { compose, setCompose, patchCompose, resetForNewMv } = useMvFlow();
-  const { loggedIn, requireLogin } = useAuth();
-  const { history } = useHistory();
+  const { requireLogin } = useAuth();
   const openCreation = useOpenCreation();
   const { credits } = useCredits();
   const { locale } = useLocale();
 
-  const myMvs = history.filter((h) => h.kind === "mv" && h.status === "completed");
-  // Designer decision, 2026-08-07 (revised same day): back to items 4/5's
-  // original `loggedIn && myMvs.length > 0` — a freshly signed-in guest with
-  // zero finished MVs sees Trending, same as before signing in. The brief
-  // `loggedIn` alone + empty-state attempt (matching DP's `isSignedIn`
-  // exactly) was tried and reverted: seeing "My Creations" over a blank card
-  // right after signing in read as broken, not empty.
-  const showMine = loggedIn && myMvs.length > 0;
+  // Live session jobs MERGED WITH THE SAME SEEDED CREATIONS `/history` SHOWS
+  // (YMW260902P0013, 2026-09-09) — see `useMyCreations` for why the rails
+  // reading only the empty session provider was the bug. `loggedIn` is folded
+  // into the hook.
+  const myMvs = useMyCreations("mv");
+  // Designer decision, 2026-08-07 (revised same day): keep items 4/5's
+  // original `loggedIn && myMvs.length > 0` — a visitor with zero finished MVs
+  // sees Trending, same as before signing in. The brief `loggedIn` alone +
+  // empty-state attempt (matching DP's `isSignedIn` exactly) was tried and
+  // reverted: seeing "My Creations" over a blank card read as broken, not
+  // empty. The guard stays for the signed-OUT case; the signed-in branch is
+  // simply no longer empty by default.
+  const showMine = myMvs.length > 0;
   const [songOpen, setSongOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -675,11 +678,17 @@ export function MvRoom() {
 
           **The condition is `loggedIn` AND "has actually made something".** DP
           can say `isSignedIn` alone because its `MY_CREATIONS` is a fixture that
-          is never empty; WA's comes from the real (session-local) History, so a
-          user who has just signed in has none. Falling back to Trending there
-          beats a "My Creations" heading over nothing — tried the empty-state
-          card instead (designer request, 2026-08-07) and reverted the same day:
-          seeing it right after signing in read as broken, not empty.
+          is never empty. WA's used to come from the session-local History ALONE,
+          so a user who had just signed in had none — and since 2026-09-09
+          (YMW260902P0013) it comes from `useMyCreations`, which merges that with
+          the same seeded creations `/history` shows. So the signed-in branch is
+          no longer empty by default, and this screen no longer disagrees with
+          `/song/create` purely because of which flow the user happened to run.
+
+          The guard itself stays, for the signed-OUT case and because the
+          alternative was tried: an empty-state card (designer request,
+          2026-08-07) was reverted the same day — seeing it right after signing
+          in read as broken, not empty.
         */}
         <div className="mv-create__side">
           <div className="mv-create__side-header">
@@ -715,18 +724,18 @@ export function MvRoom() {
                   >
                     {/* Figma node 1762:38446 (2311:58208, "My Creations") —
                         same community-style row as Trending MVs below.
-                        `HistoryItem` has no plays/likes/shares (see
-                        HistoryProvider.tsx), so these are genuinely 0 for a
-                        just-created, unpublished MV — not a fabricated
-                        stand-in for real data. */}
+                        Stats come from `useMyCreations`: real numbers for a
+                        seeded creation, and genuinely 0 for a just-created
+                        unpublished one (`HistoryItem` carries no stats, see
+                        HistoryProvider.tsx) — not a fabricated stand-in. */}
                     <ListItem
                       variant="community"
                       title={mv.title}
                       coverImage={mv.thumb}
-                      username={MOCK_USER.name}
-                      plays={0}
-                      likes={0}
-                      shares={0}
+                      username={mv.username}
+                      plays={mv.plays}
+                      likes={mv.likes}
+                      shares={mv.shares}
                     />
                   </Link>
                 ))

@@ -304,6 +304,7 @@ result: object?
   id: string
   instrumental: boolean
   lyrics: string?
+  lyricsLrc: string?
   mood: string
   title: string
 status: enum[idle|queued|processing|done|failed]
@@ -321,6 +322,7 @@ genre: string
 id: string
 instrumental: boolean
 lyrics: string?
+lyricsLrc: string?
 mood: string
 title: string"
 `;

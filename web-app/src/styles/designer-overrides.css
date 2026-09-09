@@ -856,7 +856,7 @@
 }
 
 /* Product owner request, 2026-08-13 — AI Song page's two-column row: the
-   form panel becomes a fixed 660px (was `flex: 700 1 0; max-width: 700px`,
+   form panel becomes 660px (was `flex: 700 1 0; max-width: 700px`,
    proportionally shrinking against the side rail). `:not(--full)` guards the
    Processing state's full-width panel (no side rail next to it, see
    SongCreatePage.css's own comment above `.song-create__panel--full`) — a
@@ -864,20 +864,31 @@
    own `--full` rule and, loading after it, silently win and undo the
    full-width layout.
 
-   Follow-up, 2026-08-13: the side rail itself is now a fixed 372px (was
+   Follow-up, 2026-08-13: the side rail itself is now 372px (was
    `flex: 1 1 auto`, filling whatever the row had left) — the two-column row
    no longer fills 1440px edge-to-edge, and that's intentional per this
-   request, not a leftover gap to close. */
+   request, not a leftover gap to close.
+
+   Bug fix, 2026-09-08 — see the matching MV comment above
+   (`.mv-create__panel`/`.mv-create__side`) for the full diagnosis: both of
+   these were `flex: 0 0 660px`/`0 0 372px` (`flex-shrink: 0`), so the row
+   could never shrink below 660+372+48(gap)=1080px. That overlapped
+   `.sidebar` once it re-expands from its collapsed 76px to 240px at
+   1025px+ (`Sidebar.tsx`'s `COLLAPSE_QUERY: "max-width: 1024px"`, the
+   opposite direction from this file's `min-width: 1024px`), visible from
+   just above 1024px up to ~1460px. Restored to the same 660:372 (~64:36)
+   on-screen ratio as a shrinkable `flex-basis` instead of a fixed one —
+   `max-width` keeps the 660px/372px ceiling so 1440px+ is unchanged. */
 @media (min-width: 1024px) {
   .song-create__panel:not(.song-create__panel--full) {
-    flex: 0 0 660px;
-    width: 660px;
+    flex: 0 1 64%;
+    width: auto;
     max-width: 660px;
   }
 
   .song-create__side {
-    flex: 0 0 372px;
-    width: 372px;
+    flex: 0 1 36%;
+    width: auto;
     max-width: 372px;
   }
 }
@@ -965,22 +976,42 @@
 /* Product owner request, 2026-08-13 — AI MV page's two-column row on
    desktop, matching the same request already applied to AI Song
    (`.song-create__panel`/`.song-create__side`/`.song-create__side-list`
-   above): the form panel becomes a fixed 660px (was `flex: 700 1 0;
-   max-width: 700px`), and the side rail (`.mv-create__side`) becomes a
-   fixed 372px (was `flex: 332 1 0; max-width: 332px`) with its scrollable
+   above): the form panel becomes 660px (was `flex: 700 1 0;
+   max-width: 700px`), and the side rail (`.mv-create__side`) becomes
+   372px (was `flex: 332 1 0; max-width: 332px`) with its scrollable
    list box (`.mv-create__side-list`, verbatim height: 599px) at 500px.
    No `--full`-style full-width panel state exists on this page (unlike AI
-   Song's Processing stage), so no guard is needed here. */
+   Song's Processing stage), so no guard is needed here.
+
+   Bug fix, 2026-09-08 — the first cut of this request used `flex: 0 0
+   660px`/`0 0 372px`, i.e. `flex-shrink: 0`: the row could never get
+   narrower than 660+372+48(gap)=1080px no matter the viewport. That's
+   invisible above ~1440px (the row's own `max-width: 1440px` cap plus the
+   240px expanded `.sidebar` fits it), but the sidebar re-expands from its
+   76px collapsed rail to 240px at exactly the SAME 1024px breakpoint this
+   row switches to two columns (`Sidebar.tsx`'s `COLLAPSE_QUERY` is
+   `max-width: 1024px`, opposite direction from this file's own
+   `min-width: 1024px` — collapsed at 1024, expanded at 1025+) — so from
+   1025px up to ~1460px the fixed-width row no longer fits beside the
+   now-wider sidebar and visibly overlaps it. Product owner reported this
+   live and asked for percentage widths instead of absolute px, matching
+   what DP's own un-overridden ratio (`flex: 700 1 0` / `332 1 0`) already
+   did before the 2026-08-13 request replaced it — restoring the SAME
+   660:372 on-screen ratio (~64:36) but as a shrinkable `flex-basis`
+   instead of a fixed one, so the two columns give up space together
+   rather than one refusing to and forcing an overlap. `max-width` is kept
+   as the 660px/372px ceiling so nothing changes at 1440px+; only the
+   1024–1460px range now shrinks instead of overflowing. */
 @media (min-width: 1024px) {
   .mv-create__panel {
-    flex: 0 0 660px;
-    width: 660px;
+    flex: 0 1 64%;
+    width: auto;
     max-width: 660px;
   }
 
   .mv-create__side {
-    flex: 0 0 372px;
-    width: 372px;
+    flex: 0 1 36%;
+    width: auto;
     max-width: 372px;
   }
 }
@@ -2454,10 +2485,14 @@
   background: var(--neutral-dark-14, #212127);
 }
 
+/* Product owner, 2026-09-09 — was `var(--neutral-dark-64, #9c9cab)` (dim
+   gray); Figma "Share Page - Empty" (node 3738:70778) has this glyph as
+   solid white (`Neutral/Dark/100`), full-strength against its `--neutral-
+   dark-14` badge circle same as every other icon on this page. */
 .share-page__expired-icon-glyph {
   width: 34px;
   height: 34px;
-  background-color: var(--neutral-dark-64, #9c9cab);
+  background-color: var(--neutral-dark-100, #fff);
   mask-repeat: no-repeat;
   mask-position: center;
   mask-size: contain;
@@ -2479,6 +2514,13 @@
   color: var(--neutral-dark-64, #9c9cab);
   font-family: var(--font-family-primary);
   font-size: 14px;
+}
+
+/* Product owner, 2026-09-09 — spacing to the new "Try YouCam Muse" CTA
+   below, matching Figma's 24px gap between the message group and the
+   button row (node 3738:70778's "Error Message" auto-layout). */
+.share-page__expired-actions {
+  margin-top: 24px;
 }
 
 /* ── Shared controller pieces (song + MV) ─────────────────────────────── */

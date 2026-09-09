@@ -413,6 +413,19 @@ export function ShareLinkView() {
           <p className="share-page__expired-body">
             We couldn&apos;t find this creation. Ask the sender to share it again.
           </p>
+          {/* Product owner, 2026-09-09, Figma "Share Page - Empty" (node
+              3738:70778): same "Try YouCam Muse" CTA as the valid-link state
+              below, reusing its pill/gradient/icon classes rather than
+              inventing new ones — a visitor who lands on a dead link should
+              get the same way into the product as one who lands on a live
+              one. `home` is the same locale-aware path the valid state's
+              `createHref` already resolves to. */}
+          <div className="share-page__actions share-page__expired-actions">
+            <Link href={home} className="share-page__pill share-page__pill--gradient-mv">
+              Try YouCam Muse
+              <DpIcon name="ic_arrow_right" className="share-page__pill-icon" />
+            </Link>
+          </div>
         </main>
       </div>
     );

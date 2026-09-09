@@ -154,6 +154,23 @@ export const SongResultSchema = z.object({
   audioUrl: z.string().optional(),
   instrumental: z.boolean(),
   lyrics: z.string().optional(),
+  /**
+   * Per-line lyric TIMING, LRC format (`[mm:ss.cc]line`, newline-separated),
+   * exactly as the AI Song backend returns it in
+   * `timestamps.lyrics_lrc_timestamps`. Added 2026-09-09 for YMW260903P0005
+   * (click a lyric, jump to that point) — see `docs/CHANGELOG-RD.md`.
+   *
+   * OPTIONAL, and the optionality is the contract, not a convenience: an
+   * instrumental has no lyrics to time, and a lyric line the model did not
+   * align carries no entry. `lib/mv/lyrics.ts`'s `timedLyrics()` falls back
+   * to spreading `lyrics` evenly across `durationSec` when this is absent.
+   *
+   * It is NOT a re-encoding of `lyrics` and the two can disagree in both
+   * directions: the sung line list splits, repeats and ad-libs where the
+   * written one does not, and it drops `[verse]`/`[chorus]` section tags.
+   * Where this field exists it is what the screens DISPLAY.
+   */
+  lyricsLrc: z.string().optional(),
 });
 export type SongResult = z.infer<typeof SongResultSchema>;
 

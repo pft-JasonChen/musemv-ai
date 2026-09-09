@@ -19,6 +19,7 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { songRecreateCost } from "@/lib/mv/types";
+import { activeLineIndex, timedLyrics } from "@/lib/mv/lyrics";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import {
@@ -147,7 +148,13 @@ export function SongResultView() {
   const { requireLogin, profile } = useAuth();
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  const activeLineRef = useRef<HTMLParagraphElement>(null);
+  // A callback ref, not an object ref: since YMW260903P0005 the active line is
+  // a `<button>`, and a single typed `useRef` cannot serve both that and a
+  // `<p>` — same reason `LyricsSheet` does it this way.
+  const activeLineRef = useRef<HTMLElement | null>(null);
+  const setActiveLine = (el: HTMLElement | null) => {
+    activeLineRef.current = el;
+  };
   const [buyOpen, setBuyOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -258,19 +265,27 @@ export function SongResultView() {
     void audio.play().catch(() => {});
   }, [active?.id]);
 
+  /**
+   * The lines to show, WITH their start times (YMW260903P0005 — clicking one
+   * now seeks there). Real per-line timing when the result carries an LRC
+   * (`SongResult.lyricsLrc`: the vendored `Neon Static` sample, and anything
+   * the backend times); otherwise the even spread across `duration` this
+   * screen has always used for the highlight. See `lib/mv/lyrics.ts`.
+   *
+   * `duration` is a dependency because the FALLBACK needs it — it arrives as 0
+   * and is replaced once `<audio>` reports metadata. A real LRC ignores it.
+   */
   const lyricLines = useMemo(
-    () => (songResult?.lyrics ?? "").split("\n").filter((l) => l.trim().length > 0),
-    [songResult?.lyrics],
+    () => timedLyrics(songResult?.lyrics, songResult?.lyricsLrc, duration),
+    [songResult?.lyrics, songResult?.lyricsLrc, duration],
   );
   /** Instrumental and Simple-mode songs genuinely have none — see the note above. */
   const hasLyrics = lyricLines.length > 0;
 
-  const activeLine = hasLyrics
-    ? Math.min(
-        lyricLines.length - 1,
-        Math.floor((duration ? currentTime / duration : 0) * lyricLines.length),
-      )
-    : -1;
+  // Identical index to the `floor(currentTime / duration * count)` this used to
+  // compute, whenever the times ARE that even spread — so nothing changes for
+  // a song without an LRC. With one, the highlight follows the real cues.
+  const activeLine = hasLyrics ? activeLineIndex(lyricLines, currentTime) : -1;
 
   useEffect(() => {
     activeLineRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -556,16 +571,26 @@ export function SongResultView() {
                     {hasLyrics ? (
                       <>
                         <div className="song-result__lyrics-inline-lines">
-                          {lyricLines.map((line, i) => (
-                            <p
+                          {/* Each line SEEKS to its own timestamp
+                              (YMW260903P0005). A real `<button>` rather than a
+                              `<p onClick>` so it is keyboard- and screen-
+                              reader-operable without hand-rolling
+                              role/tabIndex/Enter — the same call `SeekBar`
+                              made for the transport. `styles/lyric-seek.css`
+                              styles it back to the `<p>`'s exact appearance,
+                              so no pixel moves. */}
+                          {lyricLines.map((l, i) => (
+                            <button
                               key={i}
-                              ref={i === activeLine ? activeLineRef : undefined}
+                              type="button"
+                              ref={i === activeLine ? setActiveLine : undefined}
                               className={`song-result__lyrics-inline-line${
                                 i === activeLine ? " song-result__lyrics-inline-line--active" : ""
                               }`}
+                              onClick={() => seek(l.t)}
                             >
-                              {line}
-                            </p>
+                              {l.line}
+                            </button>
                           ))}
                         </div>
                         <div className="song-result__lyrics-inline-fade" aria-hidden="true" />
@@ -736,11 +761,12 @@ export function SongResultView() {
         isOpen={lyricsOpen && hasLyrics}
         title={active.title}
         cover={active.cover}
-        lyricLines={lyricLines}
+        lines={lyricLines}
         currentTime={currentTime}
         duration={duration}
         playing={playing}
         onTogglePlay={togglePlay}
+        onSeek={seek}
         onClose={() => setLyricsOpen(false)}
       />
       <ShareDialog

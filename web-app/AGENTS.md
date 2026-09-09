@@ -33,6 +33,17 @@ Next.js 16.2 (App Router) + React 19 + TypeScript strict + Tailwind v4. Package 
   `npm run e2e` would have. If you cannot say in advance roughly how many tests match, and that it
   lands inside a minute, it is the hook's run and not yours. Killing it to free the port also
   discards its results, so it buys nothing.
+  **`run_in_background: true` is not a way round this — it is the SAME collision, just chosen on
+  purpose** (occurrence 7, 2026-09-09). A deliberately-backgrounded run of four spec files (212
+  tests, ~20 min) was started so its results would arrive by notification; the Stop hook fired
+  first, hit `:3100 is already used`, and blocked. Backgrounding only changes who is surprised —
+  the port is held either way, and the hook can fire at any point. So the rule is about the RUN,
+  not about how it was launched: **if it will not be finished before you stop, do not start it.**
+  When you genuinely need broad coverage mid-session (say a fixture change that could touch dozens
+  of tests), the honest options are (a) accept the hook's own run as the answer and do nothing, or
+  (b) run it and then WAIT for it to finish before ending the turn — never (c) leave it running and
+  hope. Note the hook is `npm run e2e`, i.e. `--grep-invert @visual`, so it already covers every
+  behaviour and axe spec: a broad by-hand run is usually re-doing the hook's work early.
   Two ways that bites (both measured 2026-08-05): a server already on :3100 makes the run abort
   immediately (`reuseExistingServer` is false on purpose — see `playwright.config.ts`); and CPU
   contention makes the long chained specs flake on a `.click()` timeout. `G5-d#2` failed that way
@@ -233,6 +244,34 @@ House style in one line:
   the gate is real but narrower than it looks. It also only scans unprefixed English URLs
   (`discoverRoutes()` strips the `[locale]` segment); the 8 non-English locale trees aren't
   axe-scanned at all.
+- **`npm run e2e` IS NOT THE WHOLE SUITE — it is `playwright test --grep-invert @visual`.** Both
+  screenshot specs title every test `@visual …` (`visual-baseline.spec.ts`,
+  `dialog-visual.spec.ts`), so the gate and the Stop hook deliberately skip them. Worth knowing
+  before you reason about what a green hook proves: it proves behaviour and axe, never pixels.
+- **On Windows the screenshot specs cannot pass at all, and that is a NON-ISSUE for the gate
+  precisely because of the line above.** Playwright suffixes every snapshot with the platform and
+  this repo keeps `-linux` (canonical) plus an unmaintained `-darwin` set; there is no `-win32`
+  set, so every one of those snapshots is MISSING, and a missing snapshot fails (Playwright writes
+  the actual file, then fails the test). Measured 2026-09-09: running `@visual profile @ 375`
+  by hand failed with `Expected: …/profile-375-win32.png`.
+  **Do NOT record a `-win32` set to make it green** — same trap as re-recording `-darwin`: three
+  platform sets to keep in sync and 114 more PNGs in git for a platform nobody reviews on. And do
+  not run the `@visual` specs by hand here at all; there is nothing to learn and it litters the
+  snapshots directory (`git status e2e/*-snapshots` and delete any `-win32` PNGs if you already
+  did). What to do instead: **say in the session that the visual gate was not evaluated on this
+  machine**, and if you genuinely changed a screen, name the routes whose `-linux` baselines need
+  re-recording by someone on Linux. An unspoken skip is how a gate quietly stops being one.
+- **Playwright's Chromium BLOCKS autoplay with sound, so a "plays unmuted by default" assertion
+  measures Chrome's policy, not your component.** Measured 2026-09-09 on `/watch`
+  (`YMW260902P0002`): the unmuted `play()` was rejected, the component's documented muted fallback
+  took over, and the test failed with `muted: true` — indistinguishable from the fix not landing.
+  The browser needs `--autoplay-policy=no-user-gesture-required`, and `test.use({ launchOptions })`
+  is only legal at the TOP LEVEL of a spec file ("it forces a new worker"), so such a test needs
+  its own file — `e2e/watch-autoplay-sound.spec.ts` is the one. Keep it out of
+  `playwright.config.ts`: every other spec wants the strict default, because that is the state the
+  muted fallback exists for, and the fallback needs its own test too.
+  `launchOptions` REPLACES the config's object rather than merging, so re-supply `executablePath`
+  from `CHROMIUM_PATH` when you set it.
 - **The visual baseline is captured `fullPage: true`, i.e. at scroll offset 0.** Nothing is ever
   behind a sticky navbar in those screenshots, so anything that only appears once the page scrolls
   — backdrop blur, scroll shadows, sticky stacking — cannot show up as a baseline diff. 115/115

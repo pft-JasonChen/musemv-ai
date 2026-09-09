@@ -25,6 +25,12 @@
    NOT under `styles/designer/` because everything there must be byte-identical
    to a DP source and there is no source to match — see the file's header. */
 @import "../styles/faq-page.css";
+/* Fourth, and the narrowest: click-a-lyric-to-seek turns DP's `<p>` lyric lines
+   into `<button>`s, and a button needs the reset DP's own rules never had to
+   carry. Reset only — see the file's header. Order against `faq-page.css` above
+   is irrelevant (disjoint selectors: `.faq-*` vs the two lyric-line classes),
+   unlike the four imports above `designer-overrides.css`. */
+@import "../styles/lyric-seek.css";
 
 /* Map design tokens -> Tailwind v4 theme so utilities resolve to our tokens. */
 @theme inline {

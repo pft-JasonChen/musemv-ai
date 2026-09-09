@@ -1,0 +1,154 @@
+# CHANGELOG-SPEC — what moved in these specs, and where
+
+> **For RD and QA.** One row per change, newest first. Each row names the **bug/decision code**, the
+> **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
+> get from "what changed?" to the exact file without diffing.
+
+## What belongs here, and what does not
+
+There are three change logs in this repo and they answer three different questions. Reaching for the
+wrong one is why this file exists.
+
+| Log                                                  | Question it answers                                                                                | Audience  |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------- |
+| **This file**                                        | "Which acceptance criteria / storyboard steps changed, and where is the code and the test?"        | RD + QA   |
+| `../docs/CHANGELOG-RD.md`                            | "Did the **wire contract** move?" — C1–C8 only (`MuseApi`, Zod schemas, hook keys, routes, costs)  | RD        |
+| Each storyboard's own **Changelog** section          | "Which screenshots and steps in *this* walkthrough are stale?" — plus the `NEW · vN` badges inline | QA        |
+
+`CHANGELOG-RD.md` is deliberately narrow: a UI or copy change never appears there no matter how large,
+and a criterion can flip meaning without touching a single byte of contract. That is exactly the gap
+this file covers. When a change does both, it appears in both, and the row below says so.
+
+**A storyboard's own Changelog is the finer-grained one** and worth opening second: it badges the
+individual steps that moved with a green `NEW · vN` marker, and it is where a stale SCREENSHOT is
+recorded. This file points you at which storyboards to open.
+
+---
+
+## 2026-09-09 — three product-owner bug reports
+
+Commit `a523f05`. All three were reported against the running prototype. **One contract change between
+them** (`SongResult.lyricsLrc`); the other two are behaviour-only.
+
+### `YMW260902P0002` — `/watch` played muted
+
+| | |
+| --- | --- |
+| **Criteria** | **`AC-EXP-04`** changed (area 04). Was "play the MV **muted**"; now "play the MV **with sound on**", plus a new fallback clause. |
+| **Storyboard** | **S8 Explore & Community v2** → `P4-S1`. Screenshot 16 predates the change and is flagged in that step. |
+| **Also** | area 04 §2 route table, §3.3, `EXP-P4-S1`, and the EXP-P4 review checklist line. |
+| **Code** | `src/components/community/CommunityMvPlayer.tsx` — the `muted` state's default and the new `startPlayback()`. |
+| **Tests** | `e2e/watch-autoplay-sound.spec.ts` (the sound-on default — its own spec file, see below) · `YMW260902P0002: when autoplay-with-sound is REFUSED, the MV still plays` in `e2e/behaviour-regressions.spec.ts` (the fallback). |
+| **Contract** | None. |
+
+**The fallback clause is the part to read before testing this.** A browser only permits autoplay *with
+sound* while the document has user activation, and the click that opened `/watch` belongs to the
+*previous* document — it does not carry across a navigation. So an unmuted `play()` can be refused, and
+the criterion now says what happens then: the player mutes, keeps playing, and the mute control
+reflects it. **It never leaves the video paused**, which would be worse than the reported bug.
+
+Two consequences for QA:
+
+- **Behaviour is legitimately environment-dependent.** On a browser that refuses (a cold profile, a
+  first visit) you may correctly see a muted-but-playing video with the control offering "Unmute". That
+  is the fallback, not the bug. The bug was a *paused-or-silent* video whose control offered "Unmute"
+  and never played with sound after you pressed it.
+- **Only the CURRENT video is unmuted.** `/watch` keeps three permanently-mounted `<video>` slots for
+  the swipe feed; the two off-screen neighbours stay muted by design, or three tracks would play at
+  once. Asserted separately in `watch-autoplay-sound.spec.ts`.
+
+### `YMW260903P0005` — a lyric line could not be clicked to seek
+
+| | |
+| --- | --- |
+| **Criteria** | **`AC-SONG-18` NEW** (area 03). Also `AC-EXP-05` and `SONG-P3-S2` / `EXP-P5-S1` amended to name it. |
+| **Storyboard** | **S1 AI Song Creation v4** → `P2-S11` (desktop inline panel), `P7-S3` (Lyrics sheet). |
+| **Code** | `src/lib/mv/lyrics.ts` (`parseLrc`, `timedLyrics`) · `src/components/ui/LyricsSheet.tsx` · `src/components/song/SongResultView.tsx` · `src/components/song/SongDetailView.tsx` · `src/styles/lyric-seek.css`. |
+| **Fixtures** | `src/lib/mv/community.ts` (`NEON_STATIC_LRC`, `lyricsLrcForTitle`, `timedSongAudio`) · `src/lib/mv/mock.ts` (`h-neon-static`) · `public/assets/songs/Neon Static.mp3` · `public/assets/images/album-art/album_neon_static.png`. |
+| **Tests** | five `YMW260903P0005` cases in `e2e/behaviour-regressions.spec.ts` · `src/lib/mv/lyrics.test.ts`. |
+| **Contract** | ✅ **YES — `SongResult.lyricsLrc`.** See `../docs/CHANGELOG-RD.md` 2026-09-09 for the one field RD must populate. |
+
+**Where the timestamps come from, because there are two sources and they are not equivalent:**
+
+- **Real** per-line timing, where the result carries it — `SongResult.lyricsLrc`, the LRC block the AI
+  Song backend already returns as `timestamps.lyrics_lrc_timestamps`.
+- **Derived** timing otherwise — the lines spread evenly across the track duration. Not new: this is
+  what has always driven the current-line highlight.
+
+**Click-to-seek is offered on every song, not only timed ones.** The highlight already asserts a
+line↔time correspondence on an untimed song, so seeking to the same estimate is consistent with what
+the screen is already showing; withholding the control would leave the reported bug in place for every
+song a user actually generates. What real timing changes is *accuracy*.
+
+**🔒 In the prototype exactly ONE song has real timing** — the vendored `Neon Static` sample the product
+owner supplied (audio, cover and LRC). Two ways to reach it:
+
+- as the signed-in user's own creation — `/history` or the `/song/create` rail → `/song/result?id=h-neon-static`
+- as a catalog song — `/explore/songs` → `/song/result?id=sp-neon-static&from=song-detail`, or `/song/play?id=sp-neon-static` on a phone
+
+It plays its **own** mp3, not one of the two shared demo tracks: cues measured against one track land
+on the wrong beats of another.
+
+**Where an LRC exists it is also what gets DISPLAYED**, and the sung lines differ from the written ones
+on purpose — `Neon Static` sings "System failing / Pulse is low" as two lines, adds a "Go, go, go…"
+ad-lib that is in no written line, contracts "There is" to "There's", and drops the
+`[intro]`/`[verse]`/`[chorus]` tags. **So the same song can show a different line count in the lyrics
+panel than in the lyrics you typed. That is specified, not a defect.**
+
+**No pixels moved.** The lines became `<button>`s styled back to their exact previous appearance
+(`lyric-seek.css` is a reset only), so the visual baselines are unchanged and the storyboard
+screenshots are still accurate about how the panel *looks* — and silent about the new affordance.
+Hover / press / focus states have no design yet: `../docs/DESIGNER-TODO.md` **A31**.
+
+### `YMW260902P0013` — the song page's rail showed Trending where the MV page showed My Creations
+
+| | |
+| --- | --- |
+| **Criteria** | **`AC-SONG-19` NEW** (area 03) and **`AC-MV-21` NEW** (area 02). The full reasoning is written once, in `AC-SONG-19`. |
+| **Storyboard** | **S1 AI Song Creation v4** → `P6-S1`; **S2 AI Music Video Creation v4** → `P7-S1`, `P7-S2`. ⚠️ S2's screenshot 32 is now stale — flagged in that step. |
+| **Also** | `MV-P1-S0` (area 02) and `SONG-P1-S0` (area 03) route-step rows; `SHELL-E1` (area 01 §5) gains a second surface. |
+| **Code** | `src/components/history/useMyCreations.ts` **NEW** · `src/components/mv/MvRoom.tsx` · `src/components/song/SongCompose.tsx`. |
+| **Tests** | `YMW260902P0013: signed in, BOTH create rails show My Creations` · `… signed OUT, both create rails still fall back to Trending` · `items 4/5: generating a song adds it to /song/create's rail` · `3g / R9` and `G7 3g-3` rewritten. |
+| **Contract** | None. `useMyCreations` is a plain hook, **not** a C4 provider — no provider return key changed. |
+
+**What the defect actually was, because the diagnosis is counter-intuitive.** The two rails were already
+running *identical* code over the *same* source: the session-local `HistoryProvider`, which starts
+**empty**. So a signed-in user saw "My Creations" on whichever create screen they had just generated
+something on, and "Trending" on the other. The reporter had made an MV and no song. **The code was the
+same and the data was lopsided** — there was never a difference between the two screens to find.
+
+Both rails now read `useMyCreations()`: live session jobs **merged with the same
+seeded creations `/history` has always shown**. Two exclusions, and both matter for testing:
+
+- `status: "done"` only — a rail row navigates straight to a result screen, so a processing or failed
+  row has nothing to open.
+- `source: "community"` excluded — `h-whispers-past` is a community song that appears in History, not
+  something the user made, and a rail titled "My Creations" must not claim it.
+
+The "has at least one creation" condition **survives**, but only to keep a signed-**out** visitor on
+Trending. (`/mv/room` is not auth-guarded — it is the marketing navbar's "Start for Free" destination —
+so that state is reachable.) DP's literal `isSignedIn` plus an empty-state card was shipped and
+reverted on 2026-08-07: a "My Creations" heading over a blank card read as broken rather than empty.
+
+**One known, unfixed side effect, now visible.** The rail flashes the signed-out branch for a frame on a
+signed-in reload, because every route is prerendered with `authStore.getServerSnapshot() === false`.
+This is **`SHELL-E1`**, the same pre-hydration swap the navbar's Login ↔ credit-pill has — it was
+invisible here only because both branches used to render the same thing. A backend-less prototype has
+no server-side auth to fix it with. Recorded in area 01 §5, **not** worked around. If you write an
+automated check against these rails, assert the rail's title before counting its rows.
+
+---
+
+## Notes for whoever adds the next row
+
+- **Name the IDs, not the screens.** "the rail changed" costs the reader a search; "`AC-MV-21`,
+  `P7-S1`" does not.
+- **Say when there is no contract change**, explicitly. "Contract: none" is information; an absent row
+  is ambiguous, and `CHANGELOG-RD.md` makes the same demand for the same reason.
+- **Bump the storyboard's `version` when its content changes** and badge the changed steps with
+  `since: 'vN'`. The version bump is enforced: `spec_builder` fails the build if the flowchart's
+  `matches spec vN` stamp does not move with it, which is what forces someone to re-read the diagram.
+  Then update that storyboard's row in `build-index.py`'s `STORYBOARDS` list so the index shows the
+  new version, and re-run `python specs/build-index.py`.
+- **Flag a stale screenshot in the step itself**, not only here. A reader who opens the storyboard
+  should not have to have read this file first.
