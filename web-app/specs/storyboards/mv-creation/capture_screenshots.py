@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 """Capture the AI MV Creation screenshots AND measure every focus box.
 
-RE-RUN, 2026-08-27. Capture run 1's 44 screenshots were voided (PLAN.md §2 "S2
-scope" note) because they photographed `/mv/room`'s Enhance button, which
-`origin/main`'s `3bdff87` removed for V1 the day after that run captured (product
-owner, 2026-08-25). The branch has since been rebased onto `origin/main`, so this
-run drops Enhance from P2 entirely and re-shoots every path against the current
-tree — nothing from run 1 is reused, including its filenames (P2 loses one shot,
-so everything downstream is renumbered, not left with a gap).
+As of 2026-09-10 `/mv/room` again includes Description Enhance. P1-S6 was
+retaken after that restoration and visibly includes the control. The remaining
+compose screenshots still predate it where the Description footer is visible.
 
 Pattern copied from ../song-creation/capture_screenshots.py (see that file's
 header for why `NextCapture` overrides only the lifecycle, and why focus boxes
@@ -38,6 +34,7 @@ CREDITS — TWO SERVER PROCESSES, ON PURPOSE
 USAGE
     NEXT_PUBLIC_DEMO_CREDITS=2000 npm run dev -- -p 3010     # terminal 1
     python3 capture_screenshots.py --base http://localhost:3010
+    python3 capture_screenshots.py --base http://localhost:3010 --p1-s6-only
     # then restart the dev server with NO override (plain `npm run dev -- -p 3010`) and:
     python3 capture_screenshots.py --base http://localhost:3010 --credits-gate-only
     python3 build_spec.py
@@ -281,6 +278,23 @@ async def wait_generation_failed(page, timeout=20000):
     await page.wait_for_timeout(300)
 
 
+async def main_p1_s6(base):
+    """Retake only the Description-filled P1-S6 frame."""
+    async with NextCapture(HERE, base) as cap:
+        page = cap.page
+        await page.goto(f"{base}/mv/room", wait_until="networkidle")
+        await page.wait_for_timeout(700)
+        await page.locator(".mv-create__style-card").nth(2).click()
+        await open_choose_song(page)
+        await pick_song(page, "my", 0)
+        await confirm_trim(page)
+        await fill_description(page, DESCRIPTION)
+        enhance = page.get_by_role("button", name="Enhance")
+        await enhance.wait_for(state="visible")
+        await shoot(cap, "06_description_filled.png", [".mv-create__enhance-btn"], "Enhance")
+        print("P1-S6 console errors:", cap.errors or "none")
+
+
 async def main_hi_credit(base):
     """P1, P2, P3, P4, P7, P8 — everything that needs a generation to actually
     succeed, against the NEXT_PUBLIC_DEMO_CREDITS=2000 server."""
@@ -374,10 +388,8 @@ async def main_hi_credit(base):
         await shoot(cap, "15_history_new_mv_row.png")
 
         # ══════════════════════════════════════════════════════════════════
-        # P2 · Direct generation — TEMPLATES ONLY.
-        # Enhance is NOT part of this path (PLAN.md §2 S2 scope) — it was
-        # removed from /mv/room for V1 (product owner, 2026-08-25, 3bdff87)
-        # and must not appear anywhere here. Client-nav from P1's /history
+        # P2 · Direct generation — TEMPLATES + DESCRIPTION ENHANCE.
+        # Client-nav from P1's /history
         # (not `go()`/`page.goto`) so History keeps P1's row — the closing
         # shot below needs BOTH rows present.
         # ══════════════════════════════════════════════════════════════════
@@ -678,8 +690,13 @@ if __name__ == "__main__":
     ap.add_argument("--credits-gate-only", action="store_true",
                      help="Run only P5/P6 (point --base at a server with NO "
                           "NEXT_PUBLIC_DEMO_CREDITS override).")
+    ap.add_argument("--p1-s6-only", action="store_true",
+                    help="Retake only P1-S6 after filling Description and "
+                         "confirm that Enhance is visible.")
     args = ap.parse_args()
-    if args.credits_gate_only:
+    if args.p1_s6_only:
+        asyncio.run(main_p1_s6(args.base))
+    elif args.credits_gate_only:
         asyncio.run(main_credits_gate(args.base))
     else:
         asyncio.run(main_hi_credit(args.base))

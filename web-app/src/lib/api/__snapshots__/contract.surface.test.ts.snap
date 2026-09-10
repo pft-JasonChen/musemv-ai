@@ -450,7 +450,7 @@ exports[`C8 — domain constants (src/lib/mv/types.ts) [additive only] > DEFAULT
     "on": true,
     "text": "",
   },
-  "ratio": "9:16",
+  "ratio": "16:9",
   "resolution": "Standard",
   "showSubtitle": true,
   "title": {

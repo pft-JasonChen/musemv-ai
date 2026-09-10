@@ -1474,6 +1474,14 @@
   object-fit: contain;
 }
 
+/* YMW260910: crop size is controlled exclusively by the Size slider. Keep
+   package/browser resize affordances (including the old purple corner dot)
+   off the draggable crop selection. */
+.face-picker__selection::after {
+  content: none !important;
+  display: none !important;
+}
+
 .face-picker__body {
   gap: 12px;
 }

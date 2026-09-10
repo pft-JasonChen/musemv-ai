@@ -19,8 +19,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v3'
-DATE = '2026-09-02'
+VERSION = 'v5'
+DATE = '2026-09-10'
 
 f = Flow('AI Music Video (MV) Creation', 'YouCam Muse Web — desktop 1440',
           version=VERSION, date=DATE, width=1180)
@@ -68,7 +68,7 @@ f.edge(think_outcome, think_failed, '"[fail]" · P3-S1, P3-E2', kind='error')
 rendering = f.node(S, 850, '/mv/creating', 'Progress + estimate · P1-S13, P2-S5', kind='info')
 f.edge(sb_editor, rendering, 'Generate MV · P1-S12')
 
-direct = f.node(S + 260, 520, 'Directly (Templates only)', 'Enhance NOT offered · P2-S1..S4', kind='info')
+direct = f.node(S + 260, 520, 'Directly (Templates + Enhance)', 'Description Enhance · P2-S1..S4', kind='info')
 f.edge(mode, direct, 'Directly')
 f.edge(direct, rendering)
 

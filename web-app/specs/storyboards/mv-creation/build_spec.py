@@ -8,15 +8,10 @@ specs/screenshots/ was captured by driving the real Next.js dev server
 `localStorage['muse_auth']` seed the e2e specs use, except P5 (guest gate)
 which deliberately omits it.
 
-RE-RUN, 2026-08-27 — capture run 1 (44 shots) was VOIDED and is not reused.
-It was taken against a pre-rebase branch whose `/mv/room` still carried an
-Enhance button that `origin/main`'s `3bdff87` removed for V1 the next day
-(product owner, 2026-08-25 — "not available in V1"). The branch has since
-been rebased onto `origin/main`; every screenshot referenced below is a fresh
-capture against the current tree, and the filenames do not match run 1's
-(P2 drops one shot — Enhance — so everything after it renumbers by one).
-See PLAN.md's "S2 scope" note and specs/storyboards/mv-creation/capture_screenshots.py's
-own header for the full account.
+The storyboard is reconciled with the current implementation on 2026-09-10:
+`/mv/room` renders Enhance for the Description field and sends it through the
+same `enhancePrompt` API used by the storyboard and edit fields. P1-S6 was
+retaken against that implementation and visibly includes the control.
 
 Source of truth for every rule/copy string not directly re-verified against
 the running app: specs/areas/02-mv-creation.md (as-built, carries ⚠️
@@ -30,9 +25,8 @@ already carried in from an earlier (pre-rebase) capture pass:
   - Trim's footer button reads "Confirm", not "Use Trimmed Audio".
 All three held up unchanged on the rebased tree.
 
-Scope (confirmed at Phase 0, PLAN.md "S2 scope", 2026-08-27): eight paths —
-P1 storyboard-first end to end, P2 direct generation (**Templates only** —
-Enhance is explicitly NOT part of this path), P3 generation failure at both
+Scope: eight paths — P1 storyboard-first end to end, P2 direct generation
+(Templates and Description Enhance), P3 generation failure at both
 stages, P4 the six sheets and their numeric boundaries, P5 the guest gate,
 P6 insufficient credits, P7 the side-rail Trending/My Creations swap, P8 a
 controls tour of /mv/result. /mv/edit (MV-P5 in the area spec) is OUT of
@@ -40,15 +34,8 @@ scope — that is S3. History's own behavior (filters, row menu, publish,
 delete) is out of scope — see specs/areas/05-history.md; P1 closes with one
 step showing the new row, matching S1's convention.
 
-Two corrections to areas/02-mv-creation.md were made FROM THIS capture run
-(D-08 below), both about the same removed control:
-  - MV-P1-S4's row still listed "Enhance" as a Describe shortcut alongside
-    Templates. It no longer exists on `/mv/room` (3bdff87). Corrected in
-    place with a ⚠️ note.
-  - AC-MV-14 still named "the description" as one of Enhance's four target
-    fields. Corrected to the three that remain (visual style, scene prompt,
-    cover description) — all three live on /mv/storyboard or /mv/edit, not
-    /mv/room, and `enhancePrompt` itself is unchanged.
+AC-MV-14 covers all four current Enhance targets: MV description, visual
+style, scene prompt, and cover description.
 
 A real app bug was found and fixed while capturing (D-09, D10 of PLAN.md's
 programme decisions): `StoryboardGenerationScreen` started the mock
@@ -101,8 +88,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Music Video (MV) Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video',
-    'author': 'Jason Chen', 'date': '2026-09-09', 'status': 'Draft',
-    'version': 'v4',
+    'author': 'Jason Chen', 'date': '2026-09-10', 'status': 'Draft',
+    'version': 'v5',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -126,13 +113,13 @@ cfg = {
     'overview': [
         ['Platform', 'YouCam Muse Web (desktop) &mdash; captured at 1440px'],
         ['Audience', 'QA'],
-        ['Scope', 'Storyboard-first end to end (P1), direct generation with Templates only (P2), generation failure at both stages (P3), the six compose sheets and their numeric boundaries (P4), the guest sign-in gate (P5), insufficient credits (P6), the Trending MVs / My Creations side-rail swap (P7), and a controls tour of /mv/result (P8).'],
+        ['Scope', 'Storyboard-first end to end (P1), direct generation with Templates and Description Enhance (P2), generation failure at both stages (P3), the six compose sheets and their numeric boundaries (P4), the guest sign-in gate (P5), insufficient credits (P6), the Trending MVs / My Creations side-rail swap (P7), and a controls tour of /mv/result (P8).'],
         ['Out of scope', '/mv/edit (MV-P5 in the area spec) &mdash; see specs/storyboards/mv-edit (S3, postponed). History&rsquo;s own behavior (filters, &ctdot; menu, publish, delete) &mdash; see specs/areas/05-history.md.'],
         ['Source', 'specs/areas/02-mv-creation.md, specs/areas/05-history.md, specs/00-overview.md, and the running app'],
     ],
 
     'short_nav': [
-        'Storyboard-first (happy path)', 'Direct generation (Templates only)', 'Generation failure',
+        'Storyboard-first (happy path)', 'Direct generation (Templates + Enhance)', 'Generation failure',
         'The six sheets', 'Guest sign-in gate', 'Insufficient credits',
         'Trending MVs vs My Creations', 'Result screen &mdash; controls tour',
     ],
@@ -219,8 +206,8 @@ cfg = {
                     'limits': [
                         ('Typed/pasted input is capped at 2500 characters (AC-MV-03), confirmed via a real fill event.',
                          'A programmatic value assignment bypasses `maxLength`; only a real browser fill/paste event proves the cap.'),
-                        ('The only fill shortcut on this field is Templates (P2-S1) &mdash; Enhance was removed from this screen for V1.',
-                         '`enhancePrompt` itself is unchanged and reachable from /mv/storyboard and /mv/edit; only /mv/room stopped rendering the button (2026-08-25, product owner). See D-08.'),
+                        ('Templates and Enhance can both fill this field.',
+                         'Enhance calls `enhancePrompt` with kind `mv` and replaces the Description value with the returned text (AC-MV-14).'),
                         'Templates&rsquo; own fill is not length-capped (only typed/pasted input is).',
                     ],
                 },
@@ -240,7 +227,7 @@ cfg = {
                     'shot': '08_create_cta_ready.png', 'num': 8,
                     'user': 'Both a song and a description now exist.',
                     'system': 'Create Music Video becomes enabled.',
-                    'limits': [('Settings defaults: 9:16, Standard quality, MV Title on, Author Name on, Show Subtitle on, Show Watermark off.',
+                    'limits': [('Settings defaults: 16:9, Standard quality, MV Title on, Author Name on, Show Subtitle on, Show Watermark off.',
                                 'Unchanged unless the user opens Settings (P4-S8).')],
                     'focus': [{'box': [35.8, 88.2, 16.0, 5.1], 'type': 'action', 'label': 'Create Music Video'}],
                 },
@@ -291,7 +278,7 @@ cfg = {
                          'Locked after creation; changing the song means starting a new MV from /mv/room.'),
                         ('There is no Save button.',
                          'Edits are ephemeral in memory and carried into the next Generate MV / Merge tap, never persisted independently (AC-MV-08).'),
-                        ('This Enhance is the same `enhancePrompt` call the removed /mv/room shortcut used to reach (D-08).', 'Still fully functional &mdash; just relocated to fields that kept it.'),
+                        ('These controls use the same `enhancePrompt` endpoint as Description Enhance on /mv/room.', 'The target field is selected by the caller.'),
                     ],
                 },
                 {
@@ -342,8 +329,8 @@ cfg = {
         },
         {
             'id': 'p2-direct', 'num': 2,
-            'name': 'Direct generation &mdash; Templates only',
-            'desc': 'A brief filled from a Template, then rendered directly with no storyboard review stage. Enhance is deliberately NOT part of this path.',
+            'name': 'Direct generation &mdash; Templates + Enhance',
+            'desc': 'A brief may be filled from a Template or improved with Description Enhance, then rendered directly with no storyboard review stage.',
             'entry': '/mv/room (continuing from P1&rsquo;s History)', 'outcome': 'New row in History (second row)',
             'steps': [
                 {
@@ -379,8 +366,8 @@ cfg = {
                     'user': 'Taps Create Music Video, then reviews the mode chooser.',
                     'system': 'Same &ldquo;How would you like to create?&rdquo; chooser as P1-S9; this path picks the second card.',
                     'exact': ['Card 2 subtitle: &ldquo;Generate your MV instantly.&rdquo;'],
-                    'limits': [('Enhance is not offered anywhere in this path.',
-                                'It never appears on /mv/room (removed for V1, D-08) and this path never visits /mv/storyboard, the only other screen with a Describe-adjacent Enhance.')],
+                    'limits': [('Description Enhance remains available before opening this chooser.',
+                                'P1-S6 shows the current control; the P2 compose screenshots predate its restoration, so code and AC-MV-14 are authoritative for that path.')],
                     'focus': [{'box': [37.9, 57.7, 23.2, 15.4], 'type': 'action', 'label': 'Create MV Directly'}],
                 },
                 {
@@ -770,7 +757,7 @@ cfg = {
          'Edit MV only &mdash; out of scope here; owned by the mv-edit spec (S3).'),
         ('AC-MV-13', 'Merge MV re-renders from the current cover/scenes and charges on generation start, refunded on failure.', [],
          'Edit MV only &mdash; out of scope here; owned by the mv-edit spec (S3).'),
-        ('AC-MV-14', 'Enhance on visual style, scene prompt, or cover description replaces that field with the matching `enhancePrompt` result.', ['P1-S11']),
+        ('AC-MV-14', 'Enhance on MV description, visual style, scene prompt, or cover description replaces that field with the matching `enhancePrompt` result.', ['P1-S6', 'P1-S11']),
         ('AC-MV-15', 'Withdrawn upstream 2026-08-19 &mdash; it asserted generation does NOT change the balance, contradicting AC-MV-19 and the code.', [],
          'Withdrawn in the area spec itself; superseded by AC-MV-19. Nothing should map to it.'),
         ('AC-MV-16', 'A track shorter than 30s is refused at UPLOAD with a toast, and trim stores {start,end} only when the selection is &ge;30s &mdash; below that Confirm is disabled with a minimum-30s hint.', ['P1-S4', 'P4-S5', 'P4-S6']),
@@ -818,17 +805,19 @@ cfg = {
         ('D-01', 'What source replaces prd.md/plan.md for this repo?', 'specs/areas/02-mv-creation.md and 05-history.md (the existing as-built specs) plus direct verification against the running app, matching the Song spec&rsquo;s D-01.'),
         ('D-02', 'MV is one spec or two?', 'Two (PLAN.md D1) &mdash; this document covers /mv/room through /mv/result; /mv/edit is its own spec, S3 (mv-edit), postponed. The cut lands where the user re-enters from the result screen and where charging changes from per-generation to per-micro-op.'),
         ('D-03', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo yet, matching the Song spec.'),
-        ('D-04', 'P2&rsquo;s scope: Templates only, or Templates + Enhance?', 'Templates only (PLAN.md &ldquo;S2 scope&rdquo;) &mdash; Enhance is explicitly excluded from P2 and from this spec&rsquo;s /mv/room screens generally, since `origin/main`&rsquo;s `3bdff87` removed it from that screen for V1 (product owner, 2026-08-25) before this capture run began.'),
+        ('D-04', 'P2&rsquo;s scope: Templates only, or Templates + Enhance?', 'Templates + Enhance. Current `/mv/room` code renders `EnhanceButton` for Description and applies the `enhancePrompt` result to `compose.description`.'),
         ('D-05', 'Where do credit-cost numbers come from in this spec?', 'Nowhere &mdash; every RULES bullet that would assert a number points at the Credit Consume MSR instead (PLAN.md D2), matching the Song spec&rsquo;s D-05. Verbatim on-screen text (e.g. a mode card&rsquo;s live &ldquo;15 Credits&rdquo;) is unaffected, since that is a true fact about the current build regardless of what the MSR prices it at.'),
         ('D-06', '/mv/creating still uses the pre-migration shared GenerationView &mdash; call it out how?', 'One RULES line on the step that captures it (P1-S13), sourced to specs/areas/02-mv-creation.md &sect;1. Not a prototype_deltas row, since nothing about it is faked &mdash; it is a real, deliberate scope decision (DP has no design for this screen).'),
         ('D-07', 'Where does the MV Creation storyboard stop relative to History?', 'One closing step per generation path showing the new row in History (P1-S15, P2-S6); History&rsquo;s own filters/menu/publish/delete stay out of scope (05-history.md already covers them), matching the Song spec&rsquo;s D-02.'),
-        ('D-08', 'A capture run 1 contradiction: two areas/02 lines still described the /mv/room Enhance button, which the rebase removed &mdash; fix in place?', 'Yes (PLAN.md D11) &mdash; MV-P1-S4&rsquo;s row and AC-MV-14 both named a description-field Enhance shortcut that no longer exists on this screen (removed 2026-08-25, `3bdff87`, product owner). Both corrected in place with a ⚠️ note and this capture&rsquo;s date, in the same branch as this spec.'),
+        ('D-08', 'Does the storyboard follow the older removal note or current `/mv/room` code?', 'Current code. Description Enhance is present and AC-MV-14 covers it; the older removal note is superseded.'),
         ('D-09', 'A real bug found while capturing (StoryboardGenerationScreen double-starting the storyboard job under Strict Mode) &mdash; fix now or document?', 'Fixed (`e739c4e`, 2026-08-27) &mdash; a one-file fix with an obvious e2e guard (PLAN.md D10). Same `started` ref pattern `GenerationView.tsx` already carries for the other two generation screens. The owed regression test was written and mutation-tested in both directions in this same session.'),
-        ('D-10', 'Voided capture run 1 &mdash; reuse any of its 44 screenshots?', 'No &mdash; all void (PLAN.md &ldquo;S2 scope&rdquo;). They photographed a control (Enhance on /mv/room) the product owner had already removed from V1 the day after that run captured. Every screenshot in this spec is a fresh capture against the rebased tree; filenames were renumbered rather than left with a gap where the Enhance shot used to be.'),
+        ('D-10', 'Do the compose screenshots prove the current Description controls?', 'P1-S6 does: it was retaken 2026-09-10 after filling Description and visibly shows Enhance. Other older compose frames are retained for their surrounding steps.'),
         ('D-11', 'Viewport scope?', 'Desktop 1440 only (D8, PLAN.md programme decision) &mdash; the phone chrome and /mv/edit&rsquo;s MobileSceneDetail get no QA storyboard here.'),
     ],
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v5', '2026-09-10',
+         '<b>Reconciled the storyboard with current `/mv/room` code.</b> Description Enhance is available again, calls <code>enhancePrompt</code> with kind <code>mv</code>, and replaces the compose description. Updated P1, P2, AC-MV-14, D-04, D-08, and D-10; recorded the new desktop-first 16:9 Settings default; and retook P1-S6 so the current Enhance control is visible.'),
         ('v4', '2026-09-09',
          '<b>YMW260902P0013 &mdash; the two create screens&rsquo; side rails disagreed.</b> '
          'Changed: <b>P7-S1</b> and <b>P7-S2</b>, the two <b>Side rail</b> rows of the States table, '
@@ -920,7 +909,7 @@ cfg = {
         '  Compose --> Create["Tap Create Music Video"]\n'
         '  Create --> Mode{Mode?}\n'
         '  Mode -->|Storyboard First| Think["/mv/thinking"]\n'
-        '  Mode -->|Directly, Templates only| Rendering["/mv/creating"]\n'
+        '  Mode -->|Directly, Templates + Enhance| Rendering["/mv/creating"]\n'
         '  Think --> Outcome1{Job outcome}\n'
         '  Outcome1 -->|done| SB["/mv/storyboard (edit)"]\n'
         '  Outcome1 -->|&quot;[fail]&quot;| Failed1["Generation Failed"]\n'

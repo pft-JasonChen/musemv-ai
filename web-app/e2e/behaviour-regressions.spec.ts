@@ -2833,10 +2833,10 @@ test("3i: the result page renders DP's blocks and picks a layout from the aspect
 
   await expect(page.locator(".mv-result__panel")).toBeVisible();
   await expect(page.locator(".mv-result__side")).toBeVisible();
-  // DEFAULT_SETTINGS.ratio is 9:16, so DP's portrait treatment (blurred backdrop
-  // behind a pillarboxed video) is the one that must be applied.
-  await expect(page.locator(".mv-result__player--portrait")).toHaveCount(1);
-  await expect(page.locator(".mv-result__bg")).toBeVisible();
+  // DEFAULT_SETTINGS.ratio is 16:9, so the desktop-first landscape treatment
+  // must be used without the portrait-only blurred backdrop.
+  await expect(page.locator(".mv-result__player--portrait")).toHaveCount(0);
+  await expect(page.locator(".mv-result__bg")).toHaveCount(0);
 });
 
 test("3i: every mask icon on the result page has something to clip", async ({ page }) => {
@@ -3346,21 +3346,21 @@ test("G7 3g2-1: the Settings sheet's Cancel actually cancels", async ({ page }) 
   await page.goto("/mv/room");
 
   const chips = page.locator(".mv-create__settings-chips");
-  await expect(chips).toContainText("9:16");
+  await expect(chips).toContainText("16:9");
 
   await page.getByRole("button", { name: "Open MV settings" }).click();
   await sheetSettled(page);
-  await page.getByRole("button", { name: "16:9" }).click();
+  await page.getByRole("button", { name: "9:16" }).click();
   await page.locator(".mv-sheet__footer-btn--cancel").click();
-  await expect(chips).toContainText("9:16");
+  await expect(chips).toContainText("16:9");
 
   // ...and Confirm still keeps the change, or "Cancel reverts" would be
   // satisfied by a sheet that never commits anything at all.
   await page.getByRole("button", { name: "Open MV settings" }).click();
   await sheetSettled(page);
-  await page.getByRole("button", { name: "16:9" }).click();
+  await page.getByRole("button", { name: "9:16" }).click();
   await page.locator(".mv-sheet__footer-btn--confirm").click();
-  await expect(chips).toContainText("16:9");
+  await expect(chips).toContainText("9:16");
 });
 
 test("G7 3g-3: a rail titled for the user's own work does not show other people's", async ({

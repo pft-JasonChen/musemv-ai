@@ -68,7 +68,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 - `song`: `null` | `{ id, source: library|import|sample|link, title, durationSec, art, url?, trim?{start,end}, lyrics? }` — **required**.
 - `description`: string, **hard cap 2500** (`DESCRIPTION_MAX`) — **required** (non-empty after trim).
 - `photos`: 0–2 `CharacterPhoto` (optional).
-- `settings`: `ratio` 9:16(def)/16:9 · `resolution` **Standard(def)/High** · `title{on:true,text}` · `author{on:true,text}` · `showSubtitle:true` · `watermark:false`.
+- `settings`: `ratio` 16:9(def)/9:16 · `resolution` **Standard(def)/High** · `title{on:true,text}` · `author{on:true,text}` · `showSubtitle:true` · `watermark:false`.
 - **CTA-ready** (`isComposeReady`): `song != null && description.trim() !== ""`.
 
 **Job (`MvJob`)** — `queued → processing(0–100, step) → done | failed`. `mode: storyboard_first | direct`.

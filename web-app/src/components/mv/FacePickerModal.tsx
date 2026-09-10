@@ -311,6 +311,7 @@ export function FacePickerModal({
               style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.45)" }}
             />
             <div
+              className="face-picker__selection"
               onPointerDown={(e) => {
                 drag.current = "move";
                 e.currentTarget.setPointerCapture(e.pointerId);
@@ -337,6 +338,7 @@ export function FacePickerModal({
                 borderRadius: isAvatar ? "50%" : 12,
                 boxShadow: "0 0 0 9999px rgba(0,0,0,.45)",
                 border: "2.6px solid var(--color-accent-purple)",
+                resize: "none",
               }}
             />
           </div>

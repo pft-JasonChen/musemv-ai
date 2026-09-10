@@ -165,7 +165,7 @@ export const COST_MERGE = 10;
 export const COST_COVER = 4;
 
 export const DEFAULT_SETTINGS: MvSettings = {
-  ratio: "9:16",
+  ratio: "16:9",
   resolution: "Standard",
   title: { on: true, text: "" },
   author: { on: true, text: "" },

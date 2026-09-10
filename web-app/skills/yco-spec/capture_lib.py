@@ -132,7 +132,7 @@ void   XDamageSubtract(Display *d, Damage damage, void *r, void *p) {}
 
 
 def ensure_xdamage_stub():
-    if os.uname().sysname != 'Linux':
+    if os.name != 'posix' or os.uname().sysname != 'Linux':
         return
     import ctypes.util
     if ctypes.util.find_library('Xdamage'):

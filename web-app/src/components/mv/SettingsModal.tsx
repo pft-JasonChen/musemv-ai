@@ -90,7 +90,7 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
           <div className="mv-settings__group">
             <p className="mv-settings__label">ASPECT RATIO</p>
             <div className="mv-settings__seg">
-              {(["9:16", "16:9"] as const).map((ratio) => (
+              {(["16:9", "9:16"] as const).map((ratio) => (
                 <button
                   key={ratio}
                   type="button"
