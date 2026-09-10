@@ -6,6 +6,9 @@
 > ⚠️ **Backend note (G3):** there is **no real payment** — every purchase/subscribe just mutates the
 > in-memory balance/flag. Real IAP (App Store / Play Store), persistence, credit reset/expiry, and
 > restore-purchases are backend/store concerns this spec does **not** define (`TBD-CR-*`).
+>
+> Credit History record 的顯示字串與 icon mapping 契約見
+> `13-credit-history-display.md`；該文件是 RD 未來接 live ledger 時的規格，不改變目前 static seed。
 
 ---
 

@@ -135,6 +135,9 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
   **placeholders**; the real charge is the MSR Credit Consume Form (`credit_consume: 1.0`), where each
   generation posts a main action + `subActions` and the backend sums the matching rules. Area 11 is the
   RD-facing action map; the prototype numbers below are what the demo does today (`TBD-CC-05`).
+- **Credit History display contract → `areas/13-credit-history-display.md`.** A live ledger record's
+  `feature_name` + `action_name` select its localized display name and icon. Missing or empty locale
+  strings fall back to `enu`. This is an RD contract only and does not change the prototype's static ledger.
 - **Insufficient-balance gate:** when `credits < cost`, the CTA **routes to the buy-credits IAP instead of generating** (`MvRoom` mode select, `SongCompose`, `StoryboardEditor`, `MvEditor` merge, `SongResultView` recreate) — synced to the app. Real persistence / live ledger / real IAP stay backend-deferred (`TBD-GL-04`, `TBD-CR-01/04`).
 
 ## 7. Design tokens

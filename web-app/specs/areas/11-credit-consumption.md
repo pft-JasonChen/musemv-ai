@@ -10,7 +10,8 @@
 > **點數是可調參數，RD 不應 hardcode**；本文的重點是 **action 組合方式**，那才是介面契約。
 >
 > Related: 餘額 / 儲值 / 訂閱 UI → `07-credits-iap.md`。各流程的 UI 行為 → `02-mv-creation.md`、
-> `03-song-creation.md`。
+> `03-song-creation.md`。Credit History record 的顯示名稱與 icon mapping →
+> `13-credit-history-display.md`。
 >
 > ---
 >

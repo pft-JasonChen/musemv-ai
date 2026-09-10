@@ -25,6 +25,20 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-09-10 — Credit History display mapping contract
+
+No prototype change. Added `areas/13-credit-history-display.md` from the product-provided
+`ycm-credit-history.json` form.
+
+| | |
+| --- | --- |
+| **Criteria** | New `AC-CD-01`–`AC-CD-08`: map record `feature_name` + `action_name` to `credit_detail_name_key` + `icon`, then localize the key. |
+| **Fallback** | Product owner decision, 2026-09-10: a missing or empty locale value displays the same key's `enu` value. |
+| **Contract fidelity** | Form identifiers remain exact and case-sensitive, including `ai_song_simpe_instrumental`, `revreate_scene_name`, and `prt`; the spec explicitly records their divergences from the existing billing/web locale contracts. |
+| **Code / tests** | None — documentation-only by request; the prototype is unchanged. The spec includes a QA minimum test set for RD implementation. |
+
+---
+
 ## 2026-09-10 — e2e triage: one criterion withdrawn, plus a spec/code divergence to settle
 
 No feature work. The `npm run e2e` gate was failing **46 of 225** on the Windows dev machine, which
