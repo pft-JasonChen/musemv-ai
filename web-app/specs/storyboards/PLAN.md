@@ -10,6 +10,45 @@
 
 ---
 
+## 0. ⚪ WON'T FIX — the sidebar logo in the existing screenshots is the OLD one
+
+**Product owner, 2026-09-10: known, deliberately not fixed, and NOT to be raised again.**
+Do not re-capture a storyboard for this reason, and do not file it per storyboard as
+each one is next touched.
+
+`9708cbb` (2026-09-07) replaced `web-app/public/assets/brand/ycm_logo_word_ver.svg`, the
+one file `Sidebar.tsx` renders, so the wordmark went from **"MUSE"** to **"YouCam MUSE"**.
+Every screenshot that shows the sidebar and was captured before that date therefore has
+the old logo. Measured 2026-09-10: **248 of 251 screenshots across all nine storyboards**
+predate it — this is programme-wide chrome drift, not one storyboard's problem, which is
+why fixing it would mean a full re-capture of essentially the whole programme.
+
+| Storyboard | Pre-2026-09-07 shots |
+| --- | --- |
+| S1 song-creation | 32 / 32 |
+| S2 mv-creation | 41 / 44 |
+| S3 mv-edit | 24 / 24 |
+| S4 history | 27 / 27 |
+| S5 credits-iap | 21 / 21 |
+| S6 shell-auth | 27 / 27 |
+| S7 profile-account | 23 / 23 |
+| S8 explore-community | 38 / 38 |
+| S9 share | 15 / 15 |
+
+**Why it is safe to leave.** These specs exist to pin BEHAVIOUR — what each control does,
+which states exist, what the copy says. A brand asset in the shared sidebar is none of
+those, and it is identical on every screen, so it misleads nobody about the flow being
+walked. QA reading S4's publish path is not being told anything false by an old wordmark.
+
+**What this does NOT excuse.** A screenshot whose *content* contradicts the prose is still
+a defect and still gets re-captured — that is exactly why S2's `36`/`37` were retaken on
+2026-09-10 (they showed a control that no longer exists). The test is whether the image
+disagrees with what the step CLAIMS, not whether it predates some unrelated commit. When a
+new capture happens for a real reason, it picks the new logo up for free; that is the only
+way this drift should ever close.
+
+---
+
 ## 1. Two spec layers — don't confuse them
 
 | Layer                                 | Files                                      | Audience       | Basis                                                                                                                                 |
@@ -34,14 +73,14 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 
 | #       | Slug                  | Flow | Area source       | Routes / surfaces                                                                  | Paths | Shots | Status                                 |
 | ------- | --------------------- | ---- | ----------------- | ---------------------------------------------------------------------------------- | ----- | ----- | -------------------------------------- |
-| **S1**  | `song-creation`       | 3    | 03 (+05 glance)   | `/song/create` `/song/creating` `/song/result`                                     | 7     | 32    | ✅ v3, 2026-09-02                      |
-| **S2**  | `mv-creation`         | 2    | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8     | 44    | ✅ v3, 2026-09-02                      |
-| **S3**  | `mv-edit`             | 2    | 02 (MV-P5)        | `/mv/edit`                                                                         | 5     | 24    | ✅ v1, 2026-08-28                      |
-| **S4**  | `history`             | 6    | 05                | `/history`                                                                         | 7     | 27    | ✅ v2, 2026-09-02                      |
+| **S1**  | `song-creation`       | 3    | 03 (+05 glance)   | `/song/create` `/song/creating` `/song/result`                                     | 7     | 32    | ✅ v4, 2026-09-09                      |
+| **S2**  | `mv-creation`         | 2    | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8     | 44    | ✅ v6, 2026-09-10                      |
+| **S3**  | `mv-edit`             | 2    | 02 (MV-P5)        | `/mv/edit`                                                                         | 5     | 24    | ✅ v2, 2026-09-10                      |
+| **S4**  | `history`             | 6    | 05                | `/history`                                                                         | 7     | 27    | ✅ v3, 2026-09-10                      |
 | **S5**  | `credits-iap`         | 5    | 07                | `SubscribeModal` `BuyCreditsModal` `/profile/credits`                              | 6     | 21    | ✅ v1, 2026-09-01                      |
 | **S6**  | `shell-auth`          | 1    | 01 + 09           | sidebar / tab bar / route navbars / `SignInModal` / marketing footer               | 8     | 27    | ✅ v2, 2026-09-02                      |
 | **S7**  | `profile-account`     | 1    | 06                | `/profile` `/settings`, edit-profile, Send Feedback                                | 6     | 23    | ✅ v2, 2026-09-02                      |
-| **S8**  | `explore-community`   | 4    | 04                | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator`               | 7     | 38    | ✅ v1, 2026-09-01                      |
+| **S8**  | `explore-community`   | 4    | 04                | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator`               | 7     | 38    | ✅ v2, 2026-09-09                      |
 | **S9**  | `share`               | 4    | 10                | `/share`, `ShareDialog`                                                            | 5     | 15    | ✅ v1, 2026-09-01                      |
 | **S10** | `credit-consumption`  | —    | 11                | none — **the area 11 md IS the spec** (D13)                                        | —     | 0     | ✅ 2026-09-01, one blank: `TBD-CC-06`  |
 | —       | ~~proof-of-creation~~ | —    | 08                | —                                                                                  | —     | —     | ❌ out of web scope (area 08 § Status) |

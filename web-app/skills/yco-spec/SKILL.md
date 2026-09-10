@@ -263,6 +263,33 @@ reproducibility rules — in **`references/screenshots.md`**.
 
 Never screenshot from the Linux sandbox and never use `file://`.
 
+### One-time setup: the capture scripts need the PYTHON playwright package
+
+`capture_lib.py` imports `playwright.async_api`, which is the **Python** package — a
+different thing from the Node `@playwright/test` that `npm run e2e` uses. Having e2e
+working tells you nothing about whether captures will run, and the failure is a bare
+`ModuleNotFoundError: No module named 'playwright'` that reads like a broken script.
+There is no `requirements.txt` in this repo, so install it per machine:
+
+```bash
+python -m pip install playwright        # bindings only — do NOT run `playwright install`
+```
+
+**Do not let it download a browser.** `playwright install` pulls ~150 MB, and every
+machine that can run `npm run e2e` already has a Chromium. Point `CHROMIUM_PATH` at it
+and `chromium_path()` picks it up:
+
+```bash
+# Windows — Node playwright keeps its browsers here; take the highest build number
+CHROMIUM_PATH="$LOCALAPPDATA/ms-playwright/chromium-<build>/chrome-win64/chrome.exe"
+# Linux sandbox — resolved automatically, no env var needed (see chromium_path())
+PYTHONIOENCODING=utf-8 CHROMIUM_PATH="$CHROMIUM_PATH" python3 capture_screenshots.py --base http://localhost:3010
+```
+
+`PYTHONIOENCODING=utf-8` is not optional on Windows: these scripts print `✓`/`✗`, and a
+cp950 console raises `UnicodeEncodeError` inside `print()` — so a script with something
+to SAY dies while saying it, and the traceback hides the real message.
+
 ---
 
 ## Phase 4 — Build
