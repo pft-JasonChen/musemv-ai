@@ -427,6 +427,22 @@ a detail screen:**
 
 ## Error log (one line per user correction; fold recurring lessons into an AGENTS.md rule)
 
+- 2026-09-10: shipped a visible bug into `specs/index.html` — the sidebar rendered a literal
+  `\n` between every nav item — and the root cause was a BAD MEASUREMENT that I then
+  trusted twice. While rewriting `build-index.py`'s nav I could not get a search string to match,
+  so I "tested" the escaping by counting candidate strings; the candidates were themselves wrongly
+  escaped, the count pointed at the double-backslash form, and I concluded "the file contains
+  `\\n`, `cat -A` is displaying it misleadingly". It was not: the file had the correct
+  single-backslash `\n`, and I replaced 3 correct escapes with broken ones — then wrote that
+  false conclusion into the commit message as if it were a finding.
+  **A measurement whose instrument is the thing in question is not a measurement.** The honest
+  check was `git show <ref>:<file>` for the same line: one command, and the before/after is plain.
+  Two habits from it — when ESCAPING is the problem, compare against the committed version rather
+  than against strings you just typed; and build the search/replace out of `chr(92)` so there is no
+  escaping layer left to get wrong. My first repair attempt made it worse (it wrote a real newline
+  into the source and broke the file), which is `AGENTS.md`'s "same error twice → change approach"
+  firing exactly as written: I restored from git and rebuilt with `chr(92)` instead of guessing a
+  third time. The first draft of THIS log entry had the same bug in it, for the same reason.
 - 2026-09-10: blocked Stop with `⨯ Another next build process is already running` — the port-3100
   mistake in a new costume. I backgrounded a chained DoD run (`typecheck && lint && test:run &&
   build`) because it had passed the Bash tool's 10-minute cap, and the Stop hook fired its own

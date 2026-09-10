@@ -158,8 +158,8 @@ def main() -> None:
     # `data-ext` marks the rows the reader must NOT intercept: without it the
     # shared nav click handler reads a missing `data-doc` and closes the reader
     # as a side effect of following the link.
-    nav = ['      <button class="nav-item" id="nav-index" type="button" data-doc="">\\n'
-           '        <span class="nav-area">&#9776;</span><span class="nav-name">Index</span>\\n      </button>']
+    nav = ['      <button class="nav-item" id="nav-index" type="button" data-doc="">\n'
+           '        <span class="nav-area">&#9776;</span><span class="nav-name">Index</span>\n      </button>']
     for area, slug, name, ver, dev, qa in STORYBOARDS:
         href = f"storyboards/{slug}/specs/spec.html"
         nav.append(f'''      <a class="nav-item" href="{href}" target="_blank" rel="noopener" data-ext="1">
@@ -171,7 +171,7 @@ def main() -> None:
         <span class="nav-area">{STORYBOARD_S10[0]}</span><span class="nav-name">{STORYBOARD_S10[1]}</span>
         <span class="nav-dot st-ref"></span>
       </button>''')
-    nav_html = "\\n".join(nav)
+    nav_html = "\n".join(nav)
 
     # Storyboard table rows — real external links (new tab), not reader-pane docs.
     sb = []
