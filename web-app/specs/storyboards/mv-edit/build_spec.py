@@ -423,6 +423,17 @@ cfg = {
         '&ldquo;Where&rdquo; column names the nearest captured step or the sibling spec that owns the boundary.'
     ),
 
+    'changelog': [   # newest first — (version, date, what changed)
+        ('v2', '2026-09-10',
+         '<b>MV-13 &mdash; corrected how the published-MV edit block is described.</b> The block is '
+         'the Edit MV control being REMOVED, not relabelled to &ldquo;Unpublish to edit&rdquo; '
+         '(product owner, 2026-08-28). This spec does not own that boundary &mdash; it is asserted on '
+         '/mv/result (S2 P8) and in History&rsquo;s menu (S4 P4) &mdash; so only the Error States row '
+         'and decision <b>D-04</b> changed, and nothing was recaptured. '
+         'See <code>specs/CHANGELOG-SPEC.md</code>.'),
+        ('v1', '2026-08-28', 'First delivery &mdash; 5 paths, 24 shots.'),
+    ],
+
     'open_questions': [
         ('Q-01', 'What does &ldquo;cost per the Credit Consume MSR&rdquo; resolve to for Merge/Recreate?', 'Quoting a concrete number in this spec&rsquo;s own RULES text (D2) &mdash; every spec in this programme carries this same row', 'Product / RD (the MSR document link is still TBD)'),
     ],

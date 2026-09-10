@@ -458,6 +458,25 @@ cfg = {
         '&mdash; TBD-HIST-04. This table covers only what the &ctdot; menu and its confirm modals do today.'
     ),
 
+    'changelog': [   # newest first — (version, date, what changed)
+        ('v3', '2026-09-10',
+         '<b>Two things the code had changed and this spec had not.</b> '
+         '<b>MV-13:</b> while published or in review the Edit MV entry is REMOVED from the &ctdot; '
+         'menu, not relabelled to &ldquo;Unpublish to edit&rdquo; (product owner, 2026-08-28). '
+         '<b>TBD-HIST-05 is ANSWERED, not open:</b> <code>confirmPublishMv()</code> writes '
+         '<code>reviewing: true, published: false</code> and resolves ITSELF after 2500&nbsp;ms into '
+         'approved or <b>REJECTED</b> &mdash; the rejected state shows a red &ldquo;Publish '
+         '(Rejected)&rdquo; title plus a reason line, and reverts the row to unpublished. '
+         'Changed: <b>P4-S2</b>, <b>P4-S3</b>, P6&rsquo;s Edit MV limit, the published/reviewing row '
+         'of the States table, the TBD-HIST-05 open question, and the flowchart (review was drawn as '
+         'one terminal node and is now a fork). '
+         '<b>No screenshot needed retaking</b> &mdash; 21_menu_mv_reviewing.png was captured '
+         '2026-09-02, after the change, and already showed the menu with no Edit MV entry. '
+         'See <code>specs/CHANGELOG-SPEC.md</code>.'),
+        ('v2', '2026-09-02', 'Brought five storyboard specs back in line with the code (see 7987caf); this spec&rsquo;s captures were retaken in that pass.'),
+        ('v1', '2026-08-27', 'First delivery &mdash; 7 paths, 27 shots.'),
+    ],
+
     'open_questions': [
         (
             'TBD-HIST-05 &mdash; ANSWERED',

@@ -35,6 +35,7 @@ USAGE
     NEXT_PUBLIC_DEMO_CREDITS=2000 npm run dev -- -p 3010     # terminal 1
     python3 capture_screenshots.py --base http://localhost:3010
     python3 capture_screenshots.py --base http://localhost:3010 --p1-s6-only
+    python3 capture_screenshots.py --base http://localhost:3010 --p8-publish-only
     # then restart the dev server with NO override (plain `npm run dev -- -p 3010`) and:
     python3 capture_screenshots.py --base http://localhost:3010 --credits-gate-only
     python3 build_spec.py
@@ -293,6 +294,52 @@ async def main_p1_s6(base):
         await enhance.wait_for(state="visible")
         await shoot(cap, "06_description_filled.png", [".mv-create__enhance-btn"], "Enhance")
         print("P1-S6 console errors:", cap.errors or "none")
+
+
+async def main_p8_publish(base):
+    """Retake only P8's two publish frames (36, 37).
+
+    MV-13 changed on 2026-08-28 (product owner: a published/in-review MV has
+    its Edit MV control REMOVED rather than relabelled) and the pending phase
+    changed with it (the toggle stays OFF and the state line reads "In Review").
+    Both frames were captured 2026-08-27, so they still showed an "Unpublish to
+    edit" button, "Published . pending review", and the toggle ON — three things
+    the product stopped doing the next day.
+
+    This walks the SAME path main_hi_credit takes to reach /mv/result, rather
+    than opening a seeded row from History, so the player and DETAIL panel match
+    the neighbouring frames (34/35/38) instead of showing a different MV. No
+    style card is clicked: `mvType` defaults to "singing", which is what those
+    neighbours show. DETAIL's Aspect Ratio will now read 16:9 rather than 9:16 —
+    that is `DEFAULT_SETTINGS` changing, not a capture drift.
+
+    Needs the DEMO_CREDITS server, same as main_hi_credit: this does a real
+    generation.
+    """
+    async with NextCapture(HERE, base) as cap:
+        page = cap.page
+        await page.goto(f"{base}/mv/room", wait_until="networkidle")
+        await page.wait_for_timeout(700)
+        await fill_description(page, DESCRIPTION)
+        await open_choose_song(page)
+        await pick_song(page, "my", 0)
+        await confirm_trim(page)
+        await open_mode_modal(page)
+        await page.click(".mv-mode-card:not(.mv-mode-card--featured)")
+        await wait_generation_done(page, "/mv/creating")
+        await wait_generation_done(page, "/mv/result", timeout=20000)
+        await freeze_video(page)
+
+        await page.click("[aria-label='Publish to community']")
+        await page.wait_for_selector(".publish-dialog", state="visible")
+        await page.wait_for_timeout(300)
+        await shoot(cap, "36_result_publish_confirm.png", [".publish-dialog__confirm"], "Confirm")
+        await page.click(".publish-dialog__confirm")
+        # 400ms, deliberately inside PUBLISH_REVIEW_DELAY_MS (2500ms): the frame
+        # is meant to show the PENDING phase, which resolves itself after that.
+        await page.wait_for_timeout(400)
+        await shoot(cap, "37_result_publish_pending.png")
+        print("P8 publish console errors:", cap.errors or "none")
 
 
 async def main_hi_credit(base):
@@ -693,9 +740,14 @@ if __name__ == "__main__":
     ap.add_argument("--p1-s6-only", action="store_true",
                     help="Retake only P1-S6 after filling Description and "
                          "confirm that Enhance is visible.")
+    ap.add_argument("--p8-publish-only", action="store_true",
+                    help="Retake only P8's publish confirm + pending frames "
+                         "(36, 37). Needs the DEMO_CREDITS server.")
     args = ap.parse_args()
     if args.p1_s6_only:
         asyncio.run(main_p1_s6(args.base))
+    elif args.p8_publish_only:
+        asyncio.run(main_p8_publish(args.base))
     elif args.credits_gate_only:
         asyncio.run(main_credits_gate(args.base))
     else:

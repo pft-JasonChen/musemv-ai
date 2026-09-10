@@ -19,7 +19,7 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v5'
+VERSION = 'v6'
 DATE = '2026-09-10'
 
 f = Flow('AI Music Video (MV) Creation', 'YouCam Muse Web — desktop 1440',

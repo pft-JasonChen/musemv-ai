@@ -25,6 +25,8 @@
     --border: #26262e; --border-2: #33333d; --accent: #a855f7; --accent-soft: #241533;
     --gold: #f59e0b; --green: #34d399; --amber: #fbbf24; --code-bg: #16161b;
   }
+  .c-cl { white-space: nowrap; }
+  .c-none { color: var(--muted); }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body { margin: 0; background: var(--bg); color: var(--fg);
@@ -83,6 +85,7 @@
   .nav-item { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 0;
     background: none; color: var(--fg); padding: 8px 10px; border-radius: 9px; font-size: 13px;
     cursor: pointer; font-family: inherit; }
+  a.nav-item { text-decoration: none; color: inherit; }
   .nav-item:hover { background: var(--card); }
   .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
   .nav-area { font-size: 11px; font-weight: 800; color: var(--muted); min-width: 16px; }
@@ -145,65 +148,37 @@
 </head>
 <body>
 <div class="shell">
-  <nav class="sidenav" aria-label="Spec navigation">
-    <div class="sidenav-title">Specs</div>
-      <button class="nav-item" id="nav-index" type="button" data-doc="">
-        <span class="nav-area">☰</span><span class="nav-name">Index</span>
-      </button>
-      <button class="nav-item" type="button" data-doc="00">
-        <span class="nav-area">00</span><span class="nav-name">Overview — READ FIRST</span>
-        <span class="nav-dot st-ref"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="CL">
-        <span class="nav-area">CL</span><span class="nav-name">Spec Change Log — what moved, and where</span>
-        <span class="nav-dot st-ref"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="01">
-        <span class="nav-area">01</span><span class="nav-name">App Shell &amp; Global Chrome</span>
+  <nav class="sidenav" aria-label="Storyboard spec navigation">
+    <div class="sidenav-title">Storyboard specs</div>
+      <button class="nav-item" id="nav-index" type="button" data-doc="">\n        <span class="nav-area">&#9776;</span><span class="nav-name">Index</span>\n      </button>\n      <a class="nav-item" href="storyboards/song-creation/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S1</span><span class="nav-name">AI Song Creation</span>
         <span class="nav-dot st-ok"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="02">
-        <span class="nav-area">02</span><span class="nav-name">AI Music Video Creation</span>
-        <span class="nav-dot st-base"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="03">
-        <span class="nav-area">03</span><span class="nav-name">AI Song Creation</span>
+      </a>\n      <a class="nav-item" href="storyboards/mv-creation/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S2</span><span class="nav-name">AI Music Video Creation</span>
         <span class="nav-dot st-ok"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="04">
-        <span class="nav-area">04</span><span class="nav-name">Explore &amp; Community</span>
-        <span class="nav-dot st-warn"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="05">
-        <span class="nav-area">05</span><span class="nav-name">History (My Creations)</span>
+      </a>\n      <a class="nav-item" href="storyboards/mv-edit/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S3</span><span class="nav-name">MV Edit</span>
         <span class="nav-dot st-ok"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="06">
-        <span class="nav-area">06</span><span class="nav-name">Profile, Account &amp; Settings</span>
+      </a>\n      <a class="nav-item" href="storyboards/history/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S4</span><span class="nav-name">History (My Creations)</span>
         <span class="nav-dot st-ok"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="07">
-        <span class="nav-area">07</span><span class="nav-name">Credits &amp; IAP</span>
+      </a>\n      <a class="nav-item" href="storyboards/credits-iap/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S5</span><span class="nav-name">Credits &amp; IAP</span>
         <span class="nav-dot st-ok"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="08">
-        <span class="nav-area">08</span><span class="nav-name">Proof of Creation</span>
-        <span class="nav-dot st-removed"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="09">
-        <span class="nav-area">09</span><span class="nav-name">Auth &amp; Onboarding</span>
+      </a>\n      <a class="nav-item" href="storyboards/shell-auth/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S6</span><span class="nav-name">App Shell &amp; Auth</span>
         <span class="nav-dot st-ok"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="10">
-        <span class="nav-area">10</span><span class="nav-name">Share</span>
+      </a>\n      <a class="nav-item" href="storyboards/profile-account/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S7</span><span class="nav-name">Profile, Account &amp; Settings</span>
         <span class="nav-dot st-ok"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="11">
-        <span class="nav-area">11</span><span class="nav-name">Credit Consumption (RD)</span>
-        <span class="nav-dot st-warn"></span>
-      </button>
-      <button class="nav-item" type="button" data-doc="OQ">
-        <span class="nav-area">OQ</span><span class="nav-name">Open Questions</span>
+      </a>\n      <a class="nav-item" href="storyboards/explore-community/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S8</span><span class="nav-name">Explore &amp; Community</span>
+        <span class="nav-dot st-ok"></span>
+      </a>\n      <a class="nav-item" href="storyboards/share/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S9</span><span class="nav-name">Share</span>
+        <span class="nav-dot st-ok"></span>
+      </a>\n      <button class="nav-item" type="button" data-doc="11">
+        <span class="nav-area">S10</span><span class="nav-name">Credit Consumption (RD)</span>
         <span class="nav-dot st-ref"></span>
       </button>
   </nav>
@@ -222,7 +197,7 @@
 
       <div class="pills">
         <span class="pill">🗂️ 10 feature areas + overview</span>
-        <span class="pill">🎬 <a href="#sb-section">10 storyboard specs (QA)</a></span>
+        <span class="pill">🎬 <a href="#sb-section">Storyboard specs (QA)</a></span>
         <span class="pill">🛠️ <a href="../docs/archive/handoff-2026-07-23.md">Codebase handoff</a></span>
         <span class="pill">💳 Pricing synced to the Business Model (2026-07-24)</span>
       </div>
@@ -232,12 +207,107 @@
         <span class="count" id="count"></span>
       </div>
 
+      <h2 class="sb-heading" id="sb-section">Storyboard Specs</h2>
+      <p class="sub">Built with <code>skills/yco-spec</code> from the same as-built behaviour as the area specs
+      below — every rule traces back to an <code>AC-*</code> criterion. Audience is QA; screenshots come from
+      the live app, not a mockup. These are separate, pre-built HTML documents (not markdown), so each opens
+      in its own tab rather than in the reader pane below. <b>S10</b> has no screenshots — the product owner
+      ruled it ships as the Area 11 spec itself (<code>specs/storyboards/PLAN.md</code> D13).</p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Spec</th><th>Name</th><th>Routes / surfaces</th>
+              <th>Version</th><th>Change Log</th>
+            </tr>
+          </thead>
+          <tbody id="sb-tbody">
+      <tr>
+        <td class="c-area">S1</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/song-creation/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">AI Song Creation</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/song-creation/specs/spec.html</div></td>
+        <td class="c-dev">/song/create · /song/creating · /song/result</td>
+        <td><span class="badge st-ok">v4 · 2026-09-09</span></td>
+        <td class="c-cl"><a class="sb-link" href="storyboards/song-creation/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
+      </tr>
+      <tr>
+        <td class="c-area">S2</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/mv-creation/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">AI Music Video Creation</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-creation/specs/spec.html</div></td>
+        <td class="c-dev">/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result</td>
+        <td><span class="badge st-ok">v6 · 2026-09-10</span></td>
+        <td class="c-cl"><a class="sb-link" href="storyboards/mv-creation/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
+      </tr>
+      <tr>
+        <td class="c-area">S3</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">MV Edit</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-edit/specs/spec.html</div></td>
+        <td class="c-dev">/mv/edit</td>
+        <td><span class="badge st-ok">v2 · 2026-09-10</span></td>
+        <td class="c-cl"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
+      </tr>
+      <tr>
+        <td class="c-area">S4</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/history/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">History (My Creations)</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/history/specs/spec.html</div></td>
+        <td class="c-dev">/history</td>
+        <td><span class="badge st-ok">v3 · 2026-09-10</span></td>
+        <td class="c-cl"><a class="sb-link" href="storyboards/history/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
+      </tr>
+      <tr>
+        <td class="c-area">S5</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/credits-iap/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Credits &amp; IAP</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/credits-iap/specs/spec.html</div></td>
+        <td class="c-dev">SubscribeModal · BuyCreditsModal · /profile/credits</td>
+        <td><span class="badge st-ok">v1 · 2026-09-01</span></td>
+        <td class="c-cl"><span class="c-none">&mdash;</span></td>
+      </tr>
+      <tr>
+        <td class="c-area">S6</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/shell-auth/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">App Shell &amp; Auth</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/shell-auth/specs/spec.html</div></td>
+        <td class="c-dev">sidebar / tab bar · route navbars · SignInModal · marketing footer</td>
+        <td><span class="badge st-ok">v2 · 2026-09-02</span></td>
+        <td class="c-cl"><span class="c-none">&mdash;</span></td>
+      </tr>
+      <tr>
+        <td class="c-area">S7</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/profile-account/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Profile, Account &amp; Settings</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/profile-account/specs/spec.html</div></td>
+        <td class="c-dev">/profile · /settings · edit profile · Send Feedback</td>
+        <td><span class="badge st-ok">v2 · 2026-09-02</span></td>
+        <td class="c-cl"><span class="c-none">&mdash;</span></td>
+      </tr>
+      <tr>
+        <td class="c-area">S8</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/explore-community/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Explore &amp; Community</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/explore-community/specs/spec.html</div></td>
+        <td class="c-dev">/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator</td>
+        <td><span class="badge st-ok">v2 · 2026-09-09</span></td>
+        <td class="c-cl"><a class="sb-link" href="storyboards/explore-community/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
+      </tr>
+      <tr>
+        <td class="c-area">S9</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/share/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Share</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/share/specs/spec.html</div></td>
+        <td class="c-dev">/share · ShareDialog</td>
+        <td><span class="badge st-ok">v1 · 2026-09-01</span></td>
+        <td class="c-cl"><span class="c-none">&mdash;</span></td>
+      </tr>
+      <tr>
+        <td class="c-area">S10</td>
+        <td class="c-feat"><a class="sb-link" href="#11" data-jump="11"><span class="feat-name">Credit Consumption (RD)</span><span class="feat-open">Open spec →</span></a><div class="c-file">areas/11-credit-consumption.md — no spec.html, the md IS the spec (D13)</div></td>
+        <td class="c-dev">— (no journey to walk; contract-shaped, see Area 11 above)</td>
+        <td><span class="badge st-ref">2026-09-01</span></td>
+        <td class="c-cl"><span class="c-none">&mdash;</span></td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 class="sb-heading" id="area-section">Area Specs</h2>
+      <p class="sub">Behaviour-first, as-built EARS criteria (<code>AC-*</code>) for RD and AI
+      agents — text only, no screenshots. Click a row (or a spec in the sidebar) to read it
+      rendered in place. Every storyboard rule above traces back to one of these.</p>
+
       <div class="scroll">
         <table>
           <thead>
             <tr>
               <th>Area</th><th>Feature</th><th>Status</th>
-              <th>For developers</th><th>For QA</th>
+              <th>For developers</th>
             </tr>
           </thead>
           <tbody id="tbody">
@@ -246,98 +316,84 @@
         <td class="c-feat"><span class="feat-name">Overview — READ FIRST</span><span class="feat-open">Open spec →</span><div class="c-file">00-overview.md</div></td>
         <td><span class="badge st-ref">reference</span></td>
         <td class="c-dev">Conventions, ID scheme, the global auth + credits model, and the feature-parity map vs App v3.0.</td>
-        <td class="c-qa">Start here — global acceptance model, cross-area conventions, and the full TBD registry.</td>
       </tr>
       <tr data-doc="CL" tabindex="0" role="button" aria-label="Open Spec Change Log — what moved, and where spec">
         <td class="c-area">CL</td>
         <td class="c-feat"><span class="feat-name">Spec Change Log — what moved, and where</span><span class="feat-open">Open spec →</span><div class="c-file">CHANGELOG-SPEC.md</div></td>
         <td><span class="badge st-ref">reference</span></td>
         <td class="c-dev">Bug/decision code &rarr; the AC and storyboard IDs that moved &rarr; the code file &rarr; the test. Says explicitly whether the wire contract moved (and links docs/CHANGELOG-RD.md when it did).</td>
-        <td class="c-qa">Read this after a fix lands: it names the criteria that changed and flags which storyboard screenshots are now stale.</td>
       </tr>
       <tr data-doc="01" tabindex="0" role="button" aria-label="Open App Shell &amp; Global Chrome spec">
         <td class="c-area">01</td>
         <td class="c-feat"><span class="feat-name">App Shell &amp; Global Chrome</span><span class="feat-open">Open spec →</span><div class="c-file">areas/01-app-shell.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">AppShell, Sidebar / BottomBar, TopBar, HeaderActions, AccountMenu, CreditPill; responsive frame (sm/lg).</td>
-        <td class="c-qa">Chrome renders @390/768/1024/1440; credits badge + account menu; bottom-bar→sidebar switch. 8 AC.</td>
       </tr>
       <tr data-doc="02" tabindex="0" role="button" aria-label="Open AI Music Video Creation spec">
         <td class="c-area">02</td>
         <td class="c-feat"><span class="feat-name">AI Music Video Creation</span><span class="feat-open">Open spec →</span><div class="c-file">areas/02-mv-creation.md</div></td>
         <td><span class="badge st-base">golden sample</span></td>
         <td class="c-dev">MvRoom → thinking → StoryboardEditor → creating → MvResult → MvEditor; MvFlowProvider; COST_STORYBOARD / RENDER / REGEN / COVER.</td>
-        <td class="c-qa">Full MV flow incl. sheets &amp; modes; credit charge + refund-on-fail; insufficient→IAP. 20 AC (reference sample).</td>
       </tr>
       <tr data-doc="03" tabindex="0" role="button" aria-label="Open AI Song Creation spec">
         <td class="c-area">03</td>
         <td class="c-feat"><span class="feat-name">AI Song Creation</span><span class="feat-open">Open spec →</span><div class="c-file">areas/03-song-creation.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">SongCompose (Simple/Custom, BPM/Key, Lyrics-Idea), creating, SongResultView / SongDetail; SongFlowProvider; COST_SONG=10.</td>
-        <td class="c-qa">Simple/Custom compose, Instrumental, Lyrics sheet, 30s free-preview gate, Create Song CTA. 13 AC.</td>
       </tr>
       <tr data-doc="04" tabindex="0" role="button" aria-label="Open Explore &amp; Community spec">
         <td class="c-area">04</td>
         <td class="c-feat"><span class="feat-name">Explore &amp; Community</span><span class="feat-open">Open spec →</span><div class="c-file">areas/04-explore-community.md</div></td>
         <td><span class="badge st-warn">as-built</span></td>
         <td class="c-dev">HomeView, ExploreView, WatchView, CommunitySongPlayer, CreatorView; community.ts seed.</td>
-        <td class="c-qa">Feeds render, watch, community song player, creator page. UI-only — curation/ranking is a backend track. 10 AC.</td>
       </tr>
       <tr data-doc="05" tabindex="0" role="button" aria-label="Open History (My Creations) spec">
         <td class="c-area">05</td>
         <td class="c-feat"><span class="feat-name">History (My Creations)</span><span class="feat-open">Open spec →</span><div class="c-file">areas/05-history.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">HistoryView; useHistory (live + seed merge); filters, ⋯ menu, publish / delete.</td>
-        <td class="c-qa">Merged list, filters, ⋯ actions, publish/delete, share id. 9 AC.</td>
       </tr>
       <tr data-doc="06" tabindex="0" role="button" aria-label="Open Profile, Account &amp; Settings spec">
         <td class="c-area">06</td>
         <td class="c-feat"><span class="feat-name">Profile, Account &amp; Settings</span><span class="feat-open">Open spec →</span><div class="c-file">areas/06-profile-account.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">ProfileView, edit profile, LanguageModal, SettingsView (legal / unsubscribe / delete).</td>
-        <td class="c-qa">Account hub, edit profile, language switch, settings destructive actions. 10 AC.</td>
       </tr>
       <tr data-doc="07" tabindex="0" role="button" aria-label="Open Credits &amp; IAP spec">
         <td class="c-area">07</td>
         <td class="c-feat"><span class="feat-name">Credits &amp; IAP</span><span class="feat-open">Open spec →</span><div class="c-file">areas/07-credits-iap.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">CreditsProvider; Subscribe / BuyCredits / CreditsDetail modals; lib/user.ts pricing + store SKUs.</td>
-        <td class="c-qa">Subscriber-only gate, plan/pack selection + badges, per-modal disclaimers @4 widths. 9 AC. ★ Pricing updated 2026-07-24.</td>
       </tr>
       <tr data-doc="08" tabindex="0" role="button" aria-label="Open Proof of Creation spec">
         <td class="c-area">08</td>
         <td class="c-feat"><span class="feat-name">Proof of Creation</span><span class="feat-open">Open spec →</span><div class="c-file">areas/08-proof-of-creation.md</div></td>
         <td><span class="badge st-removed">removed</span></td>
         <td class="c-dev">Removed 2026-07-24 — /proof route + ProofView deleted; no code remains.</td>
-        <td class="c-qa">Confirm no Get Proof entry anywhere in History; nothing else to check.</td>
       </tr>
       <tr data-doc="09" tabindex="0" role="button" aria-label="Open Auth &amp; Onboarding spec">
         <td class="c-area">09</td>
         <td class="c-feat"><span class="feat-name">Auth &amp; Onboarding</span><span class="feat-open">Open spec →</span><div class="c-file">areas/09-auth-onboarding.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">AuthProvider, AuthGuard, mock SignInModal; action-level auth gating (GL-02).</td>
-        <td class="c-qa">Mock sign-in gate, guarded routes, auth-gated actions (like/publish). Onboarding out of scope. 7 AC.</td>
       </tr>
       <tr data-doc="10" tabindex="0" role="button" aria-label="Open Share spec">
         <td class="c-area">10</td>
         <td class="c-feat"><span class="feat-name">Share</span><span class="feat-open">Open spec →</span><div class="c-file">areas/10-share.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
         <td class="c-dev">Public /share/[id] page + the shared ShareDialog component.</td>
-        <td class="c-qa">Share dialog + public share-link page. Intended gating still open (TBD-GL-07). 6 AC.</td>
       </tr>
       <tr data-doc="11" tabindex="0" role="button" aria-label="Open Credit Consumption (RD) spec">
         <td class="c-area">11</td>
         <td class="c-feat"><span class="feat-name">Credit Consumption (RD)</span><span class="feat-open">Open spec →</span><div class="c-file">areas/11-credit-consumption.md</div></td>
         <td><span class="badge st-warn">as-built</span></td>
         <td class="c-dev">MSR Credit Consume Form (credit_consume 1.0); main-action + subActions payload per scenario; cloud-config action map.</td>
-        <td class="c-qa">Which action/subActions each generation sends, charge-on-start + refund-on-fail, reserved actions. 2 TBD.</td>
       </tr>
       <tr data-doc="OQ" tabindex="0" role="button" aria-label="Open Open Questions spec">
         <td class="c-area">OQ</td>
         <td class="c-feat"><span class="feat-name">Open Questions</span><span class="feat-open">Open spec →</span><div class="c-file">OPEN-QUESTIONS.md</div></td>
         <td><span class="badge st-ref">reference</span></td>
         <td class="c-dev">Cross-area items still needing a PM/designer/RD decision — resolved items live in each area spec instead.</td>
-        <td class="c-qa">Skim before a review — flags what's still genuinely undecided across areas.</td>
       </tr>
           </tbody>
         </table>
@@ -353,95 +409,6 @@
         ❓ = open decision · 🔒 = mock / in-memory / seed.
       </p>
 
-      <h2 class="sb-heading" id="sb-section">10 Storyboard Specs — screenshot-led QA walkthroughs</h2>
-      <p class="sub">Built with <code>skills/yco-spec</code> from the same as-built behaviour as the area specs
-      above — every rule traces back to an <code>AC-*</code> criterion. Audience is QA; screenshots come from
-      the live app, not a mockup. These are separate, pre-built HTML documents (not markdown), so each opens
-      in its own tab rather than in the reader pane below. <b>S10</b> has no screenshots — the product owner
-      ruled it ships as the Area 11 spec itself (<code>specs/storyboards/PLAN.md</code> D13).</p>
-
-      <div class="scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Spec</th><th>Name</th><th>Version</th>
-              <th>Routes / surfaces</th><th>Paths / shots</th>
-            </tr>
-          </thead>
-          <tbody id="sb-tbody">
-      <tr>
-        <td class="c-area">S1</td>
-        <td class="c-feat"><a class="sb-link" href="storyboards/song-creation/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">AI Song Creation</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/song-creation/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v4 · 2026-09-09</span></td>
-        <td class="c-dev">/song/create · /song/creating · /song/result</td>
-        <td class="c-qa">7 paths / 32 shots</td>
-      </tr>
-      <tr>
-        <td class="c-area">S2</td>
-        <td class="c-feat"><a class="sb-link" href="storyboards/mv-creation/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">AI Music Video Creation</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-creation/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v4 · 2026-09-09</span></td>
-        <td class="c-dev">/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result</td>
-        <td class="c-qa">8 paths / 44 shots</td>
-      </tr>
-      <tr>
-        <td class="c-area">S3</td>
-        <td class="c-feat"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">MV Edit</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-edit/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v2 · 2026-09-10</span></td>
-        <td class="c-dev">/mv/edit</td>
-        <td class="c-qa">5 paths / 24 shots</td>
-      </tr>
-      <tr>
-        <td class="c-area">S4</td>
-        <td class="c-feat"><a class="sb-link" href="storyboards/history/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">History (My Creations)</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/history/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v3 · 2026-09-10</span></td>
-        <td class="c-dev">/history</td>
-        <td class="c-qa">7 paths / 27 shots</td>
-      </tr>
-      <tr>
-        <td class="c-area">S5</td>
-        <td class="c-feat"><a class="sb-link" href="storyboards/credits-iap/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Credits &amp; IAP</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/credits-iap/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v1 · 2026-09-01</span></td>
-        <td class="c-dev">SubscribeModal · BuyCreditsModal · /profile/credits</td>
-        <td class="c-qa">6 paths / 21 shots</td>
-      </tr>
-      <tr>
-        <td class="c-area">S6</td>
-        <td class="c-feat"><a class="sb-link" href="storyboards/shell-auth/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">App Shell &amp; Auth</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/shell-auth/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v2 · 2026-09-02</span></td>
-        <td class="c-dev">sidebar / tab bar · route navbars · SignInModal · marketing footer</td>
-        <td class="c-qa">8 paths / 27 shots</td>
-      </tr>
-      <tr>
-        <td class="c-area">S7</td>
-        <td class="c-feat"><a class="sb-link" href="storyboards/profile-account/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Profile, Account &amp; Settings</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/profile-account/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v2 · 2026-09-02</span></td>
-        <td class="c-dev">/profile · /settings · edit profile · Send Feedback</td>
-        <td class="c-qa">6 paths / 23 shots</td>
-      </tr>
-      <tr>
-        <td class="c-area">S8</td>
-        <td class="c-feat"><a class="sb-link" href="storyboards/explore-community/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Explore &amp; Community</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/explore-community/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v2 · 2026-09-09</span></td>
-        <td class="c-dev">/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator</td>
-        <td class="c-qa">7 paths / 38 shots</td>
-      </tr>
-      <tr>
-        <td class="c-area">S9</td>
-        <td class="c-feat"><a class="sb-link" href="storyboards/share/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Share</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/share/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v1 · 2026-09-01</span></td>
-        <td class="c-dev">/share · ShareDialog</td>
-        <td class="c-qa">5 paths / 15 shots</td>
-      </tr>
-      <tr>
-        <td class="c-area">S10</td>
-        <td class="c-feat"><a class="sb-link" href="#11" data-jump="11"><span class="feat-name">Credit Consumption (RD)</span><span class="feat-open">Open spec →</span></a><div class="c-file">areas/11-credit-consumption.md — no spec.html, the md IS the spec (D13)</div></td>
-        <td><span class="badge st-ref">2026-09-01</span></td>
-        <td class="c-dev">— (no journey to walk; contract-shaped, see Area 11 above)</td>
-        <td class="c-qa">0 shots — one blank field (TBD-CC-06)</td>
-      </tr>
-          </tbody>
-        </table>
-      </div>
 
       <footer>Basis: as-built from <code>web-app/src/</code> · App reference: YouCam Muse Spec v3.0 + Explore Curation PRD + Business Model 2026-07-13.<br>
       Regenerate after editing a spec: <code>python3 specs/build-index.py</code>. Regenerate a storyboard spec after editing its
@@ -6497,6 +6464,7 @@ section」,不是「小的 UI 問題」。</strong></p>
   });
   navItems.forEach(function (btn) {
     btn.addEventListener("click", function () {
+      if (btn.hasAttribute("data-ext")) return;   // real link — let it navigate
       var area = btn.getAttribute("data-doc");
       if (area) open(area); else close();
     });

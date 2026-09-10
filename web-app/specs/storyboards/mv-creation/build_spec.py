@@ -89,7 +89,7 @@ cfg = {
     'feature_name': 'AI Music Video (MV) Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video',
     'author': 'Jason Chen', 'date': '2026-09-10', 'status': 'Draft',
-    'version': 'v5',
+    'version': 'v6',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -312,7 +312,7 @@ cfg = {
                     'exact': ['Title: &ldquo;Result&rdquo;'],
                     'limits': [
                         'The full control set is toured independently in P8, starting from a result screen just like this one.',
-                        ('Publish starts Off and Edit MV reads plain &ldquo;Edit MV&rdquo; here.', 'The &ldquo;Unpublish to edit&rdquo; state (P8-S3/S4) only appears once published.'),
+                        ('Publish starts Off and Edit MV reads plain &ldquo;Edit MV&rdquo; here.', 'Once submitted, Edit MV is REMOVED rather than relabelled (P8-S3/S4, MV-13).'),
                     ],
                 },
                 {
@@ -646,12 +646,14 @@ cfg = {
                 {
                     'shot': '37_result_publish_pending.png', 'num': 4,
                     'user': 'Taps Confirm.',
-                    'system': 'Publish shows &ldquo;Published &middot; pending review&rdquo;, and Edit MV is replaced by a neutral &ldquo;Unpublish to edit&rdquo; action.',
-                    'exact': ['Publish state: &ldquo;Published &middot; pending review&rdquo;', 'Replaced button: &ldquo;Unpublish to edit&rdquo;'],
+                    'system': 'Publish reads &ldquo;In Review&rdquo; with the toggle still OFF, and Edit MV is REMOVED from Quick Actions.',
+                    'since': 'v6',
+                    'exact': ['Publish state: &ldquo;In Review&rdquo;'],
                     'limits': [
                         ('A published (or in-review) MV cannot be edited directly (TBD-MV-13, MV-E7).',
-                         '&ldquo;Unpublish to edit&rdquo; renders in a neutral (white/black) style, distinct from the accent-colored &ldquo;Edit MV&rdquo; it replaces.'),
-                        'Tapping it unpublishes, after which the button returns to accent &ldquo;Edit MV&rdquo; and opens the editor.',
+                         'The Edit MV control is REMOVED, not relabelled &mdash; product owner, 2026-08-28. There is no &ldquo;Unpublish to edit&rdquo; button anywhere in the product; the Publish toggle is the only way back to editable.'),
+                        ('The toggle stays OFF through the pending phase and only turns on once APPROVED.',
+                         '`published` is the live/approved state; `pending` is the in-between one, so a review that comes back rejected never showed the toggle on.'),
                         ('The backend review pipeline behind &ldquo;pending review&rdquo; is undefined (TBD-MV-06).',
                          'Only the front-end publish-confirm and this status label are built.'),
                     ],
@@ -678,7 +680,7 @@ cfg = {
         ('THINKING', '/mv/thinking after Storyboard First', 'Progress ring, step label, estimate, View Later', '&rarr; STORYBOARD_EDIT on done &middot; &rarr; FAILED on mock failure', 'On job outcome'),
         ('STORYBOARD_EDIT', '/mv/storyboard after a done storyboard job', 'Visual style / scenes editable, story / lyrics read-only, MV Song play-only, no Save', '&rarr; CREATING via Generate MV', 'On Generate MV'),
         ('CREATING', '/mv/creating after direct mode or Generate MV', 'Progress ring, step label, estimate, View Later', '&rarr; RESULT on done &middot; &rarr; FAILED on mock failure', 'On job outcome'),
-        ('RESULT', '/mv/result after a successful job', 'Player, Like/Dislike, Share, Download, Publish toggle, Recreate, Edit MV / Unpublish to edit, Detail panel', '&rarr; MODE_SELECT via Recreate (returns to /mv/room) &middot; &rarr; History via Back', 'On navigation away'),
+        ('RESULT', '/mv/result after a successful job', 'Player, Like/Dislike, Share, Download, Publish toggle, Recreate, Edit MV (absent while in review or published), Detail panel', '&rarr; MODE_SELECT via Recreate (returns to /mv/room) &middot; &rarr; History via Back', 'On navigation away'),
         ('FAILED', '/mv/thinking or /mv/creating after a mock failure', 'Generation Failed message; /mv/thinking shows Back only, /mv/creating shows Back + Retry', '&rarr; CREATING via Retry (creating only) &middot; &rarr; /mv/room via Back', 'On Retry (creating only) or Back'),
         ('Side rail: Trending MVs', 'SIGNED OUT (corrected 2026-09-09 &mdash; was &ldquo;or signed in with zero completed MVs&rdquo;)', 'NEW_MVS with a &ldquo;See all&rdquo; link (P7-S1)', '&rarr; My Creations on sign-in', '&mdash;'),
         ('Side rail: My Creations', 'Signed in (useMyCreations: live jobs + the seeded creations /history shows)', 'The user&rsquo;s own finished MVs, no &ldquo;See all&rdquo; (P7-S2)', '&rarr; Trending MVs on sign-out only; a reload drops just the live half', '&mdash;'),
@@ -751,7 +753,7 @@ cfg = {
         ('AC-MV-07', 'A done storyboard job navigates to /mv/storyboard populated with character image, song, visual style, story, scenes, and lyrics.', ['P1-S11']),
         ('AC-MV-08', 'Visual Style and Scene text are editable and ephemeral (no Save); MV Song is play-only; edits carry into the next Generate MV.', ['P1-S11']),
         ('AC-MV-09', 'Generate MV renders using the (possibly edited) storyboard and lands on /mv/result.', ['P1-S12', 'P1-S13', 'P1-S14']),
-        ('AC-MV-10', '/mv/result loops muted video and exposes Like/Dislike, Share, Download, a Publish toggle with a &ldquo;Ready to Go Public?&rdquo; confirm on turn-on, Recreate, and Edit MV (replaced by &ldquo;Unpublish to edit&rdquo; while published).', ['P1-S14', 'P8-S1', 'P8-S2', 'P8-S3', 'P8-S4']),
+        ('AC-MV-10', '/mv/result loops muted video and exposes Like/Dislike, Share, Download, a Publish toggle with a &ldquo;Ready to Go Public?&rdquo; confirm on turn-on, Recreate, and Edit MV (REMOVED while in review or published).', ['P1-S14', 'P8-S1', 'P8-S2', 'P8-S3', 'P8-S4']),
         ('AC-MV-11', 'A failed job shows the error state with Back (storyboard) or Back + Retry (render/song), and marks the History row Failed.', ['P3-E2', 'P3-E3']),
         ('AC-MV-12', 'Regenerate scene / Recreate cover overwrite in place, with no picker and no undo, and decrement the balance.', [],
          'Edit MV only &mdash; out of scope here; owned by the mv-edit spec (S3).'),
@@ -816,6 +818,8 @@ cfg = {
     ],
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v6', '2026-09-10',
+         '<b>MV-13 &mdash; a published MV&rsquo;s Edit control is REMOVED, not relabelled.</b> Product owner, 2026-08-28, ruled authoritative 2026-09-10: while an MV is published or in review the Edit MV control is taken out of Quick Actions entirely and the Publish toggle is the only way back to editable. There is no &ldquo;Unpublish to edit&rdquo; button anywhere in the product. The pending phase changed with it &mdash; the state line reads <b>In Review</b> and the toggle stays <b>OFF</b> until approved. Changed: <b>P8-S4</b>, P1&rsquo;s forward reference, the RESULT row of the States table, and <b>AC-MV-10</b>. <b>Retook 36 and 37</b>: both dated 2026-08-27, i.e. before the change, so they still showed the old button, &ldquo;Published &middot; pending review&rdquo;, and the toggle ON. DETAIL&rsquo;s Aspect Ratio now reads 16:9 in those two frames &mdash; that is <code>DEFAULT_SETTINGS</code> changing (v5), not capture drift. See <code>specs/CHANGELOG-SPEC.md</code>.'),
         ('v5', '2026-09-10',
          '<b>Reconciled the storyboard with current `/mv/room` code.</b> Description Enhance is available again, calls <code>enhancePrompt</code> with kind <code>mv</code>, and replaces the compose description. Updated P1, P2, AC-MV-14, D-04, D-08, and D-10; recorded the new desktop-first 16:9 Settings default; and retook P1-S6 so the current Enhance control is visible.'),
         ('v4', '2026-09-09',

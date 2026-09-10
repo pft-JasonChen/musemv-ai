@@ -69,10 +69,15 @@ ROWS = [
 # opened in a new tab), never rendered inline into the reader pane.
 #
 # id, slug, name, version/date, routes, paths/shots
+# Storyboards whose build_spec.py defines a 'changelog' key — only those emit a
+# `#changelog` anchor (spec_builder._changelog_html), so only those get a Change
+# Log link in the table below. Add a slug here when you add that section.
+CHANGELOG_SLUGS = {"mv-creation", "history", "mv-edit", "explore-community", "song-creation"}
+
 STORYBOARDS = [
     ("S1", "song-creation", "AI Song Creation", "v4 · 2026-09-09",
      "/song/create · /song/creating · /song/result", "7 paths / 32 shots"),
-    ("S2", "mv-creation", "AI Music Video Creation", "v4 · 2026-09-09",
+    ("S2", "mv-creation", "AI Music Video Creation", "v6 · 2026-09-10",
      "/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result", "8 paths / 44 shots"),
     ("S3", "mv-edit", "MV Edit", "v2 · 2026-09-10",
      "/mv/edit", "5 paths / 24 shots"),
@@ -130,7 +135,6 @@ def main() -> None:
         <td class="c-feat"><span class="feat-name">{name}</span><span class="feat-open">Open spec →</span><div class="c-file">{rel}</div></td>
         <td><span class="badge {cls}">{status}</span></td>
         <td class="c-dev">{dev}</td>
-        <td class="c-qa">{qa}</td>
       </tr>""")
     rows_html = "\n".join(tr)
 
@@ -142,34 +146,55 @@ def main() -> None:
 
     # Sidebar nav — every spec, always visible, so switching doesn't require
     # going back to the table first.
-    nav = ['      <button class="nav-item" id="nav-index" type="button" data-doc="">\n'
-           '        <span class="nav-area">☰</span><span class="nav-name">Index</span>\n      </button>']
-    for area, rel, name, status, dev, qa, _ in docs:
-        cls = STATUS_CLASS.get(status, "st-ref")
-        nav.append(f'''      <button class="nav-item" type="button" data-doc="{area}">
+    # ── SIDEBAR IS THE STORYBOARD LIST, NOT THE AREA SPECS (2026-09-10) ──
+    # Product owner: QA is the only audience that walks these by hand, and QA
+    # reads the storyboards; RD does not navigate from here. So the sidebar
+    # lists the ten storyboard specs as real external links (each is a
+    # pre-built HTML document, so it opens in its own tab) instead of the area
+    # docs it used to list. The area specs are still fully reachable — their
+    # own table at the bottom of the index opens each one in the reader pane,
+    # the same code path the sidebar used to trigger.
+    #
+    # `data-ext` marks the rows the reader must NOT intercept: without it the
+    # shared nav click handler reads a missing `data-doc` and closes the reader
+    # as a side effect of following the link.
+    nav = ['      <button class="nav-item" id="nav-index" type="button" data-doc="">\\n'
+           '        <span class="nav-area">&#9776;</span><span class="nav-name">Index</span>\\n      </button>']
+    for area, slug, name, ver, dev, qa in STORYBOARDS:
+        href = f"storyboards/{slug}/specs/spec.html"
+        nav.append(f'''      <a class="nav-item" href="{href}" target="_blank" rel="noopener" data-ext="1">
         <span class="nav-area">{area}</span><span class="nav-name">{name}</span>
-        <span class="nav-dot {cls}"></span>
+        <span class="nav-dot st-ok"></span>
+      </a>''')
+    # S10 has no spec.html — the md IS the spec (D13) — so it stays a reader doc.
+    nav.append(f'''      <button class="nav-item" type="button" data-doc="11">
+        <span class="nav-area">{STORYBOARD_S10[0]}</span><span class="nav-name">{STORYBOARD_S10[1]}</span>
+        <span class="nav-dot st-ref"></span>
       </button>''')
-    nav_html = "\n".join(nav)
+    nav_html = "\\n".join(nav)
 
     # Storyboard table rows — real external links (new tab), not reader-pane docs.
     sb = []
     for area, slug, name, ver, dev, qa in STORYBOARDS:
         href = f"storyboards/{slug}/specs/spec.html"
+        # Deep-link into that storyboard's OWN Changelog section rather than
+        # shipping an anchor that scrolls nowhere for the four without one.
+        cl = (f'<a class="sb-link" href="{href}#changelog" target="_blank" rel="noopener">Changelog &#8599;</a>'
+              if slug in CHANGELOG_SLUGS else '<span class="c-none">&mdash;</span>')
         sb.append(f"""      <tr>
         <td class="c-area">{area}</td>
         <td class="c-feat"><a class="sb-link" href="{href}" target="_blank" rel="noopener"><span class="feat-name">{name}</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">{href}</div></td>
-        <td><span class="badge st-ok">{ver}</span></td>
         <td class="c-dev">{dev}</td>
-        <td class="c-qa">{qa}</td>
+        <td><span class="badge st-ok">{ver}</span></td>
+        <td class="c-cl">{cl}</td>
       </tr>""")
     s10_area, s10_name, s10_ver, s10_dev, s10_qa = STORYBOARD_S10
     sb.append(f"""      <tr>
         <td class="c-area">{s10_area}</td>
         <td class="c-feat"><a class="sb-link" href="#11" data-jump="11"><span class="feat-name">{s10_name}</span><span class="feat-open">Open spec →</span></a><div class="c-file">areas/11-credit-consumption.md — no spec.html, the md IS the spec (D13)</div></td>
-        <td><span class="badge st-ref">{s10_ver}</span></td>
         <td class="c-dev">{s10_dev}</td>
-        <td class="c-qa">{s10_qa}</td>
+        <td><span class="badge st-ref">{s10_ver}</span></td>
+        <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>""")
     storyboards_html = "\n".join(sb)
 
@@ -208,6 +233,8 @@ TEMPLATE = r"""<!doctype html>
     --border: #26262e; --border-2: #33333d; --accent: #a855f7; --accent-soft: #241533;
     --gold: #f59e0b; --green: #34d399; --amber: #fbbf24; --code-bg: #16161b;
   }
+  .c-cl { white-space: nowrap; }
+  .c-none { color: var(--muted); }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body { margin: 0; background: var(--bg); color: var(--fg);
@@ -266,6 +293,7 @@ TEMPLATE = r"""<!doctype html>
   .nav-item { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 0;
     background: none; color: var(--fg); padding: 8px 10px; border-radius: 9px; font-size: 13px;
     cursor: pointer; font-family: inherit; }
+  a.nav-item { text-decoration: none; color: inherit; }
   .nav-item:hover { background: var(--card); }
   .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
   .nav-area { font-size: 11px; font-weight: 800; color: var(--muted); min-width: 16px; }
@@ -328,8 +356,8 @@ TEMPLATE = r"""<!doctype html>
 </head>
 <body>
 <div class="shell">
-  <nav class="sidenav" aria-label="Spec navigation">
-    <div class="sidenav-title">Specs</div>
+  <nav class="sidenav" aria-label="Storyboard spec navigation">
+    <div class="sidenav-title">Storyboard specs</div>
 {{NAV}}
   </nav>
 
@@ -347,7 +375,7 @@ TEMPLATE = r"""<!doctype html>
 
       <div class="pills">
         <span class="pill">🗂️ 10 feature areas + overview</span>
-        <span class="pill">🎬 <a href="#sb-section">10 storyboard specs (QA)</a></span>
+        <span class="pill">🎬 <a href="#sb-section">Storyboard specs (QA)</a></span>
         <span class="pill">🛠️ <a href="../docs/archive/handoff-2026-07-23.md">Codebase handoff</a></span>
         <span class="pill">💳 Pricing synced to the Business Model (2026-07-24)</span>
       </div>
@@ -357,12 +385,38 @@ TEMPLATE = r"""<!doctype html>
         <span class="count" id="count"></span>
       </div>
 
+      <h2 class="sb-heading" id="sb-section">Storyboard Specs</h2>
+      <p class="sub">Built with <code>skills/yco-spec</code> from the same as-built behaviour as the area specs
+      below — every rule traces back to an <code>AC-*</code> criterion. Audience is QA; screenshots come from
+      the live app, not a mockup. These are separate, pre-built HTML documents (not markdown), so each opens
+      in its own tab rather than in the reader pane below. <b>S10</b> has no screenshots — the product owner
+      ruled it ships as the Area 11 spec itself (<code>specs/storyboards/PLAN.md</code> D13).</p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Spec</th><th>Name</th><th>Routes / surfaces</th>
+              <th>Version</th><th>Change Log</th>
+            </tr>
+          </thead>
+          <tbody id="sb-tbody">
+{{STORYBOARDS}}
+          </tbody>
+        </table>
+      </div>
+
+      <h2 class="sb-heading" id="area-section">Area Specs</h2>
+      <p class="sub">Behaviour-first, as-built EARS criteria (<code>AC-*</code>) for RD and AI
+      agents — text only, no screenshots. Click a row (or a spec in the sidebar) to read it
+      rendered in place. Every storyboard rule above traces back to one of these.</p>
+
       <div class="scroll">
         <table>
           <thead>
             <tr>
               <th>Area</th><th>Feature</th><th>Status</th>
-              <th>For developers</th><th>For QA</th>
+              <th>For developers</th>
             </tr>
           </thead>
           <tbody id="tbody">
@@ -381,26 +435,6 @@ TEMPLATE = r"""<!doctype html>
         ❓ = open decision · 🔒 = mock / in-memory / seed.
       </p>
 
-      <h2 class="sb-heading" id="sb-section">10 Storyboard Specs — screenshot-led QA walkthroughs</h2>
-      <p class="sub">Built with <code>skills/yco-spec</code> from the same as-built behaviour as the area specs
-      above — every rule traces back to an <code>AC-*</code> criterion. Audience is QA; screenshots come from
-      the live app, not a mockup. These are separate, pre-built HTML documents (not markdown), so each opens
-      in its own tab rather than in the reader pane below. <b>S10</b> has no screenshots — the product owner
-      ruled it ships as the Area 11 spec itself (<code>specs/storyboards/PLAN.md</code> D13).</p>
-
-      <div class="scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Spec</th><th>Name</th><th>Version</th>
-              <th>Routes / surfaces</th><th>Paths / shots</th>
-            </tr>
-          </thead>
-          <tbody id="sb-tbody">
-{{STORYBOARDS}}
-          </tbody>
-        </table>
-      </div>
 
       <footer>Basis: as-built from <code>web-app/src/</code> · App reference: YouCam Muse Spec v3.0 + Explore Curation PRD + Business Model 2026-07-13.<br>
       Regenerate after editing a spec: <code>python3 specs/build-index.py</code>. Regenerate a storyboard spec after editing its
@@ -482,6 +516,7 @@ TEMPLATE = r"""<!doctype html>
   });
   navItems.forEach(function (btn) {
     btn.addEventListener("click", function () {
+      if (btn.hasAttribute("data-ext")) return;   // real link — let it navigate
       var area = btn.getAttribute("data-doc");
       if (area) open(area); else close();
     });
