@@ -67,8 +67,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'History (My Creations)',
     'breadcrumb': 'YouCam Muse Web &rarr; History',
-    'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
-    'version': 'v2',
+    'author': 'Jason Chen', 'date': '2026-09-10', 'status': 'Draft',
+    'version': 'v3',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -292,22 +292,23 @@ cfg = {
                 {
                     'shot': '20_publish_mv_toast.png', 'num': 2,
                     'user': 'Taps Confirm.',
-                    'system': 'The row is marked reviewing and published in one write; a toast reads &ldquo;Submitted for review&rdquo;.',
+                    'system': 'The row is marked reviewing (published stays FALSE); a toast reads &ldquo;Submitted for review&rdquo;.',
+                    'since': 'v3',
                     'exact': ['Toast: &ldquo;Submitted for review&rdquo;'],
                     'limits': [
-                        ('`confirmPublishMv()` sets reviewing and published together, in the same write.', 'Nothing in the app ever moves reviewing back to false on its own &mdash; see the open TBD-HIST-05 question below.'),
+                        ('`confirmPublishMv()` writes `reviewing: true, published: false` &mdash; NOT both together, corrected v3 (product owner, 2026-08-28).', 'It resolves on its own after `PUBLISH_REVIEW_DELAY_MS` (2500&nbsp;ms) into approved (`published: true`) or REJECTED (`rejectReason` set) &mdash; `?demo=1`&rsquo;s `publishRejected` flag picks which, since a backend-less prototype has no real moderator. TBD-HIST-05 is built; see below.'),
                     ],
                 },
                 {
                     'shot': '21_menu_mv_reviewing.png', 'num': 3,
                     'user': 'Reopens the same row&rsquo;s &ctdot; menu.',
-                    'system': 'Edit MV is now the neutral &ldquo;Unpublish to edit&rdquo;, Publish reads &ldquo;Publish (Review)&rdquo; with the toggle on, and Delete is gone.',
+                    'system': 'Edit MV is GONE from the menu, Publish reads &ldquo;Publish (Review)&rdquo; with the toggle still OFF, and Delete is gone.',
+                    'since': 'v3',
                     'exact': [
-                        'CTA label: &ldquo;Unpublish to edit&rdquo;',
                         'Publish label while reviewing: &ldquo;Publish (Review)&rdquo;',
                     ],
                     'limits': [
-                        ('Unpublish to edit unpublishes the row on tap, then the menu reverts to plain Edit MV (MV-13).', 'It does not itself open /mv/edit &mdash; a second tap is needed once unpublished.'),
+                        ('MV-13: while published or in review the Edit MV entry is REMOVED, not relabelled &mdash; the Publish toggle above is the only way back to editable (product owner, 2026-08-28).', 'There is no &ldquo;Unpublish to edit&rdquo; control anywhere in the product; turning Publish off restores plain Edit MV.'),
                         ('Delete is hidden whenever an MV is published or reviewing (AC-HIST-06).', 'Confirmed: the same menu that showed Delete in P3-S1 no longer does here.'),
                     ],
                     'focus': [{'box': [23.4, 65.8, 13.7, 7.5], 'type': 'info', 'label': 'Publish (Review)'}],
@@ -364,7 +365,7 @@ cfg = {
                     'shot': '25_menu_editmv_focus.png', 'num': 1,
                     'user': '&ctdot; &rarr; Edit MV on an unpublished MV row (Cinematic Night).',
                     'system': 'Seeds the MV flow from this row and routes to /mv/edit?id=&hellip; &mdash; see area 02, S3.',
-                    'limits': [('When published/reviewing, this same slot reads &ldquo;Unpublish to edit&rdquo; instead (P4-S3).', 'That tap unpublishes; it does not route anywhere on its own.')],
+                    'limits': [('When published/reviewing, this slot is ABSENT rather than relabelled (P4-S3, MV-13).', 'Turning the Publish toggle off is what brings Edit MV back; there is no &ldquo;Unpublish to edit&rdquo; control.')],
                 },
                 {
                     'shot': '26_menu_createmv_focus.png', 'num': 2,
@@ -418,7 +419,7 @@ cfg = {
         ('Row: done (storyboard)', 'Seed row, kind storyboard', 'No status pill; Create MV pill on the cover; &ctdot; menu is Create MV + Delete', '&rarr; removed via Delete', 'On navigation away'),
         ('Row: failed', 'Live job status failed, or the failed seed row', 'Failed pill, alert placeholder, &ctdot; menu is Delete only', '&rarr; removed via Delete', 'On navigation away'),
         ('Row: community', 'source is community', 'No status pill; &ctdot; menu is Like/Unlike + Share only', '&mdash; (no Publish/Delete/CTA)', '&mdash;'),
-        ('MV: published/reviewing', 'Publish confirmed on an MV row', 'CTA reads &ldquo;Unpublish to edit&rdquo;; Publish reads &ldquo;Publish (Review)&rdquo;; Delete hidden', '&rarr; back to unpublished via Unpublish to edit', 'On toggle'),
+        ('MV: published/reviewing', 'Publish confirmed on an MV row', 'Edit MV absent; Publish reads &ldquo;Publish (Review)&rdquo;; Delete hidden', '&rarr; back to unpublished via the Publish toggle', 'On toggle'),
         ('Song: published', 'Publish toggled on a song row', 'Publish toggle on; Delete hidden', '&rarr; back to unpublished via the same toggle', 'On toggle'),
     ],
 
@@ -459,10 +460,10 @@ cfg = {
 
     'open_questions': [
         (
-            'TBD-HIST-05',
-            'What does a review-REJECTED MV look like? Publish sets reviewing and published together and nothing ever clears reviewing &mdash; there is no simulated delay, no rejection path, and no UI for it (status pill? a re-submit option in the menu? edit-first requirement? toast vs. persistent banner?).',
-            'A &ldquo;review rejected&rdquo; step in this spec&rsquo;s Publish path (P4) &mdash; not built, per the Phase 0 scope decision.',
-            'Product owner / design',
+            'TBD-HIST-05 &mdash; ANSWERED',
+            'What does a review-REJECTED MV look like? (Asked when Publish set reviewing and published together and nothing ever cleared reviewing.)',
+            'BUILT 2026-08-28 (`25fa0f0`), recorded here v3: review resolves itself after `PUBLISH_REVIEW_DELAY_MS` (2500&nbsp;ms) into approved or rejected. Rejected shows the title &ldquo;Publish (Rejected)&rdquo; in red plus a reason line, toggle OFF, and reverts the row to unpublished rather than adding a fourth persistent status. Seven reason codes (`PUBLISH_REJECT_CODES`); the backend returns the enum, the front end owns the copy. Not captured in this spec &mdash; it is only reachable through the `?demo=1` panel, so a capture would need that query armed; left for a later re-capture.',
+            'Answered &mdash; product owner, 2026-08-27/28',
         ),
     ],
 

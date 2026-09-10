@@ -227,13 +227,19 @@ Three capture notes settled at the same gate:
   > (`MvResult.tsx`, `HistoryView.tsx`) and `e2e` asserts both that Edit MV is gone and that no
   > "Unpublish to edit" control exists.
   >
-  > **Still to do — the storyboards were NOT regenerated.** `specs/storyboards/history/
-  > build_spec.py` (5 strings), `specs/storyboards/mv-edit/build_spec.py` (2) and the two
-  > generated `spec.html` / `spec-bundled.html` pairs still describe the old label, as do P8 and
-  > P4 below. Regenerating means bumping each storyboard's `version`, moving its flowchart's
-  > `matches spec vN` stamp, and re-running `specs/build-index.py` — and that index reads EVERY
-  > storyboard, so it must not be run while another is mid-regeneration. Do it in one pass when
-  > the mv-creation storyboard work settles.
+  > **DONE 2026-09-10 — both storyboards regenerated.** `history` **v2 → v3** and `mv-edit`
+  > **v1 → v2**: sources, flowchart stamps, `spec.html` / `spec-bundled.html` and
+  > `specs/index.html` are all rebuilt, and the S2-P8 / S4-P4 rows below are corrected.
+  > The screenshots did NOT need re-taking — `21_menu_mv_reviewing.png` was captured
+  > 2026-09-02, i.e. after the 2026-08-28 behaviour change, and already shows the menu
+  > with no Edit MV entry. Only the prose was stale.
+  >
+  > **A second, larger staleness surfaced while re-reading the flowchart, and is fixed in
+  > the same pass: `TBD-HIST-05` was ANSWERED on 2026-08-28 and both specs still said
+  > "not built".** Review is no longer terminal — `confirmPublishMv()` writes
+  > `reviewing: true, published: false` and resolves itself after `PUBLISH_REVIEW_DELAY_MS`
+  > (2500 ms) into approved or REJECTED. S4's flowchart had drawn it as one terminal
+  > "reviewing + published" node and is redrawn as a fork.
 
 **Watch for what 3k already learned the hard way** (`CLAUDE.md`): a section modifier here can be
 load-bearing for a phone-only rule, and `/mv/edit`'s scene **Recreate** is the shared `Button`

@@ -386,14 +386,14 @@
       <tr>
         <td class="c-area">S3</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">MV Edit</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-edit/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v1 · 2026-08-28</span></td>
+        <td><span class="badge st-ok">v2 · 2026-09-10</span></td>
         <td class="c-dev">/mv/edit</td>
         <td class="c-qa">5 paths / 24 shots</td>
       </tr>
       <tr>
         <td class="c-area">S4</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/history/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">History (My Creations)</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/history/specs/spec.html</div></td>
-        <td><span class="badge st-ok">v2 · 2026-09-02</span></td>
+        <td><span class="badge st-ok">v3 · 2026-09-10</span></td>
         <td class="c-dev">/history</td>
         <td class="c-qa">7 paths / 27 shots</td>
       </tr>
@@ -746,6 +746,9 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 <strong>placeholders</strong>; the real charge is the MSR Credit Consume Form (<code>credit_consume: 1.0</code>), where each<br>
   generation posts a main action + <code>subActions</code> and the backend sums the matching rules. Area 11 is the<br>
   RD-facing action map; the prototype numbers below are what the demo does today (<code>TBD-CC-05</code>).</li>
+<li><strong>Credit History display contract → <code>areas/13-credit-history-display.md</code>.</strong> A live ledger record's<br>
+<code>feature_name</code> + <code>action_name</code> select its localized display name and icon. Missing or empty locale<br>
+  strings fall back to <code>enu</code>. This is an RD contract only and does not change the prototype's static ledger.</li>
 <li><strong>Insufficient-balance gate:</strong> when <code>credits &lt; cost</code>, the CTA <strong>routes to the buy-credits IAP instead of generating</strong> (<code>MvRoom</code> mode select, <code>SongCompose</code>, <code>StoryboardEditor</code>, <code>MvEditor</code> merge, <code>SongResultView</code> recreate) — synced to the app. Real persistence / live ledger / real IAP stay backend-deferred (<code>TBD-GL-04</code>, <code>TBD-CR-01/04</code>).</li>
 </ul>
 <h2 id="7-design-tokens">7. Design tokens</h2>
@@ -1043,6 +1046,232 @@ this file covers. When a change does both, it appears in both, and the row below
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
 <hr>
+<h2 id="2026-09-10-credit-history-display-mapping-contract">2026-09-10 — Credit History display mapping contract</h2>
+<p>No prototype change. Added <code>areas/13-credit-history-display.md</code> from the product-provided<br>
+<code>ycm-credit-history.json</code> form.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td>New <code>AC-CD-01</code>–<code>AC-CD-08</code>: map record <code>feature_name</code> + <code>action_name</code> to <code>credit_detail_name_key</code> + <code>icon</code>, then localize the key.</td>
+</tr>
+<tr>
+<td><strong>Fallback</strong></td>
+<td>Product owner decision, 2026-09-10: a missing or empty locale value displays the same key's <code>enu</code> value.</td>
+</tr>
+<tr>
+<td><strong>Contract fidelity</strong></td>
+<td>Form identifiers remain exact and case-sensitive, including <code>ai_song_simpe_instrumental</code>, <code>revreate_scene_name</code>, and <code>prt</code>; the spec explicitly records their divergences from the existing billing/web locale contracts.</td>
+</tr>
+<tr>
+<td><strong>Code / tests</strong></td>
+<td>None — documentation-only by request; the prototype is unchanged. The spec includes a QA minimum test set for RD implementation.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2026-09-10-e2e-triage-one-criterion-withdrawn-plus-a-speccode-divergence-to-settle">2026-09-10 — e2e triage: one criterion withdrawn, plus a spec/code divergence to settle</h2>
+<p>No feature work. The <code>npm run e2e</code> gate was failing <strong>46 of 225</strong> on the Windows dev machine, which<br>
+blocked the Stop hook in every session. Triaging it turned up one product decision to withdraw, one<br>
+divergence RD/QA need to know about, and a long tail of tests that had outlived decisions already<br>
+taken. <strong>Only the two rows below change what the product is supposed to do</strong>; everything else was a<br>
+test catching up with a decision the code had already implemented.</p>
+<h3 id="songplayid-do-not-auto-play-is-withdrawn"><code>/song/play?id=</code> — "do not auto-play" is WITHDRAWN</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td>Area 04 §3's <code>/song/play</code> deep-link note (the <code>P5-S1</code> block). The <strong>"mark the row"</strong> half stands; the <strong>"do not auto-play"</strong> half is withdrawn.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td>It contradicted the 2026-08-13 rule still live in the code — <code>SongDetailView</code>'s <code>skipFirstAutoplayRef</code> makes an explicit <code>?id=</code> autoplay ("a real request for that song"). The code never stopped autoplaying, so the guard's "nothing is playing" half only passed when Chromium <strong>refused</strong> the unmuted <code>play()</code>. It was measuring browser policy, and it was flaky: 3 fails / 1 pass over four single-worker runs, at HEAD too.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-09: <strong>2026-08-13 wins.</strong> A deep link marks the row <strong>and</strong> autoplays, with the documented muted fallback where the browser refuses.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td>Unchanged — this is the case where the CODE was right and two docs disagreed.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>2026-09-01: a /song/play deep link MARKS its row</code> (renamed; the media-playing assertions removed, marker assertions strengthened) in <code>e2e/behaviour-regressions.spec.ts</code>. Mutation-tested both ways.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="resolved-mv-13-a-published-mvs-edit-control-is-removed-not-relabelled">✅ RESOLVED — <code>MV-13</code>: a published MV's Edit control is REMOVED, not relabelled</h3>
+<p><strong>Product owner ruling, 2026-09-10: the CODE is the source of truth. The spec was wrong.</strong></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>The rule now</strong></td>
+<td>While an MV is <strong>published or in review</strong>, the <strong>Edit MV control is removed entirely</strong> from <code>/mv/result</code>'s actions row and from History's <code>⋯</code> menu. The <strong>Publish toggle is the only way back to editable</strong>; turning it off restores Edit MV. There is no "Unpublish to edit" affordance anywhere in the product.</td>
+</tr>
+<tr>
+<td><strong>Was</strong></td>
+<td>Both surfaces were specified to REPLACE Edit MV with a neutral (white bg / black text) <strong>"Unpublish to edit"</strong> action that unpublished on tap. That was superseded in code by the product owner on <strong>2026-08-28</strong> and never reached the specs.</td>
+</tr>
+<tr>
+<td><strong>Criteria</strong></td>
+<td>Area 02 — <code>MV-P4-S4</code>, <code>MV-E7</code>, <code>AC-MV-10</code>, the MV-P4 review checklist. Area 05 — the History <code>⋯</code> CTA-row rule, the "Net per type" table, and the <code>HIST-E2/E3/E7</code> checklist. <code>TBD-MV-13</code> keeps its ID; only its content moved.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td>Unchanged, and already consistent across both surfaces: <code>MvResult.tsx</code> (<code>{!published &amp;&amp; !pending &amp;&amp; …}</code>) and <code>HistoryView.tsx</code> (<code>{isMv &amp;&amp; !p.published &amp;&amp; !p.reviewing &amp;&amp; …}</code>).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>3i / MV-12 + MV-13</code> in <code>e2e/behaviour-regressions.spec.ts</code> asserts Edit MV is absent while published, that <strong>no</strong> "Unpublish to edit" control exists (so re-introducing it also fails), and that toggling Publish off restores Edit MV.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>✅ Storyboards regenerated 2026-09-10 — <code>history</code> v2 → v3, <code>mv-edit</code> v1 → v2.</strong> Sources,<br>
+flowchart stamps, both <code>spec.html</code> / <code>spec-bundled.html</code> pairs and <code>specs/index.html</code> are<br>
+rebuilt; <code>PLAN.md</code>'s S2-P8 / S4-P4 rows are corrected. <strong>No screenshot needed re-taking</strong> —<br>
+<code>21_menu_mv_reviewing.png</code> was captured 2026-09-02, after the 2026-08-28 behaviour change,<br>
+and already showed the menu with no Edit MV entry. Only the prose had been stale.</p>
+</blockquote>
+<h3 id="resolved-tbd-hist-05-the-review-rejected-state-exists-and-review-is-no-longer-terminal">✅ RESOLVED — <code>TBD-HIST-05</code>: the review-REJECTED state exists (and review is no longer terminal)</h3>
+<p><strong>Found 2026-09-10 while re-reading S4's flowchart for the MV-13 fix. It had been answered on<br>
+2026-08-28 and both the area spec and the storyboard still said "not built".</strong></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Was</strong></td>
+<td>area 05 §Publish: "there is no REJECTED state · <code>confirmPublishMv()</code> sets <code>reviewing: true, published: true</code> in the same write and nothing ever moves <code>reviewing</code> back to <code>false</code> on its own · flagged, not built". S4's <code>open_questions</code> carried the same question, and its flowchart drew review as one terminal <code>reviewing + published</code> node.</td>
+</tr>
+<tr>
+<td><strong>As built</strong> (<code>25fa0f0</code>, 2026-08-28)</td>
+<td><code>confirmPublishMv()</code> writes <code>reviewing: true, **published: false**</code> and toasts "Submitted for review", then resolves <strong>itself</strong> after <code>PUBLISH_REVIEW_DELAY_MS</code> (2500 ms) into <strong>approved</strong> (<code>published: true</code>) or <strong>REJECTED</strong> (<code>rejectReason</code> set, row back to unpublished). All three of the old clauses are false.</td>
+</tr>
+<tr>
+<td><strong>Three menu states, not two</strong></td>
+<td>pending → <code>ic_timer</code>, "Publish (Review)", toggle <strong>OFF</strong> · approved → "Publish", toggle ON · rejected → <strong>"Publish (Rejected)"</strong> in red plus a reason line, toggle OFF.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>⚠️ <strong>Relevant to RD:</strong> the seven reason codes are <code>PUBLISH_REJECT_CODES</code> (<code>src/lib/publishReview.ts</code>). Decided 2026-08-27: <strong>the backend returns the enum, the front end owns the copy</strong> — so RD implements those seven values and maps anything else to <code>UNKNOWN</code> rather than rendering it raw.</td>
+</tr>
+<tr>
+<td><strong>Reachability</strong></td>
+<td>Only through the <code>?demo=1</code> panel's <code>publishRejected</code> / <code>rejectReason</code> flags — a backend-less prototype has no real moderator. Not captured in S4; a capture would need that query armed, so it is left for a later re-capture.</td>
+</tr>
+<tr>
+<td><strong>Code / tests</strong></td>
+<td>Unchanged — this row is the spec catching up with code that shipped two weeks ago.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tests-that-were-pinning-superseded-decisions-no-criterion-moved">Tests that were pinning superseded decisions (no criterion moved)</h3>
+<p>Recorded so nobody re-derives them. Each was red because a <strong>product decision had already changed</strong><br>
+and the guard still described the old behaviour — the failure mode this repo's error log lists three<br>
+times over. All are in <code>e2e/behaviour-regressions.spec.ts</code> unless noted.</p>
+<table>
+<thead>
+<tr>
+<th>Decision that moved</th>
+<th>When</th>
+<th>Test that was still asserting the old one</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/explore/songs</code> tabs = "All" + the nine creation <code>GENRES</code> (was New Releases / Top Picks)</td>
+<td>2026-09-01</td>
+<td><code>3b: ?tab= …</code>, <code>3b: switching a browse filter …</code>, <code>3b: a tab switch changes the list</code>, <code>3b / EXP-09</code></td>
+</tr>
+<tr>
+<td>Row-wide click: <code>ListItem</code>/<code>TopSongListItem</code> titles became plain <code>&lt;p&gt;</code>, <code>onSelect</code> moved to the row</td>
+<td>2026-08-11</td>
+<td><code>landing page: a New Songs row splits …</code> (also asserted the phone route at 1440), <code>3b / EXP-09</code></td>
+</tr>
+<tr>
+<td><code>SongPlayBar</code> is always mounted; <code>open</code> parks it off-screen instead of unmounting</td>
+<td>2026-08-14</td>
+<td><code>drop 2 desktop: the album art previews in place …</code> (its "no bar" check had been passing only by racing hydration)</td>
+</tr>
+<tr>
+<td>"layer 1": <code>MobileTabBar</code> only on Home + <code>/history</code>; every other route gets its own back+title bar</td>
+<td>2026-08-22</td>
+<td><code>A4: a navbar with no tabs …</code>, <code>A5: a mobile tab-bar destination …</code>, <code>drop 2 / A4: the song screen …</code></td>
+</tr>
+<tr>
+<td><code>/history</code> stopped mounting <code>MobileHeader</code>; <code>RoomNavbar</code> absorbs it via <code>mobileHeaderActions</code></td>
+<td>2026-08-23</td>
+<td><code>R12 shell: just below the cutover …</code>, <code>S13 mobile IA: the bar is Explore …</code>, <code>A4: the override restores the tabs row …</code> (premise inverted)</td>
+</tr>
+<tr>
+<td><code>/explore/songs</code>' Top Picks rail + heading/tabs are shown at <strong>every</strong> width</td>
+<td>2026-08-19</td>
+<td><code>drop 2 / A4: the song screen …</code> — and a stale comment in <code>SongDetailView.tsx</code>, corrected here</td>
+</tr>
+<tr>
+<td>Muse Pro row's pill: <code>badge--purple</code> "Subscribe/Manage" → <code>.button--secondary</code> "Upgrade"; none when subscribed</td>
+<td>2026-08-14</td>
+<td><code>3c / G7-1: the Muse Pro row …</code></td>
+</tr>
+<tr>
+<td>Subscription plans: 6 plans / 3 cadences behind a <code>DurationTabs</code> tablist (was 3 cards at once); <code>$9.99</code> is now a real WA price</td>
+<td>—</td>
+<td><code>3f / S20: the plan prices are WA's …</code> — rewritten data-driven over <code>SUBSCRIPTION_PLANS</code>; mutation-tested by re-introducing DP's hardcoded <code>/ week</code></td>
+</tr>
+<tr>
+<td>Character Image folded into the Visual Style section (<code>--char-image</code> modifier deleted)</td>
+<td>2026-08-14</td>
+<td><code>3h: both stages render DP's blocks …</code></td>
+</tr>
+<tr>
+<td>Storyboard render cost is <code>COST_FROM_SCRIPT</code> 35 + a per-<strong>second</strong> rate, not a flat 200</td>
+<td>spec 11 §3.4</td>
+<td><code>3h / GL-01: the storyboard CTA …</code> (also hit <code>FloatingCTA</code>'s two copies of its children)</td>
+</tr>
+<tr>
+<td><code>EnhanceButton</code>'s chooser is a <code>DpDialog</code>; the button never had <code>aria-expanded</code></td>
+<td>2026-08-25</td>
+<td><code>Custom Enhance opens the two-mode menu …</code> (also used class names that never existed)</td>
+</tr>
+</tbody>
+</table>
+<p>Two more were not stale but <strong>environmental / fixture-order</strong>: six <code>renderToResult</code> callers and two<br>
+<code>3h</code> tests never funded the account, so every one of them died at the IAP paywall after<br>
+<code>DEFAULT_CREDITS</code> dropped 390 → 10 on 2026-08-12 (<code>mv-flow.spec.ts</code> was fixed for this and says so;<br>
+these were missed); and <code>G5-d#8 publish</code> took the FIRST history row, which became a <strong>song</strong> when<br>
+<code>a523f05</code> inserted the <code>h-neon-static</code> fixture at the top — only an MV opens the publish confirm.</p>
 <h2 id="2026-09-09-three-product-owner-bug-reports">2026-09-09 — three product-owner bug reports</h2>
 <p>Commit <code>a523f05</code>. All three were reported against the running prototype. <strong>One contract change between<br>
 them</strong> (<code>SongResult.lyricsLrc</code>); the other two are behaviour-only.</p>
@@ -1812,7 +2041,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <li><code>song</code>: <code>null</code> | <code>{ id, source: library|import|sample|link, title, durationSec, art, url?, trim?{start,end}, lyrics? }</code> — <strong>required</strong>.</li>
 <li><code>description</code>: string, <strong>hard cap 2500</strong> (<code>DESCRIPTION_MAX</code>) — <strong>required</strong> (non-empty after trim).</li>
 <li><code>photos</code>: 0–2 <code>CharacterPhoto</code> (optional).</li>
-<li><code>settings</code>: <code>ratio</code> 9:16(def)/16:9 · <code>resolution</code> <strong>Standard(def)/High</strong> · <code>title{on:true,text}</code> · <code>author{on:true,text}</code> · <code>showSubtitle:true</code> · <code>watermark:false</code>.</li>
+<li><code>settings</code>: <code>ratio</code> 16:9(def)/9:16 · <code>resolution</code> <strong>Standard(def)/High</strong> · <code>title{on:true,text}</code> · <code>author{on:true,text}</code> · <code>showSubtitle:true</code> · <code>watermark:false</code>.</li>
 <li><strong>CTA-ready</strong> (<code>isComposeReady</code>): <code>song != null &amp;&amp; description.trim() !== ""</code>.</li>
 </ul>
 <p><strong>Job (<code>MvJob</code>)</strong> — <code>queued → processing(0–100, step) → done | failed</code>. <code>mode: storyboard_first | direct</code>.</p>
@@ -1909,7 +2138,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 </li>
 <li><strong>MV-P4-S2</strong> Like / Dislike (mutually exclusive, local state) · <strong>Share</strong> (<code>ShareDialog</code>, link) · <strong>Download</strong> (<code>resultUrl</code>) · <strong>Publish to community</strong> toggle. <strong>DECIDED (<code>TBD-MV-12</code>, sync App):</strong> toggling Publish <strong>on</strong> opens a <strong>"Ready to Go Public?" confirm dialog</strong> (the same one History uses, area 05); on confirm → <strong>Published · pending review</strong>; toggling off <strong>unpublishes</strong>. <strong>Locale ranking is RD's, not ours (產品負責人 2026-08-20).</strong> The community feed's locale-primary ranking, including whatever locale value the request carries, is decided and implemented by RD end-to-end — the web prototype sends nothing and is not expected to. This is deliberately NOT listed as a front-end gap so RD does not read it as work waiting on us. (Feed ranking → area 04 §3 / <code>TBD-EXP-10</code>, owner RD.) (Feed pipeline/destination → <code>TBD-MV-06</code>, spec-only.) 🔒 On this fresh-generation screen, publish state is <strong>local to <code>MvResult</code></strong> (there is no History row to share it with yet); opening the <em>same</em> creation later from History uses the controlled path described in area 05 §3, where the row's <code>⋯</code> menu and its detail dialog share one state.</li>
 <li><strong>MV-P4-S3</strong> Info panel: type/character tags, title (settings title or song title), author (settings or <code>MOCK_USER.name</code>), Music row, Generation Detail (character, author, style, ratio, quality, scenes, subtitle).</li>
-<li><strong>MV-P4-S4</strong> <strong>Recreate</strong> → <code>/mv/room</code> (keeps compose). <strong>Edit MV</strong> → <code>/mv/edit</code> (direct-mode renders, which have no storyboard, get a <code>mockStoryboard()</code> first). <strong>DECIDED rule (<code>TBD-MV-13</code>):</strong> a <strong>published</strong> (or in-review) MV must be <strong>unpublished before editing</strong> — while published, the Edit MV button renders <strong>neutral (white bg / black text)</strong> labeled <strong>"Unpublish to edit"</strong>; tapping it unpublishes, after which it returns to the accent <strong>"Edit MV"</strong> and opens the editor. No per-screen back arrow on Result — the shell handles back.</li>
+<li><strong>MV-P4-S4</strong> <strong>Recreate</strong> → <code>/mv/room</code> (keeps compose). <strong>Edit MV</strong> → <code>/mv/edit</code> (direct-mode renders, which have no storyboard, get a <code>mockStoryboard()</code> first). <strong>DECIDED rule (<code>TBD-MV-13</code>):</strong> a <strong>published</strong> (or in-review) MV must be <strong>unpublished before editing</strong> — while published or in review, the <strong>Edit MV control is REMOVED from the actions row entirely</strong>; the <strong>Publish toggle is the only way back to editable</strong>, and turning it off restores Edit MV. <em>(Product owner, 2026-08-28 — supersedes the earlier "renders neutral, labeled 'Unpublish to edit'" treatment, which no longer exists in the product. Spec synced 2026-09-10.)</em> No per-screen back arrow on Result — the shell handles back.</li>
 </ul>
 <h3 id="mv-p5-edit-mv-mvedit">MV-P5 — Edit MV (<code>/mv/edit</code>)</h3>
 <blockquote>
@@ -1995,7 +2224,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <tr>
 <td><strong>MV-E7</strong></td>
 <td>Attempt to Edit a <strong>published</strong> MV</td>
-<td>Blocked while published/in-review — the Edit MV button reads <strong>"Unpublish to edit"</strong> (neutral); user must unpublish first (<code>TBD-MV-13</code>). Applies on <code>/mv/result</code> and History's Edit MV (area 05).</td>
+<td>Blocked while published/in-review — there is <strong>no Edit MV control to press</strong>: it is removed from the actions row, and the Publish toggle is the only way back (<code>TBD-MV-13</code>, product owner 2026-08-28). Applies on <code>/mv/result</code> and History's Edit MV (area 05).</td>
 </tr>
 <tr>
 <td><strong>MV-E8</strong></td>
@@ -2019,7 +2248,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>AC-MV-08</strong> — WHEN Visual Style or a Scene text is edited in <code>/mv/storyboard</code>, THE SYSTEM SHALL update the in-memory storyboard (no Save button; edits are ephemeral) and carry the change into the next <strong>Generate MV</strong>. The MV Song section SHALL be <strong>play-only</strong> (no editing).</li>
 <li><strong>AC-MV-09</strong> — WHEN <strong>Generate MV</strong> is tapped, THE SYSTEM SHALL render using the (possibly edited) storyboard and land on <code>/mv/result</code>.</li>
 <li><strong>AC-MV-18</strong> — WHEN <code>/mv/result</code> is reached from a <code>/history</code> row, THE SYSTEM SHALL show that row's creation (flow state is seeded by <code>useOpenCreation</code>, area 05) and carry the row id in <code>?id=</code> so Share builds that row's link; and <strong>Back</strong> SHALL return to <code>/history</code>. <em>(Back is <code>router.back()</code> per Q6; <code>/history</code> is also the fallback. The generation screens <code>replace</code> rather than <code>push</code>, so Back off a freshly rendered MV reaches <code>/mv/room</code>, not the creating screen.)</em></li>
-<li><strong>AC-MV-10</strong> — WHEN <code>/mv/result</code> loads, THE SYSTEM SHALL loop the video muted and expose Like/Dislike (mutually exclusive), Share, Download, a <strong>Publish toggle that opens a "Ready to Go Public?" confirm on turn-on</strong>, Recreate, and <strong>Edit MV</strong> — where, while the MV is published/in-review, Edit MV is replaced by a neutral <strong>"Unpublish to edit"</strong> action. <em>(Same correction as MV-P4-S1: hand-built controls, not native ones — 2026-08-19.)</em></li>
+<li><strong>AC-MV-10</strong> — WHEN <code>/mv/result</code> loads, THE SYSTEM SHALL loop the video muted and expose Like/Dislike (mutually exclusive), Share, Download, a <strong>Publish toggle that opens a "Ready to Go Public?" confirm on turn-on</strong>, Recreate, and <strong>Edit MV</strong> — where, while the MV is published/in-review, <strong>Edit MV is removed from the actions row</strong> and the Publish toggle is the only route back to editable. <em>(Same correction as MV-P4-S1: hand-built controls, not native ones — 2026-08-19. Removal supersedes the earlier "Unpublish to edit" replacement — product owner 2026-08-28, spec synced 2026-09-10.)</em></li>
 <li><strong>AC-MV-11</strong> — IF a job <code>failed</code>, THEN THE SYSTEM SHALL show the error state with <strong>Back</strong> and mark the History row Failed. WHEN the failed job is a render or song job (<code>/mv/creating</code>, <code>/song/creating</code>), THE SYSTEM SHALL additionally offer <strong>Retry</strong> (with an unchanged <code>[fail]</code> description re-failing). ⚠️ <strong>Changed 2026-09-02, product owner:</strong> the storyboard job's error state (<code>/mv/thinking</code>) no longer offers Retry — it previously did, identically to the render/song screens, but Retry there only ever re-ran the same <code>[fail]</code> compose and re-failed deterministically, so it was a dead end kept for visual symmetry rather than because it could ever succeed.</li>
 <li><strong>AC-MV-12</strong> — WHEN Regenerate scene or Recreate cover is invoked in Edit MV, THE SYSTEM SHALL <strong>overwrite</strong> that scene/cover in place (no take/cover picker, no undo) and decrement the balance by <code>recreateShotCost(kind, resolution, sceneDurationSec)</code> for a scene (a per-second/per-tier rate per spec 11 §3.5 — <strong>not</strong> a flat number; e.g. 26 for a 9s <code>sing</code>/<code>720p</code> shot) / flat <code>COST_COVER</code> −4 for the cover. <em>(Cover corrected from −10 on 2026-08-19; the scene-cost wording corrected from a flat <code>COST_REGEN</code> −20 — a constant that no longer exists — on 2026-08-28 during the S3 storyboard-spec capture.)</em></li>
 <li><strong>AC-MV-13</strong> — WHEN <strong>Merge MV</strong> is invoked with sufficient balance, THE SYSTEM SHALL re-render the MV from the current cover/scenes + edited text and charge the flat <code>COST_MERGE</code> (−10; ⚠️ corrected 2026-08-28 during the S3 storyboard-spec capture — was wrongly stated as <code>COST_RENDER</code> −200, a constant that does not exist in the codebase) on generation start (refunded on failure); there is <strong>no Save</strong> and edits do not persist across leaving the page. WHEN the balance is insufficient, it SHALL open the buy-credits IAP instead.</li>
@@ -2039,7 +2268,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li>[ ] <strong>MV-P1</strong>: fresh room CTA disabled → add song only → still disabled → add description → enabled (AC-01/02/03).</li>
 <li>[ ] <strong>MV-P2</strong>: Storyboard First → Generating row appears in History at start → progress 0→100 <em>(visual)</em> → storyboard with ≥1 editable scene; <strong>MV Song plays on tap, not editable</strong>; <strong>no Save button</strong>; edits carried into Generate MV (AC-05/06/07/08).</li>
 <li>[ ] <strong>MV-P3</strong>: Directly → progress → result with <code>&lt;video&gt;</code> (AC-05/09/10).</li>
-<li>[ ] <strong>MV-P4</strong>: like/dislike exclusivity; Share dialog opens; Download triggers; <strong>Publish on → "Ready to Go Public?" confirm</strong>; <strong>published → Edit MV shows "Unpublish to edit"</strong>; Recreate returns to room prefilled; Edit MV opens editor when unpublished (AC-10, MV-E7).</li>
+<li>[ ] <strong>MV-P4</strong>: like/dislike exclusivity; Share dialog opens; Download triggers; <strong>Publish on → "Ready to Go Public?" confirm</strong>; <strong>published → Edit MV is GONE from the actions row</strong> (not relabelled), and toggling Publish off brings it back; Recreate returns to room prefilled; Edit MV opens editor when unpublished (AC-10, MV-E7).</li>
 <li>[ ] <strong>MV-P5</strong>: regen scene <strong>overwrites</strong> in place (dynamic per-shot rate, e.g. −26, no picker — ⚠️ not a flat −20, corrected 2026-08-28); cover recreate <strong>overwrites</strong> (−4 — ⚠️ not −10, corrected 2026-08-28, matching the already-corrected MV-P5-S2 line above); <strong>no Save button and no tray markup at all</strong> (the <code>LEGACY_TAKE_TRAY_UI</code> flag was deleted in 3k); Merge charges the flat <code>COST_MERGE</code> (−10 — ⚠️ not <code>COST_RENDER</code> −200, corrected 2026-08-28 during the S3 storyboard-spec capture) on re-render, or opens IAP when short; edits lost on leaving the page (AC-12/13/19). Check the phone path too: below 768px the scene editor is <code>MobileSceneDetail</code>, not the inline pair.</li>
 <li>[ ] <strong>MV-P6-B/MV-E8</strong>: import a &lt;30s file → rejected at upload with the "at least 30 seconds" toast, Trim never opens; import a file whose metadata probe fails (duration <code>0</code>) → NOT rejected, falls through to Trim (AC-20).</li>
 <li>[ ] <strong>MV-P6-C</strong>: trim handles move, 5% min gap holds, preview plays selected region; select &lt;30s → Confirm disabled + red "minimum 30s" hint (AC-16).</li>
@@ -2866,9 +3095,21 @@ screen marked NOTHING: a recipient of a shared song link saw the ordinary browse
 no indication which song had been shared, because the only thing that ever consumed the<br>
 resolved id was the player bar, and that opens on playback. Product owner: <strong>mark the row, do<br>
 not auto-play</strong> — autoplay was rejected because browsers block it without a user gesture, so<br>
-it would have opened a silent bar and looked broken a different way. Guarded in both<br>
-directions by <code>e2e/behaviour-regressions.spec.ts</code> ("a /song/play deep link MARKS its row<br>
-without auto-playing"): one marked row, and no media element playing. Captured at S8 <code>P5-S1</code>.<br>
+it would have opened a silent bar and looked broken a different way.</p>
+<p>⚠️ <strong>The "do not auto-play" half is WITHDRAWN (product owner, 2026-09-09). Only "mark the<br>
+row" stands.</strong> It contradicted an earlier standing decision that was never removed from the<br>
+code: 2026-08-13, <code>SongDetailView</code>'s <code>skipFirstAutoplayRef</code> — a cold load <strong>with</strong> an explicit<br>
+<code>?id=</code> autoplays, because that is "a real request for that song, not just browsing the list".<br>
+The code always did that, so the guard's "nothing is playing" half only passed when Chromium<br>
+refused the unmuted <code>play()</code>; it measured <strong>browser policy</strong>, not this screen, and was flaky<br>
+(3 fails / 1 pass over four single-worker runs, at HEAD too). <code>paused</code> also flips to <code>false</code><br>
+synchronously when <code>play()</code> is called, before the rejection lands, so the assertion was<br>
+reading inside that window. <strong>A <code>/song/play?id=</code> deep link marks the row AND autoplays</strong>, with<br>
+the documented muted fallback when the browser refuses. The 2026-09-01 rationale above was not<br>
+wrong about browsers — it is the reason the fallback exists — it was wrong that the code had<br>
+ever stopped autoplaying. Guarded now by the marker only: <code>e2e/behaviour-regressions.spec.ts</code><br>
+("a /song/play deep link MARKS its row"), one marked row naming the linked song, with nothing<br>
+that depends on this browser's autoplay policy. Captured at S8 <code>P5-S1</code>.<br>
 ⚠️ <strong>Correction to the bullets above, 2026-09-01 (D11).</strong> Two of them describe the pre-drop-2<br>
 desktop column: the <strong>disc cover</strong> and the <strong>desktop Lyrics overlay</strong> are not on this screen at<br>
 either URL. DP drop <code>2670ed2</code> deleted the desktop Now Playing column, and <code>AC-EXP-05</code>'s own<br>
@@ -3319,13 +3560,14 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <li><strong>Storyboard "Create" pill (HIST-05, 2026-07-23):</strong> done storyboard cards render a <strong>"Create MV"<br>
   pill</strong> in the card footer (calls <code>createMv(r)</code>), in addition to the menu CTA.</li>
 <li><strong><code>⋯</code> menu</strong> (<code>Menu</code>, portal) — contents depend on row type:</li>
-<li><strong>CTA row</strong> (non-community, non-failed): <strong>Edit MV</strong> (mv) / <strong>Create MV</strong> (song|storyboard). <strong>MV-13:</strong> when the MV is published/in-review, the Edit MV entry becomes a neutral <strong>"Unpublish to edit"</strong> that unpublishes on tap.</li>
+<li><strong>CTA row</strong> (non-community, non-failed): <strong>Edit MV</strong> (mv) / <strong>Create MV</strong> (song|storyboard). <strong>MV-13:</strong> when the MV is published/in-review, the Edit MV entry is <strong>removed from the menu entirely</strong> — the Publish toggle below is the only way back to editable. <em>(Product owner, 2026-08-28 — supersedes the earlier neutral "Unpublish to edit" entry; spec synced 2026-09-10. Same rule as <code>/mv/result</code>, area 02 <code>MV-P4-S4</code> / <code>MV-E7</code>.)</em></li>
 <li><strong>Like / Share</strong>: shown for community, mv, and song rows — <strong>HIST-06 (2026-07-23): a failed row is Delete-only</strong> (Like/Share now suppressed with <code>!failed</code>); storyboard rows never showed them.</li>
 <li><strong>Publish (toggle) / Download / normal Delete</strong>: non-community, non-failed, mv|song only. <strong>Delete is hidden</strong> when an MV is published/reviewing or a song is published.</li>
 <li><strong>Standalone Delete</strong>: also shown for <strong>failed</strong> and <strong>storyboard</strong> rows (<code>:355</code>).</li>
-<li><strong>Net per type (as-built 2026-07-24):</strong> MV = Edit MV (or "Unpublish to edit" when published) + Like/Share/Publish/Download/Delete · Song = Create MV + Like/Share/Publish/Download/Delete · <strong>Storyboard = Create MV (pill + menu) + Delete</strong> · <strong>Community = Like + Share only</strong> · <strong>Failed = Delete only</strong>.</li>
+<li><strong>Net per type (as-built 2026-07-24; MV-13 row updated 2026-09-10):</strong> MV = Edit MV (absent while published/in-review) + Like/Share/Publish/Download/Delete · Song = Create MV + Like/Share/Publish/Download/Delete · <strong>Storyboard = Create MV (pill + menu) + Delete</strong> · <strong>Community = Like + Share only</strong> · <strong>Failed = Delete only</strong>.</li>
 <li><strong>Publish</strong> (<code>HistoryView.tsx:125-137</code>): <strong>MV</strong> → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. <strong>Song</strong> → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ <code>TBD-MV-06</code>, area 04). <strong>2026-08-06: the row's <code>published</code>/<code>reviewing</code> override is now the <code>⋯</code> menu's alone</strong> — the dialog that used to share it is gone, and the result screens hold their own publish state (they are a different surface with their own MV-12 confirm).<br>
-  ❓ <strong>2026-08-27 — there is no REJECTED state.</strong> <code>confirmPublishMv()</code> sets <code>reviewing: true, published: true</code> in the same write and nothing ever moves <code>reviewing</code> back to <code>false</code> on its own — once submitted, an MV is reviewing-and-published forever, with no code path for a review that comes back negative. The row menu's own label already anticipates one (<code>isMv &amp;&amp; p.reviewing ? "Publish (Review)" : "Publish"</code>, <code>ic_timer</code> while reviewing), but there is no UI state behind it. Flagged, not built: <code>TBD-HIST-05</code>.</li>
+  ✅ <strong><code>TBD-HIST-05</code> is BUILT (2026-08-28, <code>25fa0f0</code>) — this paragraph said the opposite until 2026-09-10.</strong> It read: "there is no REJECTED state · <code>confirmPublishMv()</code> sets <code>reviewing: true, published: true</code> in the same write and nothing ever moves <code>reviewing</code> back to <code>false</code> on its own · flagged, not built". All three clauses are now false. <strong>As built:</strong> <code>confirmPublishMv()</code> writes <code>reviewing: true, published: **false**</code> and toasts "Submitted for review"; after <code>PUBLISH_REVIEW_DELAY_MS</code> (2500 ms, <code>src/lib/publishReview.ts</code>) it resolves <strong>on its own</strong> into one of two branches — approved (<code>reviewing: false, published: true</code>) or <strong>rejected</strong> (<code>reviewing: false, published: false, rejectReason</code> set). Which one is decided by the <code>?demo=1</code> panel's <code>publishRejected</code> / <code>rejectReason</code> flags, because a backend-less prototype has no real moderator.<br>
+<strong>Three menu states, not two:</strong> pending → <code>ic_timer</code>, label "Publish (Review)", <strong>toggle OFF</strong>; approved → label "Publish", toggle ON; rejected → title <strong>"Publish (Rejected)"</strong> (red <code>&lt;em&gt;</code>) plus a reason line no other state has, toggle OFF. A rejection reverts to unpublished rather than adding a fourth persistent status, so the reason clears the moment a resubmit is accepted. The seven reason codes are <code>PUBLISH_REJECT_CODES</code>; the <strong>backend returns the enum and the front end owns the copy</strong> (decided 2026-08-27, rationale in <code>src/lib/publishReview.ts</code>) — RD implements those seven values and must map anything else to <code>UNKNOWN</code> rather than render it raw.</li>
 <li><strong>Delete</strong> (<code>HistoryView</code>): confirm modal → adds id to <code>removed</code> (list-local; not a server delete).</li>
 <li><strong>Download</strong> (<code>HistoryView.tsx:118-122</code>): song → <code>SAMPLE_AUDIO</code> as <code>{title}.mp3</code>; else <code>SAMPLE_RESULT_VIDEO</code> as <code>{title}.mp4</code> (fixture media, not the row's own render). 🔒</li>
 <li><strong>Seeding</strong> (<code>history/useOpenCreation</code>): builds a <code>mockStoryboard</code> from the row title/thumb and sets compose, so Edit/Create/Storyboard entries render for that row (synthesized state — cross-ref area 02 MV-P6 external entries). <code>useOpenCreation</code> additionally sets <code>resultUrl</code> / <code>songResult</code> and navigates. 🔒 A seed row has no rendered artifact, so it falls back to <code>SAMPLE_RESULT_VIDEO</code> / <code>SAMPLE_AUDIO</code>.</li>
@@ -3433,7 +3675,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <li>[ ] <strong>HIST-P4</strong>: MV publish → confirm → review toast; song publish → immediate (AC-05).</li>
 <li>[ ] <strong>HIST-P5</strong>: delete confirm removes row; hidden for published/reviewing (AC-06).</li>
 <li>[ ] <strong>HIST-P6</strong>: Edit MV / Create MV seed + route correctly (AC-07).</li>
-<li>[ ] <strong>HIST-E2/E3/E7</strong>: failed → <strong>Delete only</strong>; community → Like/Share only; storyboard → Create MV pill + (Create MV + Delete) menu; published MV → "Unpublish to edit".</li>
+<li>[ ] <strong>HIST-E2/E3/E7</strong>: failed → <strong>Delete only</strong>; community → Like/Share only; storyboard → Create MV pill + (Create MV + Delete) menu; published MV → <strong>no Edit MV entry at all</strong> (MV-13, 2026-08-28).</li>
 <li>[ ] <strong>AC-09</strong>: grid clean at 4 widths <em>(visual)</em>.</li>
 </ul>
 <hr>
@@ -4195,6 +4437,8 @@ that row with them. Nothing here changes; the alternative surface simply no long
 <p>⚠️ <strong>Backend note (G3):</strong> there is <strong>no real payment</strong> — every purchase/subscribe just mutates the<br>
 in-memory balance/flag. Real IAP (App Store / Play Store), persistence, credit reset/expiry, and<br>
 restore-purchases are backend/store concerns this spec does <strong>not</strong> define (<code>TBD-CR-*</code>).</p>
+<p>Credit History record 的顯示字串與 icon mapping 契約見<br>
+<code>13-credit-history-display.md</code>；該文件是 RD 未來接 live ledger 時的規格，不改變目前 static seed。</p>
 </blockquote>
 <hr>
 <h2 id="1-overview-scope">1. Overview &amp; scope</h2>
@@ -5179,7 +5423,8 @@ in-memory History only; links do not expire (the 30-day copy was removed 2026-08
 （6 個 <code>*_seedance15</code> 的每秒點數、<code>create_script_upload_song</code> 的級距）— PDF 是成本試算稿，會再調整。<br>
 <strong>點數是可調參數，RD 不應 hardcode</strong>；本文的重點是 <strong>action 組合方式</strong>，那才是介面契約。</p>
 <p>Related: 餘額 / 儲值 / 訂閱 UI → <code>07-credits-iap.md</code>。各流程的 UI 行為 → <code>02-mv-creation.md</code>、<br>
-<code>03-song-creation.md</code>。</p>
+<code>03-song-creation.md</code>。Credit History record 的顯示名稱與 icon mapping →<br>
+<code>13-credit-history-display.md</code>。</p>
 <hr>
 <h2 id="s10credit-consumption-spec">📌 這份檔案<strong>就是</strong> S10（<code>credit-consumption</code>）的 spec</h2>
 <p><strong>產品負責人裁示 2026-09-01</strong>，沿用先前對 S11（<code>notifications-email</code>）的同一個決定:<br>

@@ -3,7 +3,7 @@
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
 <rect width="1140" height="1460" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">History (My Creations) &#8212; User Flowchart</text>
-<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v2, 2026-09-02</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v3, 2026-09-10</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; green = success / resolved &#183; red = error state &#183; blue = system response</text>
 
 <g transform="translate(0,80)">
@@ -66,13 +66,22 @@
 <text x="240" y="900" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&quot;Ready to Go Public?&quot;</text>
 <text x="240" y="917" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">confirm</text>
 <text x="240" y="935" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S1</text>
-<rect x="150" y="970" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
-<text x="240" y="990" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">reviewing + published</text>
-<text x="240" y="1008" font-size="12" fill="#5a6b78" text-anchor="middle">toast: Submitted for review &#183;</text>
-<text x="240" y="1023" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S2..S3</text>
+<rect x="150" y="970" width="180" height="82" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="240" y="990" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">reviewing, published:</text>
+<text x="240" y="1007" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">false</text>
+<text x="240" y="1025" font-size="12" fill="#5a6b78" text-anchor="middle">toast: Submitted for review &#183;</text>
+<text x="240" y="1040" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S2..S3</text>
 <line x1="340" y1="822" x2="240" y2="880" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <text x="282.976" y="838.89" font-size="12" fill="#5a6b78" text-anchor="middle">MV</text>
 <line x1="240" y1="947" x2="240" y2="970" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="30" y="1060" width="250" height="50" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<text x="155" y="1080" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">approved &#8594; published</text>
+<text x="155" y="1098" font-size="12" fill="#5a6b78" text-anchor="middle">after 2.5s &#183; toggle ON &#183; P4-S3</text>
+<rect x="320" y="1060" width="320" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="480" y="1080" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">rejected &#8594; unpublished + reason</text>
+<text x="480" y="1098" font-size="12" fill="#5a6b78" text-anchor="middle">after 2.5s &#183; &quot;Publish (Rejected)&quot; &#183; ?demo=1 only</text>
+<line x1="240" y1="1052" x2="155" y2="1060" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="240" y1="1052" x2="480" y2="1060" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <rect x="400" y="880" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
 <text x="490" y="900" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Immediate toggle</text>
 <text x="490" y="918" font-size="12" fill="#5a6b78" text-anchor="middle">toast: Published success &#183;</text>

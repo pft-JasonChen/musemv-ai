@@ -84,8 +84,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Music Video Edit',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video Edit',
-    'author': 'Jason Chen', 'date': '2026-08-28', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-09-10', 'status': 'Draft',
+    'version': 'v2',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -412,8 +412,8 @@ cfg = {
         (
             'Attempt to Edit a published MV',
             'Tap Edit MV on a published/in-review row, from Result or History',
-            'N/A here &mdash; the button itself reads &ldquo;Unpublish to edit&rdquo; and never opens this screen until unpublished',
-            'Unpublish first, then Edit MV opens normally (MV-E7)',
+            'N/A here &mdash; while published or in review there is NO Edit MV control to tap: it is removed from the row, so this screen is unreachable from there',
+            'Turn the Publish toggle off &mdash; that restores Edit MV, which then opens normally (MV-E7, MV-13)',
             'Owned by S2&rsquo;s P8 / S4&rsquo;s P4 &mdash; not captured in this spec',
         ),
     ],
@@ -452,7 +452,7 @@ cfg = {
         ('D-01', 'The area spec said Merge charges `COST_RENDER` (200) and that the flat `COST_MERGE` (10) had been removed &mdash; which does the running code actually do?', 'Neither claim held: `COST_RENDER` does not exist anywhere in `src/lib/mv/types.ts` (removed 2026-08-19 along with `COST_STORYBOARD`/`COST_REGEN`), and `COST_MERGE = 10` was never removed &mdash; confirmed live (the Merge pill reads &ldquo;10&rdquo;; the balance drops by exactly 10 across P5-S1&rarr;P5-S3). The scene Recreate cost is similarly not a flat 20 &mdash; it is `recreateShotCost`, a per-shot rate (26 in this capture). `specs/areas/02-mv-creation.md` is corrected in place (&sect;3 Costs, the MV-P5 docstring, its Merge-MV bullet, AC-MV-12/13/19, &sect;7) under this programme&rsquo;s D11 rule.'),
         ('D-02', 'The Recreate/Merge sublabel sentence reads &ldquo;(26credits)&rdquo; with no space before a DYNAMIC number but &ldquo;(10 credits)&rdquo; with one before Merge&rsquo;s flat number, even though the JSX source has an identical literal space in both places &mdash; typo in this spec, or a real app bug?', 'A real, reproducible app bug &mdash; confirmed via a direct DOM `textContent` read (not a screenshot/font artifact) across two different scenes and cost values, always missing before the dynamic number. Quoted verbatim in `exact` (P3-S4) rather than silently corrected, with a `strings_ignore` entry; filed to the product owner in this session&rsquo;s report (no `src/` authority for this build).'),
         ('D-03', 'The mobile top-of-page capture (`14_mobile_top_a16`) shows the Recreate/Merge sublabel and the floating Merge bar sorted ABOVE the STORYBOARD section &mdash; new finding, or already known?', 'Already known &mdash; `DESIGNER-TODO` A16, the same `display: contents`-with-no-`order` defect as `/mv/storyboard`&rsquo;s FloatingCTA spacer. Captured (P3-S5, P3-S8) as the evidence this screen was scoped to produce (`PLAN.md`, S3 scope note 1); not fixed here.'),
-        ('D-04', '&ldquo;Unpublish to edit&rdquo; (MV-E7) blocks Edit MV on a published MV &mdash; does this spec walk that boundary?', 'No &mdash; it is asserted on `/mv/result` (S2&rsquo;s P8) and in History&rsquo;s menu (S4&rsquo;s P4). This spec names the precondition in the Error States table and captures nothing, the same neighbour-boundary convention shell-auth used for territory it does not own.'),
+        ('D-04', 'A published MV blocks Edit MV (MV-E7) &mdash; does this spec walk that boundary?', 'No &mdash; it is asserted on `/mv/result` (S2&rsquo;s P8) and in History&rsquo;s menu (S4&rsquo;s P4). This spec names the precondition in the Error States table and captures nothing, the same neighbour-boundary convention shell-auth used for territory it does not own. <strong>Corrected v2, 2026-09-10:</strong> the block is the control being REMOVED, not relabelled to &ldquo;Unpublish to edit&rdquo; &mdash; product owner, 2026-08-28; see `specs/CHANGELOG-SPEC.md`.'),
         ('D-05', 'Which History row demonstrates the fabricated Edit MV entry (P1-S4/S5)?', '&ldquo;Cinematic Night&rdquo;, a done-MV seed row with 0 plays/likes/shares &mdash; picked because it is a plain, never-engaged-with fixture, not because of anything about its content.'),
         ('D-06', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo yet, same as S1/S4/S6.'),
         ('D-07', 'Phone viewport and scope for the D8 exception?', '375&times;812, scoped to the full-screen `.mv-edit-mobile-scene` view plus one general-page top-of-screen shot (for A16) &mdash; not a full phone re-walk of every path. Documented in `capture_screenshots.py`&rsquo;s docstring so a later re-capture does not drift.'),

@@ -71,15 +71,25 @@ test catching up with a decision the code had already implemented.
 | **Tests** | `3i / MV-12 + MV-13` in `e2e/behaviour-regressions.spec.ts` asserts Edit MV is absent while published, that **no** "Unpublish to edit" control exists (so re-introducing it also fails), and that toggling Publish off restores Edit MV. |
 | **Contract** | None. |
 
-> **⚠️ The STORYBOARDS are still stale on this and were deliberately not regenerated.**
-> `specs/storyboards/history/build_spec.py` (5 strings), `specs/storyboards/mv-edit/build_spec.py`
-> (2), their generated `spec.html` / `spec-bundled.html`, and `specs/storyboards/PLAN.md`'s S2-P8
-> and S4-P4 rows still describe the old label. Regenerating requires bumping each storyboard's
-> `version`, moving its flowchart's `matches spec vN` stamp, and re-running `specs/build-index.py`
-> — and that index reads EVERY storyboard, so it must not run while another is mid-regeneration
-> (the mv-creation storyboard was being rebuilt when this landed). PLAN.md carries the same note
-> at the `MV-E7` bullet so whoever picks it up finds it there too. **QA: for MV-13, the area specs
-> above are authoritative; S2's P8 and S4's P4 are not.**
+> **✅ Storyboards regenerated 2026-09-10 — `history` v2 → v3, `mv-edit` v1 → v2.** Sources,
+> flowchart stamps, both `spec.html` / `spec-bundled.html` pairs and `specs/index.html` are
+> rebuilt; `PLAN.md`'s S2-P8 / S4-P4 rows are corrected. **No screenshot needed re-taking** —
+> `21_menu_mv_reviewing.png` was captured 2026-09-02, after the 2026-08-28 behaviour change,
+> and already showed the menu with no Edit MV entry. Only the prose had been stale.
+
+### ✅ RESOLVED — `TBD-HIST-05`: the review-REJECTED state exists (and review is no longer terminal)
+
+**Found 2026-09-10 while re-reading S4's flowchart for the MV-13 fix. It had been answered on
+2026-08-28 and both the area spec and the storyboard still said "not built".**
+
+| | |
+| --- | --- |
+| **Was** | area 05 §Publish: "there is no REJECTED state · `confirmPublishMv()` sets `reviewing: true, published: true` in the same write and nothing ever moves `reviewing` back to `false` on its own · flagged, not built". S4's `open_questions` carried the same question, and its flowchart drew review as one terminal `reviewing + published` node. |
+| **As built** (`25fa0f0`, 2026-08-28) | `confirmPublishMv()` writes `reviewing: true, **published: false**` and toasts "Submitted for review", then resolves **itself** after `PUBLISH_REVIEW_DELAY_MS` (2500 ms) into **approved** (`published: true`) or **REJECTED** (`rejectReason` set, row back to unpublished). All three of the old clauses are false. |
+| **Three menu states, not two** | pending → `ic_timer`, "Publish (Review)", toggle **OFF** · approved → "Publish", toggle ON · rejected → **"Publish (Rejected)"** in red plus a reason line, toggle OFF. |
+| **Contract** | ⚠️ **Relevant to RD:** the seven reason codes are `PUBLISH_REJECT_CODES` (`src/lib/publishReview.ts`). Decided 2026-08-27: **the backend returns the enum, the front end owns the copy** — so RD implements those seven values and maps anything else to `UNKNOWN` rather than rendering it raw. |
+| **Reachability** | Only through the `?demo=1` panel's `publishRejected` / `rejectReason` flags — a backend-less prototype has no real moderator. Not captured in S4; a capture would need that query armed, so it is left for a later re-capture. |
+| **Code / tests** | Unchanged — this row is the spec catching up with code that shipped two weeks ago. |
 
 ### Tests that were pinning superseded decisions (no criterion moved)
 

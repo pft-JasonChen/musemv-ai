@@ -427,6 +427,22 @@ a detail screen:**
 
 ## Error log (one line per user correction; fold recurring lessons into an AGENTS.md rule)
 
+- 2026-09-10: blocked Stop with `⨯ Another next build process is already running` — the port-3100
+  mistake in a new costume. I backgrounded a chained DoD run (`typecheck && lint && test:run &&
+  build`) because it had passed the Bash tool's 10-minute cap, and the Stop hook fired its own
+  G1-a build while mine was still going. **The rule was never about port 3100 specifically — it is
+  "do not leave anything the hook also runs running when you stop"**, and `next build` takes a lock
+  exactly like `next start` takes a port. Now in `AGENTS.md` beside the e2e rule. Also worth
+  noting for next time: that chained command only ran long because a whole DoD is ~10 minutes on
+  this machine, so it should have been split into separate foreground calls rather than backgrounded.
+- 2026-09-10: told the user that re-running `specs/build-index.py` was risky because "that index
+  reads EVERY storyboard, so it must not run while another is mid-regeneration", and used it as a
+  reason to defer the storyboard work. Wrong — it reads a **hardcoded `STORYBOARDS` list**, so it
+  is deterministic and safe. I inferred the behaviour from the file's purpose instead of reading
+  it, and the bad inference became an argument for not doing work. Corrected to the user in the
+  same session and written into `AGENTS.md`. **Read the script before pricing the risk of running
+  it.**
+
 - 2026-09-10: started the e2e triage baseline as a backgrounded `--shard=1/7 --reporter=json` run.
   The JSON reporter **buffers everything to the end**, so after 15 minutes I had zero output, zero
   partial results, and a `next start` holding :3100 that I could not reason about — the

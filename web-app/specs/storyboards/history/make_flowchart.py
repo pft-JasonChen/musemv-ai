@@ -21,8 +21,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v2'
-DATE = '2026-09-02'
+VERSION = 'v3'
+DATE = '2026-09-10'
 
 f = Flow('History (My Creations)', 'YouCam Muse Web — desktop 1440',
           version=VERSION, date=DATE, width=1140)
@@ -67,9 +67,20 @@ f.elbow(menu, quick, 'quick actions', kind='deferred', out='left', into='right',
 pub = f.decision(340, 790, 'Publish, kind?')
 f.edge(menu, pub)
 mvconfirm = f.node(150, 880, '"Ready to Go Public?" confirm', 'P4-S1', kind='decision')
-reviewing = f.node(150, 970, 'reviewing + published', 'toast: Submitted for review · P4-S2..S3', kind='success')
+reviewing = f.node(150, 970, 'reviewing, published: false', 'toast: Submitted for review · P4-S2..S3', kind='success')
 f.edge(pub, mvconfirm, 'MV')
 f.edge(mvconfirm, reviewing)
+# TBD-HIST-05 was BUILT on 2026-08-28 (25fa0f0) and this diagram was drawn
+# before it: review used to be a terminal "reviewing + published" state with no
+# way out. It now resolves ITSELF after PUBLISH_REVIEW_DELAY_MS into one of two
+# branches, so the terminal node became a fork. Redrawn v3, 2026-09-10.
+# The 2.5s wait is written into both subtitles rather than onto the two edges:
+# they leave the SAME node, so a label on each lands back on top of it (the
+# layout checker rejected exactly that — 100% covered).
+approved = f.node(30, 1060, 'approved → published', 'after 2.5s · toggle ON · P4-S3', w=250, kind='success')
+rejected = f.node(320, 1060, 'rejected → unpublished + reason', 'after 2.5s · "Publish (Rejected)" · ?demo=1 only', w=320, kind='error')
+f.edge(reviewing, approved)
+f.edge(reviewing, rejected)
 songtoggle = f.node(400, 880, 'Immediate toggle', 'toast: Published success · P4-S4', kind='success')
 f.edge(pub, songtoggle, 'song')
 

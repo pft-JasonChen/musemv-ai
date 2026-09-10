@@ -274,6 +274,27 @@ House style in one line:
   working-tree copy has CRLF while the generator writes LF — G2-a's comparison now normalises both
   line endings and the date. **If a gate here ever says "nothing to check", verify that is true
   before believing it.**
+- **`next build` collides with itself the same way `next start -p 3100` does** (2026-09-10). A
+  backgrounded `npm run build` was still running when the Stop hook fired its own G1-a build, and
+  the hook died on `⨯ Another next build process is already running`. Next takes a lock, so the
+  SECOND build refuses to start rather than corrupting the first — the failure is safe, but it
+  reads like a broken build. Same rule as port 3100, and for the same reason: **do not leave a
+  build (or a suite) running when you stop.** If you background one, wait for it.
+- **The storyboard pipeline (`specs/storyboards/*`) has three Windows/behaviour traps** (measured
+  2026-09-10 regenerating S3/S4):
+  - **`make_flowchart.py` crashes with `UnicodeEncodeError` when it has something to SAY.** The
+    layout checker prints `✗ …`, and a cp950 console cannot encode `✗`, so the script dies inside
+    `print()` — which looks like a broken script and is really a real layout problem you cannot
+    read. Always run it as `PYTHONIOENCODING=utf-8 python …/make_flowchart.py`.
+  - **That layout checker is a real gate and it refuses to write.** It caught two edge labels
+    leaving the same node and landing on top of it ("100% covered") and wrote no SVG at all.
+    Trust it; move the text into a node subtitle rather than reaching for `strict=False`.
+  - **`build-index.py` reads a HARDCODED `STORYBOARDS` list, not the storyboards themselves**, so
+    re-running it is deterministic and safe even while another storyboard is mid-edit — but it
+    also means a version bump is only reflected if you edit that list by hand. It DOES embed the
+    markdown specs, so a stale `index.html` picks up every spec change since it last ran.
+  Both `build_spec.py` and `build-index.py` are deterministic: re-running with no source change
+  produces a zero diff, so any diff after an edit is genuinely yours.
 - **On Windows the screenshot specs cannot pass at all, and that is a NON-ISSUE for the gate
   precisely because of the line above.** Playwright suffixes every snapshot with the platform and
   this repo keeps `-linux` (canonical) plus an unmaintained `-darwin` set; there is no `-win32`
