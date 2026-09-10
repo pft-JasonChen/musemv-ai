@@ -1486,11 +1486,24 @@
   gap: 12px;
 }
 
+/* Product owner, 2026-09-10, Figma "Popup/Dialog - Edit" (node 2404:124364) —
+   both the Close and Done buttons ("Close btn"/"Done btn", 28×28: a 6px pad
+   around a 16px glyph) are smaller than `MVCreatePage.css`'s base 36×36; the
+   icon shrinks to match so the padding stays centered rather than growing
+   lopsided. Both buttons share this one class, and Figma sizes them
+   identically, so one override covers both. */
 .face-picker__icon-button {
+  width: 28px;
+  height: 28px;
   background: var(--white-15);
   border: 0.6px solid var(--white-15);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
+}
+
+.face-picker__icon-button .face-picker__icon {
+  width: 16px;
+  height: 16px;
 }
 
 .face-picker__confirm {
@@ -1520,15 +1533,22 @@
 }
 
 /* Product owner request, 2026-08-14 — Figma's "Control/Media Controller/Dt"
-   custom slider look (a purple "Juice" fill up to a white "Oval" thumb, on a
-   thin grey "bar" track), replacing the plain unstyled native range input.
+   custom slider look (a "Juice" fill up to a white "Oval" thumb, on a thin
+   grey "bar" track), replacing the plain unstyled native range input.
    `-webkit-appearance`/`appearance: none` opts out of the browser's own
    slider chrome so these rules can paint it instead; Firefox needs the
    equivalent `-moz` pseudo-elements since it has no shared syntax with
    WebKit/Blink for either the track or the thumb. `--range-progress`
    (FacePickerModal.tsx) is the one piece plain CSS can't derive itself — an
    `<input>`'s current value — so the fill-to-thumb gradient reads it back as
-   a custom property instead of hardcoding 50%. */
+   a custom property instead of hardcoding 50%.
+
+   Follow-up, 2026-09-10 — the "Juice" fill was ported as
+   `var(--color-accent-purple)`; Figma's own asset (and its rendered
+   screenshot) is white, matching the thumb rather than the app's purple
+   accent. Same correction on the thumb's ring: it was a purple-tinted glow
+   (`rgba(168, 85, 247, .25)`) Figma's node has no equivalent for — a plain
+   white circle, no halo — so the ring is dropped rather than recolored. */
 .face-picker input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -1537,7 +1557,7 @@
   border-radius: var(--radius-pill);
   background: linear-gradient(
     to right,
-    var(--color-accent-purple) var(--range-progress, 50%),
+    var(--neutral-dark-100) var(--range-progress, 50%),
     var(--white-15) var(--range-progress, 50%)
   );
   outline: none;
@@ -1549,7 +1569,6 @@
   height: 16px;
   border-radius: 50%;
   background: var(--neutral-dark-100);
-  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.25);
   cursor: pointer;
 }
 
@@ -1562,7 +1581,7 @@
 .face-picker input[type="range"]::-moz-range-progress {
   height: 4px;
   border-radius: var(--radius-pill);
-  background: var(--color-accent-purple);
+  background: var(--neutral-dark-100);
 }
 
 /* Product owner request, 2026-08-14 — Edit Storyboard: Character Image moved

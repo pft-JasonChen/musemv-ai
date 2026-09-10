@@ -306,10 +306,6 @@ export function FacePickerModal({
                 became visible here because a circular frame turns the same
                 rectangle into an obvious ellipse. */}
             <img src={imageUrl} alt="Uploaded" draggable={false} onLoad={measureBox} />
-            <span
-              aria-hidden="true"
-              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,.45)" }}
-            />
             <div
               className="face-picker__selection"
               onPointerDown={(e) => {
@@ -336,6 +332,14 @@ export function FacePickerModal({
                 // `width` expressed as a percentage of a different axis. If
                 // that ratio correction is ever removed, this becomes an oval.
                 borderRadius: isAvatar ? "50%" : 12,
+                // Product owner, 2026-09-10: the dark overlay outside the
+                // selection stays, but must not cross into the selected
+                // area itself. A `box-shadow` this large paints ONLY outside
+                // the element's own box — never inside it, regardless of
+                // background — so this alone gives "dim outside, untouched
+                // inside" with no separate overlay layer needed (the
+                // previous full-preview `<span>` this dialog also had
+                // double-darkened the inside too, which was the actual bug).
                 boxShadow: "0 0 0 9999px rgba(0,0,0,.45)",
                 border: "2.6px solid var(--color-accent-purple)",
                 resize: "none",
