@@ -2895,7 +2895,7 @@ test("3i / MV-12 + MV-13: publish confirms first, and blocks Edit until unpublis
     "true",
   );
 
-  // ── MV-13, REWRITTEN 2026-09-09 ───────────────────────────────────────────
+  // ── MV-13, REWRITTEN 2026-09-09, SPEC SYNCED 2026-09-10 ───────────────────
   // This asserted the Edit slot becomes an "Unpublish to edit" button. The
   // product owner changed that on 2026-08-28: MV-13 still holds (you cannot
   // edit while under review or live) but "the control now DISAPPEARS instead of
@@ -2904,6 +2904,14 @@ test("3i / MV-12 + MV-13: publish confirms first, and blocks Edit until unpublis
   // such button anywhere in `src/` any more. So the test was holding a decision
   // that had already been reversed, which is the failure mode this repo's error
   // log records three times.
+  //
+  // The spec disagreed with the code for ~2 weeks after that (five locations in
+  // areas 02 and 05). Product owner ruled on 2026-09-10 that the CODE is right;
+  // `specs/areas/02-mv-creation.md` (MV-P4-S4, MV-E7, AC-MV-10, MV-P4) and
+  // `specs/areas/05-history.md` now say "removed", and `specs/CHANGELOG-SPEC.md`
+  // carries the row. History's menu implements the same rule
+  // (`HistoryView.tsx`: `isMv && !p.published && !p.reviewing`). The storyboard
+  // specs are knowingly still stale — see CHANGELOG-SPEC and PLAN.md.
   await expect(page.getByRole("button", { name: "Edit MV", exact: true })).toHaveCount(0);
   // Pin the reversal itself, so re-introducing the old control is also a
   // failure and not a silent "fix".

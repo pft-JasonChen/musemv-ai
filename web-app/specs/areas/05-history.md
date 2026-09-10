@@ -69,11 +69,11 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 - **Storyboard "Create" pill (HIST-05, 2026-07-23):** done storyboard cards render a **"Create MV"
   pill** in the card footer (calls `createMv(r)`), in addition to the menu CTA.
 - **`⋯` menu** (`Menu`, portal) — contents depend on row type:
-  - **CTA row** (non-community, non-failed): **Edit MV** (mv) / **Create MV** (song|storyboard). **MV-13:** when the MV is published/in-review, the Edit MV entry becomes a neutral **"Unpublish to edit"** that unpublishes on tap.
+  - **CTA row** (non-community, non-failed): **Edit MV** (mv) / **Create MV** (song|storyboard). **MV-13:** when the MV is published/in-review, the Edit MV entry is **removed from the menu entirely** — the Publish toggle below is the only way back to editable. _(Product owner, 2026-08-28 — supersedes the earlier neutral "Unpublish to edit" entry; spec synced 2026-09-10. Same rule as `/mv/result`, area 02 `MV-P4-S4` / `MV-E7`.)_
   - **Like / Share**: shown for community, mv, and song rows — **HIST-06 (2026-07-23): a failed row is Delete-only** (Like/Share now suppressed with `!failed`); storyboard rows never showed them.
   - **Publish (toggle) / Download / normal Delete**: non-community, non-failed, mv|song only. **Delete is hidden** when an MV is published/reviewing or a song is published.
   - **Standalone Delete**: also shown for **failed** and **storyboard** rows (`:355`).
-  - **Net per type (as-built 2026-07-24):** MV = Edit MV (or "Unpublish to edit" when published) + Like/Share/Publish/Download/Delete · Song = Create MV + Like/Share/Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
+  - **Net per type (as-built 2026-07-24; MV-13 row updated 2026-09-10):** MV = Edit MV (absent while published/in-review) + Like/Share/Publish/Download/Delete · Song = Create MV + Like/Share/Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
 - **Publish** (`HistoryView.tsx:125-137`): **MV** → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. **Song** → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ `TBD-MV-06`, area 04). **2026-08-06: the row's `published`/`reviewing` override is now the `⋯` menu's alone** — the dialog that used to share it is gone, and the result screens hold their own publish state (they are a different surface with their own MV-12 confirm).
   ❓ **2026-08-27 — there is no REJECTED state.** `confirmPublishMv()` sets `reviewing: true, published: true` in the same write and nothing ever moves `reviewing` back to `false` on its own — once submitted, an MV is reviewing-and-published forever, with no code path for a review that comes back negative. The row menu's own label already anticipates one (`isMv && p.reviewing ? "Publish (Review)" : "Publish"`, `ic_timer` while reviewing), but there is no UI state behind it. Flagged, not built: `TBD-HIST-05`.
 - **Delete** (`HistoryView`): confirm modal → adds id to `removed` (list-local; not a server delete).
@@ -148,7 +148,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - [ ] **HIST-P4**: MV publish → confirm → review toast; song publish → immediate (AC-05).
 - [ ] **HIST-P5**: delete confirm removes row; hidden for published/reviewing (AC-06).
 - [ ] **HIST-P6**: Edit MV / Create MV seed + route correctly (AC-07).
-- [ ] **HIST-E2/E3/E7**: failed → **Delete only**; community → Like/Share only; storyboard → Create MV pill + (Create MV + Delete) menu; published MV → "Unpublish to edit".
+- [ ] **HIST-E2/E3/E7**: failed → **Delete only**; community → Like/Share only; storyboard → Create MV pill + (Create MV + Delete) menu; published MV → **no Edit MV entry at all** (MV-13, 2026-08-28).
 - [ ] **AC-09**: grid clean at 4 widths *(visual)*.
 
 ---

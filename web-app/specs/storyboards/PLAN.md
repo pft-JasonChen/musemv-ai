@@ -215,9 +215,25 @@ Three capture notes settled at the same gate:
   bullet still reads "charges on start, refunds on failure; cost per the Credit Consume MSR". D2
   governs rules, not screen text — and the MSR link is still `TBD`, so the `open_questions` row
   every spec carries applies here too.
-- **`MV-E7` is NOT S3's.** "Unpublish to edit" is asserted on `/mv/result` (S2's P8) and in
-  History's menu (S4's P4); S3 names the precondition in RULES and captures nothing. Same
+- **`MV-E7` is NOT S3's.** The published-MV edit block is asserted on `/mv/result` (S2's P8) and
+  in History's menu (S4's P4); S3 names the precondition in RULES and captures nothing. Same
   neighbour rule S6 used: one step showing the boundary, then stop.
+
+  > ⚠️ **MV-13 CHANGED, AND S2/S4 ARE STALE ON IT (2026-09-10).** Product owner, 2026-08-28: a
+  > published/in-review MV no longer relabels Edit MV to a neutral **"Unpublish to edit"** — the
+  > Edit MV control is **removed entirely**, and the Publish toggle is the only way back to
+  > editable. `specs/areas/02-mv-creation.md` (`MV-P4-S4`, `MV-E7`, `AC-MV-10`, MV-P4 checklist)
+  > and `specs/areas/05-history.md` are synced; the CODE has behaved this way since 2026-08-28
+  > (`MvResult.tsx`, `HistoryView.tsx`) and `e2e` asserts both that Edit MV is gone and that no
+  > "Unpublish to edit" control exists.
+  >
+  > **Still to do — the storyboards were NOT regenerated.** `specs/storyboards/history/
+  > build_spec.py` (5 strings), `specs/storyboards/mv-edit/build_spec.py` (2) and the two
+  > generated `spec.html` / `spec-bundled.html` pairs still describe the old label, as do P8 and
+  > P4 below. Regenerating means bumping each storyboard's `version`, moving its flowchart's
+  > `matches spec vN` stamp, and re-running `specs/build-index.py` — and that index reads EVERY
+  > storyboard, so it must not be run while another is mid-regeneration. Do it in one pass when
+  > the mv-creation storyboard work settles.
 
 **Watch for what 3k already learned the hard way** (`CLAUDE.md`): a section modifier here can be
 load-bearing for a phone-only rule, and `/mv/edit`'s scene **Recreate** is the shared `Button`
@@ -292,7 +308,7 @@ in the same change.
 | **P5** | Guest gate (`AC-MV-01b`): the screen renders with no modal; **Song Library** and **Create Music Video** gate; **Import Audio stays ungated**.                                                                                                                                                                                |
 | **P6** | Insufficient credits at mode select → buy-credits IAP instead of generating.                                                                                                                                                                                                                                                 |
 | **P7** | The side rail's two modes — Trending MVs vs My Creations (needs `loggedIn` **and** ≥1 completed MV).                                                                                                                                                                                                                         |
-| **P8** | `/mv/result` controls tour: the hand-built transport, Like/Dislike, Share, Download, Publish → "Ready to Go Public?" → pending review, the **"Unpublish to edit"** neutral state (`MV-E7`), the info panel, and the opened-from-History variant.                                                                             |
+| **P8** | `/mv/result` controls tour: the hand-built transport, Like/Dislike, Share, Download, Publish → "Ready to Go Public?" → pending review, the published-MV edit block — **Edit MV is removed from the row** (`MV-E7`; stale in this spec, see the MV-13 note above), the info panel, and the opened-from-History variant.                                                                             |
 
 **Capture run 1 was voided and re-run (2026-08-27).** Its 44 screenshots were taken against the
 pre-rebase branch, whose `/mv/room` still carried an **Enhance** button that `origin/main` had
@@ -325,7 +341,7 @@ of one screen.
 | **P1** | Browse & filter: All / Music Videos / Songs / Liked, plus the empty state (reached via **Unlike**, not delete — corrected during the build: community rows expose no Delete at all, so Unlike is the only way to empty Liked).                                                                                                                                                                                           |
 | **P2** | Open a creation: done MV → `/mv/result?id=`, done song → `/song/result?id=`, storyboard → `/mv/storyboard?id=`, community → `/song/play?id=`, processing → inert (not clickable, no menu).                                                                                                                                                                                                                               |
 | **P3** | The `⋯` menu, both its actions AND its five row-type variants — this is the highest-value coverage in the spec, the one place a content change could regress silently with no test catching it. One capture per variant (MV / song / storyboard / community / failed) showing the menu open, per the area spec's own "Net per type" table, plus Like/Unlike, Share (`ShareDialog`), and Download (toast, fixture media). |
-| **P4** | Publish: MV → live "Ready to Go Public?" confirm → "Submitted for review" toast → the menu now shows **Publish (Review)** and Edit MV becomes **"Unpublish to edit"** (MV-13). Song → immediate toggle, no confirm.                                                                                                                                                                                                      |
+| **P4** | Publish: MV → live "Ready to Go Public?" confirm → "Submitted for review" toast → the menu now shows **Publish (Review)** and Edit MV **disappears from the menu** (MV-13; this spec is stale, see the MV-13 note above). Song → immediate toggle, no confirm.                                                                                                                                                                                                      |
 | **P5** | Delete: confirm modal ("cannot be undone") → row removed; hidden for published/reviewing rows.                                                                                                                                                                                                                                                                                                                           |
 | **P6** | Edit MV / Create MV: the `⋯` menu tap only — no follow-through capture of `/mv/edit` / `/mv/storyboard` / `/mv/room`, which S2/S3 already own in full. RULES cites the destination and cross-references the owning spec.                                                                                                                                                                                                 |
 

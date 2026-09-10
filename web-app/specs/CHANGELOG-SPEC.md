@@ -44,17 +44,28 @@ test catching up with a decision the code had already implemented.
 | **Tests** | `2026-09-01: a /song/play deep link MARKS its row` (renamed; the media-playing assertions removed, marker assertions strengthened) in `e2e/behaviour-regressions.spec.ts`. Mutation-tested both ways. |
 | **Contract** | None. |
 
-### ⚠️ OPEN — `MV-13` "Unpublish to edit": the spec and the code disagree
+### ✅ RESOLVED — `MV-13`: a published MV's Edit control is REMOVED, not relabelled
 
-**Not resolved here. RD/QA should treat the code as current and the spec as pending an answer.**
+**Product owner ruling, 2026-09-10: the CODE is the source of truth. The spec was wrong.**
 
 | | |
 | --- | --- |
-| **Spec says** | `AC-MV-10`, `MV-P4-S4`, `MV-E7`, the MV-P4 review checklist (area 02) and area 05 §'s History CTA row all say a published/in-review MV replaces **Edit MV** with a neutral **"Unpublish to edit"** action. `TBD-MV-13`. |
-| **Code does** | `MvResult.tsx`: "MV-13 still applies (can't edit while under review or live) — but the control now **disappears** instead of becoming 'Unpublish to edit'. The ONLY way back to editable is the Publish toggle itself", attributed to the product owner on **2026-08-28**. There is no "Unpublish to edit" string anywhere in `src/`. |
-| **Effect** | The 2026-08-28 decision landed in code and in one comment, and never reached the five spec locations. The e2e guard was still asserting the spec's wording and had been red ever since. |
-| **Done here** | The test now pins the CODE (and asserts the old control is absent, so re-introducing it also fails). **The five spec locations are deliberately left untouched** — per `AGENTS.md`, a spec/code divergence gets flagged, not silently overwritten. |
-| **Needs** | A one-line ruling: either the spec is amended to "the control disappears", or the code restores the pill. History (area 05) has the same rule and must move with it. |
+| **The rule now** | While an MV is **published or in review**, the **Edit MV control is removed entirely** from `/mv/result`'s actions row and from History's `⋯` menu. The **Publish toggle is the only way back to editable**; turning it off restores Edit MV. There is no "Unpublish to edit" affordance anywhere in the product. |
+| **Was** | Both surfaces were specified to REPLACE Edit MV with a neutral (white bg / black text) **"Unpublish to edit"** action that unpublished on tap. That was superseded in code by the product owner on **2026-08-28** and never reached the specs. |
+| **Criteria** | Area 02 — `MV-P4-S4`, `MV-E7`, `AC-MV-10`, the MV-P4 review checklist. Area 05 — the History `⋯` CTA-row rule, the "Net per type" table, and the `HIST-E2/E3/E7` checklist. `TBD-MV-13` keeps its ID; only its content moved. |
+| **Code** | Unchanged, and already consistent across both surfaces: `MvResult.tsx` (`{!published && !pending && …}`) and `HistoryView.tsx` (`{isMv && !p.published && !p.reviewing && …}`). |
+| **Tests** | `3i / MV-12 + MV-13` in `e2e/behaviour-regressions.spec.ts` asserts Edit MV is absent while published, that **no** "Unpublish to edit" control exists (so re-introducing it also fails), and that toggling Publish off restores Edit MV. |
+| **Contract** | None. |
+
+> **⚠️ The STORYBOARDS are still stale on this and were deliberately not regenerated.**
+> `specs/storyboards/history/build_spec.py` (5 strings), `specs/storyboards/mv-edit/build_spec.py`
+> (2), their generated `spec.html` / `spec-bundled.html`, and `specs/storyboards/PLAN.md`'s S2-P8
+> and S4-P4 rows still describe the old label. Regenerating requires bumping each storyboard's
+> `version`, moving its flowchart's `matches spec vN` stamp, and re-running `specs/build-index.py`
+> — and that index reads EVERY storyboard, so it must not run while another is mid-regeneration
+> (the mv-creation storyboard was being rebuilt when this landed). PLAN.md carries the same note
+> at the `MV-E7` bullet so whoever picks it up finds it there too. **QA: for MV-13, the area specs
+> above are authoritative; S2's P8 and S4's P4 are not.**
 
 ### Tests that were pinning superseded decisions (no criterion moved)
 
