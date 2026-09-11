@@ -5,6 +5,7 @@ import { SeekBar } from "@/components/ui/SeekBar";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { DpBadge } from "@/components/ui/DpBadge";
 import { formatCount } from "@/lib/mv/community";
+import { toggleMvFullscreen } from "@/lib/fullscreen";
 import type { MvRatio } from "@/lib/mv/justifiedRows";
 
 /**
@@ -119,10 +120,7 @@ export function MvPreviewCard({
   }
 
   function toggleFullscreen() {
-    const el = stageRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void el.requestFullscreen?.().catch(() => {});
+    toggleMvFullscreen(stageRef.current, videoRef.current);
   }
 
   function seek(next: number) {

@@ -20,13 +20,19 @@ the Edit-Profile / Language / Feedback modals. **Send Feedback is a real support
 **§3.1** for the form and its CSB param mapping.
 **Out of scope (cross-referenced):** the credits/IAP
 the Credits Detail route + modals reached from here (area 07 — `/profile/credits`, `BuyCreditsModal`, `SubscribeModal`); the
-**community profile content grid** at `/creator?self=1` that the stat tiles link to (area 04);
-sign-in (area 09).
+**community profile content grid** at `/creator?self=1` that the photo/name/email identity block
+links to (area 04); **the user's own creations list** at `/history` that the MVs/Songs stat tiles
+link to (area 05, `YMW260910P0001`, 2026-09-11 — see below); sign-in (area 09).
 
 **Key mapping note (important):** web `/profile` is closest to the **App's Account screen (F18)** — a
 row-based hub — **not** the App's _My Community Profile_ (F16), whose tabbed content grid lives at
-`/creator?self=1` (area 04). The stat tiles bridge the two. ⚠️ The overview parity matrix lists
-F16→06 for convenience; the content-grid half is actually area 04.
+`/creator?self=1` (area 04). ⚠️ The overview parity matrix lists F16→06 for convenience; the
+content-grid half is actually area 04.
+**Two different destinations behind three similar-looking controls (2026-09-11):** the identity
+block (photo/name/email, one grouped link) still bridges to the **public** creator profile (area
+04, `/creator?self=1`); the MVs/Songs stat tiles bridge to the user's **own** creations list
+instead (area 05, `/history?tab=mv`\|`songs`). Before `YMW260910P0001` all three shared the public-
+profile destination — don't assume they still do when reading older notes below.
 
 **Other key divergences:** the **Notifications row is removed** (product owner, 2026-08-14 — the web
 has no push/permission flow behind it, so it was an inert local toggle; `TBD-PROF-01` is moot on web)
@@ -62,7 +68,7 @@ localized surfaces (nav + Profile). `/settings` copy is hardcoded English.
 
 **Profile header** (`ProfileView.tsx`): avatar (image or name-initial), name, **PRO** pill when
 `subscribed`, email; edit-pencil → Edit-Profile modal.
-**Stat tiles** (`:116-127`): **Credits** → `router.push('/profile/credits')` (area 07; its **Buy More** opens `BuyCreditsModal`, now mounted on that route); **MVs** → `/creator?self=1&tab=mv`; **Songs** → `/creator?self=1&tab=songs` (area 04). Counts derive from the **static** `SAMPLE_CREATIONS` (not the user's real creations) ⚠️.
+**Stat tiles** (`:116-127`): **Credits** → `router.push('/profile/credits')` (area 07; its **Buy More** opens `BuyCreditsModal`, now mounted on that route); **MVs** → `/history?tab=mv`; **Songs** → `/history?tab=songs` (area 05 — changed from `/creator?self=1&tab=…`, `YMW260910P0001`, 2026-09-11). Counts derive from the **static** `SAMPLE_CREATIONS` (not the user's real creations) ⚠️ — that mismatch is now sharper: the count comes from a fixture, but the tile now opens the user's REAL (live + seed) History list, which won't match the fixture count.
 **Rows** (`:129-146`):
 
 - **Muse Pro** — not subscribed → an **Upgrade** pill (`.button--secondary`) + row click → `SubscribeModal` (area 07); subscribed → plan name + hardcoded "validity 2026-08-10", **no pill**, row click → `/profile/credits` (product owner, 2026-08-14).
@@ -70,12 +76,14 @@ localized surfaces (nav + Profile). `/settings` copy is hardcoded English.
 - **History** — navigates to `/history` (area 05).
 - **Send Feedback** — opens `FeedbackDialog`: a **5-field support ticket** submitted through `MuseApi.submitFeedback` → **§3.1**. _(Replaced the one-textarea modal whose content was discarded, 2026-08-17. `TBD-PROF-02`'s frontend half is closed; the endpoint itself stays RD's.)_
 - **Settings** — navigates to `/settings` (via `localePath`). Sign Out is no longer on this screen (PROF-03 moved it into Settings).
-  ⚠️ The `?demo=1` panel's `profileEmpty` flag drives an empty state on the content grid the MVs/Songs
-  tiles above link to — but that grid is `CreatorProfile` (`/creator?self=1`), which is **area 04's**
-  screen per this file's own §1 mapping note, not this one's. `profileEmpty` has **no consumer inside
-  `/profile` or `/settings` themselves** — grep confirms `CreatorProfile.tsx` is its only reader. Spec
-  the behaviour in area 04; nothing on this screen changes when it is toggled. `subOnApp` (the other
-  demo flag touching this area) already has its own note under **Settings** below.
+  ⚠️ The `?demo=1` panel's `profileEmpty` flag drives an empty state on `CreatorProfile`
+  (`/creator?self=1`), which is **area 04's** screen, not this one's — reached from `/profile` via
+  the **identity block** (photo/name/email), not the MVs/Songs tiles as this line said until
+  `YMW260910P0001` (2026-09-11) moved those tiles to `/history`. `profileEmpty` has **no consumer
+  inside `/profile`, `/settings`, or `/history` themselves** — grep confirms `CreatorProfile.tsx` is
+  its only reader. Spec the behaviour in area 04; nothing on this screen changes when it is
+  toggled. `subOnApp` (the other demo flag touching this area) already has its own note under
+  **Settings** below.
 
 **Edit-Profile modal** (`:363-435`): avatar upload is a **real `<input type="file" accept="image/*">`**
 since 2026-09-01 (product owner) — **not** the `AVATAR_SAMPLES`-cycle mock this line described until
@@ -264,7 +272,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 ### PROF-P1 — View profile hub
 
 - **PROF-P1-S1** Open `/profile` (auth-gated). **System:** header + stat tiles + rows. _(The "PRO pill if subscribed" clause was removed 2026-08-19 — see `AC-PROF-01`.)_
-- **PROF-P1-S2** Tap **Credits** tile → navigates to `/profile/credits`; **MVs**/**Songs** tile → `/creator?self=1&tab=…` (area 04).
+- **PROF-P1-S2** Tap **Credits** tile → navigates to `/profile/credits`; **MVs**/**Songs** tile → `/history?tab=…` (area 05, `YMW260910P0001`).
 
 ### PROF-P2 — Edit profile
 
@@ -320,7 +328,7 @@ Screens to capture later: `/profile`, Edit-Profile modal, Language picker, `/set
 ## 6. Acceptance criteria (EARS)
 
 - **AC-PROF-01** — WHEN `/profile` loads for a signed-in user, THE SYSTEM SHALL show avatar/name/email, a ~~PRO pill~~ iff subscribed, the Credits/MVs/Songs tiles, and the row list. _(Corrected 2026-08-19 — the PRO pill is REMOVED from this criterion. DP's `AccountPage` identity block is avatar + name + email + Edit, with no plan badge, and `AccountPage.css` has no class for one; building it would mean inventing a visual with no design. Subscription state already surfaces in the account menu's PRO/FREE badge and in the Muse Pro row below. Product owner decision.)_
-- **AC-PROF-02** — WHEN a stat tile is tapped, THE SYSTEM SHALL navigate to `/profile/credits` (Credits) or to `/creator?self=1&tab=mv|songs` (MVs/Songs). _(rewritten 2026-08-12: Credits Detail became a route on 2026-08-11)_
+- **AC-PROF-02** — WHEN a stat tile is tapped, THE SYSTEM SHALL navigate to `/profile/credits` (Credits) or to `/history?tab=mv|songs` (MVs/Songs). _(rewritten 2026-09-11 for `YMW260910P0001`: MVs/Songs moved from `/creator?self=1&tab=…` to `/history?tab=…`; previously rewritten 2026-08-12 when Credits Detail became a route on 2026-08-11)_
 - **AC-PROF-03** — WHEN Edit-Profile is saved, THE SYSTEM SHALL commit name/avatar via `updateProfile` and reflect them in the shell (in-memory).
 - **AC-PROF-04** — WHEN the Muse Pro row is tapped, THE SYSTEM SHALL open the Subscribe modal (not subscribed) or the Credits detail (subscribed).
 - **AC-PROF-05** — WHEN Language is changed, THE SYSTEM SHALL switch locale via `setLocale` and reflect it in localized surfaces.
@@ -378,7 +386,8 @@ See also global: `TBD-GL-01` (credits), `TBD-GL-04` (persistence), `TBD-GL-06` (
 
 ```mermaid
 flowchart TD
-  Profile["/profile (account hub, auth)"] --> Tiles["Credits → CreditsDetail · MVs/Songs → /creator?self=1 (area 04)"]
+  Profile["/profile (account hub, auth)"] --> Tiles["Credits → CreditsDetail · MVs/Songs → /history (area 05)"]
+  Profile --> Identity["Photo/Name/Email → /creator?self=1 (area 04)"]
   Profile --> Edit["Edit Profile (name/avatar, in-memory)"]
   Edit --> AvatarPick["Change Photo → file picker (image/*, ≤10MB)"]
   AvatarPick -->|"accepted"| AvatarCrop["FacePickerModal variant=avatar (circular crop)"]
@@ -401,7 +410,8 @@ flowchart TD
 
 ---
 
-**Decisions (as-built):** `/profile` = Account-style hub (rows), community grid split to `/creator?self=1`;
+**Decisions (as-built):** `/profile` = Account-style hub (rows), community grid split to `/creator?self=1`
+(identity block only — MVs/Songs stat tiles instead open `/history?tab=…`, `YMW260910P0001`, 2026-09-11);
 edits/subscription in-memory; Unsubscribe/Delete are demo-only; Notifications is removed (2026-08-14);
 `/settings` is auth-gated with Sign Out (not on `/profile`); Terms/Privacy are real links.
 

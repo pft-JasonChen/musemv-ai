@@ -140,12 +140,17 @@ export function TopPicksSection({
     if (suspend) audioRef.current?.pause();
   }, [suspend]);
 
+  /**
+   * YMW260909P0008 (product owner, 2026-09-11): a single-card step per click
+   * read as too slow — this now steps by the row's visible width (a "page")
+   * per click, matching `MvGridSections.tsx`'s `MvTopPicksRow`, which carried
+   * the same fix first. This component is a separate copy of that pattern
+   * (see this file's own header note), so the earlier fix did not reach it.
+   */
   function scrollByCard(direction: -1 | 1) {
     const row = rowRef.current;
-    const firstItem = row?.querySelector<HTMLElement>(".top-picks__item");
-    if (!row || !firstItem) return;
-    const gap = Number.parseFloat(window.getComputedStyle(row).columnGap) || 0;
-    row.scrollBy({ left: direction * (firstItem.offsetWidth + gap), behavior: "smooth" });
+    if (!row) return;
+    row.scrollBy({ left: direction * row.clientWidth, behavior: "smooth" });
   }
 
   function handlePlayClick(songId: string) {

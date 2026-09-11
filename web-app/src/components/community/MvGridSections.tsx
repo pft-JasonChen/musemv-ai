@@ -134,12 +134,17 @@ function MvTopPicksRow({ items, rowHeight }: { items: readonly GridItem[]; rowHe
     return () => window.removeEventListener("resize", updateScrollState);
   }, []);
 
+  /**
+   * YMW260909P0008 (product owner, 2026-09-11): a single-card step per click
+   * read as too slow — RD's own build advances by roughly a full row's worth
+   * per click and that pace is the one to keep, so this now steps by the
+   * row's visible width (a "page") rather than one item + gap. Spec updated
+   * to match in `specs/areas/04-explore-community.md`.
+   */
   function scrollByCard(direction: -1 | 1) {
     const row = rowRef.current;
-    const firstItem = row?.querySelector<HTMLElement>(".mv-top-picks-item");
-    if (!row || !firstItem) return;
-    const gap = Number.parseFloat(window.getComputedStyle(row).columnGap) || 0;
-    row.scrollBy({ left: direction * (firstItem.offsetWidth + gap), behavior: "smooth" });
+    if (!row) return;
+    row.scrollBy({ left: direction * row.clientWidth, behavior: "smooth" });
   }
 
   return (

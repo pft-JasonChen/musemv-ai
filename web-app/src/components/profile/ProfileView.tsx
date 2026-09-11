@@ -172,10 +172,12 @@ export function ProfileView() {
         <div className="account-page__content">
           <div className="account-page__profile">
             <div className="account-page__identity">
-              {/* Product owner, 2026-08-31: the photo/name/email all open the
-                  same public creator profile the MVs/Songs stat pills below
-                  already link to — same destination, default (MV) tab, so
-                  omitting `tab=` here rather than repeating `tab=mv`. Grouped
+              {/* Product owner, 2026-08-31, REVERSED IN PART 2026-09-11
+                  (YMW260910P0001): the photo/name used to share this same
+                  destination with the MVs/Songs stat pills below — as of this
+                  bug the pills now go to History instead, but the identity
+                  block (photo/name/email) still opens the public creator
+                  profile; that half of the 08-31 decision stands. Grouped
                   under one `Link` rather than three (image, name, email
                   separately) since they're one identity, not three
                   destinations — Edit stays its own control, outside the link,
@@ -232,12 +234,17 @@ export function ProfileView() {
                 <span>{t("profile.credits")}</span>
               </button>
               <i />
-              <Link href={localePath(locale, "/creator?self=1&tab=mv")}>
+              {/* YMW260910P0001 (product owner, 2026-09-11): these used to
+                  match the identity link above (`/creator?self=1&tab=…`,
+                  the public creator profile). Now they go to History's own
+                  Music Videos / Songs tab instead — a user's OWN creations
+                  list, not the public profile grid. */}
+              <Link href={localePath(locale, "/history?tab=mv")}>
                 <strong>{mvCount}</strong>
                 <span>{t("profile.mvs")}</span>
               </Link>
               <i />
-              <Link href={localePath(locale, "/creator?self=1&tab=songs")}>
+              <Link href={localePath(locale, "/history?tab=songs")}>
                 <strong>{songCount}</strong>
                 <span>{t("profile.songs")}</span>
               </Link>

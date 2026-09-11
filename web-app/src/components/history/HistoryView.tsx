@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useHistory } from "@/components/providers/HistoryProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath, type Locale } from "@/lib/i18n/config";
@@ -133,13 +133,27 @@ function rowHref(locale: Locale, r: HistorySample): string {
   return localePath(locale, path);
 }
 
+/** YMW260910P0001 (product owner, 2026-09-11): Profile's MVs/Songs stat pills
+ *  now deep-link here instead of the public creator profile — `?tab=mv|songs`,
+ *  seeded once on first render only (same convention as `CreatorProfile`'s own
+ *  `?tab=`; a URL write on every tab change is a page jump even with
+ *  `replace`, so the tab stays component state after that). */
+function initialFilterFromTab(tab: string | null): Filter {
+  if (tab === "mv") return "mv";
+  if (tab === "songs") return "song";
+  return "all";
+}
+
 export function HistoryView() {
   const router = useRouter();
   const { history } = useHistory();
   const { locale } = useLocale();
   const openCreation = useOpenCreation();
   const seedMvFlow = useSeedMvFlow();
-  const [filter, setFilter] = useState<Filter>("all");
+  const searchParams = useSearchParams();
+  const [filter, setFilter] = useState<Filter>(() =>
+    initialFilterFromTab(searchParams.get("tab")),
+  );
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [ov, setOv] = useState<Record<string, Override>>({});
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -838,7 +852,11 @@ function Menu(p: MenuProps) {
                 active={p.liked}
               />
             )}
-            {!failed && (community || isMv || isSong) && (
+            {/* YMW260903P0012 (product owner, 2026-09-11): an own MV/Song row
+                could be shared before it was ever published — the link
+                worked, but nothing backed it. Community rows are already
+                someone else's published content, so they're unaffected. */}
+            {!failed && (community || ((isMv || isSong) && p.published)) && (
               <OptRow icon="ic_share" label="Share" onClick={p.onShare} />
             )}
 

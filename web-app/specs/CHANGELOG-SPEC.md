@@ -41,6 +41,37 @@ one behaviour reversal.
 
 ---
 
+## 2026-09-11 — Two eBug-driven product decisions
+
+Both from the same PM triage pass over `YMW26091*`/`YMW26090*` eBugs. Neither is a "fix the bug as
+described" — each one reverses or narrows a decision already recorded in the spec, so the PM ruling
+is the change, not the code alone.
+
+### Profile's MVs/Songs stat pills now open History, not the public Creator profile
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/06-profile-account.md` §3 ("Stat tiles"), §4 (PROF-P1-S2), §6 (AC-PROF-02), and the §7 flowchart. |
+| **Why** | `YMW260910P0001` — a user tapping their own MV/Song count expects to land on **their own creations list**, not the read-only public profile grid. |
+| **Decision** | Product owner, 2026-09-11: MVs/Songs pills → `/history?tab=mv`\|`songs`. The **identity block** (photo + name + email) is unchanged — still `/creator?self=1`, the public profile — only the count pills moved. This narrows, not reverses, the 2026-08-31 decision that grouped all three under one destination. |
+| **Code** | `ProfileView.tsx` (pill hrefs); `HistoryView.tsx` (`?tab=` now seeds the initial filter, same one-time-seed convention as `CreatorProfile`'s own `?tab=`); `app/[locale]/history/page.tsx` (wrapped in `<Suspense>` for the new `useSearchParams()` read). |
+| **Tests** | Not yet added — flagged for a follow-up pass. |
+| **Contract** | None. |
+
+### History: Share is gated on `published` for an own MV/Song row
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/05-history.md` §3 (`⋯` menu contents, "Net per type"), §4 (HIST-P3-S1), §6 (AC-HIST-08). |
+| **Why** | `YMW260903P0012` — an MV or Song could be shared before it was ever published; the link worked but pointed at content nobody else could see as "theirs" yet. |
+| **Decision** | Product owner, 2026-09-11: **add the gate.** Share now only appears on an own mv/song row once `published` is true (reviewing/rejected count as not-published). **Community rows are unaffected** — they're already someone else's published content. Like stays ungated, as before. |
+| **Code** | `HistoryView.tsx`'s `Menu` component, the Share `OptRow` condition. |
+| **Scope note** | `CreatorProfile.tsx` has its own, separately-coded Share entry that is documented as mirroring `HistoryView`'s menu — **not touched in this pass**, flagged for the PM to confirm before extending the same gate there. |
+| **Tests** | Not yet added — flagged for a follow-up pass. |
+| **Contract** | None. |
+
+---
+
 ## 2026-09-10 — Credit History display mapping contract
 
 No prototype change. Added `areas/13-credit-history-display.md` from the product-provided

@@ -1,9 +1,14 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { useRef } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialogTransition";
+
+/** Drag the handle down this fraction of the sheet's own height to close it. */
+const DRAG_CLOSE_THRESHOLD = 0.25;
 
 /**
  * The shell all five of `/mv/room`'s overlays share (slice 3g-2). DP writes it
@@ -84,6 +89,44 @@ export function MvSheet({
   const { mounted, visible } = useDialogTransition(open);
   const isPhone = useMediaQuery(PHONE_QUERY);
   useEscapeToClose(open, onClose);
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  // YMW260909P0003: the mobile grab bar was decorative only — dragging it
+  // did nothing. Follows the finger via an imperative `transform` (same
+  // pattern as `TrimAudioModal`'s handle drag) rather than re-rendering on
+  // every `pointermove`, then either commits the close or springs back,
+  // handing the animation back to the CSS `transition: transform` the sheet
+  // already has for open/close.
+  function onHandlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    const startY = event.clientY;
+    const height = sheet.getBoundingClientRect().height;
+    sheet.style.transition = "none";
+
+    function onMove(e: PointerEvent) {
+      const dy = Math.max(0, e.clientY - startY);
+      sheet!.style.transform = `translateY(${dy}px)`;
+    }
+    function onUp(e: PointerEvent) {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      sheet!.style.transition = "";
+      const dy = Math.max(0, e.clientY - startY);
+      if (dy > height * DRAG_CLOSE_THRESHOLD) {
+        // Past the threshold: keep sliding to the same fully-closed position
+        // the CSS class drives, so the release continues the motion instead
+        // of springing back open first. The sheet unmounts once `open`
+        // flips false, so this inline value never has to be cleaned up.
+        sheet!.style.transform = "translateY(100%)";
+        onClose();
+      } else {
+        sheet!.style.transform = "";
+      }
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
 
   if (!mounted || typeof document === "undefined") return null;
 
@@ -91,6 +134,7 @@ export function MvSheet({
     <div className={`mv-sheet-overlay${visible ? " mv-sheet-overlay--visible" : ""}`}>
       <div className="mv-sheet-backdrop" onClick={onClose} aria-hidden="true" />
       <div
+        ref={sheetRef}
         className={`mv-sheet${variant ? ` ${variant}` : ""}`}
         role="dialog"
         aria-modal="true"
@@ -99,7 +143,12 @@ export function MvSheet({
         // a boolean and serialises it to the HTML attribute itself.
         inert={!open}
       >
-        <div className="mv-sheet__handle" aria-hidden="true" />
+        <div
+          className="mv-sheet__handle"
+          aria-hidden="true"
+          style={{ touchAction: "none" }}
+          onPointerDown={onHandlePointerDown}
+        />
         <div className="mv-sheet__header">
           <button type="button" className="mv-sheet__close" onClick={onClose} aria-label="Close">
             {/* A REAL <img>, not `DpIcon`. `.mv-sheet__close-icon` sets width and

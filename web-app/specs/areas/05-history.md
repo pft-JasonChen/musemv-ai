@@ -15,6 +15,10 @@ Opening a row routes to the right destination: **its own result screen** (`/mv/r
 
 **In scope:** `history/HistoryView` (`/history`), its cards + `⋯` menu, the delete/publish confirm
 modals.
+**Entry points:** the nav/tab bar; and, since `YMW260910P0001` (2026-09-11), `/profile`'s MVs/Songs
+stat tiles via `/history?tab=mv`\|`songs` — seeded into the `all`/`mv`/`song` filter once on first
+render (same convention as `CreatorProfile`'s own `?tab=`; the URL is not kept in sync with later
+tab clicks, area 04's own note explains why).
 **Out of scope (cross-referenced):** the result screens themselves (`/mv/result` area 02,
 `/song/result` area 03); `ShareDialog` (area 10); the seed flow into
 `/mv/edit`/`/mv/storyboard`/`/mv/room` (area 02); the community player `/song/play` (area 04).
@@ -70,10 +74,11 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
   pill** in the card footer (calls `createMv(r)`), in addition to the menu CTA.
 - **`⋯` menu** (`Menu`, portal) — contents depend on row type:
   - **CTA row** (non-community, non-failed): **Edit MV** (mv) / **Create MV** (song|storyboard). **MV-13:** when the MV is published/in-review, the Edit MV entry is **removed from the menu entirely** — the Publish toggle below is the only way back to editable. _(Product owner, 2026-08-28 — supersedes the earlier neutral "Unpublish to edit" entry; spec synced 2026-09-10. Same rule as `/mv/result`, area 02 `MV-P4-S4` / `MV-E7`.)_
-  - **Like / Share**: shown for community, mv, and song rows — **HIST-06 (2026-07-23): a failed row is Delete-only** (Like/Share now suppressed with `!failed`); storyboard rows never showed them.
+  - **Like**: shown for community, mv, and song rows — **HIST-06 (2026-07-23): a failed row is Delete-only** (Like/Share now suppressed with `!failed`); storyboard rows never showed it.
+  - **Share**: shown for **community rows always** (already someone else's published content); for an own **mv|song row, only once `published` is true** — **YMW260903P0012 (product owner, 2026-09-11): an unpublished own row was shareable before this, which is now closed.** A reviewing/rejected MV counts as not-published for this gate, same as any other unpublished state.
   - **Publish (toggle) / Download / normal Delete**: non-community, non-failed, mv|song only. **Delete is hidden** when an MV is published/reviewing or a song is published.
   - **Standalone Delete**: also shown for **failed** and **storyboard** rows (`:355`).
-  - **Net per type (as-built 2026-07-24; MV-13 row updated 2026-09-10):** MV = Edit MV (absent while published/in-review) + Like/Share/Publish/Download/Delete · Song = Create MV + Like/Share/Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
+  - **Net per type (as-built 2026-07-24; MV-13 row updated 2026-09-10; Share-gate added 2026-09-11):** MV = Edit MV (absent while published/in-review) + Like + Share (published only) + Publish/Download/Delete · Song = Create MV + Like + Share (published only) + Publish/Download/Delete · **Storyboard = Create MV (pill + menu) + Delete** · **Community = Like + Share only** · **Failed = Delete only**.
 - **Publish** (`HistoryView.tsx:125-137`): **MV** → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. **Song** → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ `TBD-MV-06`, area 04). **2026-08-06: the row's `published`/`reviewing` override is now the `⋯` menu's alone** — the dialog that used to share it is gone, and the result screens hold their own publish state (they are a different surface with their own MV-12 confirm).
   ✅ **`TBD-HIST-05` is BUILT (2026-08-28, `25fa0f0`) — this paragraph said the opposite until 2026-09-10.** It read: "there is no REJECTED state · `confirmPublishMv()` sets `reviewing: true, published: true` in the same write and nothing ever moves `reviewing` back to `false` on its own · flagged, not built". All three clauses are now false. **As built:** `confirmPublishMv()` writes `reviewing: true, published: **false**` and toasts "Submitted for review"; after `PUBLISH_REVIEW_DELAY_MS` (2500 ms, `src/lib/publishReview.ts`) it resolves **on its own** into one of two branches — approved (`reviewing: false, published: true`) or **rejected** (`reviewing: false, published: false, rejectReason` set). Which one is decided by the `?demo=1` panel's `publishRejected` / `rejectReason` flags, because a backend-less prototype has no real moderator.
   **Three menu states, not two:** pending → `ic_timer`, label "Publish (Review)", **toggle OFF**; approved → label "Publish", toggle ON; rejected → title **"Publish (Rejected)"** (red `<em>`) plus a reason line no other state has, toggle OFF. A rejection reverts to unpublished rather than adding a fourth persistent status, so the reason clears the moment a resubmit is accepted. The seven reason codes are `PUBLISH_REJECT_CODES`; the **backend returns the enum and the front end owns the copy** (decided 2026-08-27, rationale in `src/lib/publishReview.ts`) — RD implements those seven values and must map anything else to `UNKNOWN` rather than render it raw.
@@ -98,7 +103,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - **HIST-P2-S3** Tap a **community** row → `/song/play?id=…` (area 04). **Processing** rows are inert.
 
 ### HIST-P3 — Row menu quick actions
-- **HIST-P3-S1** `⋯` → **Like/Unlike** (updates local like + count), **Share** (`ShareDialog` w/ `buildShareUrl(id)`), **Download** (fixture media + toast).
+- **HIST-P3-S1** `⋯` → **Like/Unlike** (updates local like + count), **Share** (`ShareDialog` w/ `buildShareUrl(id)` — an own mv/song row only offers this once published, `YMW260903P0012`), **Download** (fixture media + toast).
 
 ### HIST-P4 — Publish
 - **HIST-P4-S1** `⋯` → **Publish** on an **MV** → "Ready to Go Public?" modal → **Confirm** → reviewing+published, toast "Submitted for review". Toggling again unpublishes.
@@ -136,7 +141,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - **AC-HIST-05** — WHEN **Publish** is invoked on an MV, THE SYSTEM SHALL show the "Ready to Go Public?" confirm and, on confirm, mark it reviewing/published with a "Submitted for review" toast; a song publishes immediately without a confirm.
 - **AC-HIST-06** — WHEN **Delete** is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.
 - **AC-HIST-07** — WHEN **Edit MV / Create MV** is chosen, THE SYSTEM SHALL seed flow state and route to `/mv/edit` / `/mv/storyboard`|`/mv/room` respectively.
-- **AC-HIST-08** — WHEN **Share** / **Download** is invoked, THE SYSTEM SHALL open `ShareDialog` with `buildShareUrl(id)` / download the fixture media as `{title}.mp4`|`.mp3`. *(download uses fixture media, not the row's own render — 🔒)*
+- **AC-HIST-08** — WHEN **Share** / **Download** is invoked, THE SYSTEM SHALL open `ShareDialog` with `buildShareUrl(id)` / download the fixture media as `{title}.mp4`|`.mp3`. *(download uses fixture media, not the row's own render — 🔒)* **Share itself SHALL NOT be offered on an own mv/song row until it is `published`** (`YMW260903P0012`, 2026-09-11) — community rows are unaffected.
 - **AC-HIST-09** — THE SYSTEM SHALL render `/history` at 320/375/768/1024/1440/1920px with no overflow (1/2/3-column grid). *(visual)* _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
 
 ---
