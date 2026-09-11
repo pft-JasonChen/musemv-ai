@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import { MvSheet } from "./MvSheet";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
@@ -91,7 +91,7 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
   const startSec = Math.round((startPct / 100) * total);
   const endSec = Math.round((endPct / 100) * total);
 
-  const { playing, currentTime, toggle, pause } = useAudioPlayer({
+  const { playing, currentTime, toggle, pause, seek } = useAudioPlayer({
     src: song?.url,
     range: { start: startSec, end: endSec },
   });
@@ -138,6 +138,20 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     };
+  }
+
+  // YMW260903P0005: clicking the waveform (not a handle) jumps the preview
+  // playhead to that point, clamped into the trim range by `seek()` itself.
+  // Handles already `stopPropagation()` on `pointerdown`, but a plain `click`
+  // still bubbles from them, so this also has to ignore clicks that
+  // originated on a handle.
+  function seekFromClick(event: ReactMouseEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest(".mv-trim-sheet__handle")) return;
+    const track = trackRef.current;
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    const pct = Math.min(100, Math.max(0, ((event.clientX - rect.left) / rect.width) * 100));
+    seek((pct / 100) * total);
   }
 
   const selectedSec = endSec - startSec;
@@ -198,7 +212,7 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
           <span>{formatDuration(startSec)}</span>
           <span>{formatDuration(endSec)}</span>
         </div>
-        <div className="mv-trim-sheet__waveform" ref={trackRef}>
+        <div className="mv-trim-sheet__waveform" ref={trackRef} onClick={seekFromClick}>
           <div className="mv-trim-sheet__bars" aria-hidden="true">
             {BARS.map((height, i) => (
               <span key={i} className="mv-trim-sheet__bar" style={{ height: `${height}px` }} />

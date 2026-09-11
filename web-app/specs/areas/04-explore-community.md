@@ -132,6 +132,13 @@ The rails:
   > of the true catalog size, and `/watch`'s mobile treatment (`.mv-detail--selected`) hides both
   > sections outright. This closes the question `DESIGNER-TODO` **A19** raised about the 3-of-14
   > ratio: it was never a spec'd number, only (mock length) × (this hiding rule).
+  > **Top Picks row Next/Previous step, settled 2026-09-11 (`YMW260909P0008`).** The desktop-only
+  > `MvTopPicksRow` (≥1024px) originally stepped by exactly one card + gap per click; QA/an
+  > automated agent test flagged the live build advancing further than that per click as a
+  > divergence. Product owner confirmed the single-card step reads as too slow and the faster,
+  > further-per-click pace is the one to keep: `scrollByCard` now steps by the row's full visible
+  > width (`row.clientWidth`) — a "page" per click — not one item. Applies only to this row
+  > (`/explore/mvs` and `/watch`'s lower half); `NewMVsSection`'s Home-page rail is unaffected.
 - **`/explore/songs`** (`song/SongDetailView` — **the same component as `/song/play`**, merged in Slice 3b): tabbed list (All + ~~one tab per catalog `genre`, derived at runtime~~ **the nine creation `GENRES`, hardcoded** — reversed 2026-09-01, see §4 EXP-P3) beside a Now Playing column, 1:1 at ≥1024px; row → selects in Now Playing at ≥768px, opens the full-screen player at `/song/play?id` below that; creator → `/creator`; **Create** → `requireLogin` → `patchSongCompose` + `/song/create` (gated at the click, consistent with Home — GL-02/EXP-02); Back → `DetailNavbar`'s `router.back()` with a fallback to `/explore/songs`.
   > **Also new since that line was written, and never recorded (2026-09-01, S8 capture, D11): the
   > screen now opens with its own `Top Picks Songs` rail**, a horizontal `TOP_PICKS_SONGS` carousel

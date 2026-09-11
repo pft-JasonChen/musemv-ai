@@ -9,6 +9,7 @@ import { DpIcon } from "@/components/ui/DpIcon";
 import { SeekBar } from "@/components/ui/SeekBar";
 import { DetailNavbar, useBackNavigation } from "@/components/shell/DetailNavbar";
 import { buildShareUrl } from "@/lib/share";
+import { toggleMvFullscreen } from "@/lib/fullscreen";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -400,10 +401,7 @@ export function CommunityMvPlayer() {
   }
 
   function toggleFullscreen() {
-    const el = playerRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void el.requestFullscreen?.().catch(() => {});
+    toggleMvFullscreen(playerRef.current, videoRef.current);
   }
 
   function seek(next: number) {

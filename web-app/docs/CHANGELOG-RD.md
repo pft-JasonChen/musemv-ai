@@ -23,6 +23,39 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-11 — **C7 ADDITIVE** — `/history` gains an optional `?tab=` query param (YMW260910P0001)
+
+**Surface: C7** (`src/app/[locale]/history/page.tsx`). No new route, no existing route moved or
+renamed. Purely additive: an optional query parameter on the existing `/history` URL.
+
+**What changed.** Profile's MVs/Songs stat pills used to open the public Creator profile
+(`/creator?self=1&tab=mv|songs`) — same destination as the identity block. Product owner decision
+(YMW260910P0001): they now open the user's own **History** list instead, at its Music Videos /
+Songs tab: `/history?tab=mv` and `/history?tab=songs`.
+
+```ts
+// HistoryView.tsx — new, additive
+function initialFilterFromTab(tab: string | null): Filter {
+  if (tab === "mv") return "mv";
+  if (tab === "songs") return "song";
+  return "all";              // unchanged default — absent or unrecognized `tab` behaves exactly as before
+}
+```
+
+`page.tsx` itself only gained a `<Suspense>` wrapper (required for the new `useSearchParams()` read
+inside `HistoryView`) — no schema, hook return shape, or `MuseApi` method changed alongside this.
+
+**RD action required: none.** `?tab=` is read once on mount to seed local filter state (same
+one-time-seed convention `CreatorProfile.tsx` already uses for its own `?tab=`) — it isn't kept in
+sync on later tab clicks, and it isn't sent to or expected from any backend call. A `/history`
+request with no `tab` param, or any value other than `mv`/`songs`, behaves identically to before
+this change (defaults to the "All" filter).
+
+**Not a contract change beyond the query param itself** — flagging it here only because C7 covers
+URL shapes and this widens what `/history`'s URL accepts.
+
+---
+
 ## 2026-09-09 — **C2 ADDITIVE** — `SongResult.lyricsLrc`, per-line lyric timing (YMW260903P0005)
 
 **Surface: C2** (`src/lib/api/schemas.ts`). One new OPTIONAL field on `SongResultSchema`,
