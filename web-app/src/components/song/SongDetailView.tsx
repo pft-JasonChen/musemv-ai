@@ -552,12 +552,18 @@ export function SongDetailView() {
     return () => window.removeEventListener("resize", updateTopPicksScrollState);
   }, []);
 
+  /**
+   * YMW260909P0008 (product owner, 2026-09-11): a single-card step per click
+   * read as too slow — this now steps by the row's visible width (a "page")
+   * per click, matching `MvGridSections.tsx` / `TopPicksSection.tsx` /
+   * `NewMVsSection.tsx`, which carry the same fix. This is a fourth,
+   * independent copy of the identical rail pattern (own "Top Picks Songs"
+   * rail on `/explore/songs`) that the original fix did not reach.
+   */
   function scrollTopPicksByCard(direction: -1 | 1) {
     const row = topPicksRowRef.current;
-    const firstItem = row?.querySelector<HTMLElement>(".top-picks__item");
-    if (!row || !firstItem) return;
-    const gap = Number.parseFloat(window.getComputedStyle(row).columnGap) || 0;
-    row.scrollBy({ left: direction * (firstItem.offsetWidth + gap), behavior: "smooth" });
+    if (!row) return;
+    row.scrollBy({ left: direction * row.clientWidth, behavior: "smooth" });
   }
 
   /**

@@ -137,8 +137,14 @@ The rails:
   > automated agent test flagged the live build advancing further than that per click as a
   > divergence. Product owner confirmed the single-card step reads as too slow and the faster,
   > further-per-click pace is the one to keep: `scrollByCard` now steps by the row's full visible
-  > width (`row.clientWidth`) — a "page" per click — not one item. Applies only to this row
-  > (`/explore/mvs` and `/watch`'s lower half); `NewMVsSection`'s Home-page rail is unaffected.
+  > width (`row.clientWidth`) — a "page" per click — not one item.
+  > **This rail pattern turned out to be copy-pasted FOUR times, and the first fix only reached
+  > one of them** — caught by the PM testing production after the first push. All four now match:
+  > `MvGridSections.tsx`'s `MvTopPicksRow` (`/explore/mvs`, `/watch`'s lower half),
+  > `NewMVsSection.tsx` ("Trending Music Videos" on Home), `TopPicksSection.tsx` ("Top Picks Songs"
+  > on Home), and `SongDetailView.tsx`'s own `scrollTopPicksByCard` ("Top Picks Songs" on
+  > `/explore/songs`). There is still no shared hook for this pattern — a fifth copy is exactly as
+  > likely to reintroduce the one-card step as these four were.
 - **`/explore/songs`** (`song/SongDetailView` — **the same component as `/song/play`**, merged in Slice 3b): tabbed list (All + ~~one tab per catalog `genre`, derived at runtime~~ **the nine creation `GENRES`, hardcoded** — reversed 2026-09-01, see §4 EXP-P3) beside a Now Playing column, 1:1 at ≥1024px; row → selects in Now Playing at ≥768px, opens the full-screen player at `/song/play?id` below that; creator → `/creator`; **Create** → `requireLogin` → `patchSongCompose` + `/song/create` (gated at the click, consistent with Home — GL-02/EXP-02); Back → `DetailNavbar`'s `router.back()` with a fallback to `/explore/songs`.
   > **Also new since that line was written, and never recorded (2026-09-01, S8 capture, D11): the
   > screen now opens with its own `Top Picks Songs` rail**, a horizontal `TOP_PICKS_SONGS` carousel
