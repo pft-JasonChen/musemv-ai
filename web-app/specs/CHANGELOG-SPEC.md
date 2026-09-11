@@ -41,6 +41,21 @@ one behaviour reversal.
 
 ---
 
+## 2026-09-11 — `/explore/mvs` follow-up: tablet row, and a second "Trending Music Videos"
+
+Two same-day product-owner requests on top of the phone-layout change above. No contract change.
+
+| | |
+| --- | --- |
+| **Criteria** | Area 04 §3.2's `/explore/mvs` paragraph, same block as above — two new bullets appended in place. §3.1's "Trending Music Videos" name/data-mismatch note also amended (see below). |
+| **What changed** | (1) **Tablet (768–1023px)** was left out of the phone-layout work — `MvGrid`'s tablet branch ignored `asRow` and kept rendering the plain wrapping grid regardless. It now renders the same horizontal-scroll row phone and desktop use, at its own height (`TABLET_ROW_HEIGHT` = 200, a middle value with no Figma frame behind it — Figma only supplied a phone frame). "Newly Released MV" is untouched at every width. (2) The **desktop/tablet title** (shown ≥768px) changed from "Top Picks Music Videos" to **"Trending Music Videos"** — matching the mobile title's "Trending" naming, just unabbreviated. |
+| **A naming collision worth flagging to QA** | This section is now titled "Trending Music Videos" on desktop/tablet, which is **already the title of a different section on Home** (`NewMVsSection.tsx`, fed by `NEW_MVS`) — §3.1 already carries a note that this pairing (same title, different route, different array) is a settled, non-defect state from 2026-09-01; this row is the second instance of it, not a new decision. |
+| **Code** | `src/components/community/MvGridSections.tsx` — `TABLET_ROW_HEIGHT` constant, `MvGrid`'s `!isDesktop && asRow` branch, and the `SectionHeader` `title` prop. |
+| **Tests** | No test asserts the old tablet-wraps-instead-of-rows behaviour or the old title string, so nothing needed rewriting; verified live via DOM measurement at 768/800/1023/1024px (the tablet↔desktop boundary) instead. |
+| **Contract** | None. |
+
+---
+
 ## 2026-09-11 — Two eBug-driven product decisions
 
 Both from the same PM triage pass over `YMW26091*`/`YMW26090*` eBugs. Neither is a "fix the bug as

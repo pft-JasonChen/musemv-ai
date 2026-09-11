@@ -42,6 +42,11 @@ const NEWLY_RELEASED = NEW_MVS;
 /** `MvTopPicksRow`'s phone-width row height — see its own header comment. */
 const PHONE_ROW_HEIGHT = 142;
 
+/** `MvTopPicksRow`'s tablet-width row height — see `MvGrid`'s `!isDesktop`
+ *  branch for why tablet needs its own value rather than reusing either of
+ *  the other two. */
+const TABLET_ROW_HEIGHT = 200;
+
 type GridItem = CommunityMv & { ratio: MvRatio };
 
 const withRatio = (items: readonly CommunityMv[]): GridItem[] =>
@@ -261,9 +266,24 @@ function MvGrid({ items, asRow = false }: { items: readonly GridItem[]; asRow?: 
     );
   }
 
+  // Tablet, opted in (product owner, 2026-09-11 follow-up — "we forgot the
+  // tablet version"): same row treatment as phone and desktop, just its own
+  // row height. Neither of the other two constants fit here: `MAX_ROW_HEIGHT`
+  // (280, desktop) sizes a card to roughly half the tablet viewport's own
+  // width, and `PHONE_ROW_HEIGHT` (142) was picked for a 320-767px column
+  // this row never has to wrap into any more (it scrolls, not wraps) — so
+  // there's no reason to keep it phone-small once there's real width to use.
+  // `TABLET_ROW_HEIGHT` is a middle value with no Figma frame behind it
+  // (Figma only supplied a phone frame and the existing desktop one).
+  if (!isDesktop && asRow) {
+    return <MvTopPicksRow items={items} rowHeight={TABLET_ROW_HEIGHT} />;
+  }
+
   // Below Laptop width the justified-row maths (built around the 1440 desktop
   // frame Figma provides) has no room to work — fall back to the simpler
-  // fixed-width wrapping grid.
+  // fixed-width wrapping grid. Unaffected by `asRow` above 767px only when
+  // `asRow` is false — "Newly Released" keeps this at every non-desktop
+  // width, as it always did.
   if (!isDesktop) {
     return (
       <div className="mv-detail__grid mv-detail__grid--wrap" ref={containerRef}>
@@ -280,8 +300,7 @@ function MvGrid({ items, asRow = false }: { items: readonly GridItem[]; asRow?: 
     );
   }
 
-  // Desktop opt-in (phone's own `asRow` branch is above; tablet is
-  // unaffected by `asRow`, same as it always was).
+  // Desktop opt-in (phone's and tablet's own `asRow` branches are above).
   if (asRow) {
     return <MvTopPicksRow items={items} rowHeight={MAX_ROW_HEIGHT} />;
   }
@@ -322,8 +341,12 @@ export function MvGridSections() {
             as a page `<h1>`. That `<h1>` is now REMOVED (see its own
             comment) for the same reason `/explore/songs` has none: this
             SectionHeader is the one copy of the page title now, not a
-            second one duplicating a fixed top bar. */}
-        <SectionHeader title="Top Picks Music Videos" mobileTitle="Trending MV" />
+            second one duplicating a fixed top bar.
+            title changed from "Top Picks Music Videos" to "Trending Music
+            Videos" — product owner, 2026-09-11 follow-up — so desktop and
+            tablet read the same "Trending" naming the mobile title already
+            uses, just unabbreviated. */}
+        <SectionHeader title="Trending Music Videos" mobileTitle="Trending MV" />
         <MvGrid items={topPicks} asRow />
       </section>
 
