@@ -115,9 +115,15 @@ export function MvExplore() {
 
       <div className="mv-detail">
         {/* Phone-only (`.mv-detail__mobile-header` is `display: none` until
-            767px — MVDetailPage.css) — Back + the page title, since this is
-            the one MV catalog a phone can reach (A19). Must be `.mv-detail`'s
-            first child, see this file's header comment. */}
+            767px — MVDetailPage.css) — Back, since this is the one MV
+            catalog a phone can reach (A19). Must be `.mv-detail`'s first
+            child, see this file's header comment.
+            No `<h1>Trending MV</h1>` here (product owner, 2026-09-11, Figma
+            node 3940:150442) — the body's own Top Picks `SectionHeader` now
+            reads "Trending MV" on mobile too (`MvGridSections.tsx`), so a
+            second copy of the same string in this fixed bar was a pure
+            duplicate. Same call `/explore/songs` already made for its own
+            mobile header (see that file's comment on this exact point). */}
         <div className="mv-detail__mobile-header">
           <a
             href={localePath(locale, "/")}
@@ -130,7 +136,6 @@ export function MvExplore() {
           >
             <DpIcon name="ic_arrow_left" />
           </a>
-          <h1>Trending MV</h1>
         </div>
 
         {/* EXP-06's offline/empty states are still WA's Tailwind component. It

@@ -25,6 +25,22 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-09-11 — `/explore/mvs` phone layout: "Newly Released MV" un-hidden, Trending MV becomes a row
+
+Figma node 3940:150442 ("New MVs — See All — Community"). No contract change — pure layout/CSS,
+one behaviour reversal.
+
+| | |
+| --- | --- |
+| **Criteria** | Area 04 §3.2's `/explore/mvs` paragraph, corrected in place — see the `⚠️ Superseded 2026-09-11` note there for the full before/after. No AC number changes; this was prose, not a numbered criterion. |
+| **Decision reversed** | The 2026-08-07 "follow DP, hide every non-`--primary` `.mv-detail__grid-section` on phone" call (`DESIGNER-TODO` A20) is reversed for this screen: Figma's phone frame shows both sections. `DESIGNER-TODO` A20 gets a partial-resolution note — the "phone only reaches Trending" half is fixed; "Home still has no Trending rail of its own" is unchanged and stays open. |
+| **What changed** | Primary section (mobile title "Trending MV", was "Top Picks"): now a horizontal-scroll row at phone widths too (was the two-column masonry every other width still uses below 1024px; desktop already had this row, `asRow` in `MvGridSections.tsx`, since 2026-09-07). Secondary section (mobile title "Newly Released MV", was "New MVs"): no longer hidden below 768px, same masonry as before. Card radius/type size shrunk on the new phone row to match Figma and to fix a real overflow bug the narrower cards exposed (a single long word could overflow `Card`'s default 17px title into the next card). `.mv-detail`'s own mobile padding/gaps re-tuned across several same-day follow-ups, landing at: 16px horizontal (matching `.home-page`), 16px between the two sections plus a 16px `margin-bottom` on the primary section (32px total above "Newly Released MV"), 10px between each section's own header and its content. Both `/explore/mvs`' and `/explore/songs`' Top Picks rows, and Home's own `new-mvs`/`top-picks` rows, also gained a both-edges peek bleed (previously next-card-only on Home, none on the two explore rows). |
+| **Code** | `src/components/community/MvGridSections.tsx` (`MvTopPicksRow` takes a `rowHeight` prop, phone opt-in in `MvGrid`) · `src/components/community/MvExplore.tsx` (dropped the fixed `<h1>Trending MV</h1>`, now a duplicate of the SectionHeader) · `src/styles/designer-overrides.css` (all the sizing/spacing/bleed rules — each has its own dated comment). |
+| **Tests** | `drop 2: /explore/mvs still has a grid on a phone` in `e2e/behaviour-regressions.spec.ts`, rewritten to assert the reversed behaviour (both sections visible, titled, painted) instead of the old hidden state — same test, opposite assertion, not a new one. Run standalone and confirmed passing (`--grep`, not the full suite — see `AGENTS.md`'s port-3100 rule). |
+| **Contract** | None. |
+
+---
+
 ## 2026-09-10 — Credit History display mapping contract
 
 No prototype change. Added `areas/13-credit-history-display.md` from the product-provided

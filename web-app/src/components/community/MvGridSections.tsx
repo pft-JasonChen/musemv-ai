@@ -39,6 +39,9 @@ import {
 const TOP_PICKS = TRENDING_MVS;
 const NEWLY_RELEASED = NEW_MVS;
 
+/** `MvTopPicksRow`'s phone-width row height — see its own header comment. */
+const PHONE_ROW_HEIGHT = 142;
+
 type GridItem = CommunityMv & { ratio: MvRatio };
 
 const withRatio = (items: readonly CommunityMv[]): GridItem[] =>
@@ -95,8 +98,24 @@ function gridCard(mv: GridItem) {
  * — exactly the arithmetic `computeJustifiedRows` already does per row,
  * just against a single implicit row instead of solving where to break
  * multiple ones (there's only one row here, nothing to justify).
- */
-function MvTopPicksRow({ items }: { items: readonly GridItem[] }) {
+ *
+ * ── PHONE, TOO (product owner, 2026-09-11, Figma "New MVs — See All —
+ *    Community" node 3940:150442) ─────────────────────────────────────────
+ *
+ * This row was desktop-only; below 768px this section fell through to
+ * `MvGrid`'s two-column masonry branch instead, same as "Newly Released"
+ * still does. Figma's phone frame shows this ONE section (retitled
+ * "Trending MV" there — see `MvGridSections`' own `mobileTitle`) as a single
+ * horizontal-scroll row too, at phone card sizes; "Newly Released" stays the
+ * masonry below it, unchanged. `rowHeight` is now a prop instead of a
+ * hard-coded `MAX_ROW_HEIGHT` read so `MvGrid` can hand this component a
+ * smaller phone height — a flat constant (`PHONE_ROW_HEIGHT`), not a
+ * viewport-relative one, matching how `MAX_ROW_HEIGHT` itself is already a
+ * flat desktop constant rather than something that scales across every
+ * desktop width. Figma's own phone-frame numbers (114×182 portrait /
+ * 179×182 landscape, text included) back out to a ~142px cover height,
+ * which is where 142 comes from. */
+function MvTopPicksRow({ items, rowHeight }: { items: readonly GridItem[]; rowHeight: number }) {
   const { locale } = useLocale();
   const rowRef = useRef<HTMLDivElement>(null);
   const [canScrollBack, setCanScrollBack] = useState(false);
@@ -131,7 +150,7 @@ function MvTopPicksRow({ items }: { items: readonly GridItem[] }) {
             key={mv.id}
             {...gridLink(locale, mv)}
             className="mv-top-picks-item"
-            style={{ width: MAX_ROW_HEIGHT * aspectRatioOf(mv.ratio) }}
+            style={{ width: rowHeight * aspectRatioOf(mv.ratio) }}
           >
             {gridCard(mv)}
           </Link>
@@ -204,6 +223,13 @@ function MvGrid({ items, asRow = false }: { items: readonly GridItem[]; asRow?: 
     );
   }
 
+  // Phone, opted in (see `MvTopPicksRow`'s own header comment): the same
+  // single-row treatment desktop gets, just at a smaller `rowHeight`.
+  // Everything else phone-width stays the two-column masonry below.
+  if (isPhone && asRow) {
+    return <MvTopPicksRow items={items} rowHeight={PHONE_ROW_HEIGHT} />;
+  }
+
   // Phones get DP's two-column masonry — see `MvExplore`'s header note for
   // why this branch exists at all (without it the grid is blank <768px).
   if (isPhone) {
@@ -249,10 +275,10 @@ function MvGrid({ items, asRow = false }: { items: readonly GridItem[]; asRow?: 
     );
   }
 
-  // Desktop-only opt-in (see `MvTopPicksRow`'s own header comment) — everything
-  // above this point (phone/tablet) is unaffected by `asRow`.
+  // Desktop opt-in (phone's own `asRow` branch is above; tablet is
+  // unaffected by `asRow`, same as it always was).
   if (asRow) {
-    return <MvTopPicksRow items={items} />;
+    return <MvTopPicksRow items={items} rowHeight={MAX_ROW_HEIGHT} />;
   }
 
   const rows = computeJustifiedRows(items, containerWidth);
@@ -285,12 +311,23 @@ export function MvGridSections() {
   return (
     <>
       <section className="mv-detail__grid-section mv-detail__grid-section--primary">
-        <SectionHeader title="Top Picks Music Videos" mobileTitle="Top Picks" />
+        {/* mobileTitle changed from "Top Picks" to "Trending MV" — product
+            owner, 2026-09-11, Figma node 3940:150442 — matching the string
+            `MvExplore.tsx`'s own `.mv-detail__mobile-header` used to render
+            as a page `<h1>`. That `<h1>` is now REMOVED (see its own
+            comment) for the same reason `/explore/songs` has none: this
+            SectionHeader is the one copy of the page title now, not a
+            second one duplicating a fixed top bar. */}
+        <SectionHeader title="Top Picks Music Videos" mobileTitle="Trending MV" />
         <MvGrid items={topPicks} asRow />
       </section>
 
       <section className="mv-detail__grid-section">
-        <SectionHeader title="Newly Released Music Videos" mobileTitle="New MVs" />
+        {/* mobileTitle changed from "New MVs" to "Newly Released MV" —
+            product owner, 2026-09-11, matching Figma node 3940:150442's own
+            abbreviation exactly (it reads the section's full title, just
+            without "Music Videos" → "MV"). */}
+        <SectionHeader title="Newly Released Music Videos" mobileTitle="Newly Released MV" />
         <MvGrid items={newlyReleased} />
       </section>
     </>

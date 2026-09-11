@@ -1701,7 +1701,10 @@
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 20px 20px 0;
+  /* Horizontal 20px -> 16px, product owner, 2026-09-11 — matching Home's
+     own mobile inset (`.home-page { padding: 0 16px 20px }`); the 768px/
+     1024px tiers below are untouched (32px/60px, same as Home's own). */
+  padding: 20px 16px 0;
   box-sizing: border-box;
 }
 
@@ -1839,6 +1842,32 @@
    Anchors get a pointer cursor for free; this needs it spelled out. */
 .song-detail-page .top-picks__item {
   cursor: pointer;
+}
+
+/* Product owner request, 2026-09-11 — phone only: the Top Picks Songs rail on
+   this See All page should reveal a peek of BOTH the previous and next
+   (cut-off) card, not just the next one. `.new-mvs__row`/`.top-picks__row`'s
+   own bare-class rule above (2026-09-01, extended to both sides the same
+   day as this rule) does the same thing for Home's rows — this page needs
+   its OWN copy because it is a separate element in the DOM tree, but as of
+   this same-day follow-up the number matches: `.song-detail-page`'s own
+   mobile inset is now 16px too (was 20px), same as `.home-page`'s.
+   `.song-detail-page .top-picks__row-wrapper`'s compound selector (0,2,0)
+   outranks the bare `.top-picks__row-wrapper`/`.top-picks__row` rules
+   (0,1,0) regardless of file order, so this cleanly wins within this page.
+   Split across two elements on purpose: the WRAPPER (bled -16px, matching
+   `.song-detail-page`'s own padding) reaches the true edge, while the ROW
+   (the actual scroll container, its child) gets the 16px back as padding —
+   putting the wrapper's own padding on the SAME element as its negative
+   margin would cancel to zero and reveal nothing. */
+@media (max-width: 767px) {
+  .song-detail-page .top-picks__row-wrapper {
+    margin: 0 -16px;
+  }
+
+  .song-detail-page .top-picks__row {
+    padding: 0 16px;
+  }
 }
 
 /* Product owner request, 2026-08-18 — the Lyrics panel in Edit Storyboard's
@@ -3871,20 +3900,29 @@
 /* Product owner, 2026-09-01 — phone only: the Trending MV / Top Picks rows
    should reveal a peek of their next (cut-off) card the way the hero
    carousel already does, instead of stopping dead at `.home-page`'s own
-   16px edge. Same bleed idiom `HistoryPage.css` already uses for
-   `.history-page__tabs` (`margin-right: -16px; padding-right: 16px`): the
-   negative margin cancels the inherited 16px so the scrollable ROW's
-   content reaches the true screen edge, and the matching padding-right
-   puts that same 16px back as trailing scroll room instead of the last
-   card touching the bezel exactly. Left is untouched — the FIRST card is
-   already fully visible there, nothing to reveal until the user scrolls.
-   `.new-songs` isn't included: it's a 2-column list, not a horizontal-
-   scroll row, so there's no cut-off card to reveal here. */
+   16px edge. `.new-songs` isn't included: it's a 2-column list, not a
+   horizontal-scroll row, so there's no cut-off card to reveal here.
+
+   Follow-up, 2026-09-11 (product owner) — reveal BOTH the previous and
+   next card, not just the next one, matching the same request already
+   applied to `/explore/songs`' and `/explore/mvs`' own rows
+   (`designer-overrides.css`'s `.song-detail-page .top-picks__row-wrapper`
+   and `.mv-top-picks-row-wrapper`, see either's own comment for the exact
+   mechanics). Same wrapper+row split here: the WRAPPER (`.new-mvs__row-
+   wrapper`/`.top-picks__row-wrapper`) bleeds -16px to the true screen edge
+   — canceling `.home-page`'s own 16px mobile padding — and the ROW (its
+   child, the actual scroll container) gets 16px padding back. Putting both
+   on the same element cancels to zero and reveals nothing, same trap noted
+   in both of those other rules. */
 @media (max-width: 767px) {
+  .new-mvs__row-wrapper,
+  .top-picks__row-wrapper {
+    margin: 0 -16px;
+  }
+
   .new-mvs__row,
   .top-picks__row {
-    margin-right: -16px;
-    padding-right: 16px;
+    padding: 0 16px;
   }
 }
 
@@ -3922,7 +3960,7 @@
 }
 
 /* Product owner, 2026-09-07 — "Top Picks Music Videos" on `/watch` and
-   `/explore/mvs` (both mount `MvGridSections`), desktop only: a horizontal-
+   `/explore/mvs` (both mount `MvGridSections`), desktop: a horizontal-
    scroll row with Previous/Next arrows once it overflows, instead of the
    wrapping justified grid every other section on this page still uses (see
    `MvTopPicksRow`'s own comment in `MvGridSections.tsx` for why). No DP
@@ -3935,7 +3973,13 @@
    component's "EQUAL CARD HEIGHT" comment) — every item's width is set
    inline, per item, from its own aspect ratio against one shared row
    height, matching how "Newly Released"'s justified grid sizes its own
-   cards rather than Home's uniform-width rail. */
+   cards rather than Home's uniform-width rail.
+
+   Extended to phone, 2026-09-11 (Figma node 3940:150442) — see the
+   component's own "PHONE, TOO" comment. The phone-only block below this
+   one adjusts gap and adds the same right-edge peek bleed `.new-mvs__row`/
+   `.top-picks__row` already use on Home, scoped to `.mv-detail`'s own 16px
+   mobile inset (`MvExplore.tsx`'s header comment) rather than Home's. */
 .mv-top-picks-row-wrapper {
   position: relative;
 }
@@ -3982,6 +4026,163 @@
 .mv-detail__grid-section--primary:hover .mv-top-picks-next {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Phone, 2026-09-11 (Figma node 3940:150442) — smaller gap (10px, matching
+   the Figma frame, vs. desktop's 20px).
+
+   Follow-up, same day (product owner) — the right-edge-only peek bleed this
+   block first shipped (`.new-mvs__row`/`.top-picks__row`'s own idiom on
+   Home) is replaced with the wrapper+row split `.song-detail-page .top-
+   picks__row-wrapper` uses (see that rule's own comment for the mechanics):
+   reveal BOTH the previous and next card, not just the next one. The
+   WRAPPER bleeds to the true screen edge (matching `.mv-detail`'s OWN
+   mobile padding — briefly 20px, settled back at 16px the same day, see
+   that rule's own comment below), and the ROW (its child, the actual
+   scroll container) gets that padding back — putting both on the same
+   element would cancel to zero and reveal nothing, same trap noted
+   there. */
+@media (max-width: 767px) {
+  .mv-top-picks-row-wrapper {
+    margin: 0 -16px;
+  }
+
+  .mv-top-picks-row {
+    gap: 10px;
+    padding: 0 16px;
+  }
+
+  /* `MVDetailPage.css` hides the primary section's OWN `.section-header` on
+     phone (`.mv-detail__grid-section--primary .section-header { display:
+     none }`) — correct while `MvExplore.tsx`'s fixed `<h1>Trending MV</h1>`
+     was the only title, wrong now that the `<h1>` is gone and this
+     SectionHeader (`mobileTitle="Trending MV"`, `MvGridSections.tsx`) is
+     the page's one remaining title. Restored to `SectionHeader.css`'s own
+     base `display: flex`. */
+  .mv-detail__grid-section--primary .section-header {
+    display: flex;
+  }
+
+  /* `Card`'s title has no overflow guard (`Card.css`'s `.card__title` is a
+     plain `width: 100%` block, no `overflow`/`white-space`) — fine at every
+     width this component was used at before, where cards were never
+     narrower than a single word's own rendered width. At `PHONE_ROW_HEIGHT`
+     a 3:4 item is ~107px, and Card's default title size (`--font-title-m`,
+     17px) let a single long word (e.g. "Adventurous") overflow its own
+     column into the next card instead of wrapping — measured live, visibly
+     overlapping the neighboring cover. Figma's own phone frame (node
+     3940:150442) specifies smaller text here regardless of the overflow
+     bug (Label/M 13px title, Body/XS 9px meta) — the same numbers
+     `TopPicksSection.css` already uses for Top Picks Songs' own phone
+     cards, one section over — so this both matches Figma and fixes the
+     overflow. Avatar/likes icons shrunk to Figma's 12px (was 16px) to stay
+     proportional to the smaller text beside them. */
+  .mv-top-picks-item .card__title {
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: -0.13px;
+  }
+
+  .mv-top-picks-item .card__username,
+  .mv-top-picks-item .card__likes-count {
+    font-size: 9px;
+    line-height: 11px;
+    letter-spacing: -0.09px;
+  }
+
+  .mv-top-picks-item .card__avatar,
+  .mv-top-picks-item .card__likes-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Product owner, 2026-09-11 — `Card.css`'s default cover radius
+     (`--radius-xl`, 20px) is sized for the much wider cards this component
+     normally renders at (masonry columns, desktop rows). At this row's
+     ~107px 3:4 card it reads as oversized/inconsistent next to everything
+     else on the page — Figma's own phone frame draws it at 12px
+     (`--radius-sm`), matching how `.card.card--video.card--flat` (and every
+     other small-card instance already in the app) keeps its radius
+     proportionate to its own size rather than using one fixed value at
+     every scale. */
+  .mv-top-picks-item .card__cover {
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* Product owner, 2026-09-11 — this page's mobile padding: briefly bumped
+   from DP's original 16px to 20px (to match `.song-create`/`.mv-create`/
+   `.song-detail-page`'s own 20px), then a same-day follow-up asked for it
+   back at 16px, matching `.home-page`'s own mobile inset instead — so the
+   padding line below ends up numerically identical to `MVDetailPage.css`'s
+   own un-overridden value, kept explicit here (rather than deleted) since
+   `gap` in the same rule still needs overriding regardless.
+
+   `gap` (the space BETWEEN the two `.mv-detail__grid-section`s) moved from
+   DP's `0` first to `24px` (DP's `0` assumed only one section would ever
+   be visible at once — true before this change, not after; Figma's phone
+   frame, node 3940:150442, wraps its two sections in a 24px gap), then
+   32px, then back to 16px across three same-day follow-up requests — the
+   32px-total look it briefly held is now composed differently, 16px `gap`
+   here plus its own 16px `margin-bottom` on `.mv-detail__grid-section--
+   primary` below, not one flex `gap` value. */
+@media (max-width: 767px) {
+  .mv-detail {
+    gap: 16px;
+    padding: 0 16px 24px;
+  }
+
+  .mv-detail__mobile-header {
+    margin: 0 -16px;
+    padding: 10px 16px 0;
+  }
+
+  /* Product owner, 2026-09-11, same-day follow-up — 16px below the
+     Trending MV section specifically (on top of `.mv-detail`'s own 16px
+     `gap` above, so 32px total above "Newly Released MV" — see that rule's
+     own comment), rather than raising the shared gap for both sections. */
+  .mv-detail__grid-section--primary {
+    margin-bottom: 16px;
+  }
+
+  /* Product owner, 2026-09-11 — "Newly Released Music Videos" was
+     unreachable below 768px by deliberate 2026-08-07 decision (DP's own
+     mobile rule hides every `.mv-detail__grid-section` and re-shows only
+     `--primary`; see `MvExplore.tsx`'s header comment, "FOLLOW DP, and
+     record the cost here"). Figma's phone frame for THIS page (node
+     3940:150442) now shows both sections stacked — Trending MV as the row
+     above, Newly Released MV as the same two-column masonry below — so
+     that decision is reversed here: both sections show. `MvGrid`'s phone
+     masonry branch already renders the second section correctly on its
+     own; it was only ever the section wrapper's `display: none` hiding it.
+
+     `gap` here (same-day follow-up, then reduced again the same day) is
+     the space BETWEEN each section's OWN `SectionHeader` and its content
+     below (the Trending MV row, or "Newly Released MV"'s
+     `.mv-detail__mobile-grid`), settled at 10px for BOTH sections.
+     One bare-class rule does both: `.mv-detail__grid-section`'s own base
+     (non-media) value is `gap: 24px` (MVDetailPage.css) — used here as
+     "Newly Released MV"'s header-to-grid gap — and `.mv-detail__grid-
+     section--primary`'s own phone override is `gap: 0` (same file) —
+     Trending MV's header-to-row gap. Both are single-class selectors of
+     equal (0,1,0) specificity on the primary section, so this rule, loaded
+     after both in the cascade, wins for it too — no need for a second
+     `--primary`-scoped rule when the target number is the same for both
+     sections. */
+  .mv-detail__grid-section {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* Product owner, 2026-09-11, same-day follow-up — "Newly Released MV"'s
+     own `.mv-detail__mobile-grid` had a further `padding-top: 10px`
+     (MVDetailPage.css) on top of the header-to-grid gap just above, making
+     the two stack instead of one clean gap. That padding was DP's own
+     spacing for a context with no SectionHeader gap above it; now that one
+     exists, it is redundant. */
+  .mv-detail__mobile-grid {
+    padding-top: 0;
+  }
 }
 
 /* DESIGNER-TODO A32, found 2026-09-09 — DP styles `.room-navbar__mobile-back`

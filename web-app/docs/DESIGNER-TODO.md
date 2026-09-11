@@ -613,6 +613,14 @@ DP 的 `HomePage` **完全沒有這個區塊**,它的三條 rail 分別吃
   把**這個損失本身寫成斷言**(和 A19 同一手法),免得下次交稿或下個 session
   順手把 WA 自己的 rail 加回來。
 
+> **✅ 2026-09-11 部分結案 ——「兩件事疊起來」的手機那一半已解。** 產品負責人依 Figma
+> node 3940:150442 裁示:`/explore/mvs` 手機版現在**兩個 section 都顯示**(Trending MV
+> 一列橫向捲動、Newly Released MV 維持兩欄 masonry),不再只看得到 `--primary`。
+> `MVDetailPage.css` 的 `@media (max-width:767px)` 隱藏非 primary section 那條規則已在
+> `designer-overrides.css` 覆寫。**首頁沒有 Trending rail 的那一半仍未解**——這則的
+> 「需要設計判斷:首頁要不要一條 Trending rail?」依然是開放問題,只是 Explore 手機版
+> 已經不再是唯一入口只剩 3 支的窘境。細節見 `specs/areas/04-explore-community.md` §3.2。
+
 ### A21. ~~Credits Detail 的「Buy More」少了 free user 狀態~~ —— ~~🔴 **擋開發,且已經改錯了 code**~~ ✅ **2026-09-01 結案 —— 不是缺口,CTA 已分流**
 
 > 產品負責人裁示:每個帳號一註冊就送 10 credits,所以 ledger 實際上不會是空的。
