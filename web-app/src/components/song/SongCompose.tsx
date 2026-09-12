@@ -187,7 +187,10 @@ export function SongCompose() {
       <div className="song-create">
         <div className="song-create__panel">
           <div className="tabs">
-            {(["simple", "custom"] as SongMode[]).map((m) => (
+            {/* YMW260910P0021 (product owner, 2026-09-11): Custom is now the
+                first/default tab, Simple second — a straight swap of DP's
+                order, not a rename. */}
+            {(["custom", "simple"] as SongMode[]).map((m) => (
               <button
                 key={m}
                 type="button"

@@ -23,6 +23,49 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-11 — four eBug fixes touched C4/C7/C8 files; none change the contract shape
+
+Four files the gate watches were touched in this pass (YMW260911P0004, P0005, P0007). Going
+through each surface explicitly, as the gate asks for even when the answer is "no change":
+
+**`src/app/[locale]/loading.tsx` (new file, under C7's `src/app/**` watch).** This is a Next.js
+`loading.tsx` special file, not a `page.tsx` — it adds no route, renames no route, and defines no
+URL. It is the Suspense fallback Next mounts automatically while a route segment's chunk streams
+in (YMW260911P0004: F5 or a route switch showed a blank screen with no feedback). **Not a C7
+change** — nothing RD deep-links against moved.
+
+**`src/lib/mv/types.ts` (C8).** Two changes, neither touching the three names C8 actually
+guards (`COST_*`, `DEFAULT_SETTINGS`, `isComposeReady`):
+- New exported helper `mvDisplayTitle(compose)` — pure function, additive, not a constant.
+- `DEFAULT_SONG_COMPOSE.mode` changed from `"simple"` to `"custom"` (YMW260910P0021, product
+  owner) — a default VALUE, not a shape change; `SongComposeSchema` (C2) is untouched.
+**Not a contract change** — no schema, no cost table, no `isComposeReady` rule moved.
+
+**`src/components/providers/HistoryProvider.tsx` and `MvFlowProvider.tsx` (C4).** `useHistory()`
+and `useMvFlow()`'s own return KEYS are unchanged (checked against
+`providers.surface.test.ts`, which stayed green). What changed is the shape of `HistoryItem`
+itself — one new **optional** field:
+
+```ts
+export interface HistoryItem {
+  …
+  photoCount?: number;   // NEW, optional
+}
+```
+
+**Why RD should still read this one.** `HistoryProvider.tsx`'s own header comment already says
+"the backend replaces this with a persisted history endpoint" — `photoCount` is new information
+that endpoint will need to carry (character-photo count at MV creation time), or the real
+`/mv/result` will have the same bug this fixed: Character always reading "—" for anything not
+generated in the current browser session (YMW260911P0007). **Not a C1/C2 change today** — nothing
+in `MuseApi` or its Zod schemas changed — but it is the kind of field a real history endpoint's
+response will need a slot for.
+
+**RD action required: none today.** Flagging `photoCount` for whoever designs the real history
+endpoint, not asking for anything now.
+
+---
+
 ## 2026-09-11 — **C7 ADDITIVE** — `/history` gains an optional `?tab=` query param (YMW260910P0001)
 
 **Surface: C7** (`src/app/[locale]/history/page.tsx`). No new route, no existing route moved or

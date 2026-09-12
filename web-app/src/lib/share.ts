@@ -13,6 +13,7 @@
 import type { HistoryItem } from "@/components/providers/HistoryProvider";
 import { getCommunityMv, getCommunitySong } from "@/lib/mv/community";
 import { SAMPLE_AUDIO, SAMPLE_RESULT_VIDEO, HISTORY_SAMPLES } from "@/lib/mv/mock";
+import { MOCK_USER } from "@/lib/user";
 
 export interface SharedMedia {
   kind: "mv" | "song";
@@ -52,18 +53,21 @@ export function resolveShare(id: string | null, history: HistoryItem[]): SharedM
   const own = history.find((h) => h.id === id && h.status === "completed");
   if (own) {
     return own.kind === "mv"
-      ? { kind: "mv", title: own.title, posterUrl: own.thumb, videoUrl: own.resultUrl }
-      : { kind: "song", title: own.title, posterUrl: own.thumb, audioUrl: own.resultUrl };
+      ? { kind: "mv", title: own.title, posterUrl: own.thumb, videoUrl: own.resultUrl, creator: MOCK_USER.name }
+      : { kind: "song", title: own.title, posterUrl: own.thumb, audioUrl: own.resultUrl, creator: MOCK_USER.name };
   }
 
   // Static History samples resolve like community fixtures (survive reload), so a
   // shared sample creation opens the public page instead of the expired state.
   // MV/song samples carry only a thumbnail, so map to the shared demo media.
+  // Attributed to MOCK_USER, same as their own History rows already show
+  // (YMW260910P0006: this branch previously omitted `creator` entirely, which
+  // is why a song shared from here rendered with no avatar at all).
   const sample = HISTORY_SAMPLES.find((s) => s.id === id && s.status === "done" && s.thumb);
   if (sample && (sample.kind === "mv" || sample.kind === "song")) {
     return sample.kind === "mv"
-      ? { kind: "mv", title: sample.title, posterUrl: sample.thumb!, videoUrl: SAMPLE_RESULT_VIDEO }
-      : { kind: "song", title: sample.title, posterUrl: sample.thumb!, audioUrl: SAMPLE_AUDIO };
+      ? { kind: "mv", title: sample.title, posterUrl: sample.thumb!, videoUrl: SAMPLE_RESULT_VIDEO, creator: MOCK_USER.name }
+      : { kind: "song", title: sample.title, posterUrl: sample.thumb!, audioUrl: SAMPLE_AUDIO, creator: MOCK_USER.name };
   }
 
   return null;

@@ -389,6 +389,8 @@ test("G5-d#3 /song/create's gate moved to Create Song", async ({ page }) => {
   // what makes the CTA `--active`; a disabled button would pass this test for
   // the wrong reason, so assert it is enabled before clicking.
   await page.goto("/song/create");
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   await page
     .getByPlaceholder(/A bittersweet love song/)
     .fill("An upbeat summer anthem about chasing dreams.");
@@ -403,6 +405,8 @@ test("G5-d#3 a guest is never shown the credits upsell before signing in", async
   // GL-01 balance check, so a logged-out user cannot be asked to buy credits
   // for an account that does not exist yet. Sign-in must come first.
   await page.goto("/song/create");
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   await page
     .getByPlaceholder(/A bittersweet love song/)
     .fill("An upbeat summer anthem about chasing dreams.");
@@ -677,6 +681,8 @@ for (const locale of LOCALES) {
 test("G5-d#10 enhancePrompt round-trips through api, not a local fake", async ({ page }) => {
   await login(page);
   await page.goto("/song/create");
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   const box = page.getByPlaceholder(/A bittersweet love song/);
   const original = "summer road trip";
   await box.fill(original);
@@ -1216,6 +1222,8 @@ test("drop 2: a CREATED song keeps Recreate and Publish", async ({ page }) => {
   // outright would pass the test above.
   await login(page);
   await page.goto("/song/create");
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   await page
     .getByPlaceholder(/A bittersweet love song/)
     .fill("An upbeat summer anthem about chasing dreams with friends.");
@@ -1818,6 +1826,8 @@ test("TODO#5: every ported seek bar is a keyboard-operable slider, not a bare di
 
   // /mv/edit — reachable with flow state seeded the way /history rows do it.
   await page.goto("/song/create");
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   await page.getByPlaceholder(/A bittersweet love song/).fill("A slow piano ballad.");
   await page.getByRole("button", { name: /Create Song/i }).click();
   await page.waitForURL(/\/song\/(creating|result)/);
@@ -2965,6 +2975,8 @@ test("3j: all three song stages render DP's blocks", async ({ page }) => {
   await expect(page.locator(".song-create__panel")).toBeVisible();
   await expect(page.locator(".song-create__side")).toBeVisible();
 
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   await page
     .getByPlaceholder(/A bittersweet love song/)
     .fill("An upbeat summer anthem about chasing dreams with friends.");
@@ -3034,6 +3046,8 @@ test("3j / 2026-08-24: an Idea fill in both tabs, and Custom keeps a separate Ly
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/song/create");
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
 
   const describe = page.getByPlaceholder(/A bittersweet love song/);
   const idea = page.getByRole("button", { name: "Idea", exact: true });
@@ -3072,6 +3086,8 @@ test("3j / SONG-03: Recreate names its price and gates on the balance", async ({
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/song/create");
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   await page
     .getByPlaceholder(/A bittersweet love song/)
     .fill("An upbeat summer anthem about chasing dreams with friends.");
@@ -3108,6 +3124,8 @@ test("3j: the result still says what was generated, not just its title", async (
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/song/create");
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   await page
     .getByPlaceholder(/A bittersweet love song/)
     .fill("An upbeat summer anthem about chasing dreams with friends.");
@@ -3487,6 +3505,8 @@ test("items 4/5: generating a song adds it to /song/create's rail", async ({ pag
   await expect(page.locator(".song-create__side-title")).toHaveText("My Creations");
   const before = await page.locator(".song-create__side-item").count();
 
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   await page
     .getByPlaceholder(/A bittersweet love song/)
     .fill("An upbeat summer anthem about chasing dreams with friends.");
@@ -4128,6 +4148,8 @@ test("TODO#8b: a song with no lyrics offers no Lyrics affordance at all", async 
   // that genuinely has no lyrics, and Simple mode is how a user makes one.
   await login(page);
   await page.goto("/song/create");
+  // YMW260910P0021: Custom is now the default tab; this test is about Simple.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
   await page
     .getByPlaceholder(/A bittersweet love song/)
     .fill("An instrumental-feeling summer anthem about chasing dreams.");

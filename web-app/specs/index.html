@@ -1025,6 +1025,367 @@ this file covers. When a change does both, it appears in both, and the row below
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
 <hr>
+<h2 id="2026-09-12-three-more-ebug-driven-decisions">2026-09-12 — Three more eBug-driven decisions</h2>
+<h3 id="shared-song-links-creatoravatar-now-populated-on-every-resolution-branch">Shared song links: creator/avatar now populated on every resolution branch</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/10-share.md</code> §3 (resolution order note, <code>SongPanel</code> bullet).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260910P0006</code> — product owner: a shared song link should show the creator avatar; <code>share?id=h-golden-hour</code> (a <code>HISTORY_SAMPLES</code> id) didn't.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Bug, not a product decision: <code>resolveShare()</code>'s two History-derived branches (the user's own completed creation, and static <code>HISTORY_SAMPLES</code>) never set <code>creator</code> at all, while both community-fixture branches always did — <code>SongPanel</code>'s creator row is conditional on <code>media.creator</code>, so those two branches silently rendered with no avatar. Both now attribute to <code>MOCK_USER.name</code>, matching what <code>/history</code> already shows for the same rows.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>lib/share.ts</code> — <code>resolveShare()</code>'s <code>own</code> and <code>sample</code> branches now set <code>creator: MOCK_USER.name</code>.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>No existing unit/e2e test covered <code>resolveShare</code>'s <code>creator</code> field; none needed updating.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None (<code>SharedMedia.creator</code> was already optional; this only changes when it's populated).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="watchs-create-mv-handoff-v1-scope-corrected-to-prompt-type-only"><code>/watch</code>'s Create MV handoff: V1 scope corrected to prompt + type only</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/04-explore-community.md</code> §3.3 (<code>/watch</code> MV player row).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260910P0008</code> — product owner: V1 only carries prompt + video type into <code>/mv/room</code>; the spec's own line overclaimed matched-song + title.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner reaffirmed the reduced scope on 2026-09-12, after being shown that the current mock code (<code>CommunityMvPlayer.tsx</code>, since <code>cdba535c</code>, 2026-08-05) actually prefills all four fields and works live. The spec now states V1's intended scope for the real backend; the demo currently exceeds it, recorded inline rather than silently reconciled either direction.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td>None changed — nobody asked for <code>createMv()</code>'s extra prefill to be removed.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>None affected.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None (spec-only).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai-song-generation-failed-screen-retry-removed">AI Song generation-failed screen: Retry removed</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/03-song-creation.md</code> §5 (SONG-E1).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260910P0020</code> — product owner: remove the Retry button from the prototype and spec.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td><code>SongGenerationScreen</code>'s failure state now offers <strong>Back</strong> only, matching the precedent already set on the MV storyboard's own failure screen (<code>YMW260910P0020</code> mirrors the 2026-09-02 MV decision — see <code>e2e</code>'s <code>G5-d#5</code>: "Back-only (no Retry)" — same reasoning, a <code>[fail]</code> compose always re-fails deterministically, so Retry was a dead-end affordance).</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>song/SongGenerationScreen.tsx</code> — removed the Retry button and its container; copy no longer says "you can retry now".</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>No existing e2e exercised the Song <code>[fail]</code> path directly, so none needed updating.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2026-09-11-two-ebug-driven-product-decisions">2026-09-11 — Two eBug-driven product decisions</h2>
+<p>Both from the same PM triage pass over <code>YMW26091*</code>/<code>YMW26090*</code> eBugs. Neither is a "fix the bug as<br>
+described" — each one reverses or narrows a decision already recorded in the spec, so the PM ruling<br>
+is the change, not the code alone.</p>
+<h3 id="profiles-mvssongs-stat-pills-now-open-history-not-the-public-creator-profile">Profile's MVs/Songs stat pills now open History, not the public Creator profile</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/06-profile-account.md</code> §3 ("Stat tiles"), §4 (PROF-P1-S2), §6 (AC-PROF-02), and the §7 flowchart.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260910P0001</code> — a user tapping their own MV/Song count expects to land on <strong>their own creations list</strong>, not the read-only public profile grid.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-11: MVs/Songs pills → <code>/history?tab=mv</code>|<code>songs</code>. The <strong>identity block</strong> (photo + name + email) is unchanged — still <code>/creator?self=1</code>, the public profile — only the count pills moved. This narrows, not reverses, the 2026-08-31 decision that grouped all three under one destination.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>ProfileView.tsx</code> (pill hrefs); <code>HistoryView.tsx</code> (<code>?tab=</code> now seeds the initial filter, same one-time-seed convention as <code>CreatorProfile</code>'s own <code>?tab=</code>); <code>app/[locale]/history/page.tsx</code> (wrapped in <code>&lt;Suspense&gt;</code> for the new <code>useSearchParams()</code> read).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>Not yet added — flagged for a follow-up pass.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="history-share-is-gated-on-published-for-an-own-mvsong-row">History: Share is gated on <code>published</code> for an own MV/Song row</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/05-history.md</code> §3 (<code>⋯</code> menu contents, "Net per type"), §4 (HIST-P3-S1), §6 (AC-HIST-08).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260903P0012</code> — an MV or Song could be shared before it was ever published; the link worked but pointed at content nobody else could see as "theirs" yet.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-11: <strong>add the gate.</strong> Share now only appears on an own mv/song row once <code>published</code> is true (reviewing/rejected count as not-published). <strong>Community rows are unaffected</strong> — they're already someone else's published content. Like stays ungated, as before.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>HistoryView.tsx</code>'s <code>Menu</code> component, the Share <code>OptRow</code> condition.</td>
+</tr>
+<tr>
+<td><strong>Scope note</strong></td>
+<td><code>CreatorProfile.tsx</code> has its own, separately-coded Share entry that is documented as mirroring <code>HistoryView</code>'s menu — <strong>not touched in this pass</strong>, flagged for the PM to confirm before extending the same gate there.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>Not yet added — flagged for a follow-up pass.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai-song-custom-is-now-the-default-tab-simple-second">AI Song: Custom is now the default tab, Simple second</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/03-song-creation.md</code> §4 (SONG-P1-S1), §6 (AC-SONG-01), §4 decisions paragraph.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260910P0021</code> — product owner wants Custom-first, reversing the original Simple-first order.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-11: <code>DEFAULT_SONG_COMPOSE.mode = "custom"</code>; the tab row renders Custom then Simple (was Simple then Custom) — a straight swap of DP's original order.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>lib/mv/types.ts</code> (<code>DEFAULT_SONG_COMPOSE</code>); <code>song/SongCompose.tsx</code> (tab render order).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>e2e/song-flow.spec.ts</code> and 11 sites in <code>e2e/behaviour-regressions.spec.ts</code> updated to select Simple explicitly where that tab (not the new default) is what's under test.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None (<code>SongCompose.mode</code>'s default value, not its shape).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="explorehome-rails-the-hot-badge-is-retired">Explore/Home rails: the HOT badge is retired</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/04-explore-community.md</code> (community card <code>badge</code> field, wherever it is rendered — Explore, Home's Trending/Top Picks rails, <code>/explore/songs</code>).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260910P0022</code> — product owner decided the HOT tag adds no value; NEW stays.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-11: every <code>badge: "HOT"</code> fixture row becomes <code>badge: null</code>. <code>"NEW"</code> is untouched.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>lib/mv/community.ts</code> (fixture data only — the four consuming card components are unchanged).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>None referenced "HOT" by name; none needed updating.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None (data, not schema — <code>BadgeSchema</code> still allows <code>"HOT"</code> for a future drop).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="history-a-generating-mvs-placeholder-title-now-matches-its-own-mv-name-setting">History: a generating MV's placeholder title now matches its own MV-name setting</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/05-history.md</code> (generating-row title source), <code>areas/02-mv-creation.md</code> (<code>settings.title.text</code>, the "MV TITLE" field).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260911P0005</code> — a generating MV's History card showed the SOURCE SONG's title (or "Untitled MV"), never the user's own MV-name setting, while a generating Song's card already shows the song's real title.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Bug, not a product decision: <code>MvFlowProvider</code>'s <code>upsertGenerating</code> ignored <code>compose.settings.title.text</code> entirely. The mock backend's own storyboard snapshot already prioritizes it (<code>settings.title.text || song?.title</code>) — the History-facing call now matches that precedence.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>providers/MvFlowProvider.tsx</code> (<code>startStoryboard</code>, <code>startRender</code>).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>Not yet added — flagged for a follow-up pass.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mv-results-character-row-is-accurate-for-a-re-opened-history-entry">MV Result's Character row is accurate for a re-opened History entry</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/02-mv-creation.md</code> (Character/Music/Scenes detail rows on <code>/mv/result</code>).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260911P0007</code> — QA saw Character always read "—". Root cause: <code>useOpenCreation</code>'s History-row seeding never carried a photo count, so ANY MV reopened from History (or a "My Creations" rail) showed "—" regardless of whether the original had character photos.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Bug, not a product decision: persist the count at generation time (<code>HistoryItem.photoCount</code>) and prefer it on <code>/mv/result</code> when the entry is a History row; a live, just-generated flow still reads the count off <code>compose.photos</code> directly.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>providers/HistoryProvider.tsx</code> (<code>HistoryItem.photoCount</code>, optional/additive); <code>providers/MvFlowProvider.tsx</code> (<code>upsertGenerating</code> now passes it); <code>mv/MvResult.tsx</code> (<code>entry?.photoCount ?? compose.photos.length</code>).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>Not yet added — flagged for a follow-up pass.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>Additive field on the in-memory <code>HistoryItem</code> shape (not part of <code>MuseApi</code>/C1–C8 — see <code>docs/CHANGELOG-RD.md</code> note anyway, since a real history endpoint will need to carry this).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="every-route-gets-a-loading-fallback">Every route gets a loading fallback</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td>None specific — a cross-cutting Next.js App Router convention, not a screen-level behaviour.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260911P0004</code> — F5 or a route switch (e.g. AI Music Video ↔ AI Song) showed a blank/gray screen with no feedback while the new route's JS loaded, because no route in the tree had a <code>loading.tsx</code>.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Add one shared <code>src/app/[locale]/loading.tsx</code> (a small centered spinner using existing tokens) rather than one per route — consistent everywhere, smallest diff.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>app/[locale]/loading.tsx</code> (new).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>None — a route-transition loading state isn't practically assertable in Playwright (it needs a slow chunk load to ever mount), same reasoning as the demo panel's manual-only paths.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<hr>
 <h2 id="2026-09-10-credit-history-display-mapping-contract">2026-09-10 — Credit History display mapping contract</h2>
 <p>No prototype change. Added <code>areas/13-credit-history-display.md</code> from the product-provided<br>
 <code>ycm-credit-history.json</code> form.</p>
@@ -2620,7 +2981,7 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <h3 id="song-p1-compose">SONG-P1 — Compose</h3>
 <ul>
 <li><strong>SONG-P1-S0 (side rail, 2026-08-06; source corrected 2026-09-09)</strong> Same two-mode aside as <code>/mv/room</code> (area 02 MV-P1-S0): <strong>"Trending Songs"</strong> over <code>TOP_PICKS_SONGS</code> with a "See all" → <code>/explore/songs</code>, or <strong>"My Creations"</strong> over the user's own finished songs, no "See all", each row opening <code>/song/result?id=</code>. Requires <code>loggedIn</code> <strong>and</strong> at least one completed song — and since <code>YMW260902P0013</code> "the user's own finished songs" means <code>useMyCreations("song")</code>: the live session jobs <strong>merged with the same seeded creations <code>/history</code> shows</strong>, not the session jobs alone. See <code>AC-SONG-19</code>.</li>
-<li><strong>SONG-P1-S1</strong> Arrive <code>/song/create</code> (<strong>guest-reachable</strong> — the route guard was removed 2026-08-12, the gate is on the Create Song button; see <code>SONG-E3</code> / <code>AC-AUTH-08</code>); <strong>Simple</strong> tab default; <strong>Create Song</strong> disabled until <code>describe</code> non-empty. Hint "Describe your song to continue."</li>
+<li><strong>SONG-P1-S1</strong> Arrive <code>/song/create</code> (<strong>guest-reachable</strong> — the route guard was removed 2026-08-12, the gate is on the Create Song button; see <code>SONG-E3</code> / <code>AC-AUTH-08</code>); <strong>Custom</strong> tab default, <strong>Simple</strong> second (product owner, <code>YMW260910P0021</code>, 2026-09-11 — was Simple-first); <strong>Create Song</strong> disabled until <code>describe</code> non-empty <strong>while on Simple</strong>. Hint "Describe your song to continue."</li>
 <li><strong>SONG-P1-S2</strong> Toggle <strong>Instrumental</strong> (both modes). Simple: describe + <strong>Idea</strong> fill + Enhance. Toggling <strong>never changes the text</strong> in either box — see <code>AC-SONG-02</code>.</li>
 <li><strong>SONG-P1-S3</strong> Switch to <strong>Custom</strong>: free-form <strong>Lyrics</strong> textarea (or "No lyrics needed" when Instrumental) + <strong>Idea</strong>/<strong>Lyrics</strong> sample fills (Idea survives Instrumental, Lyrics does not) / <strong>Enhance</strong> (survives Instrumental, but drops its chooser there — <code>AC-SONG-14</code>); <strong>GENRE / MOOD / VOCAL chips — all three optional, single-select, tap-to-clear, and all three render with NOTHING selected on arrival</strong> (product owner, 2026-09-01: GENRE and MOOD gained clearing, VOCAL already had it; separately, and later the same day, GENRE/MOOD's pre-filled <code>"Pop"</code>/<code>"Uplifting"</code> seeds were also removed — see §1/§3); <strong>VOCAL disappears from the DOM entirely while Instrumental is ON</strong> and its stored value is cleared, reappearing empty (not restored) when Instrumental goes back OFF — see §3, <code>AC-SONG-15</code>–<code>17</code>; optional Title. Custom CTA always enabled. <em>(No BPM/Key row since 3j — §1.)</em></li>
 <li><strong>SONG-P1-S4</strong> Tap <strong>Create Song</strong> (<code>songCost(instrumental)</code> — <strong>6</strong> vocal / <strong>12</strong> instrumental) → <code>resetForNewSong()</code> → <code>/song/creating</code>. <em>(Was a flat <code>10</code>; repriced 2026-08-12, journey text corrected 2026-08-19.)</em></li>
@@ -2651,7 +3012,7 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <tr>
 <td><strong>SONG-E1</strong></td>
 <td>Song job fails</td>
-<td>Shared <code>GenerationView</code> failure state: "Generation Failed" + <strong>Back</strong> (<code>/song/create</code>) + <strong>Retry</strong>, "credits were not charged". <strong><code>[fail]</code> in the Simple-mode <code>describe</code> triggers a mock failure at ~60% (<code>mock.ts:137</code>); <code>lyrics</code> does not — so a Custom-mode song cannot be failed via the UI.</strong> Production trigger → <code>TBD-SONG-06</code>.</td>
+<td><code>SongGenerationScreen</code>'s failure state: "Generation Failed" + <strong>Back</strong> (<code>/song/create</code>) only, "credits were not charged" — <strong>no Retry</strong> (product owner, <code>YMW260910P0020</code>, 2026-09-12; was Back + Retry). <strong><code>[fail]</code> in the Simple-mode <code>describe</code> triggers a mock failure at ~60% (<code>mock.ts:137</code>); <code>lyrics</code> does not — so a Custom-mode song cannot be failed via the UI.</strong> Production trigger → <code>TBD-SONG-06</code>.</td>
 </tr>
 <tr>
 <td><strong>SONG-E2</strong></td>
@@ -2673,7 +3034,7 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <hr>
 <h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
 <ul>
-<li><strong>AC-SONG-01</strong> — WHEN <code>/song/create</code> loads, THE SYSTEM SHALL default to <strong>Simple</strong> and keep <strong>Create Song</strong> disabled until <code>describe.trim() !== ""</code>; in <strong>Custom</strong>, it SHALL be enabled by default.</li>
+<li><strong>AC-SONG-01</strong> — WHEN <code>/song/create</code> loads, THE SYSTEM SHALL default to <strong>Custom</strong> (tab order Custom, Simple — <code>YMW260910P0021</code>, 2026-09-11), enabled by default; on <strong>Simple</strong>, <strong>Create Song</strong> SHALL stay disabled until <code>describe.trim() !== ""</code>.</li>
 <li><strong>AC-SONG-01b</strong> — WHILE logged out, WHEN <code>/song/create</code> is opened, THE SYSTEM SHALL render the full compose screen with no sign-in modal; and THE SYSTEM SHALL open the sign-in modal only when the user activates <strong>Create Song</strong>. THE SYSTEM SHALL NOT show the insufficient-credit upsell to a logged-out user — <code>requireLogin</code> wraps the GL-01 balance check, so sign-in always comes first. <em>(new 2026-08-12; see area 09 AC-AUTH-08)</em></li>
 <li><strong>AC-SONG-02</strong> — WHEN Instrumental is toggled in Custom, THE SYSTEM SHALL leave the Lyrics box contents <strong>unchanged</strong> in both directions, and SHALL hide only the <strong>Lyrics</strong> sample-fill while it is ON. THE <strong>Idea</strong> fill and <strong>Enhance</strong> SHALL remain available while Instrumental is ON, and the song SHALL generate without a Lyrics sheet. <em>(Rewritten 2026-08-26: a rule that cleared the box on toggle-on was in place for one day and is withdrawn — the toggle is not a destructive control.)</em><blockquote>
 <p><em>Rewritten 2026-08-25 (product owner). The previous rule was the opposite — "toggling does not clear previously-typed lyrics" — which left the old prompt sitting under an instrumental placeholder that contradicted it. The two drafts are swapped, so neither piece of text is lost. Closes the clearing half of <code>TBD-SONG-01</code>.</em><br>
@@ -2772,7 +3133,7 @@ The same rule applies to <code>/song/play</code>'s Lyrics sheet — see <code>AC
 </code></pre>
 <hr>
 <p><strong>Decisions (as-built, 2026-08-06; ⚠️ prices below corrected 2026-09-01 — see §3/§6, this paragraph<br>
-had not been touched since the 2026-08-12 repricing):</strong> Simple default; Custom is Genre/Mood/Vocal<br>
+had not been touched since the 2026-08-12 repricing; tab default corrected 2026-09-11, <code>YMW260910P0021</code> — was Simple):</strong> Custom default; Custom is Genre/Mood/Vocal<br>
 chips + Title + a free-form Lyrics/Idea textarea (GENRE/MOOD now start empty and are tap-to-clear,<br>
 2026-09-01 — §1/§3), <strong>no BPM/Key controls</strong> (S4 — the fields stay); <strong>no free-preview cap on<br>
 either player screen</strong> (S3), and since 2026-08-06 it survives nowhere at all; <code>/song/result</code> is<br>
@@ -2946,7 +3307,20 @@ full. What a <strong>phone</strong> actually sees fewer of is a separate, CSS-on
 <code>--primary</code> (Top Picks) — so a phone on <code>/explore/mvs</code> reaches 3 of the 14 mock items regardless<br>
 of the true catalog size, and <code>/watch</code>'s mobile treatment (<code>.mv-detail--selected</code>) hides both<br>
 sections outright. This closes the question <code>DESIGNER-TODO</code> <strong>A19</strong> raised about the 3-of-14<br>
-ratio: it was never a spec'd number, only (mock length) × (this hiding rule).</p>
+ratio: it was never a spec'd number, only (mock length) × (this hiding rule).<br>
+<strong>Top Picks row Next/Previous step, settled 2026-09-11 (<code>YMW260909P0008</code>).</strong> The desktop-only<br>
+<code>MvTopPicksRow</code> (≥1024px) originally stepped by exactly one card + gap per click; QA/an<br>
+automated agent test flagged the live build advancing further than that per click as a<br>
+divergence. Product owner confirmed the single-card step reads as too slow and the faster,<br>
+further-per-click pace is the one to keep: <code>scrollByCard</code> now steps by the row's full visible<br>
+width (<code>row.clientWidth</code>) — a "page" per click — not one item.<br>
+<strong>This rail pattern turned out to be copy-pasted FOUR times, and the first fix only reached<br>
+one of them</strong> — caught by the PM testing production after the first push. All four now match:<br>
+<code>MvGridSections.tsx</code>'s <code>MvTopPicksRow</code> (<code>/explore/mvs</code>, <code>/watch</code>'s lower half),<br>
+<code>NewMVsSection.tsx</code> ("Trending Music Videos" on Home), <code>TopPicksSection.tsx</code> ("Top Picks Songs"<br>
+on Home), and <code>SongDetailView.tsx</code>'s own <code>scrollTopPicksByCard</code> ("Top Picks Songs" on<br>
+<code>/explore/songs</code>). There is still no shared hook for this pattern — a fifth copy is exactly as<br>
+likely to reintroduce the one-card step as these four were.</p>
 </blockquote>
 </li>
 <li><strong><code>/explore/songs</code></strong> (<code>song/SongDetailView</code> — <strong>the same component as <code>/song/play</code></strong>, merged in Slice 3b): tabbed list (All + ~~one tab per catalog <code>genre</code>, derived at runtime~~ <strong>the nine creation <code>GENRES</code>, hardcoded</strong> — reversed 2026-09-01, see §4 EXP-P3) beside a Now Playing column, 1:1 at ≥1024px; row → selects in Now Playing at ≥768px, opens the full-screen player at <code>/song/play?id</code> below that; creator → <code>/creator</code>; <strong>Create</strong> → <code>requireLogin</code> → <code>patchSongCompose</code> + <code>/song/create</code> (gated at the click, consistent with Home — GL-02/EXP-02); Back → <code>DetailNavbar</code>'s <code>router.back()</code> with a fallback to <code>/explore/songs</code>.<blockquote>
@@ -2965,10 +3339,20 @@ they moved into the page body with that rail. Captured at S8 <code>P3-S1</code>.
   (<code>mvCoverRatio()</code> — 3:4 or 4:3, <code>AC-EXP-04</code>), autoplay loop <strong>with sound on</strong> (falling back to<br>
   muted only if the browser refuses — <code>YMW260902P0002</code>, see <code>AC-EXP-04</code>); floating title + creator →<br>
 <code>/creator</code>; <strong>Like</strong> (local), <strong>Share</strong> (<code>ShareDialog</code>); <strong>Create Music Video</strong> → <code>setCompose</code><br>
-  (mvType + prompt + <code>matchedSong</code> + title) → <code>/mv/room</code> (area 02); a transport row with<br>
-  play/pause, a keyboard-operable <code>SeekBar</code>, mute and fullscreen; and <strong><code>MvGridSections</code> below the<br>
-  player</strong> — the same two sections <code>/explore/mvs</code> renders.<blockquote>
-<p>⚠️ <strong>Corrected 2026-09-01 by the S8 storyboard capture (D11).</strong> This line still listed a<br>
+  (mvType + prompt only — <code>YMW260910P0008</code>, product owner, 2026-09-12: <strong>V1 does not carry the<br>
+  matched song or title into the handoff</strong>, corrected from this line's own prior claim that it<br>
+  did) → <code>/mv/room</code> (area 02); a transport row with play/pause, a keyboard-operable <code>SeekBar</code>, mute<br>
+  and fullscreen; and <strong><code>MvGridSections</code> below the player</strong> — the same two sections<br>
+<code>/explore/mvs</code> renders.<blockquote>
+<p>⚠️ <strong>This mock/prototype's code currently prefills the matched song and title too</strong> —<br>
+<code>CommunityMvPlayer.tsx</code>'s <code>createMv()</code> has done so since 2026-08-05 (<code>cdba535c</code>), unchanged by<br>
+this spec correction. Investigated and confirmed live 2026-09-11: song + title + prompt all<br>
+land on <code>/mv/room</code>, and Create Music Video is enabled, not disabled. The product owner<br>
+reaffirmed the reduced V1 scope after seeing that finding — this row now states V1's INTENDED<br>
+scope for the real backend, which the demo currently exceeds. Flag before touching<br>
+<code>createMv()</code>: nobody has asked for the extra prefill to be removed from the code, only for the<br>
+spec to stop overclaiming it as required V1 behavior.<br>
+⚠️ <strong>Corrected 2026-09-01 by the S8 storyboard capture (D11).</strong> This line still listed a<br>
 <code># Music Video</code> tag, the <code>meta</code> line, a <code>Stats</code> block and the source prompt, and described the<br>
 stage as flatly "3:4 portrait". None of the first four exist: DP's immersive player replaced<br>
 WA's side panel when <code>/watch</code> migrated (slice 3d — <code>CommunityMvPlayer.tsx</code>'s own header records<br>
@@ -3466,6 +3850,10 @@ Opening a row routes to the right destination: <strong>its own result screen</st
 <code>/song/result</code>), the storyboard editor, or the community player.</p>
 <p><strong>In scope:</strong> <code>history/HistoryView</code> (<code>/history</code>), its cards + <code>⋯</code> menu, the delete/publish confirm<br>
 modals.<br>
+<strong>Entry points:</strong> the nav/tab bar; and, since <code>YMW260910P0001</code> (2026-09-11), <code>/profile</code>'s MVs/Songs<br>
+stat tiles via <code>/history?tab=mv</code>|<code>songs</code> — seeded into the <code>all</code>/<code>mv</code>/<code>song</code> filter once on first<br>
+render (same convention as <code>CreatorProfile</code>'s own <code>?tab=</code>; the URL is not kept in sync with later<br>
+tab clicks, area 04's own note explains why).<br>
 <strong>Out of scope (cross-referenced):</strong> the result screens themselves (<code>/mv/result</code> area 02,<br>
 <code>/song/result</code> area 03); <code>ShareDialog</code> (area 10); the seed flow into<br>
 <code>/mv/edit</code>/<code>/mv/storyboard</code>/<code>/mv/room</code> (area 02); the community player <code>/song/play</code> (area 04).</p>
@@ -3540,10 +3928,11 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
   pill</strong> in the card footer (calls <code>createMv(r)</code>), in addition to the menu CTA.</li>
 <li><strong><code>⋯</code> menu</strong> (<code>Menu</code>, portal) — contents depend on row type:</li>
 <li><strong>CTA row</strong> (non-community, non-failed): <strong>Edit MV</strong> (mv) / <strong>Create MV</strong> (song|storyboard). <strong>MV-13:</strong> when the MV is published/in-review, the Edit MV entry is <strong>removed from the menu entirely</strong> — the Publish toggle below is the only way back to editable. <em>(Product owner, 2026-08-28 — supersedes the earlier neutral "Unpublish to edit" entry; spec synced 2026-09-10. Same rule as <code>/mv/result</code>, area 02 <code>MV-P4-S4</code> / <code>MV-E7</code>.)</em></li>
-<li><strong>Like / Share</strong>: shown for community, mv, and song rows — <strong>HIST-06 (2026-07-23): a failed row is Delete-only</strong> (Like/Share now suppressed with <code>!failed</code>); storyboard rows never showed them.</li>
+<li><strong>Like</strong>: shown for community, mv, and song rows — <strong>HIST-06 (2026-07-23): a failed row is Delete-only</strong> (Like/Share now suppressed with <code>!failed</code>); storyboard rows never showed it.</li>
+<li><strong>Share</strong>: shown for <strong>community rows always</strong> (already someone else's published content); for an own <strong>mv|song row, only once <code>published</code> is true</strong> — <strong>YMW260903P0012 (product owner, 2026-09-11): an unpublished own row was shareable before this, which is now closed.</strong> A reviewing/rejected MV counts as not-published for this gate, same as any other unpublished state.</li>
 <li><strong>Publish (toggle) / Download / normal Delete</strong>: non-community, non-failed, mv|song only. <strong>Delete is hidden</strong> when an MV is published/reviewing or a song is published.</li>
 <li><strong>Standalone Delete</strong>: also shown for <strong>failed</strong> and <strong>storyboard</strong> rows (<code>:355</code>).</li>
-<li><strong>Net per type (as-built 2026-07-24; MV-13 row updated 2026-09-10):</strong> MV = Edit MV (absent while published/in-review) + Like/Share/Publish/Download/Delete · Song = Create MV + Like/Share/Publish/Download/Delete · <strong>Storyboard = Create MV (pill + menu) + Delete</strong> · <strong>Community = Like + Share only</strong> · <strong>Failed = Delete only</strong>.</li>
+<li><strong>Net per type (as-built 2026-07-24; MV-13 row updated 2026-09-10; Share-gate added 2026-09-11):</strong> MV = Edit MV (absent while published/in-review) + Like + Share (published only) + Publish/Download/Delete · Song = Create MV + Like + Share (published only) + Publish/Download/Delete · <strong>Storyboard = Create MV (pill + menu) + Delete</strong> · <strong>Community = Like + Share only</strong> · <strong>Failed = Delete only</strong>.</li>
 <li><strong>Publish</strong> (<code>HistoryView.tsx:125-137</code>): <strong>MV</strong> → "Ready to Go Public?" confirm modal → sets reviewing+published, toast "Submitted for review"; already-published/reviewing → unpublish directly. <strong>Song</strong> → direct toggle, toast "Published/Unpublished success". 🔒 local override only; no community write (→ <code>TBD-MV-06</code>, area 04). <strong>2026-08-06: the row's <code>published</code>/<code>reviewing</code> override is now the <code>⋯</code> menu's alone</strong> — the dialog that used to share it is gone, and the result screens hold their own publish state (they are a different surface with their own MV-12 confirm).<br>
   ✅ <strong><code>TBD-HIST-05</code> is BUILT (2026-08-28, <code>25fa0f0</code>) — this paragraph said the opposite until 2026-09-10.</strong> It read: "there is no REJECTED state · <code>confirmPublishMv()</code> sets <code>reviewing: true, published: true</code> in the same write and nothing ever moves <code>reviewing</code> back to <code>false</code> on its own · flagged, not built". All three clauses are now false. <strong>As built:</strong> <code>confirmPublishMv()</code> writes <code>reviewing: true, published: **false**</code> and toasts "Submitted for review"; after <code>PUBLISH_REVIEW_DELAY_MS</code> (2500 ms, <code>src/lib/publishReview.ts</code>) it resolves <strong>on its own</strong> into one of two branches — approved (<code>reviewing: false, published: true</code>) or <strong>rejected</strong> (<code>reviewing: false, published: false, rejectReason</code> set). Which one is decided by the <code>?demo=1</code> panel's <code>publishRejected</code> / <code>rejectReason</code> flags, because a backend-less prototype has no real moderator.<br>
 <strong>Three menu states, not two:</strong> pending → <code>ic_timer</code>, label "Publish (Review)", <strong>toggle OFF</strong>; approved → label "Publish", toggle ON; rejected → title <strong>"Publish (Rejected)"</strong> (red <code>&lt;em&gt;</code>) plus a reason line no other state has, toggle OFF. A rejection reverts to unpublished rather than adding a fourth persistent status, so the reason clears the moment a resubmit is accepted. The seven reason codes are <code>PUBLISH_REJECT_CODES</code>; the <strong>backend returns the enum and the front end owns the copy</strong> (decided 2026-08-27, rationale in <code>src/lib/publishReview.ts</code>) — RD implements those seven values and must map anything else to <code>UNKNOWN</code> rather than render it raw.</li>
@@ -3568,7 +3957,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 </ul>
 <h3 id="hist-p3-row-menu-quick-actions">HIST-P3 — Row menu quick actions</h3>
 <ul>
-<li><strong>HIST-P3-S1</strong> <code>⋯</code> → <strong>Like/Unlike</strong> (updates local like + count), <strong>Share</strong> (<code>ShareDialog</code> w/ <code>buildShareUrl(id)</code>), <strong>Download</strong> (fixture media + toast).</li>
+<li><strong>HIST-P3-S1</strong> <code>⋯</code> → <strong>Like/Unlike</strong> (updates local like + count), <strong>Share</strong> (<code>ShareDialog</code> w/ <code>buildShareUrl(id)</code> — an own mv/song row only offers this once published, <code>YMW260903P0012</code>), <strong>Download</strong> (fixture media + toast).</li>
 </ul>
 <h3 id="hist-p4-publish">HIST-P4 — Publish</h3>
 <ul>
@@ -3642,7 +4031,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <li><strong>AC-HIST-05</strong> — WHEN <strong>Publish</strong> is invoked on an MV, THE SYSTEM SHALL show the "Ready to Go Public?" confirm and, on confirm, mark it reviewing/published with a "Submitted for review" toast; a song publishes immediately without a confirm.</li>
 <li><strong>AC-HIST-06</strong> — WHEN <strong>Delete</strong> is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.</li>
 <li><strong>AC-HIST-07</strong> — WHEN <strong>Edit MV / Create MV</strong> is chosen, THE SYSTEM SHALL seed flow state and route to <code>/mv/edit</code> / <code>/mv/storyboard</code>|<code>/mv/room</code> respectively.</li>
-<li><strong>AC-HIST-08</strong> — WHEN <strong>Share</strong> / <strong>Download</strong> is invoked, THE SYSTEM SHALL open <code>ShareDialog</code> with <code>buildShareUrl(id)</code> / download the fixture media as <code>{title}.mp4</code>|<code>.mp3</code>. <em>(download uses fixture media, not the row's own render — 🔒)</em></li>
+<li><strong>AC-HIST-08</strong> — WHEN <strong>Share</strong> / <strong>Download</strong> is invoked, THE SYSTEM SHALL open <code>ShareDialog</code> with <code>buildShareUrl(id)</code> / download the fixture media as <code>{title}.mp4</code>|<code>.mp3</code>. <em>(download uses fixture media, not the row's own render — 🔒)</em> <strong>Share itself SHALL NOT be offered on an own mv/song row until it is <code>published</code></strong> (<code>YMW260903P0012</code>, 2026-09-11) — community rows are unaffected.</li>
 <li><strong>AC-HIST-09</strong> — THE SYSTEM SHALL render <code>/history</code> at 320/375/768/1024/1440/1920px with no overflow (1/2/3-column grid). <em>(visual)</em> <em>(Widths corrected 2026-08-19 to the six tiers the code and <code>visual-baseline.spec.ts</code> actually use; the old list said 390, which no test has ever measured.)</em></li>
 </ul>
 <hr>
@@ -3722,12 +4111,18 @@ the Edit-Profile / Language / Feedback modals. <strong>Send Feedback is a real s
 <strong>§3.1</strong> for the form and its CSB param mapping.<br>
 <strong>Out of scope (cross-referenced):</strong> the credits/IAP<br>
 the Credits Detail route + modals reached from here (area 07 — <code>/profile/credits</code>, <code>BuyCreditsModal</code>, <code>SubscribeModal</code>); the<br>
-<strong>community profile content grid</strong> at <code>/creator?self=1</code> that the stat tiles link to (area 04);<br>
-sign-in (area 09).</p>
+<strong>community profile content grid</strong> at <code>/creator?self=1</code> that the photo/name/email identity block<br>
+links to (area 04); <strong>the user's own creations list</strong> at <code>/history</code> that the MVs/Songs stat tiles<br>
+link to (area 05, <code>YMW260910P0001</code>, 2026-09-11 — see below); sign-in (area 09).</p>
 <p><strong>Key mapping note (important):</strong> web <code>/profile</code> is closest to the <strong>App's Account screen (F18)</strong> — a<br>
 row-based hub — <strong>not</strong> the App's <em>My Community Profile</em> (F16), whose tabbed content grid lives at<br>
-<code>/creator?self=1</code> (area 04). The stat tiles bridge the two. ⚠️ The overview parity matrix lists<br>
-F16→06 for convenience; the content-grid half is actually area 04.</p>
+<code>/creator?self=1</code> (area 04). ⚠️ The overview parity matrix lists F16→06 for convenience; the<br>
+content-grid half is actually area 04.<br>
+<strong>Two different destinations behind three similar-looking controls (2026-09-11):</strong> the identity<br>
+block (photo/name/email, one grouped link) still bridges to the <strong>public</strong> creator profile (area<br>
+04, <code>/creator?self=1</code>); the MVs/Songs stat tiles bridge to the user's <strong>own</strong> creations list<br>
+instead (area 05, <code>/history?tab=mv</code>|<code>songs</code>). Before <code>YMW260910P0001</code> all three shared the public-<br>
+profile destination — don't assume they still do when reading older notes below.</p>
 <p><strong>Other key divergences:</strong> the <strong>Notifications row is removed</strong> (product owner, 2026-08-14 — the web<br>
 has no push/permission flow behind it, so it was an inert local toggle; <code>TBD-PROF-01</code> is moot on web)<br>
 ⚠️; Unsubscribe / Delete Account are <strong>demo toasts</strong> (Unsubscribe does not actually downgrade; Delete<br>
@@ -3795,7 +4190,7 @@ localized surfaces (nav + Profile). <code>/settings</code> copy is hardcoded Eng
 <h2 id="3-state-model-rules">3. State model &amp; rules</h2>
 <p><strong>Profile header</strong> (<code>ProfileView.tsx</code>): avatar (image or name-initial), name, <strong>PRO</strong> pill when<br>
 <code>subscribed</code>, email; edit-pencil → Edit-Profile modal.<br>
-<strong>Stat tiles</strong> (<code>:116-127</code>): <strong>Credits</strong> → <code>router.push('/profile/credits')</code> (area 07; its <strong>Buy More</strong> opens <code>BuyCreditsModal</code>, now mounted on that route); <strong>MVs</strong> → <code>/creator?self=1&amp;tab=mv</code>; <strong>Songs</strong> → <code>/creator?self=1&amp;tab=songs</code> (area 04). Counts derive from the <strong>static</strong> <code>SAMPLE_CREATIONS</code> (not the user's real creations) ⚠️.<br>
+<strong>Stat tiles</strong> (<code>:116-127</code>): <strong>Credits</strong> → <code>router.push('/profile/credits')</code> (area 07; its <strong>Buy More</strong> opens <code>BuyCreditsModal</code>, now mounted on that route); <strong>MVs</strong> → <code>/history?tab=mv</code>; <strong>Songs</strong> → <code>/history?tab=songs</code> (area 05 — changed from <code>/creator?self=1&amp;tab=…</code>, <code>YMW260910P0001</code>, 2026-09-11). Counts derive from the <strong>static</strong> <code>SAMPLE_CREATIONS</code> (not the user's real creations) ⚠️ — that mismatch is now sharper: the count comes from a fixture, but the tile now opens the user's REAL (live + seed) History list, which won't match the fixture count.<br>
 <strong>Rows</strong> (<code>:129-146</code>):</p>
 <ul>
 <li><strong>Muse Pro</strong> — not subscribed → an <strong>Upgrade</strong> pill (<code>.button--secondary</code>) + row click → <code>SubscribeModal</code> (area 07); subscribed → plan name + hardcoded "validity 2026-08-10", <strong>no pill</strong>, row click → <code>/profile/credits</code> (product owner, 2026-08-14).</li>
@@ -3803,12 +4198,14 @@ localized surfaces (nav + Profile). <code>/settings</code> copy is hardcoded Eng
 <li><strong>History</strong> — navigates to <code>/history</code> (area 05).</li>
 <li><strong>Send Feedback</strong> — opens <code>FeedbackDialog</code>: a <strong>5-field support ticket</strong> submitted through <code>MuseApi.submitFeedback</code> → <strong>§3.1</strong>. <em>(Replaced the one-textarea modal whose content was discarded, 2026-08-17. <code>TBD-PROF-02</code>'s frontend half is closed; the endpoint itself stays RD's.)</em></li>
 <li><strong>Settings</strong> — navigates to <code>/settings</code> (via <code>localePath</code>). Sign Out is no longer on this screen (PROF-03 moved it into Settings).<br>
-  ⚠️ The <code>?demo=1</code> panel's <code>profileEmpty</code> flag drives an empty state on the content grid the MVs/Songs<br>
-  tiles above link to — but that grid is <code>CreatorProfile</code> (<code>/creator?self=1</code>), which is <strong>area 04's</strong><br>
-  screen per this file's own §1 mapping note, not this one's. <code>profileEmpty</code> has <strong>no consumer inside<br>
-<code>/profile</code> or <code>/settings</code> themselves</strong> — grep confirms <code>CreatorProfile.tsx</code> is its only reader. Spec<br>
-  the behaviour in area 04; nothing on this screen changes when it is toggled. <code>subOnApp</code> (the other<br>
-  demo flag touching this area) already has its own note under <strong>Settings</strong> below.</li>
+  ⚠️ The <code>?demo=1</code> panel's <code>profileEmpty</code> flag drives an empty state on <code>CreatorProfile</code><br>
+  (<code>/creator?self=1</code>), which is <strong>area 04's</strong> screen, not this one's — reached from <code>/profile</code> via<br>
+  the <strong>identity block</strong> (photo/name/email), not the MVs/Songs tiles as this line said until<br>
+<code>YMW260910P0001</code> (2026-09-11) moved those tiles to <code>/history</code>. <code>profileEmpty</code> has <strong>no consumer<br>
+  inside <code>/profile</code>, <code>/settings</code>, or <code>/history</code> themselves</strong> — grep confirms <code>CreatorProfile.tsx</code> is<br>
+  its only reader. Spec the behaviour in area 04; nothing on this screen changes when it is<br>
+  toggled. <code>subOnApp</code> (the other demo flag touching this area) already has its own note under<br>
+<strong>Settings</strong> below.</li>
 </ul>
 <p><strong>Edit-Profile modal</strong> (<code>:363-435</code>): avatar upload is a <strong>real <code>&lt;input type="file" accept="image/*"&gt;</code></strong><br>
 since 2026-09-01 (product owner) — <strong>not</strong> the <code>AVATAR_SAMPLES</code>-cycle mock this line described until<br>
@@ -4123,7 +4520,7 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
 <h3 id="prof-p1-view-profile-hub">PROF-P1 — View profile hub</h3>
 <ul>
 <li><strong>PROF-P1-S1</strong> Open <code>/profile</code> (auth-gated). <strong>System:</strong> header + stat tiles + rows. <em>(The "PRO pill if subscribed" clause was removed 2026-08-19 — see <code>AC-PROF-01</code>.)</em></li>
-<li><strong>PROF-P1-S2</strong> Tap <strong>Credits</strong> tile → navigates to <code>/profile/credits</code>; <strong>MVs</strong>/<strong>Songs</strong> tile → <code>/creator?self=1&amp;tab=…</code> (area 04).</li>
+<li><strong>PROF-P1-S2</strong> Tap <strong>Credits</strong> tile → navigates to <code>/profile/credits</code>; <strong>MVs</strong>/<strong>Songs</strong> tile → <code>/history?tab=…</code> (area 05, <code>YMW260910P0001</code>).</li>
 </ul>
 <h3 id="prof-p2-edit-profile">PROF-P2 — Edit profile</h3>
 <ul>
@@ -4224,7 +4621,7 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
 <h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
 <ul>
 <li><strong>AC-PROF-01</strong> — WHEN <code>/profile</code> loads for a signed-in user, THE SYSTEM SHALL show avatar/name/email, a ~~PRO pill~~ iff subscribed, the Credits/MVs/Songs tiles, and the row list. <em>(Corrected 2026-08-19 — the PRO pill is REMOVED from this criterion. DP's <code>AccountPage</code> identity block is avatar + name + email + Edit, with no plan badge, and <code>AccountPage.css</code> has no class for one; building it would mean inventing a visual with no design. Subscription state already surfaces in the account menu's PRO/FREE badge and in the Muse Pro row below. Product owner decision.)</em></li>
-<li><strong>AC-PROF-02</strong> — WHEN a stat tile is tapped, THE SYSTEM SHALL navigate to <code>/profile/credits</code> (Credits) or to <code>/creator?self=1&amp;tab=mv|songs</code> (MVs/Songs). <em>(rewritten 2026-08-12: Credits Detail became a route on 2026-08-11)</em></li>
+<li><strong>AC-PROF-02</strong> — WHEN a stat tile is tapped, THE SYSTEM SHALL navigate to <code>/profile/credits</code> (Credits) or to <code>/history?tab=mv|songs</code> (MVs/Songs). <em>(rewritten 2026-09-11 for <code>YMW260910P0001</code>: MVs/Songs moved from <code>/creator?self=1&amp;tab=…</code> to <code>/history?tab=…</code>; previously rewritten 2026-08-12 when Credits Detail became a route on 2026-08-11)</em></li>
 <li><strong>AC-PROF-03</strong> — WHEN Edit-Profile is saved, THE SYSTEM SHALL commit name/avatar via <code>updateProfile</code> and reflect them in the shell (in-memory).</li>
 <li><strong>AC-PROF-04</strong> — WHEN the Muse Pro row is tapped, THE SYSTEM SHALL open the Subscribe modal (not subscribed) or the Credits detail (subscribed).</li>
 <li><strong>AC-PROF-05</strong> — WHEN Language is changed, THE SYSTEM SHALL switch locale via <code>setLocale</code> and reflect it in localized surfaces.</li>
@@ -4303,7 +4700,8 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
 <hr>
 <h2 id="9-flow-diagram">9. Flow diagram</h2>
 <pre><code class="language-mermaid">flowchart TD
-  Profile[&quot;/profile (account hub, auth)&quot;] --&gt; Tiles[&quot;Credits → CreditsDetail · MVs/Songs → /creator?self=1 (area 04)&quot;]
+  Profile[&quot;/profile (account hub, auth)&quot;] --&gt; Tiles[&quot;Credits → CreditsDetail · MVs/Songs → /history (area 05)&quot;]
+  Profile --&gt; Identity[&quot;Photo/Name/Email → /creator?self=1 (area 04)&quot;]
   Profile --&gt; Edit[&quot;Edit Profile (name/avatar, in-memory)&quot;]
   Edit --&gt; AvatarPick[&quot;Change Photo → file picker (image/*, ≤10MB)&quot;]
   AvatarPick --&gt;|&quot;accepted&quot;| AvatarCrop[&quot;FacePickerModal variant=avatar (circular crop)&quot;]
@@ -4324,7 +4722,8 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
   Settings --&gt; Del[&quot;Delete Account (demo toast → Home)&quot;]
 </code></pre>
 <hr>
-<p><strong>Decisions (as-built):</strong> <code>/profile</code> = Account-style hub (rows), community grid split to <code>/creator?self=1</code>;<br>
+<p><strong>Decisions (as-built):</strong> <code>/profile</code> = Account-style hub (rows), community grid split to <code>/creator?self=1</code><br>
+(identity block only — MVs/Songs stat tiles instead open <code>/history?tab=…</code>, <code>YMW260910P0001</code>, 2026-09-11);<br>
 edits/subscription in-memory; Unsubscribe/Delete are demo-only; Notifications is removed (2026-08-14);<br>
 <code>/settings</code> is auth-gated with Sign Out (not on <code>/profile</code>); Terms/Privacy are real links.</p>
 <h2 id="10-decisions-send-feedback-2026-08-17">10. Decisions — Send Feedback (2026-08-17)</h2>
@@ -5214,7 +5613,12 @@ native Share button were removed</strong> (social channels deferred → <code>TB
 <li><strong>Resolution order</strong> (<code>lib/share.ts</code>): <code>resolveShare(id, history)</code> tries community MV fixture →<br>
   community song fixture → the user's own <strong>completed</strong> in-memory History item → <strong>static<br>
 <code>HISTORY_SAMPLES</code></strong> (done MV/song, mapped to the shared demo video/audio) → else <code>null</code>.<br>
-<code>?type=expired</code> forces <code>null</code> (<code>ShareLinkView.tsx</code>).</li>
+<code>?type=expired</code> forces <code>null</code> (<code>ShareLinkView.tsx</code>).<br>
+  ⚠️ <strong><code>creator</code> is now populated on every branch (<code>YMW260910P0006</code>, product owner, 2026-09-12)</strong> —<br>
+  the two History-derived branches (own creation, static sample) used to omit it entirely, so a<br>
+  song shared from either showed no creator row at all (the community-fixture branches always had<br>
+  it). Both now attribute to <code>MOCK_USER.name</code>, matching what <code>/history</code> already shows for the same<br>
+  rows. Was reported as <code>h-golden-hour</code> (a <code>HISTORY_SAMPLES</code> id) missing its avatar.</li>
 <li><strong>Valid link (<code>SharedMedia</code> present) — REDESIGNED 2026-08-24</strong> (product owner, Figma<br>
   "Share Page - MV" / song equivalent, nodes <code>2906:61191</code> / <code>2881:57358</code>), which <strong>reverses</strong> the<br>
   2026-07-23 simplification this bullet used to describe:</li>
@@ -5224,8 +5628,9 @@ native Share button were removed</strong> (social channels deferred → <code>TB
 <li><strong><code>MvMoreMenu</code></strong> — <strong>Download · Playback Speed · Picture in Picture</strong>. Playback Speed <em>cycles</em><br>
 <code>[1, 1.5, 2, 0.5]</code> and deliberately keeps the menu open; the other two act once and close.<br>
     Closes on Escape or an outside click.</li>
-<li><strong><code>SongPanel</code></strong> — cover art, <strong>title + creator</strong> (the creator line only when the media carries<br>
-    one), and a pill controller: play/pause, <code>elapsed / total</code>, seek, mute, download.</li>
+<li><strong><code>SongPanel</code></strong> — cover art, <strong>title + creator</strong> (the creator line renders whenever the media<br>
+    carries one — every branch of <code>resolveShare</code> now does, see §3's resolution-order note), and a<br>
+    pill controller: play/pause, <code>elapsed / total</code>, seek, mute, download.</li>
 <li><strong>Two action pills</strong> below either panel: <strong>Download</strong> (rendered only when a media URL exists)<br>
     and a <strong>Create</strong> pill reading <strong><code>Try YouCam Muse</code></strong> on BOTH media kinds. ⚠️ <strong>It goes to the<br>
     HOME page</strong>, not to a create flow — product owner, 2026-08-24: this page is unauthenticated and<br>

@@ -709,8 +709,18 @@ async def main_guest(base):
         await page.wait_for_timeout(600)
         if "/mv/room" in page.url:
             raise SystemExit("the gated card navigated anyway while logged out")
-        await fixed("08_guest_toolcard_gated.png", [".login-modal--sign-in"],
-                    "Sign-in opens at the click — S6 owns this modal")
+        # YMW260909P0009 (product owner, 2026-09-12): QA misread this shot as
+        # "entering the creation page shows a sign-in dialog" — the modal frame
+        # alone gave no visual cue that the press happened on HOME's own
+        # tool-selector card, still visible (dimmed) behind the backdrop, not on
+        # a route inside the creation flow. A second frame around the card
+        # itself makes the trigger unambiguous without changing the shot or the
+        # behaviour it documents.
+        await multi_focus(cap, page, "08_guest_toolcard_gated.png", [
+            ([".tool-selector-v3__row > *:first-child"],
+             "The AI Music Video card that was pressed — still on Home, not a route", "info"),
+            ([".login-modal--sign-in"], "Sign-in opens at the click — S6 owns this modal", "action"),
+        ], full_page=False)
         await page.keyboard.press("Escape")
         await page.wait_for_timeout(600)
 

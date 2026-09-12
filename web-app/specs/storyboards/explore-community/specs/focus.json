@@ -394,6 +394,16 @@
   "08_guest_toolcard_gated.png": [
     {
       "box": [
+        30.2,
+        30.7,
+        27.1,
+        14.6
+      ],
+      "type": "info",
+      "label": "The AI Music Video card that was pressed \u2014 still on Home, not a route"
+    },
+    {
+      "box": [
         35.9,
         23.5,
         27.1,

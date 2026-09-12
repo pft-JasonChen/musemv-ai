@@ -63,8 +63,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Explore &amp; Community',
     'breadcrumb': 'YouCam Muse Web &rarr; Explore &amp; Community',
-    'author': 'Jason Chen', 'date': '2026-09-09', 'status': 'Draft',
-    'version': 'v2',
+    'author': 'Jason Chen', 'date': '2026-09-12', 'status': 'Draft',
+    'version': 'v3',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -210,9 +210,9 @@ cfg = {
                     ],
                 },
                 {
-                    'shot': '08_guest_toolcard_gated.png', 'num': 8,
+                    'shot': '08_guest_toolcard_gated.png', 'num': 8, 'since': 'v3',
                     'user': 'While signed out, presses a create card.',
-                    'system': 'The sign-in modal opens and the navigation does not happen.',
+                    'system': 'The sign-in modal opens and the navigation does not happen &mdash; the dimmed card behind it (framed separately below) is the one that was pressed, still on Home.',
                     'limits': [
                         ('The gate is on the ACTION, not the route: the screen was already fully visible.',
                          'AC-EXP-02 / AC-EXP-08.'),
@@ -906,6 +906,18 @@ cfg = {
     ],
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v3', '2026-09-12',
+         '<b>YMW260909P0009 &mdash; P1-S8 re-captured with a second frame.</b> '
+         'No behaviour changed: pressing a tool-selector card while signed out still opens the '
+         'sign-in modal without navigating (AC-EXP-02 / AC-EXP-08), unchanged since v1. QA had '
+         'read the single-frame shot as &ldquo;entering the creation page shows a sign-in '
+         'dialog&rdquo; &mdash; the modal frame alone gave no visual cue that the press happened '
+         'on a HOME card, still visible (dimmed) behind the backdrop, not on a route inside the '
+         'creation flow. <b>P1-S8</b> now frames the pressed card itself as a second, separately '
+         'labeled box on the same shot, alongside the modal. '
+         'Code: <code>capture_screenshots.py</code> (<code>main_guest</code>, '
+         '<code>multi_focus</code> in place of the single-target <code>fixed</code> call). '
+         'No app code changed &mdash; this is a documentation-clarity fix only.'),
         ('v2', '2026-09-09',
          '<b>YMW260902P0002 &mdash; /watch now plays WITH SOUND ON.</b> '
          'Changed: <b>P4-S1</b> (system line + a new limits row) and <b>AC-EXP-04</b>. '

@@ -50,6 +50,11 @@ Renders **bare** (no shell) — `AppShell` treats any `/share…` path as chrome
   community song fixture → the user's own **completed** in-memory History item → **static
   `HISTORY_SAMPLES`** (done MV/song, mapped to the shared demo video/audio) → else `null`.
   `?type=expired` forces `null` (`ShareLinkView.tsx`).
+  ⚠️ **`creator` is now populated on every branch (`YMW260910P0006`, product owner, 2026-09-12)** —
+  the two History-derived branches (own creation, static sample) used to omit it entirely, so a
+  song shared from either showed no creator row at all (the community-fixture branches always had
+  it). Both now attribute to `MOCK_USER.name`, matching what `/history` already shows for the same
+  rows. Was reported as `h-golden-hour` (a `HISTORY_SAMPLES` id) missing its avatar.
 - **Valid link (`SharedMedia` present) — REDESIGNED 2026-08-24** (product owner, Figma
   "Share Page - MV" / song equivalent, nodes `2906:61191` / `2881:57358`), which **reverses** the
   2026-07-23 simplification this bullet used to describe:
@@ -59,8 +64,9 @@ Renders **bare** (no shell) — `AppShell` treats any `/share…` path as chrome
   - **`MvMoreMenu`** — **Download · Playback Speed · Picture in Picture**. Playback Speed *cycles*
     `[1, 1.5, 2, 0.5]` and deliberately keeps the menu open; the other two act once and close.
     Closes on Escape or an outside click.
-  - **`SongPanel`** — cover art, **title + creator** (the creator line only when the media carries
-    one), and a pill controller: play/pause, `elapsed / total`, seek, mute, download.
+  - **`SongPanel`** — cover art, **title + creator** (the creator line renders whenever the media
+    carries one — every branch of `resolveShare` now does, see §3's resolution-order note), and a
+    pill controller: play/pause, `elapsed / total`, seek, mute, download.
   - **Two action pills** below either panel: **Download** (rendered only when a media URL exists)
     and a **Create** pill reading **`Try YouCam Muse`** on BOTH media kinds. ⚠️ **It goes to the
     HOME page**, not to a create flow — product owner, 2026-08-24: this page is unauthenticated and

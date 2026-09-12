@@ -13,6 +13,10 @@ import { MOCK_USER } from "@/lib/user";
 
 export type { Badge, CommunityCreator, CommunityMv, CommunitySong } from "@/lib/api/schemas";
 
+// YMW260910P0022 (product owner, 2026-09-11): the HOT badge is retired across
+// every fixture below — NEW is unaffected. `BadgeSchema` still allows "HOT"
+// for a future drop.
+
 const V_SINGING = "/assets/videos/mv-preview/feature_intro_ai_mv_singing_480x640.mp4";
 const V_STORY = "/assets/videos/mv-preview/feature_intro_ai_mv_storytelling_480x640.mp4";
 const V_HYBRID = "/assets/videos/mv-preview/feature_intro_ai_mv_hybrid_480x640.mp4";
@@ -32,7 +36,7 @@ export const NEW_MVS: CommunityMv[] = [
     title: "Cinematic Dark",
     thumb: mv("mv_01_cinematic_dark.jpg"),
     video: V_SINGING,
-    badge: "HOT",
+    badge: null,
     meta: "Popular | 2-3 min",
     prompt: "A cinematic dark visual journey — neon lights, dramatic angles, emotive close-ups.",
     mvType: "singing",
@@ -178,7 +182,7 @@ export const NEW_MVS: CommunityMv[] = [
     title: "Urban Fashion",
     thumb: mv("mv_10_monochrome.jpg"),
     video: V_SINGING,
-    badge: "HOT",
+    badge: null,
     meta: "Hot | 2-3 min",
     prompt: "Street style meets music — bold fashion, urban energy, attitude-filled performance.",
     mvType: "singing",
@@ -316,7 +320,7 @@ export const TRENDING_MVS: CommunityMv[] = [
     title: "Midnight Serenade",
     thumb: mv("mv_02_late_night_stage.jpg"),
     video: V_SINGING,
-    badge: "HOT",
+    badge: null,
     meta: "Singing · 2-3 min",
     prompt: "An intimate midnight performance — hushed piano, close framing, quiet longing.",
     mvType: "singing",
@@ -573,7 +577,7 @@ export const TOP_PICKS_SONGS: CommunitySong[] = [
     likes: 1300,
     shares: 210,
     date: "2026-06-05",
-    badge: "HOT",
+    badge: null,
     lyrics: lyr("Neon Pulse"),
   },
   {
@@ -652,7 +656,7 @@ export const TOP_PICKS_SONGS: CommunitySong[] = [
     likes: 990,
     shares: 130,
     date: "2026-05-31",
-    badge: "HOT",
+    badge: null,
   },
   {
     id: "sp-retro-funk",

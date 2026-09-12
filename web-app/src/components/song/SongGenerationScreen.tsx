@@ -29,9 +29,14 @@ const WAVE_BAR_HEIGHTS = [
  * second, fictional progress indicator running beside a real one.
  *
  * Everything else DP has no design for is kept, for the same reasons as the
- * storyboard's processing stage: the failure path with Retry (DP cannot fail),
- * the `alreadyDone` forward that stops a rehydrated result hanging at 0%, and
- * the mid-flow guard back to `/song/create`.
+ * storyboard's processing stage: the failure path (DP cannot fail), the
+ * `alreadyDone` forward that stops a rehydrated result hanging at 0%, and the
+ * mid-flow guard back to `/song/create`.
+ *
+ * **No Retry button** (product owner, `YMW260910P0020`, 2026-09-12) — the
+ * failure state offers only **Back** to `/song/create`, where the user can
+ * adjust input and generate again. This deliberately diverges from the
+ * sibling MV storyboard's failure screen, which still has one.
  */
 export function SongGenerationScreen() {
   const router = useRouter();
@@ -108,7 +113,7 @@ export function SongGenerationScreen() {
               </p>
               <p className="song-processing__subtitle">
                 {failed ? (
-                  "Something went wrong while generating. Your credits were not charged — you can retry now or adjust your input and try again."
+                  "Something went wrong while generating. Your credits were not charged — adjust your input and try again."
                 ) : (
                   <>
                     AI is generating your original track.
@@ -119,17 +124,7 @@ export function SongGenerationScreen() {
               </p>
             </div>
 
-            {failed ? (
-              <div className="song-processing__progress">
-                <button
-                  type="button"
-                  className="button button--medium button--primary"
-                  onClick={startSong}
-                >
-                  <span className="button__label">Retry</span>
-                </button>
-              </div>
-            ) : (
+            {!failed && (
               <div className="song-processing__progress">
                 <div className="song-processing__progress-track">
                   <div

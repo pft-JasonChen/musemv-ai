@@ -187,6 +187,17 @@ export function isComposeReady(s: ComposeState): boolean {
 }
 
 /**
+ * Display title for an in-progress or just-finished MV (History row,
+ * generating-state placeholder). Mirrors the mock backend's own
+ * storyboard-title precedence — the user's own MV-name setting first, the
+ * matched song's title otherwise — so a custom name set in MV Settings is
+ * never silently dropped in favor of the source song's name (`YMW260911P0005`).
+ */
+export function mvDisplayTitle(s: Pick<ComposeState, "settings" | "song">): string {
+  return s.settings.title.text || s.song?.title || "Untitled MV";
+}
+
+/**
  * Length that will actually be used in the MV: the trim range when set,
  * the full track otherwise. `durationSec` itself is ALWAYS the full length.
  */
@@ -197,7 +208,9 @@ export function effectiveDurationSec(song: Pick<Song, "durationSec" | "trim">): 
 // ── AI Song ──────────────────────────────────────────────────────────────
 
 export const DEFAULT_SONG_COMPOSE: SongCompose = {
-  mode: "simple",
+  // YMW260910P0021 (product owner, 2026-09-11): default tab is Custom, not
+  // Simple — SongCompose.tsx's tab row is reordered to match (Custom first).
+  mode: "custom",
   describe: "",
   instrumental: false,
   lyrics: "",

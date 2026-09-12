@@ -129,6 +129,7 @@ export function MvResult() {
   // DP puts behind a portrait video. Passing the .mp4 URL to an `<img>` there
   // would render a broken image behind a pillarboxed video.
   const poster = entry?.thumb ?? storyboard?.characterImage;
+  const characterCount = entry?.photoCount ?? compose.photos.length;
 
   useEffect(() => {
     if (!resultUrl) router.replace(localePath(locale, "/mv/room"));
@@ -405,7 +406,11 @@ export function MvResult() {
                 ["Aspect Ratio", compose.settings.ratio],
                 ["Quality", compose.settings.resolution],
                 ["Scenes", storyboard ? String(storyboard.scenes.length) : "—"],
-                ["Character", compose.photos.length ? String(compose.photos.length) : "—"],
+                // A History-opened MV has no live `compose.photos` (useOpenCreation
+                // can't reconstruct actual photos), so prefer the count persisted
+                // at generation time; a live, just-generated flow has no `entry`
+                // yet and falls back to the real array (YMW260911P0007).
+                ["Character", characterCount ? String(characterCount) : "—"],
                 ["Subtitle", compose.settings.showSubtitle ? "On" : "Off"],
                 ["Watermark", compose.settings.watermark ? "On" : "Off"],
               ] as const

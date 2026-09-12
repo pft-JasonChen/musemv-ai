@@ -15,9 +15,9 @@ Result: **11 bugs**, all currently `NewCreated`. Handler on all 11 is `JASON_CHE
 |---|-----|--------|
 | 1 | YMW260910P0011 | ⏸️ Not touched — you're having someone else handle it |
 | 2 | YMW260910P0010 | ⏸️ Not touched — already fixed previously; you'll reply to the eBug directly |
-| 3 | YMW260910P0006 | ❓ Needs a design decision — see below |
+| 3 | YMW260910P0006 | ✅ Fixed 2026-09-12, spec updated, confirmed live |
 | 4 | YMW260910P0001 | ✅ Fixed, spec updated, confirmed live |
-| 5 | YMW260909P0009 | ⏸️ Ignored, per your instruction (code shows it's already gated) |
+| 5 | YMW260909P0009 | ✅ Fixed 2026-09-12 — spec screenshot re-captured with clearer annotation |
 | 6 | YMW260909P0008 | ✅ Fixed, spec updated, confirmed live |
 | 7 | YMW260909P0003 | ✅ Fixed, confirmed live |
 | 8 | YMW260907P0012 | ✅ Fixed (root cause found); can't confirm on real iOS from here |
@@ -51,28 +51,29 @@ There's no "Unpublish to edit" control left to reproduce this bug against.
 
 ---
 
-## [ ] 3. YMW260910P0006 — needs a design decision
+## [x] 3. YMW260910P0006 — ✅ FIXED, confirmed live
 **Short Description:** [History] Shows additional avatar on sharing music link.
 
-**Investigated but not implemented — this needs your call, not a guess.**
+**Your 2026-09-12 decision:** show the avatar on every shared song link — you confirmed
+`share?id=h-golden-hour` was the one actually missing it, which is what earlier investigation
+(comparing it against `sp-neon-static`, which had one) had flagged as the discrepancy but stopped
+short of diagnosing.
 
-- The Song share panel ([ShareLinkView.tsx](src/components/share/ShareLinkView.tsx)) renders
-  exactly ONE avatar element — a generic gray "person" icon (`ic_user`) next to the creator's name.
-  There's no code-level duplication.
-- Checked live at `http://localhost:3000/share?id=sp-neon-static` (a community song credited to the
-  current user): confirmed only one avatar node in the DOM.
-- The data model has **no real per-creator avatar image at all** — `CommunitySong`/`CommunityMv`
-  only carry a `creator: string` name (`src/lib/mv/community.ts`), so "show the correct avatar"
-  would mean adding new avatar data/assets, not just a code fix.
-- The bug's own **Expected Result** offers two different fixes: *"Should not show it, or should
-  show the correct avatar"* — those are two different amounts of work (remove an element vs. add a
-  data field), and I don't think you meant for me to pick one silently.
-
-**Question:** for a shared song/MV's creator row, do you want (a) the avatar removed entirely, or
-(b) real avatar data added per creator? SMITH_LEE's comment also pointed at two comparison links —
-`https://musemv-ai.vercel.app/cht/share?id=h-golden-hour` and `.../share?id=ns-memory-lane` — worth
-opening those against current `/share?id=sp-neon-static` if you want to eyeball the difference
-yourself.
+- **Root cause:** [share.ts](src/lib/share.ts)'s `resolveShare()` has four resolution branches —
+  community MV fixture, community song fixture, the user's own completed History item, and static
+  `HISTORY_SAMPLES`. Only the two COMMUNITY branches ever set `creator`; the two HISTORY-derived
+  branches (own creation, static sample) never did. `SongPanel`'s creator row (avatar + name) is
+  conditional on `media.creator` being present, so any song shared from either History-derived
+  branch silently rendered with no creator row at all. `h-golden-hour` is a `HISTORY_SAMPLES` id —
+  exactly the branch that omitted it.
+- **Fix:** both branches now set `creator: MOCK_USER.name` — the same attribution `/history`
+  already shows for these exact rows ("Golden Hour / Scott Wu").
+- Spec updated: `specs/areas/10-share.md` §3; recorded in `specs/CHANGELOG-SPEC.md`.
+- **Confirmed live:** `/share?id=h-golden-hour` now shows the avatar + "Scott Wu", where it
+  previously showed nothing.
+- **Scope note:** this only affects `SongPanel` — `MvPanel` never renders a creator row at all
+  (settled as deliberate per this spec's own D-11-adjacent note, "a music video usually carries its
+  own title on screen"), so MV share links are unaffected and unchanged.
 
 ---
 
@@ -101,13 +102,34 @@ stays on the public Creator profile.
 
 ---
 
-## [ ] 5. YMW260909P0009 — ignored, per your instruction
+## [x] 5. YMW260909P0009 — ✅ FIXED (spec clarity, no behavior change), confirmed
 **Short Description:** [EXPLORE COMMUNITY] Signed-out creation action bypasses the sign-in gate
 
-You said: if this is already fixed, ignore it. Matches what I found — every creation entry point
-(Home hero, tool selector, `/watch`'s Create MV) already calls `requireLogin` before navigating,
-and the bug's own repro path ("Trending Music Videos → see all → AI Music Video creation card")
-doesn't match any element on `/explore/mvs` (that page has no creation card). No code change made.
+**Reopened 2026-09-12.** You identified the actual root cause: QA misread this exact storyboard
+screenshot (`specs/storyboards/explore-community`, step **P1-S8**,
+`08_guest_toolcard_gated.png`) as "entering the creation page shows a sign-in dialog", when the
+real (and correctly-implemented) rule is "pressing a create card on Home opens the gate without
+navigating" (`AC-EXP-02`/`AC-EXP-08`) — confirmed unchanged and correct by re-reading
+`capture_screenshots.py`'s own capture steps. You chose **"re-capture with clearer annotation"**:
+same screen, same behavior, but make the trigger visually unambiguous.
+
+- [capture_screenshots.py](specs/storyboards/explore-community/capture_screenshots.py): the shot
+  now uses `multi_focus` with TWO labeled frames instead of one — the tool-selector card that was
+  actually pressed (still visible, dimmed, behind the modal backdrop) gets its own box and label
+  ("...still on Home, not a route"), alongside the existing modal frame.
+- Re-captured live against a running dev server (`CHROMIUM_PATH` pointed at an installed build
+  since the pinned one wasn't present, per `AGENTS.md`'s own escape hatch) and rebuilt
+  `spec.html`/`spec-bundled.html`. `user-flowchart.svg`'s version stamp and `build_spec.py`'s
+  header/changelog bumped to **v3** (2026-09-12) — the validator requires the stamp to match the
+  spec version; no path or step actually moved, confirmed by a near-zero SVG diff (1 line, the
+  stamp text only).
+- `specs/index.html` regenerated to pick up this and the same-day P0006/P0008/P0020 spec edits.
+- **Verified via direct DOM/computed-style inspection** (both `.fbox` annotation elements present
+  at the recorded coordinates, image loaded at full resolution) — the Browser pane's screenshot
+  tool would not paint this specific scroll depth for a visual check, a pane-side quirk unrelated
+  to the content.
+- **No app code changed** — `AC-EXP-02`/`AC-EXP-08` and the gate itself are untouched; this was a
+  documentation-clarity fix only.
 
 ---
 
@@ -203,3 +225,174 @@ root-caused it (OpenAI flagged the generated lyrics as copyrighted content) and 
 `error_nsfw_content_detected`
 ([commit](https://github.com/perfect-corp/MTAudio/commit/0ab65e31fff1bd60d3eb697402294e7469ba08ab));
 the open ask from SMITH_LEE was for PM to specify the user-facing behavior for that error.
+
+---
+
+# Re-pull (same day, 2026-09-11) — 8 new eBugs
+
+Re-queried `TSR.EbugSearch` (same filters) at your request ("又有新的bug，請上網頁重新撈下來"). Of
+12 currently-open PM bugs, 8 are new since the pull above (the other 4 — P0006/P0009/P0010 unchanged
+below; the rest of the original 11 have moved off NewCreated/Assigned since being fixed/decided).
+
+**Result:**
+
+| # | Bug | Status |
+|---|-----|--------|
+| 1 | YMW260910P0008 | ✅ Spec corrected (2026-09-12 decision); no code change |
+| 2 | YMW260910P0020 | ✅ Fixed (Retry removed), spec updated, confirmed live |
+| 3 | YMW260910P0021 | ✅ Fixed, spec updated, confirmed live |
+| 4 | YMW260910P0022 | ✅ Fixed, spec updated, confirmed live |
+| 5 | YMW260911P0003 | ⏸️ Deferred to designer, per your instruction — not touched |
+| 6 | YMW260911P0004 | ✅ Fixed (loading fallback added) |
+| 7 | YMW260911P0005 | ✅ Fixed, spec updated, confirmed live |
+| 8 | YMW260911P0007 | ✅ Fixed, spec updated, confirmed live |
+
+`typecheck` / `lint` / `test:run` / `build` are all green throughout both passes. Not committed
+(per your instruction).
+
+---
+
+## [x] 1. YMW260910P0008 — ✅ spec corrected, per your 2026-09-12 decision
+**Short Description:** [EXPLORE COMMUNITY] Create MV handoff omits matched song and title
+
+I had flagged that the code (`CommunityMvPlayer.tsx`'s `createMv()`, since 2026-08-05) actually
+prefills matched song + title too, live-verified, contradicting the eBug and your own earlier
+comment. You reaffirmed 2026-09-12: **V1 only carries prompt + video type; spec needs updating** —
+so this is the decided scope regardless of what the demo currently shows.
+
+- Spec updated: `specs/areas/04-explore-community.md` §3.3 (`/watch` MV player row) now states V1's
+  intended scope (prompt + type only) as the primary line, with an inline note recording that the
+  current mock/prototype code still prefills the matched song + title too (unchanged — nobody
+  asked for that to be removed) so the two don't silently drift back into agreement unnoticed.
+- **No code change** — `createMv()` is untouched. If you want the demo brought down to match V1's
+  reduced scope exactly, that's a separate ask.
+- Recorded in `specs/CHANGELOG-SPEC.md`.
+
+---
+
+## [x] 2. YMW260910P0020 — ✅ FIXED (Retry removed), confirmed live
+**Short Description:** [AI Song] UI for failed to generate AI song is inconsistent with mockup
+
+Your 2026-09-12 instruction: **remove the Retry button from the prototype and spec.**
+
+- [SongGenerationScreen.tsx](src/components/song/SongGenerationScreen.tsx): the failure state's
+  Retry button (and its container) is removed; the subtitle copy no longer says "you can retry
+  now". The screen now offers **Back** only — matching the precedent already set on the MV
+  storyboard's own failure screen (`e2e`'s `G5-d#5`, product owner, 2026-09-02, same reasoning: a
+  `[fail]` compose always re-fails deterministically, so Retry was a dead-end affordance).
+- Spec updated: `specs/areas/03-song-creation.md` §5 (SONG-E1); recorded in
+  `specs/CHANGELOG-SPEC.md`.
+- **Confirmed live:** `/song/create` → Simple → `[fail] ...` → Create Song → the failure screen
+  shows "Generation Failed" + the updated message + a single **Back** button, no Retry.
+- **Not addressed (out of scope, per SMITH_LEE's own ticket comment):** the back-button question is
+  tracked in a different eBug; "Description is different" (exact copy vs. the mockup image) wasn't
+  re-checked, since your instruction only named Retry.
+
+---
+
+## [x] 3. YMW260910P0021 — ✅ FIXED, confirmed live
+**Short Description:** [Alice Feedback] AI Song 預設Tab 改成 Custom，另外把Custom 跟 Simple Tab 位置對調
+
+- [types.ts](src/lib/mv/types.ts): `DEFAULT_SONG_COMPOSE.mode` → `"custom"` (was `"simple"`).
+- [SongCompose.tsx](src/components/song/SongCompose.tsx): tab row now maps `["custom", "simple"]`
+  (was `["simple", "custom"]`) — a straight swap of DP's order, not a rename.
+- Spec updated: `specs/areas/03-song-creation.md` (SONG-P1-S1, AC-SONG-01, the §4 decisions
+  paragraph); recorded in `specs/CHANGELOG-SPEC.md`.
+- **Scope note:** this default flip broke the *implicit* assumption in 11 e2e tests (they went
+  straight to `/song/create` and filled the Simple placeholder with no tab click). All 11 in
+  `e2e/behaviour-regressions.spec.ts` plus 1 in `e2e/song-flow.spec.ts` now explicitly select
+  **Simple** before touching it — same behavior under test, just no longer relying on which tab
+  happens to be first.
+- **Confirmed live:** `/song/create` opens on **Custom** (LYRICS/IDEA, STYLE, GENRE/MOOD/VOCAL,
+  SONG TITLE all visible by default; Create Song shows "6" and is enabled), Simple is the second tab.
+- **Not evaluated:** `npm run e2e` itself (per `AGENTS.md` — the Stop hook owns that run); the visual
+  baseline for `/song/create` will need re-recording since the default screen changed (flagged, not
+  done, per the same rule other slices have followed).
+
+---
+
+## [x] 4. YMW260910P0022 — ✅ FIXED, confirmed live
+**Short Description:** [Feedback] Explore/ Trending MV/ Top Picked Songs 無需標示HOT tag
+
+- [community.ts](src/lib/mv/community.ts): all 5 `badge: "HOT"` fixture rows → `badge: null`.
+  `"NEW"` badges are untouched. This is the single shared fixture file every HOT/NEW-showing rail
+  (Home's Trending MVs / Top Picks Songs, `/explore/mvs`, `/explore/songs`) reads from, so one
+  data-level change covers all of them — no component code changed.
+- Spec note added in `specs/areas/04-explore-community.md`; recorded in `specs/CHANGELOG-SPEC.md`.
+- **Confirmed live** on `/`: the card that showed the "HOT" pill now shows no badge at all; the
+  adjacent "NEW" card is unchanged.
+
+---
+
+## [ ] 5. YMW260911P0003 — deferred to designer, per your instruction
+**Short Description:** [AI Song][Mobile] Volume adjustment is only available in History's song
+
+You said: *"我們現在不用處理，會請designer調整"* (no need to handle this now, will have the
+designer adjust it). Left as-is — no code or spec change. For the record: the ticket's own Expected
+Result was a question ("please check if this needs to be synced or is expected behavior"), not a
+defect with a known answer, which is why this was flagged rather than guessed at.
+
+---
+
+## [x] 6. YMW260911P0004 — ✅ FIXED
+**Short Description:** [AI Music Video] Display gray without any loading animation after pressing F5 or switching tab between AI Music Video and AI Songs.
+
+- **Root cause:** no route in the tree had a `loading.tsx`, so Next.js had no fallback UI to show
+  while a route's JS streamed in on a slow load or a segment switch — just whatever the page
+  background happens to be, with nothing on it.
+- [app/[locale]/loading.tsx](src/app/[locale]/loading.tsx): one shared spinner (existing
+  `--accent` token, no new visual asset) covering every route under the locale segment, rather than
+  one per screen.
+- Spec note added in `specs/CHANGELOG-SPEC.md` (cross-cutting, not tied to one area's spec).
+- **Not verified with a slow-load repro** — this needs network throttling deep enough to observe
+  the fallback actually mount, which wasn't practical to stage reliably in this session; the
+  typecheck/build passing confirms the file is wired into the route tree correctly. Flag me if you
+  want it checked with DevTools throttling before you consider this closed.
+
+---
+
+## [x] 7. YMW260911P0005 — ✅ FIXED, confirmed live
+**Short Description:** [History] Title of generating MV shows "Untitled Creation" which is not sync with Songs.
+
+- **Root cause:** `MvFlowProvider`'s `upsertGenerating` built the History row's title as
+  `compose.song?.title ?? "Untitled MV"` — the SOURCE SONG's title, never the user's own "MV TITLE"
+  setting (`compose.settings.title.text`, the field in MV Settings). A generating SONG's row already
+  used the real generated title; a generating MV's row never could, no matter what the user typed
+  into the MV name field.
+- [types.ts](src/lib/mv/types.ts): new `mvDisplayTitle(compose)` helper — `settings.title.text ||
+  song?.title || "Untitled MV"` — mirrors the precedence the mock backend's own storyboard snapshot
+  already used, so History and the storyboard now agree.
+- [MvFlowProvider.tsx](src/components/providers/MvFlowProvider.tsx): both `upsertGenerating` calls
+  (`startStoryboard`, `startRender`) now use it.
+- Spec updated in `specs/CHANGELOG-SPEC.md`.
+- **Confirmed live:** set a custom MV name ("My Custom MV Name P0005") in Settings, generated with a
+  different song ("Summer Vibes") attached — the History "Generating…" card showed the custom name,
+  not the song's.
+
+---
+
+## [x] 8. YMW260911P0007 — ✅ FIXED, confirmed live
+**Short Description:** [AI Music Video] Character always shows "—".
+
+- **Root cause:** the Character detail row on `/mv/result` reads `compose.photos.length`, but
+  `useOpenCreation.ts` (what seeds the flow when a History row or a "My Creations" rail item is
+  opened) never reconstructs `photos` — it can't, the actual uploaded images aren't persisted
+  anywhere. So **any** MV opened from History showed "—" for Character regardless of whether
+  character photos were used at creation time, which is exactly what "select any MV to check
+  result" would show. The row isn't dead — it does reflect real state for a fresh, in-session
+  result — it's just that reopening one from History always destroyed the information.
+- [HistoryProvider.tsx](src/components/providers/HistoryProvider.tsx): new optional
+  `HistoryItem.photoCount` field (additive).
+- [MvFlowProvider.tsx](src/components/providers/MvFlowProvider.tsx): both `upsertGenerating` calls
+  now pass `photoCount: compose.photos.length`.
+- [MvResult.tsx](src/components/mv/MvResult.tsx): Character row now reads
+  `entry?.photoCount ?? compose.photos.length` — the persisted count when opened from History, the
+  live array otherwise.
+- Spec updated in `specs/CHANGELOG-SPEC.md`.
+- **Confirmed live:** generated an MV with 2 character photos and a custom name, then opened it from
+  the History rail — Character correctly read **"2"**, not "—".
+- **Noted, not fixed (separate, pre-existing, out of scope):** reopening an MV from History also
+  shows the MV's own title in the "Music" detail row instead of the original matched song's title
+  — `useOpenCreation`'s reseeding never distinguished the two either. Same limitation as the
+  Character count had, just not the thing this eBug asked about; flag me if you want that
+  addressed too.

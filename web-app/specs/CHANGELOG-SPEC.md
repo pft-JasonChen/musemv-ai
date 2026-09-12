@@ -25,6 +25,43 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-09-12 — Three more eBug-driven decisions
+
+### Shared song links: creator/avatar now populated on every resolution branch
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/10-share.md` §3 (resolution order note, `SongPanel` bullet). |
+| **Why** | `YMW260910P0006` — product owner: a shared song link should show the creator avatar; `share?id=h-golden-hour` (a `HISTORY_SAMPLES` id) didn't. |
+| **Decision** | Bug, not a product decision: `resolveShare()`'s two History-derived branches (the user's own completed creation, and static `HISTORY_SAMPLES`) never set `creator` at all, while both community-fixture branches always did — `SongPanel`'s creator row is conditional on `media.creator`, so those two branches silently rendered with no avatar. Both now attribute to `MOCK_USER.name`, matching what `/history` already shows for the same rows. |
+| **Code** | `lib/share.ts` — `resolveShare()`'s `own` and `sample` branches now set `creator: MOCK_USER.name`. |
+| **Tests** | No existing unit/e2e test covered `resolveShare`'s `creator` field; none needed updating. |
+| **Contract** | None (`SharedMedia.creator` was already optional; this only changes when it's populated). |
+
+### `/watch`'s Create MV handoff: V1 scope corrected to prompt + type only
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/04-explore-community.md` §3.3 (`/watch` MV player row). |
+| **Why** | `YMW260910P0008` — product owner: V1 only carries prompt + video type into `/mv/room`; the spec's own line overclaimed matched-song + title. |
+| **Decision** | Product owner reaffirmed the reduced scope on 2026-09-12, after being shown that the current mock code (`CommunityMvPlayer.tsx`, since `cdba535c`, 2026-08-05) actually prefills all four fields and works live. The spec now states V1's intended scope for the real backend; the demo currently exceeds it, recorded inline rather than silently reconciled either direction. |
+| **Code** | None changed — nobody asked for `createMv()`'s extra prefill to be removed. |
+| **Tests** | None affected. |
+| **Contract** | None (spec-only). |
+
+### AI Song generation-failed screen: Retry removed
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/03-song-creation.md` §5 (SONG-E1). |
+| **Why** | `YMW260910P0020` — product owner: remove the Retry button from the prototype and spec. |
+| **Decision** | `SongGenerationScreen`'s failure state now offers **Back** only, matching the precedent already set on the MV storyboard's own failure screen (`YMW260910P0020` mirrors the 2026-09-02 MV decision — see `e2e`'s `G5-d#5`: "Back-only (no Retry)" — same reasoning, a `[fail]` compose always re-fails deterministically, so Retry was a dead-end affordance). |
+| **Code** | `song/SongGenerationScreen.tsx` — removed the Retry button and its container; copy no longer says "you can retry now". |
+| **Tests** | No existing e2e exercised the Song `[fail]` path directly, so none needed updating. |
+| **Contract** | None. |
+
+---
+
 ## 2026-09-11 — Two eBug-driven product decisions
 
 Both from the same PM triage pass over `YMW26091*`/`YMW26090*` eBugs. Neither is a "fix the bug as
@@ -52,6 +89,61 @@ is the change, not the code alone.
 | **Code** | `HistoryView.tsx`'s `Menu` component, the Share `OptRow` condition. |
 | **Scope note** | `CreatorProfile.tsx` has its own, separately-coded Share entry that is documented as mirroring `HistoryView`'s menu — **not touched in this pass**, flagged for the PM to confirm before extending the same gate there. |
 | **Tests** | Not yet added — flagged for a follow-up pass. |
+| **Contract** | None. |
+
+### AI Song: Custom is now the default tab, Simple second
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/03-song-creation.md` §4 (SONG-P1-S1), §6 (AC-SONG-01), §4 decisions paragraph. |
+| **Why** | `YMW260910P0021` — product owner wants Custom-first, reversing the original Simple-first order. |
+| **Decision** | Product owner, 2026-09-11: `DEFAULT_SONG_COMPOSE.mode = "custom"`; the tab row renders Custom then Simple (was Simple then Custom) — a straight swap of DP's original order. |
+| **Code** | `lib/mv/types.ts` (`DEFAULT_SONG_COMPOSE`); `song/SongCompose.tsx` (tab render order). |
+| **Tests** | `e2e/song-flow.spec.ts` and 11 sites in `e2e/behaviour-regressions.spec.ts` updated to select Simple explicitly where that tab (not the new default) is what's under test. |
+| **Contract** | None (`SongCompose.mode`'s default value, not its shape). |
+
+### Explore/Home rails: the HOT badge is retired
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/04-explore-community.md` (community card `badge` field, wherever it is rendered — Explore, Home's Trending/Top Picks rails, `/explore/songs`). |
+| **Why** | `YMW260910P0022` — product owner decided the HOT tag adds no value; NEW stays. |
+| **Decision** | Product owner, 2026-09-11: every `badge: "HOT"` fixture row becomes `badge: null`. `"NEW"` is untouched. |
+| **Code** | `lib/mv/community.ts` (fixture data only — the four consuming card components are unchanged). |
+| **Tests** | None referenced "HOT" by name; none needed updating. |
+| **Contract** | None (data, not schema — `BadgeSchema` still allows `"HOT"` for a future drop). |
+
+### History: a generating MV's placeholder title now matches its own MV-name setting
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/05-history.md` (generating-row title source), `areas/02-mv-creation.md` (`settings.title.text`, the "MV TITLE" field). |
+| **Why** | `YMW260911P0005` — a generating MV's History card showed the SOURCE SONG's title (or "Untitled MV"), never the user's own MV-name setting, while a generating Song's card already shows the song's real title. |
+| **Decision** | Bug, not a product decision: `MvFlowProvider`'s `upsertGenerating` ignored `compose.settings.title.text` entirely. The mock backend's own storyboard snapshot already prioritizes it (`settings.title.text || song?.title`) — the History-facing call now matches that precedence. |
+| **Code** | `providers/MvFlowProvider.tsx` (`startStoryboard`, `startRender`). |
+| **Tests** | Not yet added — flagged for a follow-up pass. |
+| **Contract** | None. |
+
+### MV Result's Character row is accurate for a re-opened History entry
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/02-mv-creation.md` (Character/Music/Scenes detail rows on `/mv/result`). |
+| **Why** | `YMW260911P0007` — QA saw Character always read "—". Root cause: `useOpenCreation`'s History-row seeding never carried a photo count, so ANY MV reopened from History (or a "My Creations" rail) showed "—" regardless of whether the original had character photos. |
+| **Decision** | Bug, not a product decision: persist the count at generation time (`HistoryItem.photoCount`) and prefer it on `/mv/result` when the entry is a History row; a live, just-generated flow still reads the count off `compose.photos` directly. |
+| **Code** | `providers/HistoryProvider.tsx` (`HistoryItem.photoCount`, optional/additive); `providers/MvFlowProvider.tsx` (`upsertGenerating` now passes it); `mv/MvResult.tsx` (`entry?.photoCount ?? compose.photos.length`). |
+| **Tests** | Not yet added — flagged for a follow-up pass. |
+| **Contract** | Additive field on the in-memory `HistoryItem` shape (not part of `MuseApi`/C1–C8 — see `docs/CHANGELOG-RD.md` note anyway, since a real history endpoint will need to carry this). |
+
+### Every route gets a loading fallback
+
+| | |
+| --- | --- |
+| **Criteria** | None specific — a cross-cutting Next.js App Router convention, not a screen-level behaviour. |
+| **Why** | `YMW260911P0004` — F5 or a route switch (e.g. AI Music Video ↔ AI Song) showed a blank/gray screen with no feedback while the new route's JS loaded, because no route in the tree had a `loading.tsx`. |
+| **Decision** | Add one shared `src/app/[locale]/loading.tsx` (a small centered spinner using existing tokens) rather than one per route — consistent everywhere, smallest diff. |
+| **Code** | `app/[locale]/loading.tsx` (new). |
+| **Tests** | None — a route-transition loading state isn't practically assertable in Playwright (it needs a slow chunk load to ever mount), same reasoning as the demo panel's manual-only paths. |
 | **Contract** | None. |
 
 ---

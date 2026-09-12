@@ -13,6 +13,14 @@ export interface HistoryItem {
   thumb: string;
   status: "generating" | "completed" | "failed";
   resultUrl?: string;
+  /**
+   * Count of character photos used at MV creation time (`compose.photos.length`).
+   * Additive, MV-only. `/mv/result`'s Character detail row reads this when the
+   * screen was opened from a History row rather than the live flow, since
+   * `useOpenCreation`'s seeding has no way to reconstruct the actual photos
+   * (`YMW260911P0007`).
+   */
+  photoCount?: number;
 }
 
 interface HistoryValue {

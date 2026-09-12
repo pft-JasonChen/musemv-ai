@@ -8,6 +8,9 @@ test("AI Song: describe -> compose -> result", async ({ page }) => {
   // runs so the guard sees a logged-in user instead of opening the sign-in modal.
   await page.addInitScript(() => window.localStorage.setItem("muse_auth", "1"));
   await page.goto("/song/create");
+  // YMW260910P0021 (2026-09-11): Custom is now the default tab — this spec
+  // exercises Simple specifically, so select it explicitly.
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
 
   const cta = page.getByRole("button", { name: /Create Song/ });
   await expect(cta).toBeDisabled();
