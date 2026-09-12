@@ -2260,35 +2260,50 @@ test("drop 2: /explore/mvs still has a grid on a phone", async ({ page }) => {
   // phones: the grid still in the DOM, `display: none`, nothing painted.
   // typecheck, lint, vitest, build, guard-greps and designer-css were all green
   // through it, because a verbatim-copy gate cannot see markup two files away.
+  //
+  // ── REVERSED, 2026-09-11 (product owner, Figma node 3940:150442) ───────────
+  //
+  // "Newly Released Music Videos" (the non-`--primary` section) used to be
+  // hidden below 768px by deliberate 2026-08-07 decision — DP hides every
+  // non-primary `.mv-detail__grid-section` on phones, and the product owner
+  // chose to follow DP rather than diverge. That decision is now reversed:
+  // Figma's phone frame for this exact screen shows BOTH sections stacked
+  // (Trending MV as a horizontal-scroll row, Newly Released MV as the same
+  // two-column masonry below), so `designer-overrides.css` un-hides the
+  // second section again. This test used to assert the hidden state as "the
+  // accepted loss" — it now asserts the opposite, on purpose, not a silent
+  // regression.
   for (const width of [320, 375, 767]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/explore/mvs");
 
-    // Scoped to `--primary`, because BOTH sections render a mobile grid and only
-    // the primary one is shown — see the Newly Released assertion below.
-    const grid = page.locator(".mv-detail__grid-section--primary .mv-detail__mobile-grid");
+    // Primary section ("Trending MV"): a horizontal-scroll row, not the
+    // two-column masonry other widths and the OTHER section still use here —
+    // `MvGridSections.tsx`'s `asRow` opt-in, extended to phone the same day
+    // as the un-hide above.
+    const primaryHeader = page.locator(
+      ".mv-detail__grid-section--primary .section-header__title--mobile",
+    );
+    await expect(primaryHeader, `primary section title at ${width}px`).toHaveText("Trending MV");
+    const row = page.locator(".mv-detail__grid-section--primary .mv-top-picks-row");
+    await expect(row, `Trending MV row at ${width}px`).toBeVisible();
+    await expect(row.locator(".mv-top-picks-item").first()).toBeVisible();
+
+    // Secondary section ("Newly Released MV"): the same two-column masonry
+    // the primary section used to be the only one to render, now visible and
+    // painted with real height, not merely present in the DOM at `display:
+    // none` (the drop-2 failure this test was written for, one section over).
+    const secondary = page.locator(".mv-detail__grid-section:not(.mv-detail__grid-section--primary)");
+    const secondaryHeader = secondary.locator(".section-header__title--mobile");
+    await expect(secondaryHeader, `secondary section title at ${width}px`).toHaveText(
+      "Newly Released MV",
+    );
+    const grid = secondary.locator(".mv-detail__mobile-grid");
     await expect(grid, `mobile grid at ${width}px`).toBeVisible();
-    // Painted, not merely present — a zero-height grid is the same blank screen.
     const box = await grid.boundingBox();
     expect(box!.height, `mobile grid must have real height at ${width}px`).toBeGreaterThan(100);
     await expect(grid.locator(".mv-detail__mobile-column")).toHaveCount(2);
     await expect(grid.locator(".card--video").first()).toBeVisible();
-
-    // THE ACCEPTED LOSS, ASSERTED SO IT CANNOT BE SILENTLY "FIXED". DP hides
-    // every non-primary section on phones. That costs DP nothing (its second
-    // section is the first one reversed) and costs WA a whole catalog: NEW_MVS
-    // is desktop-only. Product owner decided 2026-08-07 to follow DP. If this
-    // goes red, someone has re-added the section — which is a designer request
-    // for a mobile two-section design, not a code fix.
-    //
-    // MEASURE IT BEFORE DEFENDING IT: TRENDING_MVS has **3** items and NEW_MVS
-    // has **11**, so a phone reaches 3 of the 14 MVs in the catalog. The
-    // decision was taken on "a secondary catalog is hidden"; the number was
-    // counted afterwards and is recorded here and in DESIGNER-TODO A19 so the
-    // next person weighs the real cost rather than the framing.
-    await expect(
-      page.locator(".mv-detail__grid-section:not(.mv-detail__grid-section--primary)"),
-    ).toBeHidden();
   }
 });
 

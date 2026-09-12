@@ -113,6 +113,13 @@ The rails:
   for a rank that does not exist yet. `TRENDING_MVS` remains reachable only from `/explore/mvs`,
   where it is the `--primary` section (A20 / A19). **QA should not file the name/data mismatch as
   a defect**, and no code changed. Recorded because it looks exactly like a wiring error.
+  > **⚠️ The collision got a second instance, 2026-09-11.** `/explore/mvs`'s own primary section —
+  > `TRENDING_MVS`, the one this bullet is about — is now ALSO titled "Trending Music Videos" on
+  > desktop/tablet (was "Top Picks Music Videos"; §3.2 has the full history). So the product now
+  > has **two different sections named "Trending Music Videos"**, on two different routes, fed by
+  > two different arrays: Home's (`NEW_MVS`) and `/explore/mvs`'s (`TRENDING_MVS`). Same product
+  > owner call as the first instance — not a defect, not a request to rename either — but worth
+  > naming explicitly so QA doesn't file this pairing as a duplicate-content bug either.
 - 🆕 **Empty rails now have a UI** _(2026-09-01)_ — see `AC-EXP-13` and §3.7.
 - 📄 **Publish→feed locale contract (backend; spec-only).** When a creation is published (area 02/05) it carries a **language/locale code**. The backend returns each feed **already ranked locale-primary** (viewer's locale first, then engagement signals per the Curation PRD). The **frontend just requests and displays** the server-sorted data — no client-side ranking; "we only ask, the backend sorts." The **code format (2-char ISO `en` vs 3-char product `enu`, etc.) is RD-TBD** → `TBD-EXP-10` (relates to i18n `TBD-GL-06`). No prototype change now (mock feed stays seed).
 
@@ -126,15 +133,28 @@ The rails:
   > and `NEWLY_RELEASED = NEW_MVS` straight through with no `.slice()`/cap anywhere in the render
   > path — confirmed in code. Today the mock seed holds 3 and 11 items (14 total); that split is a
   > property of the fixture data, not a designed limit — a bigger or smaller backend feed renders in
-  > full. What a **phone** actually sees fewer of is a separate, CSS-only fact: `MVDetailPage.css`'s
+  > full.
+  > **⚠️ Superseded 2026-09-11 (product owner, Figma node 3940:150442) — the phone treatment below
+  > is REVERSED from what this paragraph used to say.** It used to read: `MVDetailPage.css`'s
   > `@media (max-width:767px)` rule hides every `.mv-detail__grid-section` and re-shows only
-  > `--primary` (Top Picks) — so a phone on `/explore/mvs` reaches 3 of the 14 mock items regardless
-  > of the true catalog size, and `/watch`'s mobile treatment (`.mv-detail--selected`) hides both
-  > sections outright. This closes the question `DESIGNER-TODO` **A19** raised about the 3-of-14
-  > ratio: it was never a spec'd number, only (mock length) × (this hiding rule).
-  > **Top Picks row Next/Previous step, settled 2026-09-11 (`YMW260909P0008`).** The desktop-only
-  > `MvTopPicksRow` (≥1024px) originally stepped by exactly one card + gap per click; QA/an
-  > automated agent test flagged the live build advancing further than that per click as a
+  > `--primary` (Top Picks), so a phone reached only the primary catalog and `DESIGNER-TODO` **A19**'s
+  > "3 of 14" question was closed on that basis. That hiding rule is now overridden
+  > (`designer-overrides.css`): **both sections render on phone.** The primary section (mobile title
+  > "Trending MV", was "Top Picks") is now a horizontal-scroll row at every width including phone —
+  > previously desktop-only (`asRow`, `MvGridSections.tsx`) — with a both-edges peek bleed; "Newly
+  > Released MV" (was "New MVs") keeps the same two-column masonry it always used, just no longer
+  > hidden below 768px. `.mv-detail`'s own mobile padding/gaps were re-tuned alongside this (16px
+  > horizontal inset matching Home, 16px between sections, 10px header-to-content, plus a 16px
+  > `margin-bottom` on the primary section — 32px total above "Newly Released MV"). `DESIGNER-TODO`
+  > **A20**'s "手機只看得到 Trending" half of its "兩件事疊起來" concern is resolved by this; its
+  > other half (Home still has no Trending rail of its own) is unchanged, see A20.
+  > `e2e/behaviour-regressions.spec.ts`'s "drop 2: /explore/mvs still has a grid on a phone" now
+  > asserts the reversed behavior (both sections visible, titled, painted) instead of the old hidden
+  > state. `/watch`'s mobile treatment (`.mv-detail--selected`) still hides both sections outright —
+  > that half is unchanged.
+  > **Top Picks row Next/Previous step, also settled 2026-09-11 (`YMW260909P0008`).** The
+  > desktop-only `MvTopPicksRow` (≥1024px) originally stepped by exactly one card + gap per click;
+  > QA/an automated agent test flagged the live build advancing further than that per click as a
   > divergence. Product owner confirmed the single-card step reads as too slow and the faster,
   > further-per-click pace is the one to keep: `scrollByCard` now steps by the row's full visible
   > width (`row.clientWidth`) — a "page" per click — not one item.
@@ -145,6 +165,16 @@ The rails:
   > on Home), and `SongDetailView.tsx`'s own `scrollTopPicksByCard` ("Top Picks Songs" on
   > `/explore/songs`). There is still no shared hook for this pattern — a fifth copy is exactly as
   > likely to reintroduce the one-card step as these four were.
+  > **Two more same-day follow-ups, both product owner, 2026-09-11.** (1) "We forgot the tablet
+  > version" — the row treatment above landed phone + desktop only; `MvGrid`'s tablet branch
+  > (`!isDesktop`, 768–1023px) still fell through to the plain wrapping grid regardless of `asRow`.
+  > Fixed the same way: tablet now renders the row too, at its own height
+  > (`TABLET_ROW_HEIGHT` = 200, `MvGridSections.tsx` — no Figma frame for this width, picked as a
+  > middle value between phone's 142 and desktop's 280). "Newly Released MV" is unaffected — it
+  > keeps the wrapping grid at every non-desktop width, tablet included, exactly as before. (2) The
+  > desktop/tablet title (`.section-header__title--desktop`, shown ≥768px) changed from "Top Picks
+  > Music Videos" to **"Trending Music Videos"** — see §3.1's note on the resulting second instance
+  > of that exact title existing on a different route/array pairing.
 - **`/explore/songs`** (`song/SongDetailView` — **the same component as `/song/play`**, merged in Slice 3b): tabbed list (All + ~~one tab per catalog `genre`, derived at runtime~~ **the nine creation `GENRES`, hardcoded** — reversed 2026-09-01, see §4 EXP-P3) beside a Now Playing column, 1:1 at ≥1024px; row → selects in Now Playing at ≥768px, opens the full-screen player at `/song/play?id` below that; creator → `/creator`; **Create** → `requireLogin` → `patchSongCompose` + `/song/create` (gated at the click, consistent with Home — GL-02/EXP-02); Back → `DetailNavbar`'s `router.back()` with a fallback to `/explore/songs`.
   > **Also new since that line was written, and never recorded (2026-09-01, S8 capture, D11): the
   > screen now opens with its own `Top Picks Songs` rail**, a horizontal `TOP_PICKS_SONGS` carousel
