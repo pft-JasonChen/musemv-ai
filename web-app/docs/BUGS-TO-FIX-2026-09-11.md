@@ -396,3 +396,34 @@ defect with a known answer, which is why this was flagged rather than guessed at
   — `useOpenCreation`'s reseeding never distinguished the two either. Same limitation as the
   Character count had, just not the thing this eBug asked about; flag me if you want that
   addressed too.
+
+---
+
+## Follow-up (2026-09-13): "should display the character's name, not count"
+
+Your instruction after the fix above shipped. This is a bigger fix than the count was — the NAME
+was never reachable at `/mv/result` at all, live or reopened, because it only ever existed as
+page-local state on `/mv/room` (`photoNames`), gone the moment that page unmounted for
+`/mv/thinking` / `/mv/creating`.
+
+- [MvFlowProvider.tsx](src/components/providers/MvFlowProvider.tsx): new `characterNames` /
+  `setCharacterNames` (C4 additive — `docs/CHANGELOG-RD.md` updated, `providers.surface.test.ts`'s
+  snapshot regenerated). `upsertGenerating` now persists `characterNames.slice(0,
+  compose.photos.length)` onto the History row instead of a photo count.
+- [HistoryProvider.tsx](src/components/providers/HistoryProvider.tsx): `HistoryItem.photoCount` →
+  `HistoryItem.characterNames?: string[]` (replaced, not added alongside — a count can't answer
+  "which character").
+- [MvRoom.tsx](src/components/mv/MvRoom.tsx): the per-slot name editor now reads/writes the
+  provider's `characterNames` instead of its own local `photoNames` state — same UI, same
+  behavior, just the state lives somewhere that survives navigation. Still NOT a field on
+  `CharacterPhoto` (C2 stays frozen) — the doc comment explaining that decision is updated to
+  explain the new location too.
+- [MvResult.tsx](src/components/mv/MvResult.tsx): Character row now reads
+  `entry?.characterNames ?? characterNames.slice(0, compose.photos.length)`, joins non-empty names
+  with ", ", falls back to "—" only when none are set. An unnamed slot is dropped rather than shown
+  as the editing UI's "Name" placeholder (that's a prompt, not a value).
+- Spec updated in `specs/CHANGELOG-SPEC.md` (new entry supersedes the count-based one) and
+  `docs/CHANGELOG-RD.md`.
+- **Confirmed live:** uploaded a sample photo, named it "Alice", generated an MV — the History
+  "Generating…" row and the finished `/mv/result` (reached both by waiting for it to land in
+  History and by the live in-session flow) both show **Character: Alice**.

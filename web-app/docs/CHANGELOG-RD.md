@@ -23,6 +23,39 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-13 — **C4 ADDITIVE** — `useMvFlow` gains `characterNames` / `setCharacterNames` (YMW260911P0007)
+
+**Surface: C4** (`src/components/providers/MvFlowProvider.tsx`, interface `MvFlowValue`). Two new
+keys, both additive — `providers.surface.test.ts`'s snapshot updated, its "no baseline key
+renamed/removed" check unaffected since nothing existing moved.
+
+```ts
+interface MvFlowValue {
+  …
+  characterNames: string[];                                    // NEW
+  setCharacterNames: React.Dispatch<React.SetStateAction<string[]>>;  // NEW
+}
+```
+
+**What changed and why.** Follow-up correction to the 2026-09-11 entry below: the product owner
+asked for `/mv/result`'s Character row to show the character's NAME, not a photo count. Names were
+previously page-local state on `MvRoom.tsx` (`photoNames`, DP parity) and never reached
+`/mv/result` or History at all — that state was gone the moment `MvRoom` unmounted on navigation
+to `/mv/thinking` / `/mv/creating`. Lifting it into `MvFlowProvider` (not into `ComposeState` or
+`CharacterPhoto` — those are C2, frozen) is what lets `startStoryboard`/`startRender` read it at
+the moment they call `upsertGenerating`, and what lets `MvRoom` itself keep working exactly as
+before (same editing UI, same behavior, just sourced from the provider instead of local state).
+
+**`HistoryItem.photoCount` (added 2026-09-11, see below) is now REPLACED by
+`HistoryItem.characterNames?: string[]`** — a count can't answer "which character", so the field
+that carries it changed shape rather than growing a sibling. This is `HistoryItem`, not
+`HistoryValue` — still outside C4's own watch (`useHistory()`'s return keys are unchanged), but
+noted here since the previous entry described `photoCount`'s intent, which no longer holds.
+
+**RD action required: none.** No `MuseApi` method, schema, or existing hook key changed shape.
+
+---
+
 ## 2026-09-11 — four eBug fixes touched C4/C7/C8 files; none change the contract shape
 
 Four files the gate watches were touched in this pass (YMW260911P0004, P0005, P0007). Going

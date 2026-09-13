@@ -84,20 +84,24 @@ import {
  *
  * ── AND ONE THING DP HAS THAT WA DID NOT ────────────────────────────────────
  *
- * Per-photo NAMES — an editable label on each filled photo slot. Ported, and
- * held the way DP holds it: as PAGE-LOCAL state (`photoNames`), not as a field
- * on the photo.
+ * Per-photo NAMES — an editable label on each filled photo slot. Ported, but
+ * NOT held page-local the way DP holds it: `useMvFlow().characterNames`
+ * (`MvFlowProvider.tsx`), because `/mv/result`'s Character row and the History
+ * row both need it, and both are reached only after this page has unmounted
+ * (`YMW260911P0007` — showing a name, not a count, requires the name to still
+ * exist at that point).
  *
- * That is not a shortcut, it is the only correct place for it here.
- * `CharacterPhoto` is `CharacterPhotoSchema` in `src/lib/api/schemas.ts`, which
- * is contract surface C2 and frozen by G4 — adding a field there is an
- * RD-facing wire change requiring a declared contract update and a
- * CHANGELOG-RD entry, for something no request or response currently carries.
- * DP keeps it local for its own reasons and the two happen to agree.
+ * Still NOT a field on `CharacterPhoto` — `CharacterPhotoSchema` in
+ * `src/lib/api/schemas.ts` is contract surface C2 and frozen by G4, and
+ * adding a field there would be an RD-facing wire change requiring a declared
+ * contract update, for something no request or response currently carries.
+ * Lifting it to the provider (rather than the photo) keeps it out of C2 while
+ * still surviving the navigation DP's page-local approach could not.
  */
 export function MvRoom() {
   const router = useRouter();
-  const { compose, setCompose, patchCompose, resetForNewMv } = useMvFlow();
+  const { compose, setCompose, patchCompose, resetForNewMv, characterNames, setCharacterNames } =
+    useMvFlow();
   const { loggedIn, profile, requireLogin } = useAuth();
   const openCreation = useOpenCreation();
   const { credits } = useCredits();
@@ -129,8 +133,6 @@ export function MvRoom() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<number | null>(null);
-  /** Per-slot character names — page-local, exactly as DP holds them. */
-  const [photoNames, setPhotoNames] = useState<string[]>(["", ""]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -252,7 +254,7 @@ export function MvRoom() {
     setCompose((c) => ({ ...c, photos: [...c.photos, photo].slice(0, 2) }));
   }
   function setPhotoName(index: number, name: string) {
-    setPhotoNames((names) => names.map((n, i) => (i === index ? name : n)));
+    setCharacterNames((names) => names.map((n, i) => (i === index ? name : n)));
   }
   function openSettings() {
     if (loggedIn && !authorDefaultApplied.current) {
@@ -566,7 +568,7 @@ export function MvRoom() {
                               type="text"
                               className="mv-create__photo-name-input"
                               placeholder="Name"
-                              value={photoNames[slot] ?? ""}
+                              value={characterNames[slot] ?? ""}
                               autoFocus
                               onChange={(e) => setPhotoName(slot, e.target.value)}
                               onBlur={() => setEditingName(null)}
@@ -575,7 +577,7 @@ export function MvRoom() {
                               }}
                             />
                           ) : (
-                            <p className="mv-create__photo-name">{photoNames[slot] || "Name"}</p>
+                            <p className="mv-create__photo-name">{characterNames[slot] || "Name"}</p>
                           )}
                           <button
                             type="button"

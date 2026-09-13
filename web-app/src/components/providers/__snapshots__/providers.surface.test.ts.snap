@@ -44,6 +44,7 @@ exports[`C4 — provider hook surfaces [additive only] > useHistory > shape is u
 
 exports[`C4 — provider hook surfaces [additive only] > useMvFlow > shape is unchanged 1`] = `
 [
+  "characterNames",
   "compose",
   "gen",
   "patchCompose",
@@ -51,6 +52,7 @@ exports[`C4 — provider hook surfaces [additive only] > useMvFlow > shape is un
   "resetForRerender",
   "resultUrl",
   "saveStoryboard",
+  "setCharacterNames",
   "setCompose",
   "setResultUrl",
   "setStoryboard",

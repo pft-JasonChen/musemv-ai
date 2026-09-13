@@ -36,6 +36,16 @@ interface MvFlowValue {
   storyboardDirty: boolean;
   resultUrl: string | null;
   /**
+   * Per-slot character names, page-local by DESIGN in the UI that edits them
+   * (`MvRoom.tsx`'s own note explains why a name is not a `CharacterPhoto`
+   * field — C2 is frozen) but lifted up here, not into `MvRoom`'s own state,
+   * because it has to survive the navigation to `/mv/thinking` / `/mv/creating`
+   * that actually starts generation. `startStoryboard`/`startRender` read it
+   * at that moment and persist it onto the History row (`YMW260911P0007`).
+   */
+  characterNames: string[];
+  setCharacterNames: React.Dispatch<React.SetStateAction<string[]>>;
+  /**
    * Hydrate the flow with an ALREADY-FINISHED render, so `/mv/result` can be
    * opened for something the user made earlier instead of only for the video
    * this session just produced. `/history` uses it (with `setCompose`) to route
@@ -72,6 +82,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
   const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
   const renderIntent = useRef<RenderIntent>("create");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [characterNames, setCharacterNames] = useState<string[]>(["", ""]);
   const [savedJson, setSavedJson] = useState<string | null>(null);
   const jobId = useRef<string | null>(null);
   const cancelPoll = useRef<(() => void) | null>(null);
@@ -149,7 +160,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
           kind: "mv",
           title: mvDisplayTitle(compose),
           thumb: job.thumb,
-          photoCount: compose.photos.length,
+          characterNames: characterNames.slice(0, compose.photos.length),
         });
         track(
           job,
@@ -165,7 +176,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         refund();
         setGen((g) => ({ ...g, status: "failed" }));
       });
-  }, [compose, track, upsertGenerating, addCredits]);
+  }, [compose, characterNames, track, upsertGenerating, addCredits]);
 
   const startRender = useCallback(() => {
     // GL-01: charge on start, refund on failure. WHICH price depends on how we
@@ -191,7 +202,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
           kind: "mv",
           title: mvDisplayTitle(compose),
           thumb: job.thumb,
-          photoCount: compose.photos.length,
+          characterNames: characterNames.slice(0, compose.photos.length),
         });
         track(
           job,
@@ -207,7 +218,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         refund();
         setGen((g) => ({ ...g, status: "failed" }));
       });
-  }, [compose, storyboard, track, upsertGenerating, markCompleted, addCredits]);
+  }, [compose, characterNames, storyboard, track, upsertGenerating, markCompleted, addCredits]);
 
   // A brand-new MV must discard any storyboard/result/job left over from a
   // previous flow, otherwise the generation screens' `alreadyDone` guard sees
@@ -247,6 +258,8 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         storyboardDirty,
         resultUrl,
         setResultUrl,
+        characterNames,
+        setCharacterNames,
         startStoryboard,
         startRender,
         resetForNewMv,

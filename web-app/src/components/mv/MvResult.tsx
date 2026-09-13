@@ -86,7 +86,8 @@ export function MvResult() {
   const idParam = useSearchParams().get("id");
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
-  const { resultUrl, compose, storyboard, setStoryboard, saveStoryboard } = useMvFlow();
+  const { resultUrl, compose, storyboard, setStoryboard, saveStoryboard, characterNames } =
+    useMvFlow();
   const { history } = useHistory();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -129,7 +130,16 @@ export function MvResult() {
   // DP puts behind a portrait video. Passing the .mp4 URL to an `<img>` there
   // would render a broken image behind a pillarboxed video.
   const poster = entry?.thumb ?? storyboard?.characterImage;
-  const characterCount = entry?.photoCount ?? compose.photos.length;
+  // Reopened from a History row: whatever names were persisted at generation
+  // time. A live, just-finished flow: the provider's own names, one per photo
+  // actually uploaded (`characterNames` is a fixed 2-slot array regardless of
+  // how many photos are filled). Untitled slots are dropped, not shown as
+  // "Name" — that placeholder belongs to the editing UI, not a real value
+  // (YMW260911P0007: the row now names the character, not just counts them).
+  const characterLabel = (entry?.characterNames ?? characterNames.slice(0, compose.photos.length))
+    .map((n) => n.trim())
+    .filter(Boolean)
+    .join(", ");
 
   useEffect(() => {
     if (!resultUrl) router.replace(localePath(locale, "/mv/room"));
@@ -406,11 +416,7 @@ export function MvResult() {
                 ["Aspect Ratio", compose.settings.ratio],
                 ["Quality", compose.settings.resolution],
                 ["Scenes", storyboard ? String(storyboard.scenes.length) : "—"],
-                // A History-opened MV has no live `compose.photos` (useOpenCreation
-                // can't reconstruct actual photos), so prefer the count persisted
-                // at generation time; a live, just-generated flow has no `entry`
-                // yet and falls back to the real array (YMW260911P0007).
-                ["Character", characterCount ? String(characterCount) : "—"],
+                ["Character", characterLabel || "—"],
                 ["Subtitle", compose.settings.showSubtitle ? "On" : "Off"],
                 ["Watermark", compose.settings.watermark ? "On" : "Off"],
               ] as const

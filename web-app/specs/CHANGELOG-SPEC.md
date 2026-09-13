@@ -157,6 +157,10 @@ is the change, not the code alone.
 
 ### MV Result's Character row is accurate for a re-opened History entry
 
+> ⚠️ **Superseded 2026-09-13** — the product owner asked for the character's NAME, not a count.
+> See "MV Result's Character row shows the name, not a count" below; `HistoryItem.photoCount` this
+> row describes no longer exists, replaced by `HistoryItem.characterNames`.
+
 | | |
 | --- | --- |
 | **Criteria** | `areas/02-mv-creation.md` (Character/Music/Scenes detail rows on `/mv/result`). |
@@ -165,6 +169,17 @@ is the change, not the code alone.
 | **Code** | `providers/HistoryProvider.tsx` (`HistoryItem.photoCount`, optional/additive); `providers/MvFlowProvider.tsx` (`upsertGenerating` now passes it); `mv/MvResult.tsx` (`entry?.photoCount ?? compose.photos.length`). |
 | **Tests** | Not yet added — flagged for a follow-up pass. |
 | **Contract** | Additive field on the in-memory `HistoryItem` shape (not part of `MuseApi`/C1–C8 — see `docs/CHANGELOG-RD.md` note anyway, since a real history endpoint will need to carry this). |
+
+### MV Result's Character row shows the name, not a count
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/02-mv-creation.md` (Character detail row on `/mv/result`); supersedes the entry directly above. |
+| **Why** | `YMW260911P0007`, follow-up (2026-09-13) — product owner: the Character field should display the character's name, not a count. |
+| **Decision** | The name was never reachable at `/mv/result` even in the LIVE flow: `MvRoom.tsx`'s per-slot name editor (`photoNames`) was page-local state, discarded the moment the page unmounted for `/mv/thinking` or `/mv/creating`. Lifted into `MvFlowProvider` (`characterNames`) instead of `MvRoom` — same DP-parity reasoning as before for keeping it off `CharacterPhoto` (C2, frozen), but now surviving the navigation that actually starts generation, so `startStoryboard`/`startRender` can persist it onto the History row. |
+| **Code** | `providers/MvFlowProvider.tsx` (`characterNames`/`setCharacterNames`, C4 additive — see `docs/CHANGELOG-RD.md`); `providers/HistoryProvider.tsx` (`HistoryItem.characterNames?: string[]`, replaces `photoCount`); `mv/MvRoom.tsx` (reads/writes the provider's state instead of local `photoNames`); `mv/MvResult.tsx` (`entry?.characterNames ?? characterNames.slice(0, compose.photos.length)`, joined, untitled slots dropped rather than shown as the editing UI's "Name" placeholder). |
+| **Tests** | `providers.surface.test.ts`'s C4 snapshot updated (additive). No behavior test yet for the Character row itself — flagged for a follow-up pass. |
+| **Contract** | C4 additive (`useMvFlow` gains two keys) — see `docs/CHANGELOG-RD.md`, 2026-09-13 entry. |
 
 ### Every route gets a loading fallback
 

@@ -14,13 +14,15 @@ export interface HistoryItem {
   status: "generating" | "completed" | "failed";
   resultUrl?: string;
   /**
-   * Count of character photos used at MV creation time (`compose.photos.length`).
-   * Additive, MV-only. `/mv/result`'s Character detail row reads this when the
-   * screen was opened from a History row rather than the live flow, since
-   * `useOpenCreation`'s seeding has no way to reconstruct the actual photos
-   * (`YMW260911P0007`).
+   * Character names entered at MV creation time, one per uploaded photo
+   * (empty string for a slot left unnamed). Additive, MV-only. `/mv/result`'s
+   * Character detail row reads this when the screen was opened from a History
+   * row rather than the live flow, since `useOpenCreation`'s seeding has no
+   * way to reconstruct the actual photos or their names (`YMW260911P0007`).
+   * Names themselves are NOT part of `CharacterPhoto` (`schemas.ts`, C2,
+   * frozen) — see `MvRoom.tsx`'s own note on why that field stays local.
    */
-  photoCount?: number;
+  characterNames?: string[];
 }
 
 interface HistoryValue {
