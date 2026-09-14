@@ -146,6 +146,11 @@ is the change, not the code alone.
 
 ### History: a generating MV's placeholder title now matches its own MV-name setting
 
+> ⚠️ **Superseded 2026-09-14** — RD: a real MV job carries no title info at all at this point
+> (unlike Song, whose backend assigns one at creation), so the client-side "smart" title below is
+> not something production can build. See "History: a generating MV's title is a fixed
+> placeholder" below.
+
 | | |
 | --- | --- |
 | **Criteria** | `areas/05-history.md` (generating-row title source), `areas/02-mv-creation.md` (`settings.title.text`, the "MV TITLE" field). |
@@ -154,6 +159,17 @@ is the change, not the code alone.
 | **Code** | `providers/MvFlowProvider.tsx` (`startStoryboard`, `startRender`). |
 | **Tests** | Not yet added — flagged for a follow-up pass. |
 | **Contract** | None. |
+
+### History: a generating MV's title is a fixed placeholder ("New MV")
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/05-history.md` (generating-row title source); supersedes the entry directly above. |
+| **Why** | `YMW260911P0005`, RD follow-up (2026-09-14): the real backend has no title info available for an MV job — Song's job schema is assigned a title at creation server-side; MV's has no equivalent field and none is planned. Building a client-side "smart" title (this prototype's own compose data) would describe behavior production cannot match. |
+| **Decision** | Revert to a fixed placeholder, **"New MV"** — same shape as any other job-status placeholder, no longer trying to reflect the user's MV-name setting or the matched song's title. This is a UI/UX change: a generating (and, since the row is never retitled, a completed) MV's History card now always reads "New MV" regardless of what was typed in MV Settings or which song was chosen. |
+| **Code** | `lib/mv/types.ts` (removed `mvDisplayTitle`, added `GENERATING_MV_TITLE = "New MV"`); `providers/MvFlowProvider.tsx` (`startStoryboard`, `startRender` — `title: GENERATING_MV_TITLE`). |
+| **Tests** | None existing asserted the smart-title behavior; nothing needed updating. |
+| **Contract** | None (the `title` field itself is unchanged shape — still `string` — only the value supplied changed). |
 
 ### MV Result's Character row is accurate for a re-opened History entry
 
@@ -183,6 +199,11 @@ is the change, not the code alone.
 
 ### Every route gets a loading fallback
 
+> ⚠️ **Superseded 2026-09-14** — the spinner below was a NEW visual; product owner: reuse
+> History's existing 3-dot loading animation everywhere instead of inventing another UI. See
+> "Route loading fallback now reuses History's 3-dot animation" below. The behavioral scope was
+> also corrected the same day — see that entry for what this fix does and does not cover.
+
 | | |
 | --- | --- |
 | **Criteria** | None specific — a cross-cutting Next.js App Router convention, not a screen-level behaviour. |
@@ -190,6 +211,19 @@ is the change, not the code alone.
 | **Decision** | Add one shared `src/app/[locale]/loading.tsx` (a small centered spinner using existing tokens) rather than one per route — consistent everywhere, smallest diff. |
 | **Code** | `app/[locale]/loading.tsx` (new). |
 | **Tests** | None — a route-transition loading state isn't practically assertable in Playwright (it needs a slow chunk load to ever mount), same reasoning as the demo panel's manual-only paths. |
+| **Contract** | None. |
+
+### Route loading fallback now reuses History's 3-dot animation
+
+| | |
+| --- | --- |
+| **Criteria** | `areas/05-history.md` region N/A (no area doc covers this cross-cutting fallback) — supersedes the entry directly above. |
+| **Why** | `YMW260911P0004` follow-up, product owner (2026-09-14): loading states across the app should all use the ONE existing 3-dot animation (`?demo=1` panel's "History — slow load", Figma "History — Loading" 3261:44705) — not a new spinner per screen. |
+| **Decision** | Extracted `HistoryView.tsx`'s previously-private `HistoryLoadingDots` into a shared `ui/LoadingDots` component; both History's own slow-load state and the route-level `loading.tsx` now render the identical component and reuse the identical CSS (`.history-page__loading` / `.history-page__loading-dots` / `.history-page__loading-dot(--1/2/3)` in `designer-overrides.css`) — no new CSS was written. |
+| **Code** | `components/ui/LoadingDots.tsx` (new, the extracted component); `components/history/HistoryView.tsx` (now imports it instead of defining it locally); `app/[locale]/loading.tsx` (renders it instead of the SVG spinner). |
+| **Verified** | Live, with an artificial delay on `/mv/room`'s page component (temporary, reverted): confirmed the route-transition fallback now shows the identical 3-dot animation as History's own `?demo=1` "slow load" state, side by side. |
+| **Also corrected the same day — scope, not just visual:** `loading.tsx` only ever mounts for a **client-side route transition** (e.g. clicking between AI Music Video / AI Song in the sidebar while already in the app) — confirmed live. It does **not** mount on a full page reload (F5): Next.js sends the complete, already-resolved page in one response since nothing in this tree does real async data-fetching, so a slow F5 shows nothing (blank) for the whole load, same as before this fix. That gap needs a different approach if it's still wanted; not built here. |
+| **Tests** | None — same reasoning as above (not practically assertable without a real slow chunk load). |
 | **Contract** | None. |
 
 ---

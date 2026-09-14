@@ -181,20 +181,19 @@ export const DEFAULT_COMPOSE: ComposeState = {
   settings: DEFAULT_SETTINGS,
 };
 
+/**
+ * History-row title for an MV while it generates (and after — the row is
+ * never retitled on completion). RD (`YMW260911P0005` follow-up, 2026-09-14):
+ * a real MV job carries no title info at this point — unlike Song, whose
+ * backend assigns one at creation, MV has none — so this is a fixed
+ * placeholder, not a client-side guess from `compose` (the prototype had one
+ * client-side; production would not).
+ */
+export const GENERATING_MV_TITLE = "New MV";
+
 /** CTA-enable rule (new web behavior; not in source prototype). */
 export function isComposeReady(s: ComposeState): boolean {
   return s.song != null && s.description.trim().length > 0;
-}
-
-/**
- * Display title for an in-progress or just-finished MV (History row,
- * generating-state placeholder). Mirrors the mock backend's own
- * storyboard-title precedence — the user's own MV-name setting first, the
- * matched song's title otherwise — so a custom name set in MV Settings is
- * never silently dropped in favor of the source song's name (`YMW260911P0005`).
- */
-export function mvDisplayTitle(s: Pick<ComposeState, "settings" | "song">): string {
-  return s.settings.title.text || s.song?.title || "Untitled MV";
 }
 
 /**

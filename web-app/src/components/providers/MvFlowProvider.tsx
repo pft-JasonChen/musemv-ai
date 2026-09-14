@@ -16,7 +16,7 @@ import {
   scriptCost,
   COST_MERGE,
   DEFAULT_COMPOSE,
-  mvDisplayTitle,
+  GENERATING_MV_TITLE,
   type ComposeState,
   type MvJob,
   type Storyboard,
@@ -158,7 +158,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         upsertGenerating({
           id: job.id,
           kind: "mv",
-          title: mvDisplayTitle(compose),
+          title: GENERATING_MV_TITLE,
           thumb: job.thumb,
           characterNames: characterNames.slice(0, compose.photos.length),
         });
@@ -200,7 +200,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         upsertGenerating({
           id: job.id,
           kind: "mv",
-          title: mvDisplayTitle(compose),
+          title: GENERATING_MV_TITLE,
           thumb: job.thumb,
           characterNames: characterNames.slice(0, compose.photos.length),
         });

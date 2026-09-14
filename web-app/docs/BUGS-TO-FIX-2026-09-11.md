@@ -243,8 +243,8 @@ below; the rest of the original 11 have moved off NewCreated/Assigned since bein
 | 3 | YMW260910P0021 | ✅ Fixed, spec updated, confirmed live |
 | 4 | YMW260910P0022 | ✅ Fixed, spec updated, confirmed live |
 | 5 | YMW260911P0003 | ⏸️ Deferred to designer, per your instruction — not touched |
-| 6 | YMW260911P0004 | ✅ Fixed (loading fallback added) |
-| 7 | YMW260911P0005 | ✅ Fixed, spec updated, confirmed live |
+| 6 | YMW260911P0004 | ✅ Fixed (tab-switch only); reuses History's 3-dot UI; F5 case still open |
+| 7 | YMW260911P0005 | ✅ Fixed; corrected 2026-09-14 per RD — now a fixed "New MV" placeholder |
 | 8 | YMW260911P0007 | ✅ Fixed, spec updated, confirmed live |
 
 `typecheck` / `lint` / `test:run` / `build` are all green throughout both passes. Not committed
@@ -334,20 +334,45 @@ defect with a known answer, which is why this was flagged rather than guessed at
 
 ---
 
-## [x] 6. YMW260911P0004 — ✅ FIXED
+## [x] 6. YMW260911P0004 — ✅ FIXED, corrected 2026-09-14
 **Short Description:** [AI Music Video] Display gray without any loading animation after pressing F5 or switching tab between AI Music Video and AI Songs.
 
 - **Root cause:** no route in the tree had a `loading.tsx`, so Next.js had no fallback UI to show
-  while a route's JS streamed in on a slow load or a segment switch — just whatever the page
-  background happens to be, with nothing on it.
-- [app/[locale]/loading.tsx](src/app/[locale]/loading.tsx): one shared spinner (existing
-  `--accent` token, no new visual asset) covering every route under the locale segment, rather than
-  one per screen.
-- Spec note added in `specs/CHANGELOG-SPEC.md` (cross-cutting, not tied to one area's spec).
-- **Not verified with a slow-load repro** — this needs network throttling deep enough to observe
-  the fallback actually mount, which wasn't practical to stage reliably in this session; the
-  typecheck/build passing confirms the file is wired into the route tree correctly. Flag me if you
-  want it checked with DevTools throttling before you consider this closed.
+  while a route's JS streamed in on a route switch — just whatever the page background happens to
+  be, with nothing on it.
+- [app/[locale]/loading.tsx](src/app/[locale]/loading.tsx): renders the shared 3-dot animation
+  (below) for every route under the locale segment, rather than one per screen.
+
+**Follow-up (2026-09-14), two corrections from you:**
+
+1. **"Use the 3-dot UI already built for History, don't write a new one."** The first version of
+   this fix used a new custom SVG spinner. Reverted that: extracted History's own loading
+   animation (`HistoryLoadingDots`, built for the `?demo=1` "History — slow load" state) into a
+   shared [ui/LoadingDots.tsx](src/components/ui/LoadingDots.tsx), no new CSS. `HistoryView.tsx`
+   and the route fallback now render the exact same component.
+   - **Confirmed live:** toggled History's `?demo=1` "slow load" flag and triggered a route
+     transition side by side — pixel-identical 3-dot animation in both places.
+2. **You asked exactly how to reproduce this, and testing on `testing-ycm.makeupar.com` with
+   F12+3G showed nothing.** Investigated properly rather than re-asserting the original claim:
+   - That screenshot is almost certainly a **different codebase**, not this prototype — its URL
+     uses `/en/` (this app has no `en` locale; ours are `enu/jpn/kor/cht/chs/deu/fra/esp/ptg`,
+     English unprefixed) and shows a skeleton-loading list component that does not exist anywhere
+     in this repo (grepped, zero matches). This fix cannot be checked on that URL.
+   - Within THIS prototype, verified with an artificial delay (temporary, reverted after): the
+     fallback **does** mount on a **client-side route switch** (e.g. the sidebar AI Music
+     Video ↔ AI Song links) — confirmed live. It does **not** mount on a full-page reload (F5):
+     Next.js resolves this fully-synchronous page tree in one response, so a slow F5 still shows a
+     blank screen for the whole load, same as before. That half of the original repro is not
+     actually fixed; a different approach would be needed if it's still wanted.
+- Spec updated in `specs/CHANGELOG-SPEC.md` (new entry supersedes the previous one, not edited in
+  place).
+
+**Reply comment (paste into eBug):**
+> Fixed for switching between AI Music Video and AI Song without a full page reload — you'll now
+> see the same 3-dot loading animation History already uses, instead of a blank screen. **Not
+> fixed for F5 (full refresh)** — that still shows blank while loading; a full fix for that case
+> would need more work. Also: this can only be verified on this prototype's own build, not on
+> `testing-ycm.makeupar.com` — that appears to be a separate implementation.
 
 ---
 
@@ -368,6 +393,32 @@ defect with a known answer, which is why this was flagged rather than guessed at
 - **Confirmed live:** set a custom MV name ("My Custom MV Name P0005") in Settings, generated with a
   different song ("Summer Vibes") attached — the History "Generating…" card showed the custom name,
   not the song's.
+
+---
+
+## Follow-up (2026-09-14): RD — real MV jobs have no title info, default to "New MV"
+
+RD's comment on the ticket: the fix above assumed data (the user's MV name / matched song title)
+that only exists because this is a mock — a real MV job genuinely has no title available at this
+point (Song's backend assigns one at creation; MV's has no equivalent and none is planned).
+Reverted to a fixed placeholder per RD's instruction.
+
+- [types.ts](src/lib/mv/types.ts): removed `mvDisplayTitle`; added `GENERATING_MV_TITLE = "New MV"`.
+- [MvFlowProvider.tsx](src/components/providers/MvFlowProvider.tsx): both `upsertGenerating` calls
+  now pass the fixed `GENERATING_MV_TITLE` instead of a compose-derived title.
+- **UI/UX change:** a generating (and, since the row is never retitled, a completed) MV's History
+  card now always reads **"New MV"**, regardless of the MV Settings name or the matched song —
+  Song's own cards are unaffected, they still show the real generated title.
+- Spec updated in `specs/CHANGELOG-SPEC.md` (new entry supersedes the previous one, not edited in
+  place) and `docs/CHANGELOG-RD.md`.
+- Not re-verified with a fresh screenshot — the change is a one-line string swap, already covered
+  by the typecheck/build pass.
+
+**Reply comment (paste into eBug):**
+> Updated per RD's comment: since a real MV job has no title available while generating, a
+> generating (and finished) MV's History card now always shows a fixed **"New MV"** label instead
+> of trying to show the MV's name or matched song. This replaces the previous fix, which showed
+> the real name/song — that's no longer the behavior. AI Song's cards are unaffected.
 
 ---
 

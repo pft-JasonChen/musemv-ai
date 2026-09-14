@@ -23,6 +23,28 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-14 — `MvFlowProvider.tsx` (C4) and `types.ts` (C8) touched; no shape change
+
+**Surface: C4** (`src/components/providers/MvFlowProvider.tsx`) **and C8**
+(`src/lib/mv/types.ts`). `YMW260911P0005` follow-up: RD flagged that a real MV job has no title
+info available when it starts generating (Song's job schema gets one assigned server-side at
+creation; MV's has no equivalent and none is planned), so the 2026-09-11 "smart title" fix
+(`mvDisplayTitle`, reading `compose.settings.title.text` / the matched song's title) described
+behavior production cannot build.
+
+**Not a contract shape change on either surface:**
+- C4: `useMvFlow()`'s return keys are unchanged — `startStoryboard`/`startRender` still call
+  `upsertGenerating` with a `title: string`, only the VALUE supplied changed (a fixed constant now,
+  not a compose-derived one).
+- C8: `mvDisplayTitle` (a function, not one of the three names C8 guards) is removed; new constant
+  `GENERATING_MV_TITLE = "New MV"` added. Neither touches `COST_*`, `DEFAULT_SETTINGS`, or
+  `isComposeReady`.
+
+**RD action required: none.** If/when a real MV job endpoint DOES gain a title field, this is the
+line to revisit (`GENERATING_MV_TITLE` usage in `MvFlowProvider.tsx`).
+
+---
+
 ## 2026-09-13 — **C4 ADDITIVE** — `useMvFlow` gains `characterNames` / `setCharacterNames` (YMW260911P0007)
 
 **Surface: C4** (`src/components/providers/MvFlowProvider.tsx`, interface `MvFlowValue`). Two new

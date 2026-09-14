@@ -25,6 +25,7 @@ import { RoomNavbar, Tabs } from "@/components/shell/RoomNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { DpBadge } from "@/components/ui/DpBadge";
 import { DpDialog } from "@/components/ui/DpDialog";
+import { LoadingDots } from "@/components/ui/LoadingDots";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
 import { useDemoFlag, useDemoState } from "@/components/demo/useDemo";
@@ -107,22 +108,6 @@ interface Override {
  * paths the `NEXT_LOCALE` cookie redirect does NOT rescue. (Recorded as an open
  * R-9 shape in `PHASE-3-ACCEPTANCE.md` §3 "Also noted"; closed here.)
  */
-/** Product owner, 2026-08-31, Figma "History — Loading" (3261:44705, `?demo=1`
- *  panel's "History — slow load"). The design is a static two-frame snapshot
- *  (one dot raised, the other two at rest) rather than a real animation
- *  export — matches the CSS `@keyframes` below (`designer-overrides.css`):
- *  each dot floats up 8px and back, staggered 150ms after the previous one,
- *  "one after another" per the product owner's own description. */
-function HistoryLoadingDots() {
-  return (
-    <div className="history-page__loading-dots" role="status" aria-label="Loading">
-      <span className="history-page__loading-dot history-page__loading-dot--1" />
-      <span className="history-page__loading-dot history-page__loading-dot--2" />
-      <span className="history-page__loading-dot history-page__loading-dot--3" />
-    </div>
-  );
-}
-
 function rowHref(locale: Locale, r: HistorySample): string {
   const path =
     r.source === "community" && r.communitySongId
@@ -347,7 +332,7 @@ export function HistoryView() {
             fifth `EMPTY_STATE` entry. */}
         {demoLoading ? (
           <div className="history-page__loading">
-            <HistoryLoadingDots />
+            <LoadingDots />
           </div>
         ) : (
           <>
