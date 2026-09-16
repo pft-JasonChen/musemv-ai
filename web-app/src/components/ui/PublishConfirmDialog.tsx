@@ -22,8 +22,12 @@ import { useDialogTransition, useEscapeToClose } from "./useDialogTransition";
  * follows DP's markup directly instead, reusing only the mount/fade
  * bookkeeping (`useDialogTransition`/`useEscapeToClose`) both shells share.
  *
- * Song publish skips this entirely and shows a Toast instead — no
- * confirmation step there, matching DP.
+ * Product owner, 2026-09-16: Song publish now confirms first too, the same
+ * dialog here — History's AI Song menu, `SongResultView`, and Creator
+ * Profile's Song tab all reuse this component directly. DP's own split (song
+ * publishes straight away, no dialog, matching a Toast instead) no longer
+ * holds; each of those three call sites still skips the dialog for
+ * UNpublishing, which stays an immediate toggle everywhere.
  */
 export function PublishConfirmDialog({
   open,

@@ -57,8 +57,9 @@ import {
  *
  * Decision (product owner, 2026-08-05): port all six and wire every one to real
  * behaviour, reusing the implementations `/history` already has —
- *   · Publish  → MV confirms first, Song toggles straight away, both toast.
- *                Same MV-vs-Song split as History/MV Result/Song Create.
+ *   · Publish  → confirms first (MV and song alike, 2026-09-16 follow-up —
+ *                see `PublishConfirmDialog`'s own header for the split this
+ *                superseded), unpublish toggles straight away, both toast.
  *   · Download → `downloadFile`, the same helper History's menu calls.
  *   · Delete   → History's confirm modal, then the row leaves the list.
  *   · Edit     → `/mv/edit` for an MV, `/song/create` for a song.
@@ -478,19 +479,21 @@ export function CreatorProfile() {
 
   function doPublish(item: ProfileItem, next: boolean) {
     setOpenMenu(null);
-    // An MV going public is reviewed first, so it confirms; a song is immediate.
-    if (next && item.kind === "mv") {
+    // Going public confirms first, MV or song alike (product owner,
+    // 2026-09-16 — supersedes the MV-only split this used to have);
+    // unpublishing stays immediate either way.
+    if (next) {
       setPubConfirm(item);
       return;
     }
     setPublished((s) => toggle(s, item.id));
     stopReviewing(item.id);
     clearRejectReason(item.id);
-    showToast(next ? "Published success" : "Unpublished success");
+    showToast("Unpublished success");
   }
 
   // 2.5: the `?demo=1` panel's `publishRejected` flag decides what a submission
-  // comes back as, same as `HistoryView.confirmPublishMv`. Rejection reverts
+  // comes back as, same as `HistoryView.confirmPublish`. Rejection reverts
   // the item to unpublished (rule 2) rather than adding a fourth status.
   //
   // Product owner, 2026-08-28: submitting doesn't resolve immediately —
@@ -498,9 +501,20 @@ export function CreatorProfile() {
   // either `published` flips true (toggle ON) or the reject reason lands,
   // same pending phase as `HistoryView`/`MvResult`. The flag/reason are
   // captured now, not re-read when the timer fires.
+  //
+  // Song shares the confirm DIALOG now (2026-09-16 follow-up) but not this
+  // review delay/reject simulation — that timer models MV's moderation queue
+  // specifically, which was never part of this ask; confirming a song
+  // publishes it immediately, same as before the dialog existed.
   function confirmPublish() {
     if (!pubConfirm) return;
     const id = pubConfirm.id;
+    if (pubConfirm.kind === "song") {
+      setPublished((s) => new Set(s).add(id));
+      showToast("Published success");
+      setPubConfirm(null);
+      return;
+    }
     const rejected = demo.flags.publishRejected;
     const reason = demo.rejectReason;
     setReviewing((s) => new Set(s).add(id));

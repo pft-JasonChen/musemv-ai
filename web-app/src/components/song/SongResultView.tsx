@@ -9,6 +9,7 @@ import { DpIcon } from "@/components/ui/DpIcon";
 import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { ListItem } from "@/components/ui/ListItem";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
+import { PublishConfirmDialog } from "@/components/ui/PublishConfirmDialog";
 import { LyricsSheet } from "@/components/ui/LyricsSheet";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
@@ -183,6 +184,10 @@ export function SongResultView() {
   const [shareOpen, setShareOpen] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [published, setPublished] = useState(false);
+  // Product owner, 2026-09-16: publishing a song now confirms first, the
+  // same "Ready to Go Public?" dialog MV already uses — supersedes the
+  // "Song does NOT confirm first" split below.
+  const [pubConfirm, setPubConfirm] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
   /**
@@ -648,12 +653,13 @@ export function SongResultView() {
                         <p className="song-result__publish-state">{published ? "On" : "Off"}</p>
                       </div>
                       {/* GL-02: publishing to the community is gated at the action.
-                          Unlike MV, Song does NOT confirm first — DP's own split. */}
+                          Confirms first now (2026-09-16 follow-up), same dialog
+                          MV uses — unpublishing stays immediate either way. */}
                       <ToggleSwitch
                         checked={published}
                         ariaLabel="Publish to community"
                         onChange={(next) =>
-                          next ? requireLogin(() => setPublished(true)) : setPublished(false)
+                          next ? requireLogin(() => setPubConfirm(true)) : setPublished(false)
                         }
                       />
                     </div>
@@ -784,6 +790,14 @@ export function SongResultView() {
         url={buildShareUrl(shareId)}
       />
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
+      <PublishConfirmDialog
+        open={pubConfirm}
+        onCancel={() => setPubConfirm(false)}
+        onConfirm={() => {
+          setPublished(true);
+          setPubConfirm(false);
+        }}
+      />
     </>
   );
 }

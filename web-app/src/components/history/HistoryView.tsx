@@ -253,10 +253,18 @@ export function HistoryView() {
       localePath(locale, r.kind === "storyboard" ? `/mv/storyboard?id=${r.id}` : "/mv/room"),
     );
   }
+  // Product owner, 2026-09-16: Song now confirms before publishing too, the
+  // same "Ready to Go Public?" dialog MV already uses — DP's own split
+  // (song publishes straight away, no dialog) no longer holds. Unpublishing
+  // stays immediate for both kinds; only the publish direction gates on the
+  // dialog, matching the MV toggle below exactly.
   function togglePublishSong(r: HistorySample) {
-    const next = !published(r);
-    patch(r.id, { published: next });
-    showToast(next ? "Published success" : "Unpublished success");
+    if (published(r)) {
+      patch(r.id, { published: false });
+      showToast("Unpublished success");
+      return;
+    }
+    setPubConfirm(r.id);
   }
   function togglePublishMv(r: HistorySample) {
     if (published(r) || reviewing(r)) {
@@ -279,22 +287,32 @@ export function HistoryView() {
   // reject reason lands, matching `MvResult`'s own pending phase. The flag/
   // reason are captured now, not re-read when the timer fires, so a QA
   // toggling the panel mid-review doesn't change an already-submitted result.
-  function confirmPublishMv() {
-    if (pubConfirm) {
-      const id = pubConfirm;
-      const rejected = demo.flags.publishRejected;
-      const reason = demo.rejectReason;
-      patch(id, { reviewing: true, published: false, rejectReason: null });
-      showToast("Submitted for review");
-      window.setTimeout(() => {
-        if (rejected) {
-          patch(id, { reviewing: false, published: false, rejectReason: reason });
-        } else {
-          patch(id, { reviewing: false, published: true, rejectReason: null });
-        }
-      }, PUBLISH_REVIEW_DELAY_MS);
-    }
+  //
+  // Song shares this dialog now (2026-09-16 follow-up) but NOT the review
+  // delay/reject simulation above — that timer models MV's moderation queue
+  // specifically, which was never part of this ask; confirming a song
+  // publishes it immediately, same as before the dialog existed.
+  function confirmPublish() {
+    const id = pubConfirm;
     setPubConfirm(null);
+    if (!id) return;
+    const row = rows.find((r) => r.id === id);
+    if (row?.kind === "song") {
+      patch(id, { published: true });
+      showToast("Published success");
+      return;
+    }
+    const rejected = demo.flags.publishRejected;
+    const reason = demo.rejectReason;
+    patch(id, { reviewing: true, published: false, rejectReason: null });
+    showToast("Submitted for review");
+    window.setTimeout(() => {
+      if (rejected) {
+        patch(id, { reviewing: false, published: false, rejectReason: reason });
+      } else {
+        patch(id, { reviewing: false, published: true, rejectReason: null });
+      }
+    }, PUBLISH_REVIEW_DELAY_MS);
   }
 
   return (
@@ -475,7 +493,7 @@ export function HistoryView() {
         <PublishConfirmDialog
           open={pubConfirm != null}
           onCancel={() => setPubConfirm(null)}
-          onConfirm={confirmPublishMv}
+          onConfirm={confirmPublish}
         />
 
         <CreateSheet open={createSheetOpen} onClose={() => setCreateSheetOpen(false)} />
