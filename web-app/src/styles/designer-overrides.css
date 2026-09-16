@@ -533,6 +533,413 @@
   inset: -3px 0;
 }
 
+/* Product owner, 2026-09-16 — `SongResultView.tsx`/`SongPlayBar.tsx` already
+   had this exact volume popup (`.song-result__volume-slider`,
+   `SongCreatePage.css`; `.song-bar__volume-slider`, `SongPlayBar.css`), both
+   gated verbatim and both desktop-only (`.song-result__icon-btn--desktop`,
+   shown only ≥1024px; `.song-bar` itself hidden ≤767px). Two changes, same
+   request as the rest of this block: (1) the component dropped the
+   `--desktop` class from THIS ONE wrapper (its own base rule is already
+   unconditional `display: flex`, so nothing else was needed to reach every
+   width); (2) touch devices need the SAME `--open` class hook every other
+   screen's popup gets from `useVolumePopup`, which this gated CSS has no
+   selector for — added here rather than in the verbatim file. */
+.song-result__volume--open .song-result__volume-slider,
+.song-bar__volume--open .song-bar__volume-slider {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Product owner, 2026-09-16 follow-up: a 5px gap between the mute icon and
+   the popup, same as every `.{block}__volume-slider` below — the gated
+   file's `bottom: 100%` leaves the popup flush against the button with no
+   gap at all. The `::before` bridge alongside it is required, not
+   decorative — see the big comment on `.mv-result__volume::before` below
+   for why a gap with no bridge breaks `:hover` before the cursor ever
+   reaches the popup. */
+.song-result__volume-slider,
+.song-bar__volume-slider {
+  bottom: calc(100% + 5px);
+}
+
+.song-result__volume::before,
+.song-bar__volume::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 5px;
+}
+
+/* `.song-bar__icon-btn` is 32px, 4px narrower than this popup's 36px, so the
+   gated file's `right: 0` (matching `.song-result__icon-btn`'s 36px exactly)
+   leaves `.song-bar__volume-slider` 2px off-center over `SongPlayBar`'s mute
+   icon. Recentered the same way as every other screen's popup below. */
+.song-bar__volume-slider {
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, 6px);
+}
+
+.song-bar__volume:hover .song-bar__volume-slider,
+.song-bar__volume:focus-within .song-bar__volume-slider,
+.song-bar__volume--open .song-bar__volume-slider {
+  transform: translate(-50%, 0);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Volume-slider popup on the mute button — product owner, 2026-09-16,
+   requested on every Song/MV playing/result screen and the Share page, at
+   every width (desktop/tablet/mobile). `SongResultView.tsx`/`SongPlayBar.tsx`
+   already had exactly this popup (`.song-result__volume-slider`,
+   `SongCreatePage.css`) — desktop-only, pure-CSS `:hover`/`:focus-within`,
+   no touch path. Every `.{block}__volume`/`.{block}__volume-slider` pair
+   below (one per screen, matching each screen's own BEM prefix rather than
+   sharing a class name across unrelated blocks) copies that same 36px-wide,
+   112px-tall pill exactly, for one consistent look app-wide — the JS state
+   machine behind the touch path is shared instead (`useVolumePopup`,
+   `src/components/ui/useVolumePopup.ts`; see its own header for why a hook
+   here, unlike this codebase's usual per-screen duplication). The `--open`
+   modifier is the touch path's hook into the same reveal rule `:hover`/
+   `:focus-within` already use — a desktop mouse never sets it, and never
+   needs to.
+
+   ── THE 5px GAP NEEDS A HOVER BRIDGE, OR IT KILLS ITS OWN HOVER ───────────
+
+   Product owner, 2026-09-16 follow-up: a small visible gap between the icon
+   and the popup (was flush, then briefly 10px — both wrong, see below).
+   `:hover` on `.{block}__volume` stays true while the cursor is over EITHER
+   the button or the slider (both its DOM descendants, regardless of the
+   slider's absolute position) — but the gap between them is neither, so the
+   instant the mouse crosses it the wrapper stops matching `:hover` and the
+   popup starts closing before the cursor ever reaches it. A 10px gap made
+   this failure reliable; 5px alone would not have fixed it, only made it
+   less likely. The real fix is `.{block}__volume::before`: an invisible,
+   pointer-events-default strip the same width as the popup, sitting exactly
+   in the gap — a third hoverable descendant that bridges the two, so the
+   cursor is always over SOMETHING inside the wrapper along the whole path
+   from button to popup. It needs no visibility toggle (it has no visible
+   content to show or hide) and no `pointer-events: none` closed-state
+   guard either — it sits directly above the button, where this app never
+   puts another interactive control, so leaving it always hit-testable
+   costs nothing. ════════════════════════════════════════════════════════ */
+
+.mv-result__volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mv-result__volume::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 5px;
+}
+
+.mv-result__volume-slider {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 112px;
+  box-sizing: border-box;
+  padding: 12px 0;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-14);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.mv-result__volume:hover .mv-result__volume-slider,
+.mv-result__volume:focus-within .mv-result__volume-slider,
+.mv-result__volume--open .mv-result__volume-slider {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.mv-result__volume-slider input {
+  width: 4px;
+  height: 88px;
+  margin: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  accent-color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+/* `/watch` (`CommunityMvPlayer.tsx`) — same recipe, see the block comment
+   above `.mv-result__volume`. */
+.mv-player__volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mv-player__volume::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 5px;
+}
+
+.mv-player__volume-slider {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 112px;
+  box-sizing: border-box;
+  padding: 12px 0;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-14);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.mv-player__volume:hover .mv-player__volume-slider,
+.mv-player__volume:focus-within .mv-player__volume-slider,
+.mv-player__volume--open .mv-player__volume-slider {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.mv-player__volume-slider input {
+  width: 4px;
+  height: 88px;
+  margin: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  accent-color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+/* `/mv/edit` (`MvEditor.tsx`) — same recipe, see the block comment above
+   `.mv-result__volume`. */
+.mv-edit__volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mv-edit__volume::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 5px;
+}
+
+.mv-edit__volume-slider {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 112px;
+  box-sizing: border-box;
+  padding: 12px 0;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-14);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.mv-edit__volume:hover .mv-edit__volume-slider,
+.mv-edit__volume:focus-within .mv-edit__volume-slider,
+.mv-edit__volume--open .mv-edit__volume-slider {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.mv-edit__volume-slider input {
+  width: 4px;
+  height: 88px;
+  margin: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  accent-color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+/* Home hero's two mute/unmute buttons (`HeroBannerSectionV3.tsx`'s
+   `.hero-banner-v3__volume`, `HeroBannerMobile`'s `.hero-banner-mobile__volume`
+   in `HeroBannerSection.tsx`) are plain toggles, not this file's other
+   `.{block}__volume` popups (product owner, 2026-09-16 follow-up — this
+   control is mute/unmute only) — no CSS of their own needed beyond the
+   `IconButton` they already wrap; both set their top-right position inline
+   in the component instead (no DP-native class for either exists at all). */
+
+/* `/song/play`'s full-screen mobile player (`MobileNowPlaying`,
+   `SongDetailView.tsx`) — same recipe, see the block comment above
+   `.mv-result__volume`. */
+.song-detail-mobile-player__volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.song-detail-mobile-player__volume::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 5px;
+}
+
+.song-detail-mobile-player__volume-slider {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 112px;
+  box-sizing: border-box;
+  padding: 12px 0;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-14);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.song-detail-mobile-player__volume:hover .song-detail-mobile-player__volume-slider,
+.song-detail-mobile-player__volume:focus-within .song-detail-mobile-player__volume-slider,
+.song-detail-mobile-player__volume--open .song-detail-mobile-player__volume-slider {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.song-detail-mobile-player__volume-slider input {
+  width: 4px;
+  height: 88px;
+  margin: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  accent-color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+/* Share page (`ShareLinkView.tsx`) — both panels, same recipe, see the block
+   comment above `.mv-result__volume`. This page has no gated DP stylesheet
+   at all (see this file's own `.share-page` header comment), but the rule
+   stays here with the volume-popup group rather than moving up next to
+   `.share-page`'s other rules, so all ten of these stay easy to find
+   together. */
+.share-song__volume,
+.share-mv__volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.share-song__volume::before,
+.share-mv__volume::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 5px;
+}
+
+.share-song__volume-slider,
+.share-mv__volume-slider {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 112px;
+  box-sizing: border-box;
+  padding: 12px 0;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-14);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.share-song__volume:hover .share-song__volume-slider,
+.share-song__volume:focus-within .share-song__volume-slider,
+.share-song__volume--open .share-song__volume-slider,
+.share-mv__volume:hover .share-mv__volume-slider,
+.share-mv__volume:focus-within .share-mv__volume-slider,
+.share-mv__volume--open .share-mv__volume-slider {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.share-song__volume-slider input,
+.share-mv__volume-slider input {
+  width: 4px;
+  height: 88px;
+  margin: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  accent-color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
 /* DESIGNER-TODO A13 — caption-level text at --neutral-dark-44 is under AA.
    Not one stylesheet's mistake — `--neutral-dark-44` measures ~3.3-3.8:1
    (3.59:1 exactly, worked out against this bar's #09090b background)

@@ -12,6 +12,7 @@ import { Tabs } from "@/components/shell/RoomNavbar";
 import { TopSongListItem } from "@/components/ui/TopSongListItem";
 import { LyricsSheet, formatTime } from "@/components/ui/LyricsSheet";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -252,13 +253,14 @@ interface PlayerProps {
   song: CommunitySong;
   playing: boolean;
   muted: boolean;
+  volume: number;
   currentTime: number;
   duration: number;
   audioRef: RefObject<HTMLAudioElement | null>;
   liked: boolean;
   onToggleLike: () => void;
   onTogglePlay: () => void;
-  onToggleMute: () => void;
+  onSetVolume: (next: number) => void;
   onPrev: () => void;
   onNext: () => void;
   onCreate: () => void;
@@ -290,13 +292,14 @@ function MobileNowPlaying({
   song,
   playing,
   muted,
+  volume,
   currentTime,
   duration,
   audioRef,
   liked,
   onToggleLike,
   onTogglePlay,
-  onToggleMute,
+  onSetVolume,
   onPrev,
   onNext,
   onCreate,
@@ -308,6 +311,8 @@ function MobileNowPlaying({
   const mounted = useIsMounted();
   const { locale } = useLocale();
   const { seek } = useSeek(audioRef);
+  const volumeWrapRef = useRef<HTMLDivElement>(null);
+  const volumePopup = useVolumePopup(volumeWrapRef);
 
   if (!mounted) return null;
 
@@ -389,18 +394,39 @@ function MobileNowPlaying({
                 Like's `--active`) — this screen never had one to reuse, so it's
                 the plain icon-btn class with the same on/off `DpIcon` pair
                 `CommunityMvPlayer.tsx`/`SongResultView.tsx` already use for
-                their own mute buttons. */}
-            <button
-              type="button"
-              className="song-detail-mobile-player__icon-btn"
-              onClick={onToggleMute}
-              aria-label={muted ? "Unmute" : "Mute"}
+                their own mute buttons. The volume-slider popup (product
+                owner, 2026-09-16) is the same 36px/112px pill every other
+                screen uses — see `designer-overrides.css`'s
+                `.mv-result__volume` block comment. */}
+            <div
+              className={`song-detail-mobile-player__volume${
+                volumePopup.open ? " song-detail-mobile-player__volume--open" : ""
+              }`}
+              ref={volumeWrapRef}
             >
-              <DpIcon
-                name={muted ? "ic_speaker_off" : "ic_speaker_on"}
-                className="song-detail-mobile-player__icon"
-              />
-            </button>
+              <div className="song-detail-mobile-player__volume-slider">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={muted ? 0 : volume}
+                  onChange={(e) => onSetVolume(Number(e.target.value))}
+                  aria-label="Volume"
+                />
+              </div>
+              <button
+                type="button"
+                className="song-detail-mobile-player__icon-btn"
+                onClick={() => volumePopup.handleMuteClick(() => onSetVolume(muted ? 1 : 0))}
+                aria-label={muted ? "Unmute" : "Mute"}
+              >
+                <DpIcon
+                  name={muted || volume === 0 ? "ic_speaker_off" : "ic_speaker_on"}
+                  className="song-detail-mobile-player__icon"
+                />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -518,8 +544,9 @@ export function SongDetailView() {
   // control at all (not a missing onClick, the button itself didn't exist).
   // Mirrors `playing`/`togglePlay` above: state here, real toggle against
   // the one shared `<audio>` element, same pattern `CommunityMvPlayer.tsx`'s
-  // `toggleMute` already uses for its own player.
+  // `setVol` already uses for its own player.
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   /**
@@ -741,11 +768,19 @@ export function SongDetailView() {
     else audio.pause();
   }
 
-  function toggleMute() {
+  // Product owner, 2026-09-16: hover-revealed volume-slider popup on
+  // `MobileNowPlaying`'s mute button. `setVol` replaces the old boolean-only
+  // `toggleMute` — same `audioRef`, now also driving a `volume` float the
+  // slider needs (see `MvResult.tsx`'s matching comment for the pattern this
+  // mirrors on the video-player screens).
+  function setVol(next: number) {
     const audio = audioRef.current;
-    if (!audio) return;
-    audio.muted = !audio.muted;
-    setMuted(audio.muted);
+    if (audio) {
+      audio.volume = next;
+      audio.muted = next === 0;
+    }
+    setVolume(next);
+    setMuted(next === 0);
   }
 
   /**
@@ -1103,13 +1138,14 @@ export function SongDetailView() {
               song={activeSong}
               playing={playing}
               muted={muted}
+              volume={volume}
               currentTime={currentTime}
               duration={duration}
               audioRef={audioRef}
               liked={likedIds.has(activeSong.id)}
               onToggleLike={() => toggleLike(activeSong.id)}
               onTogglePlay={togglePlay}
-              onToggleMute={toggleMute}
+              onSetVolume={setVol}
               onPrev={() => step(-1)}
               onNext={() => step(1)}
               onCreate={() => createFromSong(activeSong)}

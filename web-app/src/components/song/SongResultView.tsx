@@ -6,6 +6,7 @@ import { SeekBar } from "@/components/ui/SeekBar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { ListItem } from "@/components/ui/ListItem";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { LyricsSheet } from "@/components/ui/LyricsSheet";
@@ -177,6 +178,8 @@ export function SongResultView() {
   }
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(1);
+  const volumeWrapRef = useRef<HTMLDivElement>(null);
+  const volumePopup = useVolumePopup(volumeWrapRef);
   const [shareOpen, setShareOpen] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [published, setPublished] = useState(false);
@@ -472,7 +475,12 @@ export function SongResultView() {
                             <DpIcon name="ic_download" className="song-result__icon" />
                           </button>
                         )}
-                        <div className="song-result__volume song-result__icon-btn--desktop">
+                        <div
+                          className={`song-result__volume${
+                            volumePopup.open ? " song-result__volume--open" : ""
+                          }`}
+                          ref={volumeWrapRef}
+                        >
                           <div className="song-result__volume-slider">
                             <input
                               type="range"
@@ -487,7 +495,7 @@ export function SongResultView() {
                           <button
                             type="button"
                             className="song-result__icon-btn"
-                            onClick={() => setVol(muted ? 1 : 0)}
+                            onClick={() => volumePopup.handleMuteClick(() => setVol(muted ? 1 : 0))}
                             aria-label={muted ? "Unmute" : "Mute"}
                           >
                             <DpIcon

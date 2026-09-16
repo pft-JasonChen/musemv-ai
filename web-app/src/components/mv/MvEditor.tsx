@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
@@ -150,6 +151,12 @@ export function MvEditor() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
+  // Product owner, 2026-09-16: hover-revealed volume-slider popup on the mute
+  // button — see `MvResult.tsx`'s matching comment for why `muted` stays
+  // JSX-declarative (autoplay eligibility) while `volume` is new/imperative.
+  const [volume, setVolume] = useState(1);
+  const volumeWrapRef = useRef<HTMLDivElement>(null);
+  const volumePopup = useVolumePopup(volumeWrapRef);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -284,6 +291,13 @@ export function MvEditor() {
     const media = videoRef.current;
     if (!media || !media.duration) return;
     media.currentTime = Math.min(media.duration, Math.max(0, next));
+  }
+
+  function setVol(next: number) {
+    const video = videoRef.current;
+    if (video) video.volume = next;
+    setVolume(next);
+    setMuted(next === 0);
   }
 
 
@@ -449,17 +463,33 @@ export function MvEditor() {
                   thumbClassName="mv-edit__progress-thumb"
                 />
                 <span className="mv-edit__time">{formatTime(duration)}</span>
-                <button
-                  type="button"
-                  className="mv-edit__control-btn"
-                  onClick={() => setMuted((m) => !m)}
-                  aria-label={muted ? "Unmute" : "Mute"}
+                <div
+                  className={`mv-edit__volume${volumePopup.open ? " mv-edit__volume--open" : ""}`}
+                  ref={volumeWrapRef}
                 >
-                  <DpIcon
-                    name={muted ? "ic_speaker_off" : "ic_speaker_on"}
-                    className="mv-edit__control-icon"
-                  />
-                </button>
+                  <div className="mv-edit__volume-slider">
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={muted ? 0 : volume}
+                      onChange={(e) => setVol(Number(e.target.value))}
+                      aria-label="Volume"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="mv-edit__control-btn"
+                    onClick={() => volumePopup.handleMuteClick(() => setVol(muted ? 1 : 0))}
+                    aria-label={muted ? "Unmute" : "Mute"}
+                  >
+                    <DpIcon
+                      name={muted || volume === 0 ? "ic_speaker_off" : "ic_speaker_on"}
+                      className="mv-edit__control-icon"
+                    />
+                  </button>
+                </div>
                 <button
                   type="button"
                   className="mv-edit__control-btn"

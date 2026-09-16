@@ -1,11 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { SeekBar } from "@/components/ui/SeekBar";
 import type { RefObject } from "react";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { IconButton } from "@/components/ui/IconButton";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { formatTime } from "@/components/ui/LyricsSheet";
@@ -92,6 +93,8 @@ export function SongPlayBar({
   const [shareOpen, setShareOpen] = useState(false);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
+  const volumeWrapRef = useRef<HTMLDivElement>(null);
+  const volumePopup = useVolumePopup(volumeWrapRef);
 
   /**
    * The bar is `position: fixed`, so it spans the viewport — including the
@@ -150,13 +153,6 @@ export function SongPlayBar({
     }
     setVolume(next);
     setMuted(next === 0);
-  }
-
-  function toggleMute() {
-    const audio = audioRef.current;
-    const next = !muted;
-    if (audio) audio.muted = next;
-    setMuted(next);
   }
 
   // Product owner request, 2026-08-14 — album art + title open the song's own
@@ -272,8 +268,14 @@ export function SongPlayBar({
       />
       <span className="song-bar__time">{formatTime(duration)}</span>
 
-      {/* Figma node 2330:64177 — order is Volume > Like > Share > Close. */}
-      <div className="song-bar__volume">
+      {/* Figma node 2330:64177 — order is Volume > Like > Share > Close.
+          Volume-slider popup's touch path (product owner, 2026-09-16) reuses
+          the same `useVolumePopup` hook every other screen's does — see
+          `designer-overrides.css`'s `.mv-result__volume` block comment. */}
+      <div
+        className={`song-bar__volume${volumePopup.open ? " song-bar__volume--open" : ""}`}
+        ref={volumeWrapRef}
+      >
         <div className="song-bar__volume-slider">
           <input
             type="range"
@@ -288,7 +290,7 @@ export function SongPlayBar({
         <button
           type="button"
           className="song-bar__icon-btn"
-          onClick={toggleMute}
+          onClick={() => volumePopup.handleMuteClick(() => applyVolume(muted ? 1 : 0))}
           aria-label={muted ? "Unmute" : "Mute"}
         >
           <DpIcon

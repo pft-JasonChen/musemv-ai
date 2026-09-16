@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { SeekBar } from "@/components/ui/SeekBar";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { DpBadge } from "@/components/ui/DpBadge";
 import { formatCount } from "@/lib/mv/community";
 import { toggleMvFullscreen } from "@/lib/fullscreen";
@@ -91,6 +92,12 @@ export function MvPreviewCard({
   const stageRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
+  // Product owner, 2026-09-16: hover-revealed volume-slider popup on the mute
+  // button — see `MvResult.tsx`'s matching comment for the `muted`/`volume`
+  // split.
+  const [volume, setVolume] = useState(1);
+  const volumeWrapRef = useRef<HTMLDivElement>(null);
+  const volumePopup = useVolumePopup(volumeWrapRef);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const isPortrait = ratio === "3:4";
@@ -112,11 +119,14 @@ export function MvPreviewCard({
     }
   }
 
-  function toggleMute() {
+  function setVol(next: number) {
     const v = videoRef.current;
-    if (!v) return;
-    v.muted = !v.muted;
-    setMuted(v.muted);
+    if (v) {
+      v.volume = next;
+      v.muted = next === 0;
+    }
+    setVolume(next);
+    setMuted(next === 0);
   }
 
   function toggleFullscreen() {
@@ -210,17 +220,35 @@ export function MvPreviewCard({
 
                     <span className="mv-preview__time">{formatTime(duration)}</span>
 
-                    <button
-                      type="button"
-                      className="mv-preview__control-btn"
-                      onClick={toggleMute}
-                      aria-label={muted ? "Unmute" : "Mute"}
+                    <div
+                      className={`mv-preview__volume${
+                        volumePopup.open ? " mv-preview__volume--open" : ""
+                      }`}
+                      ref={volumeWrapRef}
                     >
-                      <DpIcon
-                        name={muted ? "ic_speaker_off" : "ic_speaker_on"}
-                        className="mv-preview__control-icon"
-                      />
-                    </button>
+                      <div className="mv-preview__volume-slider">
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={muted ? 0 : volume}
+                          onChange={(e) => setVol(Number(e.target.value))}
+                          aria-label="Volume"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="mv-preview__control-btn"
+                        onClick={() => volumePopup.handleMuteClick(() => setVol(muted ? 1 : 0))}
+                        aria-label={muted ? "Unmute" : "Mute"}
+                      >
+                        <DpIcon
+                          name={muted || volume === 0 ? "ic_speaker_off" : "ic_speaker_on"}
+                          className="mv-preview__control-icon"
+                        />
+                      </button>
+                    </div>
 
                     <button
                       type="button"

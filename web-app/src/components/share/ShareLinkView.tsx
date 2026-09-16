@@ -22,6 +22,7 @@ import { resolveShare, type SharedMedia } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { SeekBar } from "@/components/ui/SeekBar";
+import { useVolumePopup } from "@/components/ui/useVolumePopup";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -131,6 +132,12 @@ function SongPanel({ media, onDownload }: { media: SharedMedia; onDownload: () =
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  // Product owner, 2026-09-16: hover-revealed volume-slider popup on the
+  // mute button, on every playing/result screen and the Share page — see
+  // `MvResult.tsx`'s matching comment for the `muted`/`volume` split.
+  const [volume, setVolume] = useState(1);
+  const volumeWrapRef = useRef<HTMLDivElement>(null);
+  const volumePopup = useVolumePopup(volumeWrapRef);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -150,11 +157,14 @@ function SongPanel({ media, onDownload }: { media: SharedMedia; onDownload: () =
     }
   }
 
-  function toggleMute() {
+  function setVol(next: number) {
     const a = audioRef.current;
-    if (!a) return;
-    a.muted = !a.muted;
-    setMuted(a.muted);
+    if (a) {
+      a.volume = next;
+      a.muted = next === 0;
+    }
+    setVolume(next);
+    setMuted(next === 0);
   }
 
   function seek(next: number) {
@@ -215,14 +225,33 @@ function SongPanel({ media, onDownload }: { media: SharedMedia; onDownload: () =
             thumbClassName="share-song__progress-thumb"
           />
         </div>
-        <button
-          type="button"
-          className="share-song__icon-btn"
-          onClick={toggleMute}
-          aria-label={muted ? "Unmute" : "Mute"}
+        <div
+          className={`share-song__volume${volumePopup.open ? " share-song__volume--open" : ""}`}
+          ref={volumeWrapRef}
         >
-          <DpIcon name={muted ? "ic_speaker_off" : "ic_speaker_on"} className="share-song__icon" />
-        </button>
+          <div className="share-song__volume-slider">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={muted ? 0 : volume}
+              onChange={(e) => setVol(Number(e.target.value))}
+              aria-label="Volume"
+            />
+          </div>
+          <button
+            type="button"
+            className="share-song__icon-btn"
+            onClick={() => volumePopup.handleMuteClick(() => setVol(muted ? 1 : 0))}
+            aria-label={muted ? "Unmute" : "Mute"}
+          >
+            <DpIcon
+              name={muted || volume === 0 ? "ic_speaker_off" : "ic_speaker_on"}
+              className="share-song__icon"
+            />
+          </button>
+        </div>
         <button
           type="button"
           className="share-song__icon-btn"
@@ -244,6 +273,11 @@ function MvPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => 
   const panelRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  // Product owner, 2026-09-16: hover-revealed volume-slider popup on the
+  // mute button — see `MvResult.tsx`'s matching comment for the pattern.
+  const [volume, setVolume] = useState(1);
+  const volumeWrapRef = useRef<HTMLDivElement>(null);
+  const volumePopup = useVolumePopup(volumeWrapRef);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -277,11 +311,14 @@ function MvPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => 
     void v.requestPictureInPicture().catch(() => {});
   }
 
-  function toggleMute() {
+  function setVol(next: number) {
     const v = videoRef.current;
-    if (!v) return;
-    v.muted = !v.muted;
-    setMuted(v.muted);
+    if (v) {
+      v.volume = next;
+      v.muted = next === 0;
+    }
+    setVolume(next);
+    setMuted(next === 0);
   }
 
   function toggleFullscreen() {
@@ -336,14 +373,33 @@ function MvPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => 
             thumbClassName="share-mv__progress-thumb"
           />
         </div>
-        <button
-          type="button"
-          className="share-mv__icon-btn"
-          onClick={toggleMute}
-          aria-label={muted ? "Unmute" : "Mute"}
+        <div
+          className={`share-mv__volume${volumePopup.open ? " share-mv__volume--open" : ""}`}
+          ref={volumeWrapRef}
         >
-          <DpIcon name={muted ? "ic_speaker_off" : "ic_speaker_on"} className="share-mv__icon" />
-        </button>
+          <div className="share-mv__volume-slider">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={muted ? 0 : volume}
+              onChange={(e) => setVol(Number(e.target.value))}
+              aria-label="Volume"
+            />
+          </div>
+          <button
+            type="button"
+            className="share-mv__icon-btn"
+            onClick={() => volumePopup.handleMuteClick(() => setVol(muted ? 1 : 0))}
+            aria-label={muted ? "Unmute" : "Mute"}
+          >
+            <DpIcon
+              name={muted || volume === 0 ? "ic_speaker_off" : "ic_speaker_on"}
+              className="share-mv__icon"
+            />
+          </button>
+        </div>
         <button
           type="button"
           className="share-mv__icon-btn"

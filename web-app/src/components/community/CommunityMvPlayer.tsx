@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { SeekBar } from "@/components/ui/SeekBar";
+import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { DetailNavbar, useBackNavigation } from "@/components/shell/DetailNavbar";
 import { buildShareUrl } from "@/lib/share";
 import { toggleMvFullscreen } from "@/lib/fullscreen";
@@ -136,7 +137,7 @@ import { MvGridSections } from "@/components/community/MvGridSections";
  * continues with zero delay. Only the slot that just left the 3-item window
  * gets a new `src` loaded into it, off-screen, for the next drag.
  *
- * `videoRef` (used by `togglePlay`/`toggleMute`/`seek`/the control row) always
+ * `videoRef` (used by `togglePlay`/`setVol`/`seek`/the control row) always
  * points at whichever slot currently plays role "curr" — its ref callback
  * re-runs that assignment on every render, so it tracks `rolesRef` without a
  * separate effect. `feedIdxRef` is this component's own cursor into
@@ -220,6 +221,13 @@ export function CommunityMvPlayer() {
   // therefore tries unmuted FIRST and only falls back to muted if the browser
   // refuses, keeping `muted` state and the mute button honest either way.
   const [muted, setMuted] = useState(false);
+  // Product owner, 2026-09-16: hover-revealed volume-slider popup on the mute
+  // button. `muted` above stays exactly as it was — the autoplay-with-sound
+  // fallback in `startPlayback` reads/writes it directly and that must keep
+  // working unchanged; `volume` is new, purely additive.
+  const [volume, setVolume] = useState(1);
+  const volumeWrapRef = useRef<HTMLDivElement>(null);
+  const volumePopup = useVolumePopup(volumeWrapRef);
   const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   // See this file's "REWRITTEN AS A 3-SLOT ROTATING TRACK" header comment.
@@ -393,11 +401,14 @@ export function CommunityMvPlayer() {
     }
   }
 
-  function toggleMute() {
+  function setVol(next: number) {
     const v = videoRef.current;
-    if (!v) return;
-    v.muted = !v.muted;
-    setMuted(v.muted);
+    if (v) {
+      v.volume = next;
+      v.muted = next === 0;
+    }
+    setVolume(next);
+    setMuted(next === 0);
   }
 
   function toggleFullscreen() {
@@ -635,9 +646,7 @@ export function CommunityMvPlayer() {
                         // Ref callback, not a render-time read — runs at
                         // commit, keeping `videoRef` pointed at whichever
                         // slot currently plays "curr" (see header comment).
-                        // eslint-disable-next-line react-hooks/refs
                         slotVideoRefs.current[slotIdx] = el;
-                        // eslint-disable-next-line react-hooks/refs
                         if (isCurrent) videoRef.current = el;
                       }}
                       className="mv-player__video"
@@ -768,17 +777,33 @@ export function CommunityMvPlayer() {
 
               <span className="mv-player__time">{formatTime(duration)}</span>
 
-              <button
-                type="button"
-                className="mv-player__control-btn"
-                onClick={toggleMute}
-                aria-label={muted ? "Unmute" : "Mute"}
+              <div
+                className={`mv-player__volume${volumePopup.open ? " mv-player__volume--open" : ""}`}
+                ref={volumeWrapRef}
               >
-                <DpIcon
-                  name={muted ? "ic_speaker_off" : "ic_speaker_on"}
-                  className="mv-player__control-icon"
-                />
-              </button>
+                <div className="mv-player__volume-slider">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={muted ? 0 : volume}
+                    onChange={(e) => setVol(Number(e.target.value))}
+                    aria-label="Volume"
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="mv-player__control-btn"
+                  onClick={() => volumePopup.handleMuteClick(() => setVol(muted ? 1 : 0))}
+                  aria-label={muted ? "Unmute" : "Mute"}
+                >
+                  <DpIcon
+                    name={muted || volume === 0 ? "ic_speaker_off" : "ic_speaker_on"}
+                    className="mv-player__control-icon"
+                  />
+                </button>
+              </div>
 
               {/* `mv-player__fullscreen` (on top of the base control-btn
                   class) is what MVDetailPage.css's mobile query hides —

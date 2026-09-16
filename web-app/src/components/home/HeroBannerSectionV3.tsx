@@ -94,6 +94,10 @@ export function HeroBannerSectionV3() {
   // below unmutes on a real user gesture, so browsers permit it. Shared
   // across cards on purpose — only one card is ever mounted with a
   // `<video>` at a time, so this is "the hero's sound", not per-card state.
+  // Plain toggle only (product owner, 2026-09-16): no volume-slider popup
+  // here, unlike every playing/result screen — this control is mute/unmute
+  // only, so `muted` alone (still the declarative `<video muted>` prop, no
+  // ref needed) is the whole story.
   const [muted, setMuted] = useState(true);
 
   function measureStep() {
@@ -217,14 +221,18 @@ export function HeroBannerSectionV3() {
                 // stylesheet; the button itself is the shared `IconButton` in
                 // its existing "small/tertiary" preset, which already matches
                 // the Figma spec pixel-for-pixel (28px, 16px icon, white-15
-                // glass).
-                <div style={{ position: "absolute", top: 16, right: 16, zIndex: 2 }}>
+                // glass). Plain mute/unmute toggle only (product owner,
+                // 2026-09-16) — no volume-slider popup here.
+                <div
+                  className="hero-banner-v3__volume"
+                  style={{ position: "absolute", top: 16, right: 16, zIndex: 2 }}
+                >
                   <IconButton
                     size="small"
                     variant="tertiary"
                     icon={muted ? "ic_speaker_off" : "ic_speaker_on"}
                     label={muted ? "Unmute" : "Mute"}
-                    onClick={() => setMuted((current) => !current)}
+                    onClick={() => setMuted(!muted)}
                   />
                 </div>
               )}

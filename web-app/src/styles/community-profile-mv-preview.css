@@ -136,6 +136,73 @@
   -webkit-mask-size: contain;
 }
 
+/* Volume-slider popup on the mute button — product owner, 2026-09-16, same
+   36px/112px pill used on every other playing/result screen (see
+   `designer-overrides.css`'s `.mv-result__volume` block comment for the full
+   rationale and the shared `useVolumePopup` hook it's paired with). This
+   file has no gated DP counterpart, so the rule lives here directly instead
+   of in an override. */
+.mv-preview__volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Invisible hover bridge across the gap to the popup — required, not
+   decorative; see `designer-overrides.css`'s `.mv-result__volume::before`
+   comment for why a gap with no bridge closes the popup before the cursor
+   reaches it. */
+.mv-preview__volume::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 5px;
+}
+
+.mv-preview__volume-slider {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 112px;
+  box-sizing: border-box;
+  padding: 12px 0;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-14);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.mv-preview__volume:hover .mv-preview__volume-slider,
+.mv-preview__volume:focus-within .mv-preview__volume-slider,
+.mv-preview__volume--open .mv-preview__volume-slider {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.mv-preview__volume-slider input {
+  width: 4px;
+  height: 88px;
+  margin: 0;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  accent-color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
 .mv-preview__time {
   flex-shrink: 0;
   color: var(--white-40);

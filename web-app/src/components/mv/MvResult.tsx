@@ -6,6 +6,7 @@ import { SeekBar } from "@/components/ui/SeekBar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { PublishConfirmDialog } from "@/components/ui/PublishConfirmDialog";
@@ -99,6 +100,15 @@ export function MvResult() {
   // render unreachable. `MvEditor` already solves this the same way on the
   // sibling screen, so the treatment is DP's own, not an invention.
   const [muted, setMuted] = useState(true);
+  // Product owner, 2026-09-16: a hover-revealed volume-slider popup on the
+  // mute button, on every playing/result/Share screen. `muted` stays the
+  // JSX-declarative prop on `<video>` (unchanged — it's what makes autoplay
+  // eligible; see the comment on its own state above), and `volume` is new,
+  // set imperatively on the ref like `SongResultView`'s `setVol` already does
+  // for `<audio>` — there is no autoplay concern to protect for a plain float.
+  const [volume, setVolume] = useState(1);
+  const volumeWrapRef = useRef<HTMLDivElement>(null);
+  const volumePopup = useVolumePopup(volumeWrapRef);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [vote, setVote] = useState<"up" | "down" | null>(null);
@@ -184,6 +194,13 @@ export function MvResult() {
     media.currentTime = Math.min(media.duration, Math.max(0, next));
   }
 
+  function setVol(next: number) {
+    const video = videoRef.current;
+    if (video) video.volume = next;
+    setVolume(next);
+    setMuted(next === 0);
+  }
+
   // MV-12 + GL-02.
   function togglePublish(next: boolean) {
     if (!next) {
@@ -267,17 +284,33 @@ export function MvResult() {
                 thumbClassName="mv-result__progress-thumb"
               />
               <span className="mv-result__time">{formatTime(duration)}</span>
-              <button
-                type="button"
-                className="mv-result__control-btn"
-                onClick={() => setMuted((m) => !m)}
-                aria-label={muted ? "Unmute" : "Mute"}
+              <div
+                className={`mv-result__volume${volumePopup.open ? " mv-result__volume--open" : ""}`}
+                ref={volumeWrapRef}
               >
-                <DpIcon
-                  name={muted ? "ic_speaker_off" : "ic_speaker_on"}
-                  className="mv-result__control-icon"
-                />
-              </button>
+                <div className="mv-result__volume-slider">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={muted ? 0 : volume}
+                    onChange={(e) => setVol(Number(e.target.value))}
+                    aria-label="Volume"
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="mv-result__control-btn"
+                  onClick={() => volumePopup.handleMuteClick(() => setVol(muted ? 1 : 0))}
+                  aria-label={muted ? "Unmute" : "Mute"}
+                >
+                  <DpIcon
+                    name={muted || volume === 0 ? "ic_speaker_off" : "ic_speaker_on"}
+                    className="mv-result__control-icon"
+                  />
+                </button>
+              </div>
               <button
                 type="button"
                 className="mv-result__control-btn"

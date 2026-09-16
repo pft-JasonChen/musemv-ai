@@ -141,16 +141,36 @@ function mobileRealIndex(domIndex: number) {
  * Same `localePath(locale, "/watch?id=" + item.id)` destination
  * `HeroBannerSectionV3`'s desktop cards and `NewMVsSection`'s Trending MV
  * cards both use — see that file's header comment for the full reasoning
- * (`HERO_MVS`, the media-link override, the tag-swap-is-safe note). No video
- * ever plays here (this carousel is photos only, see the file header above),
- * so there is no watermark to add — the product owner's watermark ask was
- * specifically about the PLAYING hero video, which only exists on desktop.
+ * (`HERO_MVS`, the media-link override, the tag-swap-is-safe note). No
+ * watermark here — the product owner's watermark ask was specifically about
+ * the PLAYING hero video and was pulled back to the home page entirely (see
+ * `HeroBannerSectionV3`'s own header comment); that verdict applies here too.
  *
  * The text link is additionally gated the same way the CTA button already
  * is (`tabIndex`/`aria-hidden` on `isActive`) — `.hero-banner-mobile__bottom`
  * is `opacity:0;pointer-events:none` for a flanking card, and an invisible
  * link left focusable/announced would be the exact "opacity 0 is not
  * hidden" defect this codebase has already caught twice elsewhere.
+ *
+ * ── ONLY THE CENTERED CARD PLAYS VIDEO, 2026-09-16 (product owner) ─────────
+ *
+ * Originally photos-only (this carousel used to render nothing but
+ * `item.thumbnail`) — the product owner asked for a mute/unmute control on
+ * this card too, and a mute button needs something playing to mute. Unlike
+ * every Song/MV playing/result screen, this is a PLAIN toggle with no
+ * volume-slider popup (product owner, 2026-09-16 follow-up) — same as
+ * `HeroBannerSectionV3`. Ported that file's video-swap pattern: a SEPARATE
+ * `activeDomIndex` state (not `activeReal`) tracks which single padded card
+ * gets a live `<video>`, because `activeReal` deliberately maps BOTH a
+ * clone and its real equivalent to the same value during the snap-settle
+ * window (see `settleAfterSnap` above) — fine for the CTA row, which shows
+ * identical content either way, but two `<video autoPlay>`s briefly racing
+ * on the same audio would not be. `activeDomIndex` matches exactly one
+ * rendered card, always. Starts `muted` (required for autoplay to be
+ * allowed at all) and unmutes only on the button's own click, a real user
+ * gesture — same reasoning as `HeroBannerSectionV3`, and it sidesteps that
+ * file's sibling `CommunityMvPlayer`'s autoplay-with-sound/rejection-fallback
+ * complexity entirely.
  */
 function HeroBannerMobile({
   onCreate,
@@ -165,6 +185,15 @@ function HeroBannerMobile({
   const timerRef = useRef<number | undefined>(undefined);
   const stepRef = useRef(0);
   const [activeReal, setActiveReal] = useState(0);
+  // Mirrors domIndexRef as real state, same as `HeroBannerSectionV3` — see
+  // this component's header comment for why it is a second state distinct
+  // from `activeReal` rather than reusing it.
+  const [activeDomIndex, setActiveDomIndex] = useState(1);
+  // Plain mute/unmute toggle only (product owner, 2026-09-16): no
+  // volume-slider popup here, unlike every playing/result screen — `muted`
+  // alone (the declarative `<video muted>` prop, no ref needed) is the whole
+  // story.
+  const [muted, setMuted] = useState(true);
 
   function measureStep() {
     const firstCard = trackRef.current?.firstElementChild;
@@ -184,6 +213,7 @@ function HeroBannerMobile({
     domIndexRef.current = domIndex;
     setTrackX(-domIndex * stepRef.current, animated);
     setActiveReal(mobileRealIndex(domIndex));
+    setActiveDomIndex(domIndex);
   }
 
   // After animating onto a clone, silently snap to its real equivalent — the
@@ -292,18 +322,51 @@ function HeroBannerMobile({
       >
         {MOBILE_PADDED_ITEMS.map((item, domIndex) => {
           const isActive = mobileRealIndex(domIndex) === activeReal;
+          const isVideoActive = domIndex === activeDomIndex;
           const detailHref = localePath(locale, `/watch?id=${item.id}`);
           return (
             <div className="hero-banner-mobile__card" key={`${domIndex}-${item.title}`}>
               <Link href={detailHref} className="hero-banner-mobile__media-link" aria-label={item.title}>
-                <img
-                  src={item.thumbnail}
-                  alt=""
-                  className="hero-banner-mobile__bg"
-                  draggable={false}
-                />
+                {isVideoActive ? (
+                  <video
+                    className="hero-banner-mobile__bg"
+                    src={item.video}
+                    poster={item.thumbnail}
+                    autoPlay
+                    loop
+                    muted={muted}
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={item.thumbnail}
+                    alt=""
+                    className="hero-banner-mobile__bg"
+                    draggable={false}
+                  />
+                )}
                 <div className="hero-banner-mobile__scrim" aria-hidden="true" />
               </Link>
+              {isVideoActive && (
+                // Plain mute/unmute toggle only (product owner, 2026-09-16) —
+                // no volume-slider popup here. 8px inset matches the card's
+                // own padding (`.hero-banner-mobile__card`), the same edge
+                // the CTA button below already sits flush against — not the
+                // 16px `HeroBannerSectionV3` uses, which answers to that
+                // card's own (24px) padding instead.
+                <div
+                  className="hero-banner-mobile__volume"
+                  style={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}
+                >
+                  <IconButton
+                    size="small"
+                    variant="tertiary"
+                    icon={muted ? "ic_speaker_off" : "ic_speaker_on"}
+                    label={muted ? "Unmute" : "Mute"}
+                    onClick={() => setMuted(!muted)}
+                  />
+                </div>
+              )}
               <div
                 className={`hero-banner-mobile__bottom${isActive ? " hero-banner-mobile__bottom--active" : ""}`}
               >
