@@ -307,7 +307,17 @@ export function StoryboardEditor() {
                 onClick={songPlayer.toggle}
                 aria-label={songPlayer.playing ? "Pause song" : "Play song"}
               >
-                <img src={compose.song?.art ?? "/assets/images/album-art/album_05.jpg"} alt="" />
+                {/* `??` only covers "no song picked yet" (falls back to the demo
+                    placeholder art below); an imported song with no art of its
+                    own is `""`, not nullish, so it needs its own guard — same
+                    idiom `TrimAudioModal`/`MvRoom`'s own song-art use, letting
+                    `.mv-storyboard__song-art`'s CSS `--neutral-dark-24`
+                    background show through instead of a broken image icon. */}
+                {compose.song ? (
+                  compose.song.art && <img src={compose.song.art} alt="" />
+                ) : (
+                  <img src="/assets/images/album-art/album_05.jpg" alt="" />
+                )}
                 <span className="mv-storyboard__song-art-scrim" aria-hidden="true" />
                 <DpIcon
                   name={songPlayer.playing ? "ic_pause" : "ic_play"}

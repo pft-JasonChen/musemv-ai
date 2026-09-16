@@ -231,7 +231,11 @@ export function MvRoom() {
         source: "import",
         title,
         durationSec,
-        art: "/assets/images/album-art/album_01.jpg",
+        // A user's own local file has no album art this app can read (no
+        // ID3/metadata extraction, no backend) — leave it empty so every
+        // `song.art && <img .../>` consumer falls through to its CSS
+        // `--neutral-dark-24` placeholder background instead of a fake cover.
+        art: "",
         url,
       });
     };
