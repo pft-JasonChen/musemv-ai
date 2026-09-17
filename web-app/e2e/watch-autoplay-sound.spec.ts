@@ -26,11 +26,14 @@
 // when that variable is needed at all.
 
 import { expect, test } from "@playwright/test";
+import { resolveChromiumPath } from "./chromiumPath";
+
+const chromiumPath = resolveChromiumPath();
 
 test.use({
   launchOptions: {
     args: ["--autoplay-policy=no-user-gesture-required"],
-    ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
+    ...(chromiumPath ? { executablePath: chromiumPath } : {}),
   },
 });
 

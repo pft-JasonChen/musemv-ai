@@ -1,4 +1,7 @@
 import { defineConfig } from "@playwright/test";
+import { resolveChromiumPath } from "./e2e/chromiumPath";
+
+const chromiumPath = resolveChromiumPath();
 
 export default defineConfig({
   testDir: "./e2e",
@@ -8,8 +11,10 @@ export default defineConfig({
     baseURL: "http://localhost:3100",
     browserName: "chromium",
     // Sandboxed CI/agent environments provide a system chromium instead of a
-    // playwright-managed download; point CHROMIUM_PATH at it to skip the download.
-    launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+    // playwright-managed download; point CHROMIUM_PATH at it to skip the download
+    // (see `e2e/chromiumPath.ts` for the Stop-hook fallback when that env var
+    // cannot be set from outside the hook's own subprocess).
+    launchOptions: chromiumPath ? { executablePath: chromiumPath } : {},
   },
   webServer: {
     command: "next start -p 3100",

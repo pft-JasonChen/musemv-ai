@@ -23,6 +23,11 @@ tsconfig.tsbuildinfo
 # Absolute local paths must never reach the shared file.
 .claude/settings.local.json
 
+# Per-machine Playwright browser path override — see playwright.config.ts. Needed on
+# a sandboxed box whose installed browser build predates the pinned one (the Stop
+# hook's `npm run e2e` has no way to receive an env var, so this is the fallback).
+.chromium-path-local
+
 # Playwright MCP capture artifacts (console logs / page dumps from spec screenshot runs)
 .playwright-mcp/
 # yco-spec downscaled review copies (regenerated on every capture; PNG is canonical)
