@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { TOP_PICKS_SONGS, songAudioUrl } from "@/lib/mv/community";
+import { TOP_PICKS_SONGS, songAudioUrl, songResultFromCommunity } from "@/lib/mv/community";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
+import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { localePath } from "@/lib/i18n/config";
 import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
 import { useDemoFlag } from "@/components/demo/useDemo";
@@ -74,6 +75,7 @@ export function TopPicksSection({
   const demoEmpty = useDemoFlag("feedEmpty");
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
+  const { setSongResult } = useSongFlow();
   const isPhone = useMediaQuery(PHONE_QUERY);
   const audioRef = useRef<HTMLAudioElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
@@ -153,6 +155,25 @@ export function TopPicksSection({
     row.scrollBy({ left: direction * row.clientWidth, behavior: "smooth" });
   }
 
+  /**
+   * YMW260914P0002 (product owner, 2026-09-17, after live-testing production):
+   * a card's TITLE/cover click was going to `/song/play` at every width. This
+   * is the exact bug `NewSongsSection.tsx`'s own `openSong` already fixed for
+   * ITS rail on 2026-08-13 (product owner request) — a duplicate copy of the
+   * same pattern that missed the fix, same shape as `YMW260909P0008`. Mirrors
+   * that function exactly, `from=home` included: desktop seeds `SongFlow` and
+   * goes straight to `/song/result` (which self-guards back to `/song/create`
+   * when its flow state is empty, hence the seed); phones keep `/song/play`.
+   */
+  function openSong(song: (typeof TOP_PICKS_SONGS)[number]) {
+    if (isPhone) {
+      router.push(localePath(locale, `/song/play?id=${song.id}`));
+      return;
+    }
+    setSongResult(songResultFromCommunity(song));
+    router.push(localePath(locale, `/song/result?id=${song.id}&from=home`));
+  }
+
   function handlePlayClick(songId: string) {
     // No preview bar exists on a phone (`.song-bar` is `display: none` below
     // 768px), so playing here would be audio with no transport. Navigate
@@ -214,8 +235,15 @@ export function TopPicksSection({
             {TOP_PICKS_SONGS.map((song) => (
               <Link
                 key={song.id}
-                href={localePath(locale, `/song/play?id=${song.id}`)}
+                href={localePath(
+                  locale,
+                  isPhone ? `/song/play?id=${song.id}` : `/song/result?id=${song.id}&from=home`,
+                )}
                 className="top-picks__item"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openSong(song);
+                }}
               >
                 <Card
                   type="Song"

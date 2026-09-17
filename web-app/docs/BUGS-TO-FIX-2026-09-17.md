@@ -16,7 +16,7 @@ Result: **17 bugs**, all `NewCreated`, Handler `JASON_CHEN` (two — P0012, P002
 | --- | -------------- | ------------------------------------------------------------------------ |
 | 1   | YMW260907P0007 | ✅ Already fixed (verified live) — reply comment ready                   |
 | 2   | YMW260911P0004 | ✅ Already fixed (09/11–09/14) — reply comment ready                     |
-| 3   | YMW260914P0002 | ⏸️ Decided: keep current behavior — reply comment ready, no code change  |
+| 3   | YMW260914P0002 | ✅ Fixed, confirmed live (reversed after live-testing production)        |
 | 4   | YMW260915P0004 | ⏸️ Deferred to designer, per your instruction — not touched              |
 | 5   | YMW260915P0007 | ✅ Spec documented (MV-E9) using RD's error-code sheet, no code change   |
 | 6   | YMW260915P0009 | ✅ Spec documented (MV-E9), name mismatch flagged for RD, no code change |
@@ -75,12 +75,31 @@ go-ahead — see note at the end).
 
 - ePF status: NewCreated · Priority: 2 · Handler: JASON_CHEN
 - Triage: Already fixed (2026-09-11, corrected 2026-09-14)
-- Local status: **Verified**
+- Local status: Fixed for the route-transition case; **question open on the screenshot below**
 
 Matches `docs/BUGS-TO-FIX-2026-09-11.md` #6/Re-pull #6. A shared `ui/LoadingDots.tsx` renders via
 `app/[locale]/loading.tsx` on every client-side route switch between AI Music Video / AI Song.
 **Not fixed for a full F5 reload** — Next.js resolves that fully-synchronously, so nothing streams
 a separate fallback. Accepted, known gap (product owner, prior session).
+
+### Follow-up (2026-09-17): screenshot from `testing-ycm.makeupar.com/en/mv/room`
+
+You sent a screenshot highlighting a gray skeleton-placeholder list (rows of a thumbnail + two text
+bars) in the right-hand panel of `/mv/room`, asking whether "we fix the correct issue".
+
+- **That URL is the real backend build, not this prototype** — same distinction the eBug's own
+  `Note` field already made (`URL: https://testing-ycm.makeupar.com`). The highlighted panel is
+  structurally that build's "My Creations"/Trending rail.
+- **This is a different mechanism from what we fixed.** Our `LoadingDots` fix addresses a
+  **route-transition** loading state — the WHOLE page going blank while a new route's JS streams
+  in, on F5 or switching between AI Music Video/Song. The screenshot shows a **panel-level data
+  skeleton** — a placeholder for ONE list while it fetches, which only makes sense against a real
+  backend with real network latency.
+- **This repo's equivalent panel can't reproduce or need this**, because it has no async fetch to
+  skeleton in the first place: `useMyCreations()` reads already-in-memory mock state synchronously
+  — there is no moment where that data is "loading". Same shape as `YMW260915P0007`/`P0009`/`P0026`
+  — a real-backend behavior this backend-less prototype has no equivalent code path for.
+- **Not verified as still correct** pending your answer — see the question below the ledger.
 
 ### Reply comment (paste into eBug)
 
@@ -94,8 +113,8 @@ a separate fallback. Accepted, known gap (product owner, prior session).
 ## YMW260914P0002 — [Home] Top Picks Songs card click is inconsistent with mockup
 
 - ePF status: NewCreated · Priority: 5 · Handler: JASON_CHEN
-- Triage: Needs PM — **decided 2026-09-17: keep current behavior**
-- Local status: Decided, no code change
+- Triage: Clear to fix — **reversed after you live-tested production**
+- Local status: **Fixed, confirmed live**
 
 ### Report
 
@@ -104,15 +123,42 @@ a separate fallback. Accepted, known gap (product owner, prior session).
 - Expected (QA's own words): "behavior on mockup is entering a page like a see all page" — QA
   itself asked PM to confirm which is correct.
 
-### Resolution
+### Investigation and correction
 
-You confirmed: keep the current behavior (card → `/song/play`, the song's own player). No code
-change. `src/components/home/TopPicksSection.tsx` is the code location, unchanged.
+First round: I asked "keep current (`/song/play`) or change to a see-all list page", and you said
+keep current. You then tested it live on `https://musemv-ai.vercel.app/` and reported the opposite
+— clicking a Top Picks Songs card lands on `/song/play?id=sp-neon-static`, and that this is **not**
+"that song's own player", which you identified as `/song/result?id=sp-neon-static&from=song-detail`.
+
+That pointed at a real, pre-existing inconsistency: `NewSongsSection.tsx` (Home's OTHER song rail,
+"Newly Released Songs") already got exactly this fix on **2026-08-13** (product owner request) —
+desktop seeds `SongFlow` and opens `/song/result`, phone keeps `/song/play`. `TopPicksSection.tsx`
+is a duplicate copy of the same row pattern that never received that fix — the same shape as
+`YMW260909P0008`'s missed-duplicate. `specs/areas/04-explore-community.md`'s `AC-EXP-03` was
+itself stale since 2026-08-13 for the same reason.
+
+### Resolution and verification
+
+- Resolution: `TopPicksSection.tsx` gained its own `openSong()`, mirrored from
+  `NewSongsSection.tsx` exactly (including the `from=home` origin tag, not `/explore/songs`' own
+  `from=song-detail`). The card's `Link` now branches by viewport instead of always pointing at
+  `/song/play`.
+- Spec corrected: `AC-EXP-03` and `EXP-P1-S3` in `specs/areas/04-explore-community.md`, recorded in
+  `specs/CHANGELOG-SPEC.md`.
+- **Confirmed live:** clicking the "Neon Static" card now seeds `SongFlow` and lands on
+  `/song/result?id=sp-neon-static&from=home`, rendering the song's title, lyrics panel, and the
+  "Newly Released Songs" rail correctly (desktop viewport).
+- **Related finding, not yet acted on:** `CreatorProfile.tsx`'s own songs grid also links straight
+  to `/song/play?id=` with no viewport split at all — a different, mixed MV/song/storyboard grid
+  component, not simply another copy of the `NewSongsSection`/`TopPicksSection` row pattern, so I
+  didn't change it without checking first. Flag if you want the same split applied there.
 
 ### Reply comment (paste into eBug)
 
-> Confirmed as intended — clicking a Top Picks Songs card opens that song's own player, which is
-> the behavior we want to keep. No change needed.
+> Fixed — a Top Picks Songs card now opens that song's own result page
+> (`/song/result?id=...`) at desktop widths, matching the "Newly Released Songs" rail right below
+> it, instead of always going to `/song/play`. On a phone it still opens the full-screen player,
+> same as every other song rail.
 
 ---
 
