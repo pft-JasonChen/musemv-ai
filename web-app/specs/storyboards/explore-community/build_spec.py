@@ -63,8 +63,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Explore &amp; Community',
     'breadcrumb': 'YouCam Muse Web &rarr; Explore &amp; Community',
-    'author': 'Jason Chen', 'date': '2026-09-12', 'status': 'Draft',
-    'version': 'v3',
+    'author': 'Jason Chen', 'date': '2026-09-17', 'status': 'Draft',
+    'version': 'v4',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -343,12 +343,12 @@ cfg = {
                     ],
                 },
                 {
-                    'shot': '15_explore_songs_create.png', 'num': 5,
+                    'shot': '15_explore_songs_create.png', 'num': 5, 'since': 'v4',
                     'user': 'Presses Create on a row.',
-                    'system': 'The song create screen opens with that song&rsquo;s details already filled in.',
+                    'system': 'The song create screen opens blank &mdash; not seeded with the row&rsquo;s details.',
                     'limits': [
-                        ('Create seeds the compose form with the song&rsquo;s genre, mood, title and lyrics before navigating.',
-                         'AC-EXP-02.'),
+                        ('An earlier version of this flow seeded genre/mood/title/lyrics from the row before navigating; product owner decided 2026-09-17 that was more than V1 wants.',
+                         'AC-EXP-02, corrected in v4 &mdash; YMW260916P0021.'),
                         ('It is gated: signed out, this opens the sign-in modal instead and runs afterwards.',
                          'AC-EXP-08; the gate itself is shown at P1-S8.'),
                         ('The destination screen belongs to S1.',
@@ -822,7 +822,7 @@ cfg = {
 
     'criteria': [
         ('AC-EXP-01', 'WHEN the home page loads, THE SYSTEM SHALL render the hero, the tool selector and the three seed rails in seed order &mdash; and SHALL mount the narrow treatment of the hero and tool selector below 768px and the desktop treatment at or above it.', ['P1-S1', 'P1-S2']),
-        ('AC-EXP-02', 'WHEN a hero CTA, a tool-selector card, or a row Create is pressed, THE SYSTEM SHALL run the sign-in gate and, on success, navigate to the create flow with the song pre-filled.', ['P1-S8', 'P3-S5']),
+        ('AC-EXP-02', 'WHEN a hero CTA, a tool-selector card, or a row Create is pressed, THE SYSTEM SHALL run the sign-in gate and, on success, navigate to the create flow. The create flow opens blank; it does not pre-fill the pressed row&rsquo;s details.', ['P1-S8', 'P3-S5']),
         ('AC-EXP-03', 'WHEN an MV card is pressed anywhere, THE SYSTEM SHALL open the MV player for it. WHEN a song row is pressed on /explore/songs at 768px and above, THE SYSTEM SHALL navigate to the result-stage player; WHEN the row&rsquo;s album art is pressed instead, THE SYSTEM SHALL preview it in the bottom bar WITHOUT navigating.', ['P1-S5', 'P2-S2', 'P3-S3', 'P3-S4']),
         ('AC-EXP-04', 'WHEN the MV player loads, THE SYSTEM SHALL play the MV WITH SOUND ON in the item&rsquo;s OWN aspect ratio, with play/pause and mute, and expose Like, Share and Create Music Video pre-filling the MV create flow. Where the browser refuses to autoplay with sound, it SHALL fall back to muted playback rather than leaving the video paused.', ['P4-S1', 'P4-S10']),
         ('AC-EXP-05', 'WHEN the song player loads, THE SYSTEM SHALL resolve the id to the correct playlist, present real audio progress with Previous/Next, Like/Share and a lyrics sheet where one exists, and SHALL NOT cap playback for free accounts.', ['P3-S3', 'P5-S2', 'P5-S3'], 'The disc player and the lyrics sheet live on the result-stage player (P3-S4&rsquo;s destination, owned by S1) and in the narrow layout&rsquo;s full-screen player, which is outside this spec&rsquo;s desktop-only scope (D8). The playlist resolution, the real audio and the absence of a cap are all covered by the steps listed.'),
@@ -906,6 +906,19 @@ cfg = {
     ],
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v4', '2026-09-17',
+         '<b>YMW260916P0021 &mdash; Create no longer pre-fills the compose form.</b> '
+         'Changed: <b>AC-EXP-02</b> and <b>P3-S5</b>. QA reported that pressing Create on a '
+         'Newly Released Songs row did not fill Genre/Mood/Style Prompt/Title/Lyrics into the '
+         'creation panel. Investigation found the opposite of what was reported: Genre, Mood, '
+         'Title and Lyrics were already filling in correctly (this spec had simply fallen behind '
+         'a 2026-09-02 change); only the Simple-mode Style Prompt was ever left blank. Put to the '
+         'product owner, who decided the EXISTING pre-fill was itself more than V1 wants, rather '
+         'than asking for the one missing field. Create now opens a blank compose form from every '
+         'entry point (Home&rsquo;s Newly Released Songs, /explore/songs&rsquo; own row Create, '
+         'and the matching rail on /song/create&rsquo;s and /song/result&rsquo;s result screen). '
+         'Code: <code>NewSongsSection.tsx</code>, <code>SongDetailView.tsx</code>, '
+         '<code>SongResultView.tsx</code> — each dropped its own copy of the seeding call.'),
         ('v3', '2026-09-12',
          '<b>YMW260909P0009 &mdash; P1-S8 re-captured with a second frame.</b> '
          'No behaviour changed: pressing a tool-selector card while signed out still opens the '

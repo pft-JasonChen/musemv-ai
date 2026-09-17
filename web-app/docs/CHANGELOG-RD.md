@@ -23,6 +23,30 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-17 — **C4 ADDITIVE** — `useMvFlow` gains `resultDate` / `setResultDate` (YMW260916P0024)
+
+**Surface: C4** (`src/components/providers/MvFlowProvider.tsx`, interface `MvFlowValue`). Two new
+keys, both additive — `providers.surface.test.ts`'s snapshot updated, no existing key renamed or
+removed.
+
+```ts
+interface MvFlowValue {
+  …
+  resultDate: string | null;                                     // NEW
+  setResultDate: React.Dispatch<React.SetStateAction<string | null>>;  // NEW
+}
+```
+
+`/mv/result` was hardcoding the literal string `"just now"` regardless of when the opened MV was
+actually created (`useOpenCreation` never threaded a real date through). `useOpenCreation`'s
+`OpenableCreation` gains an optional `date?: string`, set from `HISTORY_SAMPLES`' `date` field
+when opening a fixture from History or the "My Creations" rail; a genuinely fresh in-session
+render never sets it, so `/mv/result` still correctly falls back to "just now" in that case.
+
+**RD action required: none** — additive only, same fallback behavior preserved for live jobs.
+
+---
+
 ## 2026-09-14 — `MvFlowProvider.tsx` (C4) and `types.ts` (C8) touched; no shape change
 
 **Surface: C4** (`src/components/providers/MvFlowProvider.tsx`) **and C8**
@@ -33,6 +57,7 @@ creation; MV's has no equivalent and none is planned), so the 2026-09-11 "smart 
 behavior production cannot build.
 
 **Not a contract shape change on either surface:**
+
 - C4: `useMvFlow()`'s return keys are unchanged — `startStoryboard`/`startRender` still call
   `upsertGenerating` with a `title: string`, only the VALUE supplied changed (a fixed constant now,
   not a compose-derived one).
@@ -83,18 +108,18 @@ noted here since the previous entry described `photoCount`'s intent, which no lo
 Four files the gate watches were touched in this pass (YMW260911P0004, P0005, P0007). Going
 through each surface explicitly, as the gate asks for even when the answer is "no change":
 
-**`src/app/[locale]/loading.tsx` (new file, under C7's `src/app/**` watch).** This is a Next.js
-`loading.tsx` special file, not a `page.tsx` — it adds no route, renames no route, and defines no
+**`src/app/[locale]/loading.tsx` (new file, under C7's `src/app/**`watch).** This is a Next.js`loading.tsx`special file, not a`page.tsx` — it adds no route, renames no route, and defines no
 URL. It is the Suspense fallback Next mounts automatically while a route segment's chunk streams
 in (YMW260911P0004: F5 or a route switch showed a blank screen with no feedback). **Not a C7
 change** — nothing RD deep-links against moved.
 
 **`src/lib/mv/types.ts` (C8).** Two changes, neither touching the three names C8 actually
 guards (`COST_*`, `DEFAULT_SETTINGS`, `isComposeReady`):
+
 - New exported helper `mvDisplayTitle(compose)` — pure function, additive, not a constant.
 - `DEFAULT_SONG_COMPOSE.mode` changed from `"simple"` to `"custom"` (YMW260910P0021, product
   owner) — a default VALUE, not a shape change; `SongComposeSchema` (C2) is untouched.
-**Not a contract change** — no schema, no cost table, no `isComposeReady` rule moved.
+  **Not a contract change** — no schema, no cost table, no `isComposeReady` rule moved.
 
 **`src/components/providers/HistoryProvider.tsx` and `MvFlowProvider.tsx` (C4).** `useHistory()`
 and `useMvFlow()`'s own return KEYS are unchanged (checked against
@@ -136,7 +161,7 @@ Songs tab: `/history?tab=mv` and `/history?tab=songs`.
 function initialFilterFromTab(tab: string | null): Filter {
   if (tab === "mv") return "mv";
   if (tab === "songs") return "song";
-  return "all";              // unchanged default — absent or unrecognized `tab` behaves exactly as before
+  return "all"; // unchanged default — absent or unrecognized `tab` behaves exactly as before
 }
 ```
 
@@ -260,16 +285,16 @@ the gate's watched paths.
 
 - **Home page, mobile only:** Trending MV / Top Picks rows now bleed to the true screen edge
   (revealing more of the next card) instead of stopping at the page's own 16px padding; the
-  hero carousel's peek of the neighbour card — always *meant* to show ~28px on each side — was
+  hero carousel's peek of the neighbour card — always _meant_ to show ~28px on each side — was
   being clipped down to a barely-visible sliver by its own overflow-hidden wrapper sitting
   inside that same 16px padding, now fixed to reach the true viewport edge. Section header-to-
   row gap (Trending MV / Top Picks / New Songs) tightened 24px → 12px. `.mobile-tabbar`'s three
   items (Explore / Create / History) now space evenly, including the outer edges.
 - **`/mv/room` and `/song/create`, desktop only (≥1024px):** the two-column layout (form panel
-  + side rail, both fixed-width since a 2026-08-13 request) now centers as a block within its
-  row instead of packing against the left edge — visible once the row is wider than the two
-  columns combined, i.e. most desktop screens. The columns themselves are unchanged; only
-  their position moved.
+  - side rail, both fixed-width since a 2026-08-13 request) now centers as a block within its
+    row instead of packing against the left edge — visible once the row is wider than the two
+    columns combined, i.e. most desktop screens. The columns themselves are unchanged; only
+    their position moved.
 - **Color/copy:** `.mv-create__settings-chevron` (chip-row expand arrow) and the "Allow Data
   Processing for Better Experience" consent dialog's checkbox are both now solid white
   (`var(--neutral-dark-100)`), matching the rest of each screen's icon/control color. The MV
@@ -431,18 +456,18 @@ and fixed against the spec, per the product owner.
 
 ### C8 — removed
 
-| removed | why |
-| --- | --- |
+| removed                | why                                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
 | `COST_STORYBOARD` (20) | §3.3 prices this in **tiers by song length** — 12 / 15 / 18. No single number is correct. |
-| `COST_RENDER` (200) | §3.2/§3.4 price this **per second**, and differently for Create MV vs Generate MV. |
-| `COST_REGEN` (20) | §3.5 prices this **per second of the shot**, at a rate that depends on the shot's kind. |
+| `COST_RENDER` (200)    | §3.2/§3.4 price this **per second**, and differently for Create MV vs Generate MV.        |
+| `COST_REGEN` (20)      | §3.5 prices this **per second of the shot**, at a rate that depends on the shot's kind.   |
 
 These three are gone rather than deprecated: a wrong constant left exported is a constant something
 will keep importing. The old `TBD-CC-05` note argued the duration-dependent values should wait for
 the backend because the resolution is "由後端回傳而非 hardcode". That conflated **who owns the number
 at runtime** (the backend, still true) with **whether the prototype charges correctly today** (it
 did not). `TBD-CC-06` — the payload field names — is genuinely still open, but it only ever blocked
-the API *call*, never the arithmetic, and this prototype has no backend to call.
+the API _call_, never the arithmetic, and this prototype has no backend to call.
 
 ### C8 — added
 

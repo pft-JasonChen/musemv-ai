@@ -306,7 +306,8 @@
   color: var(--neutral-dark-04);
 }
 
-.history-card__menu > button.history-card__menu-primary:not(.history-card__menu-primary--gradient):hover {
+.history-card__menu
+  > button.history-card__menu-primary:not(.history-card__menu-primary--gradient):hover {
   background: var(--neutral-dark-100);
   color: var(--color-accent-purple);
 }
@@ -328,8 +329,7 @@
 
 .history-card__menu > .history-card__menu-primary--gradient:hover {
   background:
-    linear-gradient(var(--overlay-hover-dark), var(--overlay-hover-dark)),
-    var(--gradient-mv);
+    linear-gradient(var(--overlay-hover-dark), var(--overlay-hover-dark)), var(--gradient-mv);
 }
 
 /* Product owner request, 2026-08-14 — Delete should read the same white as
@@ -516,19 +516,19 @@
 
 .toggle-switch__track::after,
 .song-create__idea-btn::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px 0;
 }
 
 .mv-result__control-btn::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
 }
 
 .history-card__copy > a::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -3px 0;
 }
@@ -4108,7 +4108,6 @@
   box-sizing: border-box;
 }
 
-
 /* Product owner, 2026-09-01 — `sidebar__logo` now renders
    `ycm_logo_word_ver.svg` (300×96, aspect ~3.125:1) instead of the old
    placeholder `Logo.svg` (Figma "Sidebar", node 1330:21595). `Sidebar.css`
@@ -4621,4 +4620,16 @@
   .room-navbar__mobile-back {
     display: none;
   }
+}
+
+/* DESIGNER-TODO A33 — no `:disabled` visual anywhere. Product owner decided
+   2026-09-17: 40% opacity, site-wide. Functionally-disabled buttons (e.g.
+   TrimAudioModal's confirm below the 30s floor, YMW260916P0006) were already
+   non-clickable; this is the first visual rule for that state at all, so it
+   is a NEW value, not a defect fix — do not delete this on a future drop
+   unless it ships its own disabled treatment AND product owner reconciles the
+   two. */
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

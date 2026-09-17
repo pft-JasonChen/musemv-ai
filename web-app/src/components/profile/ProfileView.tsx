@@ -144,8 +144,13 @@ export function ProfileView() {
     if (!file) return;
     // Same accept/size shape as `MvRoom`'s character-photo upload, so the two
     // entry points into this dialog cannot disagree about what they take.
-    if (!file.type.startsWith("image/")) {
-      flash("Unsupported format. Please choose an image.");
+    // YMW260916P0001: `image/*` alone let TIFF (and anything else no browser
+    // can decode into an `<img>`) through — narrowed to what actually renders.
+    const name = file.name.toLowerCase();
+    const okExt = [".jpg", ".jpeg", ".png"].some((ext) => name.endsWith(ext));
+    const okType = /image\/(jpeg|png)/.test(file.type);
+    if (!okExt && !okType) {
+      flash("This image format isn't supported. Please use JPG or PNG.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -400,7 +405,7 @@ export function ProfileView() {
           <input
             ref={avatarFileRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png"
             className="hidden"
             onChange={(e) => {
               onAvatarFile(e.target.files?.[0]);

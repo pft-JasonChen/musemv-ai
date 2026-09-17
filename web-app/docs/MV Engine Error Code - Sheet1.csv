@@ -1,0 +1,20 @@
+Error Code,Description,UI Error Message
+invalid_parameter,"Invalid parameter value
+output format: parameter %s is missing or invalid",
+error_download_audio,Download source audio error,
+error_decode_audio,Decode source audio error,
+error_download_image,Download source image error,
+error_decode_image,Decode source image error,
+exceed_max_filesize,Input file size exceeds the maximum limit,
+error_below_min_image_size,"Input image resolution is too small
+(2026/06/03: 這是預留的error code, 目前mvAgent engine還不會做這個檢查)",
+error_exceed_max_image_size,"Input image resolution is too large
+(2026/06/03: 這是預留的error code, 目前mvAgent engine還不會做這個檢查)",
+error_audio_underlength,Not enough input audio length (>=15s),
+error_audio_overlength,Input audio length too long (<=240s),
+error_mv_project_busy,"Unable to acquire lock, task under same project is still running",
+error_inference,Inference pipeline error,
+error_upload,Upload result content error,
+error_credit_param_mismatch,mismatch between act_params and cost est config,
+error_nsfw_content_detected,Output Blocked (image/ vedio),
+unknown_internal_error,Others,

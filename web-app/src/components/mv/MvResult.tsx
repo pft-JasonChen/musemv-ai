@@ -87,8 +87,15 @@ export function MvResult() {
   const idParam = useSearchParams().get("id");
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
-  const { resultUrl, compose, storyboard, setStoryboard, saveStoryboard, characterNames } =
-    useMvFlow();
+  const {
+    resultUrl,
+    resultDate,
+    compose,
+    storyboard,
+    setStoryboard,
+    saveStoryboard,
+    characterNames,
+  } = useMvFlow();
   const { history } = useHistory();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -327,7 +334,7 @@ export function MvResult() {
           <div className="mv-result__title-row">
             <div className="mv-result__title-group">
               <p className="mv-result__title">{title}</p>
-              <p className="mv-result__date">just now</p>
+              <p className="mv-result__date">{resultDate ?? "just now"}</p>
             </div>
             <div className="mv-result__reactions">
               <button
@@ -371,14 +378,20 @@ export function MvResult() {
                   <img src="/assets/icons/ui/ic_download.svg" alt="" />
                   Download
                 </button>
-                <button
-                  type="button"
-                  className="mv-result__action"
-                  onClick={() => setShareOpen(true)}
-                >
-                  <img src="/assets/icons/ui/ic_share.svg" alt="" />
-                  Share
-                </button>
+                {/* YMW260916P0013: hidden while unpublished/in-review, same rule
+                    History's own row menu already applies (2026-09-11,
+                    YMW260903P0012) — a link that resolves to nothing shouldn't
+                    be offered. */}
+                {published && (
+                  <button
+                    type="button"
+                    className="mv-result__action"
+                    onClick={() => setShareOpen(true)}
+                  >
+                    <img src="/assets/icons/ui/ic_share.svg" alt="" />
+                    Share
+                  </button>
+                )}
               </div>
               <div
                 className={`mv-result__actions-row${

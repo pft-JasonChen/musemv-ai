@@ -62,12 +62,12 @@ axe 實測(WCAG AA,小型文字需 **4.5:1**):
 (其餘 8 條真的乾淨)。全部落在 `src/styles/designer/` 裡,也就是逐位元組複製、不能在這邊改的檔案。
 上表三個成因各自多了新的 selector:
 
-| 新出現的 selector | 前景 / 背景 | 實測 | 屬於 |
-| --- | --- | --- | --- |
-| `.button--primary > .button__label`(`/`、`/faq`)、`.mv-player__cta-desktop`(`/watch`) | `#ffffff` on `#a855f7` | **3.95:1** | 白字壓品牌紫 —— 與 `.tabs__tab--active` 同一個數字 |
-| `.mv-create__char-count` / `.song-create__char-count`(9 條 route) | `rgba(255,255,255,.4)` on `#151519` | **3.84:1** | 低不透明度次要文字 —— A1 選項 1 的 `.4 → .6` 正是這個 |
-| `.mv-create__settings-chip--dim` | 疊 `opacity: 0.3` on `#202025` | **2.39:1** | 同一類,但**第四種機制**:不是顏色,是 opacity 乘上去的 |
-| `.badge--failed > span`(`/creator`) | `#ff2600` on `#4d221f` | **3.53:1** | **就是上表第三列**,只是第一次被量到 |
+| 新出現的 selector                                                                     | 前景 / 背景                         | 實測       | 屬於                                                  |
+| ------------------------------------------------------------------------------------- | ----------------------------------- | ---------- | ----------------------------------------------------- |
+| `.button--primary > .button__label`(`/`、`/faq`)、`.mv-player__cta-desktop`(`/watch`) | `#ffffff` on `#a855f7`              | **3.95:1** | 白字壓品牌紫 —— 與 `.tabs__tab--active` 同一個數字    |
+| `.mv-create__char-count` / `.song-create__char-count`(9 條 route)                     | `rgba(255,255,255,.4)` on `#151519` | **3.84:1** | 低不透明度次要文字 —— A1 選項 1 的 `.4 → .6` 正是這個 |
+| `.mv-create__settings-chip--dim`                                                      | 疊 `opacity: 0.3` on `#202025`      | **2.39:1** | 同一類,但**第四種機制**:不是顏色,是 opacity 乘上去的  |
+| `.badge--failed > span`(`/creator`)                                                   | `#ff2600` on `#4d221f`              | **3.53:1** | **就是上表第三列**,只是第一次被量到                   |
 
 - **`.badge--failed` 之前寫「尚未被 axe 量到(只出現在 `/history`,仍在覆蓋缺口裡)」 —— `/creator`
   沒有 `AuthGuard`,所以缺口在它身上關掉了**,和 2026-08-05 `.tabs__tab--active` 靠
@@ -1040,7 +1040,6 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
    所以歌曲不會有 reject 畫面 —— 即使七種原因裡的「音訊品質不佳」與「版權疑慮」對歌曲才最適用。
    這是已拍板的產品決定,不是漏掉。
 
-
 ### A31. 歌詞每一行現在是「可點擊跳時間」的控制項 —— 但**沒有 hover / press / focus 的稿**（2026-09-09）
 
 `YMW260903P0005`：產品負責人回報「點歌詞應該要跳到那個時間點」。已實作，`/song/result`
@@ -1054,13 +1053,13 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
 
 需要設計師回答的，只有「它看起來要像可以點嗎」：
 
-| 狀態             | 現況                                                                 | 需要的東西                     |
-| ---------------- | -------------------------------------------------------------------- | ------------------------------ |
-| **靜置**         | 與 `<p>` 相同（非 active 行 opacity 0.4 / `--neutral-dark-64`）      | 要不要有任何「可點」的暗示     |
-| **hover**        | 只有 `cursor: pointer`，顏色與 opacity 不變                          | hover 的顏色 / opacity         |
-| **press**        | 走 `globals.css` 的全站 active 縮放                                  | 是否要別的回饋                 |
-| **focus**        | 走 `globals.css` 的全站 focus-visible ring                           | 是否要別的樣式                 |
-| **不能點的情況** | 沒有這種情況 —— 見下                                                 | —                              |
+| 狀態             | 現況                                                            | 需要的東西                 |
+| ---------------- | --------------------------------------------------------------- | -------------------------- |
+| **靜置**         | 與 `<p>` 相同（非 active 行 opacity 0.4 / `--neutral-dark-64`） | 要不要有任何「可點」的暗示 |
+| **hover**        | 只有 `cursor: pointer`，顏色與 opacity 不變                     | hover 的顏色 / opacity     |
+| **press**        | 走 `globals.css` 的全站 active 縮放                             | 是否要別的回饋             |
+| **focus**        | 走 `globals.css` 的全站 focus-visible ring                      | 是否要別的樣式             |
+| **不能點的情況** | 沒有這種情況 —— 見下                                            | —                          |
 
 **兩個已經拍板、不要再拿來討論的決定：**
 
@@ -1098,6 +1097,28 @@ DP 本身也是這樣(`PROJECT_CONTEXT` 自述 Pricing / FAQ 是佔位),所以�
   那個元素在桌機本來就什麼都不畫。
 - **請設計師做的**：在 `RoomNavbar.css` 補上桌機的 `display: none`，或讓 component 在桌機
   不要 render 它。下一次交稿只要有任一種，我們就刪掉 override。
+
+### A33. 全站沒有任何按鈕有「disabled」的視覺樣式（2026-09-17，`YMW260916P0006`）
+
+**功能上早就是對的：** `TrimAudioModal.tsx` 的 `tooShort` 邏輯（S2，見下方 D 表）在音訊
+少於 30 秒時，正確地把 confirm 按鈕設成 `disabled`，點不下去。QA 回報的是視覺——按鈕看起來
+還是「可點」的樣子。搜過整個 `src/styles/` 之後發現這不是這一顆按鈕獨有的缺口：**DP 交來的
+每一份 designer stylesheet 都沒有為任何按鈕定義 `:disabled` 規則**，所以這其實是一個
+系統性缺口，只是先在這顆按鈕上被回報出來。
+
+**產品負責人已拍板（2026-09-17）**：全站的 disabled 按鈕降到 **40% 不透明度**。實作為
+`designer-overrides.css` 的一條通用規則，之後任何按鈕只要用原生 `disabled` 屬性就自動套用，
+不需要逐一加規則。
+
+```css
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+```
+
+**不刪除的原因**：這不是「DP 之後會補的缺陷」，是我們自己決定的視覺值——DP 從未定義任何
+disabled 樣式，沒有上游修正可以等。
 
 ---
 

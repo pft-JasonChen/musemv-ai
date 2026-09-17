@@ -188,7 +188,18 @@ export function MvRoom() {
     }
     fileRef.current?.click();
   }
+  // YMW260916P0001: no browser can decode TIFF (or most other non-web formats)
+  // into an `<img>`, so an unsupported upload used to silently render as a
+  // broken/blank photo. Same reject-with-toast shape `importAudio` already
+  // uses below, message text set by the product owner (2026-09-17).
   function addPhotoFromFile(file: File) {
+    const name = file.name.toLowerCase();
+    const okExt = [".jpg", ".jpeg", ".png"].some((ext) => name.endsWith(ext));
+    const okType = /image\/(jpeg|png)/.test(file.type);
+    if (!okExt && !okType) {
+      showToast("This image format isn't supported. Please use JPG or PNG.");
+      return;
+    }
     setPendingPhoto(URL.createObjectURL(file));
     setFaceOpen(true);
   }
@@ -298,11 +309,7 @@ export function MvRoom() {
 
   return (
     <>
-      <RoomNavbar
-        title="AI Music Video"
-        mobileBackHref="/"
-        className="room-navbar__top--tight"
-      />
+      <RoomNavbar title="AI Music Video" mobileBackHref="/" className="room-navbar__top--tight" />
 
       <div className="mv-create">
         <div className="mv-create__panel">
@@ -581,7 +588,9 @@ export function MvRoom() {
                               }}
                             />
                           ) : (
-                            <p className="mv-create__photo-name">{characterNames[slot] || "Name"}</p>
+                            <p className="mv-create__photo-name">
+                              {characterNames[slot] || "Name"}
+                            </p>
                           )}
                           <button
                             type="button"
@@ -616,7 +625,7 @@ export function MvRoom() {
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png"
               className="mv-create__file-input"
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -745,6 +754,7 @@ export function MvRoom() {
                         title: mv.title,
                         thumb: mv.thumb,
                         resultUrl: mv.resultUrl,
+                        date: mv.date,
                       });
                     }}
                   >

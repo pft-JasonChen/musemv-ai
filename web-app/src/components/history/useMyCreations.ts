@@ -87,6 +87,7 @@ export function useMyCreations(kind: "mv" | "song"): MyCreation[] {
       title: s.title,
       thumb: s.thumb,
       resultUrl: s.resultUrl,
+      date: s.date,
       plays: s.plays,
       likes: s.likes,
       shares: s.shares,

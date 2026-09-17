@@ -145,6 +145,21 @@
   color: var(--neutral-dark-54);
 }
 
+/* YMW260915P0010: `type="search"` gives Chrome/Safari/Edge their own native
+   clear ("x") button once the field has text, which doubled up with our own
+   `.faq-page__search-clear` below. Suppressing all three vendors' versions
+   leaves exactly one clear control. */
+.faq-page__search input[type="search"]::-webkit-search-cancel-button,
+.faq-page__search input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.faq-page__search input[type="search"]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .faq-page__search-clear {
   position: absolute;
   top: 50%;

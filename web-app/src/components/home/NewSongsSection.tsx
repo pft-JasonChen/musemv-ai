@@ -56,10 +56,13 @@ import { SongPlayBar } from "@/components/song/SongPlayBar";
  *
  * ── WHAT WA ADDS THAT DP DOES NOT HAVE ─────────────────────────────────────
  *
- * `requireLogin` on the Create pill (`AC-EXP-02`), and it seeds SongCompose with
- * the song's genre/mood/title/lyrics before routing — the behaviour the
- * pre-migration home already had on its own Create button. DP's Create is a bare
- * href to its create page, because DP has neither auth nor a compose store.
+ * `requireLogin` on the Create pill (`AC-EXP-02`), gating navigation to
+ * `/song/create` on being signed in. DP's Create is a bare href to its create
+ * page, because DP has no auth. **No longer seeds SongCompose at all**
+ * (removed 2026-09-17, `YMW260916P0021`) — an earlier version prefilled
+ * Genre/Mood/Title/Lyrics from the row, which the product owner decided was
+ * more than V1 wants; Create now opens a blank compose form like every other
+ * entry point.
  *
  * ── SUSPEND / ONPREVIEWOPEN, ADDED 2026-08-18 ──────────────────────────────
  *
@@ -112,7 +115,7 @@ export function NewSongsSection({
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
   const demoEmpty = useDemoFlag("feedEmpty");
-  const { patchSongCompose, setSongResult } = useSongFlow();
+  const { setSongResult } = useSongFlow();
   const isPhone = useMediaQuery(PHONE_QUERY);
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -225,14 +228,13 @@ export function NewSongsSection({
     );
   }
 
-  function createFromSong(song: CommunitySong) {
+  // YMW260916P0021 (product owner, 2026-09-17): Create no longer carries any
+  // of the song's details into the compose form — confirmed the row's own
+  // Genre/Mood/Title/Lyrics prefill (added 2026-09-02) is more than V1 wants;
+  // spec corrected to match rather than filling the one remaining gap
+  // (Simple mode's Style Prompt) that prompted this review.
+  function createFromSong() {
     requireLogin(() => {
-      patchSongCompose({
-        genre: song.genre,
-        mood: song.mood,
-        title: song.title,
-        lyrics: song.lyrics ?? "",
-      });
       router.push(localePath(locale, "/song/create"));
     });
   }
@@ -255,7 +257,7 @@ export function NewSongsSection({
           onToggleLike={() => toggleLike(song.id)}
           onSelect={() => openSong(song.id)}
           onPlay={() => handlePlay(song.id)}
-          onCreate={() => createFromSong(song)}
+          onCreate={createFromSong}
         />
       </div>
     ));

@@ -44,6 +44,12 @@ export interface OpenableCreation {
   thumb?: string;
   /** The finished artifact, when this entry is a live job that carries one. */
   resultUrl?: string;
+  /**
+   * The row's real creation date (e.g. `HISTORY_SAMPLES`' `"2026-09-09"`).
+   * Absent for a live, in-session job — `/mv/result` falls back to "just now"
+   * in that case, which is still accurate (YMW260916P0024).
+   */
+  date?: string;
 }
 
 /**
@@ -58,7 +64,7 @@ export function creationHref(c: Pick<OpenableCreation, "id" | "kind">): string {
 export function useOpenCreation() {
   const router = useRouter();
   const { locale } = useLocale();
-  const { setCompose, setStoryboard, saveStoryboard, setResultUrl } = useMvFlow();
+  const { setCompose, setStoryboard, saveStoryboard, setResultUrl, setResultDate } = useMvFlow();
   const { setSongResult } = useSongFlow();
 
   return useCallback(
@@ -114,9 +120,19 @@ export function useOpenCreation() {
         settings: { ...DEFAULT_COMPOSE.settings, title: { on: true, text: c.title } },
       });
       setResultUrl(c.resultUrl ?? SAMPLE_RESULT_VIDEO);
+      setResultDate(c.date ?? null);
       router.push(localePath(locale, creationHref(c)));
     },
-    [router, locale, setCompose, setStoryboard, saveStoryboard, setResultUrl, setSongResult],
+    [
+      router,
+      locale,
+      setCompose,
+      setStoryboard,
+      saveStoryboard,
+      setResultUrl,
+      setResultDate,
+      setSongResult,
+    ],
   );
 }
 

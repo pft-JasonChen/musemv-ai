@@ -36,6 +36,17 @@ interface MvFlowValue {
   storyboardDirty: boolean;
   resultUrl: string | null;
   /**
+   * The opened creation's real date, for `/mv/result`'s date line
+   * (YMW260916P0024). Only ever set by `useOpenCreation` when hydrating an
+   * ALREADY-FINISHED render (same trigger as `setResultUrl`, see below) — a
+   * fresh in-session render never sets it, so `/mv/result` falls back to
+   * "just now" exactly when that is still true.
+   *
+   * C4 addition, not a rename — see `docs/CHANGELOG-RD.md`.
+   */
+  resultDate: string | null;
+  setResultDate: React.Dispatch<React.SetStateAction<string | null>>;
+  /**
    * Per-slot character names, page-local by DESIGN in the UI that edits them
    * (`MvRoom.tsx`'s own note explains why a name is not a `CharacterPhoto`
    * field — C2 is frozen) but lifted up here, not into `MvRoom`'s own state,
@@ -82,6 +93,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
   const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
   const renderIntent = useRef<RenderIntent>("create");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [resultDate, setResultDate] = useState<string | null>(null);
   const [characterNames, setCharacterNames] = useState<string[]>(["", ""]);
   const [savedJson, setSavedJson] = useState<string | null>(null);
   const jobId = useRef<string | null>(null);
@@ -146,6 +158,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
 
   const startStoryboard = useCallback(() => {
     setResultUrl(null);
+    setResultDate(null);
     // GL-01: charge on generation start; refund if the job fails so the "credits
     // were not charged" failure copy stays true.
     // §3.3 — priced off the SONG, in tiers, before any MV exists.
@@ -232,6 +245,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
     setGen(IDLE_GEN);
     setStoryboard(null);
     setResultUrl(null);
+    setResultDate(null);
   }, []);
 
   // Re-rendering keeps the current storyboard + job id but must clear the prior
@@ -241,6 +255,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
     cancelPoll.current?.();
     setGen(IDLE_GEN);
     setResultUrl(null);
+    setResultDate(null);
   }, []);
 
   const storyboardDirty = storyboard != null && JSON.stringify(storyboard) !== savedJson;
@@ -258,6 +273,8 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         storyboardDirty,
         resultUrl,
         setResultUrl,
+        resultDate,
+        setResultDate,
         characterNames,
         setCharacterNames,
         startStoryboard,

@@ -21,7 +21,13 @@ import { localePath } from "@/lib/i18n/config";
 import { GENRES, MOODS, VOCALS } from "@/lib/mv/mock";
 import { SONG_IDEA_PROMPTS, LYRIC_PRESETS, pickIdea } from "@/lib/mv/songIdeas";
 import { TOP_PICKS_SONGS } from "@/lib/mv/community";
-import { DESCRIPTION_MAX, isSongReady, songCost, type SongMode } from "@/lib/mv/types";
+import {
+  DESCRIPTION_MAX,
+  SONG_TITLE_MAX,
+  isSongReady,
+  songCost,
+  type SongMode,
+} from "@/lib/mv/types";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3j) ────────────────────
@@ -497,13 +503,21 @@ export function SongCompose() {
                     className="song-create__title-input"
                     placeholder="e.g. Midnight Drive, Golden Hour..."
                     value={s.title}
+                    maxLength={SONG_TITLE_MAX}
                     onChange={(e) => patch({ title: e.target.value })}
                     aria-label="Song title"
                   />
                 </div>
-                <p className="song-create__title-hint">
-                  Leave blank — AI will suggest a title based on your lyrics and style.
-                </p>
+                {/* Layout-only flex wrapper (no DP class exists for a hint+counter
+                    row here) — YMW260916P0022, product owner set the 120 cap. */}
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <p className="song-create__title-hint">
+                    Leave blank — AI will suggest a title based on your lyrics and style.
+                  </p>
+                  <span className="song-create__char-count">
+                    {s.title.length}/{SONG_TITLE_MAX}
+                  </span>
+                </div>
               </div>
             </div>
           )}

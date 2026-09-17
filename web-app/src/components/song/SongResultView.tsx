@@ -142,8 +142,7 @@ export function SongResultView() {
    */
   const fromSongDetail = params.get("from") === "song-detail";
   const { locale } = useLocale();
-  const { songCompose, songResult, setSongResult, resetForRecreate, patchSongCompose } =
-    useSongFlow();
+  const { songCompose, songResult, setSongResult, resetForRecreate } = useSongFlow();
   const { patchCompose } = useMvFlow();
   const { history } = useHistory();
   const { credits } = useCredits();
@@ -731,16 +730,12 @@ export function SongResultView() {
                           onToggleLike={() => toggleRailLike(item.id)}
                           onSelect={select}
                           onPlay={select}
+                          // YMW260916P0021 (product owner, 2026-09-17): no
+                          // longer seeds the compose form, matching the
+                          // "same list as Home's Newly Released Songs"
+                          // intent above — Home's own Create dropped this.
                           onCreate={() =>
-                            requireLogin(() => {
-                              patchSongCompose({
-                                genre: meta.genre,
-                                mood: meta.mood,
-                                title: meta.title,
-                                lyrics: meta.lyrics ?? "",
-                              });
-                              router.push(localePath(locale, "/song/create"));
-                            })
+                            requireLogin(() => router.push(localePath(locale, "/song/create")))
                           }
                         />
                       ) : (

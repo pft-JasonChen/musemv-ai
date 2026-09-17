@@ -520,7 +520,7 @@ export function SongDetailView() {
   const router = useRouter();
   const params = useSearchParams();
   const { locale } = useLocale();
-  const { patchSongCompose, setSongResult } = useSongFlow();
+  const { setSongResult } = useSongFlow();
   const { requireLogin } = useAuth();
   const online = useOnline();
   const isPhone = useMediaQuery(PHONE_QUERY);
@@ -863,14 +863,11 @@ export function SongDetailView() {
   }
 
   // GL-02/EXP-02: gate at the action, so Create matches Home's create flow.
-  function createFromSong(song: CommunitySong) {
+  // YMW260916P0021 (product owner, 2026-09-17): no longer seeds the compose
+  // form — Home's own Create dropped the prefill, and this still needs to
+  // match it.
+  function createFromSong() {
     requireLogin(() => {
-      patchSongCompose({
-        genre: song.genre,
-        mood: song.mood,
-        title: song.title,
-        lyrics: song.lyrics ?? "",
-      });
       router.push(localePath(locale, "/song/create"));
     });
   }
@@ -1102,7 +1099,7 @@ export function SongDetailView() {
                       isSelected={song.id === activeId}
                       onSelect={() => selectSong(song.id)}
                       onPlay={() => previewSong(song.id)}
-                      onCreate={() => createFromSong(song)}
+                      onCreate={createFromSong}
                       onToggleLike={() => toggleLike(song.id)}
                       liked={likedIds.has(song.id)}
                     />
@@ -1148,7 +1145,7 @@ export function SongDetailView() {
               onSetVolume={setVol}
               onPrev={() => step(-1)}
               onNext={() => step(1)}
-              onCreate={() => createFromSong(activeSong)}
+              onCreate={createFromSong}
               isOpen={mobilePlayerOpen}
               onClose={goBack}
             />

@@ -136,9 +136,7 @@ export function HistoryView() {
   const openCreation = useOpenCreation();
   const seedMvFlow = useSeedMvFlow();
   const searchParams = useSearchParams();
-  const [filter, setFilter] = useState<Filter>(() =>
-    initialFilterFromTab(searchParams.get("tab")),
-  );
+  const [filter, setFilter] = useState<Filter>(() => initialFilterFromTab(searchParams.get("tab")));
   const [removed, setRemoved] = useState<Set<string>>(new Set());
   const [ov, setOv] = useState<Record<string, Override>>({});
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -231,6 +229,7 @@ export function HistoryView() {
       title: r.title,
       thumb: r.thumb,
       resultUrl: r.resultUrl,
+      date: r.date,
     });
   }
 

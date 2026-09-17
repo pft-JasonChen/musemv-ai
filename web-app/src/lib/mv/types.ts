@@ -36,6 +36,8 @@ import type {
 } from "@/lib/api/schemas";
 
 export const DESCRIPTION_MAX = 2500;
+/** YMW260916P0022 (product owner, 2026-09-17): Song Title had no documented cap at all. */
+export const SONG_TITLE_MAX = 120;
 
 /**
  * ── CREDIT COSTS — read this before changing a number (TBD-CC-05) ───────────
