@@ -38,6 +38,8 @@ exports[`C4 — provider hook surfaces [additive only] > useHistory > shape is u
   "history",
   "markCompleted",
   "markFailed",
+  "remove",
+  "removed",
   "upsertGenerating",
 ]
 `;

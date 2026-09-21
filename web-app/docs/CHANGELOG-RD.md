@@ -23,6 +23,30 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-21 — **C4 ADDITIVE** — `useHistory` gains `removed` / `remove` (YMW260917P0008)
+
+**Surface: C4** (`src/components/providers/HistoryProvider.tsx`, interface `HistoryValue`). Two new
+keys, both additive — `removed: ReadonlySet<string>` and `remove(id: string): void`.
+`providers.surface.test.ts`'s snapshot is updated and the diff is exactly two added lines; no
+existing key renamed, retyped or removed.
+
+**Surface: C7 — considered and NOT changed.** `/mv/edit` now acts on the optional `?id=` that
+`/history` has been linking since slice 3k, but no route file changed: `MvEditor` reads
+`window.location.search` inside the delete click handler. The first attempt did use
+`useSearchParams`, which required wrapping the page in `<Suspense>` and opted the route out of
+prerendering — that broke four unrelated e2e specs by changing when the editor mounts (see
+`docs/BUGS-TO-FIX-2026-09-21.md`). `src/app/**/page.tsx` is untouched, so C7 is unmoved.
+
+**What RD must do:** nothing for an existing caller. When the real backend lands, `remove(id)` is
+the seam for a persisted `DELETE /creations/{id}` — today it only records the id in a session-local
+`Set` that the History grid filters against, because the grid draws from two sources (live jobs and
+the `HISTORY_SAMPLES` seed constant) and a module constant cannot be spliced.
+
+**Why it moved:** "Delete this Project" in `/mv/edit` previously discarded only the in-memory flow,
+so the MV it was opened from stayed in History and the control appeared to do nothing. Product
+owner, 2026-09-20: it should delete that creation. Deletion could not stay in `HistoryView` local
+state once another route had to reach it.
+
 ## 2026-09-17 — **C4 ADDITIVE** — `useMvFlow` gains `resultDate` / `setResultDate` (YMW260916P0024)
 
 **Surface: C4** (`src/components/providers/MvFlowProvider.tsx`, interface `MvFlowValue`). Two new

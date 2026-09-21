@@ -427,6 +427,27 @@ a detail screen:**
 
 ## Error log (one line per user correction; fold recurring lessons into an AGENTS.md rule)
 
+- 2026-09-21: blocked Stop FOUR times on e2e, and the cause was a fix from a previous session.
+  `app/[locale]/loading.tsx` (added 2026-09-12 for `YMW260911P0004`) wraps EVERY route in a
+  Suspense boundary, so Next streams each page in two parts and parks a copy in a hidden
+  `<div hidden>` until an inline script swaps it in. Under load Playwright's CSS locator matches
+  both copies — `strict mode violation: … resolved to 2 elements` — on whatever route the run
+  reached, which is why the failing set changed every run (22 · 27 · 24 · 14). Users never see it;
+  only the suite does. Product owner rolled the whole eBug back.
+  **Three process lessons, in the order I should have applied them.**
+  (1) **Before blaming your own diff, get the control.** A full-suite run on a stashed clean tree
+  failed 24 — the same rate — which is the measurement that ended the guessing. I reached for it
+  fourth, after two wrong answers.
+  (2) **A read that CONFIRMS your hypothesis deserves the same suspicion as one that contradicts
+  it.** I counted 2 `.mv-create__panel` on my build vs 1 on a clean build and called the
+  duplication mine; the reading was taken moments after a `resize_window` and was a transient.
+  Two build cycles lost. `REFERENCE.md` only warned about stale-looking reads.
+  (3) **Single-test retries cannot attribute a failure in a noisy suite.** They produced my second
+  wrong answer ("5 are genuinely mine" — they pass now). Only the clean-tree control could.
+  One improvement survived on its own merits: reading `?id=` with `useSearchParams` forces a
+  `<Suspense>` boundary and opts a route out of prerendering, so when the value is only needed in
+  an event handler, read `window.location.search` there (rule in `AGENTS.md` → Architecture).
+
 - 2026-09-10: shipped a visible bug into `specs/index.html` — the sidebar rendered a literal
   `\n` between every nav item — and the root cause was a BAD MEASUREMENT that I then
   trusted twice. While rewriting `build-index.py`'s nav I could not get a search string to match,

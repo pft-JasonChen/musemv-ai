@@ -25,6 +25,52 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-09-21 — Delete this Project now deletes the creation; guarded routes show a loading state
+
+### `YMW260917P0008`: "Delete Project" in Edit Music Video deletes the original MV
+
+|              |                                                                                                                                                                                                                                                                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Criteria** | `areas/02-mv-creation.md` — **MV-P5-S6** extended.                                                                                                                                                                                                                                                                                 |
+| **Why**      | The eBug's Expect Result ("shouldn't affect the original MV") and its 2026-09-18 comment ("after discuss w/ PM, delete project would delete mv") say opposite things. Measured first: the repro does NOT reproduce here — nothing in `MvEditor` could reach a History row, so Delete this Project already left the MV alone.        |
+| **Decision** | Product owner chose the comment's behaviour (2026-09-20): Delete this Project **deletes the creation it was opened from**. Scoped by `/mv/edit?id=<historyId>`, which `/history` already puts in the URL — entered from `/mv/result` or `/creator` there is no id and only the in-memory flow is discarded.                        |
+| **Code**     | `components/providers/HistoryProvider.tsx` (new `removed` / `remove`), `components/history/HistoryView.tsx` (local `removed` state lifted to the provider), `components/mv/MvEditor.tsx` (`deleteProject` reads `?id=` from `window.location.search` at click time — **no route file changed**).                                          |
+| **Tests**    | `components/providers/HistoryProvider.test.tsx` (5 tests, mutation-tested both ways). Verified live at 1440px: History 8 rows → 7, the edited MV gone, the other two MVs untouched; and with no `?id=`, 7 rows → 7.                                                                                                                 |
+| **Contract** | **C4 additive only** (`useHistory` gains `removed` / `remove`). C7 unmoved — see `../docs/CHANGELOG-RD.md` for why the first `useSearchParams` attempt was backed out.                                                                                                                                                                                               |
+
+**Side effect, deliberate:** deleting from `/history` itself now persists for the session. It was
+local `HistoryView` state before, so a deleted row came back as soon as you navigated away — which
+had to change for `/mv/edit` to reach it at all, and was never right on its own terms.
+
+### `YMW260911P0004`, part 2: the rail gets a skeleton — RD implements it, spec only here
+
+|              |                                                                                                                                                                                                                                                                                                                              |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Criteria** | `areas/02-mv-creation.md` — new **AC-MV-22** and **MV-E10**; `areas/03-song-creation.md` — new **AC-SONG-20** (cross-reference).                                                                                                                                                                                             |
+| **Why**      | The eBug's own screenshot was a **panel-level skeleton in the right-hand rail** of `/mv/room`, not a page-level spinner — the rail is what needs query time against a real backend. The route-level fallback we built instead was the wrong mechanism for the reported symptom, and it destabilised the e2e gate (see above). |
+| **Decision** | Product owner, 2026-09-21: the two create screens' side rail uses a **skeleton**; **every other loading state keeps the 3-dot UI** (this narrows, but does not revoke, the 2026-09-14 "one loading UI everywhere" instruction). The AC explicitly forbids solving it with a route-level `loading.tsx`.                        |
+| **Code**     | **None, deliberately.** RD implements this against the real backend. `useMyCreations()` is a synchronous `useMemo` over in-memory state, so this prototype has no loading moment to render — MV-E10 records that so nobody "implements" a skeleton that can never appear.                                                     |
+| **Tests**    | None — no behaviour in this repo to test.                                                                                                                                                                                                                                                                                    |
+| **Contract** | None.                                                                                                                                                                                                                                                                                                                        |
+
+### `YMW260911P0004`: ROLLED BACK — every loading-state change for this eBug is reverted
+
+|              |                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Criteria** | None. The 2026-09-12 and 2026-09-14 entries for this eBug are **superseded by this rollback**, not amended.                                                                                                                                                                                                                                                                         |
+| **Why**      | `app/[locale]/loading.tsx` put a Suspense boundary around **every** route under `[locale]`. That makes Next stream each page in two parts, leaving a copy in a hidden `<div hidden>` staging area until an inline script swaps it in. Under load a Playwright CSS locator sees the in-place copy **and** the staged one — `strict mode violation: … resolved to 2 elements`, on whichever route the run reached. |
+| **Decision** | Product owner, 2026-09-21: **roll the whole eBug back.** A loading animation nobody could reliably measure is not worth a gate that cannot attribute a failure to a change. The reported screenshot was also traced to `testing-ycm.makeupar.com`, a different codebase.                                                                                                             |
+| **Code**     | Deleted `app/[locale]/loading.tsx` and `components/ui/LoadingDots.tsx`; `HistoryView.tsx`'s `HistoryLoadingDots` is inline again exactly as before `9109683`; `components/auth/AuthGuard.tsx` back to `if (!hydrated \|\| !loggedIn) return null`.                                                                                                                                    |
+| **Tests**    | `components/auth/AuthGuard.test.tsx` deleted with the code it guarded.                                                                                                                                                                                                                                                                                                              |
+| **Contract** | None.                                                                                                                                                                                                                                                                                                                                                                              |
+
+**Known and accepted after this rollback:** F5 on `/history`, `/profile`, `/settings` and
+`/profile/credits` shows an **empty `<main>`** (34 bytes, measured) until the JS hydrates, and
+switching between AI Music Video / AI Song has no route-transition animation. That is the
+behaviour that shipped before 2026-09-12. **Do not re-add a route-level `loading.tsx` to fix it**
+without first measuring the e2e gate. Removing that one file took the suite from **24 failures to
+6** (5 of which are pre-existing and fail on a clean tree too) — measured, not inferred.
+
 ## 2026-09-17 — Real-backend MV error codes documented (no code — this mock has no error-code surface)
 
 ### `YMW260915P0007` / `YMW260915P0009`: `error_audio_overlength` / `error_moderation_blocked`

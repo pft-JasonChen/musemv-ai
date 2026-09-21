@@ -174,6 +174,17 @@ House style in one line:
 - Every `src/app/**/page.tsx` is a thin page that returns a `"use client"` view from
   `src/components/<area>/` (a few tiny pages are client components using hooks directly).
   Wrap the view in `<Suspense>` if it uses `useSearchParams`.
+- **But adding `useSearchParams` to a route that did not have it is a rendering-mode change, not
+  an import.** The required `<Suspense>` boundary opts that route out of prerendering and moves
+  when the view mounts — and that ripples into specs which never mention the query param.
+  Measured 2026-09-21: reading `?id=` on `/mv/edit` this way turned **five** green e2e tests red,
+  four of them about unrelated screens (`A4` navbar, `3i` result-page blocks, `3k / GL-01`
+  Recreate→IAP, `G7 3k-1` Merge). Nothing in typecheck, lint, vitest or build said a word.
+  **If the value is only needed inside an event handler, read
+  `new URLSearchParams(window.location.search)` there instead** — a handler only runs in the
+  browser, so there is no hook, no boundary, no deopt, and `src/app/**/page.tsx` stays untouched
+  (which also keeps it out of Gate G4-g's C7 surface). Reach for the hook only when the value is
+  genuinely needed during render.
 - **API layer** (`src/lib/api/`): `contract.ts` defines `MuseApi` (job-based create/poll);
   `schemas.ts` holds the Zod schemas that ARE the entity types; `mock.ts` is the only fake-backend
   code; `index.ts` exports `api` — the single backend swap point. UI/providers import only `api`.
@@ -263,7 +274,7 @@ House style in one line:
   wait for it before you stop (`AGENTS.md`'s port-3100 rule, occurrences 4-7).
 - **Two Stop-hook gates were SILENT NO-OPS on Windows until 2026-09-09, and one of them reported
   success.** `scripts/*.mjs` derived their root with `resolve(new URL("..", import.meta.url)
-  .pathname)`, which on Windows yields `/C:/…` and resolves to `C:\C:\…` — a path that never
+.pathname)`, which on Windows yields `/C:/…` and resolves to `C:\C:\…` — a path that never
   exists. So `check-designer-css.mjs` (D1) printed "no src/styles/designer/ yet — nothing to
   check" and **exited 0 with 46 gated stylesheets sitting right there**, and
   `build-token-map.mjs --check` (G2-a) exited 1, which `stop-verify.sh` reports as the benign
@@ -293,8 +304,8 @@ House style in one line:
     re-running it is deterministic and safe even while another storyboard is mid-edit — but it
     also means a version bump is only reflected if you edit that list by hand. It DOES embed the
     markdown specs, so a stale `index.html` picks up every spec change since it last ran.
-  Both `build_spec.py` and `build-index.py` are deterministic: re-running with no source change
-  produces a zero diff, so any diff after an edit is genuinely yours.
+    Both `build_spec.py` and `build-index.py` are deterministic: re-running with no source change
+    produces a zero diff, so any diff after an edit is genuinely yours.
 - **On Windows the screenshot specs cannot pass at all, and that is a NON-ISSUE for the gate
   precisely because of the line above.** Playwright suffixes every snapshot with the platform and
   this repo keeps `-linux` (canonical) plus an unmaintained `-darwin` set; there is no `-win32`

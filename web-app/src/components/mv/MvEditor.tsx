@@ -15,12 +15,22 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import { downloadFile } from "@/lib/download";
-import { COST_COVER, COST_MERGE, recreateShotCost, resolutionOf, sceneDurationSec, shotKind, DESCRIPTION_MAX, type Scene } from "@/lib/mv/types";
+import {
+  COST_COVER,
+  COST_MERGE,
+  recreateShotCost,
+  resolutionOf,
+  sceneDurationSec,
+  shotKind,
+  DESCRIPTION_MAX,
+  type Scene,
+} from "@/lib/mv/types";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
 
 function formatTime(seconds: number): string {
@@ -92,9 +102,15 @@ const clipCover = (i: number) => `/assets/videos/storyboard-clips/clip_${(i % 19
  *
  * "Delete this Project" is DP's own control with a dead handler. Per the
  * `/creator` precedent (3e: port every action, wire every one), it confirms
- * with History's wording and then discards the in-memory flow and leaves —
- * which is what deleting an uncommitted project means in a flow whose state is
- * in memory. It does not invent a backend delete.
+ * with History's wording and then discards the in-memory flow and leaves.
+ *
+ * **It also deletes the creation it was opened from** (YMW260917P0008, product
+ * owner 2026-09-20). The first version discarded only the in-memory flow, so
+ * the MV stayed in History and "Delete this Project" deleted nothing the user
+ * could see. The row is identified by `?id=`, which `/history` already put in
+ * the URL when it opened this screen — so the delete is scoped to an edit that
+ * genuinely came FROM a creation. Reached from `/mv/result` or `/creator`
+ * there is no `id`, nothing is in History yet, and it discards the flow only.
  *
  * Every `.mv-edit__*-icon` is a `background-color` + `mask-*` rule, so they are
  * all `DpIcon`. The only `<img>`-shaped rules on this screen are
@@ -104,6 +120,9 @@ const clipCover = (i: number) => `/assets/videos/storyboard-clips/clip_${(i % 19
 export function MvEditor() {
   const router = useRouter();
   const { locale } = useLocale();
+  // Named `removeCreation` here because `remove` alone reads, at the call site
+  // in `deleteProject`, like it removes the scene being edited.
+  const { remove: removeCreation } = useHistory();
   const {
     storyboard,
     setStoryboard,
@@ -269,6 +288,17 @@ export function MvEditor() {
 
   function deleteProject() {
     setDeleteConfirm(false);
+    // Read the query at CLICK time rather than with `useSearchParams`. That
+    // hook opts the whole route out of prerendering and needs a `<Suspense>`
+    // boundary around this screen, which measurably broke four unrelated e2e
+    // specs (2026-09-21) by changing when the editor mounts. A click handler
+    // already runs in the browser, so the plain URL is the cheaper, more local
+    // read — and it keeps `/mv/edit/page.tsx` untouched, so this is no longer
+    // a C7 change at all.
+    // Order matters: remove the row BEFORE navigating, so `/history` renders
+    // once, already without it, instead of showing it and then blinking out.
+    const fromCreation = new URLSearchParams(window.location.search).get("id");
+    if (fromCreation) removeCreation(fromCreation);
     resetForNewMv();
     router.push(localePath(locale, "/history"));
   }
@@ -299,7 +329,6 @@ export function MvEditor() {
     setVolume(next);
     setMuted(next === 0);
   }
-
 
   const sceneEditor = (
     <>
