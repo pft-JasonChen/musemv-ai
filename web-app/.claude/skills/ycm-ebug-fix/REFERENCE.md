@@ -1,22 +1,42 @@
 # Reference — pitfalls this flow was built from
 
-Every item below is something that actually happened running this flow the first time
-(2026-09-11). Read the relevant section before repeating the step it names.
+Every item below is something that actually happened running this flow — the triage,
+scope, and verification sections on the first run (2026-09-11), the Step 1 section when
+the flow moved onto the ePF REST API (2026-09-18). Read the relevant section before
+repeating the step it names.
 
 ## Step 1
 
-- **The MCP query model and the web UI answer different questions.** `TSR.EbugSearch` is fast and
-  gives you exact counts/filters, but its fields are metadata only (status, priority, assignee,
-  dates, `ShortDescription`) — there is no Repro Steps / Result / Expected Result field to query.
-  Don't try to make the MCP call do more than it can; go to the Chrome UI for the text fields.
-- **Direct per-bug URL**: `https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/<BugCode>`
-  (a bug-code link on the search-results page also resolves through
-  `/api/v3.2/TSR/ebug/<BugCode>/ViewPage` to the same place). Opening this directly per bug is
-  faster than clicking through the results table each time.
-- **Read the comments and activity log, not just the top fields.** They routinely contain the
-  actual state of the bug: an RD root-cause already posted, a "please confirm behavior" from RD
-  waiting on the PM, a reporter's own follow-up saying the first fix didn't work, or a note that
-  the bug was filed by an automated agent test (worth knowing when a repro path is oddly worded).
+**The ePF endpoint traps live in [API.md](API.md), not here — read that file before
+writing any ePF call by hand.** The short version of why it matters: two of the traps
+(`Handler` vs `AssignedBugHandler`, and the broken `terms` operator) produce a *wrong
+answer* rather than an error, so a ledger built by hand-rolled curl can look perfectly
+healthy and still disagree with the ePF board. `scripts/epf_ebug.py` exists so those
+decisions are made once.
+
+- **One ticket is four endpoints, not one.** `TSR.EbugSearch` is fast and gives exact
+  counts and filters, but its fields are metadata only — there is no Repro Steps / Result /
+  Expected Result to query. That text is in `GetKernel`, comments are in
+  `TSR.EbugComments`, and attachment bytes only come from `DownloadByToken`.
+  `epf_ebug.py full` composes the first three; `attach` adds the fourth.
+- **The browser route is no longer the way in.** Before 2026-09-18 this step needed an
+  authenticated ePF SSO session (Claude in Chrome) purely because the search model had no
+  report text. It does not any more. Open
+  `https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/<BugCode>` only for something the
+  read API genuinely does not expose — and if you find such a thing, add it to API.md.
+- **Attachments are now real files you can open.** This is a genuine capability change, not
+  a convenience: a screenshot downloaded to the scratchpad can be *looked at* during
+  triage. Several of the Step 2 calibration cases below turned on evidence that was sitting
+  in an attachment. Download to the scratchpad, never into the repo.
+- **Read the comments and activity log, not just the top fields.** They routinely contain
+  the actual state of the bug: an RD root-cause already posted, a "please confirm behavior"
+  from RD waiting on the PM, a reporter's own follow-up saying the first fix didn't work, or
+  a note that the bug was filed by an automated agent test (worth knowing when a repro path
+  is oddly worded). ePF also stores duplicate comment rows — same author, same text, seconds
+  apart — so a thread read raw will show the same request twice; `full` dedupes.
+- **No token is a stop, not a detour.** `epf_ebug.py` exits 3 with instructions to apply at
+  <https://eperfect.perfectcorp.com/sso/mgm/tokenPage>. Relay that and wait. Falling back to
+  scraping the web UI is how this step grew an SSO dependency the first time.
 
 ## Step 2
 

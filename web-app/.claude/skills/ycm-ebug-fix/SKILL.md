@@ -16,28 +16,93 @@ Run only as far as the request authorizes:
 - **Fix or debug**: continue through implementation and verification for independently cleared eBugs. An unresolved eBug does not block other cleared eBugs.
 - **Commit**: commit only when the request includes implementing/fixing the eBugs or explicitly asks for a commit.
 - **Ship or check production**: push, deploy, or test production only when explicitly requested. A push to `main` is a production release.
+- **Reply comment**: whenever the run implemented, verified, or disproved an eBug, close it out with Step 5's paste-ready comment — including when the run stopped before shipping, in which case the comment says how far it got.
 
 Before starting, confirm the current repository is YouCam Muse Web and read the applicable `AGENTS.md`. Preserve unrelated worktree changes. If the expected project paths, tools, or scripts are unavailable, report the mismatch instead of creating substitute conventions.
 
+## Credentials
+
+eBugs are read over the ePF REST API using the user's own Bearer token, resolved from
+`EPF_API_TOKEN` (repo-root `.env`, which is gitignored). No token ships with this skill.
+
+If `scripts/epf_ebug.py` exits `3` ("No ePF API token found"), **stop and tell the user to
+apply for their own token at <https://eperfect.perfectcorp.com/sso/mgm/tokenPage>**, then
+save it as `EPF_API_TOKEN` in the repo-root `.env` (`.env.example` shows the shape). Do not
+route around a missing token by scraping the ePF web UI, and never write the token into a
+ledger, a commit, an eBug comment, or anything under `src/`.
+
+Every ePF call in this flow is **read-only**. Nothing here changes a ticket's assignee,
+status, or comments; the reply comment in Step 4 is for the user to paste in themselves.
+
 ## Step 1 — Pull and document the eBugs
 
-1. Query ePF MCP with `query_data`, `serviceCode: "tsr"`, and `queryModel: "TSR.EbugSearch"`. Filter to Product **YouCam Muse Web** (`ProductID: 315`), `BugBelong: PM`, and statuses `NewCreated, Assigned`.
-2. Fetch every result page, deduplicate by BugCode, and record the query time and filters. The search model supplies metadata such as code, title, priority, assignee, and dates, but not the complete Repro Steps, Result, or Expected Result.
-3. Retrieve each full eBug through an authenticated browser session with access to the user's ePF SSO. In the usual Claude environment, use Claude in Chrome rather than an isolated Browser pane. Open either the search page or the direct form URL:
-   - `https://eperfect.perfectcorp.com/IF3/ebug/BPM/Start/SearchRequest/Query`
-   - `https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/<BugCode>`
-4. Capture Short Description, Repro Steps, Result, Expected Result, and decision-relevant comments or attachments. Preserve the four primary fields faithfully; summarize supporting discussion unless exact wording affects the decision. Never copy credentials, session data, personal information, or unrelated attachment content into the repository.
-5. If authenticated browser access or an attachment is unavailable, keep the metadata result, mark the missing evidence explicitly, and do not infer it. If search metadata and the current form disagree, use the form's current status and note the discrepancy.
-6. Create or update `docs/BUGS-TO-FIX-<YYYY-MM-DD>.md`. Use the current ledger for the run when one already exists; do not create multiple same-day ledgers.
+`scripts/epf_ebug.py` wraps the four ePF endpoints that together make up one complete
+ticket. Read [API.md](API.md) before deviating from the commands below — several of those
+endpoints return a plausible wrong answer rather than an error.
+
+1. Pull the working set:
+
+   ```bash
+   python3 web-app/.claude/skills/ycm-ebug-fix/scripts/epf_ebug.py search --ycm-web --pm-open
+   ```
+
+   That is Product **YouCam Muse Web** (`ProductID 315`), `BugBelong: PM`, statuses
+   `NewCreated` and `Assigned`. Use `--status`, `--handler`, `--since`, `--creator`, or
+   `--cond` when the request asks for a different set. Record the filters and the query
+   time in the ledger; results are already deduplicated by BugCode and sorted newest first.
+
+2. For each BugCode, pull the complete ticket:
+
+   ```bash
+   python3 .../epf_ebug.py full <BugCode>
+   ```
+
+   `full` emits the ledger block directly. It reads the report text from GetKernel (Repro
+   Steps / Result / Expect Result live there — the search model has none of them), appends
+   the deduplicated comment thread, and corrects handler/status/product from the search
+   model. That correction matters: GetKernel's `AssignedBugHandler` is the *assignee*, so
+   copying it across as "handler" produces a ledger that disagrees with the ePF board.
+
+3. Download attachments that carry decision-relevant evidence, and actually look at them —
+   a screenshot frequently settles a triage call the text leaves ambiguous:
+
+   ```bash
+   python3 .../epf_ebug.py attach <BugCode> --out "<scratchpad>/ebug"
+   ```
+
+   Download into the session scratchpad, never into the repository. Never copy credentials,
+   session data, personal information, or unrelated attachment content into the repo.
+
+4. Read the comments and status log, not only the top fields. They routinely hold the real
+   state of the bug: an RD root cause already posted, a "please confirm this behavior"
+   waiting on the PM, the reporter saying the first fix did not work, or a note that the
+   bug came from an automated agent test.
+
+5. Preserve Short Description, Repro Steps, Result, and Expected Result faithfully;
+   summarize supporting discussion unless the exact wording affects the decision. If a call
+   fails or an attachment cannot be fetched, keep what you have, mark the missing evidence
+   explicitly, and do not infer it.
+
+6. Create or update `docs/BUGS-TO-FIX-<YYYY-MM-DD>.md`. Use the current ledger for the run
+   when one already exists; do not create multiple same-day ledgers.
+
+The human-readable form is `https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/<BugCode>`
+and `full` prints it. Open it in a browser only when you need something the read API does
+not expose; the API is the default path and needs no SSO session.
 
 Use this per-eBug structure so the ledger remains actionable:
 
 ```markdown
-## <BugCode> — <Title>
+## <BugCode> — <Title>          <!-- `full` emits this header block: -->
 
 - ePF status:
-- Priority:
-- ePF assignee:
+- Priority:               | Severity:
+- ePF handler:            | Assignee:
+- BugBelong:              | Product:  | Version:  | Build:
+- Reported by <Creator> at <CreateTime>
+- Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/<BugCode>
+
+<!-- and these you fill in: -->
 - Retrieved at:
 - Triage: Pending | Clear to fix | Needs PM | Needs Designer | Stale/unlocatable
 - Local status: Pulled | Investigating | Blocked | Fixing | Fixed | Verified | Committed | Shipped
@@ -48,7 +113,10 @@ Use this per-eBug structure so the ledger remains actionable:
 - Short Description:
 - Repro Steps:
 - Result:
-- Expected Result:
+- Expect Result:
+
+### Attachments
+### Comments
 
 ### Resolution and verification
 - Root cause:
@@ -57,7 +125,7 @@ Use this per-eBug structure so the ledger remains actionable:
 - Not verified:
 
 ### Reply comment (paste into eBug)
-<!-- See Step 4's "Reply comment" rule before writing this. -->
+<!-- Written in Step 5, AFTER shipping. Left empty until then. -->
 ```
 
 The ledger is the shared source of truth for the rest of the flow, not a one-time report. Do not change the ePF ticket's assignee, status, or comments unless the user explicitly asks.
@@ -91,13 +159,7 @@ For each cleared eBug:
 5. Run the repository Definition of Done from `web-app/`: `npm run typecheck`, `npm run lint`, `npm run test:run`, and `npm run build`. Run them so each result can be attributed. Do not leave a build running when ending the session.
 6. Do **not** run the full `npm run e2e` or `.claude/hooks/stop-verify.sh`; the Stop hook owns that run and port 3100. A narrowly targeted test is allowed only when its selected scope is known in advance to finish quickly. Read [REFERENCE.md](REFERENCE.md#gates--the-port-3100-rule) before considering one.
 7. Verify the exact reported path and Expected Result in the live local app. Record the URL/scenario and observed result. For visual changes, follow the repository's required viewport checks. If authentication, data, environment state, or browser throttling prevents verification, record the concrete blocker under `Not verified`; never report an inferred pass. Read [REFERENCE.md](REFERENCE.md#browser-verification-quirks).
-8. Update the ledger with root cause, resolution, checks run, live verification, and anything not verified. Use precise statuses; `Fixed` is not `Verified`, and `Committed` is not `Shipped`.
-9. Write a short **reply comment** the user can paste into the eBug as-is, under that eBug's "Reply comment" field. This is read by RD/QA, not by whoever wrote the code — write it in their terms:
-   - Lead with **whether the user (or RD/QA) will see anything different** — a UI/UX change, a copy change, or no observable change at all (e.g. a documentation-only correction, or a false alarm that doesn't reproduce). Never make the reader infer this from a code description.
-   - Describe the **behavior**, not the implementation: what a user does, what they now see/experience. Skip file names, function names, hook names, and internal architecture — those belong in the ledger, not the reply.
-   - If a follow-up comment reverses or narrows an earlier fix (e.g. RD flags a real-backend constraint the mock didn't have), say plainly what changed *this time*, not just what the final state is — RD is tracking the eBug across replies and a comment that only restates the current behavior reads as if nothing happened.
-   - Keep it to 1–3 sentences. Longer technical justification stays in the ledger's own Root cause/Resolution fields, not the reply.
-
+8. Update the ledger with root cause, resolution, checks run, live verification, and anything not verified. Use precise statuses; `Fixed` is not `Verified`, and `Committed` is not `Shipped`. Leave that eBug's **Reply comment** field empty for now — it is written in Step 5, once the change has actually shipped.
 ## Commit and production rules
 
 When committing is authorized:
@@ -108,4 +170,45 @@ When committing is authorized:
 
 Push to `main` only when explicitly requested because Vercel deploys it to production. When asked to check production after a push, verify the live production URL rather than relying on localhost, and update the ledger from `Committed` to `Shipped` only after the requested production check succeeds.
 
-See [REFERENCE.md](REFERENCE.md) for the repository-specific pitfalls behind these rules. Read only the section relevant to the current step.
+## Step 5 — Write the reply comment (the LAST step, after shipping)
+
+**This is the final step of the flow and it comes after the push, not before it.** Write it once
+the change is actually live — or, when the run stops short of shipping, once you know exactly how
+far it got. Writing it earlier produces a comment that claims a state the eBug is not in yet:
+"Fixed" pasted into ePF while the fix is still sitting uncommitted on a laptop is how RD retests
+something that was never deployed.
+
+So the trigger is whichever of these the run reached, and the comment says so plainly:
+
+| How far the run got | What the comment must say |
+| --- | --- |
+| Shipped (pushed, production check passed) | the fix is live — the normal case |
+| Committed, not pushed | what changed and that it is **not on production yet** |
+| Fixed locally, not committed | that nothing has shipped, so retesting now proves nothing |
+| Not a defect / does not reproduce | that, and what was actually tested |
+
+Produce one comment per eBug, in that eBug's **Reply comment** ledger field, ready for the user to
+paste as-is. **Never post it to ePF yourself** — every ePF call in this flow is read-only, and the
+user decides what goes on the ticket. Deliver the comments in the session response too, not only
+in the ledger, so they can be copied without opening a file.
+
+It is read by RD/QA, not by whoever wrote the code — write it in their terms:
+
+- Lead with **whether the reader will see anything different** — a UI/UX change, a copy change, or
+  no observable change at all (a documentation-only correction, or a false alarm that doesn't
+  reproduce). Never make them infer this from a code description.
+- Describe the **behavior**, not the implementation: what a user does, what they now see. Skip file
+  names, function names, hook names, and internal architecture — those belong in the ledger.
+- **Say what changed *this time*.** If a follow-up reverses or narrows an earlier fix, or
+  contradicts a diagnosis you posted before, lead with that. RD is tracking the eBug across
+  replies, and a comment that only restates the final behavior reads as if nothing happened.
+- **If the eBug did not reproduce, say so before saying what you changed** — otherwise a behaviour
+  change lands on the ticket looking like a bug fix, and QA retests the wrong thing.
+- Name anything the reader must retest differently: a **deliberate side effect**, a case that is
+  still not fixed, or a build the report was filed against that this repo is not.
+- Keep it to 1–3 sentences. Longer justification stays in the ledger's Root cause / Resolution
+  fields.
+
+See [API.md](API.md) for the ePF endpoint contract, the token rules, and the API traps
+behind Step 1, and [REFERENCE.md](REFERENCE.md) for the repository-specific pitfalls
+behind the rest. Read only the section relevant to the current step.

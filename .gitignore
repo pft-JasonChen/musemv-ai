@@ -16,3 +16,10 @@ prototypes/*/temp/
 # Playwright / test runtime
 .tools/
 node_modules/
+
+# Local secrets. `.env` holds EPF_API_TOKEN for the ycm-ebug-fix skill's ePF
+# REST calls (see web-app/.claude/skills/ycm-ebug-fix/API.md). Never commit it —
+# `.env.example` is the committed placeholder that documents the shape.
+.env
+.env.*
+!.env.example
