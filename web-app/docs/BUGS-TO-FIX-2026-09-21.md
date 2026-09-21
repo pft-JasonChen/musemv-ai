@@ -11,8 +11,8 @@ run since the skill stopped depending on a browser SSO session.
 
 | #   | BugCode          | Status                                                        |
 | --- | ---------------- | ------------------------------------------------------------- |
-| 1   | `YMW260911P0004` | ↩️ **ROLLED BACK** to pre-2026-09-12 — now UNFIXED, by decision |
-| 2   | `YMW260917P0008` | ✅ Implemented as new behaviour, per product owner 2026-09-20 |
+| 1   | `YMW260911P0004` | ↩️ **ROLLED BACK** (`53915d3`, pushed) — unfixed here; RD does the rail skeleton |
+| 2   | `YMW260917P0008` | ✅ Implemented as new behaviour (`53915d3`, pushed to `main`)  |
 | 3   | `YMW260918P0003` | ⏸️ Deferred by the product owner — not looked at              |
 | 4   | `YMW260915P0012` | ⏸️ Deferred by the product owner — not looked at              |
 
@@ -104,7 +104,7 @@ reverted」。**這段比原本核可的「乙」多了一句解法歸屬** —�
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260917P0008
 - Retrieved at: 2026-09-18 (API), re-read 2026-09-21
 - Triage: **Needs PM → answered.** The Expect Result and the newest comment contradict each other.
-- Local status: **Verified**
+- Local status: **Pushed** — `53915d3` on `main` 2026-09-21. Production not yet re-checked.
 - Related code/spec: `components/providers/HistoryProvider.tsx`,
   `components/history/HistoryView.tsx`, `components/mv/MvEditor.tsx`,
   `app/[locale]/mv/edit/page.tsx`, `specs/areas/02-mv-creation.md` **MV-P5-S6**
