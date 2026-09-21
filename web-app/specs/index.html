@@ -1025,6 +1025,265 @@ this file covers. When a change does both, it appears in both, and the row below
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
 <hr>
+<h2 id="2026-09-21-delete-this-project-now-deletes-the-creation-guarded-routes-show-a-loading-state">2026-09-21 — Delete this Project now deletes the creation; guarded routes show a loading state</h2>
+<h3 id="ymw260917p0008-delete-project-in-edit-music-video-deletes-the-original-mv"><code>YMW260917P0008</code>: "Delete Project" in Edit Music Video deletes the original MV</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/02-mv-creation.md</code> — <strong>MV-P5-S6</strong> extended.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td>The eBug's Expect Result ("shouldn't affect the original MV") and its 2026-09-18 comment ("after discuss w/ PM, delete project would delete mv") say opposite things. Measured first: the repro does NOT reproduce here — nothing in <code>MvEditor</code> could reach a History row, so Delete this Project already left the MV alone.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner chose the comment's behaviour (2026-09-20): Delete this Project <strong>deletes the creation it was opened from</strong>. Scoped by <code>/mv/edit?id=&lt;historyId&gt;</code>, which <code>/history</code> already puts in the URL — entered from <code>/mv/result</code> or <code>/creator</code> there is no id and only the in-memory flow is discarded.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>components/providers/HistoryProvider.tsx</code> (new <code>removed</code> / <code>remove</code>), <code>components/history/HistoryView.tsx</code> (local <code>removed</code> state lifted to the provider), <code>components/mv/MvEditor.tsx</code> (<code>deleteProject</code> reads <code>?id=</code> from <code>window.location.search</code> at click time — <strong>no route file changed</strong>).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>components/providers/HistoryProvider.test.tsx</code> (5 tests, mutation-tested both ways). Verified live at 1440px: History 8 rows → 7, the edited MV gone, the other two MVs untouched; and with no <code>?id=</code>, 7 rows → 7.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td><strong>C4 additive only</strong> (<code>useHistory</code> gains <code>removed</code> / <code>remove</code>). C7 unmoved — see <code>../docs/CHANGELOG-RD.md</code> for why the first <code>useSearchParams</code> attempt was backed out.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Side effect, deliberate:</strong> deleting from <code>/history</code> itself now persists for the session. It was<br>
+local <code>HistoryView</code> state before, so a deleted row came back as soon as you navigated away — which<br>
+had to change for <code>/mv/edit</code> to reach it at all, and was never right on its own terms.</p>
+<h3 id="ymw260911p0004-part-2-the-rail-gets-a-skeleton-rd-implements-it-spec-only-here"><code>YMW260911P0004</code>, part 2: the rail gets a skeleton — RD implements it, spec only here</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/02-mv-creation.md</code> — new <strong>AC-MV-22</strong> and <strong>MV-E10</strong>; <code>areas/03-song-creation.md</code> — new <strong>AC-SONG-20</strong> (cross-reference).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td>The eBug's own screenshot was a <strong>panel-level skeleton in the right-hand rail</strong> of <code>/mv/room</code>, not a page-level spinner — the rail is what needs query time against a real backend. The route-level fallback we built instead was the wrong mechanism for the reported symptom, and it destabilised the e2e gate (see above).</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-21: the two create screens' side rail uses a <strong>skeleton</strong>; <strong>every other loading state keeps the 3-dot UI</strong> (this narrows, but does not revoke, the 2026-09-14 "one loading UI everywhere" instruction). The AC explicitly forbids solving it with a route-level <code>loading.tsx</code>.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><strong>None, deliberately.</strong> RD implements this against the real backend. <code>useMyCreations()</code> is a synchronous <code>useMemo</code> over in-memory state, so this prototype has no loading moment to render — MV-E10 records that so nobody "implements" a skeleton that can never appear.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>None — no behaviour in this repo to test.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ymw260911p0004-rolled-back-every-loading-state-change-for-this-ebug-is-reverted"><code>YMW260911P0004</code>: ROLLED BACK — every loading-state change for this eBug is reverted</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td>None. The 2026-09-12 and 2026-09-14 entries for this eBug are <strong>superseded by this rollback</strong>, not amended.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>app/[locale]/loading.tsx</code> put a Suspense boundary around <strong>every</strong> route under <code>[locale]</code>. That makes Next stream each page in two parts, leaving a copy in a hidden <code>&lt;div hidden&gt;</code> staging area until an inline script swaps it in. Under load a Playwright CSS locator sees the in-place copy <strong>and</strong> the staged one — <code>strict mode violation: … resolved to 2 elements</code>, on whichever route the run reached.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-21: <strong>roll the whole eBug back.</strong> A loading animation nobody could reliably measure is not worth a gate that cannot attribute a failure to a change. The reported screenshot was also traced to <code>testing-ycm.makeupar.com</code>, a different codebase.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td>Deleted <code>app/[locale]/loading.tsx</code> and <code>components/ui/LoadingDots.tsx</code>; <code>HistoryView.tsx</code>'s <code>HistoryLoadingDots</code> is inline again exactly as before <code>9109683</code>; <code>components/auth/AuthGuard.tsx</code> back to <code>if (!hydrated \|\| !loggedIn) return null</code>.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>components/auth/AuthGuard.test.tsx</code> deleted with the code it guarded.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Known and accepted after this rollback:</strong> F5 on <code>/history</code>, <code>/profile</code>, <code>/settings</code> and<br>
+<code>/profile/credits</code> shows an <strong>empty <code>&lt;main&gt;</code></strong> (34 bytes, measured) until the JS hydrates, and<br>
+switching between AI Music Video / AI Song has no route-transition animation. That is the<br>
+behaviour that shipped before 2026-09-12. <strong>Do not re-add a route-level <code>loading.tsx</code> to fix it</strong><br>
+without first measuring the e2e gate. Removing that one file took the suite from <strong>24 failures to<br>
+6</strong> (5 of which are pre-existing and fail on a clean tree too) — measured, not inferred.</p>
+<h2 id="2026-09-17-real-backend-mv-error-codes-documented-no-code-this-mock-has-no-error-code-surface">2026-09-17 — Real-backend MV error codes documented (no code — this mock has no error-code surface)</h2>
+<h3 id="ymw260915p0007-ymw260915p0009-error_audio_overlength-error_moderation_blocked"><code>YMW260915P0007</code> / <code>YMW260915P0009</code>: <code>error_audio_overlength</code> / <code>error_moderation_blocked</code></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/02-mv-creation.md</code> — new row <strong>MV-E9</strong>.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td>Both eBugs report real-backend (testing-ycm) generation failures undocumented in spec or UI. This repo has no real generation API and no error-code model to fix in code.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Document what's known, sourced from <code>docs/MV Engine Error Code - Sheet1.csv</code> (RD's canonical error-code sheet): <code>error_audio_overlength</code> = 240s (4 min) ceiling, with a suggested user-facing message. <code>error_moderation_blocked</code> has no exact match in that sheet — closest is <code>error_nsfw_content_detected</code> — flagged for RD to confirm rather than assumed.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td>None — no error-code handling exists anywhere in <code>src/lib/api/</code>; MV-E9 is documentation only, for whenever a real backend integration lands.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>None — no behavior to test.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2026-09-17-sign-out-does-not-auto-open-the-sign-in-dialog-decision-recorded-no-code-change">2026-09-17 — Sign Out does not auto-open the sign-in dialog (decision recorded, no code change)</h2>
+<h3 id="ymw260916p0020-no-sign-in-popup-after-landing-on-home-post-sign-out"><code>YMW260916P0020</code>: no sign-in popup after landing on Home post sign-out</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/06-profile-account.md</code> — <code>AC-PROF-06</code>.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td>eBug reported the sign-in dialog should appear automatically after Sign Out returns to Home; RD (SMITH_LEE) commented on the ticket that this isn't necessary.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner agreed with RD — keep the existing behavior (no popup), spec updated to state it explicitly rather than leave it silent.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td>None — this is current, unchanged behavior.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>None needed — no behavior changed.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2026-09-17-top-picks-songs-card-click-now-matches-newly-released-songs-and-exploresongs">2026-09-17 — Top Picks Songs' card click now matches Newly Released Songs (and <code>/explore/songs</code>)</h2>
+<h3 id="ymw260914p0002-home-song-cards-open-songresult-at-768px-not-always-songplay"><code>YMW260914P0002</code>: Home song cards open <code>/song/result</code> at ≥768px, not always <code>/song/play</code></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/04-explore-community.md</code> — <code>AC-EXP-03</code>, <code>EXP-P1-S3</code>.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td>Product owner initially said "keep current behavior" when only asked in the abstract, then live-tested <code>TopPicksSection</code> on production and reported the opposite: a card should open "that song's own player" (<code>/song/result</code>), not <code>/song/play</code>.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td><code>NewSongsSection.tsx</code> already made exactly this fix on 2026-08-13 (its own <code>openSong</code>: desktop seeds <code>SongFlow</code> and goes to <code>/song/result</code>, phone keeps <code>/song/play</code>) — <code>TopPicksSection.tsx</code> is a duplicate copy of the same row pattern that never received it, same shape as <code>YMW260909P0008</code>. Applied the identical fix, including the <code>from=home</code> param (not <code>from=song-detail</code>, which is <code>/explore/songs</code>' own origin tag). The spec line this corrects (<code>AC-EXP-03</code>) was itself stale since 2026-08-13 — it was never updated when <code>NewSongsSection</code> changed.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>components/home/TopPicksSection.tsx</code> — new <code>openSong()</code>, mirrored from <code>NewSongsSection.tsx</code>; the card <code>Link</code>'s <code>href</code> and <code>onClick</code> now branch on <code>isPhone</code>.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>No existing test covered this row's click destination; none needed updating. Verified live: card click seeds <code>SongFlow</code> and lands on <code>/song/result?id=sp-neon-static&amp;from=home</code> with the song's title, lyrics, and "Newly Released Songs" rail all rendering correctly.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2026-09-17-song-create-no-longer-pre-fills-the-compose-form">2026-09-17 — Song "Create" no longer pre-fills the compose form</h2>
+<h3 id="newly-released-songs-explore-songs-song-play-create-opens-a-blank-compose-form">Newly Released Songs / Explore Songs / Song Play "Create" opens a blank compose form</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/04-explore-community.md</code> — <code>AC-EXP-02</code>, <code>AC-EXP-05</code>, <code>EXP-P1-S3</code>, <code>EXP-P3-S1</code>, <code>EXP-P5-S2</code>, §2 (Newly Released Songs), §7 checklist (EXP-P3/P5), the mermaid flowchart. Also <code>specs/storyboards/explore-community/build_spec.py</code> — <code>AC-EXP-02</code>, P3-S5 (v3 → v4).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260916P0021</code> — QA reported Create on a Newly Released Songs row didn't fill Genre/Mood/Style Prompt/Title/Lyrics into the creation panel.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Investigated and found the OPPOSITE of the report: Genre, Mood, Title and Lyrics were already filling in correctly in Custom mode (added 2026-09-02, live-verified both signed-in and through the sign-in gate); only Simple mode's Style Prompt was ever left blank, since <code>CommunitySong</code> has no free-text prompt field to seed it from. Put to the product owner as "keep the working prefill and only patch the one gap, or remove it all" — <strong>decided to remove it all</strong>: the existing prefill was itself more than V1 wants, not a partial implementation to complete.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>components/home/NewSongsSection.tsx</code>, <code>components/song/SongDetailView.tsx</code> (<code>/explore/songs</code> and <code>/song/play</code>, same component), <code>components/song/SongResultView.tsx</code> (its own "same list as Home" rail) — each dropped its <code>patchSongCompose(...)</code> seeding call; Create now only gates on <code>requireLogin</code> and navigates.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>No existing test asserted the prefill; none needed updating. Verified live via the dev server (both signed-in and through the sign-in gate) that Title/Lyrics/Genre/Mood all stay blank after Create.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None — <code>useSongFlow().patchSongCompose</code> itself is unchanged; these are just call sites that stopped calling it.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="2026-09-12-three-more-ebug-driven-decisions">2026-09-12 — Three more eBug-driven decisions</h2>
 <h3 id="shared-song-links-creatoravatar-now-populated-on-every-resolution-branch">Shared song links: creator/avatar now populated on every resolution branch</h3>
 <table>
@@ -1124,6 +1383,81 @@ recorded. This file points you at which storyboards to open.</p>
 <tr>
 <td><strong>Tests</strong></td>
 <td>No existing e2e exercised the Song <code>[fail]</code> path directly, so none needed updating.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2026-09-11-exploremvs-phone-layout-newly-released-mv-un-hidden-trending-mv-becomes-a-row">2026-09-11 — <code>/explore/mvs</code> phone layout: "Newly Released MV" un-hidden, Trending MV becomes a row</h2>
+<p>Figma node 3940:150442 ("New MVs — See All — Community"). No contract change — pure layout/CSS,<br>
+one behaviour reversal.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td>Area 04 §3.2's <code>/explore/mvs</code> paragraph, corrected in place — see the <code>⚠️ Superseded 2026-09-11</code> note there for the full before/after. No AC number changes; this was prose, not a numbered criterion.</td>
+</tr>
+<tr>
+<td><strong>Decision reversed</strong></td>
+<td>The 2026-08-07 "follow DP, hide every non-<code>--primary</code> <code>.mv-detail__grid-section</code> on phone" call (<code>DESIGNER-TODO</code> A20) is reversed for this screen: Figma's phone frame shows both sections. <code>DESIGNER-TODO</code> A20 gets a partial-resolution note — the "phone only reaches Trending" half is fixed; "Home still has no Trending rail of its own" is unchanged and stays open.</td>
+</tr>
+<tr>
+<td><strong>What changed</strong></td>
+<td>Primary section (mobile title "Trending MV", was "Top Picks"): now a horizontal-scroll row at phone widths too (was the two-column masonry every other width still uses below 1024px; desktop already had this row, <code>asRow</code> in <code>MvGridSections.tsx</code>, since 2026-09-07). Secondary section (mobile title "Newly Released MV", was "New MVs"): no longer hidden below 768px, same masonry as before. Card radius/type size shrunk on the new phone row to match Figma and to fix a real overflow bug the narrower cards exposed (a single long word could overflow <code>Card</code>'s default 17px title into the next card). <code>.mv-detail</code>'s own mobile padding/gaps re-tuned across several same-day follow-ups, landing at: 16px horizontal (matching <code>.home-page</code>), 16px between the two sections plus a 16px <code>margin-bottom</code> on the primary section (32px total above "Newly Released MV"), 10px between each section's own header and its content. Both <code>/explore/mvs</code>' and <code>/explore/songs</code>' Top Picks rows, and Home's own <code>new-mvs</code>/<code>top-picks</code> rows, also gained a both-edges peek bleed (previously next-card-only on Home, none on the two explore rows).</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>src/components/community/MvGridSections.tsx</code> (<code>MvTopPicksRow</code> takes a <code>rowHeight</code> prop, phone opt-in in <code>MvGrid</code>) · <code>src/components/community/MvExplore.tsx</code> (dropped the fixed <code>&lt;h1&gt;Trending MV&lt;/h1&gt;</code>, now a duplicate of the SectionHeader) · <code>src/styles/designer-overrides.css</code> (all the sizing/spacing/bleed rules — each has its own dated comment).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>drop 2: /explore/mvs still has a grid on a phone</code> in <code>e2e/behaviour-regressions.spec.ts</code>, rewritten to assert the reversed behaviour (both sections visible, titled, painted) instead of the old hidden state — same test, opposite assertion, not a new one. Run standalone and confirmed passing (<code>--grep</code>, not the full suite — see <code>AGENTS.md</code>'s port-3100 rule).</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2026-09-11-exploremvs-follow-up-tablet-row-and-a-second-trending-music-videos">2026-09-11 — <code>/explore/mvs</code> follow-up: tablet row, and a second "Trending Music Videos"</h2>
+<p>Two same-day product-owner requests on top of the phone-layout change above. No contract change.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td>Area 04 §3.2's <code>/explore/mvs</code> paragraph, same block as above — two new bullets appended in place. §3.1's "Trending Music Videos" name/data-mismatch note also amended (see below).</td>
+</tr>
+<tr>
+<td><strong>What changed</strong></td>
+<td>(1) <strong>Tablet (768–1023px)</strong> was left out of the phone-layout work — <code>MvGrid</code>'s tablet branch ignored <code>asRow</code> and kept rendering the plain wrapping grid regardless. It now renders the same horizontal-scroll row phone and desktop use, at its own height (<code>TABLET_ROW_HEIGHT</code> = 200, a middle value with no Figma frame behind it — Figma only supplied a phone frame). "Newly Released MV" is untouched at every width. (2) The <strong>desktop/tablet title</strong> (shown ≥768px) changed from "Top Picks Music Videos" to <strong>"Trending Music Videos"</strong> — matching the mobile title's "Trending" naming, just unabbreviated.</td>
+</tr>
+<tr>
+<td><strong>A naming collision worth flagging to QA</strong></td>
+<td>This section is now titled "Trending Music Videos" on desktop/tablet, which is <strong>already the title of a different section on Home</strong> (<code>NewMVsSection.tsx</code>, fed by <code>NEW_MVS</code>) — §3.1 already carries a note that this pairing (same title, different route, different array) is a settled, non-defect state from 2026-09-01; this row is the second instance of it, not a new decision.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>src/components/community/MvGridSections.tsx</code> — <code>TABLET_ROW_HEIGHT</code> constant, <code>MvGrid</code>'s <code>!isDesktop &amp;&amp; asRow</code> branch, and the <code>SectionHeader</code> <code>title</code> prop.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>No test asserts the old tablet-wraps-instead-of-rows behaviour or the old title string, so nothing needed rewriting; verified live via DOM measurement at 768/800/1023/1024px (the tablet↔desktop boundary) instead.</td>
 </tr>
 <tr>
 <td><strong>Contract</strong></td>
@@ -1281,6 +1615,21 @@ is the change, not the code alone.</p>
 </tbody>
 </table>
 <h3 id="history-a-generating-mvs-placeholder-title-now-matches-its-own-mv-name-setting">History: a generating MV's placeholder title now matches its own MV-name setting</h3>
+<blockquote>
+<p>⚠️ <strong>Superseded 2026-09-14</strong> — RD: a real MV job carries no title info at all at this point<br>
+(unlike Song, whose backend assigns one at creation), so the client-side "smart" title below is<br>
+not something production can build. See "History: a generating MV's title is a fixed<br>
+placeholder" below.</p>
+</blockquote>
+<p>|              |                                                                                                                                                                                                                |<br>
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | -------------------------------------------------------------------- |<br>
+| <strong>Criteria</strong> | <code>areas/05-history.md</code> (generating-row title source), <code>areas/02-mv-creation.md</code> (<code>settings.title.text</code>, the "MV TITLE" field).                                                                                  |<br>
+| <strong>Why</strong>      | <code>YMW260911P0005</code> — a generating MV's History card showed the SOURCE SONG's title (or "Untitled MV"), never the user's own MV-name setting, while a generating Song's card already shows the song's real title. |<br>
+| <strong>Decision</strong> | Bug, not a product decision: <code>MvFlowProvider</code>'s <code>upsertGenerating</code> ignored <code>compose.settings.title.text</code> entirely. The mock backend's own storyboard snapshot already prioritizes it (<code>settings.title.text     |     | song?.title</code>) — the History-facing call now matches that precedence. |<br>
+| <strong>Code</strong>     | <code>providers/MvFlowProvider.tsx</code> (<code>startStoryboard</code>, <code>startRender</code>).                                                                                                                                             |<br>
+| <strong>Tests</strong>    | Not yet added — flagged for a follow-up pass.                                                                                                                                                                  |<br>
+| <strong>Contract</strong> | None.                                                                                                                                                                                                          |</p>
+<h3 id="history-a-generating-mvs-title-is-a-fixed-placeholder-new-mv">History: a generating MV's title is a fixed placeholder ("New MV")</h3>
 <table>
 <thead>
 <tr>
@@ -1291,31 +1640,36 @@ is the change, not the code alone.</p>
 <tbody>
 <tr>
 <td><strong>Criteria</strong></td>
-<td><code>areas/05-history.md</code> (generating-row title source), <code>areas/02-mv-creation.md</code> (<code>settings.title.text</code>, the "MV TITLE" field).</td>
+<td><code>areas/05-history.md</code> (generating-row title source); supersedes the entry directly above.</td>
 </tr>
 <tr>
 <td><strong>Why</strong></td>
-<td><code>YMW260911P0005</code> — a generating MV's History card showed the SOURCE SONG's title (or "Untitled MV"), never the user's own MV-name setting, while a generating Song's card already shows the song's real title.</td>
+<td><code>YMW260911P0005</code>, RD follow-up (2026-09-14): the real backend has no title info available for an MV job — Song's job schema is assigned a title at creation server-side; MV's has no equivalent field and none is planned. Building a client-side "smart" title (this prototype's own compose data) would describe behavior production cannot match.</td>
 </tr>
 <tr>
 <td><strong>Decision</strong></td>
-<td>Bug, not a product decision: <code>MvFlowProvider</code>'s <code>upsertGenerating</code> ignored <code>compose.settings.title.text</code> entirely. The mock backend's own storyboard snapshot already prioritizes it (<code>settings.title.text || song?.title</code>) — the History-facing call now matches that precedence.</td>
+<td>Revert to a fixed placeholder, <strong>"New MV"</strong> — same shape as any other job-status placeholder, no longer trying to reflect the user's MV-name setting or the matched song's title. This is a UI/UX change: a generating (and, since the row is never retitled, a completed) MV's History card now always reads "New MV" regardless of what was typed in MV Settings or which song was chosen.</td>
 </tr>
 <tr>
 <td><strong>Code</strong></td>
-<td><code>providers/MvFlowProvider.tsx</code> (<code>startStoryboard</code>, <code>startRender</code>).</td>
+<td><code>lib/mv/types.ts</code> (removed <code>mvDisplayTitle</code>, added <code>GENERATING_MV_TITLE = "New MV"</code>); <code>providers/MvFlowProvider.tsx</code> (<code>startStoryboard</code>, <code>startRender</code> — <code>title: GENERATING_MV_TITLE</code>).</td>
 </tr>
 <tr>
 <td><strong>Tests</strong></td>
-<td>Not yet added — flagged for a follow-up pass.</td>
+<td>None existing asserted the smart-title behavior; nothing needed updating.</td>
 </tr>
 <tr>
 <td><strong>Contract</strong></td>
-<td>None.</td>
+<td>None (the <code>title</code> field itself is unchanged shape — still <code>string</code> — only the value supplied changed).</td>
 </tr>
 </tbody>
 </table>
 <h3 id="mv-results-character-row-is-accurate-for-a-re-opened-history-entry">MV Result's Character row is accurate for a re-opened History entry</h3>
+<blockquote>
+<p>⚠️ <strong>Superseded 2026-09-13</strong> — the product owner asked for the character's NAME, not a count.<br>
+See "MV Result's Character row shows the name, not a count" below; <code>HistoryItem.photoCount</code> this<br>
+row describes no longer exists, replaced by <code>HistoryItem.characterNames</code>.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -1350,7 +1704,48 @@ is the change, not the code alone.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="mv-results-character-row-shows-the-name-not-a-count">MV Result's Character row shows the name, not a count</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/02-mv-creation.md</code> (Character detail row on <code>/mv/result</code>); supersedes the entry directly above.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260911P0007</code>, follow-up (2026-09-13) — product owner: the Character field should display the character's name, not a count.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>The name was never reachable at <code>/mv/result</code> even in the LIVE flow: <code>MvRoom.tsx</code>'s per-slot name editor (<code>photoNames</code>) was page-local state, discarded the moment the page unmounted for <code>/mv/thinking</code> or <code>/mv/creating</code>. Lifted into <code>MvFlowProvider</code> (<code>characterNames</code>) instead of <code>MvRoom</code> — same DP-parity reasoning as before for keeping it off <code>CharacterPhoto</code> (C2, frozen), but now surviving the navigation that actually starts generation, so <code>startStoryboard</code>/<code>startRender</code> can persist it onto the History row.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>providers/MvFlowProvider.tsx</code> (<code>characterNames</code>/<code>setCharacterNames</code>, C4 additive — see <code>docs/CHANGELOG-RD.md</code>); <code>providers/HistoryProvider.tsx</code> (<code>HistoryItem.characterNames?: string[]</code>, replaces <code>photoCount</code>); <code>mv/MvRoom.tsx</code> (reads/writes the provider's state instead of local <code>photoNames</code>); <code>mv/MvResult.tsx</code> (<code>entry?.characterNames ?? characterNames.slice(0, compose.photos.length)</code>, joined, untitled slots dropped rather than shown as the editing UI's "Name" placeholder).</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>providers.surface.test.ts</code>'s C4 snapshot updated (additive). No behavior test yet for the Character row itself — flagged for a follow-up pass.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>C4 additive (<code>useMvFlow</code> gains two keys) — see <code>docs/CHANGELOG-RD.md</code>, 2026-09-13 entry.</td>
+</tr>
+</tbody>
+</table>
 <h3 id="every-route-gets-a-loading-fallback">Every route gets a loading fallback</h3>
+<blockquote>
+<p>⚠️ <strong>Superseded 2026-09-14</strong> — the spinner below was a NEW visual; product owner: reuse<br>
+History's existing 3-dot loading animation everywhere instead of inventing another UI. See<br>
+"Route loading fallback now reuses History's 3-dot animation" below. The behavioral scope was<br>
+also corrected the same day — see that entry for what this fix does and does not cover.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -1378,6 +1773,49 @@ is the change, not the code alone.</p>
 <tr>
 <td><strong>Tests</strong></td>
 <td>None — a route-transition loading state isn't practically assertable in Playwright (it needs a slow chunk load to ever mount), same reasoning as the demo panel's manual-only paths.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="route-loading-fallback-now-reuses-historys-3-dot-animation">Route loading fallback now reuses History's 3-dot animation</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/05-history.md</code> region N/A (no area doc covers this cross-cutting fallback) — supersedes the entry directly above.</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td><code>YMW260911P0004</code> follow-up, product owner (2026-09-14): loading states across the app should all use the ONE existing 3-dot animation (<code>?demo=1</code> panel's "History — slow load", Figma "History — Loading" 3261:44705) — not a new spinner per screen.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Extracted <code>HistoryView.tsx</code>'s previously-private <code>HistoryLoadingDots</code> into a shared <code>ui/LoadingDots</code> component; both History's own slow-load state and the route-level <code>loading.tsx</code> now render the identical component and reuse the identical CSS (<code>.history-page__loading</code> / <code>.history-page__loading-dots</code> / <code>.history-page__loading-dot(--1/2/3)</code> in <code>designer-overrides.css</code>) — no new CSS was written.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>components/ui/LoadingDots.tsx</code> (new, the extracted component); <code>components/history/HistoryView.tsx</code> (now imports it instead of defining it locally); <code>app/[locale]/loading.tsx</code> (renders it instead of the SVG spinner).</td>
+</tr>
+<tr>
+<td><strong>Verified</strong></td>
+<td>Live, with an artificial delay on <code>/mv/room</code>'s page component (temporary, reverted): confirmed the route-transition fallback now shows the identical 3-dot animation as History's own <code>?demo=1</code> "slow load" state, side by side.</td>
+</tr>
+<tr>
+<td><strong>Also corrected the same day — scope, not just visual:</strong> <code>loading.tsx</code> only ever mounts for a <strong>client-side route transition</strong> (e.g. clicking between AI Music Video / AI Song in the sidebar while already in the app) — confirmed live. It does <strong>not</strong> mount on a full page reload (F5): Next.js sends the complete, already-resolved page in one response since nothing in this tree does real async data-fetching, so a slow F5 shows nothing (blank) for the whole load, same as before this fix. That gap needs a different approach if it's still wanted; not built here.</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td>None — same reasoning as above (not practically assertable without a real slow chunk load).</td>
 </tr>
 <tr>
 <td><strong>Contract</strong></td>
@@ -2506,7 +2944,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>MV-P5-S2</strong> <strong>Cover:</strong> large preview (Expand → lightbox, Download); a <strong>Cover description</strong> textarea + Enhance; <strong>Recreate</strong> cover (<code>COST_COVER</code>, currently <strong>4</strong>) <strong>overwrites the cover directly</strong> — no "pick which cover" tray, no undo. <em>(Was 10; repriced 2026-08-12, spec corrected 2026-08-19.)</em></li>
 <li><strong>MV-P5-S3</strong> <strong>Scenes:</strong> a per-clip storyboard strip with an inline video preview and its own transport; the scene editor edits the active scene's prompt (max 2500 + Enhance) and shows a <strong>scene-version history row</strong>; <strong>Recreate scene</strong> (<code>20</code>, <code>addCredits(-20)</code>) <strong>overwrites that scene's video directly</strong> — no "pick which take" tray, no undo. <strong>Below 768px the inline editor and the preview are replaced by a full-screen <code>MobileSceneDetail</code></strong> (DP's phone frame has no room for the inline pair).</li>
 <li><strong>MV-P5-S4</strong> <strong>Output settings are inline sections of the right rail, not a modal</strong>: MV title toggle+input, Author name toggle+input, Show Subtitle, Show Watermark (no ratio/quality here). The two ON-OFF switches are WA's — DP ships the text inputs alone, but <code>settings.title.on</code> / <code>settings.author.on</code> are <code>MvSettingsSchema</code> fields (contract surface C2) and decide whether the caption is burned in at all.</li>
-<li><strong>MV-P5-S6</strong> <strong>Delete this Project</strong> (DP's control; DP's own handler is dead) confirms with History's wording and then discards the in-memory flow and leaves — which is what deleting an uncommitted project means when the flow state is in memory. It does <strong>not</strong> call a backend delete.</li>
+<li><strong>MV-P5-S6</strong> <strong>Delete this Project</strong> (DP's control; DP's own handler is dead) confirms with History's wording, then <strong>deletes the creation it was opened from</strong> and leaves to <code>/history</code>. The creation is identified by <code>/mv/edit?id=&lt;historyId&gt;</code>, which <code>/history</code>'s own "Edit MV" action puts in the URL; opened from <code>/mv/result</code> or <code>/creator</code> there is no <code>id</code>, nothing is in History yet, and it discards the in-memory flow only. <em>(Extended 2026-09-20, product owner, <code>YMW260917P0008</code> — supersedes the original "discards the in-memory flow and leaves", which left the edited MV sitting in History and made the control appear to do nothing.)</em> It still does <strong>not</strong> call a backend delete: removal is a session-local filter over the History grid's two sources (<code>useHistory().remove</code>), never a mutation of the <code>HISTORY_SAMPLES</code> seed.</li>
 <li><strong>MV-P5-S5</strong> <strong>Merge MV</strong> → <code>resetForRerender()</code> → <code>/mv/creating</code>, where <code>startRender</code> charges the flat <code>COST_MERGE</code> (10, refunded on failure — GL-01; ⚠️ corrected 2026-08-28 during the S3 storyboard-spec capture — was wrongly stated as <code>COST_RENDER</code> 200, a constant that does not exist; see the §3 Costs correction); re-renders the MV from the current (overwritten) cover/scenes + edited text. Enabled by <strong>any</strong> pending edit (text, regenerate, cover, or settings — incl. <code>storyboardDirty</code>). If <code>credits &lt; COST_MERGE</code>, Merge opens <code>BuyCreditsModal</code> instead (which itself falls back to <code>SubscribeModal</code> for a non-subscriber — CR-06, per S6 D-04 — confirmed live in this spec's own capture <code>22_merge_insufficient_credits.png</code>, which shows "Upgrade Your Plan").</li>
 </ul>
 <h3 id="mv-p6-supporting-sheets-external-entries">MV-P6 — Supporting sheets &amp; external entries</h3>
@@ -2571,6 +3009,16 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <td>Import a local audio file whose probed duration is <code>&gt;0s</code> and <code>&lt;30s</code> (new 2026-09-01, MV-01)</td>
 <td><code>MvRoom.importAudio</code> rejects it with the toast <code>Audio must be at least 30 seconds.</code>, revokes the object URL, and never opens Trim. Deliberate exception: a probed duration of exactly <code>0</code> (the metadata probe <strong>failed</strong>, not a zero-length file) is <strong>not</strong> rejected here — it falls through to Trim as before, where the 180s-fallback / <code>0:00</code> display already documented at MV-P6-B applies.</td>
 </tr>
+<tr>
+<td><strong>MV-E9</strong></td>
+<td>Real MV generation backend fails with <code>error_audio_overlength</code> or <code>error_moderation_blocked</code> (<code>YMW260915P0007</code>/<code>P0009</code>, 2026-09-17)</td>
+<td><strong>Documentation only — not modeled in this mock.</strong> This prototype has no real generation API call and no error-code surface at all (<code>src/lib/api/mock.ts</code> only knows the <code>[fail]</code>-description / <code>jobFail</code> demo failure, MV-E1). The canonical error-code list RD maintains is <code>docs/MV Engine Error Code - Sheet1.csv</code> — per that sheet, <code>error_audio_overlength</code> means <strong>"Input audio length too long (&lt;=240s)"</strong>, i.e. a 240-second (4-minute) ceiling; suggested user-facing text: <em>"Your audio is too long — please use a track under 4 minutes."</em> The sheet has <strong>no <code>error_moderation_blocked</code> entry</strong>; the closest match is <code>error_nsfw_content_detected</code> ("Output Blocked"), which may be the same failure under a different name — flagged for RD to confirm rather than assumed. Suggested text if so: <em>"We couldn't create your MV because the content didn't pass our moderation check. Please try a different photo, audio, or description."</em> Neither message is implemented anywhere in this repo; when a real backend integration lands, this row is where its error-code handling should start.</td>
+</tr>
+<tr>
+<td><strong>MV-E10</strong></td>
+<td>The side rail's data is still being fetched (real backend only — <code>YMW260911P0004</code>, product owner 2026-09-21)</td>
+<td>The rail renders a <strong>skeleton</strong> in place of its rows: grey placeholder blocks in the shape of the list (thumbnail + two text lines per row), keeping the rail's width and height so nothing below it moves when the data lands. <strong>Not modelled in this mock and deliberately so</strong> — <code>useMyCreations()</code> is a synchronous <code>useMemo</code> over in-memory state (<code>HistoryProvider</code> + the <code>HISTORY_SAMPLES</code> seed), so there is no moment at which this rail is "loading". RD implements it against the real backend; see <code>AC-MV-22</code> for the rule and for why this rail is the one exception to the app's 3-dot loading UI.</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -2601,6 +3049,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>AC-MV-17b</strong> — THE SYSTEM SHALL render <code>/mv/room</code>, <code>/mv/storyboard</code>, <code>/mv/result</code>, <code>/mv/edit</code> at 320/375/768/1024/1440/1920px with no overflow. <em>(visual)</em> <em>(Renumbered 2026-08-19 — <code>AC-MV-17</code> was used twice; the audio-import criterion above keeps the plain id. Widths updated to the six-tier set the code and <code>visual-baseline.spec.ts</code> actually use.)</em></li>
 <li><strong>AC-MV-20</strong> — WHEN a local audio file is imported (MV-P6-B) AND its probed duration is <code>&gt;0s</code> and <code>&lt;MIN_TRIM_SEC</code> (30s), THE SYSTEM SHALL reject the import with the toast <code>Audio must be at least 30 seconds.</code> and SHALL NOT open Trim; a probed duration of exactly <code>0</code> (probe failure, not a zero-length file) SHALL NOT be rejected by this rule. <em>(New 2026-09-01, MV-01/MV-E8. This is the upload-time half of the same 30s floor AC-MV-16 already enforces at Trim-selection time — both read <code>MIN_TRIM_SEC</code>, exported from <code>TrimAudioModal</code> and imported by <code>MvRoom</code>, so the two cannot drift to different numbers.)</em></li>
 <li><strong>AC-MV-21</strong> <em>(new 2026-09-09, <code>YMW260902P0013</code>)</em> — WHILE the user is signed in, <code>/mv/room</code>'s side rail SHALL show <strong>My Creations</strong> over their own finished MVs (<code>useMyCreations("mv")</code>: live session jobs merged with the seeded creations <code>/history</code> shows, <code>status: "done"</code> only, community-sourced rows excluded), and SHALL behave identically to <code>/song/create</code>'s rail. WHEN they are signed out, or have no finished MVs at all, it SHALL fall back to <strong>Trending MVs</strong> with "See all". <em>The reasoning — why the two screens appeared to disagree when the code was identical — is written once, in area 03 <code>AC-SONG-19</code>.</em></li>
+<li><strong>AC-MV-22</strong> <em>(new 2026-09-21, <code>YMW260911P0004</code>, product owner)</em> — WHILE <code>/mv/room</code>'s side rail is waiting on its data, THE SYSTEM SHALL render a <strong>skeleton</strong> of the list (placeholder blocks in the shape of the rows, occupying the rail's normal footprint) rather than an empty column, a spinner, or the app's 3-dot loading animation. THE SYSTEM SHALL NOT wrap the route in a page-level loading fallback to achieve this. <strong>This rail is the ONE exception to the app-wide loading UI</strong> — everywhere else keeps the 3-dot animation (<code>HistoryLoadingDots</code>, product owner 2026-09-14: "loading 狀況請統一改成用那個 UI，不要寫新的 UI"). <em>Why the exception: the rail is a single panel inside an otherwise fully-rendered page, and its row shape is known before the data arrives — a skeleton holds the layout still and says which part is late, whereas a centred animation in a side column reads as that column being broken. The alternative that was tried, a page-level fallback over the whole route, was removed on 2026-09-21: it made Next stream every page in two parts and left a duplicate in a hidden staging div, which took the e2e suite from 6 failures to 24. That is why this AC forbids solving it at the route level.</em> <em>Scope: RD implements this on the real backend. It is <strong>not</strong> implemented in this prototype and cannot be — <code>useMyCreations()</code> reads in-memory state synchronously, so the rail has no loading state to render (MV-E10).</em></li>
 </ul>
 <hr>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
@@ -3060,7 +3509,8 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 The same rule applies to <code>/song/play</code>'s Lyrics sheet — see <code>AC-EXP-05</code>.</p>
 </blockquote>
 </li>
-<li><strong>AC-SONG-19</strong> <em>(new 2026-09-09, <code>YMW260902P0013</code>)</em> — WHILE the user is signed in, <code>/song/create</code>'s side rail SHALL show <strong>My Creations</strong> over their own finished songs, and SHALL behave identically to <code>/mv/room</code>'s rail (area 02, <code>AC-MV-21</code>). WHEN they are signed out, or have no finished songs at all, it SHALL fall back to <strong>Trending Songs</strong> with "See all".<blockquote>
+<li><strong>AC-SONG-19</strong> <em>(new 2026-09-09, <code>YMW260902P0013</code>)</em> — WHILE the user is signed in, <code>/song/create</code>'s side rail SHALL show <strong>My Creations</strong> over their own finished songs, and SHALL behave identically to <code>/mv/room</code>'s rail (area 02, <code>AC-MV-21</code>). WHEN they are signed out, or have no finished songs at all, it SHALL fall back to <strong>Trending Songs</strong> with "See all".</li>
+<li><strong>AC-SONG-20</strong> <em>(new 2026-09-21, <code>YMW260911P0004</code>, product owner)</em> — WHILE <code>/song/create</code>'s side rail is waiting on its data, THE SYSTEM SHALL render a <strong>skeleton</strong> of the list, identically to <code>/mv/room</code>'s rail. The full rule, the reason this rail is the one exception to the app's 3-dot loading UI, and the note that it is RD-implemented rather than mocked here, are written once in area 02 <code>AC-MV-22</code> / <code>MV-E10</code>.<blockquote>
 <p><strong>What the reported defect actually was.</strong> Both rails already ran the same condition over the same source — the session-local <code>HistoryProvider</code>, which starts EMPTY. So a signed-in user saw "My Creations" on whichever create screen they had just generated something on, and "Trending" on the other; the reporter had made an MV and no song, and the two pages looked like they disagreed. The code was identical and the DATA was lopsided.</p>
 <p>The fix gives both rails the source <code>/history</code> has always had (<code>useMyCreations</code>): live session jobs <strong>plus</strong> the seeded creations. A <code>status: "done"</code> filter and a <code>source: "community"</code> exclusion apply — a rail titled "My Creations" must not claim a community song that merely appears in History (<code>h-whispers-past</code>), and a processing or failed row has no result screen to open.</p>
 <p>The "at least one finished song" guard <strong>survives</strong> for the signed-out case, and because the alternative was tried: DP's literal <code>isSignedIn</code> plus an empty-state card was shipped and reverted on 2026-08-07 — a "My Creations" heading over a blank card read as broken rather than empty.<br>
@@ -3273,8 +3723,8 @@ is DP's own arrangement:</p>
 <li><strong>Newly Released Songs</strong> — <code>NEW_SONGS.slice(0,6)</code> in 2 columns (1 column below 768px); per row a<br>
 <strong>title</strong> that navigates to <code>/song/play?id</code>, <strong>album art</strong> that starts <code>SongPlayBar</code> (the desktop<br>
   preview bar; on a phone it falls back to navigating, because the bar is <code>display:none</code> there),<br>
-  Like (local), Share (<code>ShareDialog</code>), and <strong>Create</strong> → <code>requireLogin</code> → <code>patchSongCompose</code> →<br>
-<code>/song/create</code>.</li>
+  Like (local), Share (<code>ShareDialog</code>), and <strong>Create</strong> → <code>requireLogin</code> → <code>/song/create</code> (blank —<br>
+  no longer seeds the compose form; removed 2026-09-17, <code>YMW260916P0021</code>).</li>
 <li>⚠️ <strong>The Trending MV marquee is GONE, and with it <code>TRENDING_MVS</code>'s only home entry point.</strong><br>
   It was WA's own 45s infinite rail; DP has no equivalent, and the product owner decided<br>
   2026-08-07 to follow DP ("TRENDING_MVS 不用首頁 (Match DP)"). <code>TRENDING_MVS</code> is now reachable<br>
@@ -3288,7 +3738,16 @@ is DP's own arrangement:</p>
   wired, "Trending" will BE the ranked result; what the rail shows today is seed data standing in<br>
   for a rank that does not exist yet. <code>TRENDING_MVS</code> remains reachable only from <code>/explore/mvs</code>,<br>
   where it is the <code>--primary</code> section (A20 / A19). <strong>QA should not file the name/data mismatch as<br>
-  a defect</strong>, and no code changed. Recorded because it looks exactly like a wiring error.</li>
+  a defect</strong>, and no code changed. Recorded because it looks exactly like a wiring error.<blockquote>
+<p><strong>⚠️ The collision got a second instance, 2026-09-11.</strong> <code>/explore/mvs</code>'s own primary section —<br>
+<code>TRENDING_MVS</code>, the one this bullet is about — is now ALSO titled "Trending Music Videos" on<br>
+desktop/tablet (was "Top Picks Music Videos"; §3.2 has the full history). So the product now<br>
+has <strong>two different sections named "Trending Music Videos"</strong>, on two different routes, fed by<br>
+two different arrays: Home's (<code>NEW_MVS</code>) and <code>/explore/mvs</code>'s (<code>TRENDING_MVS</code>). Same product<br>
+owner call as the first instance — not a defect, not a request to rename either — but worth<br>
+naming explicitly so QA doesn't file this pairing as a duplicate-content bug either.</p>
+</blockquote>
+</li>
 <li>🆕 <strong>Empty rails now have a UI</strong> <em>(2026-09-01)</em> — see <code>AC-EXP-13</code> and §3.7.</li>
 <li>📄 <strong>Publish→feed locale contract (backend; spec-only).</strong> When a creation is published (area 02/05) it carries a <strong>language/locale code</strong>. The backend returns each feed <strong>already ranked locale-primary</strong> (viewer's locale first, then engagement signals per the Curation PRD). The <strong>frontend just requests and displays</strong> the server-sorted data — no client-side ranking; "we only ask, the backend sorts." The <strong>code format (2-char ISO <code>en</code> vs 3-char product <code>enu</code>, etc.) is RD-TBD</strong> → <code>TBD-EXP-10</code> (relates to i18n <code>TBD-GL-06</code>). No prototype change now (mock feed stays seed).</li>
 </ul>
@@ -3302,15 +3761,28 @@ is DP's own arrangement:</p>
 and <code>NEWLY_RELEASED = NEW_MVS</code> straight through with no <code>.slice()</code>/cap anywhere in the render<br>
 path — confirmed in code. Today the mock seed holds 3 and 11 items (14 total); that split is a<br>
 property of the fixture data, not a designed limit — a bigger or smaller backend feed renders in<br>
-full. What a <strong>phone</strong> actually sees fewer of is a separate, CSS-only fact: <code>MVDetailPage.css</code>'s<br>
+full.<br>
+<strong>⚠️ Superseded 2026-09-11 (product owner, Figma node 3940:150442) — the phone treatment below<br>
+is REVERSED from what this paragraph used to say.</strong> It used to read: <code>MVDetailPage.css</code>'s<br>
 <code>@media (max-width:767px)</code> rule hides every <code>.mv-detail__grid-section</code> and re-shows only<br>
-<code>--primary</code> (Top Picks) — so a phone on <code>/explore/mvs</code> reaches 3 of the 14 mock items regardless<br>
-of the true catalog size, and <code>/watch</code>'s mobile treatment (<code>.mv-detail--selected</code>) hides both<br>
-sections outright. This closes the question <code>DESIGNER-TODO</code> <strong>A19</strong> raised about the 3-of-14<br>
-ratio: it was never a spec'd number, only (mock length) × (this hiding rule).<br>
-<strong>Top Picks row Next/Previous step, settled 2026-09-11 (<code>YMW260909P0008</code>).</strong> The desktop-only<br>
-<code>MvTopPicksRow</code> (≥1024px) originally stepped by exactly one card + gap per click; QA/an<br>
-automated agent test flagged the live build advancing further than that per click as a<br>
+<code>--primary</code> (Top Picks), so a phone reached only the primary catalog and <code>DESIGNER-TODO</code> <strong>A19</strong>'s<br>
+"3 of 14" question was closed on that basis. That hiding rule is now overridden<br>
+(<code>designer-overrides.css</code>): <strong>both sections render on phone.</strong> The primary section (mobile title<br>
+"Trending MV", was "Top Picks") is now a horizontal-scroll row at every width including phone —<br>
+previously desktop-only (<code>asRow</code>, <code>MvGridSections.tsx</code>) — with a both-edges peek bleed; "Newly<br>
+Released MV" (was "New MVs") keeps the same two-column masonry it always used, just no longer<br>
+hidden below 768px. <code>.mv-detail</code>'s own mobile padding/gaps were re-tuned alongside this (16px<br>
+horizontal inset matching Home, 16px between sections, 10px header-to-content, plus a 16px<br>
+<code>margin-bottom</code> on the primary section — 32px total above "Newly Released MV"). <code>DESIGNER-TODO</code><br>
+<strong>A20</strong>'s "手機只看得到 Trending" half of its "兩件事疊起來" concern is resolved by this; its<br>
+other half (Home still has no Trending rail of its own) is unchanged, see A20.<br>
+<code>e2e/behaviour-regressions.spec.ts</code>'s "drop 2: /explore/mvs still has a grid on a phone" now<br>
+asserts the reversed behavior (both sections visible, titled, painted) instead of the old hidden<br>
+state. <code>/watch</code>'s mobile treatment (<code>.mv-detail--selected</code>) still hides both sections outright —<br>
+that half is unchanged.<br>
+<strong>Top Picks row Next/Previous step, also settled 2026-09-11 (<code>YMW260909P0008</code>).</strong> The<br>
+desktop-only <code>MvTopPicksRow</code> (≥1024px) originally stepped by exactly one card + gap per click;<br>
+QA/an automated agent test flagged the live build advancing further than that per click as a<br>
 divergence. Product owner confirmed the single-card step reads as too slow and the faster,<br>
 further-per-click pace is the one to keep: <code>scrollByCard</code> now steps by the row's full visible<br>
 width (<code>row.clientWidth</code>) — a "page" per click — not one item.<br>
@@ -3320,7 +3792,17 @@ one of them</strong> — caught by the PM testing production after the first pus
 <code>NewMVsSection.tsx</code> ("Trending Music Videos" on Home), <code>TopPicksSection.tsx</code> ("Top Picks Songs"<br>
 on Home), and <code>SongDetailView.tsx</code>'s own <code>scrollTopPicksByCard</code> ("Top Picks Songs" on<br>
 <code>/explore/songs</code>). There is still no shared hook for this pattern — a fifth copy is exactly as<br>
-likely to reintroduce the one-card step as these four were.</p>
+likely to reintroduce the one-card step as these four were.<br>
+<strong>Two more same-day follow-ups, both product owner, 2026-09-11.</strong> (1) "We forgot the tablet<br>
+version" — the row treatment above landed phone + desktop only; <code>MvGrid</code>'s tablet branch<br>
+(<code>!isDesktop</code>, 768–1023px) still fell through to the plain wrapping grid regardless of <code>asRow</code>.<br>
+Fixed the same way: tablet now renders the row too, at its own height<br>
+(<code>TABLET_ROW_HEIGHT</code> = 200, <code>MvGridSections.tsx</code> — no Figma frame for this width, picked as a<br>
+middle value between phone's 142 and desktop's 280). "Newly Released MV" is unaffected — it<br>
+keeps the wrapping grid at every non-desktop width, tablet included, exactly as before. (2) The<br>
+desktop/tablet title (<code>.section-header__title--desktop</code>, shown ≥768px) changed from "Top Picks<br>
+Music Videos" to <strong>"Trending Music Videos"</strong> — see §3.1's note on the resulting second instance<br>
+of that exact title existing on a different route/array pairing.</p>
 </blockquote>
 </li>
 <li><strong><code>/explore/songs</code></strong> (<code>song/SongDetailView</code> — <strong>the same component as <code>/song/play</code></strong>, merged in Slice 3b): tabbed list (All + ~~one tab per catalog <code>genre</code>, derived at runtime~~ <strong>the nine creation <code>GENRES</code>, hardcoded</strong> — reversed 2026-09-01, see §4 EXP-P3) beside a Now Playing column, 1:1 at ≥1024px; row → selects in Now Playing at ≥768px, opens the full-screen player at <code>/song/play?id</code> below that; creator → <code>/creator</code>; <strong>Create</strong> → <code>requireLogin</code> → <code>patchSongCompose</code> + <code>/song/create</code> (gated at the click, consistent with Home — GL-02/EXP-02); Back → <code>DetailNavbar</code>'s <code>router.back()</code> with a fallback to <code>/explore/songs</code>.<blockquote>
@@ -3552,7 +4034,7 @@ mutation-tested both ways. Captured at S8 <code>P7</code>.</p>
 <ul>
 <li><strong>EXP-P1-S1</strong> Open <code>/</code> (public). <strong>System:</strong> hero CTAs + three seed rails render.</li>
 <li><strong>EXP-P1-S2</strong> Hero <strong>Create MV / Create Song</strong> → <code>requireLogin</code> → <code>/mv/room</code> / <code>/song/create</code> (area 09/02/03).</li>
-<li><strong>EXP-P1-S3</strong> Tap a Trending/New MV card → <code>/watch?id</code>; a Top Picks/New Song → <code>/song/play?id</code>; a New-Songs <strong>Create</strong> → <code>requireLogin</code> → <code>/song/create</code> (song pre-filled); Like/Share act locally.</li>
+<li><strong>EXP-P1-S3</strong> Tap a Trending/New MV card → <code>/watch?id</code>; a Top Picks/New Song's title/cover → <code>/song/result?id&amp;from=home</code> at ≥768px, <code>/song/play?id</code> below it (<code>YMW260914P0002</code>); a New-Songs <strong>Create</strong> → <code>requireLogin</code> → <code>/song/create</code> (blank, not pre-filled — <code>YMW260916P0021</code>); Like/Share act locally.</li>
 <li><strong>EXP-P1-S4</strong> "See all" → <code>/explore/mvs</code> or <code>/explore/songs</code>.</li>
 </ul>
 <h3 id="exp-p2-explore-mvs">EXP-P2 — Explore MVs</h3>
@@ -3562,7 +4044,7 @@ mutation-tested both ways. Captured at S8 <code>P7</code>.</p>
 </ul>
 <h3 id="exp-p3-explore-songs">EXP-P3 — Explore Songs</h3>
 <ul>
-<li><strong>EXP-P3-S1</strong> <code>/explore/songs</code>: one tabbed list — <strong>All</strong> plus ~~one tab per <code>genre</code> present in the catalog (Acoustic / Electronic / Funk / Indie / Jazz / Lo-fi / Pop / R&amp;B), derived at runtime from <code>CommunitySong.genre</code> rather than hardcoded~~ <strong>the nine creation <code>GENRES</code>, hardcoded — reversed 2026-09-01</strong> (ten tabs total, in this order: <code>All · Pop · Hip-Hop · R&amp;B · Rock · Jazz · Electronic · Rap · Classical · Country</code>) <em>(changed 2026-08-14; reversed 2026-09-01; spec corrected 2026-08-19 — it previously said "Top Picks / New Releases")</em> — occupying the full width, two columns at ≥1024px (the same screen as <code>/song/play</code>; see §3.2). Row title → <code>/song/result?id&amp;from=song-detail</code> at ≥768px, or the full-screen player at <code>/song/play?id</code> below 768px; row album art → a preview in the bottom <code>SongPlayBar</code> at ≥768px, the full-screen player below it; creator → <code>/creator</code>; <strong>Create</strong> → <code>/song/create</code> (pre-filled). Switching a tab changes the list only and must NOT change what is playing.<blockquote>
+<li><strong>EXP-P3-S1</strong> <code>/explore/songs</code>: one tabbed list — <strong>All</strong> plus ~~one tab per <code>genre</code> present in the catalog (Acoustic / Electronic / Funk / Indie / Jazz / Lo-fi / Pop / R&amp;B), derived at runtime from <code>CommunitySong.genre</code> rather than hardcoded~~ <strong>the nine creation <code>GENRES</code>, hardcoded — reversed 2026-09-01</strong> (ten tabs total, in this order: <code>All · Pop · Hip-Hop · R&amp;B · Rock · Jazz · Electronic · Rap · Classical · Country</code>) <em>(changed 2026-08-14; reversed 2026-09-01; spec corrected 2026-08-19 — it previously said "Top Picks / New Releases")</em> — occupying the full width, two columns at ≥1024px (the same screen as <code>/song/play</code>; see §3.2). Row title → <code>/song/result?id&amp;from=song-detail</code> at ≥768px, or the full-screen player at <code>/song/play?id</code> below 768px; row album art → a preview in the bottom <code>SongPlayBar</code> at ≥768px, the full-screen player below it; creator → <code>/creator</code>; <strong>Create</strong> → <code>/song/create</code> (blank, not pre-filled — <code>YMW260916P0021</code>). Switching a tab changes the list only and must NOT change what is playing.<blockquote>
 <p><strong>Reversed 2026-09-01 (product owner: "tag please match creation").</strong> The 2026-08-14 derivation<br>
 (<code>Array.from(new Set(ALL_COMMUNITY_SONGS.map(s =&gt; s.genre))).sort()</code>) is superseded: <code>TABS</code> in<br>
 <code>SongDetailView.tsx</code> is now hardcoded to <code>[{id:"All"}, ...GENRES]</code>, importing the same nine<br>
@@ -3598,7 +4080,7 @@ on future fixture edits, and on RD's real catalog.</p>
 <h3 id="exp-p5-song-play-community">EXP-P5 — Song play (community)</h3>
 <ul>
 <li><strong>EXP-P5-S1</strong> <code>/song/play?id</code>: disc + <strong>real <code>&lt;audio&gt;</code> progress</strong>; Prev/Next cycle the playlist; seek; Like/Share; Lyrics sheet, <strong>each line of which seeks to its own timestamp</strong> (2026-09-09, <code>YMW260903P0005</code>). <em>("simulated progress" corrected 2026-08-19 — real audio landed 2026-08-05, see AC-EXP-05.)</em></li>
-<li><strong>EXP-P5-S2</strong> <strong>Create AI Song</strong> → <code>/song/create</code> pre-filled (genre/mood/title/lyrics).</li>
+<li><strong>EXP-P5-S2</strong> <strong>Create AI Song</strong> → <code>/song/create</code>, blank — no longer pre-fills genre/mood/title/lyrics (removed 2026-09-17, <code>YMW260916P0021</code>).</li>
 </ul>
 <h3 id="exp-p6-creator-profile">EXP-P6 — Creator profile</h3>
 <ul>
@@ -3684,8 +4166,8 @@ screenshot taken at one width, so it is stated here rather than left as an imple
 detail.</p>
 </blockquote>
 </li>
-<li><strong>AC-EXP-02</strong> — WHEN a hero CTA, a tool-selector card, or a New-Songs <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>requireLogin</code> and, on success, navigate to the create flow (pre-filling the song for Create-from-song).</li>
-<li><strong>AC-EXP-03</strong> — WHEN an MV card is tapped <strong>anywhere</strong> (Home rails or <code>/explore/mvs</code>), THE SYSTEM SHALL navigate to <code>/watch?id</code>. WHEN a song card is tapped <strong>from Home</strong>, THE SYSTEM SHALL navigate to <code>/song/play?id</code>. WHEN a song row is tapped <strong>on <code>/explore/songs</code></strong>, THE SYSTEM SHALL, below 768px, open the full-screen player at <code>/song/play?id</code>; and at 768px and above, navigate to <code>/song/result?id&amp;from=song-detail</code>. WHEN a row's <strong>album art</strong> is tapped at 768px and above, THE SYSTEM SHALL start a preview in the persistent bottom bar <strong>without navigating</strong>.<blockquote>
+<li><strong>AC-EXP-02</strong> — WHEN a hero CTA, a tool-selector card, or a New-Songs <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>requireLogin</code> and, on success, navigate to the create flow. The create flow opens blank; it does NOT pre-fill the tapped song's details (reversed 2026-09-17, <code>YMW260916P0021</code> — an earlier version of this line required pre-filling genre/mood/title/lyrics, which the product owner decided was more than V1 wants).</li>
+<li><strong>AC-EXP-03</strong> — WHEN an MV card is tapped <strong>anywhere</strong> (Home rails or <code>/explore/mvs</code>), THE SYSTEM SHALL navigate to <code>/watch?id</code>. WHEN a song card's <strong>title/cover</strong> is tapped, on <strong>either Home rail</strong> (Top Picks Songs or Newly Released Songs) or <strong>on <code>/explore/songs</code></strong>, THE SYSTEM SHALL, below 768px, open the full-screen player at <code>/song/play?id</code>; and at 768px and above, seed <code>SongFlow</code> and navigate to <code>/song/result?id&amp;from=…</code> (<code>from=home</code> from a Home rail, <code>from=song-detail</code> from <code>/explore/songs</code>). WHEN a row's <strong>album art/Play control</strong> is tapped at 768px and above, THE SYSTEM SHALL start a preview in the persistent bottom bar <strong>without navigating</strong>. <em>(Corrected 2026-09-17, <code>YMW260914P0002</code>: this line previously said Home always goes straight to <code>/song/play?id</code> — that was already stale for <code>NewSongsSection</code> (fixed 2026-08-13) and was live-tested wrong for <code>TopPicksSection</code>, which had never received that fix; both Home rails now match <code>/explore/songs</code>.)</em><blockquote>
 <p><strong>Rewritten 2026-08-07 (DP drop <code>2670ed2</code>), and this REVERSES the 2026-08-05 wording below.</strong> Drop 2 deleted DP's desktop Now Playing column — all 54 <code>.now-playing__*</code> rules — and made the list a full-width two-column grid. There is no right-hand column left to swap, so the previous criterion described markup that no stylesheet dresses. The product owner chose to adopt DP (2026-08-07): a desktop row click now navigates to the result-stage player, seeding SongFlow first the way <code>/history</code> rows already do.</p>
 <p><strong>The two affordances split, and that is the part worth reading.</strong> DP did not simply replace "swap" with "navigate": the row's TITLE navigates, while the row's ALBUM ART starts <code>SongPlayBar</code>, a desktop-only preview bar, so browsing continues while a preview plays. An earlier reading of this drop concluded the bar had REPLACED the player and that adopting it would delete four of <code>AC-EXP-05</code>'s five requirements. That was wrong — inferred from a CSS diff instead of read from the markup — and nothing is lost: the disc player, Like, Lyrics and the Create CTA all still exist, on <code>/song/result</code> for desktop and in <code>MobileNowPlaying</code> on phones.</p>
 <p>Asserted by <code>e2e/behaviour-regressions.spec.ts</code>, "drop 2 desktop: clicking a song navigates to its result screen" and "drop 2 desktop: the album art previews in place without navigating". Home is NOT migrated and still navigates, which is why the criterion stays split by entry point.</p>
@@ -3700,7 +4182,7 @@ detail.</p>
 <p><em>Corrected 2026-08-19: this said "in 3:4" flatly. The stage has always sized itself to the item, and the fixtures alternate 3:4 / 4:3 on purpose, because real community MVs are not all portrait. Confirmed by the product owner as intended, not a defect.</em></p>
 </blockquote>
 </li>
-<li><strong>AC-EXP-05</strong> — WHEN <code>/song/play</code> loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community) and present the disc player with <strong>real <code>&lt;audio&gt;</code> progress</strong>, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist (<strong>each line seeks to its own timestamp</strong> since 2026-09-09 - <code>YMW260903P0005</code>, specified in area 03 <code>AC-SONG-18</code>), and <strong>Create AI Song</strong> → <code>/song/create</code> pre-filled — below 768px in the full-screen <code>MobileNowPlaying</code>, and at 768px and above on <code>/song/result</code>, which the row click navigates to. Playback SHALL NOT be capped for free accounts.<blockquote>
+<li><strong>AC-EXP-05</strong> — WHEN <code>/song/play</code> loads, THE SYSTEM SHALL resolve the id to the correct playlist (creator vs community) and present the disc player with <strong>real <code>&lt;audio&gt;</code> progress</strong>, Prev/Next, Like/Share, a Lyrics sheet when lyrics exist (<strong>each line seeks to its own timestamp</strong> since 2026-09-09 - <code>YMW260903P0005</code>, specified in area 03 <code>AC-SONG-18</code>), and <strong>Create AI Song</strong> → <code>/song/create</code>, blank (no longer pre-filled, <code>YMW260916P0021</code>) — below 768px in the full-screen <code>MobileNowPlaying</code>, and at 768px and above on <code>/song/result</code>, which the row click navigates to. Playback SHALL NOT be capped for free accounts.<blockquote>
 <p><strong>Amended 2026-08-07 (DP drop <code>2670ed2</code>) — the requirements are unchanged, only WHERE desktop satisfies them.</strong> Drop 2 deleted the desktop Now Playing column, so this screen no longer carries the disc player at ≥768px; <code>/song/result</code> does, and <code>AC-EXP-03</code>'s row click is what reaches it. Every one of the five requirements above still holds at every width. This was very nearly recorded as "adopting drop 2 deletes four of AC-EXP-05's five requirements" — a conclusion reached by reading a CSS diff rather than DP's markup, and caught by the product owner running the prototype.<br>
 <strong>Rewritten 2026-08-05 by the designer-UI migration (Slice 3b). Three changes, all deliberate:</strong></p>
 <ol>
@@ -3755,9 +4237,9 @@ playback IS asserted, by <code>AC-EXP-05</code> above — corrected 2026-09-01, 
 <ul>
 <li>[ ] <strong>EXP-P1</strong>: rails render in seed order; hero + New-Songs Create gate via sign-in; cards route correctly (AC-01/02/03).</li>
 <li>[ ] <strong>EXP-P2</strong>: grid → <code>/watch?id</code> → Create MV → /mv/room (AC-03/04).</li>
-<li>[ ] <strong>EXP-P3</strong>: song lists → player; Create → /song/create pre-filled (AC-03); tab bar reads All · Pop · Hip-Hop · R&amp;B · Rock · Jazz · Electronic · Rap · Classical · Country, every tab non-empty.</li>
+<li>[ ] <strong>EXP-P3</strong>: song lists → player; Create → /song/create, blank, not pre-filled (AC-03); tab bar reads All · Pop · Hip-Hop · R&amp;B · Rock · Jazz · Electronic · Rap · Classical · Country, every tab non-empty.</li>
 <li>[ ] <strong>EXP-P4</strong>: /watch autoplay 3:4 with SOUND ON (muted only as the blocked-autoplay fallback, <code>YMW260902P0002</code>); play/mute/like/share; Create MV pre-fills (AC-04); bad id → NEW_MVS[0] (AC-07, E1); a <code>HERO_MVS</code> id shows the YCM watermark, a <code>NEW_MVS</code>/<code>TRENDING_MVS</code>/<code>CREATOR_MVS</code> id does not (AC-10); ❓ vertical drag on the stage swipes to next/prev MV (AC-11, contested — see §3.3 before treating this as a requirement).</li>
-<li>[ ] <strong>EXP-P5</strong>: real <code>&lt;audio&gt;</code> progress; Prev/Next cycle; Lyrics; Create AI Song pre-fills (AC-05).</li>
+<li>[ ] <strong>EXP-P5</strong>: real <code>&lt;audio&gt;</code> progress; Prev/Next cycle; Lyrics; Create AI Song opens blank, not pre-filled (AC-05).</li>
 <li>[ ] <strong>EXP-P6</strong>: creator tabs + rows open players; self=1 shows MOCK_USER (AC-06); <code>?demo=1</code> + <code>profileEmpty</code> shows the empty block, with the subtitle/CTA only in self mode (AC-12).</li>
 <li>[ ] <strong>AC-13</strong>: <code>?demo=1</code> + <code>feedEmpty</code> → all three home rails, both explore catalogs and the song<br>
       list show the shared block, with every heading / tab / "See all" still present; flag off, all<br>
@@ -3826,7 +4308,7 @@ playback IS asserted, by <code>AC-EXP-05</code> above — corrected 2026-09-01, 
   Play --&gt;|creator| Creator
   Watch --&gt;|Create MV| Room[&quot;/mv/room (area 02, prefilled)&quot;]
   Watch2 --&gt;|Create MV| Room
-  Play --&gt;|Create AI Song| Song[&quot;/song/create (area 03, prefilled)&quot;]
+  Play --&gt;|Create AI Song| Song[&quot;/song/create (area 03, blank)&quot;]
   Creator --&gt;|row| Watch
   Creator --&gt;|row| Play
 </code></pre>
@@ -4625,7 +5107,7 @@ dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠�
 <li><strong>AC-PROF-03</strong> — WHEN Edit-Profile is saved, THE SYSTEM SHALL commit name/avatar via <code>updateProfile</code> and reflect them in the shell (in-memory).</li>
 <li><strong>AC-PROF-04</strong> — WHEN the Muse Pro row is tapped, THE SYSTEM SHALL open the Subscribe modal (not subscribed) or the Credits detail (subscribed).</li>
 <li><strong>AC-PROF-05</strong> — WHEN Language is changed, THE SYSTEM SHALL switch locale via <code>setLocale</code> and reflect it in localized surfaces.</li>
-<li><strong>AC-PROF-06</strong> — WHEN Sign Out is invoked (from Settings — PROF-03 — or the account menu), THE SYSTEM SHALL clear auth and redirect Home. It SHALL NOT appear on <code>/profile</code>.</li>
+<li><strong>AC-PROF-06</strong> — WHEN Sign Out is invoked (from Settings — PROF-03 — or the account menu), THE SYSTEM SHALL clear auth and redirect Home. It SHALL NOT appear on <code>/profile</code>. Landing on Home after Sign Out SHALL NOT open the sign-in dialog automatically. <em>(<code>YMW260916P0020</code>, 2026-09-17: reported as a defect ("no sign-in dialog after sign out"), but the product owner agreed with RD's own comment on the ticket that an automatic popup right after leaving your account is not wanted — this line is the explicit record so it does not get re-reported.)</em></li>
 <li><strong>AC-PROF-17</strong> — <code>/settings</code> SHALL be auth-gated (<code>AuthGuard</code>); WHEN logged out, it opens the sign-in modal (PROF-03). <em>(was a second <code>AC-PROF-08</code>; renumbered 2026-08-17 — the visual criterion below keeps <code>08</code>, which is what §7's "AC-08" and areas 01/04 mean by it.)</em></li>
 <li><strong>AC-PROF-09</strong> — WHEN Terms of Use / Privacy Policy is tapped (Settings or the sign-in modal), THE SYSTEM SHALL open the shared real legal URL in a new tab (PROF-06 / AUTH-03).</li>
 <li><strong>AC-PROF-07</strong> — WHEN Unsubscribe or Delete Account is confirmed in <code>/settings</code>, THE SYSTEM SHALL show a demo toast (and Delete redirects Home) <strong>without</strong> actually cancelling or deleting anything. <em>(as-built placeholder — pending <code>TBD-PROF-04</code>.)</em> ⚠️ <em>(Extended 2026-08-31, D11 — this describes the DEFAULT branch only. WHEN the <code>?demo=1</code> panel's <code>subOnApp</code> flag is on, tapping Unsubscribe SHALL instead open a "manage it on your phone" explainer with a single "Got It" control — no confirm, no toast, nothing else to show, because a store-bought subscription cannot be cancelled from the web. See §3's own ⚠️ note.)</em></li>
