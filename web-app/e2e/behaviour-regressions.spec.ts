@@ -1905,9 +1905,22 @@ test("3e: all six options-menu actions exist and none of them is dead", async ({
   await expect(menu.getByRole("menuitem", { name: "Download" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Delete" })).toBeVisible();
 
-  // Publish: a Song publishes immediately (no confirm step — that's MV-only,
-  // per the MV-vs-Song split; we're on the Songs tab here).
+  // Publish: confirms first, MV or Song alike. This asserted the opposite —
+  // "a Song publishes immediately (no confirm step — that's MV-only, per the
+  // MV-vs-Song split)" — which was true until `ca5c671` (product owner,
+  // 2026-09-16) made Song reuse the same `PublishConfirmDialog`. That commit
+  // changed `CreatorProfile.doPublish` without touching this spec, so the test
+  // sat waiting 30s for a toast that now only fires after Confirm. Same failure
+  // mode as MV-13 below: a passing test holding a decision that was reversed.
+  //
+  // What stays Song-specific is the other half: confirming publishes it
+  // straight away, with none of the MV review delay (`confirmPublish` returns
+  // early for `kind === "song"`), so the toast is "Published success" and not
+  // "Submitted for review". That distinction is the thing worth guarding here.
   await menu.getByRole("switch").click();
+  const pubConfirm = page.getByRole("dialog", { name: "Ready to Go Public?" });
+  await expect(pubConfirm).toBeVisible();
+  await pubConfirm.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByText("Published success")).toBeVisible();
 
   // Delete: confirms, then the row actually leaves the list.
@@ -2293,7 +2306,9 @@ test("drop 2: /explore/mvs still has a grid on a phone", async ({ page }) => {
     // the primary section used to be the only one to render, now visible and
     // painted with real height, not merely present in the DOM at `display:
     // none` (the drop-2 failure this test was written for, one section over).
-    const secondary = page.locator(".mv-detail__grid-section:not(.mv-detail__grid-section--primary)");
+    const secondary = page.locator(
+      ".mv-detail__grid-section:not(.mv-detail__grid-section--primary)",
+    );
     const secondaryHeader = secondary.locator(".section-header__title--mobile");
     await expect(secondaryHeader, `secondary section title at ${width}px`).toHaveText(
       "Newly Released MV",
@@ -2644,7 +2659,11 @@ test("3g-2: the face picker wears DP's block and still crops the real upload", a
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/mv/room");
 
-  await page.locator('input[type="file"][accept="image/*"]').setInputFiles({
+  // Prefix selector, for the reason the picker spy above carries: `5b26403`
+  // narrowed this input to `accept="image/jpeg,image/png"`, and an equality
+  // match on `image/*` silently stopped resolving — which surfaces as
+  // `setInputFiles` timing out and reads exactly like a broken face picker.
+  await page.locator('input[type="file"][accept^="image/"]').setInputFiles({
     name: "face.png",
     mimeType: "image/png",
     // 1x1 PNG — enough for the canvas crop to succeed.
@@ -2820,8 +2839,10 @@ test("3h / GL-01: the storyboard CTA still states its cost and still gates on it
   // this keeps holding when the per-second rate or the fixture length changes.
   const shown = ((await cta.innerText()).match(/\d+/) ?? [])[0];
   expect(shown, "the CTA must state its credit cost").toBeTruthy();
-  expect(Number(shown), "and it must include the per-second component, not just the 35 base").
-    toBeGreaterThan(COST_FROM_SCRIPT);
+  expect(
+    Number(shown),
+    "and it must include the per-second component, not just the 35 base",
+  ).toBeGreaterThan(COST_FROM_SCRIPT);
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2846,6 +2867,28 @@ async function renderToResult(page: Page) {
   await page.getByText("Create MV Directly").click();
   await page.waitForURL("**/mv/result", { timeout: 60_000 });
   await expect(page.locator(".mv-result__player")).toBeVisible();
+}
+
+/**
+ * Take an already-open `/mv/result` from unpublished to live.
+ *
+ * Needed by two tests since `5b26403` (YMW260916P0013) gated the Share quick
+ * action behind `published` — before that Share was unconditional and both
+ * tests found it on arrival. `MvResult`'s `published` is component state that
+ * always starts `false` (it does NOT read the History row's flag), so
+ * publishing is the only way to reach that control, and it has to go through
+ * the confirm dialog and then the `PUBLISH_REVIEW_DELAY_MS` (2500ms) review
+ * phase. The `aria-checked` wait is what spans that delay — `toHaveAttribute`
+ * retries for the 20s expect timeout, so it does not need a sleep.
+ */
+async function publishFromMvResult(page: Page) {
+  const toggle = page.getByRole("switch", { name: "Publish to community" });
+  await toggle.click();
+  await page
+    .getByRole("dialog", { name: "Ready to Go Public?" })
+    .getByRole("button", { name: "Confirm" })
+    .click();
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
 }
 
 test("3i: the result page renders DP's blocks and picks a layout from the aspect", async ({
@@ -2875,14 +2918,36 @@ test("3i: every mask icon on the result page has something to clip", async ({ pa
 
   expect(await invisibleMaskIcons(page), "invisible mask icons on /mv/result").toEqual([]);
 
-  // And the other half of the trap: the four quick-action icons must have a size.
-  for (const label of ["Download", "Share", "Edit MV", "Recreate"]) {
+  // And the other half of the trap: the quick-action icons must have a size.
+  // The four are NOT all on screen at once any more, so this loop over a fixed
+  // four-label list hung for the full timeout waiting on a Share that was never
+  // going to render: `5b26403` (YMW260916P0013) hides Share until published,
+  // and 2026-08-28 hides Edit MV once published or in review. They are mutually
+  // exclusive by design. Sweep BOTH states instead of dropping a label — that
+  // keeps all four covered and additionally pins the gating rule itself.
+  const iconWidth = async (label: string) => {
     const box = await page
       .getByRole("button", { name: label, exact: true })
       .locator("img")
       .boundingBox();
-    expect(box?.width ?? 0, `${label} icon must have a size`).toBeGreaterThan(0);
+    return box?.width ?? 0;
+  };
+
+  await expect(page.getByRole("button", { name: "Share", exact: true })).toHaveCount(0);
+  for (const label of ["Download", "Edit MV", "Recreate"]) {
+    expect(await iconWidth(label), `${label} icon must have a size`).toBeGreaterThan(0);
   }
+
+  await publishFromMvResult(page);
+
+  await expect(page.getByRole("button", { name: "Edit MV", exact: true })).toHaveCount(0);
+  for (const label of ["Download", "Share", "Recreate"]) {
+    expect(await iconWidth(label), `${label} icon must have a size once live`).toBeGreaterThan(0);
+  }
+
+  // Sweep the masks again: publishing swaps the action row and rewrites the
+  // publish-status line, so the first sweep above never saw this state.
+  expect(await invisibleMaskIcons(page), "invisible mask icons on a live /mv/result").toEqual([]);
 });
 
 test("3i / MV-12 + MV-13: publish confirms first, and blocks Edit until unpublished", async ({
@@ -3670,6 +3735,13 @@ test("item 3: Share from an opened history row carries that row's id", async ({ 
   // A seed row is a fixture, not a job, so opening one and hitting Share built
   // `/share?id=` — a link that resolves to the expired state. The id in the URL
   // is what fixes it, which is also why these pages now read `?id=`.
+  //
+  // Share has to be EARNED since `5b26403` (YMW260916P0013) — the action is
+  // hidden while the MV is unpublished, so this test used to find it on arrival
+  // and now publishes first. What it guards is unchanged: `shareId` is
+  // `idParam ?? entry?.id`, so the assertion still says "the id in the URL is
+  // the id in the link", which is the regression that mattered.
+  test.slow(); // + the 2500ms publish-review phase
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/history");
@@ -3677,8 +3749,15 @@ test("item 3: Share from an opened history row carries that row's id", async ({ 
   await page.waitForURL(/\/mv\/result\?id=/);
   const id = new URL(page.url()).searchParams.get("id");
 
+  await publishFromMvResult(page);
+
   await page.locator(".mv-result__action").filter({ hasText: "Share" }).click();
-  const field = page.getByRole("dialog").locator("input");
+  // Scoped by name: the publish confirm is also a `role=dialog`, and it only
+  // unmounts after its fade-out, so a bare `getByRole("dialog")` can briefly
+  // resolve to two elements here.
+  const field = page
+    .getByRole("dialog", { name: "Share" })
+    .getByRole("textbox", { name: "Share link" });
   await expect(field).toHaveValue(new RegExp(`/share\\?id=${id}$`));
 });
 
@@ -3999,7 +4078,16 @@ async function mvRoomWithPickerSpy(page: Page) {
       "click",
       (e) => {
         const t = e.target;
-        if (t instanceof HTMLInputElement && t.type === "file" && t.accept === "image/*") {
+        // Prefix-match, not equality. This read `t.accept === "image/*"` until
+        // 2026-09-21; `5b26403` narrowed the character-photo input to
+        // `image/jpeg,image/png` (upload validation) and the spy stopped
+        // matching it. That broke "accepting opens the picker" outright, and it
+        // quietly HOLLOWED OUT its sibling above, whose whole assertion is
+        // `picks() === 0` — a counter that can never increment satisfies that
+        // forever. A test that cannot fail is worse than no test (AGENTS.md),
+        // so match the input by what it IS rather than by one exact value the
+        // product is free to narrow again.
+        if (t instanceof HTMLInputElement && t.type === "file" && t.accept.startsWith("image/")) {
           (window as unknown as { __picks: number }).__picks++;
           e.preventDefault();
         }
