@@ -1665,6 +1665,27 @@
   background: var(--gradient-mv);
 }
 
+/* Product owner, 2026-09-22 — "Create MV Directly" (not "Create Storyboard
+   First") gets a 3s preparing transition before `/mv/creating`: the same
+   blurred-glass full-screen shell every dialog/sheet overlay in this app
+   already uses (`.mv-sheet-backdrop`/`.login-modal-backdrop`, both
+   `rgba(0,0,0,0.6)` + `blur(2px)`, `z-index: 200`) around the app's one
+   3-dot loading animation (`.history-page__loading-dots`, reused directly —
+   product owner, 2026-09-14: one loading UI, not a new one per screen). No
+   dialog card, so no `useDialogTransition` fade — it never closes on its
+   own terms, `MvRoom.tsx`'s own timeout just navigates away after 3s. */
+.mv-create__preparing-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
 /* Product owner request, 2026-08-14 — Figma's "Upload Character Photo" circle
    buttons (node 1344:25769, the Delete-photo / Edit-name pills on a filled
    slot) are a LIGHT glass pill — `background: var(--white-15)` plus a
