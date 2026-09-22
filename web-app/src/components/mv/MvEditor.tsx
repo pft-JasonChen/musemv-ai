@@ -21,6 +21,7 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import { downloadFile } from "@/lib/download";
+import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 import {
   COST_COVER,
   COST_MERGE,
@@ -168,6 +169,9 @@ export function MvEditor() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  // Same fix as `MvResult.tsx` — see its comment and `useIsFullscreen`'s own
+  // header comment in `src/lib/fullscreen.ts`.
+  const isFullscreen = useIsFullscreen();
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   // Product owner, 2026-09-16: hover-revealed volume-slider popup on the mute
@@ -443,32 +447,38 @@ export function MvEditor() {
             </div>
 
             <div ref={previewRef} className="mv-edit__preview">
-              <video
-                ref={videoRef}
-                className="mv-edit__preview-video mv-edit__preview-video--portrait"
-                src={activeVideo}
-                poster={clipCover(selectedClip)}
-                autoPlay
-                loop
-                muted={muted}
-                playsInline
-                onPlay={() => setPlaying(true)}
-                onPause={() => setPlaying(false)}
-                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-                onClick={togglePlay}
-              />
-              {/* A <button>, not DP's download anchor: `guard-greps.sh` bans a
-                  literal internal href, and this is a real action anyway. */}
-              <button
-                type="button"
-                className="mv-edit__media-action mv-edit__media-action--download"
-                onClick={() => downloadFile(activeVideo, `scene-${scene.index}.mp4`)}
-                aria-label="Download video"
-              >
-                <DpIcon name="ic_download" className="mv-edit__media-action-icon" />
-              </button>
-              <div className="mv-edit__preview-controls">
+              {/* `.mv-edit__preview-frame` (designer-overrides.css) reproduces
+                  the portrait video's own sizing formula one level up — see
+                  its header comment for why the button/controls below need
+                  this instead of measuring against `.mv-edit__preview`
+                  itself, which is much wider than the letterboxed video. */}
+              <div className="mv-edit__preview-frame">
+                <video
+                  ref={videoRef}
+                  className="mv-edit__preview-video mv-edit__preview-video--fill"
+                  src={activeVideo}
+                  poster={clipCover(selectedClip)}
+                  autoPlay
+                  loop
+                  muted={muted}
+                  playsInline
+                  onPlay={() => setPlaying(true)}
+                  onPause={() => setPlaying(false)}
+                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                  onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                  onClick={togglePlay}
+                />
+                {/* A <button>, not DP's download anchor: `guard-greps.sh` bans a
+                    literal internal href, and this is a real action anyway. */}
+                <button
+                  type="button"
+                  className="mv-edit__media-action mv-edit__media-action--download"
+                  onClick={() => downloadFile(activeVideo, `scene-${scene.index}.mp4`)}
+                  aria-label="Download video"
+                >
+                  <DpIcon name="ic_download" className="mv-edit__media-action-icon" />
+                </button>
+                <div className="mv-edit__preview-controls">
                 <button
                   type="button"
                   className="mv-edit__control-btn"
@@ -522,11 +532,18 @@ export function MvEditor() {
                 <button
                   type="button"
                   className="mv-edit__control-btn"
-                  onClick={() => previewRef.current?.requestFullscreen?.().catch(() => {})}
-                  aria-label="Fullscreen"
+                  // Same fix as `MvResult.tsx`'s fullscreen button — see its
+                  // comment for why the shared helper replaces a bare
+                  // `requestFullscreen` call.
+                  onClick={() => toggleMvFullscreen(previewRef.current, videoRef.current)}
+                  aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
                 >
-                  <DpIcon name="ic_expand" className="mv-edit__control-icon" />
+                  <DpIcon
+                    name={isFullscreen ? "ic_shrink" : "ic_expand"}
+                    className="mv-edit__control-icon"
+                  />
                 </button>
+              </div>
               </div>
             </div>
           </div>

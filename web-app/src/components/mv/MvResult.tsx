@@ -17,6 +17,7 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
+import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 import { MV_TYPES, mockStoryboard } from "@/lib/mv/mock";
 import { MOCK_USER } from "@/lib/user";
 import { useDemoState } from "@/components/demo/useDemo";
@@ -100,6 +101,13 @@ export function MvResult() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  // Reported bug, 2026-09-22: the fullscreen button always showed the same
+  // "expand" icon, even once already fullscreen, and looked broken because
+  // there was no visible way to tell a second click would exit. See
+  // `useIsFullscreen`'s own header comment for why this needs the real
+  // `fullscreenchange` event rather than reading `document.fullscreenElement`
+  // once at click time.
+  const isFullscreen = useIsFullscreen();
   const [playing, setPlaying] = useState(false);
   // G7 finding 3i-1. The pre-migration screen was a `<video controls>`, so the
   // native bar carried volume; DP's is a hand-built bar with no volume control
@@ -321,10 +329,18 @@ export function MvResult() {
               <button
                 type="button"
                 className="mv-result__control-btn"
-                onClick={() => stageRef.current?.requestFullscreen?.().catch(() => {})}
-                aria-label="Fullscreen"
+                // YMW260907P0012's fallback, same as `CommunityMvPlayer`/
+                // `MvPreviewCard`: iOS Safari has no Fullscreen API for a
+                // plain container, only `<video>`'s own `webkitEnterFullscreen`.
+                // This player never got that fix; the bare `requestFullscreen`
+                // call it had also never toggled back out.
+                onClick={() => toggleMvFullscreen(stageRef.current, videoRef.current)}
+                aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
               >
-                <DpIcon name="ic_expand" className="mv-result__control-icon" />
+                <DpIcon
+                  name={isFullscreen ? "ic_shrink" : "ic_expand"}
+                  className="mv-result__control-icon"
+                />
               </button>
             </div>
           </div>

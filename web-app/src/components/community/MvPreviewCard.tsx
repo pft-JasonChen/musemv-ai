@@ -6,7 +6,7 @@ import { DpIcon } from "@/components/ui/DpIcon";
 import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { DpBadge } from "@/components/ui/DpBadge";
 import { formatCount } from "@/lib/mv/community";
-import { toggleMvFullscreen } from "@/lib/fullscreen";
+import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 import type { MvRatio } from "@/lib/mv/justifiedRows";
 
 /**
@@ -90,6 +90,10 @@ export function MvPreviewCard({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  // Reported bug, 2026-09-22 (found on `/mv/edit`, same shared button
+  // everywhere): the fullscreen icon never changed once already fullscreen.
+  // See `useIsFullscreen`'s header comment in `src/lib/fullscreen.ts`.
+  const isFullscreen = useIsFullscreen();
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   // Product owner, 2026-09-16: hover-revealed volume-slider popup on the mute
@@ -254,9 +258,12 @@ export function MvPreviewCard({
                       type="button"
                       className="mv-preview__control-btn"
                       onClick={toggleFullscreen}
-                      aria-label="Fullscreen"
+                      aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
                     >
-                      <DpIcon name="ic_expand" className="mv-preview__control-icon" />
+                      <DpIcon
+                        name={isFullscreen ? "ic_shrink" : "ic_expand"}
+                        className="mv-preview__control-icon"
+                      />
                     </button>
                   </div>
                 </div>

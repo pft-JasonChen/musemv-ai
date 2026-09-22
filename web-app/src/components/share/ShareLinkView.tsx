@@ -20,6 +20,7 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { resolveShare, type SharedMedia } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
+import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { SeekBar } from "@/components/ui/SeekBar";
 import { useVolumePopup } from "@/components/ui/useVolumePopup";
@@ -271,6 +272,10 @@ function SongPanel({ media, onDownload }: { media: SharedMedia; onDownload: () =
 function MvPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  // Reported bug, 2026-09-22 (found on `/mv/edit`, same shared button
+  // everywhere): the fullscreen icon never changed once already fullscreen.
+  // See `useIsFullscreen`'s header comment in `src/lib/fullscreen.ts`.
+  const isFullscreen = useIsFullscreen();
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   // Product owner, 2026-09-16: hover-revealed volume-slider popup on the
@@ -322,10 +327,12 @@ function MvPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => 
   }
 
   function toggleFullscreen() {
-    const el = panelRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void el.requestFullscreen?.().catch(() => {});
+    // Was its own one-off inline toggle (checked `document.fullscreenElement`
+    // correctly, unlike the other four screens' buttons before this fix, but
+    // still had no iOS fallback). Moved onto the shared helper for that
+    // fallback and to stop this screen being a third, independent
+    // implementation of the same behavior.
+    toggleMvFullscreen(panelRef.current, videoRef.current);
   }
 
   function seek(next: number) {
@@ -404,9 +411,9 @@ function MvPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => 
           type="button"
           className="share-mv__icon-btn"
           onClick={toggleFullscreen}
-          aria-label="Fullscreen"
+          aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
         >
-          <DpIcon name="ic_expand" className="share-mv__icon" />
+          <DpIcon name={isFullscreen ? "ic_shrink" : "ic_expand"} className="share-mv__icon" />
         </button>
         <button
           type="button"
