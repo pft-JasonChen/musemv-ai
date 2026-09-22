@@ -447,11 +447,12 @@ export function MvEditor() {
             </div>
 
             <div ref={previewRef} className="mv-edit__preview">
-              {/* `.mv-edit__preview-frame` (designer-overrides.css) reproduces
-                  the portrait video's own sizing formula one level up — see
-                  its header comment for why the button/controls below need
-                  this instead of measuring against `.mv-edit__preview`
-                  itself, which is much wider than the letterboxed video. */}
+              {/* Product owner, 2026-09-22 follow-up: the controls bar and the
+                  download button go back to spanning/anchoring against the
+                  FULL preview box (DP's original behavior) — only the video
+                  itself stays letterboxed inside `.mv-edit__preview-frame`
+                  (designer-overrides.css), which now exists purely to size
+                  the video and is no longer read by anything else. */}
               <div className="mv-edit__preview-frame">
                 <video
                   ref={videoRef}
@@ -468,17 +469,18 @@ export function MvEditor() {
                   onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
                   onClick={togglePlay}
                 />
-                {/* A <button>, not DP's download anchor: `guard-greps.sh` bans a
-                    literal internal href, and this is a real action anyway. */}
-                <button
-                  type="button"
-                  className="mv-edit__media-action mv-edit__media-action--download"
-                  onClick={() => downloadFile(activeVideo, `scene-${scene.index}.mp4`)}
-                  aria-label="Download video"
-                >
-                  <DpIcon name="ic_download" className="mv-edit__media-action-icon" />
-                </button>
-                <div className="mv-edit__preview-controls">
+              </div>
+              {/* A <button>, not DP's download anchor: `guard-greps.sh` bans a
+                  literal internal href, and this is a real action anyway. */}
+              <button
+                type="button"
+                className="mv-edit__media-action mv-edit__media-action--download"
+                onClick={() => downloadFile(activeVideo, `scene-${scene.index}.mp4`)}
+                aria-label="Download video"
+              >
+                <DpIcon name="ic_download" className="mv-edit__media-action-icon" />
+              </button>
+              <div className="mv-edit__preview-controls">
                 <button
                   type="button"
                   className="mv-edit__control-btn"
@@ -543,7 +545,6 @@ export function MvEditor() {
                     className="mv-edit__control-icon"
                   />
                 </button>
-              </div>
               </div>
             </div>
           </div>

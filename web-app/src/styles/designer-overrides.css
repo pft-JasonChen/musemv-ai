@@ -743,34 +743,25 @@
   cursor: pointer;
 }
 
-/* Reported, 2026-09-22 (screenshot of the fullscreen view): the mute/
+/* First reported, 2026-09-22 (screenshot of the fullscreen view): the mute/
    fullscreen buttons sat stranded far to the right, with a wide gap of empty
-   black space between them and the actual (portrait, letterboxed) video —
-   read as "extra padding" but is really a WIDTH mismatch. `.mv-edit__preview`
-   is a fixed 16:9 box (fullscreen or not — the browser's own `:fullscreen`
-   sizing just makes that box much bigger in absolute pixels, which is why it
-   was only reported there); the portrait video inside occupies roughly a
-   third of that width, but the download button and the controls bar are
-   `position: absolute; left: 0; right: 0` — measured against the WIDE
-   16:9 box, not the narrow video. DP's own `MVEditPage.css` never solved
-   this (checked against the vendored `designer-prototype/` source directly:
-   its `.mv-edit__preview-video--portrait` sizes only the `<video>` itself,
-   nothing wraps it) — MV Result already gets a visually different fix (a
-   blurred backdrop fills the gap instead of removing it), but this asked for
-   the gap itself gone, so this is new WA-authored layout, not a DP rule to
-   correct.
-
-   `.mv-edit__preview-frame` reproduces the exact sizing formula
-   `.mv-edit__preview-video--portrait` already uses (height: 100%, width:
-   auto, aspect-ratio: 9/16) one level up, as a `position: relative` wrapper
-   around the video, the download button, and the controls bar — so all
-   three now measure their `absolute` positioning against the video's own
-   footprint instead of the container's. `.mv-edit__preview-video--fill`
-   replaces `--portrait` on the `<video>` itself (now it just fills the
-   frame exactly); the gated `--portrait` rule is left completely
-   untouched/unused rather than overridden, since overriding a rule a future
-   drop still reads by that name is exactly the "override becomes the bug"
-   trap `AGENTS.md` warns about. */
+   black space between them and the actual (portrait, letterboxed) video.
+   First attempt made the download button and the controls bar measure
+   their `absolute` positioning against the video's own narrower footprint
+   instead of the container's — reverted the same day (product owner
+   follow-up): the button and the controls bar are supposed to keep
+   spanning/anchoring against the FULL `.mv-edit__preview` box, matching
+   DP's original behavior. `.mv-edit__preview-frame` is what's left of that
+   attempt — it still exists, scoped down to ONLY size the `<video>` itself
+   (reproducing `.mv-edit__preview-video--portrait`'s own formula: height:
+   100%, width: auto, aspect-ratio: 9/16, one level up as a `position:
+   relative` wrapper around just the video), because the video staying
+   letterboxed was never in question, only what measured against what.
+   `.mv-edit__preview-video--fill` replaces `--portrait` on the `<video>`
+   itself (now it just fills the frame exactly); the gated `--portrait` rule
+   is left completely untouched/unused rather than overridden, since
+   overriding a rule a future drop still reads by that name is exactly the
+   "override becomes the bug" trap `AGENTS.md` warns about. */
 .mv-edit__preview-frame {
   position: relative;
   height: 100%;

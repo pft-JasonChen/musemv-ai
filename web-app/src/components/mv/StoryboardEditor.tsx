@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
@@ -22,6 +22,7 @@ import {
 import { formatDuration, SAMPLE_AUDIO } from "@/lib/mv/mock";
 import { buildTimedLines } from "@/lib/mv/lyrics";
 import { downloadFile } from "@/lib/download";
+import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 
 const fmtTs = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
@@ -95,7 +96,14 @@ export function StoryboardEditor() {
   const { credits } = useCredits();
   const [buyOpen, setBuyOpen] = useState(false);
   const [storylineOpen, setStorylineOpen] = useState(true);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  // Product owner, 2026-09-22: the character image's "expand" button now
+  // opens the same real browser fullscreen the video buttons use elsewhere
+  // (`toggleMvFullscreen`/`useIsFullscreen`, `src/lib/fullscreen.ts`),
+  // replacing what used to be its own bespoke in-page lightbox overlay. No
+  // `<video>` to pass for the iOS fallback — this is a still image, and the
+  // helper already handles a `null` video argument.
+  const charImageRef = useRef<HTMLDivElement>(null);
+  const isCharFullscreen = useIsFullscreen();
   // The MV song is play-only here — the song is locked after creation, so this
   // section only previews it. Fall back to the demo track so the control is
   // functional for library/sample songs that carry no local URL.
@@ -128,14 +136,6 @@ export function StoryboardEditor() {
     return () => clearTimeout(t);
   }, [storyboard, router, locale]);
 
-  useEffect(() => {
-    if (!previewOpen) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setPreviewOpen(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [previewOpen]);
 
   if (!storyboard) return null;
 
@@ -157,7 +157,7 @@ export function StoryboardEditor() {
           <div className="mv-storyboard__section mv-storyboard__section--visual-style">
             <p className="mv-storyboard__label">VISUAL STYLE</p>
             <div className="mv-storyboard__visual-style-row">
-              <div className="mv-storyboard__char-image">
+              <div className="mv-storyboard__char-image" ref={charImageRef}>
                 <img
                   src={storyboard.characterImage}
                   alt="Storyboard character"
@@ -177,10 +177,13 @@ export function StoryboardEditor() {
                 <button
                   type="button"
                   className="mv-storyboard__char-expand"
-                  onClick={() => setPreviewOpen(true)}
-                  aria-label="Expand character image"
+                  onClick={() => toggleMvFullscreen(charImageRef.current, null)}
+                  aria-label={isCharFullscreen ? "Exit fullscreen" : "Expand character image"}
                 >
-                  <img src="/assets/icons/ui/ic_expand.svg" alt="" />
+                  <img
+                    src={`/assets/icons/ui/${isCharFullscreen ? "ic_shrink" : "ic_expand"}.svg`}
+                    alt=""
+                  />
                 </button>
               </div>
               <div className="mv-storyboard__input-box">
@@ -360,28 +363,6 @@ export function StoryboardEditor() {
           </div>
         </div>
       </div>
-
-      {previewOpen && (
-        <div
-          className="mv-storyboard__image-preview-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Character image preview"
-          onClick={() => setPreviewOpen(false)}
-        >
-          <div className="mv-storyboard__image-preview" onClick={(e) => e.stopPropagation()}>
-            <img src={storyboard.characterImage} alt="Storyboard character enlarged" />
-            <button
-              type="button"
-              className="mv-storyboard__image-preview-close"
-              onClick={() => setPreviewOpen(false)}
-              aria-label="Close image preview"
-            >
-              <img src="/assets/icons/ui/ic_close.svg" alt="" />
-            </button>
-          </div>
-        </div>
-      )}
 
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
     </>
