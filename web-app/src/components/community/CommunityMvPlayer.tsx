@@ -423,21 +423,22 @@ export function CommunityMvPlayer() {
   }
 
   // GL-02/EXP-02: gate at the action — creating from a community MV requires sign-in.
+  //
+  // YMW260910P0008 (product owner, 2026-09-22): the handoff carries **mvType and
+  // prompt ONLY**. It used to seed `song` from `mv.matchedSong` and `settings.title`
+  // from `mv.title` as well; both are deliberately removed, and the reason is not
+  // cosmetic — **the community MV's track is licensed, and handing it to a new
+  // creation is a music-rights problem.** Carrying official music into the composer
+  // is a NEXT-version feature; V1 does not do it.
+  //
+  // Consequence, and it is intended rather than a dead end: `isComposeReady` is
+  // `song != null && description.trim().length > 0`, so `/mv/room` opens with
+  // "Create Music Video" DISABLED until the user chooses a song themselves. Do not
+  // "fix" that by re-adding a song here — that is the licensing problem again.
+  // Guarded by `e2e/behaviour-regressions.spec.ts` → "YMW260910P0008".
   function createMv() {
     requireLogin(() => {
-      setCompose({
-        ...DEFAULT_COMPOSE,
-        mvType: mv.mvType,
-        description: mv.prompt,
-        song: {
-          id: `tpl-${mv.id}`,
-          source: "sample",
-          title: mv.matchedSong.title,
-          durationSec: mv.matchedSong.durationSec,
-          art: mv.matchedSong.art,
-        },
-        settings: { ...DEFAULT_COMPOSE.settings, title: { on: true, text: mv.title } },
-      });
+      setCompose({ ...DEFAULT_COMPOSE, mvType: mv.mvType, description: mv.prompt });
       router.push(localePath(locale, "/mv/room"));
     });
   }

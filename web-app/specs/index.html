@@ -1025,6 +1025,76 @@ this file covers. When a change does both, it appears in both, and the row below
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
 <hr>
+<h2 id="2026-09-22-community-mv-handoff-drops-the-licensed-song-history-remembers-its-tab">2026-09-22 — Community MV handoff drops the licensed song; History remembers its tab</h2>
+<h3 id="ymw260910p0008-create-mv-from-watch-carries-prompt-video-type-only"><code>YMW260910P0008</code>: Create MV from <code>/watch</code> carries prompt + video type ONLY</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-22, answering <code>BARRY_KAO</code>'s 2026-09-21 challenge to the reduced V1 scope. <strong>Reason is licensing:</strong> the community MV's track is licensed, so carrying it into a new creation is a music-rights problem. Official music in the composer is a <strong>next-version</strong> feature.</td>
+</tr>
+<tr>
+<td><strong>Spec</strong></td>
+<td><code>areas/04-explore-community.md</code> §3.3 <code>/watch</code> row — reduced scope restated with the reason; the ⚠️ divergence note (2026-09-12 → 2026-09-22) is <strong>resolved</strong> and replaced.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>src/components/community/CommunityMvPlayer.tsx</code> → <code>createMv()</code> no longer seeds <code>song</code> (from <code>mv.matchedSong</code>) or <code>settings.title</code> (from <code>mv.title</code>). It had done so since 2026-08-05 (<code>cdba535c</code>).</td>
+</tr>
+<tr>
+<td><strong>Test</strong></td>
+<td><code>e2e/behaviour-regressions.spec.ts</code> → <code>YMW260910P0008</code> — asserts the prompt DID arrive and the CTA is disabled.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>Not a C1–C8 change: no <code>MuseApi</code> method, Zod schema, hook key, route or cost moved. <code>MvFlow</code>'s <code>setCompose</code> is called with fewer fields, not a different shape.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Retest note for QA:</strong> <code>/mv/room</code> now opens from <code>/watch</code> with <strong>Create Music Video disabled</strong>, and<br>
+that is correct, not a regression. <code>isComposeReady</code> requires a song, so "prompt-only prefill" and<br>
+"CTA enabled" cannot both hold. The user picks a song, then the button enables.</p>
+<h3 id="ymw260921p0015-the-history-filter-tab-survives-opening-a-creation"><code>YMW260921P0015</code>: the History filter tab survives opening a creation</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-22. Reported by <code>JOANNE_HSIEH</code> against the <strong>Liked</strong> tab; measured at HEAD 2026-09-21 and <strong>all four</strong> tabs reset, so this is not Liked-only.</td>
+</tr>
+<tr>
+<td><strong>Spec</strong></td>
+<td><code>areas/05-history.md</code> — <strong>new <code>AC-HIST-10</code></strong>; <code>AC-HIST-01</code>, <code>HIST-P1-S1</code>, <code>HIST-P1-S2</code> and the §Entry-points note amended.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>src/components/history/HistoryView.tsx</code> — module-scoped <code>rememberedFilter</code>, written by a new <code>changeFilter</code>. Persists across client-side navigation, resets on a document load; <code>?tab=</code> still wins.</td>
+</tr>
+<tr>
+<td><strong>Test</strong></td>
+<td><code>e2e/behaviour-regressions.spec.ts</code> → <code>YMW260921P0015</code> — asserts the tab AND that the list is really filtered, plus that no query param is written.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>Not a C1–C8 change: component-local state only, no provider and no route signature moved.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>This did NOT reopen <code>YMW260910P0001</code></strong> (2026-09-11, "a URL write on every tab change is a page<br>
+jump"). Remembering a tab needs no URL write, so that decision is untouched and the test asserts the<br>
+URL stays clean.</p>
+<hr>
 <h2 id="2026-09-21-delete-this-project-now-deletes-the-creation-guarded-routes-show-a-loading-state">2026-09-21 — Delete this Project now deletes the creation; guarded routes show a loading state</h2>
 <h3 id="ymw260917p0008-delete-project-in-edit-music-video-deletes-the-original-mv"><code>YMW260917P0008</code>: "Delete Project" in Edit Music Video deletes the original MV</h3>
 <table>
@@ -3821,19 +3891,26 @@ they moved into the page body with that rail. Captured at S8 <code>P3-S1</code>.
   (<code>mvCoverRatio()</code> — 3:4 or 4:3, <code>AC-EXP-04</code>), autoplay loop <strong>with sound on</strong> (falling back to<br>
   muted only if the browser refuses — <code>YMW260902P0002</code>, see <code>AC-EXP-04</code>); floating title + creator →<br>
 <code>/creator</code>; <strong>Like</strong> (local), <strong>Share</strong> (<code>ShareDialog</code>); <strong>Create Music Video</strong> → <code>setCompose</code><br>
-  (mvType + prompt only — <code>YMW260910P0008</code>, product owner, 2026-09-12: <strong>V1 does not carry the<br>
-  matched song or title into the handoff</strong>, corrected from this line's own prior claim that it<br>
-  did) → <code>/mv/room</code> (area 02); a transport row with play/pause, a keyboard-operable <code>SeekBar</code>, mute<br>
+  (mvType + prompt only — <code>YMW260910P0008</code>, product owner, 2026-09-12, reaffirmed with a reason<br>
+  2026-09-22: <strong>V1 does not carry the matched song or title into the handoff</strong>) → <code>/mv/room</code><br>
+  (area 02); a transport row with play/pause, a keyboard-operable <code>SeekBar</code>, mute<br>
   and fullscreen; and <strong><code>MvGridSections</code> below the player</strong> — the same two sections<br>
 <code>/explore/mvs</code> renders.<blockquote>
-<p>⚠️ <strong>This mock/prototype's code currently prefills the matched song and title too</strong> —<br>
-<code>CommunityMvPlayer.tsx</code>'s <code>createMv()</code> has done so since 2026-08-05 (<code>cdba535c</code>), unchanged by<br>
-this spec correction. Investigated and confirmed live 2026-09-11: song + title + prompt all<br>
-land on <code>/mv/room</code>, and Create Music Video is enabled, not disabled. The product owner<br>
-reaffirmed the reduced V1 scope after seeing that finding — this row now states V1's INTENDED<br>
-scope for the real backend, which the demo currently exceeds. Flag before touching<br>
-<code>createMv()</code>: nobody has asked for the extra prefill to be removed from the code, only for the<br>
-spec to stop overclaiming it as required V1 behavior.<br>
+<p><strong>Why it is only two fields: music licensing.</strong> The community MV's track is licensed, so<br>
+handing it to a new creation is a music-rights problem, not a scope preference. Carrying<br>
+official music into the composer is a <strong>next-version</strong> feature. (Product owner, 2026-09-22,<br>
+answering <code>BARRY_KAO</code>'s 2026-09-21 challenge to the reduced scope.)</p>
+<p><strong>The CTA is therefore DISABLED on arrival, and that is required behavior.</strong><br>
+<code>isComposeReady</code> is <code>song != null &amp;&amp; description.trim().length &gt; 0</code>, so a handoff with a<br>
+prompt but no song necessarily leaves <strong>Create Music Video</strong> disabled until the user picks a<br>
+song. "Prompt-only prefill" and "CTA enabled" cannot both be true — do not re-add a song to<br>
+light the button up.</p>
+<p>✅ <strong>Code now matches this row (2026-09-22).</strong> <code>CommunityMvPlayer.tsx</code>'s <code>createMv()</code> had<br>
+seeded the matched song and title since 2026-08-05 (<code>cdba535c</code>); that prefill is removed.<br>
+Between 2026-09-12 and 2026-09-22 this file carried a ⚠️ recording the divergence as<br>
+known-and-accepted — it is resolved, not still open. Guarded by<br>
+<code>e2e/behaviour-regressions.spec.ts</code> → <code>YMW260910P0008</code>, which asserts both halves (prompt<br>
+present, CTA disabled) so neither can regress silently.<br>
 ⚠️ <strong>Corrected 2026-09-01 by the S8 storyboard capture (D11).</strong> This line still listed a<br>
 <code># Music Video</code> tag, the <code>meta</code> line, a <code>Stats</code> block and the source prompt, and described the<br>
 stage as flatly "3:4 portrait". None of the first four exist: DP's immersive player replaced<br>
@@ -4335,7 +4412,9 @@ modals.<br>
 <strong>Entry points:</strong> the nav/tab bar; and, since <code>YMW260910P0001</code> (2026-09-11), <code>/profile</code>'s MVs/Songs<br>
 stat tiles via <code>/history?tab=mv</code>|<code>songs</code> — seeded into the <code>all</code>/<code>mv</code>/<code>song</code> filter once on first<br>
 render (same convention as <code>CreatorProfile</code>'s own <code>?tab=</code>; the URL is not kept in sync with later<br>
-tab clicks, area 04's own note explains why).<br>
+tab clicks, area 04's own note explains why). Since <code>YMW260921P0015</code> (2026-09-22) the tab chosen<br>
+afterwards is <strong>remembered for the visit</strong> in module state, so opening a creation and coming back<br>
+restores it — still with no URL write (<strong>AC-HIST-10</strong>).<br>
 <strong>Out of scope (cross-referenced):</strong> the result screens themselves (<code>/mv/result</code> area 02,<br>
 <code>/song/result</code> area 03); <code>ShareDialog</code> (area 10); the seed flow into<br>
 <code>/mv/edit</code>/<code>/mv/storyboard</code>/<code>/mv/room</code> (area 02); the community player <code>/song/play</code> (area 04).</p>
@@ -4428,8 +4507,8 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <p>Screens to capture later: <code>/history</code> (All + Liked filters), <code>⋯</code> menu open (MV / song / storyboard / community / failed), publish + delete confirm modals.</p>
 <h3 id="hist-p1-browse-filter">HIST-P1 — Browse &amp; filter</h3>
 <ul>
-<li><strong>HIST-P1-S1</strong> Open <code>/history</code> (auth-gated). <strong>System:</strong> renders merged rows under <strong>All</strong>. Empty filter → empty-state copy.</li>
-<li><strong>HIST-P1-S2</strong> Tap a filter chip (All / Music Videos / Songs / Liked). <strong>System:</strong> re-filters per §3 rules.</li>
+<li><strong>HIST-P1-S1</strong> Open <code>/history</code> (auth-gated). <strong>System:</strong> renders merged rows under <strong>All</strong> on a cold load, or under the tab remembered from earlier in the visit (<strong>AC-HIST-10</strong>). Empty filter → empty-state copy.</li>
+<li><strong>HIST-P1-S2</strong> Tap a filter chip (All / Music Videos / Songs / Liked). <strong>System:</strong> re-filters per §3 rules, writes no query param, and remembers the choice for the rest of the visit (<strong>AC-HIST-10</strong>).</li>
 </ul>
 <h3 id="hist-p2-open-a-creation">HIST-P2 — Open a creation</h3>
 <ul>
@@ -4506,7 +4585,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <hr>
 <h2 id="6-acceptance-criteria-ears">6. Acceptance criteria (EARS)</h2>
 <ul>
-<li><strong>AC-HIST-01</strong> — WHEN <code>/history</code> loads for a signed-in user, THE SYSTEM SHALL show live jobs prepended to the seed samples, under the <strong>All</strong> filter (community rows excluded).</li>
+<li><strong>AC-HIST-01</strong> — WHEN <code>/history</code> loads for a signed-in user, THE SYSTEM SHALL show live jobs prepended to the seed samples, under the <strong>All</strong> filter (community rows excluded) — unless a tab is remembered from earlier in the visit or given as <code>?tab=</code>, per <strong>AC-HIST-10</strong>.</li>
 <li><strong>AC-HIST-02</strong> — WHEN a filter chip is selected, THE SYSTEM SHALL show only rows matching it (All=own, Music Videos=mv/storyboard, Songs=song, <strong>Liked=community-liked only</strong>).</li>
 <li><strong>AC-HIST-03</strong> — WHILE a row is <code>processing</code>, THE SYSTEM SHALL show a Generating pill and disable open + the <code>⋯</code> menu; WHEN <code>failed</code>, show a Failed pill and a <strong>Delete-only</strong> menu; storyboard rows SHALL show a <strong>Create MV pill</strong> plus a <strong>Create MV + Delete</strong> menu.</li>
 <li><strong>AC-HIST-04</strong> — WHEN a done MV card is tapped, THE SYSTEM SHALL seed the MV flow and route to <code>/mv/result?id=…</code>; a done song → <code>/song/result?id=…</code>; a storyboard → <code>/mv/storyboard</code>; a community row → <code>/song/play</code>. No detail dialog is opened.</li>
@@ -4514,6 +4593,7 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 <li><strong>AC-HIST-06</strong> — WHEN <strong>Delete</strong> is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.</li>
 <li><strong>AC-HIST-07</strong> — WHEN <strong>Edit MV / Create MV</strong> is chosen, THE SYSTEM SHALL seed flow state and route to <code>/mv/edit</code> / <code>/mv/storyboard</code>|<code>/mv/room</code> respectively.</li>
 <li><strong>AC-HIST-08</strong> — WHEN <strong>Share</strong> / <strong>Download</strong> is invoked, THE SYSTEM SHALL open <code>ShareDialog</code> with <code>buildShareUrl(id)</code> / download the fixture media as <code>{title}.mp4</code>|<code>.mp3</code>. <em>(download uses fixture media, not the row's own render — 🔒)</em> <strong>Share itself SHALL NOT be offered on an own mv/song row until it is <code>published</code></strong> (<code>YMW260903P0012</code>, 2026-09-11) — community rows are unaffected.</li>
+<li><strong>AC-HIST-10</strong> — WHEN the user opens a creation from <code>/history</code> and returns (browser Back, or a Back control on the result screen), THE SYSTEM SHALL restore the filter tab they left, not reset to <strong>All</strong>. The tab SHALL persist for the visit across client-side navigation, SHALL reset to <strong>All</strong> on a full document load, and an explicit <code>?tab=mv|songs</code> deep link SHALL win over the remembered value. THE SYSTEM SHALL NOT write the tab into the URL. <em>(<code>YMW260921P0015</code>, product owner 2026-09-22. Reported against the Liked tab specifically; measured 2026-09-21 at HEAD, <strong>all four</strong> tabs reset, so the fix is not Liked-only. The no-URL-write clause is <code>YMW260910P0001</code>'s separate 2026-09-11 decision, which this does not touch — remembering a tab needs no URL write. Guarded by <code>e2e/behaviour-regressions.spec.ts</code> → <code>YMW260921P0015</code>.)</em></li>
 <li><strong>AC-HIST-09</strong> — THE SYSTEM SHALL render <code>/history</code> at 320/375/768/1024/1440/1920px with no overflow (1/2/3-column grid). <em>(visual)</em> <em>(Widths corrected 2026-08-19 to the six tiers the code and <code>visual-baseline.spec.ts</code> actually use; the old list said 390, which no test has ever measured.)</em></li>
 </ul>
 <hr>

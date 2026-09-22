@@ -25,6 +25,38 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-09-22 — Community MV handoff drops the licensed song; History remembers its tab
+
+### `YMW260910P0008`: Create MV from `/watch` carries prompt + video type ONLY
+
+| | |
+| --- | --- |
+| **Decision** | Product owner, 2026-09-22, answering `BARRY_KAO`'s 2026-09-21 challenge to the reduced V1 scope. **Reason is licensing:** the community MV's track is licensed, so carrying it into a new creation is a music-rights problem. Official music in the composer is a **next-version** feature. |
+| **Spec** | `areas/04-explore-community.md` §3.3 `/watch` row — reduced scope restated with the reason; the ⚠️ divergence note (2026-09-12 → 2026-09-22) is **resolved** and replaced. |
+| **Code** | `src/components/community/CommunityMvPlayer.tsx` → `createMv()` no longer seeds `song` (from `mv.matchedSong`) or `settings.title` (from `mv.title`). It had done so since 2026-08-05 (`cdba535c`). |
+| **Test** | `e2e/behaviour-regressions.spec.ts` → `YMW260910P0008` — asserts the prompt DID arrive and the CTA is disabled. |
+| **Contract** | Not a C1–C8 change: no `MuseApi` method, Zod schema, hook key, route or cost moved. `MvFlow`'s `setCompose` is called with fewer fields, not a different shape. |
+
+**Retest note for QA:** `/mv/room` now opens from `/watch` with **Create Music Video disabled**, and
+that is correct, not a regression. `isComposeReady` requires a song, so "prompt-only prefill" and
+"CTA enabled" cannot both hold. The user picks a song, then the button enables.
+
+### `YMW260921P0015`: the History filter tab survives opening a creation
+
+| | |
+| --- | --- |
+| **Decision** | Product owner, 2026-09-22. Reported by `JOANNE_HSIEH` against the **Liked** tab; measured at HEAD 2026-09-21 and **all four** tabs reset, so this is not Liked-only. |
+| **Spec** | `areas/05-history.md` — **new `AC-HIST-10`**; `AC-HIST-01`, `HIST-P1-S1`, `HIST-P1-S2` and the §Entry-points note amended. |
+| **Code** | `src/components/history/HistoryView.tsx` — module-scoped `rememberedFilter`, written by a new `changeFilter`. Persists across client-side navigation, resets on a document load; `?tab=` still wins. |
+| **Test** | `e2e/behaviour-regressions.spec.ts` → `YMW260921P0015` — asserts the tab AND that the list is really filtered, plus that no query param is written. |
+| **Contract** | Not a C1–C8 change: component-local state only, no provider and no route signature moved. |
+
+**This did NOT reopen `YMW260910P0001`** (2026-09-11, "a URL write on every tab change is a page
+jump"). Remembering a tab needs no URL write, so that decision is untouched and the test asserts the
+URL stays clean.
+
+---
+
 ## 2026-09-21 — Delete this Project now deletes the creation; guarded routes show a loading state
 
 ### `YMW260917P0008`: "Delete Project" in Edit Music Video deletes the original MV

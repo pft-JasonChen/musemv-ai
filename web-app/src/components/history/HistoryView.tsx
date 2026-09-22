@@ -144,6 +144,24 @@ function initialFilterFromTab(tab: string | null): Filter {
   return "all";
 }
 
+/**
+ * The tab the user last picked, remembered for the lifetime of the document.
+ *
+ * `YMW260921P0015` (product owner, 2026-09-22): opening a row and coming back
+ * must land on the tab you left, not on All. Before this, `filter` was seeded
+ * once per mount and a round trip to a result screen is a fresh mount, so every
+ * tab reset — measured at HEAD on all four, Liked included.
+ *
+ * Module scope, deliberately, and it is NOT the `?tab=` query param: writing the
+ * URL on every tab change is a page jump even with `replace`, which is the
+ * separate `YMW260910P0001` decision from 2026-09-11 and stays exactly as it is.
+ * Remembering the tab needs no URL write at all, so the two do not interact.
+ * Same shape as `lib/mv/faceConsent.ts`: it survives client-side navigation and
+ * resets on a real document load, which is the intended "within this visit"
+ * boundary — an explicit `?tab=` deep link still wins on arrival.
+ */
+let rememberedFilter: Filter | null = null;
+
 export function HistoryView() {
   const router = useRouter();
   const { history, removed, remove } = useHistory();
@@ -151,7 +169,18 @@ export function HistoryView() {
   const openCreation = useOpenCreation();
   const seedMvFlow = useSeedMvFlow();
   const searchParams = useSearchParams();
-  const [filter, setFilter] = useState<Filter>(() => initialFilterFromTab(searchParams.get("tab")));
+  // An explicit `?tab=` deep link wins (Profile's stat pills, `YMW260910P0001`);
+  // otherwise resume the remembered tab, falling back to All on a cold load.
+  const [filter, setFilter] = useState<Filter>(() => {
+    const tab = searchParams.get("tab");
+    if (tab) return initialFilterFromTab(tab);
+    return rememberedFilter ?? "all";
+  });
+
+  function changeFilter(next: Filter) {
+    rememberedFilter = next;
+    setFilter(next);
+  }
   const [ov, setOv] = useState<Record<string, Override>>({});
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [share, setShare] = useState<{ title: string; url: string } | null>(null);
@@ -350,7 +379,7 @@ export function HistoryView() {
       <RoomNavbar
         title="My Creations"
         tabsSlot={
-          demoLoading ? undefined : <Tabs tabs={FILTERS} active={filter} onChange={setFilter} />
+          demoLoading ? undefined : <Tabs tabs={FILTERS} active={filter} onChange={changeFilter} />
         }
         mobileHeaderActions
       />

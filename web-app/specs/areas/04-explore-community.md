@@ -189,19 +189,28 @@ The rails:
   (`mvCoverRatio()` — 3:4 or 4:3, `AC-EXP-04`), autoplay loop **with sound on** (falling back to
   muted only if the browser refuses — `YMW260902P0002`, see `AC-EXP-04`); floating title + creator →
   `/creator`; **Like** (local), **Share** (`ShareDialog`); **Create Music Video** → `setCompose`
-  (mvType + prompt only — `YMW260910P0008`, product owner, 2026-09-12: **V1 does not carry the
-  matched song or title into the handoff**, corrected from this line's own prior claim that it
-  did) → `/mv/room` (area 02); a transport row with play/pause, a keyboard-operable `SeekBar`, mute
+  (mvType + prompt only — `YMW260910P0008`, product owner, 2026-09-12, reaffirmed with a reason
+  2026-09-22: **V1 does not carry the matched song or title into the handoff**) → `/mv/room`
+  (area 02); a transport row with play/pause, a keyboard-operable `SeekBar`, mute
   and fullscreen; and **`MvGridSections` below the player** — the same two sections
   `/explore/mvs` renders.
-  > ⚠️ **This mock/prototype's code currently prefills the matched song and title too** —
-  > `CommunityMvPlayer.tsx`'s `createMv()` has done so since 2026-08-05 (`cdba535c`), unchanged by
-  > this spec correction. Investigated and confirmed live 2026-09-11: song + title + prompt all
-  > land on `/mv/room`, and Create Music Video is enabled, not disabled. The product owner
-  > reaffirmed the reduced V1 scope after seeing that finding — this row now states V1's INTENDED
-  > scope for the real backend, which the demo currently exceeds. Flag before touching
-  > `createMv()`: nobody has asked for the extra prefill to be removed from the code, only for the
-  > spec to stop overclaiming it as required V1 behavior.
+  > **Why it is only two fields: music licensing.** The community MV's track is licensed, so
+  > handing it to a new creation is a music-rights problem, not a scope preference. Carrying
+  > official music into the composer is a **next-version** feature. (Product owner, 2026-09-22,
+  > answering `BARRY_KAO`'s 2026-09-21 challenge to the reduced scope.)
+  >
+  > **The CTA is therefore DISABLED on arrival, and that is required behavior.**
+  > `isComposeReady` is `song != null && description.trim().length > 0`, so a handoff with a
+  > prompt but no song necessarily leaves **Create Music Video** disabled until the user picks a
+  > song. "Prompt-only prefill" and "CTA enabled" cannot both be true — do not re-add a song to
+  > light the button up.
+  >
+  > ✅ **Code now matches this row (2026-09-22).** `CommunityMvPlayer.tsx`'s `createMv()` had
+  > seeded the matched song and title since 2026-08-05 (`cdba535c`); that prefill is removed.
+  > Between 2026-09-12 and 2026-09-22 this file carried a ⚠️ recording the divergence as
+  > known-and-accepted — it is resolved, not still open. Guarded by
+  > `e2e/behaviour-regressions.spec.ts` → `YMW260910P0008`, which asserts both halves (prompt
+  > present, CTA disabled) so neither can regress silently.
   > ⚠️ **Corrected 2026-09-01 by the S8 storyboard capture (D11).** This line still listed a
   > `# Music Video` tag, the `meta` line, a `Stats` block and the source prompt, and described the
   > stage as flatly "3:4 portrait". None of the first four exist: DP's immersive player replaced

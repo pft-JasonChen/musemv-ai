@@ -18,7 +18,9 @@ modals.
 **Entry points:** the nav/tab bar; and, since `YMW260910P0001` (2026-09-11), `/profile`'s MVs/Songs
 stat tiles via `/history?tab=mv`\|`songs` — seeded into the `all`/`mv`/`song` filter once on first
 render (same convention as `CreatorProfile`'s own `?tab=`; the URL is not kept in sync with later
-tab clicks, area 04's own note explains why).
+tab clicks, area 04's own note explains why). Since `YMW260921P0015` (2026-09-22) the tab chosen
+afterwards is **remembered for the visit** in module state, so opening a creation and coming back
+restores it — still with no URL write (**AC-HIST-10**).
 **Out of scope (cross-referenced):** the result screens themselves (`/mv/result` area 02,
 `/song/result` area 03); `ShareDialog` (area 10); the seed flow into
 `/mv/edit`/`/mv/storyboard`/`/mv/room` (area 02); the community player `/song/play` (area 04).
@@ -94,8 +96,8 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV / song / storyboard / community / failed), publish + delete confirm modals.
 
 ### HIST-P1 — Browse & filter
-- **HIST-P1-S1** Open `/history` (auth-gated). **System:** renders merged rows under **All**. Empty filter → empty-state copy.
-- **HIST-P1-S2** Tap a filter chip (All / Music Videos / Songs / Liked). **System:** re-filters per §3 rules.
+- **HIST-P1-S1** Open `/history` (auth-gated). **System:** renders merged rows under **All** on a cold load, or under the tab remembered from earlier in the visit (**AC-HIST-10**). Empty filter → empty-state copy.
+- **HIST-P1-S2** Tap a filter chip (All / Music Videos / Songs / Liked). **System:** re-filters per §3 rules, writes no query param, and remembers the choice for the rest of the visit (**AC-HIST-10**).
 
 ### HIST-P2 — Open a creation
 - **HIST-P2-S1** Tap a **done MV** card → seed → `/mv/result?id=…` (area 02); a **done song** card → seed → `/song/result?id=…` (area 03).
@@ -134,7 +136,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 
 ## 6. Acceptance criteria (EARS)
 
-- **AC-HIST-01** — WHEN `/history` loads for a signed-in user, THE SYSTEM SHALL show live jobs prepended to the seed samples, under the **All** filter (community rows excluded).
+- **AC-HIST-01** — WHEN `/history` loads for a signed-in user, THE SYSTEM SHALL show live jobs prepended to the seed samples, under the **All** filter (community rows excluded) — unless a tab is remembered from earlier in the visit or given as `?tab=`, per **AC-HIST-10**.
 - **AC-HIST-02** — WHEN a filter chip is selected, THE SYSTEM SHALL show only rows matching it (All=own, Music Videos=mv/storyboard, Songs=song, **Liked=community-liked only**).
 - **AC-HIST-03** — WHILE a row is `processing`, THE SYSTEM SHALL show a Generating pill and disable open + the `⋯` menu; WHEN `failed`, show a Failed pill and a **Delete-only** menu; storyboard rows SHALL show a **Create MV pill** plus a **Create MV + Delete** menu.
 - **AC-HIST-04** — WHEN a done MV card is tapped, THE SYSTEM SHALL seed the MV flow and route to `/mv/result?id=…`; a done song → `/song/result?id=…`; a storyboard → `/mv/storyboard`; a community row → `/song/play`. No detail dialog is opened.
@@ -142,6 +144,7 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - **AC-HIST-06** — WHEN **Delete** is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.
 - **AC-HIST-07** — WHEN **Edit MV / Create MV** is chosen, THE SYSTEM SHALL seed flow state and route to `/mv/edit` / `/mv/storyboard`|`/mv/room` respectively.
 - **AC-HIST-08** — WHEN **Share** / **Download** is invoked, THE SYSTEM SHALL open `ShareDialog` with `buildShareUrl(id)` / download the fixture media as `{title}.mp4`|`.mp3`. *(download uses fixture media, not the row's own render — 🔒)* **Share itself SHALL NOT be offered on an own mv/song row until it is `published`** (`YMW260903P0012`, 2026-09-11) — community rows are unaffected.
+- **AC-HIST-10** — WHEN the user opens a creation from `/history` and returns (browser Back, or a Back control on the result screen), THE SYSTEM SHALL restore the filter tab they left, not reset to **All**. The tab SHALL persist for the visit across client-side navigation, SHALL reset to **All** on a full document load, and an explicit `?tab=mv|songs` deep link SHALL win over the remembered value. THE SYSTEM SHALL NOT write the tab into the URL. _(`YMW260921P0015`, product owner 2026-09-22. Reported against the Liked tab specifically; measured 2026-09-21 at HEAD, **all four** tabs reset, so the fix is not Liked-only. The no-URL-write clause is `YMW260910P0001`'s separate 2026-09-11 decision, which this does not touch — remembering a tab needs no URL write. Guarded by `e2e/behaviour-regressions.spec.ts` → `YMW260921P0015`.)_
 - **AC-HIST-09** — THE SYSTEM SHALL render `/history` at 320/375/768/1024/1440/1920px with no overflow (1/2/3-column grid). *(visual)* _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
 
 ---

@@ -9,12 +9,17 @@ run since the skill stopped depending on a browser SSO session.
 - **In scope this session (product owner):** `YMW260911P0004` and `YMW260917P0008` only.
   The other two were explicitly deferred — not triaged, not touched.
 
-| #   | BugCode          | Status                                                        |
-| --- | ---------------- | ------------------------------------------------------------- |
+| #   | BugCode          | Status                                                                           |
+| --- | ---------------- | -------------------------------------------------------------------------------- |
 | 1   | `YMW260911P0004` | ↩️ **ROLLED BACK** (`53915d3`, pushed) — unfixed here; RD does the rail skeleton |
-| 2   | `YMW260917P0008` | ✅ Implemented as new behaviour (`53915d3`, pushed to `main`)  |
-| 3   | `YMW260918P0003` | ⏸️ Deferred by the product owner — not looked at              |
-| 4   | `YMW260915P0012` | ⏸️ Deferred by the product owner — not looked at              |
+| 2   | `YMW260917P0008` | ✅ Implemented as new behaviour (`53915d3`, pushed to `main`)                    |
+| 3   | `YMW260918P0003` | ⏸️ Deferred earlier — **now triaged in run 2 below**                             |
+| 4   | `YMW260915P0012` | ⏸️ Deferred by the product owner — not looked at                                 |
+
+> **A SECOND RUN happened later the same day — see [Run 2](#run-2--triage-refresh-2026-09-21)
+> at the bottom.** It re-pulled the working set (now **7** open), triaged **6** of them
+> (`YMW260915P0012` excluded again, by instruction), and changed no product code. Both items
+> this file lists under "Not done in this session" were also completed in that run.
 
 ---
 
@@ -170,11 +175,11 @@ So this is new behaviour, not a defect repair.
 The Stop hook blocked twice. Chasing it produced one real simplification and one wrong
 conclusion, and the measurement that settled it was a **full-suite run on a stashed clean tree**:
 
-| Tree | Result |
-| --- | --- |
-| Mine, run 1 | **22 failed** / 203 passed |
+| Tree                                                            | Result                     |
+| --------------------------------------------------------------- | -------------------------- |
+| Mine, run 1                                                     | **22 failed** / 203 passed |
 | Mine, run 2 (after the `useSearchParams` change was backed out) | **27 failed** / 198 passed |
-| **Clean tree (`git stash`, rebuilt), full suite** | **24 failed** / 201 passed |
+| **Clean tree (`git stash`, rebuilt), full suite**               | **24 failed** / 201 passed |
 
 **The clean tree fails at the same rate**, and the failing SETS differ in all three runs. The clean
 run failed six tests that never failed on mine (`G5-d#2`, `3g` blocks, `3h / GL-01`, `3i` DETAIL
@@ -210,11 +215,11 @@ every page is `src/app/[locale]/loading.tsx`** — a Suspense boundary wrapping 
 
 **CONFIRMED 2026-09-21 by removing it and re-running the full suite:**
 
-| Tree | Full suite |
-| --- | --- |
-| Clean tree (control, `loading.tsx` present) | **24 failed** / 201 passed |
-| Mine, `loading.tsx` present | 22 · 27 · 14 failed |
-| **After the rollback (`loading.tsx` deleted)** | **6 failed / 219 passed** |
+| Tree                                           | Full suite                 |
+| ---------------------------------------------- | -------------------------- |
+| Clean tree (control, `loading.tsx` present)    | **24 failed** / 201 passed |
+| Mine, `loading.tsx` present                    | 22 · 27 · 14 failed        |
+| **After the rollback (`loading.tsx` deleted)** | **6 failed / 219 passed**  |
 
 **Five of those six are in the clean-tree baseline** — pre-existing, nothing to do with either
 eBug. The sixth (`G5-d#3 /mv/room's Song library is gated too`) passed 3/3 when re-run alone, so
@@ -247,6 +252,12 @@ own merits, whatever the gate was doing. Rule recorded in `AGENTS.md` → Archit
 
 ## Not done in this session
 
+> **Both of the first two bullets were done later the same day, before run 2's triage.**
+> `specs/index.html` was regenerated (`3771062`) and the five pre-existing e2e failures were
+> fixed (`58cda60`) — neither is outstanding any more. The bullets are kept as written because
+> they are the record of what this session left behind; the follow-up is noted here rather than
+> by editing them.
+
 - **`specs/index.html` is stale, and it was stale before this session.** It is generated from the
   markdown specs by `specs/build-index.py`. Regenerating it from **unmodified** markdown already
   produced a 388-insertion / 28-deletion diff against the committed file, touching `AC-EXP-02`,
@@ -263,3 +274,346 @@ own merits, whatever the gate was doing. Rule recorded in `AGENTS.md` → Archit
 - No e2e spec was added for either fix. Both are covered by mutation-tested unit tests and live
   verification; an e2e test written here could not be mutation-tested without a full-suite run,
   and an unverified guard is the thing `AGENTS.md` warns about.
+
+---
+
+# Run 2 — triage refresh (2026-09-21)
+
+- **Query:** `search --ycm-web --pm-open`, retrieved 2026-09-21 ~23:55.
+- **Returned 7.** `YMW260915P0012` excluded by instruction, so **6 triaged**.
+- **Triage first, implementation only after the answers.** Nothing was changed before 2026-09-22.
+
+- **Product owner answered all six on 2026-09-22.** Two were implemented; four need no code.
+
+| #   | BugCode          | Outcome                                                       | State                 |
+| --- | ---------------- | ------------------------------------------------------------- | --------------------- |
+| 1   | `YMW260921P0015` | ✅ **Fixed** — the tab now survives the round trip            | Committed, not pushed |
+| 2   | `YMW260910P0008` | ✅ **Fixed** — licensed song + title removed from the handoff | Committed, not pushed |
+| 3   | `YMW260918P0006` | 🚫 **NAB** — accept shipped behaviour, mockup to be updated   | No code change        |
+| 4   | `YMW260918P0003` | 🚫 **NAB** — handle-only drag is intended                     | No code change        |
+| 5   | `YMW260916P0020` | ⏸️ **Open** — asks for a _prototype_ update, not code         | Awaiting PM           |
+| 6   | `YMW260902P0006` | ⏸️ **Open** — spec-documentation scope unconfirmed            | Awaiting PM           |
+
+All six were triaged first and **none was implemented before the product owner answered**. Two
+turned out not to be defects in this repo, and both were established by measurement rather than by
+reading the code — item 1 did not reproduce at all, and item 2's code already did what the report
+asked. Both still changed, because the answers went the other way: item 1 became a new
+requirement, item 2 a deliberate removal on licensing grounds.
+
+---
+
+## YMW260921P0015 — [History] Category filter resets to All after returning from a result page
+
+- ePF status: NewCreated · Priority: 5 · Severity: 2 · Handler: JASON_CHEN
+- Reported by JOANNE_HSIEH, 2026-09-21T17:45 · Build 0921
+- Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260921P0015
+- Retrieved at: 2026-09-21 (run 2)
+- Triage: **Answered 2026-09-22 — filter must survive Back** (the reported Liked exception did not reproduce; all four tabs reset equally)
+- Local status: **Fixed + verified.** Committed, not pushed.
+- Related code/spec: `src/components/history/HistoryView.tsx:141-154` (`initialFilterFromTab`,
+  `filter` state), `:137-140` (the 2026-09-11 `?tab=` note from `YMW260910P0001`)
+
+### Report
+
+- Result: Category filter resets to All.
+- Expect Result: "Pls check if this is expected. This behavior is consistent with mockup, except
+  for Liked category" — in the mockup Back always returns to All, but on the test link Liked
+  reportedly stays on Liked.
+
+### What the code does
+
+`filter` is component state seeded **once** from `?tab=`, and a tab change deliberately never
+writes the URL (`YMW260910P0001`, product owner 2026-09-11: "a URL write on every tab change is a
+page jump even with `replace`"). `initialFilterFromTab` maps only `mv` and `songs`; everything
+else — including `liked` — falls through to `all`. So **no tab has a persistence mechanism**, and
+reset-to-All is the designed behaviour for all four.
+
+### Measured, not inferred
+
+Ran it locally at HEAD (`npm run dev`, seeded `muse_auth`): History → **Liked** (tab ACTIVE, 1 row)
+→ opened the row (`/cht/song/play?id=ns-whispers-past`) → browser Back →
+**`All:ACTIVE`, 8 rows.** The Liked exception the report describes is **not present in this code**.
+
+So either the test site was serving an older build, or it is a browser bfcache effect on that
+environment. Not reproducible here.
+
+### Decision — the filter SHALL survive Back (product owner, 2026-09-22)
+
+Not NAB. The tab the user left must be the tab they return to. The product owner also corrected
+the framing above: **this has nothing to do with `YMW260910P0001`.** That decision was about not
+WRITING the tab into the URL, and remembering a tab needs no URL write at all — the two do not
+interact, and `YMW260910P0001` is untouched.
+
+### Root cause
+
+`filter` was seeded once per mount from `?tab=`, and returning from a result screen is a fresh
+mount, so every tab fell back to `all`. No persistence existed for any tab.
+
+### Resolution
+
+`HistoryView.tsx`: module-scoped `rememberedFilter`, written by a new `changeFilter` that wraps
+`setFilter` (the `Tabs` `onChange`). Same shape as `lib/mv/faceConsent.ts` — it survives
+client-side navigation and resets on a real document load, the intended "within this visit"
+boundary. An explicit `?tab=` deep link still wins on arrival. **No URL is written.**
+
+Spec: new **`AC-HIST-10`** in `areas/05-history.md`, plus amendments to `AC-HIST-01`,
+`HIST-P1-S1`, `HIST-P1-S2` and the entry-points note; `CHANGELOG-SPEC.md` row added.
+
+### Verified
+
+- e2e `YMW260921P0015` — asserts the tab, that the list is genuinely filtered (0 song covers),
+  and that picking a tab writes no query param. **Mutation-tested:** dropping
+  `rememberedFilter = next` turns it red (`aria-pressed="false"` after Back).
+- Live at 1440px, all four boundaries: **Music Videos** survives Back; **Liked** survives Back
+  (the tab the report singled out); a full document load resets to **All**; `?tab=songs` wins.
+
+### Not verified
+
+- Local dev build only; not re-checked on `testing-ycm.makeupar.com`.
+- Visual gate **not evaluated on this machine** (macOS — only `-linux` baselines are maintained).
+  `/history` cold-loads to All so its baseline should be unaffected, but that is reasoning, not a
+  measurement.
+
+### Reply comment (paste into eBug)
+
+> Fixed. The category filter now stays on whatever you selected when you open a result and come
+> back — this applies to all four tabs (All / Music Videos / Songs / Liked), not just Liked.
+>
+> Two notes for retesting. The filter is remembered for the current visit only, so a full page
+> reload (F5) still returns to All — that is intended. And we could not reproduce the original
+> Liked-specific difference on the current build; all four tabs were resetting equally, so this
+> was fixed as one behaviour rather than as a Liked-only exception.
+>
+> Not yet on the test site — it is committed but not deployed, so please retest after the next
+> release rather than now.
+
+---
+
+## YMW260910P0008 — [EXPLORE COMMUNITY] Create MV handoff omits matched song and title
+
+- ePF status: NewCreated · Priority: 2 · Severity: 2 · Handler: JASON_CHEN · Assignee: JUNHAO_CHEN
+- Reported by BARRY_KAO, 2026-09-10 · Build 0910 · Note: `MUSE-EXPLORE-COMMUNITY-0909-S028-B001`
+- Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260910P0008
+- Retrieved at: 2026-09-21 (run 2)
+- Triage: **Answered 2026-09-22 — reduced V1 scope stands, on licensing grounds**
+- Local status: **Fixed + verified.** Committed, not pushed.
+- Related code/spec: `src/components/community/CommunityMvPlayer.tsx:427-442` (`createMv`),
+  `src/lib/mv/types.ts:197-199` (`isComposeReady`), `specs/areas/04-explore-community.md:192-204`
+
+### Report
+
+- Result: composer opens with Singing + prompt prefilled, **no matched song or title**, and
+  **Create Music Video stays disabled**.
+- Expect Result: opens prefilled with MV type, source prompt, matched song **and** title.
+
+### Comment thread
+
+- JASON_CHEN, 2026-09-10: "第一版只會帶 prompt, video type。PM 須更新 spec"
+- JASON_CHEN, 2026-09-13: spec corrected to record V1 scope; asked QA to verify the test site.
+- **BARRY_KAO, 2026-09-21:** "Both the prototype and spec should include the matched song. If you
+  are absolutely certain that the first version will only include the prompt and video type,
+  please update the spec and prototype."
+
+### Measured at HEAD — this repo already does what the report asks
+
+`createMv` seeds `mvType`, `description: mv.prompt`, a `song` built from `mv.matchedSong`, **and**
+`settings.title = { on: true, text: mv.title }` — all four. Driven live at HEAD:
+`/watch?id=trend-adventurous-echoes` → Create MV → `/mv/room` with song **"Ethereal Echoes"**,
+a 78-character prompt, and **Create Music Video ENABLED** (`disabled === false`).
+
+That last point explains the reported symptom exactly: `isComposeReady` is
+`song != null && description.trim().length > 0`, so a handoff carrying the prompt **but no song**
+necessarily leaves the CTA disabled. "Prompt-only prefill" and "CTA enabled" cannot both be true.
+
+### The divergence is already recorded, and that is the crux
+
+`specs/areas/04-explore-community.md:197` already carries a ⚠️ note saying "this mock/prototype's
+code currently prefills the matched song and title too", and :201 says the product owner
+**reaffirmed the reduced V1 scope after seeing that finding**. So the code/spec gap is deliberate
+and known — the spec states V1's _intended_ scope while the prototype does more.
+
+What is new is that BARRY_KAO is now disputing the reduced scope itself.
+
+### Decision — keep the reduced V1 scope, and the reason is LICENSING (product owner, 2026-09-22)
+
+Option (a). **The community MV's track is licensed, so carrying it into a new creation is a
+music-rights problem** — not a scope preference. Supporting official music in the composer is a
+**next-version** feature. V1 carries prompt + video type only.
+
+Worth recording because the reason was never on the ticket: the earlier thread only said
+"第一版只會帶 prompt, video type", which reads like an arbitrary cut — which is why it was pushed
+back on.
+
+### Resolution
+
+`CommunityMvPlayer.tsx` → `createMv()` no longer seeds `song` (from `mv.matchedSong`) or
+`settings.title` (from `mv.title`). It had done both since 2026-08-05 (`cdba535c`).
+
+**The disabled CTA is now required behaviour, not a side effect.** `isComposeReady` is
+`song != null && description.trim().length > 0`, so a prompt-only handoff necessarily leaves
+"Create Music Video" disabled until the user picks a song. Recorded in the spec and asserted in
+e2e so it is not re-filed as a bug.
+
+Spec: `areas/04-explore-community.md` §3.3 — reduced scope restated with the licensing reason, and
+the ⚠️ divergence note that stood from 2026-09-12 is **resolved** and replaced.
+`CHANGELOG-SPEC.md` row added. Not a C1–C8 change (`check-rd-changelog.sh` exits 0).
+
+### Verified
+
+- e2e `YMW260910P0008` — asserts the prompt DID arrive **and** the CTA is disabled.
+  **Mutation-tested:** re-adding the song seeding turns it red. The test is new; the prefill
+  existed for six weeks with no test at all, which is why removing it would otherwise be silent.
+- Live at 1440px: `/watch?id=trend-adventurous-echoes` → Create MV → `/mv/room` with a
+  78-character prompt, **no song**, CTA **disabled**. Before the change the same path gave song
+  "Ethereal Echoes" and an enabled CTA.
+
+### Not verified
+
+- Local dev build only; not re-checked on `testing-ycm.makeupar.com`.
+- Visual gate not evaluated on this machine (macOS; only `-linux` baselines are maintained).
+
+### Reply comment (paste into eBug)
+
+> Confirmed as intended, and now enforced in code: Create MV from a community MV carries the
+> **prompt and video type only**. The reason is licensing — the music on a community MV is
+> licensed to that video, so we cannot hand that track to a new creation. Bringing official music
+> into the composer is planned for the next version, not this one.
+>
+> Please retest with this in mind: **the composer opens with "Create Music Video" disabled, and
+> that is correct.** It enables once you pick a song. Separately, our prototype had also been
+> pre-filling the matched song and title, which did not match this decision — that has been
+> removed, so the prototype and the spec now agree.
+>
+> Not yet on the test site — committed but not deployed.
+
+---
+
+## YMW260918P0006 — [AI Music Video] Imported audio thumbnail in Edit Storyboard inconsistent with mockup
+
+- ePF status: NewCreated · Priority: 5 · Severity: 2 · Handler: JASON_CHEN · Assignee: JUNHAO_CHEN
+- Reported by JOANNE_HSIEH, 2026-09-18 · Build 0918
+- Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260918P0006
+- Retrieved at: 2026-09-21 (run 2)
+- Triage: **Answered 2026-09-22 — NAB, mockup is what changes**
+- Local status: No code change, by decision.
+
+### Report
+
+- Result: MV Song thumbnail shows the visual-style image instead of a plain audio icon.
+- Expect Result: thumbnail should show only the audio icon, matching mockup.
+
+### Comment
+
+- **SMITH_LEE, 2026-09-21:** "app and web both draws thumbnail on song icon for user uploaded
+  audio. suggest update mockup if no concern."
+
+### Decision — accept the shipped behaviour, update the mockup (product owner, 2026-09-22)
+
+RD's proposal is taken: app and web both draw the thumbnail on the song icon for user-uploaded
+audio, so the **mockup** is the artifact that changes. **No code change**, and none was made.
+
+### Reply comment (paste into eBug)
+
+> Agreed with SMITH_LEE — the current behaviour is correct and stays as it is. Drawing the
+> thumbnail on the song icon for user-uploaded audio is consistent between app and web, so the
+> mockup will be updated rather than the implementation. No code change, so there is nothing to
+> retest here.
+
+---
+
+## YMW260918P0003 — [Mobile] Bottom sheet dialog can only be dragged by the handle bar
+
+- ePF status: NewCreated · Priority: 5 · Severity: 2 · Handler: JASON_CHEN
+- Reported by CRUZ_CHU, 2026-09-18 · Build 0918 · Related: `YMW260909P0003`
+- Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260918P0003
+- Retrieved at: 2026-09-21 (run 2) — **previously deferred, now triaged**
+- Triage: **Answered 2026-09-22 — NAB, handle-only is intended**
+- Local status: No code change, by decision.
+- Related code/spec: `src/components/mv/MvSheet.tsx:94-120` (`onHandlePointerDown`), `:147-150`
+  (bound to `.mv-sheet__handle` only)
+
+### Report
+
+- Result: the dialog can only be dragged by the top handle bar.
+- Expect Result: "Please check if this is expected or needs to be adjusted." Compared against
+  Gemini's bottom-sheet pattern.
+
+### What the code does — the report is accurate
+
+`MvSheet` binds its drag to `onPointerDown` on `.mv-sheet__handle` and nowhere else. The comment
+there records why: the grab bar used to be **decorative**, and `YMW260909P0003` — the related
+issue the reporter cites — is what made it draggable at all. So this eBug is the natural follow-up
+to that one: the previous fix made the handle work, this one asks for the whole sheet.
+
+### Decision — keep handle-only, propose NAB (product owner, 2026-09-22)
+
+Dragging by the handle bar is the intended interaction. **No code change**, and none was made.
+(The trade that made this the easy call: several of these sheets scroll — Choose Song, Settings —
+and a body drag competes with that scroll unless it is gated on "already scrolled to top".)
+
+### Reply comment (paste into eBug)
+
+> This is expected behaviour — the bottom sheet is dragged by its handle bar and we are keeping it
+> that way, so this can be closed as NAB. The handle itself was made draggable by the related
+> YMW260909P0003; extending the drag to the sheet body would conflict with the sheets that have
+> scrollable content (e.g. Choose Song, Settings), where the drag and the scroll compete. No code
+> change, so there is nothing to retest.
+
+---
+
+## YMW260916P0020 — [Account] After sign out, UI doesn't popup sign in dialog
+
+- ePF status: Assigned · Priority: 3 · Severity: 2 · Handler/Assignee: JASON_CHEN
+- Reported by KURT_WANG, 2026-09-16 · Build 0916
+- Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260916P0020
+- Retrieved at: 2026-09-21 (run 2)
+- Triage: **Needs PM — the code question is closed, the remaining ask is not about code**
+- Local status: Decided 2026-09-17 (spec updated, no code change). **Reopened by new comments.**
+
+### Already decided
+
+`docs/BUGS-TO-FIX-2026-09-17.md` records it: SMITH_LEE proposed no popup, JASON_CHEN agreed
+2026-09-17, spec updated, no code change.
+
+### What is new (2026-09-21)
+
+- **ARIES_HONG, 08:01:** "Prototype does not update."
+- **KURT_WANG, 09:52:** "Hi PM, Please help update prototype."
+
+### Decision needed
+
+Both new comments ask for a **prototype** update, not a code change — and this session cannot act
+on that without knowing which artifact is meant. `ycmuse-app-prototype/` in this repo is
+READ-ONLY reference by `CLAUDE.md`, and the Figma/mockup prototype is owned outside it. Which
+prototype is being asked for, and is any part of it ours to change?
+
+---
+
+## YMW260902P0006 — [AI Song] Custom result omits submitted lyrics section markers
+
+- ePF status: Assigned · Priority: 4 · Severity: 2 · Handler/Assignee: JASON_CHEN
+- Reported by BARRY_KAO, 2026-09-02 · Build 0902 · Note: `MUSE-SONG-0826-S012-B002`
+- Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260902P0006
+- Retrieved at: 2026-09-21 (run 2)
+- Triage: **Spec-only task, scope needs confirming**
+- Local status: Pulled, no code change
+
+### Report
+
+Submitted lyrics contain `[intro]`, `[verse]`, `[chorus]`, `[bridge]`, `[outro]`; the result
+Lyrics panel omits all of them. Expect Result: render them as separate lines.
+
+### Comment thread — already proposed NAB twice
+
+- **SMITH_LEE, 2026-09-04:** "lyrics generated from engine. propose nab"
+- **JASON_CHEN, 2026-09-09:** "It's expected. Propose NAB"
+- **BARRY_KAO, 2026-09-21:** "If this behavior is expected, please provide screenshots and
+  descriptions in the updated spec."
+
+### Decision needed
+
+The behaviour question is settled (the engine returns lyrics without markers; not a defect). What
+is outstanding is purely documentation: BARRY_KAO wants the expected behaviour written into the
+spec **with screenshots**. Confirm the scope before it is written — which `specs/areas/*.md` row
+it belongs on (`03-song-creation.md`), and who supplies the screenshots, since these have to come
+from the real engine's output and cannot be produced from this mock.

@@ -1849,6 +1849,35 @@ test("3d / EXP-06: an unresolvable /watch id is a not-found state", async ({ pag
   await expect(page.getByRole("button", { name: "Explore Music Videos" })).toBeVisible();
 });
 
+test("YMW260910P0008: Create MV from /watch carries prompt + type ONLY, and the CTA is disabled", async ({
+  page,
+}) => {
+  // Product owner, 2026-09-22: V1 must NOT carry the community MV's matched song
+  // into a new creation — that track is licensed, and reusing it is a music-rights
+  // problem. Official music in the composer is a next-version feature.
+  //
+  // This needs a behaviour test precisely because the removal is invisible: the
+  // handoff seeded `song` and `settings.title` from 2026-08-05 until now, NO test
+  // ever asserted it, and the spec spent ten days recording the divergence as
+  // known-and-accepted. Nothing would have gone red either when it was added or
+  // when it was taken away.
+  //
+  // The disabled CTA is asserted as a REQUIREMENT, not tolerated as a side effect:
+  // `isComposeReady` needs a song, so "prompt-only prefill" and "CTA enabled"
+  // cannot both hold. Re-adding a song to make the button light up is the
+  // licensing bug coming back.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/watch?id=trend-adventurous-echoes");
+  await page.getByRole("button", { name: /Create MV/ }).click();
+  await page.waitForURL("**/mv/room");
+
+  // The prompt DID come across — this is not "the handoff stopped working".
+  await expect(page.locator("textarea").first()).not.toHaveValue("");
+  // The song did not, so the room is still asking for one.
+  await expect(page.getByRole("button", { name: "Create Music Video" })).toBeDisabled();
+});
+
 test("3d / GL-02: Create MV from /watch requires sign-in", async ({ page }) => {
   // NOT logged in — the gate is at the action, not the route.
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -3686,6 +3715,40 @@ test("item 3: the row href matches where the click actually goes", async ({ page
   for (const href of hrefs) expect(href).toMatch(/^\/jpn\//);
   expect(hrefs.some((h) => h.startsWith("/jpn/mv/result?id="))).toBe(true);
   expect(hrefs.some((h) => h.startsWith("/jpn/song/result?id="))).toBe(true);
+});
+
+test("YMW260921P0015: the History tab survives opening a row and coming back", async ({ page }) => {
+  // Product owner, 2026-09-22: returning from a result page must land on the tab
+  // you left. It used to reset to All on all four tabs, because `filter` is seeded
+  // once per mount and a round trip is a fresh mount.
+  //
+  // Deliberately NOT done via `?tab=`: a URL write on every tab change is a page
+  // jump (`YMW260910P0001`, 2026-09-11), and that decision is untouched — the tab
+  // is remembered in module state instead. So this asserts the URL stays clean
+  // as well, or the fix would have quietly reversed a different decision.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+
+  await page.getByRole("button", { name: "Music Videos" }).click();
+  await expect(page).toHaveURL(/\/history$/); // picking a tab writes no query
+
+  await doneCover(page, "music-video").click();
+  await page.waitForURL(/\/mv\/result\?id=/);
+  await page.goBack();
+  await page.waitForURL(/\/history$/);
+
+  // The tab is still Music Videos, and the list is really filtered — not just the
+  // pill highlighted. Every row on this tab is an MV cover.
+  // `aria-pressed`, not `aria-selected` — `Tabs` renders toggle buttons, not an
+  // ARIA tablist (`RoomNavbar.tsx`).
+  await expect(page.getByRole("button", { name: "Music Videos" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  const rows = page.locator(".history-card");
+  await expect(rows.first()).toBeVisible();
+  expect(await page.locator(".history-card__cover--song").count()).toBe(0);
 });
 
 test("items 1/2: Back on both result screens returns to /history", async ({ page }) => {
