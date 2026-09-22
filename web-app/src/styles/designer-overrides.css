@@ -4685,3 +4685,61 @@ button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* `ImageLightbox` (src/components/ui/ImageLightbox.tsx) — extracted
+   2026-09-22 on its second consumer. Values copied verbatim from
+   `MvEditor.tsx`'s original inline Cover Image lightbox (previously
+   `.mv-edit__lightbox-*`, itself WA-authored content that happened to live
+   inside the gated `MVEditPage.css`) — that markup is what
+   `StoryboardEditor.tsx`'s character-image lightbox was asked to match
+   exactly, so this is the one canonical implementation both now share
+   instead of `StoryboardEditor` keeping its own near-duplicate (which put
+   the close button at the enlarged image's own corner instead of the
+   screen's — the actual complaint that started this). */
+.image-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.image-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  cursor: pointer;
+}
+
+.image-lightbox-close-icon {
+  width: 18px;
+  height: 18px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.image-lightbox-image {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 14px;
+  object-fit: contain;
+  box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
+}

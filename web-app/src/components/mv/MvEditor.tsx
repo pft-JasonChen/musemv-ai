@@ -12,6 +12,7 @@ import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { Modal } from "@/components/ui/Modal";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { Button } from "@/components/ui/Button";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
@@ -189,15 +190,6 @@ export function MvEditor() {
     const t = setTimeout(() => router.replace(localePath(locale, "/mv/room")), 400);
     return () => clearTimeout(t);
   }, [storyboard, router, locale]);
-
-  useEffect(() => {
-    if (!coverLightbox) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setCoverLightbox(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [coverLightbox]);
 
   if (!storyboard) return null;
 
@@ -824,33 +816,12 @@ export function MvEditor() {
           document.body,
         )}
 
-      {coverLightbox &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="mv-edit__lightbox-overlay"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Cover image preview"
-            onClick={() => setCoverLightbox(false)}
-          >
-            <button
-              type="button"
-              className="mv-edit__lightbox-close"
-              onClick={() => setCoverLightbox(false)}
-              aria-label="Close"
-            >
-              <DpIcon name="ic_close" className="mv-edit__lightbox-close-icon" />
-            </button>
-            <img
-              src={activeCover}
-              alt=""
-              className="mv-edit__lightbox-image"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>,
-          document.body,
-        )}
+      <ImageLightbox
+        src={activeCover}
+        alt="Cover image preview"
+        open={coverLightbox}
+        onClose={() => setCoverLightbox(false)}
+      />
 
       <Modal
         open={deleteConfirm}

@@ -1,13 +1,14 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -22,7 +23,6 @@ import {
 import { formatDuration, SAMPLE_AUDIO } from "@/lib/mv/mock";
 import { buildTimedLines } from "@/lib/mv/lyrics";
 import { downloadFile } from "@/lib/download";
-import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 
 const fmtTs = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
@@ -96,14 +96,7 @@ export function StoryboardEditor() {
   const { credits } = useCredits();
   const [buyOpen, setBuyOpen] = useState(false);
   const [storylineOpen, setStorylineOpen] = useState(true);
-  // Product owner, 2026-09-22: the character image's "expand" button now
-  // opens the same real browser fullscreen the video buttons use elsewhere
-  // (`toggleMvFullscreen`/`useIsFullscreen`, `src/lib/fullscreen.ts`),
-  // replacing what used to be its own bespoke in-page lightbox overlay. No
-  // `<video>` to pass for the iOS fallback — this is a still image, and the
-  // helper already handles a `null` video argument.
-  const charImageRef = useRef<HTMLDivElement>(null);
-  const isCharFullscreen = useIsFullscreen();
+  const [previewOpen, setPreviewOpen] = useState(false);
   // The MV song is play-only here — the song is locked after creation, so this
   // section only previews it. Fall back to the demo track so the control is
   // functional for library/sample songs that carry no local URL.
@@ -136,7 +129,6 @@ export function StoryboardEditor() {
     return () => clearTimeout(t);
   }, [storyboard, router, locale]);
 
-
   if (!storyboard) return null;
 
   const updateScene = (id: string, text: string) =>
@@ -157,7 +149,7 @@ export function StoryboardEditor() {
           <div className="mv-storyboard__section mv-storyboard__section--visual-style">
             <p className="mv-storyboard__label">VISUAL STYLE</p>
             <div className="mv-storyboard__visual-style-row">
-              <div className="mv-storyboard__char-image" ref={charImageRef}>
+              <div className="mv-storyboard__char-image">
                 <img
                   src={storyboard.characterImage}
                   alt="Storyboard character"
@@ -177,13 +169,10 @@ export function StoryboardEditor() {
                 <button
                   type="button"
                   className="mv-storyboard__char-expand"
-                  onClick={() => toggleMvFullscreen(charImageRef.current, null)}
-                  aria-label={isCharFullscreen ? "Exit fullscreen" : "Expand character image"}
+                  onClick={() => setPreviewOpen(true)}
+                  aria-label="Expand character image"
                 >
-                  <img
-                    src={`/assets/icons/ui/${isCharFullscreen ? "ic_shrink" : "ic_expand"}.svg`}
-                    alt=""
-                  />
+                  <img src="/assets/icons/ui/ic_expand.svg" alt="" />
                 </button>
               </div>
               <div className="mv-storyboard__input-box">
@@ -363,6 +352,13 @@ export function StoryboardEditor() {
           </div>
         </div>
       </div>
+
+      <ImageLightbox
+        src={storyboard.characterImage}
+        alt="Character image preview"
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
 
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
     </>
