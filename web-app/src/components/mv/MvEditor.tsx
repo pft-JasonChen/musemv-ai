@@ -12,6 +12,7 @@ import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { Modal } from "@/components/ui/Modal";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { Button } from "@/components/ui/Button";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
@@ -21,6 +22,7 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import { downloadFile } from "@/lib/download";
+import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 import {
   COST_COVER,
   COST_MERGE,
@@ -168,6 +170,9 @@ export function MvEditor() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  // Same fix as `MvResult.tsx` — see its comment and `useIsFullscreen`'s own
+  // header comment in `src/lib/fullscreen.ts`.
+  const isFullscreen = useIsFullscreen();
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   // Product owner, 2026-09-16: hover-revealed volume-slider popup on the mute
@@ -185,15 +190,6 @@ export function MvEditor() {
     const t = setTimeout(() => router.replace(localePath(locale, "/mv/room")), 400);
     return () => clearTimeout(t);
   }, [storyboard, router, locale]);
-
-  useEffect(() => {
-    if (!coverLightbox) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setCoverLightbox(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [coverLightbox]);
 
   if (!storyboard) return null;
 
@@ -443,21 +439,29 @@ export function MvEditor() {
             </div>
 
             <div ref={previewRef} className="mv-edit__preview">
-              <video
-                ref={videoRef}
-                className="mv-edit__preview-video mv-edit__preview-video--portrait"
-                src={activeVideo}
-                poster={clipCover(selectedClip)}
-                autoPlay
-                loop
-                muted={muted}
-                playsInline
-                onPlay={() => setPlaying(true)}
-                onPause={() => setPlaying(false)}
-                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-                onClick={togglePlay}
-              />
+              {/* Product owner, 2026-09-22 follow-up: the controls bar and the
+                  download button go back to spanning/anchoring against the
+                  FULL preview box (DP's original behavior) — only the video
+                  itself stays letterboxed inside `.mv-edit__preview-frame`
+                  (designer-overrides.css), which now exists purely to size
+                  the video and is no longer read by anything else. */}
+              <div className="mv-edit__preview-frame">
+                <video
+                  ref={videoRef}
+                  className="mv-edit__preview-video mv-edit__preview-video--fill"
+                  src={activeVideo}
+                  poster={clipCover(selectedClip)}
+                  autoPlay
+                  loop
+                  muted={muted}
+                  playsInline
+                  onPlay={() => setPlaying(true)}
+                  onPause={() => setPlaying(false)}
+                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                  onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                  onClick={togglePlay}
+                />
+              </div>
               {/* A <button>, not DP's download anchor: `guard-greps.sh` bans a
                   literal internal href, and this is a real action anyway. */}
               <button
@@ -522,10 +526,16 @@ export function MvEditor() {
                 <button
                   type="button"
                   className="mv-edit__control-btn"
-                  onClick={() => previewRef.current?.requestFullscreen?.().catch(() => {})}
-                  aria-label="Fullscreen"
+                  // Same fix as `MvResult.tsx`'s fullscreen button — see its
+                  // comment for why the shared helper replaces a bare
+                  // `requestFullscreen` call.
+                  onClick={() => toggleMvFullscreen(previewRef.current, videoRef.current)}
+                  aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
                 >
-                  <DpIcon name="ic_expand" className="mv-edit__control-icon" />
+                  <DpIcon
+                    name={isFullscreen ? "ic_shrink" : "ic_expand"}
+                    className="mv-edit__control-icon"
+                  />
                 </button>
               </div>
             </div>
@@ -806,33 +816,12 @@ export function MvEditor() {
           document.body,
         )}
 
-      {coverLightbox &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            className="mv-edit__lightbox-overlay"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Cover image preview"
-            onClick={() => setCoverLightbox(false)}
-          >
-            <button
-              type="button"
-              className="mv-edit__lightbox-close"
-              onClick={() => setCoverLightbox(false)}
-              aria-label="Close"
-            >
-              <DpIcon name="ic_close" className="mv-edit__lightbox-close-icon" />
-            </button>
-            <img
-              src={activeCover}
-              alt=""
-              className="mv-edit__lightbox-image"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>,
-          document.body,
-        )}
+      <ImageLightbox
+        src={activeCover}
+        alt="Cover image preview"
+        open={coverLightbox}
+        onClose={() => setCoverLightbox(false)}
+      />
 
       <Modal
         open={deleteConfirm}

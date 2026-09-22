@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
@@ -133,6 +133,19 @@ export function MvRoom() {
   const [buyOpen, setBuyOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<number | null>(null);
+  // Product owner, 2026-09-22: "Create MV Directly" gets a 3s preparing
+  // transition (blurred glass + the app's one 3-dot loading animation)
+  // before `/mv/creating`; "Create Storyboard First" does not — it goes
+  // straight to `/mv/thinking` exactly as before. This is a same-screen
+  // overlay, NOT a route-level `loading.tsx`/Suspense fallback — that path
+  // is spec'd shut (`AC-MV-22`) after it broke e2e for every route in the
+  // app (see `docs/BUGS-TO-FIX-2026-09-21.md`, YMW260911P0004).
+  const [preparing, setPreparing] = useState(false);
+  const preparingTimeoutRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    return () => window.clearTimeout(preparingTimeoutRef.current);
+  }, []);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -295,7 +308,16 @@ export function MvRoom() {
       return;
     }
     resetForNewMv(); // discard any storyboard/result from a previous MV before starting fresh
-    router.push(localePath(locale, mode === "storyboard_first" ? "/mv/thinking" : "/mv/creating"));
+    if (mode === "storyboard_first") {
+      router.push(localePath(locale, "/mv/thinking"));
+      return;
+    }
+    // Product owner, 2026-09-22: "Create MV Directly" only — the 3s
+    // preparing overlay below runs, then this navigates on its own.
+    setPreparing(true);
+    preparingTimeoutRef.current = window.setTimeout(() => {
+      router.push(localePath(locale, "/mv/creating"));
+    }, 3000);
   }
 
   const settingsChips: [string, boolean][] = [
@@ -854,6 +876,18 @@ export function MvRoom() {
           setTemplatesOpen(false);
         }}
       />
+      {preparing && (
+        <div className="mv-create__preparing-overlay" role="status" aria-label="Preparing">
+          {/* Same 3-dot markup/classes as `HistoryView`'s `HistoryLoadingDots` —
+              product owner, 2026-09-14: one loading UI app-wide, not a new one
+              per screen. */}
+          <div className="history-page__loading-dots">
+            <span className="history-page__loading-dot history-page__loading-dot--1" />
+            <span className="history-page__loading-dot history-page__loading-dot--2" />
+            <span className="history-page__loading-dot history-page__loading-dot--3" />
+          </div>
+        </div>
+      )}
     </>
   );
 }

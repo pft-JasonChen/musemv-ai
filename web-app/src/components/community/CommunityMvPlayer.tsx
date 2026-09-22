@@ -10,7 +10,7 @@ import { SeekBar } from "@/components/ui/SeekBar";
 import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { DetailNavbar, useBackNavigation } from "@/components/shell/DetailNavbar";
 import { buildShareUrl } from "@/lib/share";
-import { toggleMvFullscreen } from "@/lib/fullscreen";
+import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -206,6 +206,10 @@ export function CommunityMvPlayer() {
   // path (`mvIndex < 0`, a single plain `<video>`) it's just that video.
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
+  // Reported bug, 2026-09-22 (found on `/mv/edit`, same shared button
+  // everywhere): the fullscreen icon never changed once already fullscreen.
+  // See `useIsFullscreen`'s header comment in `src/lib/fullscreen.ts`.
+  const isFullscreen = useIsFullscreen();
   const [playing, setPlaying] = useState(true);
   // ── SOUND ON BY DEFAULT (YMW260902P0002) ──────────────────────────────────
   // Was `true`: clicking a Trending MV on Home landed on a silent video, and
@@ -815,9 +819,12 @@ export function CommunityMvPlayer() {
                 type="button"
                 className="mv-player__control-btn mv-player__fullscreen"
                 onClick={toggleFullscreen}
-                aria-label="Fullscreen"
+                aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
               >
-                <DpIcon name="ic_expand" className="mv-player__control-icon" />
+                <DpIcon
+                  name={isFullscreen ? "ic_shrink" : "ic_expand"}
+                  className="mv-player__control-icon"
+                />
               </button>
             </div>
           </div>

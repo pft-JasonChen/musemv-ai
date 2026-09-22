@@ -8,6 +8,7 @@ import { DpIcon } from "@/components/ui/DpIcon";
 import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -127,15 +128,6 @@ export function StoryboardEditor() {
     const t = setTimeout(() => router.replace(localePath(locale, "/mv/room")), 400);
     return () => clearTimeout(t);
   }, [storyboard, router, locale]);
-
-  useEffect(() => {
-    if (!previewOpen) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setPreviewOpen(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [previewOpen]);
 
   if (!storyboard) return null;
 
@@ -361,27 +353,12 @@ export function StoryboardEditor() {
         </div>
       </div>
 
-      {previewOpen && (
-        <div
-          className="mv-storyboard__image-preview-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Character image preview"
-          onClick={() => setPreviewOpen(false)}
-        >
-          <div className="mv-storyboard__image-preview" onClick={(e) => e.stopPropagation()}>
-            <img src={storyboard.characterImage} alt="Storyboard character enlarged" />
-            <button
-              type="button"
-              className="mv-storyboard__image-preview-close"
-              onClick={() => setPreviewOpen(false)}
-              aria-label="Close image preview"
-            >
-              <img src="/assets/icons/ui/ic_close.svg" alt="" />
-            </button>
-          </div>
-        </div>
-      )}
+      <ImageLightbox
+        src={storyboard.characterImage}
+        alt="Character image preview"
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
 
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
     </>

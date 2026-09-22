@@ -743,6 +743,37 @@
   cursor: pointer;
 }
 
+/* First reported, 2026-09-22 (screenshot of the fullscreen view): the mute/
+   fullscreen buttons sat stranded far to the right, with a wide gap of empty
+   black space between them and the actual (portrait, letterboxed) video.
+   First attempt made the download button and the controls bar measure
+   their `absolute` positioning against the video's own narrower footprint
+   instead of the container's — reverted the same day (product owner
+   follow-up): the button and the controls bar are supposed to keep
+   spanning/anchoring against the FULL `.mv-edit__preview` box, matching
+   DP's original behavior. `.mv-edit__preview-frame` is what's left of that
+   attempt — it still exists, scoped down to ONLY size the `<video>` itself
+   (reproducing `.mv-edit__preview-video--portrait`'s own formula: height:
+   100%, width: auto, aspect-ratio: 9/16, one level up as a `position:
+   relative` wrapper around just the video), because the video staying
+   letterboxed was never in question, only what measured against what.
+   `.mv-edit__preview-video--fill` replaces `--portrait` on the `<video>`
+   itself (now it just fills the frame exactly); the gated `--portrait` rule
+   is left completely untouched/unused rather than overridden, since
+   overriding a rule a future drop still reads by that name is exactly the
+   "override becomes the bug" trap `AGENTS.md` warns about. */
+.mv-edit__preview-frame {
+  position: relative;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 9 / 16;
+}
+
+.mv-edit__preview-video--fill {
+  width: 100%;
+  height: 100%;
+}
+
 /* `/mv/edit` (`MvEditor.tsx`) — same recipe, see the block comment above
    `.mv-result__volume`. */
 .mv-edit__volume {
@@ -1663,6 +1694,27 @@
    135deg value — not switched over here since that wasn't asked for). */
 .mv-create__cta--active {
   background: var(--gradient-mv);
+}
+
+/* Product owner, 2026-09-22 — "Create MV Directly" (not "Create Storyboard
+   First") gets a 3s preparing transition before `/mv/creating`: the same
+   blurred-glass full-screen shell every dialog/sheet overlay in this app
+   already uses (`.mv-sheet-backdrop`/`.login-modal-backdrop`, both
+   `rgba(0,0,0,0.6)` + `blur(2px)`, `z-index: 200`) around the app's one
+   3-dot loading animation (`.history-page__loading-dots`, reused directly —
+   product owner, 2026-09-14: one loading UI, not a new one per screen). No
+   dialog card, so no `useDialogTransition` fade — it never closes on its
+   own terms, `MvRoom.tsx`'s own timeout just navigates away after 3s. */
+.mv-create__preparing-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 /* Product owner request, 2026-08-14 — Figma's "Upload Character Photo" circle
@@ -4632,4 +4684,62 @@
 button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* `ImageLightbox` (src/components/ui/ImageLightbox.tsx) — extracted
+   2026-09-22 on its second consumer. Values copied verbatim from
+   `MvEditor.tsx`'s original inline Cover Image lightbox (previously
+   `.mv-edit__lightbox-*`, itself WA-authored content that happened to live
+   inside the gated `MVEditPage.css`) — that markup is what
+   `StoryboardEditor.tsx`'s character-image lightbox was asked to match
+   exactly, so this is the one canonical implementation both now share
+   instead of `StoryboardEditor` keeping its own near-duplicate (which put
+   the close button at the enlarged image's own corner instead of the
+   screen's — the actual complaint that started this). */
+.image-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.image-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  cursor: pointer;
+}
+
+.image-lightbox-close-icon {
+  width: 18px;
+  height: 18px;
+  background-color: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.image-lightbox-image {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 14px;
+  object-fit: contain;
+  box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
 }
