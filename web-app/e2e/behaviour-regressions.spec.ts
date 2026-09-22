@@ -322,6 +322,38 @@ for (const route of GUARDED_ROUTES) {
   });
 }
 
+test("YMW260916P0020: signing out goes Home WITHOUT re-opening the sign-in modal", async ({
+  page,
+}) => {
+  // Sign Out lives on /settings, which is itself in GUARDED_ROUTES above. So
+  // flipping `loggedIn` to false tripped the guard on the very page the user was
+  // standing on, and asked them to sign back in the instant they asked to leave.
+  // Product owner ruled 2026-09-17 that there is no automatic sign-in popup after
+  // sign-out; the prototype was still doing it, reproduced 2026-09-22 both on
+  // musemv-ai.vercel.app and locally (URL was home AND `.login-modal--sign-in`
+  // was mounted).
+  //
+  // The GUEST half of the guard is already covered by the `G5-d#3` loop directly
+  // above, and that pairing is the point: "stop opening the modal" must not be
+  // implementable by deleting the gate. Both tests have to pass together.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/settings");
+
+  await page.locator(".account-page__row").filter({ hasText: "Sign Out" }).click();
+  await page.waitForURL((url) => new URL(url).pathname === "/");
+
+  // Really signed out — otherwise "no modal" would be trivially true.
+  await expect(page.getByRole("button", { name: /Log ?in|Sign ?in/i }).first()).toBeVisible();
+
+  // Absence has to be asserted over time, not once: the modal was opened by an
+  // effect, so a single check right after the navigation can pass before the
+  // effect has even run.
+  await expect(page.locator(".login-modal--sign-in")).toHaveCount(0);
+  await page.waitForTimeout(1500);
+  await expect(page.locator(".login-modal--sign-in")).toHaveCount(0);
+});
+
 test("G5-d#3 /mv/room is guest-reachable, unlike the routes above", async ({ page }) => {
   // No login() — arrive as a guest. If `/mv/room` were still behind AuthGuard
   // this would render nothing and pop the sign-in dialog, same as the loop above.

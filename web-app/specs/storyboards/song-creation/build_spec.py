@@ -403,7 +403,8 @@ cfg = {
                     'exact': ['Genre &middot; mood line format: &ldquo;Pop &middot; Uplifting&rdquo;'],
                     'limits': [
                         'Custom mode plus typed lyrics is what produces the Lyrics panel &mdash; Simple mode never does (P1-S7).',
-                        'Section markers ([intro], [verse], [chorus], [bridge], [outro]) render as their own lines, same as typed.',
+                        ('Section markers ([intro], [verse], [chorus], [bridge], [outro]) render as their own lines HERE because this prototype echoes the text you typed. The real product does not show them &mdash; expected, not a defect (YMW260902P0006 / AC-SONG-21).',
+                         'They are an instruction to the engine about song structure, not text to be sung back, so the engine returns generated lyric lines without them. The capture above is the prototype, so it still shows the markers; it is deliberately not being re-shot. NAB confirmed by the product owner 2026-09-22.'),
                         ('Since 2026-09-09 (YMW260903P0005 / AC-SONG-18) every line here seeks to its own timestamp on click. Pixel-identical to this capture &mdash; the change is the affordance, not the appearance.',
                          'For a song the backend has timed, the DISPLAYED lines come from the LRC rather than from the typed text, and the two can differ: the sung line list splits, repeats and ad-libs, and carries no section markers. In the prototype only the vendored Neon Static sample is timed that way.'),
                     ],

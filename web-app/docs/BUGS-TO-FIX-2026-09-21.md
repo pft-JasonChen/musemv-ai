@@ -291,8 +291,8 @@ own merits, whatever the gate was doing. Rule recorded in `AGENTS.md` → Archit
 | 2   | `YMW260910P0008` | ✅ **Fixed** — licensed song + title removed from the handoff | Committed, not pushed |
 | 3   | `YMW260918P0006` | 🚫 **NAB** — accept shipped behaviour, mockup to be updated   | No code change        |
 | 4   | `YMW260918P0003` | 🚫 **NAB** — handle-only drag is intended                     | No code change        |
-| 5   | `YMW260916P0020` | ⏸️ **Open** — asks for a _prototype_ update, not code         | Awaiting PM           |
-| 6   | `YMW260902P0006` | ⏸️ **Open** — spec-documentation scope unconfirmed            | Awaiting PM           |
+| 5   | `YMW260916P0020` | ✅ **Fixed** — sign-out no longer re-opens the sign-in modal   | Committed + pushed    |
+| 6   | `YMW260902P0006` | 📝 **Documented** — `AC-SONG-21` + storyboard rule corrected   | Committed + pushed    |
 
 All six were triaged first and **none was implemented before the product owner answered**. Two
 turned out not to be defects in this repo, and both were established by measurement rather than by
@@ -567,8 +567,8 @@ and a body drag competes with that scroll unless it is gated on "already scrolle
 - Reported by KURT_WANG, 2026-09-16 · Build 0916
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260916P0020
 - Retrieved at: 2026-09-21 (run 2)
-- Triage: **Needs PM — the code question is closed, the remaining ask is not about code**
-- Local status: Decided 2026-09-17 (spec updated, no code change). **Reopened by new comments.**
+- Triage: **Answered 2026-09-22 — it IS our prototype, and it was a real code defect**
+- Local status: **Fixed + verified.** Committed and pushed.
 
 ### Already decided
 
@@ -580,12 +580,64 @@ and a body drag competes with that scroll unless it is gated on "already scrolle
 - **ARIES_HONG, 08:01:** "Prototype does not update."
 - **KURT_WANG, 09:52:** "Hi PM, Please help update prototype."
 
-### Decision needed
+### Decision — the "prototype" IS this repo (product owner, 2026-09-22)
 
-Both new comments ask for a **prototype** update, not a code change — and this session cannot act
-on that without knowing which artifact is meant. `ycmuse-app-prototype/` in this repo is
-READ-ONLY reference by `CLAUDE.md`, and the Figma/mockup prototype is owned outside it. Which
-prototype is being asked for, and is any part of it ours to change?
+`https://musemv-ai.vercel.app` is **our** Vercel deployment of `web-app/`. So this was a real code
+defect after all, not a request to update someone else's artifact.
+
+**This also corrects an assumption that ran through the whole of run 2:** earlier entries treated
+`testing-ycm.makeupar.com` as this repo's deployment. It is not — that is RD's build of the real
+product, and `musemv-ai.vercel.app` is ours. That is why `YMW260910P0008`'s observed behaviour
+could not be reproduced here: QA was testing a different codebase.
+
+### Root cause
+
+`AuthGuard` opened the sign-in modal whenever `hydrated && !loggedIn`, and **Sign Out lives on
+`/settings`, which is itself an `AuthGuard`ed route.** So signing out tripped the guard on the very
+page the user was standing on and immediately asked them to sign back in. `!loggedIn` alone cannot
+distinguish the two ways a guard is reached logged-out:
+
+- **arrived as a guest** → prompt (correct, and still required)
+- **signed out while here** → leave quietly (what was broken)
+
+Reproduced 2026-09-22 locally before touching anything: after Sign Out the URL was `/cht` **and**
+`.login-modal--sign-in` was mounted.
+
+### Resolution
+
+`AuthGuard.tsx` keeps a `wasSignedIn` ref — whether this mount ever observed a signed-in user. On
+logging out it now `router.replace`s Home **without** calling `requireLogin`; a guest arriving cold
+still gets the modal. `SettingsView`'s own `router.push("/")` is unchanged and agrees on the
+destination.
+
+No spec change: the 2026-09-17 correction already states there is no automatic popup after
+sign-out. The code simply did not implement it.
+
+### Verified
+
+- e2e `YMW260916P0020`, asserting absence **over time** (the modal was opened by an effect, so a
+  single check right after the navigation can pass before the effect has run).
+  **Mutation-tested:** removing the sign-out branch turns it red — and, importantly, the four
+  `G5-d#3 AuthGuard: … is closed to guests` tests stayed GREEN under that mutation, which is what
+  proves the two halves are independently covered. A fix that just stopped opening the modal would
+  have deleted the guest gate silently.
+- Live at 1440px, both halves: Sign Out from `/settings` → home, **no modal of any kind**,
+  `muse_auth` cleared; and a guest opening `/history` → **still prompted**.
+
+### Not verified
+
+- Local dev build. `musemv-ai.vercel.app` should be re-checked after this deploys.
+
+### Reply comment (paste into eBug)
+
+> Fixed on our prototype. Signing out now returns you to the home page without the sign-in dialog
+> appearing — which matches the behaviour agreed on 2026-09-17 (no automatic sign-in prompt after
+> sign-out). The dialog was appearing because Sign Out sits on the Settings page, which is itself
+> a signed-in-only page, so signing out was triggering that page's own sign-in gate.
+>
+> To retest once it is deployed, please check both: signing out should show no dialog, and opening
+> a signed-in-only page (e.g. History) while logged out should still show the sign-in dialog as
+> before. The second one is unchanged and deliberately so.
 
 ---
 
@@ -595,8 +647,8 @@ prototype is being asked for, and is any part of it ours to change?
 - Reported by BARRY_KAO, 2026-09-02 · Build 0902 · Note: `MUSE-SONG-0826-S012-B002`
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260902P0006
 - Retrieved at: 2026-09-21 (run 2)
-- Triage: **Spec-only task, scope needs confirming**
-- Local status: Pulled, no code change
+- Triage: **Answered 2026-09-22 — NAB; correct the spec wording, keep the screenshots**
+- Local status: **Spec updated.** Committed and pushed.
 
 ### Report
 
@@ -610,10 +662,51 @@ Lyrics panel omits all of them. Expect Result: render them as separate lines.
 - **BARRY_KAO, 2026-09-21:** "If this behavior is expected, please provide screenshots and
   descriptions in the updated spec."
 
-### Decision needed
+### Decision — correct the spec WORDING only; screenshots stay (product owner, 2026-09-22)
 
-The behaviour question is settled (the engine returns lyrics without markers; not a defect). What
-is outstanding is purely documentation: BARRY_KAO wants the expected behaviour written into the
-spec **with screenshots**. Confirm the scope before it is written — which `specs/areas/*.md` row
-it belongs on (`03-song-creation.md`), and who supplies the screenshots, since these have to come
-from the real engine's output and cannot be produced from this mock.
+"調整 spec 字串就好，不用更動示意圖." So no captures were re-shot, and none needed to be — the
+existing ones are pictures of the prototype, which is itself the point being documented.
+
+### What was actually wrong in the spec
+
+The Song Creation storyboard asserted the **opposite** of the agreed behaviour. `SONG-P2-S11`
+read: _"Section markers ([intro], [verse], [chorus], [bridge], [outro]) render as their own lines,
+same as typed."_ That is true of this prototype and false of the product, so the spec was
+endorsing the very thing the eBug was filed against — which is a fair reading of why `BARRY_KAO`
+kept pushing back rather than accepting NAB.
+
+### Resolution — documentation only, no code
+
+- **New `AC-SONG-21`** in `areas/03-song-creation.md`: the result panel shows the lines the ENGINE
+  returns, which carry no section markers; the markers are an instruction about song structure,
+  not text to be sung back; the system must not re-insert them. It also records the prototype
+  exception explicitly, and that the vendored **Neon Static** LRC sample is the one place this
+  repo behaves like the product.
+- **Storyboard rule rewritten** (`storyboards/song-creation/build_spec.py`, `SONG-P2-S11`) to say
+  the markers appear *here* because the prototype echoes typed text, and that the product does not
+  show them — cross-referenced to `AC-SONG-21`.
+- `spec.html` / `spec-bundled.html` and `specs/index.html` regenerated.
+
+**The screenshots are provably untouched.** `build_spec.py` needs Pillow to downscale the embedded
+captures, and without it the bundle went from 2.18 MB to 10.44 MB — i.e. re-encoding every image,
+exactly what "不用更動示意圖" rules out. Pillow was installed and it was regenerated: the file is
+now 457 bytes larger than the committed one (the text change), and all **32** embedded images hash
+byte-identical to the committed version.
+
+### Verified
+
+- Spec text only; no code path changed, so there is nothing behavioural to test.
+- `AC-SONG-21` confirmed present in the regenerated `specs/index.html`.
+
+### Reply comment (paste into eBug)
+
+> Confirmed as expected behaviour (NAB), and the spec now says so explicitly rather than leaving it
+> on the ticket. The section markers ([intro], [verse], [chorus], [bridge], [outro]) are an
+> instruction to the generation engine about song structure, not lyrics to be sung back, so the
+> engine returns generated lyric lines without them and the result panel correctly shows none.
+>
+> We also found the spec was stating the opposite — the Song Creation storyboard said the markers
+> "render as their own lines, same as typed", which was describing our prototype rather than the
+> product. That has been corrected, and a new acceptance criterion **AC-SONG-21** records the
+> expected behaviour. The existing screenshots are unchanged on purpose: they are captures of the
+> prototype, which is exactly the difference being documented.
