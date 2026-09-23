@@ -3,7 +3,7 @@
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
 <rect width="1180" height="1470" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">AI Music Video (MV) Creation &#8212; User Flowchart</text>
-<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v6, 2026-09-10</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v7, 2026-09-10</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">blue = system response &#183; amber = decision &#183; green = success / resolved &#183; red = error state</text>
 
 <g transform="translate(0,80)">
@@ -78,11 +78,10 @@
 <polygon points="590,948 693.635,980 590,1012 486.365,980" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
 <text x="590" y="985" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Job outcome</text>
 <line x1="590" y1="915" x2="590" y2="948" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<rect x="500" y="1060" width="180" height="80" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
+<rect x="500" y="1060" width="180" height="65" rx="8" fill="#e3f7ea" stroke="#6cc79a" stroke-width="1.5"/>
 <text x="590" y="1080" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/mv/result</text>
-<text x="590" y="1098" font-size="12" fill="#5a6b78" text-anchor="middle">P8: Like, Share, Publish</text>
-<text x="590" y="1113" font-size="12" fill="#5a6b78" text-anchor="middle">confirm, Recreate, Edit MV &#183;</text>
-<text x="590" y="1128" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S14</text>
+<text x="590" y="1098" font-size="12" fill="#5a6b78" text-anchor="middle">P8: Publish confirm, Share,</text>
+<text x="590" y="1113" font-size="12" fill="#5a6b78" text-anchor="middle">Recreate, Edit MV &#183; P1-S14</text>
 <line x1="590" y1="1012" x2="590" y2="1060" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <text x="602" y="1030" font-size="12" fill="#5a6b78" text-anchor="start">done</text>
 <rect x="180" y="1075" width="180" height="50" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
@@ -94,7 +93,7 @@
 <text x="590" y="1180" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/history</text>
 <text x="590" y="1198" font-size="12" fill="#5a6b78" text-anchor="middle">New row, prepended &#183;</text>
 <text x="590" y="1213" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S15, P2-S6</text>
-<line x1="590" y1="1140" x2="590" y2="1160" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="590" y1="1125" x2="590" y2="1160" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <line x1="40" y1="1266" x2="1140" y2="1266" stroke="#e5e9ed" stroke-width="1"/>
 <line x1="40" y1="1286" x2="74" y2="1286" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
 <text x="86" y="1290" font-size="12" fill="#5a6b78">Primary happy path</text>

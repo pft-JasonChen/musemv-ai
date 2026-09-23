@@ -3712,6 +3712,22 @@ test("item 3: a done MV row opens /mv/result, not a dialog", async ({ page }) =>
   await expect(page.locator("[role=dialog][aria-modal=true]")).toHaveCount(0);
 });
 
+test("YMW260921P0013: /mv/result shows no Like / Dislike until they persist", async ({ page }) => {
+  // Product owner + RD, 2026-09-22: the pair was local state, so a pick was
+  // gone after Back → reopen. Hidden until a patch saves it server-side.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+
+  await doneCover(page, "music-video").click();
+  await page.waitForURL(/\/mv\/result\?id=/);
+  await expect(page.locator(".mv-result__title")).toBeVisible();
+  await expect(page.locator(".mv-result__reactions")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /^(Like|Unlike|Dislike|Remove dislike)$/ }),
+  ).toHaveCount(0);
+});
+
 test("item 3: a done song row opens /song/result, not a dialog", async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });

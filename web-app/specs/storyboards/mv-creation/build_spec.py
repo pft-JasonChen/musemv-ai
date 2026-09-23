@@ -88,8 +88,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Music Video (MV) Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video',
-    'author': 'Jason Chen', 'date': '2026-09-10', 'status': 'Draft',
-    'version': 'v6',
+    'author': 'Jason Chen', 'date': '2026-09-23', 'status': 'Draft',
+    'version': 'v7',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -308,7 +308,7 @@ cfg = {
                 {
                     'shot': '14_mv_result_storyboard_first.png', 'num': 14,
                     'user': 'The render finishes.',
-                    'system': 'Navigates to /mv/result: looping muted video, Like/Dislike, Quick Actions, Publish toggle, and a Detail panel (AC-MV-10).',
+                    'system': 'Navigates to /mv/result: looping muted video, Quick Actions, Publish toggle, and a Detail panel (AC-MV-10). No Like/Dislike &mdash; hidden since v7 (YMW260921P0013).',
                     'exact': ['Title: &ldquo;Result&rdquo;'],
                     'limits': [
                         'The full control set is toured independently in P8, starting from a result screen just like this one.',
@@ -612,26 +612,11 @@ cfg = {
         {
             'id': 'p8-result-controls', 'num': 8,
             'name': 'Result screen &mdash; controls tour',
-            'desc': 'Five independent single-screen scenarios on /mv/result, starting from an already-generated result &mdash; not a continuation of P1/P2, and not a connected journey with each other.',
+            'desc': 'Four single-screen scenarios on /mv/result, starting from an already-generated result &mdash; not a continuation of P1/P2. S1&ndash;S3 run in order (Share only exists once the MV is published and approved); S4 is independent.',
             'entry': 'Arrives at an already-generated /mv/result (any path)', 'outcome': 'Varies per step',
             'steps': [
                 {
-                    'shot': '34_result_like.png', 'num': 1,
-                    'user': 'Taps Like.',
-                    'system': 'The thumbs-up fills solid; Dislike is mutually exclusive with it.',
-                    'limits': [('Like/Dislike is local-only &mdash; no API call, no History write, same pattern as the Song spec.', 'A user may like their own creation.')],
-                    'focus': [{'box': [89.2, 11.7, 2.5, 4.0], 'type': 'info', 'label': 'Like'}],
-                },
-                {
-                    'shot': '35_result_share_dialog.png', 'num': 2,
-                    'user': 'Taps Share.',
-                    'system': 'A dialog opens with a copyable public link to this MV.',
-                    'exact': ['Title: &ldquo;Share&rdquo;', 'Body: Shareable public link to &ldquo;{title}&rdquo;', 'Button: &ldquo;Copy&rdquo;'],
-                    'limits': [('Download saves the fixture render, not a per-row unique file (mock reality).',
-                                'Same limitation the Song spec&rsquo;s result screen has for its own Download.')],
-                },
-                {
-                    'shot': '36_result_publish_confirm.png', 'num': 3,
+                    'shot': '36_result_publish_confirm.png', 'num': 1,
                     'user': 'Turns the Publish toggle on.',
                     'system': 'A confirm dialog appears before publishing &mdash; unlike Song, which publishes with no confirmation step.',
                     'exact': [
@@ -644,7 +629,7 @@ cfg = {
                     'focus': [{'box': [49.9, 52.2, 10.5, 5.3], 'type': 'action', 'label': 'Confirm'}],
                 },
                 {
-                    'shot': '37_result_publish_pending.png', 'num': 4,
+                    'shot': '37_result_publish_pending.png', 'num': 2,
                     'user': 'Taps Confirm.',
                     'system': 'Publish reads &ldquo;In Review&rdquo; with the toggle still OFF, and Edit MV is REMOVED from Quick Actions.',
                     'since': 'v6',
@@ -659,7 +644,17 @@ cfg = {
                     ],
                 },
                 {
-                    'shot': '38_result_from_history.png', 'num': 5,
+                    'shot': '35_result_share_dialog.png', 'num': 3, 'since': 'v7',
+                    'user': 'Once the review approves it (the toggle turns On), taps Share.',
+                    'system': 'A dialog opens with a copyable public link to this MV.',
+                    'exact': ['Title: &ldquo;Share&rdquo;', 'Body: Shareable public link to &ldquo;{title}&rdquo;', 'Button: &ldquo;Copy&rdquo;'],
+                    'limits': [('Share is hidden while the MV is unpublished or In Review (YMW260916P0013).',
+                                'A share link to an unpublished MV resolves to nothing, so the control only appears once the MV is live &mdash; the same rule History&rsquo;s row menu applies.'),
+                               ('Download saves the fixture render, not a per-row unique file (mock reality).',
+                                'Same limitation the Song spec&rsquo;s result screen has for its own Download.')],
+                },
+                {
+                    'shot': '38_result_from_history.png', 'num': 4,
                     'user': 'Opens a completed MV from a /history row (cold start, no prior flow state).',
                     'system': 'Lands on /mv/result showing that row&rsquo;s MV, with a Back control and the row&rsquo;s data seeded fresh (AC-MV-18).',
                     'limits': [
@@ -680,7 +675,7 @@ cfg = {
         ('THINKING', '/mv/thinking after Storyboard First', 'Progress ring, step label, estimate, View Later', '&rarr; STORYBOARD_EDIT on done &middot; &rarr; FAILED on mock failure', 'On job outcome'),
         ('STORYBOARD_EDIT', '/mv/storyboard after a done storyboard job', 'Visual style / scenes editable, story / lyrics read-only, MV Song play-only, no Save', '&rarr; CREATING via Generate MV', 'On Generate MV'),
         ('CREATING', '/mv/creating after direct mode or Generate MV', 'Progress ring, step label, estimate, View Later', '&rarr; RESULT on done &middot; &rarr; FAILED on mock failure', 'On job outcome'),
-        ('RESULT', '/mv/result after a successful job', 'Player, Like/Dislike, Share, Download, Publish toggle, Recreate, Edit MV (absent while in review or published), Detail panel', '&rarr; MODE_SELECT via Recreate (returns to /mv/room) &middot; &rarr; History via Back', 'On navigation away'),
+        ('RESULT', '/mv/result after a successful job', 'Player, Download, Share (only once published), Publish toggle, Recreate, Edit MV (absent while in review or published), Detail panel &mdash; no Like/Dislike (v7)', '&rarr; MODE_SELECT via Recreate (returns to /mv/room) &middot; &rarr; History via Back', 'On navigation away'),
         ('FAILED', '/mv/thinking or /mv/creating after a mock failure', 'Generation Failed message; /mv/thinking shows Back only, /mv/creating shows Back + Retry', '&rarr; CREATING via Retry (creating only) &middot; &rarr; /mv/room via Back', 'On Retry (creating only) or Back'),
         ('Side rail: Trending MVs', 'SIGNED OUT (corrected 2026-09-09 &mdash; was &ldquo;or signed in with zero completed MVs&rdquo;)', 'NEW_MVS with a &ldquo;See all&rdquo; link (P7-S1)', '&rarr; My Creations on sign-in', '&mdash;'),
         ('Side rail: My Creations', 'Signed in (useMyCreations: live jobs + the seeded creations /history shows)', 'The user&rsquo;s own finished MVs, no &ldquo;See all&rdquo; (P7-S2)', '&rarr; Trending MVs on sign-out only; a reload drops just the live half', '&mdash;'),
@@ -753,7 +748,7 @@ cfg = {
         ('AC-MV-07', 'A done storyboard job navigates to /mv/storyboard populated with character image, song, visual style, story, scenes, and lyrics.', ['P1-S11']),
         ('AC-MV-08', 'Visual Style and Scene text are editable and ephemeral (no Save); MV Song is play-only; edits carry into the next Generate MV.', ['P1-S11']),
         ('AC-MV-09', 'Generate MV renders using the (possibly edited) storyboard and lands on /mv/result.', ['P1-S12', 'P1-S13', 'P1-S14']),
-        ('AC-MV-10', '/mv/result loops muted video and exposes Like/Dislike, Share, Download, a Publish toggle with a &ldquo;Ready to Go Public?&rdquo; confirm on turn-on, Recreate, and Edit MV (REMOVED while in review or published).', ['P1-S14', 'P8-S1', 'P8-S2', 'P8-S3', 'P8-S4']),
+        ('AC-MV-10', '/mv/result loops muted video and exposes Share (once published), Download, a Publish toggle with a &ldquo;Ready to Go Public?&rdquo; confirm on turn-on, Recreate, and Edit MV (REMOVED while in review or published). No Like/Dislike (YMW260921P0013).', ['P1-S14', 'P8-S1', 'P8-S2', 'P8-S3']),
         ('AC-MV-11', 'A failed job shows the error state with Back (storyboard) or Back + Retry (render/song), and marks the History row Failed.', ['P3-E2', 'P3-E3']),
         ('AC-MV-12', 'Regenerate scene / Recreate cover overwrite in place, with no picker and no undo, and decrement the balance.', [],
          'Edit MV only &mdash; out of scope here; owned by the mv-edit spec (S3).'),
@@ -764,7 +759,7 @@ cfg = {
          'Withdrawn in the area spec itself; superseded by AC-MV-19. Nothing should map to it.'),
         ('AC-MV-16', 'A track shorter than 30s is refused at UPLOAD with a toast, and trim stores {start,end} only when the selection is &ge;30s &mdash; below that Confirm is disabled with a minimum-30s hint.', ['P1-S4', 'P4-S5', 'P4-S6']),
         ('AC-MV-17', 'Imported audio accepts only MP3/AAC/WAV/M4A &le;50MB and rejects anything else with an error toast.', ['P4-S3', 'P4-S4']),
-        ('AC-MV-18', '/mv/result reached from a History row shows that row&rsquo;s MV, seeded fresh via useOpenCreation, with Back to /history.', ['P8-S5']),
+        ('AC-MV-18', '/mv/result reached from a History row shows that row&rsquo;s MV, seeded fresh via useOpenCreation, with Back to /history.', ['P8-S4']),
         ('AC-MV-18b', 'On the free plan, tapping High quality opens the subscribe IAP instead of selecting it.', ['P4-S8', 'P4-S9']),
         ('AC-MV-19', 'Storyboard/render generation charges its cost on start and refunds on failure; insufficient balance routes to the buy-credits IAP instead of generating.', ['P1-S10', 'P1-S13', 'P3-E2', 'P3-E3', 'P6-S1']),
         ('AC-MV-17b', '/mv/room, /mv/storyboard, /mv/result and /mv/edit render at 320/375/768/1024/1440/1920px with no overflow.', [],
@@ -818,6 +813,11 @@ cfg = {
     ],
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v7', '2026-09-23',
+         '<b>YMW260921P0013 &mdash; Like / Dislike are HIDDEN on /mv/result.</b> Product owner with RD, 2026-09-22: the thumbs-up / thumbs-down pair was local-only, so a pick was lost on Back &rarr; reopen; it returns in a patch, saved server-side, as a single toggle. (Thumbs = feedback on the generated video; the heart icon elsewhere is the community Like and is unaffected.) '
+         'Changed: <b>P8-S1 &ldquo;Taps Like&rdquo; deleted</b> (frame 34 removed), P1-S14&rsquo;s system line, the RESULT row of the States table, and <b>AC-MV-10</b>. '
+         '<b>P8 reordered</b>: Publish confirm &rarr; In Review &rarr; Share &rarr; opened from History. Share has been hidden until an MV is published and approved since YMW260916P0013, so the old &ldquo;tap Share on a fresh result&rdquo; step could no longer happen; <b>AC-MV-18</b> now points at P8-S4. '
+         '<b>Retook 14, 19, 35, 36, 37 and 38</b> &mdash; every /mv/result frame still showed the thumbs. The balance pill differs from the untouched frames (capture-run state), and the player is 16:9 per v5&rsquo;s <code>DEFAULT_SETTINGS</code> change. 38 now reads &ldquo;New MV&rdquo; (title AND Music): a freshly generated MV&rsquo;s History row is titled with RD&rsquo;s fixed placeholder (<code>GENERATING_MV_TITLE</code>, 2026-09-14 &mdash; a real MV job carries no title), and reopening a row rebuilds the result screen from that title alone. Current behaviour, not a capture error. See <code>specs/CHANGELOG-SPEC.md</code>.'),
         ('v6', '2026-09-10',
          '<b>MV-13 &mdash; a published MV&rsquo;s Edit control is REMOVED, not relabelled.</b> Product owner, 2026-08-28, ruled authoritative 2026-09-10: while an MV is published or in review the Edit MV control is taken out of Quick Actions entirely and the Publish toggle is the only way back to editable. There is no &ldquo;Unpublish to edit&rdquo; button anywhere in the product. The pending phase changed with it &mdash; the state line reads <b>In Review</b> and the toggle stays <b>OFF</b> until approved. Changed: <b>P8-S4</b>, P1&rsquo;s forward reference, the RESULT row of the States table, and <b>AC-MV-10</b>. <b>Retook 36 and 37</b>: both dated 2026-08-27, i.e. before the change, so they still showed the old button, &ldquo;Published &middot; pending review&rdquo;, and the toggle ON. DETAIL&rsquo;s Aspect Ratio now reads 16:9 in those two frames &mdash; that is <code>DEFAULT_SETTINGS</code> changing (v5), not capture drift. See <code>specs/CHANGELOG-SPEC.md</code>.'),
         ('v5', '2026-09-10',

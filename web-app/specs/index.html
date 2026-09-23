@@ -246,7 +246,7 @@
         <td class="c-area">S2</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/mv-creation/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">AI Music Video Creation</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-creation/specs/spec.html</div></td>
         <td class="c-dev">/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result</td>
-        <td><span class="badge st-ok">v6 · 2026-09-10</span></td>
+        <td><span class="badge st-ok">v7 · 2026-09-23</span></td>
         <td class="c-cl"><a class="sb-link" href="storyboards/mv-creation/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
       </tr>
       <tr>
@@ -1024,6 +1024,48 @@ this file covers. When a change does both, it appears in both, and the row below
 <p><strong>A storyboard's own Changelog is the finer-grained one</strong> and worth opening second: it badges the<br>
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
+<hr>
+<h2 id="2026-09-23-mvresult-hides-like-dislike-until-they-persist">2026-09-23 — <code>/mv/result</code> hides Like / Dislike until they persist</h2>
+<h3 id="ymw260921p0013-like-dislike-are-hidden-not-fixed"><code>YMW260921P0013</code>: Like / Dislike are hidden, not fixed</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner with RD, 2026-09-22 (eBug thread). The pair was <strong>local component state</strong> — no API call, no History write — so a pick was gone after Back → reopen, which is what <code>JOANNE_HSIEH</code> reported. Saving it server-side moves to a <strong>patch</strong>; until then the UI hides the buttons. <code>SMITH_LEE</code> noted on the same thread that the patch version is a <strong>single like/unlike toggle</strong>, not a pair.</td>
+</tr>
+<tr>
+<td><strong>Spec</strong></td>
+<td><code>areas/02-mv-creation.md</code> — <code>/mv/result</code> route row, <strong>MV-P4-S2</strong>, <strong>AC-MV-10</strong> and the MV-P4 checklist line: Like/Dislike removed, with the deferral recorded.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>src/components/mv/MvResult.tsx</code> — <code>.mv-result__reactions</code> and its <code>vote</code> state deleted. The DP stylesheet keeps its rules (gated verbatim); nothing renders them.</td>
+</tr>
+<tr>
+<td><strong>Test</strong></td>
+<td><code>e2e/behaviour-regressions.spec.ts</code> → <code>YMW260921P0013</code> — opens a done MV from History and asserts no reactions block and no Like/Dislike button.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>Not a C1–C8 change: the vote was never in <code>MuseApi</code>, a schema or a provider.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Icon rule (product owner, 2026-09-23):</strong> a <strong>thumbs up / thumbs down</strong> icon is <strong>feedback on the<br>
+generated video</strong> — that is what is hidden here. A <strong>heart</strong> icon is the <strong>community Like</strong> record,<br>
+and stays everywhere: <code>/watch</code>, <code>/creator</code>, <code>/explore/*</code>, History's Liked tab, and <code>/song/result</code>'s<br>
+Like on the user's own song (<code>TBD-SONG-08</code> KEEP is unaffected).</p>
+<p><strong>Storyboard:</strong> <code>storyboards/mv-creation</code> is <strong>v7</strong>. P8-S1 "Taps Like" and frame 34 are gone; P8 is<br>
+reordered (Publish confirm → In Review → Share → opened from History) because Share has only<br>
+appeared once an MV is published and approved since <code>YMW260916P0013</code>; every <code>/mv/result</code> frame<br>
+(14, 19, 35–38) was retaken with <code>capture_screenshots.py --result-only</code> (new mode). <code>spec.html</code>,<br>
+<code>spec-bundled.html</code>, the flowchart and <code>specs/index.html</code> are all rebuilt.</p>
 <hr>
 <h2 id="2026-09-22-community-mv-handoff-drops-the-licensed-song-history-remembers-its-tab">2026-09-22 — Community MV handoff drops the licensed song; History remembers its tab</h2>
 <h3 id="ymw260910p0008-create-mv-from-watch-carries-prompt-video-type-only"><code>YMW260910P0008</code>: Create MV from <code>/watch</code> carries prompt + video type ONLY</h3>
@@ -2864,7 +2906,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <tr>
 <td><code>/mv/result</code></td>
 <td><code>MvResult</code> (self-contained since 3i)</td>
-<td><strong>Back (→ History)</strong>, video stage, like/dislike, share, download, publish toggle, Recreate, Edit MV</td>
+<td><strong>Back (→ History)</strong>, video stage, share, download, publish toggle, Recreate, Edit MV (like/dislike hidden — <code>YMW260921P0013</code>)</td>
 <td><code>resultUrl</code>, <code>compose</code>, <code>storyboard</code>, <code>useHistory</code></td>
 <td>—</td>
 </tr>
@@ -2984,7 +3026,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <li>
 <p><strong>MV-P4-S1</strong> Video autoplays <strong>muted + looped</strong> with native controls on a square stage. ⚠️ App autoplays speaker-on; muted is a web/browser choice. <em>(Corrected 2026-08-19: the player uses a hand-built control row — play / seek / mute / fullscreen — not the browser's native <code>controls</code>. Changed during the designer migration; this line was not updated.)</em></p>
 </li>
-<li><strong>MV-P4-S2</strong> Like / Dislike (mutually exclusive, local state) · <strong>Share</strong> (<code>ShareDialog</code>, link) · <strong>Download</strong> (<code>resultUrl</code>) · <strong>Publish to community</strong> toggle. <strong>DECIDED (<code>TBD-MV-12</code>, sync App):</strong> toggling Publish <strong>on</strong> opens a <strong>"Ready to Go Public?" confirm dialog</strong> (the same one History uses, area 05); on confirm → <strong>Published · pending review</strong>; toggling off <strong>unpublishes</strong>. <strong>Locale ranking is RD's, not ours (產品負責人 2026-08-20).</strong> The community feed's locale-primary ranking, including whatever locale value the request carries, is decided and implemented by RD end-to-end — the web prototype sends nothing and is not expected to. This is deliberately NOT listed as a front-end gap so RD does not read it as work waiting on us. (Feed ranking → area 04 §3 / <code>TBD-EXP-10</code>, owner RD.) (Feed pipeline/destination → <code>TBD-MV-06</code>, spec-only.) 🔒 On this fresh-generation screen, publish state is <strong>local to <code>MvResult</code></strong> (there is no History row to share it with yet); opening the <em>same</em> creation later from History uses the controlled path described in area 05 §3, where the row's <code>⋯</code> menu and its detail dialog share one state.</li>
+<li><strong>MV-P4-S2</strong> ~~Like / Dislike (mutually exclusive, local state)~~ <strong>HIDDEN (<code>YMW260921P0013</code>, product owner + RD 2026-09-22):</strong> a local-only vote was lost on Back → reopen; it returns in a patch, saved server-side, as a <strong>single like/unlike toggle</strong>. · <strong>Share</strong> (<code>ShareDialog</code>, link) · <strong>Download</strong> (<code>resultUrl</code>) · <strong>Publish to community</strong> toggle. <strong>DECIDED (<code>TBD-MV-12</code>, sync App):</strong> toggling Publish <strong>on</strong> opens a <strong>"Ready to Go Public?" confirm dialog</strong> (the same one History uses, area 05); on confirm → <strong>Published · pending review</strong>; toggling off <strong>unpublishes</strong>. <strong>Locale ranking is RD's, not ours (產品負責人 2026-08-20).</strong> The community feed's locale-primary ranking, including whatever locale value the request carries, is decided and implemented by RD end-to-end — the web prototype sends nothing and is not expected to. This is deliberately NOT listed as a front-end gap so RD does not read it as work waiting on us. (Feed ranking → area 04 §3 / <code>TBD-EXP-10</code>, owner RD.) (Feed pipeline/destination → <code>TBD-MV-06</code>, spec-only.) 🔒 On this fresh-generation screen, publish state is <strong>local to <code>MvResult</code></strong> (there is no History row to share it with yet); opening the <em>same</em> creation later from History uses the controlled path described in area 05 §3, where the row's <code>⋯</code> menu and its detail dialog share one state.</li>
 <li><strong>MV-P4-S3</strong> Info panel: type/character tags, title (settings title or song title), author (settings or <code>MOCK_USER.name</code>), Music row, Generation Detail (character, author, style, ratio, quality, scenes, subtitle).</li>
 <li><strong>MV-P4-S4</strong> <strong>Recreate</strong> → <code>/mv/room</code> (keeps compose). <strong>Edit MV</strong> → <code>/mv/edit</code> (direct-mode renders, which have no storyboard, get a <code>mockStoryboard()</code> first). <strong>DECIDED rule (<code>TBD-MV-13</code>):</strong> a <strong>published</strong> (or in-review) MV must be <strong>unpublished before editing</strong> — while published or in review, the <strong>Edit MV control is REMOVED from the actions row entirely</strong>; the <strong>Publish toggle is the only way back to editable</strong>, and turning it off restores Edit MV. <em>(Product owner, 2026-08-28 — supersedes the earlier "renders neutral, labeled 'Unpublish to edit'" treatment, which no longer exists in the product. Spec synced 2026-09-10.)</em> No per-screen back arrow on Result — the shell handles back.</li>
 </ul>
@@ -3106,7 +3148,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>AC-MV-08</strong> — WHEN Visual Style or a Scene text is edited in <code>/mv/storyboard</code>, THE SYSTEM SHALL update the in-memory storyboard (no Save button; edits are ephemeral) and carry the change into the next <strong>Generate MV</strong>. The MV Song section SHALL be <strong>play-only</strong> (no editing).</li>
 <li><strong>AC-MV-09</strong> — WHEN <strong>Generate MV</strong> is tapped, THE SYSTEM SHALL render using the (possibly edited) storyboard and land on <code>/mv/result</code>.</li>
 <li><strong>AC-MV-18</strong> — WHEN <code>/mv/result</code> is reached from a <code>/history</code> row, THE SYSTEM SHALL show that row's creation (flow state is seeded by <code>useOpenCreation</code>, area 05) and carry the row id in <code>?id=</code> so Share builds that row's link; and <strong>Back</strong> SHALL return to <code>/history</code>. <em>(Back is <code>router.back()</code> per Q6; <code>/history</code> is also the fallback. The generation screens <code>replace</code> rather than <code>push</code>, so Back off a freshly rendered MV reaches <code>/mv/room</code>, not the creating screen.)</em></li>
-<li><strong>AC-MV-10</strong> — WHEN <code>/mv/result</code> loads, THE SYSTEM SHALL loop the video muted and expose Like/Dislike (mutually exclusive), Share, Download, a <strong>Publish toggle that opens a "Ready to Go Public?" confirm on turn-on</strong>, Recreate, and <strong>Edit MV</strong> — where, while the MV is published/in-review, <strong>Edit MV is removed from the actions row</strong> and the Publish toggle is the only route back to editable. <em>(Same correction as MV-P4-S1: hand-built controls, not native ones — 2026-08-19. Removal supersedes the earlier "Unpublish to edit" replacement — product owner 2026-08-28, spec synced 2026-09-10.)</em></li>
+<li><strong>AC-MV-10</strong> — WHEN <code>/mv/result</code> loads, THE SYSTEM SHALL loop the video muted and expose Share, Download, a <strong>Publish toggle that opens a "Ready to Go Public?" confirm on turn-on</strong>, Recreate, and <strong>Edit MV</strong> — where, while the MV is published/in-review, <strong>Edit MV is removed from the actions row</strong> and the Publish toggle is the only route back to editable. <em>(Same correction as MV-P4-S1: hand-built controls, not native ones — 2026-08-19. Removal supersedes the earlier "Unpublish to edit" replacement — product owner 2026-08-28, spec synced 2026-09-10. Like/Dislike removed until they persist server-side — <code>YMW260921P0013</code>, 2026-09-22.)</em></li>
 <li><strong>AC-MV-11</strong> — IF a job <code>failed</code>, THEN THE SYSTEM SHALL show the error state with <strong>Back</strong> and mark the History row Failed. WHEN the failed job is a render or song job (<code>/mv/creating</code>, <code>/song/creating</code>), THE SYSTEM SHALL additionally offer <strong>Retry</strong> (with an unchanged <code>[fail]</code> description re-failing). ⚠️ <strong>Changed 2026-09-02, product owner:</strong> the storyboard job's error state (<code>/mv/thinking</code>) no longer offers Retry — it previously did, identically to the render/song screens, but Retry there only ever re-ran the same <code>[fail]</code> compose and re-failed deterministically, so it was a dead end kept for visual symmetry rather than because it could ever succeed.</li>
 <li><strong>AC-MV-12</strong> — WHEN Regenerate scene or Recreate cover is invoked in Edit MV, THE SYSTEM SHALL <strong>overwrite</strong> that scene/cover in place (no take/cover picker, no undo) and decrement the balance by <code>recreateShotCost(kind, resolution, sceneDurationSec)</code> for a scene (a per-second/per-tier rate per spec 11 §3.5 — <strong>not</strong> a flat number; e.g. 26 for a 9s <code>sing</code>/<code>720p</code> shot) / flat <code>COST_COVER</code> −4 for the cover. <em>(Cover corrected from −10 on 2026-08-19; the scene-cost wording corrected from a flat <code>COST_REGEN</code> −20 — a constant that no longer exists — on 2026-08-28 during the S3 storyboard-spec capture.)</em></li>
 <li><strong>AC-MV-13</strong> — WHEN <strong>Merge MV</strong> is invoked with sufficient balance, THE SYSTEM SHALL re-render the MV from the current cover/scenes + edited text and charge the flat <code>COST_MERGE</code> (−10; ⚠️ corrected 2026-08-28 during the S3 storyboard-spec capture — was wrongly stated as <code>COST_RENDER</code> −200, a constant that does not exist in the codebase) on generation start (refunded on failure); there is <strong>no Save</strong> and edits do not persist across leaving the page. WHEN the balance is insufficient, it SHALL open the buy-credits IAP instead.</li>
@@ -3127,7 +3169,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li>[ ] <strong>MV-P1</strong>: fresh room CTA disabled → add song only → still disabled → add description → enabled (AC-01/02/03).</li>
 <li>[ ] <strong>MV-P2</strong>: Storyboard First → Generating row appears in History at start → progress 0→100 <em>(visual)</em> → storyboard with ≥1 editable scene; <strong>MV Song plays on tap, not editable</strong>; <strong>no Save button</strong>; edits carried into Generate MV (AC-05/06/07/08).</li>
 <li>[ ] <strong>MV-P3</strong>: Directly → progress → result with <code>&lt;video&gt;</code> (AC-05/09/10).</li>
-<li>[ ] <strong>MV-P4</strong>: like/dislike exclusivity; Share dialog opens; Download triggers; <strong>Publish on → "Ready to Go Public?" confirm</strong>; <strong>published → Edit MV is GONE from the actions row</strong> (not relabelled), and toggling Publish off brings it back; Recreate returns to room prefilled; Edit MV opens editor when unpublished (AC-10, MV-E7).</li>
+<li>[ ] <strong>MV-P4</strong>: NO Like/Dislike (<code>YMW260921P0013</code>); Share dialog opens; Download triggers; <strong>Publish on → "Ready to Go Public?" confirm</strong>; <strong>published → Edit MV is GONE from the actions row</strong> (not relabelled), and toggling Publish off brings it back; Recreate returns to room prefilled; Edit MV opens editor when unpublished (AC-10, MV-E7).</li>
 <li>[ ] <strong>MV-P5</strong>: regen scene <strong>overwrites</strong> in place (dynamic per-shot rate, e.g. −26, no picker — ⚠️ not a flat −20, corrected 2026-08-28); cover recreate <strong>overwrites</strong> (−4 — ⚠️ not −10, corrected 2026-08-28, matching the already-corrected MV-P5-S2 line above); <strong>no Save button and no tray markup at all</strong> (the <code>LEGACY_TAKE_TRAY_UI</code> flag was deleted in 3k); Merge charges the flat <code>COST_MERGE</code> (−10 — ⚠️ not <code>COST_RENDER</code> −200, corrected 2026-08-28 during the S3 storyboard-spec capture) on re-render, or opens IAP when short; edits lost on leaving the page (AC-12/13/19). Check the phone path too: below 768px the scene editor is <code>MobileSceneDetail</code>, not the inline pair.</li>
 <li>[ ] <strong>MV-P6-B/MV-E8</strong>: import a &lt;30s file → rejected at upload with the "at least 30 seconds" toast, Trim never opens; import a file whose metadata probe fails (duration <code>0</code>) → NOT rejected, falls through to Trim (AC-20).</li>
 <li>[ ] <strong>MV-P6-C</strong>: trim handles move, 5% min gap holds, preview plays selected region; select &lt;30s → Confirm disabled + red "minimum 30s" hint (AC-16).</li>

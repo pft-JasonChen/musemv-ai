@@ -77,8 +77,8 @@ CHANGELOG_SLUGS = {"mv-creation", "history", "mv-edit", "explore-community", "so
 STORYBOARDS = [
     ("S1", "song-creation", "AI Song Creation", "v4 · 2026-09-09",
      "/song/create · /song/creating · /song/result", "7 paths / 32 shots"),
-    ("S2", "mv-creation", "AI Music Video Creation", "v6 · 2026-09-10",
-     "/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result", "8 paths / 44 shots"),
+    ("S2", "mv-creation", "AI Music Video Creation", "v7 · 2026-09-23",
+     "/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result", "8 paths / 43 shots"),
     ("S3", "mv-edit", "MV Edit", "v2 · 2026-09-10",
      "/mv/edit", "5 paths / 24 shots"),
     ("S4", "history", "History (My Creations)", "v3 · 2026-09-10",

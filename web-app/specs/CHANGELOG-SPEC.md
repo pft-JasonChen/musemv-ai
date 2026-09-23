@@ -25,6 +25,31 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-09-23 — `/mv/result` hides Like / Dislike until they persist
+
+### `YMW260921P0013`: Like / Dislike are hidden, not fixed
+
+| | |
+| --- | --- |
+| **Decision** | Product owner with RD, 2026-09-22 (eBug thread). The pair was **local component state** — no API call, no History write — so a pick was gone after Back → reopen, which is what `JOANNE_HSIEH` reported. Saving it server-side moves to a **patch**; until then the UI hides the buttons. `SMITH_LEE` noted on the same thread that the patch version is a **single like/unlike toggle**, not a pair. |
+| **Spec** | `areas/02-mv-creation.md` — `/mv/result` route row, **MV-P4-S2**, **AC-MV-10** and the MV-P4 checklist line: Like/Dislike removed, with the deferral recorded. |
+| **Code** | `src/components/mv/MvResult.tsx` — `.mv-result__reactions` and its `vote` state deleted. The DP stylesheet keeps its rules (gated verbatim); nothing renders them. |
+| **Test** | `e2e/behaviour-regressions.spec.ts` → `YMW260921P0013` — opens a done MV from History and asserts no reactions block and no Like/Dislike button. |
+| **Contract** | Not a C1–C8 change: the vote was never in `MuseApi`, a schema or a provider. |
+
+**Icon rule (product owner, 2026-09-23):** a **thumbs up / thumbs down** icon is **feedback on the
+generated video** — that is what is hidden here. A **heart** icon is the **community Like** record,
+and stays everywhere: `/watch`, `/creator`, `/explore/*`, History's Liked tab, and `/song/result`'s
+Like on the user's own song (`TBD-SONG-08` KEEP is unaffected).
+
+**Storyboard:** `storyboards/mv-creation` is **v7**. P8-S1 "Taps Like" and frame 34 are gone; P8 is
+reordered (Publish confirm → In Review → Share → opened from History) because Share has only
+appeared once an MV is published and approved since `YMW260916P0013`; every `/mv/result` frame
+(14, 19, 35–38) was retaken with `capture_screenshots.py --result-only` (new mode). `spec.html`,
+`spec-bundled.html`, the flowchart and `specs/index.html` are all rebuilt.
+
+---
+
 ## 2026-09-22 — Community MV handoff drops the licensed song; History remembers its tab
 
 ### `YMW260910P0008`: Create MV from `/watch` carries prompt + video type ONLY

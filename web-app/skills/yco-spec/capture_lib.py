@@ -109,9 +109,15 @@ def chromium_path():
     env = os.environ.get('CHROMIUM_PATH')
     if env and os.path.exists(env):
         return env
+    # macOS: the Python `playwright` package and the repo's npm one pin
+    # different builds, so the cache holds the npm one (e.g. chromium-1217)
+    # while Python asks for another. Same mismatch as the sandbox, other path.
+    mac = os.path.expanduser('~/Library/Caches/ms-playwright')
     for pat in ('/opt/pw-browsers/chromium-*/chrome-linux/chrome',
                 '/opt/pw-browsers/chromium_headless_shell-*/'
-                'chrome-headless-shell-linux64/chrome-headless-shell'):
+                'chrome-headless-shell-linux64/chrome-headless-shell',
+                mac + '/chromium-*/chrome-mac*/Google Chrome for Testing.app/'
+                'Contents/MacOS/Google Chrome for Testing'):
         hits = sorted(glob.glob(pat))
         if hits:
             return hits[-1]

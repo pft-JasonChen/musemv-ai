@@ -36,6 +36,7 @@ USAGE
     python3 capture_screenshots.py --base http://localhost:3010
     python3 capture_screenshots.py --base http://localhost:3010 --p1-s6-only
     python3 capture_screenshots.py --base http://localhost:3010 --p8-publish-only
+    python3 capture_screenshots.py --base http://localhost:3010 --result-only
     # then restart the dev server with NO override (plain `npm run dev -- -p 3010`) and:
     python3 capture_screenshots.py --base http://localhost:3010 --credits-gate-only
     python3 build_spec.py
@@ -118,7 +119,10 @@ class NextCapture(Capture):
             executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
-            viewport=self.viewport, device_scale_factor=1)
+            # en-US pinned: Chromium otherwise sends the OS language, and on a
+            # zh-TW machine middleware serves /cht/... — every `href="/history"`
+            # selector then matches nothing.
+            viewport=self.viewport, device_scale_factor=1, locale="en-US")
         await ctx.add_init_script("window.localStorage.setItem('muse_auth', '1')")
         self.page = await ctx.new_page()
         self.page.on("console", lambda m: self.errors.append(m.text)
@@ -141,7 +145,10 @@ class GuestNextCapture(NextCapture):
             executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
-            viewport=self.viewport, device_scale_factor=1)
+            # en-US pinned: Chromium otherwise sends the OS language, and on a
+            # zh-TW machine middleware serves /cht/... — every `href="/history"`
+            # selector then matches nothing.
+            viewport=self.viewport, device_scale_factor=1, locale="en-US")
         self.page = await ctx.new_page()
         self.page.on("console", lambda m: self.errors.append(m.text)
                      if m.type == "error" else None)
@@ -340,6 +347,105 @@ async def main_p8_publish(base):
         await page.wait_for_timeout(400)
         await shoot(cap, "37_result_publish_pending.png")
         print("P8 publish console errors:", cap.errors or "none")
+
+
+async def main_result_frames(base):
+    """Retake every /mv/result frame (14, 19, 35, 36, 37, 38) and nothing else.
+
+    v7, YMW260921P0013 (product owner + RD, 2026-09-22): /mv/result stopped
+    rendering the Like / Dislike thumbs, and every one of those frames still
+    showed them. This replays the SAME compose steps main_hi_credit takes to
+    reach each result — P1's storyboard-first MV, P2's direct MV continuing
+    from P1's state, then P8's fresh direct MV — without re-shooting the
+    compose/progress frames in between, so only the stale frames change.
+
+    Needs the DEMO_CREDITS server: three real generations.
+    """
+    async with NextCapture(HERE, base) as cap:
+        page = cap.page
+        await page.goto(f"{base}/mv/room", wait_until="networkidle")
+        await page.wait_for_timeout(700)
+
+        # P1 -> 14
+        await page.locator(".mv-create__style-card").nth(2).click()
+        await open_choose_song(page)
+        await pick_song(page, "my", 0)
+        await confirm_trim(page)
+        await fill_description(page, DESCRIPTION)
+        await add_sample_photo(page, 0)
+        await open_mode_modal(page)
+        await page.click(".mv-mode-card--featured")
+        await wait_generation_done(page, "/mv/thinking")
+        await wait_generation_done(page, "/mv/storyboard", timeout=15000)
+        await page.locator(".mv-storyboard__cta:visible").scroll_into_view_if_needed()
+        await page.click(".mv-storyboard__cta:visible")
+        await wait_generation_done(page, "/mv/creating")
+        await wait_generation_done(page, "/mv/result", timeout=20000)
+        await freeze_video(page)
+        await shoot(cap, "14_mv_result_storyboard_first.png")
+
+        # P2 -> 19 (client nav, so compose carries over exactly as in P2)
+        await goto_history(page)
+        await goto_room_client(page)
+        await page.click(TEMPLATES_BTN)
+        await page.wait_for_selector(".mv-template-sheet__list", state="visible")
+        await page.wait_for_timeout(300)
+        await page.locator(".mv-template-sheet__item").nth(1).click()
+        await page.wait_for_timeout(200)
+        await page.click(".mv-sheet__footer-btn--confirm")
+        await page.wait_for_timeout(300)
+        await open_choose_song(page)
+        await pick_song(page, "my", 1)
+        await confirm_trim(page)
+        await add_sample_photo(page, 1)
+        await open_mode_modal(page)
+        await page.click(".mv-mode-card:not(.mv-mode-card--featured)")
+        await wait_generation_done(page, "/mv/creating")
+        await wait_generation_done(page, "/mv/result", timeout=20000)
+        await freeze_video(page)
+        await shoot(cap, "19_mv_result_direct.png")
+
+        # P8 -> 36, 37, 35, 38
+        await goto_room_client(page)
+        await fill_description(page, DESCRIPTION)
+        await open_choose_song(page)
+        await pick_song(page, "my", 0)
+        await confirm_trim(page)
+        await open_mode_modal(page)
+        await page.click(".mv-mode-card:not(.mv-mode-card--featured)")
+        await wait_generation_done(page, "/mv/creating")
+        await wait_generation_done(page, "/mv/result", timeout=20000)
+        await freeze_video(page)
+        if await page.locator(".mv-result__reactions").count():
+            raise SystemExit("/mv/result still renders Like/Dislike — the frames would be stale again")
+
+        await page.click("[aria-label='Publish to community']")
+        await page.wait_for_selector(".publish-dialog", state="visible")
+        await page.wait_for_timeout(300)
+        await shoot(cap, "36_result_publish_confirm.png", [".publish-dialog__confirm"], "Confirm")
+        await page.click(".publish-dialog__confirm")
+        await page.wait_for_timeout(400)  # inside PUBLISH_REVIEW_DELAY_MS — see main_p8_publish
+        await shoot(cap, "37_result_publish_pending.png")
+        # Share only renders once the MV is published AND approved
+        # (YMW260916P0013), so it comes after the review delay, not before.
+        await page.wait_for_timeout(3000)
+        await page.click("text=Share")
+        await page.wait_for_selector("[role='dialog'][aria-label='Share']", state="visible")
+        await page.wait_for_timeout(300)
+        await shoot(cap, "35_result_share_dialog.png")
+        await page.keyboard.press("Escape")
+        await page.wait_for_timeout(300)
+
+
+        await goto_history(page)
+        # Rows are no longer links named after the song; open the newest done
+        # MV the way e2e's `doneCover` does (new rows are prepended).
+        await page.locator(".history-card--done .history-card__cover--music-video").first.click()
+        await page.wait_for_url("**/mv/result**")
+        await page.wait_for_timeout(600)
+        await freeze_video(page)
+        await shoot(cap, "38_result_from_history.png")
+        print("result frames console errors:", cap.errors or "none")
 
 
 async def main_hi_credit(base):
@@ -643,17 +749,8 @@ async def main_hi_credit(base):
         await wait_generation_done(page, "/mv/result", timeout=20000)
         await freeze_video(page)
 
-        await page.click("[aria-label='Like']")
-        await page.wait_for_timeout(200)
-        await shoot(cap, "34_result_like.png", ["[aria-label='Unlike']"], "Like", kind="info")
-
-        await page.click("text=Share")
-        await page.wait_for_selector("[role='dialog'][aria-label='Share']", state="visible")
-        await page.wait_for_timeout(300)
-        await shoot(cap, "35_result_share_dialog.png")
-        await page.keyboard.press("Escape")
-        await page.wait_for_timeout(300)
-
+        # 34_result_like.png is gone (v7, YMW260921P0013): /mv/result no
+        # longer renders Like / Dislike, so there is nothing to tap.
         await page.click("[aria-label='Publish to community']")
         await page.wait_for_selector(".publish-dialog", state="visible")
         await page.wait_for_timeout(300)
@@ -661,11 +758,22 @@ async def main_hi_credit(base):
         await page.click(".publish-dialog__confirm")
         await page.wait_for_timeout(400)
         await shoot(cap, "37_result_publish_pending.png")
+        # Share only renders once published AND approved (YMW260916P0013).
+        await page.wait_for_timeout(3000)
+        await page.click("text=Share")
+        await page.wait_for_selector("[role='dialog'][aria-label='Share']", state="visible")
+        await page.wait_for_timeout(300)
+        await shoot(cap, "35_result_share_dialog.png")
+        await page.keyboard.press("Escape")
+        await page.wait_for_timeout(300)
+
 
         await goto_history(page)
         # open the most recent done MV row from History (cold-start variant).
         # New rows are prepended, so .first() is the one just generated above.
-        await page.get_by_role("link", name="My Wedding Ballad").first.click()
+        # Rows are no longer links named after the song; open the newest done
+        # MV the way e2e's `doneCover` does (new rows are prepended).
+        await page.locator(".history-card--done .history-card__cover--music-video").first.click()
         await page.wait_for_url("**/mv/result**")
         await page.wait_for_timeout(600)
         await freeze_video(page)
@@ -743,8 +851,13 @@ if __name__ == "__main__":
     ap.add_argument("--p8-publish-only", action="store_true",
                     help="Retake only P8's publish confirm + pending frames "
                          "(36, 37). Needs the DEMO_CREDITS server.")
+    ap.add_argument("--result-only", action="store_true",
+                    help="Retake every /mv/result frame (14, 19, 35-38). "
+                         "Needs the DEMO_CREDITS server.")
     args = ap.parse_args()
-    if args.p1_s6_only:
+    if args.result_only:
+        asyncio.run(main_result_frames(args.base))
+    elif args.p1_s6_only:
         asyncio.run(main_p1_s6(args.base))
     elif args.p8_publish_only:
         asyncio.run(main_p8_publish(args.base))

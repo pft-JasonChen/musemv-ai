@@ -126,7 +126,6 @@ export function MvResult() {
   const volumePopup = useVolumePopup(volumeWrapRef);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   // Product owner, 2026-08-28: submitting doesn't flip the toggle on straight
   // away — it sits "off" showing "In Review" for `PUBLISH_REVIEW_DELAY_MS`,
@@ -352,32 +351,17 @@ export function MvResult() {
               <p className="mv-result__title">{title}</p>
               <p className="mv-result__date">{resultDate ?? "just now"}</p>
             </div>
-            <div className="mv-result__reactions">
-              <button
-                type="button"
-                className={`mv-result__icon-btn${vote === "up" ? " mv-result__icon-btn--selected" : ""}`}
-                onClick={() => setVote((v) => (v === "up" ? null : "up"))}
-                aria-label={vote === "up" ? "Unlike" : "Like"}
-                aria-pressed={vote === "up"}
-              >
-                <DpIcon
-                  name={vote === "up" ? "ic_like_on" : "ic_like_off"}
-                  className="mv-result__reaction-icon"
-                />
-              </button>
-              <button
-                type="button"
-                className={`mv-result__icon-btn${vote === "down" ? " mv-result__icon-btn--selected" : ""}`}
-                onClick={() => setVote((v) => (v === "down" ? null : "down"))}
-                aria-label={vote === "down" ? "Remove dislike" : "Dislike"}
-                aria-pressed={vote === "down"}
-              >
-                <DpIcon
-                  name={vote === "down" ? "ic_dislike_on" : "ic_dislike_off"}
-                  className="mv-result__reaction-icon"
-                />
-              </button>
-            </div>
+            {/* YMW260921P0013 (product owner + RD, 2026-09-22): Like / Dislike
+                are HIDDEN until they are saved server-side, which moves to a
+                patch. They were local component state, so the pick vanished
+                the moment the user left and came back — a control that
+                forgets is worse than none. When the patch lands it is a single
+                like/unlike toggle, not this pair (PM, same thread); restore
+                from git history and persist it through `api`.
+                Icon rule (product owner, 2026-09-23): thumbs up/down = feedback
+                on the generated video, which is what this was; the heart
+                (`ic_favorite_*`) = the community Like, which stays everywhere
+                it appears, including `/song/result`. */}
           </div>
 
           <div className="mv-result__section">
