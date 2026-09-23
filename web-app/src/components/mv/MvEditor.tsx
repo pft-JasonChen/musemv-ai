@@ -326,6 +326,18 @@ export function MvEditor() {
     setMuted(next === 0);
   }
 
+  // G7 finding 3k-1: MV-08 is still enforced, but the migration lost the one
+  // sentence that EXPLAINED it — so Merge sat disabled with no stated reason
+  // and edits looked saved. `mv-edit__sublabel` is DP's own muted explanatory
+  // line, already used on this screen for "Select to edit storyboard"; no new
+  // class, no override.
+  const sceneExplainer = (
+    <p className="mv-edit__sublabel">
+      Recreate ({sceneCost} credits) replaces a scene directly. Edits aren&apos;t saved — Merge MV
+      ({COST_MERGE} credits) re-renders the video with your changes.
+    </p>
+  );
+
   const sceneEditor = (
     <>
       <div className="mv-edit__scene-header">
@@ -548,15 +560,17 @@ export function MvEditor() {
               the desktop editor leaks onto phones. */}
           <div className="mv-edit__section mv-edit__section--scene-editor">{sceneEditor}</div>
 
-          {/* G7 finding 3k-1: MV-08 is still enforced, but the migration lost
-              the one sentence that EXPLAINED it — so Merge sat disabled with no
-              stated reason and edits looked saved. `mv-edit__sublabel` is DP's
-              own muted explanatory line, already used on this screen for
-              "Select to edit storyboard"; no new class, no override. */}
-          <p className="mv-edit__sublabel">
-            Recreate ({sceneCost} credits) replaces a scene directly. Edits aren&apos;t saved —
-            Merge MV ({COST_MERGE} credits) re-renders the video with your changes.
-          </p>
+          {/* Desktop only — on phones this same paragraph renders inside the
+              full-screen scene editor instead (see `mobileSceneExplainer`
+              below). `MVEditPage.css`'s mobile reorder block never gave this
+              bare `<p>` an `order`, so at 767px and under it defaulted to 0 and
+              sorted ahead of every `order`-ed section — rendering directly
+              under the header instead of near Recreate/Merge, which is also
+              what left `.floating-cta__spacer` (equally order-less) stranded
+              up there with it. Moving the paragraph next to the mobile
+              Recreate button it explains removes the reason for it to render
+              here at all on phones. */}
+          {!isPhone && sceneExplainer}
 
           <div className="mv-edit__ctas">
             <button
@@ -811,6 +825,7 @@ export function MvEditor() {
                 />
               </div>
               {sceneEditor}
+              {sceneExplainer}
             </div>
           </div>,
           document.body,

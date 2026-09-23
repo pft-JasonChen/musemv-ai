@@ -4736,6 +4736,24 @@ button:disabled {
   -webkit-mask-size: contain;
 }
 
+/*
+ * `/mv/edit`'s mobile reorder (`MVEditPage.css`'s `@media (max-width: 767px)`
+ * block) gives every section an explicit `order`, 1 through 7, but never
+ * touches `FloatingCTA`'s own `.floating-cta__spacer` / `.floating-cta` —
+ * those are shared component classes DP's page CSS has no reason to know
+ * about. Left at their default `order: 0`, they sorted ahead of every
+ * ordered section and rendered directly under the header: the spacer's 84px
+ * reserved gap, meant to sit just above the fixed Merge bar at the bottom of
+ * the page, showed up as blank space at the top instead. Scoped to this page
+ * only — MvRoom / StoryboardEditor's own FloatingCTA usages are untouched.
+ */
+@media (max-width: 767px) {
+  .mv-edit .floating-cta__spacer,
+  .mv-edit .floating-cta {
+    order: 8;
+  }
+}
+
 .image-lightbox-image {
   max-width: 100%;
   max-height: 100%;
