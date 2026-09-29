@@ -1079,10 +1079,25 @@
 /* Designer request, 2026-08-11 — Song Result's transport row (prev/play/next)
    used `justify-content: space-between` with no explicit gap, so the space
    between the three buttons scaled with the container's width instead of
-   staying fixed. Fixed 70px gap, centered instead of edge-hugging. */
+   staying fixed. Fixed 70px gap, centered instead of edge-hugging.
+
+   Product owner, 2026-09-29: at narrow mobile widths the row's own content
+   (three buttons + two 70px gaps + the row's 35px side padding) overflows
+   its container by a few px, and flexbox's default `flex-shrink: 1`
+   quietly compresses all three buttons to absorb it — `.song-result__play`
+   measured 54.6875 × 56, not the perfect circle its `border-radius: pill`
+   is meant to draw. `flex-shrink: 0` keeps every button (and the 70px gap
+   above) pixel-exact; the row is left to overflow its nominal column by a
+   sub-2px sliver per side instead, which is imperceptible and still well
+   inside the page's own 20px gutter. */
 .song-result__transport {
   justify-content: center;
   gap: 70px;
+}
+
+.song-result__transport-btn,
+.song-result__play {
+  flex-shrink: 0;
 }
 
 /* Designer request, 2026-08-11 — "Primary Large Button" rule: 16px
@@ -2581,16 +2596,26 @@
    now wants the same treatment `/song/play`'s mobile full-screen player
    already has (`.song-detail-mobile-player__bg`/`__scrim`, `SongDetailPage.
    css`) on THIS screen's mobile view too, since both are meant to read as
-   the same "Now Playing" experience. Mirrors the desktop rule's own values
-   exactly (not the oversized `inset: -10%` variant `/song/play`'s full-
-   screen portal uses) — `.song-result` has no `overflow: hidden`, so an
-   oversized image here would bleed past the card instead of the viewport
-   edge the other screen relies on. */
+   the same "Now Playing" experience.
+
+   Follow-up, 2026-09-29: the values above only filled `.song-result`'s own
+   box, which sits inside `.song-create`'s normal 20px page padding — so it
+   read as a framed card with a visible black gutter on every side instead
+   of a true full-bleed background. Product owner asked for it to reach the
+   real screen edges, matching `/song/play`'s fixed full-screen player.
+   `position: fixed` sidesteps the page padding entirely (no need to know
+   or cancel its exact value), and reaching the viewport edges outright
+   means the oversized `inset: -10%` trick that screen needs (to survive
+   its own container's `overflow: hidden` clipping) is not needed here —
+   plain `inset: 0` already lands exactly on the four true edges. Negative
+   `z-index` keeps it behind every other fixed element on the page
+   (MobileTabBar, FloatingCTA, …) without having to out-order them. */
 @media (max-width: 767px) {
   .song-result__bg {
     display: block;
-    position: absolute;
+    position: fixed;
     inset: 0;
+    z-index: -1;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -2600,8 +2625,9 @@
 
   .song-result__bg-overlay {
     display: block;
-    position: absolute;
+    position: fixed;
     inset: 0;
+    z-index: -1;
     background: linear-gradient(to bottom, rgba(9, 9, 11, 0.6) 0%, rgba(9, 9, 11, 0.9) 100%);
   }
 }
