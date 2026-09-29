@@ -31,6 +31,7 @@ export function RenderGenerationScreen() {
       subtitle="Your cinematic MV is being rendered. We'll notify you when it's ready."
       estimate="~2 minutes"
       nextHref="/mv/result"
+      forwardId
       start={startRender}
       alreadyDone={resultUrl != null}
     />

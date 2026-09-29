@@ -58,13 +58,16 @@ export interface MyCreation extends OpenableCreation {
 
 export function useMyCreations(kind: "mv" | "song"): MyCreation[] {
   const { loggedIn } = useAuth();
-  const { history } = useHistory();
+  const { history, removed } = useHistory();
 
   return useMemo(() => {
     if (!loggedIn) return [];
 
+    // Same overlay as `/history`: a merged seed row keeps its slot (below).
+    const seedIds = new Set(HISTORY_SAMPLES.map((s) => s.id));
+    const liveById = new Map(history.map((h) => [h.id, h]));
     const live: MyCreation[] = history
-      .filter((h) => h.kind === kind && h.status === "completed")
+      .filter((h) => h.kind === kind && h.status === "completed" && !seedIds.has(h.id))
       .map((h) => ({
         id: h.id,
         kind: h.kind,
@@ -79,14 +82,17 @@ export function useMyCreations(kind: "mv" | "song"): MyCreation[] {
         username: MOCK_USER.name,
       }));
 
-    const seeded: MyCreation[] = HISTORY_SAMPLES.filter(
-      (s) => s.kind === kind && s.status === "done" && s.source !== "community",
-    ).map((s) => ({
+    const seeded: MyCreation[] = HISTORY_SAMPLES.filter((s) => {
+      if (s.kind !== kind || s.source === "community") return false;
+      // Mid-Merge it is not finished, exactly like a live generating job.
+      const l = liveById.get(s.id);
+      return l ? l.status === "completed" : s.status === "done";
+    }).map((s) => ({
       id: s.id,
       kind,
       title: s.title,
-      thumb: s.thumb,
-      resultUrl: s.resultUrl,
+      thumb: liveById.get(s.id)?.thumb ?? s.thumb,
+      resultUrl: liveById.get(s.id)?.resultUrl ?? s.resultUrl,
       date: s.date,
       plays: s.plays,
       likes: s.likes,
@@ -94,6 +100,7 @@ export function useMyCreations(kind: "mv" | "song"): MyCreation[] {
       username: MOCK_USER.name,
     }));
 
-    return [...live, ...seeded];
-  }, [loggedIn, history, kind]);
+    // Deleted rows leave the rails too, same as `/history` (YMW260917P0008).
+    return [...live, ...seeded].filter((c) => !removed.has(c.id));
+  }, [loggedIn, history, removed, kind]);
 }

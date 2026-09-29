@@ -35,8 +35,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v2'
-DATE = '2026-09-10'
+VERSION = 'v3'
+DATE = '2026-09-29'
 W = 1180
 MARGIN = 40
 COL_A, COL_C = MARGIN, 820      # left lead-in column; right outcome column
@@ -102,7 +102,7 @@ f.edge(settings, settingsdirty, 'yes', side='h')
 
 delete = f.node(COL_C, 960, 'Delete this Project', 'Confirm · P4-S2', w=NW)
 f.edge(settings, delete, 'Delete', kind='deferred', side=('bottom', 'left'))
-deletedone = f.node(COL_C, 1060, 'Discards in-memory flow → /history', 'No backend delete · P4-S3',
+deletedone = f.node(COL_C, 1060, 'Deletes the MV → /history', 'Row gone from History · P4-S3',
                     w=NW, kind='success')
 f.edge(delete, deletedone, 'confirm')
 

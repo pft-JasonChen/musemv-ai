@@ -253,7 +253,7 @@
         <td class="c-area">S3</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">MV Edit</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-edit/specs/spec.html</div></td>
         <td class="c-dev">/mv/edit</td>
-        <td><span class="badge st-ok">v2 · 2026-09-10</span></td>
+        <td><span class="badge st-ok">v3 · 2026-09-29</span></td>
         <td class="c-cl"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
       </tr>
       <tr>
@@ -1037,7 +1037,7 @@ recorded. This file points you at which storyboards to open.</p>
 <tbody>
 <tr>
 <td><strong>Decision</strong></td>
-<td>Product owner with RD, 2026-09-22 (eBug thread). The pair was <strong>local component state</strong> — no API call, no History write — so a pick was gone after Back → reopen, which is what <code>JOANNE_HSIEH</code> reported. Saving it server-side moves to a <strong>patch</strong>; until then the UI hides the buttons. <code>SMITH_LEE</code> noted on the same thread that the patch version is a <strong>single like/unlike toggle</strong>, not a pair.</td>
+<td>The 2026-09-20 decision ("delete project would delete mv") now holds on every <code>/mv/result</code> entry. Product owner, 2026-09-29: that includes an MV just generated, which is already a live History entry — the old carve-out's "nothing is in History yet" was never true of it. <code>/creator</code> still carries no id and is unchanged.</td>
 </tr>
 <tr>
 <td><strong>Spec</strong></td>
@@ -1136,6 +1136,80 @@ that is correct, not a regression. <code>isComposeReady</code> requires a song, 
 <p><strong>This did NOT reopen <code>YMW260910P0001</code></strong> (2026-09-11, "a URL write on every tab change is a page<br>
 jump"). Remembering a tab needs no URL write, so that decision is untouched and the test asserts the<br>
 URL stays clean.</p>
+<hr>
+<h2 id="2026-09-29-merge-mv-re-renders-the-creation-in-place">2026-09-29 — Merge MV re-renders the creation in place</h2>
+<h3 id="merge-on-an-mv-opened-from-history-filed-a-second-row-or-overwrote-an-unrelated-mv">Merge on an MV opened from History filed a second row, or overwrote an unrelated MV</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/02-mv-creation.md</code> — <strong>MV-P5-S5</strong> extended; <code>areas/05-history.md</code> §1 (seed rows overlaid by a live re-render).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td>Found by the G7 review of the <code>YMW260917P0008</code> retest fix. Merge keyed off the last job id of the session, which opening a History row never resets: on a seed row it filed the render as a new row; after an earlier unrelated generation it re-rendered into THAT MV. Either way a later Delete this Project removed the wrong row.</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>Product owner, 2026-09-29: Merge <strong>replaces the row in place</strong> (same id, same slot) and the row shows <strong>Generating…</strong> while the render runs.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>MvFlowProvider</code> (<code>resetForRerender(intent, source?)</code>, History id kept separate from the API job id), <code>HistoryProvider.upsertGenerating</code> (in place), <code>HistoryView</code> + <code>useMyCreations</code> (seed overlay), <code>MvEditor.merge</code>, <code>GenerationView</code> (<code>forwardId</code>). Two G7-review fixes ride along: <code>useMyCreations</code> now drops deleted rows (the <code>/mv/room</code> and <code>/song/create</code> rails kept showing an MV deleted since 2026-09-21), and <code>/mv/result</code> finds its History entry by <code>?id=</code> before falling back to the shared mock <code>resultUrl</code>.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>MvFlowProvider.test.tsx</code> (new, 2 tests, mutation-tested both ways), <code>HistoryProvider.test.tsx</code> (+2), e2e "2026-09-29: Merge on a History MV re-renders THAT row in place…". Verified live at 1440px.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>C4 signature widened, no key change — <code>../docs/CHANGELOG-RD.md</code> 2026-09-29.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2026-09-29-delete-this-project-also-deletes-the-mv-when-the-editor-was-opened-from-mvresult">2026-09-29 — Delete this Project also deletes the MV when the editor was opened from /mv/result</h2>
+<h3 id="ymw260917p0008-retest-failed-2026-09-24-history-open-the-mv-edit-mv-delete-kept-the-mv"><code>YMW260917P0008</code> (retest failed 2026-09-24): History → open the MV → Edit MV → Delete kept the MV</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Criteria</strong></td>
+<td><code>areas/02-mv-creation.md</code> — <strong>MV-P5-S6</strong> carve-out narrowed to <code>/creator</code> only; storyboard S3 <strong>P4-S3</strong> rewritten (v3).</td>
+</tr>
+<tr>
+<td><strong>Why</strong></td>
+<td>QA's retest video took a different path from the 2026-09-21 verification: open the MV from History, then Edit MV on <code>/mv/result</code>. That button went to <code>/mv/edit</code> without the row's id, so Delete only discarded the flow. The S3 storyboard also still said "the History row is unaffected".</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td>The 2026-09-20 decision ("delete project would delete mv") now holds on every <code>/mv/result</code> entry. Product owner, 2026-09-29: that includes an MV just generated, which is already a live History entry — the old carve-out's "nothing is in History yet" was never true of it. <code>/creator</code> still carries no id and is unchanged.</td>
+</tr>
+<tr>
+<td><strong>Code</strong></td>
+<td><code>components/mv/MvResult.tsx</code> — Edit MV forwards the MV's History id (the <code>?id=</code> it was opened with, else the live job's). No route file changed.</td>
+</tr>
+<tr>
+<td><strong>Tests</strong></td>
+<td><code>e2e/behaviour-regressions.spec.ts</code> → "YMW260917P0008: History → Result → Edit MV → Delete this Project deletes that MV". Plus "3k: Delete this Project confirms…" now asserts a freshly generated MV leaves History. Verified live in <code>/cht</code> at 1440px on both paths.</td>
+</tr>
+<tr>
+<td><strong>Contract</strong></td>
+<td>None. The query string on an existing route is not a C1–C8 surface.</td>
+</tr>
+</tbody>
+</table>
 <hr>
 <h2 id="2026-09-21-delete-this-project-now-deletes-the-creation-guarded-routes-show-a-loading-state">2026-09-21 — Delete this Project now deletes the creation; guarded routes show a loading state</h2>
 <h3 id="ymw260917p0008-delete-project-in-edit-music-video-deletes-the-original-mv"><code>YMW260917P0008</code>: "Delete Project" in Edit Music Video deletes the original MV</h3>
@@ -3056,8 +3130,8 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>MV-P5-S2</strong> <strong>Cover:</strong> large preview (Expand → lightbox, Download); a <strong>Cover description</strong> textarea + Enhance; <strong>Recreate</strong> cover (<code>COST_COVER</code>, currently <strong>4</strong>) <strong>overwrites the cover directly</strong> — no "pick which cover" tray, no undo. <em>(Was 10; repriced 2026-08-12, spec corrected 2026-08-19.)</em></li>
 <li><strong>MV-P5-S3</strong> <strong>Scenes:</strong> a per-clip storyboard strip with an inline video preview and its own transport; the scene editor edits the active scene's prompt (max 2500 + Enhance) and shows a <strong>scene-version history row</strong>; <strong>Recreate scene</strong> (<code>20</code>, <code>addCredits(-20)</code>) <strong>overwrites that scene's video directly</strong> — no "pick which take" tray, no undo. <strong>Below 768px the inline editor and the preview are replaced by a full-screen <code>MobileSceneDetail</code></strong> (DP's phone frame has no room for the inline pair).</li>
 <li><strong>MV-P5-S4</strong> <strong>Output settings are inline sections of the right rail, not a modal</strong>: MV title toggle+input, Author name toggle+input, Show Subtitle, Show Watermark (no ratio/quality here). The two ON-OFF switches are WA's — DP ships the text inputs alone, but <code>settings.title.on</code> / <code>settings.author.on</code> are <code>MvSettingsSchema</code> fields (contract surface C2) and decide whether the caption is burned in at all.</li>
-<li><strong>MV-P5-S6</strong> <strong>Delete this Project</strong> (DP's control; DP's own handler is dead) confirms with History's wording, then <strong>deletes the creation it was opened from</strong> and leaves to <code>/history</code>. The creation is identified by <code>/mv/edit?id=&lt;historyId&gt;</code>, which <code>/history</code>'s own "Edit MV" action puts in the URL; opened from <code>/mv/result</code> or <code>/creator</code> there is no <code>id</code>, nothing is in History yet, and it discards the in-memory flow only. <em>(Extended 2026-09-20, product owner, <code>YMW260917P0008</code> — supersedes the original "discards the in-memory flow and leaves", which left the edited MV sitting in History and made the control appear to do nothing.)</em> It still does <strong>not</strong> call a backend delete: removal is a session-local filter over the History grid's two sources (<code>useHistory().remove</code>), never a mutation of the <code>HISTORY_SAMPLES</code> seed.</li>
-<li><strong>MV-P5-S5</strong> <strong>Merge MV</strong> → <code>resetForRerender()</code> → <code>/mv/creating</code>, where <code>startRender</code> charges the flat <code>COST_MERGE</code> (10, refunded on failure — GL-01; ⚠️ corrected 2026-08-28 during the S3 storyboard-spec capture — was wrongly stated as <code>COST_RENDER</code> 200, a constant that does not exist; see the §3 Costs correction); re-renders the MV from the current (overwritten) cover/scenes + edited text. Enabled by <strong>any</strong> pending edit (text, regenerate, cover, or settings — incl. <code>storyboardDirty</code>). If <code>credits &lt; COST_MERGE</code>, Merge opens <code>BuyCreditsModal</code> instead (which itself falls back to <code>SubscribeModal</code> for a non-subscriber — CR-06, per S6 D-04 — confirmed live in this spec's own capture <code>22_merge_insufficient_credits.png</code>, which shows "Upgrade Your Plan").</li>
+<li><strong>MV-P5-S6</strong> <strong>Delete this Project</strong> (DP's control; DP's own handler is dead) confirms with History's wording, then <strong>deletes the creation it was opened from</strong> and leaves to <code>/history</code>. The creation is identified by <code>/mv/edit?id=&lt;historyId&gt;</code>, which <code>/history</code>'s own "Edit MV" action puts in the URL — and which <code>/mv/result</code>'s Edit MV forwards as well: the row's id when that result was opened from History (<code>/mv/result?id=&lt;historyId&gt;</code>), or the live job's id right after a generation, since a just-generated MV is already a History entry. <em>(2026-09-29, product owner, <code>YMW260917P0008</code> retest — QA's path was History → open the MV → Edit MV, which carried no id and so deleted nothing; supersedes "opened from <code>/mv/result</code> there is no <code>id</code>, nothing is in History yet", which was never true of a fresh generation.)</em> Opened from <code>/creator</code> there is no <code>id</code> and it discards the in-memory flow only. <em>(Extended 2026-09-20, product owner, <code>YMW260917P0008</code> — supersedes the original "discards the in-memory flow and leaves", which left the edited MV sitting in History and made the control appear to do nothing.)</em> It still does <strong>not</strong> call a backend delete: removal is a session-local filter over the History grid's two sources (<code>useHistory().remove</code>), never a mutation of the <code>HISTORY_SAMPLES</code> seed.</li>
+<li><strong>MV-P5-S5</strong> <strong>Merge MV</strong> → <code>resetForRerender()</code> → <code>/mv/creating</code>, where <code>startRender</code> charges the flat <code>COST_MERGE</code> (10, refunded on failure — GL-01; ⚠️ corrected 2026-08-28 during the S3 storyboard-spec capture — was wrongly stated as <code>COST_RENDER</code> 200, a constant that does not exist; see the §3 Costs correction); re-renders the MV from the current (overwritten) cover/scenes + edited text. <strong>It re-renders the SAME creation, in place</strong> <em>(product owner, 2026-09-29)</em>: opened from <code>/mv/edit?id=&lt;historyId&gt;</code>, that History row keeps its id and its slot, title, date and stats, shows <strong>Generating…</strong> while the render runs, then <strong>Done</strong> with the merged video — no second row. The id rides along (<code>/mv/creating?id=</code> → <code>/mv/result?id=</code>), so the result screen, its Share, and a later Delete this Project (MV-P5-S6) all still name that row. With no <code>id</code> (<code>/creator</code>) the Merge is filed as a new History row. Enabled by <strong>any</strong> pending edit (text, regenerate, cover, or settings — incl. <code>storyboardDirty</code>). If <code>credits &lt; COST_MERGE</code>, Merge opens <code>BuyCreditsModal</code> instead (which itself falls back to <code>SubscribeModal</code> for a non-subscriber — CR-06, per S6 D-04 — confirmed live in this spec's own capture <code>22_merge_insufficient_credits.png</code>, which shows "Upgrade Your Plan").</li>
 </ul>
 <h3 id="mv-p6-supporting-sheets-external-entries">MV-P6 — Supporting sheets &amp; external entries</h3>
 <ul>
@@ -4454,7 +4528,7 @@ click but not persisted. All curation/feed logic deferred to the backend track (
 <hr>
 <h2 id="1-overview-scope">1. Overview &amp; scope</h2>
 <p>The signed-in user's <strong>"My Creations"</strong> list (<code>/history</code>, auth-gated). It merges <strong>live in-memory jobs</strong><br>
-(from the MV/Song flow providers) with a <strong>static seed</strong> of sample creations, shown as filterable<br>
+(from the MV/Song flow providers) with a <strong>static seed</strong> of sample creations (a live job that carries a seed row's id — a Merge of that row, MV-P5-S5 — overlays it in place: same slot and stats, the live status and video), shown as filterable<br>
 cards with a per-row <code>⋯</code> options menu (like/share/download/delete/publish + Edit MV / Create MV).<br>
 Opening a row routes to the right destination: <strong>its own result screen</strong> (<code>/mv/result</code> or<br>
 <code>/song/result</code>), the storyboard editor, or the community player.</p>

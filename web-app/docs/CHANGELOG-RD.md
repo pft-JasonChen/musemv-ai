@@ -23,6 +23,42 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-09-29 — **C4 ADDITIVE** — `resetForRerender` takes an optional `source`; `upsertGenerating` re-renders in place (Merge MV)
+
+**Surface: C4.** No key added, renamed or removed; `providers.surface.test.ts`'s snapshot is
+unchanged. Two signatures and behaviours moved, both backwards-compatible:
+
+```ts
+// MvFlowValue (src/components/providers/MvFlowProvider.tsx)
+resetForRerender: (intent: RenderIntent, source?: string) => void; // `source` is NEW, optional
+
+// HistoryValue (src/components/providers/HistoryProvider.tsx)
+upsertGenerating: (item) => void; // an id ALREADY listed is now replaced in place, title kept
+```
+
+- `resetForRerender("merge", historyId)` makes the next `startRender` re-render **that creation**:
+  its History row keeps its id and switches to generating, then completes with the merged video.
+  Every existing call site passes no `source` and behaves exactly as before, except a Merge with no
+  source, which now makes a fresh job instead of reusing `jobId` (that is the bug below).
+- `upsertGenerating` used to move a repeated id to the top. It now updates it in its current
+  position and keeps its title. New ids are still prepended.
+
+**Surface: C7 — considered and NOT changed.** `/mv/creating` and `/mv/result` now carry an
+optional `?id=` through a Merge, but both are read in handlers/effects via
+`window.location.search`; no `src/app/**/page.tsx` changed.
+
+**C1 — considered and NOT changed.** `MuseApi` is untouched. A Merge on a creation with no job yet
+(a seed row) calls the existing `createMvJob` then `renderMvJob` with the edited storyboard. **What
+RD must do:** when the real backend lands, that pair is where a "re-render creation {id}" endpoint
+belongs; the provider already keeps the History id separate from the job id, so only
+`startRender`'s merge branch changes.
+
+**Why it moved:** Merge keyed off `jobId`, which opening a History row never resets. So Merge on
+an MV opened from History filed a second History row, or, if another MV had been generated earlier
+in the session, re-rendered into **that** MV's record. A later Delete this Project (YMW260917P0008)
+then removed the wrong row. Product owner, 2026-09-29: Merge replaces the row in place and shows
+Generating while it renders.
+
 ## 2026-09-21 — **C4 ADDITIVE** — `useHistory` gains `removed` / `remove` (YMW260917P0008)
 
 **Surface: C4** (`src/components/providers/HistoryProvider.tsx`, interface `HistoryValue`). Two new

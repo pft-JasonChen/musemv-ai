@@ -27,7 +27,11 @@ export interface HistoryItem {
 
 interface HistoryValue {
   history: HistoryItem[];
-  /** Prepend a generating entry (replacing any existing entry with the same id). */
+  /**
+   * Mark an entry generating. A NEW id is prepended. An id that is already
+   * listed is replaced IN PLACE and keeps its title: that is a re-render of
+   * the same creation (Merge MV, product owner 2026-09-29), not new work.
+   */
   upsertGenerating: (item: Omit<HistoryItem, "status">) => void;
   markCompleted: (id: string, resultUrl?: string) => void;
   markFailed: (id: string) => void;
@@ -54,7 +58,13 @@ export function HistoryProvider({ children }: { children: React.ReactNode }) {
   const [removed, setRemoved] = useState<ReadonlySet<string>>(() => new Set());
 
   const upsertGenerating = useCallback((item: Omit<HistoryItem, "status">) => {
-    setHistory((h) => [{ ...item, status: "generating" }, ...h.filter((x) => x.id !== item.id)]);
+    setHistory((h) =>
+      h.some((x) => x.id === item.id)
+        ? h.map((x) =>
+            x.id === item.id ? { ...x, ...item, title: x.title, status: "generating" } : x,
+          )
+        : [{ ...item, status: "generating" }, ...h],
+    );
   }, []);
 
   const markCompleted = useCallback((id: string, resultUrl?: string) => {

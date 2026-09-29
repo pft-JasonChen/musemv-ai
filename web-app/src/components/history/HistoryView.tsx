@@ -232,7 +232,21 @@ export function HistoryView() {
       liked: false,
       resultUrl: h.resultUrl,
     }));
-    return [...live, ...HISTORY_SAMPLES].filter((r) => !removed.has(r.id));
+    // A Merge on a SEED row re-renders it in place (product owner, 2026-09-29):
+    // the live job carries the seed's own id, so it overlays that row — same
+    // slot, same title, date and stats — with the live status and video,
+    // rather than showing up again at the top as a second card.
+    const liveById = new Map(live.map((r) => [r.id, r]));
+    const seeded = HISTORY_SAMPLES.map((s) => {
+      const l = liveById.get(s.id);
+      return l
+        ? { ...s, status: l.status, thumb: l.thumb, meta: l.meta, resultUrl: l.resultUrl }
+        : s;
+    });
+    const seedIds = new Set(HISTORY_SAMPLES.map((s) => s.id));
+    return [...live.filter((r) => !seedIds.has(r.id)), ...seeded].filter(
+      (r) => !removed.has(r.id),
+    );
   }, [history, removed]);
 
   // `demoEmpty` (`?demo=1` panel) has to be the LAST thing that decides what

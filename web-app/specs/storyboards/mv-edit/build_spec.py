@@ -85,7 +85,7 @@ cfg = {
     'feature_name': 'AI Music Video Edit',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video Edit',
     'author': 'Jason Chen', 'date': '2026-09-10', 'status': 'Draft',
-    'version': 'v2',
+    'version': 'v3',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -312,8 +312,12 @@ cfg = {
                 {
                     'shot': '20_delete_done_history.png', 'num': 3,
                     'user': 'Confirms Delete.',
-                    'system': 'Discards the in-memory flow and lands on /history &mdash; it does NOT call a backend delete.',
-                    'limits': [('The History row this flow was seeded from is unaffected.', 'Confirmed live: the same row is still present afterward. &ldquo;Delete&rdquo; here means discarding an uncommitted edit, not removing a creation &mdash; there is nothing server-side to remove yet.')],
+                    'system': 'Deletes the MV this editor was opened from, discards the in-memory flow, and lands on /history &mdash; the row is gone.',
+                    'limits': [
+                        ('The MV this edit came from is deleted from History.', 'Product owner, 2026-09-20 (YMW260917P0008): &ldquo;delete project would delete mv&rdquo;. Confirmed live: History drops from 8 rows to 7 and &ldquo;Cinematic Night&rdquo; is gone.'),
+                        ('Every /mv/result entry deletes it too.', 'Since 2026-09-29, Edit MV on /mv/result carries the MV&rsquo;s History id into the editor &mdash; whether the result was opened from History or reached straight after a generation (P1-S1), because a just-generated MV is already in History.'),
+                        ('Only /creator has nothing to delete.', 'Reached from /creator the editor has no History id, so Delete only discards the unsaved edits.'),
+                    ],
                 },
             ],
         },
@@ -424,6 +428,13 @@ cfg = {
     ),
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v3', '2026-09-29',
+         '<b>P4-S3 &mdash; Delete this Project now deletes the MV.</b> The step still said the History row '
+         'was unaffected, which stopped being true on 2026-09-21 (YMW260917P0008, product owner: '
+         '&ldquo;delete project would delete mv&rdquo;). Rules rewritten, and shot 20 recaptured so the '
+         'History grid shows the row gone. Also records that Edit MV on /mv/result now carries the MV into '
+         'the editor, so Delete removes it on that path too &mdash; including an MV just generated '
+         '(product owner, 2026-09-29). See <code>specs/CHANGELOG-SPEC.md</code>.'),
         ('v2', '2026-09-10',
          '<b>MV-13 &mdash; corrected how the published-MV edit block is described.</b> The block is '
          'the Edit MV control being REMOVED, not relabelled to &ldquo;Unpublish to edit&rdquo; '

@@ -59,3 +59,27 @@ describe("HistoryProvider.remove (YMW260917P0008)", () => {
     expect(result.current.removed.has("live-1")).toBe(true);
   });
 });
+
+describe("HistoryProvider.upsertGenerating — a re-render is in place (Merge, 2026-09-29)", () => {
+  it("replaces an existing id where it stands and keeps its title", () => {
+    const { result } = setup();
+    act(() => result.current.upsertGenerating({ id: "a", kind: "mv", title: "First", thumb: "" }));
+    act(() => result.current.upsertGenerating({ id: "b", kind: "mv", title: "Second", thumb: "" }));
+    act(() => result.current.markCompleted("a", "a.mp4"));
+
+    act(() => result.current.upsertGenerating({ id: "a", kind: "mv", title: "New MV", thumb: "t" }));
+
+    expect(result.current.history.map((h) => [h.id, h.title, h.status])).toEqual([
+      ["b", "Second", "generating"],
+      ["a", "First", "generating"],
+    ]);
+  });
+
+  it("still prepends an id it has not seen", () => {
+    const { result } = setup();
+    act(() => result.current.upsertGenerating({ id: "a", kind: "mv", title: "A", thumb: "" }));
+    act(() => result.current.upsertGenerating({ id: "b", kind: "mv", title: "B", thumb: "" }));
+
+    expect(result.current.history.map((h) => h.id)).toEqual(["b", "a"]);
+  });
+});

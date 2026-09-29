@@ -142,7 +142,11 @@ export function MvResult() {
   const [rejectReason, setRejectReason] = useState<PublishRejectCode | null>(null);
   const demo = useDemoState();
 
-  const entry = history.find((h) => h.kind === "mv" && h.resultUrl === resultUrl);
+  // By id first: every mock render shares one `resultUrl`, so once two MVs are
+  // done (common after a Merge) the URL match alone can pick the wrong one.
+  const entry =
+    (idParam ? history.find((h) => h.id === idParam) : undefined) ??
+    history.find((h) => h.kind === "mv" && h.resultUrl === resultUrl);
   // Opened from a `/history` row the id is in the URL and there is no live
   // History job to match on (seed rows are fixtures, not jobs) — without it
   // Share would build `/share?id=`, which resolves to the expired state.
@@ -185,7 +189,13 @@ export function MvResult() {
       setStoryboard(sb);
       saveStoryboard(sb);
     }
-    router.push(localePath(locale, "/mv/edit"));
+    // Forward the History id of the MV on screen: `/mv/edit`'s "Delete this
+    // Project" deletes the creation named there (YMW260917P0008). That is the
+    // row's `?id=` when opened from `/history` (History → Result → Edit MV,
+    // the path QA took), or the live job's id right after a generation —
+    // product owner, 2026-09-29: a just-generated MV is in History too, so
+    // Delete removes it as well. `shareId` is exactly that pair, already.
+    router.push(localePath(locale, shareId ? `/mv/edit?id=${shareId}` : "/mv/edit"));
   }
 
   function togglePlay() {

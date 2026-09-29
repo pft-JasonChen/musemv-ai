@@ -3306,7 +3306,9 @@ async function openEditor(page: Page) {
   await page.getByText("Create MV Directly").click();
   await page.waitForURL("**/mv/result", { timeout: 60_000 });
   await page.getByRole("button", { name: "Edit MV", exact: true }).click();
-  await page.waitForURL("**/mv/edit", { timeout: 20_000 });
+  // `**` after: Edit MV now carries the new MV's History id (`?id=`,
+  // YMW260917P0008), and a bare `**/mv/edit` glob does not match a query.
+  await page.waitForURL("**/mv/edit**", { timeout: 20_000 });
   await expect(page.locator(".mv-edit__panel")).toBeVisible();
 }
 
@@ -3448,12 +3450,16 @@ test("3k / GL-01: Recreate routes to IAP when the balance cannot cover it", asyn
 
 test("3k: Delete this Project confirms before discarding", async ({ page }) => {
   // DP ships this control with a dead handler. Per the /creator precedent it is
-  // wired — but to a confirm first, and then only to discarding the in-memory
-  // flow, not to an invented backend delete.
+  // wired — to a confirm first, never to an invented backend delete. Confirming
+  // deletes the MV the editor was opened for: here a freshly generated one,
+  // which is already a live History entry (product owner, 2026-09-29,
+  // YMW260917P0008).
   test.slow();
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await openEditor(page);
+  const id = new URL(page.url()).searchParams.get("id");
+  expect(id, "Edit MV must carry the new MV's History id").toBeTruthy();
 
   await page.locator(".mv-edit__delete-btn").click();
   const confirm = page.getByRole("dialog", { name: "Delete" });
@@ -3467,6 +3473,81 @@ test("3k: Delete this Project confirms before discarding", async ({ page }) => {
     .getByRole("button", { name: "Delete" })
     .click();
   await page.waitForURL("**/history");
+  await expect(page.locator(".history-card").first()).toBeVisible();
+  await expect(page.locator(`.history-card a[href*="id=${id}"]`)).toHaveCount(0);
+});
+
+test("YMW260917P0008: History → Result → Edit MV → Delete this Project deletes that MV", async ({
+  page,
+}) => {
+  // The card-menu "Edit MV" already passed `?id=`; the result page's own Edit MV
+  // did not, so the path QA took (open the MV, then edit it) deleted nothing.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+  const row = () => page.locator(".history-card").filter({ hasText: "Cinematic Night" });
+  await expect(row()).toHaveCount(1);
+  await row().getByRole("link", { name: "Cinematic Night" }).first().click();
+  await page.waitForURL("**/mv/result?id=*");
+  const id = new URL(page.url()).searchParams.get("id");
+
+  await page.getByRole("button", { name: "Edit MV", exact: true }).click();
+  await page.waitForURL("**/mv/edit?id=*");
+  expect(new URL(page.url()).searchParams.get("id")).toBe(id);
+
+  await page.locator(".mv-edit__delete-btn").click();
+  await page
+    .getByRole("dialog", { name: "Delete" })
+    .getByRole("button", { name: "Delete" })
+    .click();
+  await page.waitForURL("**/history");
+  await expect(row()).toHaveCount(0);
+});
+
+test("2026-09-29: Merge on a History MV re-renders THAT row in place, and Delete after it removes it", async ({
+  page,
+}) => {
+  // Merge used to key off a stale job id: on a seed row it filed the render as a
+  // SECOND History card and returned to a bare /mv/result, so a later Delete
+  // this Project removed that copy and left the row the user opened. Product
+  // owner, 2026-09-29: Merge replaces the row in place.
+  test.slow();
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+  const row = () => page.locator(".history-card").filter({ hasText: "Cinematic Night" });
+  await expect(row()).toHaveCount(1);
+  const total = await page.locator(".history-card").count();
+
+  await row().getByRole("link", { name: "Cinematic Night" }).first().click();
+  await page.waitForURL("**/mv/result?id=h-cinematic-night");
+  await page.getByRole("button", { name: "Edit MV", exact: true }).click();
+  await page.waitForURL("**/mv/edit?id=h-cinematic-night");
+
+  await page.getByRole("switch", { name: "Show Watermark" }).click();
+  await page.locator(".mv-edit__merge-btn").click();
+  await page.waitForURL("**/mv/creating?id=h-cinematic-night");
+  // The render screen hands the id on, so the result still knows which MV it is.
+  await page.waitForURL("**/mv/result?id=h-cinematic-night", { timeout: 60_000 });
+
+  await page.getByRole("button", { name: "Edit MV", exact: true }).click();
+  await page.waitForURL("**/mv/edit?id=h-cinematic-night");
+  await page.locator(".mv-edit__delete-btn").click();
+  await page
+    .getByRole("dialog", { name: "Delete" })
+    .getByRole("button", { name: "Delete" })
+    .click();
+  await page.waitForURL("**/history");
+  await expect(row()).toHaveCount(0);
+  // One row gone, not one added and one removed.
+  await expect(page.locator(".history-card")).toHaveCount(total - 1);
+
+  // And gone from /mv/room's My Creations rail, which kept deleted rows until
+  // it read `removed` too. Client-side, because History state is in memory.
+  await page.locator('a[href="/mv/room"]').first().click();
+  await page.waitForURL("**/mv/room");
+  await expect(page.locator(".mv-create__side-item").first()).toBeVisible();
+  await expect(page.locator('.mv-create__side-item[href*="id=h-cinematic-night"]')).toHaveCount(0);
 });
 
 // ════════════════════════════════════════════════════════════════════════════

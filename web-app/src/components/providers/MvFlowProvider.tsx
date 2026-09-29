@@ -76,7 +76,14 @@ interface MvFlowValue {
    * cannot separate Generate MV (§3.4, `35 + N×sec`) from Merge MV (§3.6, flat
    * 10) — both arrive with a job id and a storyboard. So the caller states it.
    */
-  resetForRerender: (intent: RenderIntent) => void;
+  /**
+   * `source` is the History id of the MV being re-rendered, when there is one
+   * (Merge from `/mv/edit?id=`). A Merge then REPLACES that History row in
+   * place — same id, "Generating…" while it renders, then the merged video
+   * (product owner, 2026-09-29) — instead of filing the render as a new row.
+   * Optional, so every existing caller is unchanged. C4 additive.
+   */
+  resetForRerender: (intent: RenderIntent, source?: string) => void;
 }
 
 export type RenderIntent = "create" | "generate" | "merge";
@@ -97,6 +104,15 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
   const [characterNames, setCharacterNames] = useState<string[]>(["", ""]);
   const [savedJson, setSavedJson] = useState<string | null>(null);
   const jobId = useRef<string | null>(null);
+  // Merge re-renders a CREATION, which is not the same thing as a job.
+  // `mergeTarget` is the History id being merged (set by `resetForRerender`);
+  // `apiJobFor` maps a History id to the API job that last rendered it.
+  // Seed rows (`h-…`) have no API job until their first Merge, so that Merge
+  // creates one — and `jobId.current` is never reused for it, because opening
+  // a History row does not reset `jobId`, so it can name an unrelated MV
+  // generated earlier in the session (it re-rendered into THAT MV's record).
+  const mergeTarget = useRef<string | null>(null);
+  const apiJobFor = useRef(new Map<string, string>());
   const cancelPoll = useRef<(() => void) | null>(null);
 
   const patchCompose = useCallback(
@@ -139,7 +155,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
   /** Track `job`, updating gen on every poll tick until it completes or fails.
    *  `onFail` runs on error so the caller can refund a credit charge (GL-01). */
   const track = useCallback(
-    (job: MvJob, onDone: (job: MvJob) => void, onFail?: () => void) => {
+    (job: MvJob, onDone: (job: MvJob) => void, onFail?: () => void, rowId: string = job.id) => {
       cancelPoll.current?.();
       jobId.current = job.id;
       setGen(toGen(job));
@@ -148,7 +164,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
         onDone,
         onError: () => {
           setGen((g) => ({ ...g, status: "failed" }));
-          markFailed(job.id);
+          markFailed(rowId);
           onFail?.();
         },
       });
@@ -168,6 +184,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
     void api
       .createMvJob({ mode: "storyboard_first", compose })
       .then((job) => {
+        apiJobFor.current.set(job.id, job.id);
         upsertGenerating({
           id: job.id,
           kind: "mv",
@@ -204,15 +221,32 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
           : createMvCost(compose.mvType, res, sec);
     addCredits(-cost);
     const refund = () => addCredits(cost);
-    const start =
-      jobId.current && storyboard
+    const merging = renderIntent.current === "merge";
+    const rowId = merging ? mergeTarget.current : null;
+    const mergeJob = rowId ? apiJobFor.current.get(rowId) : undefined;
+    const start = merging
+      ? mergeJob && storyboard
+        ? api.renderMvJob(mergeJob, storyboard)
+        : // No job behind this creation yet (a seed row, or `/creator` with no
+          // History id): make one and render the EDITED storyboard into it.
+          api
+            .createMvJob({ mode: "direct", compose })
+            .then((job) => (storyboard ? api.renderMvJob(job.id, storyboard) : job))
+      : jobId.current && storyboard
         ? api.renderMvJob(jobId.current, storyboard)
         : api.createMvJob({ mode: "direct", compose });
     void start
       .then((job) => {
+        // The History row: the merged creation's own id, else the new job's.
+        const row = rowId ?? job.id;
+        apiJobFor.current.set(row, job.id);
         upsertGenerating({
-          id: job.id,
+          id: row,
           kind: "mv",
+          // Only a brand-new row shows this. A live row being merged keeps its
+          // own title (`upsertGenerating`, in place), and a seed row's card is
+          // drawn from the seed, title included (`HistoryView`, `useMyCreations`)
+          // — so the on-video caption is never mistaken for the row's name.
           title: GENERATING_MV_TITLE,
           thumb: job.thumb,
           characterNames: characterNames.slice(0, compose.photos.length),
@@ -222,9 +256,10 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
           (done) => {
             if (!done.resultUrl) return;
             setResultUrl(done.resultUrl);
-            markCompleted(done.id, done.resultUrl);
+            markCompleted(row, done.resultUrl);
           },
           refund,
+          row,
         );
       })
       .catch(() => {
@@ -250,8 +285,9 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
 
   // Re-rendering keeps the current storyboard + job id but must clear the prior
   // rendered video so the render screen starts fresh instead of bouncing back.
-  const resetForRerender = useCallback((intent: RenderIntent) => {
+  const resetForRerender = useCallback((intent: RenderIntent, source?: string) => {
     renderIntent.current = intent;
+    mergeTarget.current = intent === "merge" ? (source ?? null) : null;
     cancelPoll.current?.();
     setGen(IDLE_GEN);
     setResultUrl(null);

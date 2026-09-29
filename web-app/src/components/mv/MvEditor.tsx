@@ -111,8 +111,11 @@ const clipCover = (i: number) => `/assets/videos/storyboard-clips/clip_${(i % 19
  * the MV stayed in History and "Delete this Project" deleted nothing the user
  * could see. The row is identified by `?id=`, which `/history` already put in
  * the URL when it opened this screen — so the delete is scoped to an edit that
- * genuinely came FROM a creation. Reached from `/mv/result` or `/creator`
- * there is no `id`, nothing is in History yet, and it discards the flow only.
+ * genuinely came FROM a creation. `/mv/result` forwards an id too: the History
+ * row's when it was itself opened from one (History → Result → Edit MV, the
+ * path QA reported on 2026-09-24), or the live job's right after a generation,
+ * which is already in History (product owner, 2026-09-29). Reached with no
+ * `id` — `/creator` — it discards the flow only.
  *
  * Every `.mv-edit__*-icon` is a `background-color` + `mask-*` rule, so they are
  * all `DpIcon`. The only `<img>`-shaped rules on this screen are
@@ -278,8 +281,13 @@ export function MvEditor() {
     saveStoryboard(committed);
     // §3.6 — Merge is a FLAT 10 at any length, not a re-render price. Saying so
     // explicitly is what lets the provider tell it apart from Generate MV.
-    resetForRerender("merge");
-    router.push(localePath(locale, "/mv/creating"));
+    // Merge re-renders the creation this editor was opened for, in place
+    // (product owner, 2026-09-29). Its History id is `?id=` — read at click
+    // time, same as `deleteProject`, and carried through `/mv/creating` so the
+    // result screen after the render still knows which MV it is showing.
+    const source = new URLSearchParams(window.location.search).get("id");
+    resetForRerender("merge", source ?? undefined);
+    router.push(localePath(locale, source ? `/mv/creating?id=${source}` : "/mv/creating"));
   }
 
   function deleteProject() {

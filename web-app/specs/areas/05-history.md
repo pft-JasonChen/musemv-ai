@@ -8,7 +8,7 @@
 ## 1. Overview & scope
 
 The signed-in user's **"My Creations"** list (`/history`, auth-gated). It merges **live in-memory jobs**
-(from the MV/Song flow providers) with a **static seed** of sample creations, shown as filterable
+(from the MV/Song flow providers) with a **static seed** of sample creations (a live job that carries a seed row's id — a Merge of that row, MV-P5-S5 — overlays it in place: same slot and stats, the live status and video), shown as filterable
 cards with a per-row `⋯` options menu (like/share/download/delete/publish + Edit MV / Create MV).
 Opening a row routes to the right destination: **its own result screen** (`/mv/result` or
 `/song/result`), the storyboard editor, or the community player.
@@ -43,11 +43,11 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 
 ## 2. Route / component / state / API map (RD)
 
-| Route / Component | Owns UI | Reads/writes state | `MuseApi` |
-|---|---|---|---|
-| `/history` → `history/HistoryView` | title + retention note, filter chips, card grid, `⋯` menu (portal), delete + publish-confirm modals, toasts | `useHistory().history`, local `removed`/`ov`(overrides)/`openMenu`/`share`/`del`/`pubConfirm`; `useOpenCreation()` / `useSeedMvFlow()` | **none** |
-| `history/useOpenCreation` | — (hook) | seeds `useMvFlow().{setCompose,setStoryboard,saveStoryboard,setResultUrl}` or `useSongFlow().setSongResult`, then routes to the result screen | — |
-| `ui/ShareDialog` | share composer | see area 10 | — |
+| Route / Component                  | Owns UI                                                                                                     | Reads/writes state                                                                                                                            | `MuseApi` |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `/history` → `history/HistoryView` | title + retention note, filter chips, card grid, `⋯` menu (portal), delete + publish-confirm modals, toasts | `useHistory().history`, local `removed`/`ov`(overrides)/`openMenu`/`share`/`del`/`pubConfirm`; `useOpenCreation()` / `useSeedMvFlow()`        | **none**  |
+| `history/useOpenCreation`          | — (hook)                                                                                                    | seeds `useMvFlow().{setCompose,setStoryboard,saveStoryboard,setResultUrl}` or `useSongFlow().setSongResult`, then routes to the result screen | —         |
+| `ui/ShareDialog`                   | share composer                                                                                              | see area 10                                                                                                                                   | —         |
 
 **Data sources:** `useHistory()` (live jobs, in-memory) + `HISTORY_SAMPLES` (static seed in
 `lib/mv/mock`). No history endpoint exists — the backend adds one later (→ `TBD-GL-04`).
@@ -69,8 +69,8 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 - **Card** (`HistoryCard`): aspect-video thumb (or processing/failed placeholder), 20% scrim,
   hover-play (MV only), **status pill** (Generating…=gold / Failed=red / Done=green; community=none),
   > _Corrected 2026-08-19: **Generating renders on DP's `.badge--processing`, a deliberate dark grey** (`background: var(--neutral-dark-14)` in `designer/Badge.css`), not gold. `.badge--gold` exists but belongs to other badges. Following DP; the code is right and this line was not._
-  **kind badge** (MV / SONG / STORYBOARD icon), title, stats (plays/likes/shares for done mv/song) or
-  `meta`, date.
+  > **kind badge** (MV / SONG / STORYBOARD icon), title, stats (plays/likes/shares for done mv/song) or
+  > `meta`, date.
 - **Open row** (`HistoryView.openRow`): `processing` → not clickable; community song → `/song/play?id=…` (id = `communitySongId`, area 04); `storyboard` → seed + `/mv/storyboard?id=…` (area 02); **done MV → seed + `/mv/result?id=…`; done song → seed + `/song/result?id=…`** (2026-08-06). Every card href is locale-prefixed (R-9) and matches where the click goes, so middle-click and copy-link agree with it.
 - **Storyboard "Create" pill (HIST-05, 2026-07-23):** done storyboard cards render a **"Create MV"
   pill** in the card footer (calls `createMv(r)`), in addition to the menu CTA.
@@ -96,25 +96,31 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV / song / storyboard / community / failed), publish + delete confirm modals.
 
 ### HIST-P1 — Browse & filter
+
 - **HIST-P1-S1** Open `/history` (auth-gated). **System:** renders merged rows under **All** on a cold load, or under the tab remembered from earlier in the visit (**AC-HIST-10**). Empty filter → empty-state copy.
 - **HIST-P1-S2** Tap a filter chip (All / Music Videos / Songs / Liked). **System:** re-filters per §3 rules, writes no query param, and remembers the choice for the rest of the visit (**AC-HIST-10**).
 
 ### HIST-P2 — Open a creation
+
 - **HIST-P2-S1** Tap a **done MV** card → seed → `/mv/result?id=…` (area 02); a **done song** card → seed → `/song/result?id=…` (area 03).
 - **HIST-P2-S2** Tap a **storyboard** card → `seedFlow` → `/mv/storyboard?id=…` (area 02).
 - **HIST-P2-S3** Tap a **community** row → `/song/play?id=…` (area 04). **Processing** rows are inert.
 
 ### HIST-P3 — Row menu quick actions
+
 - **HIST-P3-S1** `⋯` → **Like/Unlike** (updates local like + count), **Share** (`ShareDialog` w/ `buildShareUrl(id)` — an own mv/song row only offers this once published, `YMW260903P0012`), **Download** (fixture media + toast).
 
 ### HIST-P4 — Publish
+
 - **HIST-P4-S1** `⋯` → **Publish** on an **MV** → "Ready to Go Public?" modal → **Confirm** → reviewing+published, toast "Submitted for review". Toggling again unpublishes.
 - **HIST-P4-S2** **Publish** on a **song** → immediate toggle + toast (no confirm).
 
 ### HIST-P5 — Delete
+
 - **HIST-P5-S1** `⋯` → **Delete** → confirm modal ("cannot be undone") → **Delete** → row removed from the list (local). Delete is hidden for published/reviewing items.
 
 ### HIST-P6 — Create / Edit entries (cross-area)
+
 - **HIST-P6-S1** `⋯` → **Edit MV** (mv) → `seedFlow` → `/mv/edit?id=…` (area 02).
 - **HIST-P6-S2** `⋯` → **Create MV** (song/storyboard) → `seedFlow` → `/mv/storyboard?id=…` (storyboard) or `/mv/room` (song) (area 02).
 
@@ -122,15 +128,15 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 
 ## 5. Error & edge states
 
-| ID | Trigger | Behaviour |
-|---|---|---|
-| **HIST-E1** | Row status `processing` | Card not clickable; `⋯` menu not rendered (only after done/failed). |
-| **HIST-E2** | Row status `failed` | Thumb-less placeholder (alert icon) + `meta` label; menu is **Delete-only** (HIST-06, 2026-07-23 — Like/Share suppressed). |
-| **HIST-E7** | Storyboard row | Menu collapses to **Create MV (CTA) + Delete** only — no Like/Share/Publish/Download. |
-| **HIST-E3** | Community-sourced row | Reduced menu (Like/Share only); no Publish/Delete/CTA row; status pill hidden. |
-| **HIST-E4** | Reload | Live rows lost (in-memory); only static seed samples remain (🔒 → `TBD-GL-04`). |
-| **HIST-E5** | Empty filter | Empty-state card: "Nothing here yet. Your {filter} will appear here." |
-| **HIST-E6** | Logged out | `AuthGuard` → sign-in modal (area 09). |
+| ID          | Trigger                 | Behaviour                                                                                                                  |
+| ----------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **HIST-E1** | Row status `processing` | Card not clickable; `⋯` menu not rendered (only after done/failed).                                                        |
+| **HIST-E2** | Row status `failed`     | Thumb-less placeholder (alert icon) + `meta` label; menu is **Delete-only** (HIST-06, 2026-07-23 — Like/Share suppressed). |
+| **HIST-E7** | Storyboard row          | Menu collapses to **Create MV (CTA) + Delete** only — no Like/Share/Publish/Download.                                      |
+| **HIST-E3** | Community-sourced row   | Reduced menu (Like/Share only); no Publish/Delete/CTA row; status pill hidden.                                             |
+| **HIST-E4** | Reload                  | Live rows lost (in-memory); only static seed samples remain (🔒 → `TBD-GL-04`).                                            |
+| **HIST-E5** | Empty filter            | Empty-state card: "Nothing here yet. Your {filter} will appear here."                                                      |
+| **HIST-E6** | Logged out              | `AuthGuard` → sign-in modal (area 09).                                                                                     |
 
 ---
 
@@ -143,9 +149,9 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - **AC-HIST-05** — WHEN **Publish** is invoked on an MV, THE SYSTEM SHALL show the "Ready to Go Public?" confirm and, on confirm, mark it reviewing/published with a "Submitted for review" toast; a song publishes immediately without a confirm.
 - **AC-HIST-06** — WHEN **Delete** is confirmed, THE SYSTEM SHALL remove the row from the list; and Delete SHALL be hidden for published/reviewing items.
 - **AC-HIST-07** — WHEN **Edit MV / Create MV** is chosen, THE SYSTEM SHALL seed flow state and route to `/mv/edit` / `/mv/storyboard`|`/mv/room` respectively.
-- **AC-HIST-08** — WHEN **Share** / **Download** is invoked, THE SYSTEM SHALL open `ShareDialog` with `buildShareUrl(id)` / download the fixture media as `{title}.mp4`|`.mp3`. *(download uses fixture media, not the row's own render — 🔒)* **Share itself SHALL NOT be offered on an own mv/song row until it is `published`** (`YMW260903P0012`, 2026-09-11) — community rows are unaffected.
+- **AC-HIST-08** — WHEN **Share** / **Download** is invoked, THE SYSTEM SHALL open `ShareDialog` with `buildShareUrl(id)` / download the fixture media as `{title}.mp4`|`.mp3`. _(download uses fixture media, not the row's own render — 🔒)_ **Share itself SHALL NOT be offered on an own mv/song row until it is `published`** (`YMW260903P0012`, 2026-09-11) — community rows are unaffected.
 - **AC-HIST-10** — WHEN the user opens a creation from `/history` and returns (browser Back, or a Back control on the result screen), THE SYSTEM SHALL restore the filter tab they left, not reset to **All**. The tab SHALL persist for the visit across client-side navigation, SHALL reset to **All** on a full document load, and an explicit `?tab=mv|songs` deep link SHALL win over the remembered value. THE SYSTEM SHALL NOT write the tab into the URL. _(`YMW260921P0015`, product owner 2026-09-22. Reported against the Liked tab specifically; measured 2026-09-21 at HEAD, **all four** tabs reset, so the fix is not Liked-only. The no-URL-write clause is `YMW260910P0001`'s separate 2026-09-11 decision, which this does not touch — remembering a tab needs no URL write. Guarded by `e2e/behaviour-regressions.spec.ts` → `YMW260921P0015`.)_
-- **AC-HIST-09** — THE SYSTEM SHALL render `/history` at 320/375/768/1024/1440/1920px with no overflow (1/2/3-column grid). *(visual)* _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
+- **AC-HIST-09** — THE SYSTEM SHALL render `/history` at 320/375/768/1024/1440/1920px with no overflow (1/2/3-column grid). _(visual)_ _(Widths corrected 2026-08-19 to the six tiers the code and `visual-baseline.spec.ts` actually use; the old list said 390, which no test has ever measured.)_
 
 ---
 
@@ -158,16 +164,16 @@ Screens to capture later: `/history` (All + Liked filters), `⋯` menu open (MV 
 - [ ] **HIST-P5**: delete confirm removes row; hidden for published/reviewing (AC-06).
 - [ ] **HIST-P6**: Edit MV / Create MV seed + route correctly (AC-07).
 - [ ] **HIST-E2/E3/E7**: failed → **Delete only**; community → Like/Share only; storyboard → Create MV pill + (Create MV + Delete) menu; published MV → **no Edit MV entry at all** (MV-13, 2026-08-28).
-- [ ] **AC-09**: grid clean at 4 widths *(visual)*.
+- [ ] **AC-09**: grid clean at 4 widths _(visual)_.
 
 ---
 
 ## 8. Open items for RD
 
-| ID | Open item |
-|---|---|
-| **TBD-HIST-01** | 🔧 **Backend (RD)** — persisted per-user history endpoint (list/detail/delete). Today live rows are in-memory and downloads use fixture media, not the row's own render. |
-| **TBD-HIST-04** | 📄 **Backend pipeline undefined** — Publish's confirm→review→community frontend flow is built, but what Publish actually *does* server-side (moderation/review → community feed) is spec-only, tied to the Curation PRD (`TBD-GL-05`, area 04). |
+| ID              | Open item                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TBD-HIST-01** | 🔧 **Backend (RD)** — persisted per-user history endpoint (list/detail/delete). Today live rows are in-memory and downloads use fixture media, not the row's own render.                                                                                                                                                                                                                                                                                                                                                                                            |
+| **TBD-HIST-04** | 📄 **Backend pipeline undefined** — Publish's confirm→review→community frontend flow is built, but what Publish actually _does_ server-side (moderation/review → community feed) is spec-only, tied to the Curation PRD (`TBD-GL-05`, area 04).                                                                                                                                                                                                                                                                                                                     |
 | **TBD-HIST-05** | 🎨 **No review-REJECTED state exists, at any layer.** Found 2026-08-27 scoping the S4 storyboard spec (product owner). Publish sets `reviewing`+`published` together and nothing ever clears `reviewing` on its own — there is no simulated delay, no rejection, no UI for "review failed". Needed: what a rejected MV looks like on the card (status pill?), in the `⋯` menu (can the user re-submit? edit first?), and whether it is a toast, a persistent banner, or a distinct card state. Blocks a "review rejected" step in the S4 storyboard until answered. |
 
 See also global: `TBD-GL-04` (persistence), and `TBD-MV-06` (publish → community pipeline).

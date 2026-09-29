@@ -21,6 +21,13 @@ interface Props {
   start: () => void;
   /** guard: if this is already satisfied, skip starting (e.g. storyboard exists) */
   alreadyDone: boolean;
+  /**
+   * Carry this screen's own `?id=` on to `nextHref`. Set by the render screen:
+   * a Merge arrives as `/mv/creating?id=<historyId>`, and `/mv/result` needs
+   * that id to know which creation it shows (its Share and Edit MV use it).
+   * Read in the effect, not with `useSearchParams` — see `AGENTS.md`.
+   */
+  forwardId?: boolean;
 }
 
 /**
@@ -60,6 +67,7 @@ export function GenerationView({
   nextHref,
   start,
   alreadyDone,
+  forwardId = false,
 }: Props) {
   const router = useRouter();
   const { locale } = useLocale();
@@ -100,10 +108,12 @@ export function GenerationView({
   // Back from the result reaches the screen the user actually came from.
   useEffect(() => {
     if (alreadyDone || gen.status === "done") {
-      const t = setTimeout(() => router.replace(nextHref), 350);
+      const id = forwardId ? new URLSearchParams(window.location.search).get("id") : null;
+      const href = id ? `${nextHref}?id=${id}` : nextHref;
+      const t = setTimeout(() => router.replace(href), 350);
       return () => clearTimeout(t);
     }
-  }, [alreadyDone, gen.status, nextHref, router]);
+  }, [alreadyDone, gen.status, nextHref, router, forwardId]);
 
   const backHref = kind === "song" ? "/song/create" : "/mv/room";
   const failed = gen.status === "failed";
