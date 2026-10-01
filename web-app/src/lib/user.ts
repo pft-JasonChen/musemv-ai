@@ -337,37 +337,13 @@ export interface CreditTxn {
   icon: string;
 }
 
-/** Recent credit ledger shown in the Credits Detail view (prototype seed). */
+/**
+ * Recent credit ledger shown in the Credits Detail view (prototype seed).
+ * Seeded as a brand-new free account: the only entry is the sign-up gift, so
+ * the ledger sums to `DEFAULT_CREDITS` and matches the balance shown above it.
+ * No credit-pack row (packs are subscriber-only, CR-06) and no daily sign-in
+ * bonus (the product has no such feature).
+ */
 export const CREDIT_TRANSACTIONS: CreditTxn[] = [
-  { id: 1, label: "Credit pack purchase", date: "2026-07-12", amount: 300, icon: "ic_credit" },
-  {
-    id: 2,
-    label: "MV render — Neon City Nights",
-    date: "2026-07-11",
-    amount: -200,
-    icon: "ic_video_ai",
-  },
-  {
-    id: 3,
-    label: "Song generation — Golden Hour",
-    date: "2026-07-10",
-    amount: -10,
-    icon: "ic_song_ai",
-  },
-  {
-    id: 4,
-    label: "Scene regenerate — Electric Dreams",
-    date: "2026-07-09",
-    amount: -20,
-    icon: "ic_script",
-  },
-  { id: 5, label: "Daily sign-in bonus", date: "2026-07-09", amount: 20, icon: "ic_gift" },
-  {
-    id: 6,
-    label: "Storyboard — Starfall Serenade",
-    date: "2026-07-08",
-    amount: -20,
-    icon: "ic_script",
-  },
-  { id: 7, label: "Welcome bonus", date: "2026-07-01", amount: 500, icon: "ic_gift" },
+  { id: 1, label: "Welcome bonus", date: "2026-07-01", amount: DEFAULT_CREDITS, icon: "ic_gift" },
 ];

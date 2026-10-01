@@ -5,8 +5,8 @@
 // is the gate: run the action if signed in, otherwise open the sign-in modal
 // and queue the action to run after a successful sign-in.
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { MOCK_USER, type PlanId } from "@/lib/user";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { DEFAULT_CREDITS, MOCK_USER, type PlanId } from "@/lib/user";
 import { authStore, hydratedStore } from "@/lib/authStore";
 import { SignInModal } from "@/components/auth/SignInModal";
 
@@ -42,6 +42,25 @@ const DEFAULT_PROFILE: Profile = { name: MOCK_USER.name, email: MOCK_USER.email,
 
 const Ctx = createContext<AuthValue | null>(null);
 
+// Sign-up gift toast. RD queries the backend for the gift after sign-up and the
+// answer may not be ready at once, so the toast is shown ~3s after sign-in, and
+// only once per account. The mock has no sign-up/sign-in distinction, so the
+// FIRST sign-in on this browser stands in for sign-up. If RD's query fails or
+// times out, show nothing — the credits still appear in the balance/ledger.
+const SIGNUP_GIFT_SEEN_KEY = "muse_signup_gift_seen";
+const SIGNUP_GIFT_DELAY_MS = 3000;
+const SIGNUP_GIFT_VISIBLE_MS = 4000;
+
+function claimSignupGift(): boolean {
+  try {
+    if (localStorage.getItem(SIGNUP_GIFT_SEEN_KEY) === "1") return false;
+    localStorage.setItem(SIGNUP_GIFT_SEEN_KEY, "1");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loggedIn = useSyncExternalStore(authStore.subscribe, authStore.getSnapshot, authStore.getServerSnapshot);
   const hydrated = useSyncExternalStore(hydratedStore.subscribe, hydratedStore.getSnapshot, hydratedStore.getServerSnapshot);
@@ -51,6 +70,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const pending = useRef<(() => void) | null>(null);
   const cancel = useRef<(() => void) | null>(null);
+  const [giftToast, setGiftToast] = useState(false);
+  const giftTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearGiftTimers = useCallback(() => {
+    giftTimers.current.forEach(clearTimeout);
+    giftTimers.current = [];
+  }, []);
+  useEffect(() => clearGiftTimers, [clearGiftTimers]);
 
   const openSignIn = useCallback(() => {
     pending.current = null;
@@ -74,11 +101,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleSignedIn = useCallback(() => {
     authStore.set(true);
     setModalOpen(false);
+    if (claimSignupGift()) {
+      clearGiftTimers();
+      giftTimers.current.push(
+        setTimeout(() => setGiftToast(true), SIGNUP_GIFT_DELAY_MS),
+        setTimeout(() => setGiftToast(false), SIGNUP_GIFT_DELAY_MS + SIGNUP_GIFT_VISIBLE_MS),
+      );
+    }
     const fn = pending.current;
     pending.current = null;
     cancel.current = null;
     fn?.();
-  }, []);
+  }, [clearGiftTimers]);
 
   const handleClose = useCallback(() => {
     setModalOpen(false);
@@ -90,10 +124,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(() => {
     authStore.set(false);
+    clearGiftTimers();
+    setGiftToast(false);
     setSubscribed(false);
     setSubscribedPlan(null);
     setProfile(DEFAULT_PROFILE);
-  }, []);
+  }, [clearGiftTimers]);
 
   const subscribe = useCallback((plan: PlanId) => {
     setSubscribed(true);
@@ -115,6 +151,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={value}>
       {children}
       <SignInModal open={modalOpen} onClose={handleClose} onSignedIn={handleSignedIn} />
+      {giftToast && (
+        <div
+          role="status"
+          className="anim-toast pointer-events-none fixed bottom-24 left-1/2 z-[120] w-max max-w-[calc(100vw-32px)] rounded-full px-4 py-2 text-center text-[13px] font-semibold"
+          style={{ background: "var(--neutral-dark-100)", color: "var(--neutral-dark-04)" }}
+        >
+          🎉 Welcome! {DEFAULT_CREDITS} free credits have been added to your account.
+        </div>
+      )}
     </Ctx.Provider>
   );
 }

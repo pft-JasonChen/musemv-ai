@@ -270,8 +270,21 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, `/profile/credits`.
 ### CR-P3 — Credits detail
 
 - **CR-P3-S1** Navigate to `/profile/credits` (profile Credits tile / Muse Pro **Manage** — both `router.push`, no longer a modal). **System:** balance + All/Spend/Earn filter + static ledger + **Buy More** → `BuyCreditsModal`.
-- **CR-P3-S2** Pick **Spend** or **Earn** → the ledger filters to negative / positive entries; **All** restores all 7.
+- **CR-P3-S2** Pick **Spend** or **Earn** → the ledger filters to negative / positive entries; **All** restores the full ledger. _(The seed is now ONE entry — `Welcome bonus +10`, a brand-new free account — so Spend shows the empty state. Corrected 2026-10-01, product owner: the old 7-entry seed carried a +500 welcome bonus, a +300 pack purchase a free user cannot make (CR-06), and a daily sign-in bonus the product does not have.)_
 - **CR-P3-S3** Back → `/profile`. The route is deep-linkable and survives browser back/forward — the reason it stopped being a modal.
+
+### CR-P4 — Sign-up gift toast _(added 2026-10-01)_
+
+- **CR-P4-S1** A new account finishes sign-up. RD queries the backend for the sign-up gift; the answer may not be ready immediately, so the toast appears **~3 s after sign-up** (provisional delay, RD-owned).
+- **CR-P4-S2** **System:** a non-blocking toast (no dialog, no CTA, does not intercept clicks), visible ~4 s: **"🎉 Welcome! {credits} free credits have been added to your account."** `{credits}` comes from the backend (today `DEFAULT_CREDITS` = 10) and is never hardcoded in the string. The header credit pill reflects the new balance.
+- **CR-P4-S3** Shown **once per account** — a later sign-in does not show it again.
+- **CR-P4-S4** If the gift query fails or has not answered in time, **show nothing** (no error toast); the credits still appear in the balance and in the ledger as **"Welcome bonus"**.
+- _Prototype:_ the mock has no sign-up/sign-in distinction, so the FIRST sign-in on a browser stands in for sign-up (`localStorage["muse_signup_gift_seen"]`, `AuthProvider.tsx`). Clear that key to see it again.
+
+| String           | English                                                               |
+| ---------------- | --------------------------------------------------------------------- |
+| toast            | `🎉 Welcome! {credits} free credits have been added to your account.` |
+| ledger row label | `Welcome bonus`                                                       |
 
 ---
 
@@ -302,6 +315,7 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, `/profile/credits`.
 - **AC-CR-09** — WHEN a Muse Pro plan is subscribed to in `SubscribeModal`, THE SYSTEM SHALL update the header credit count and expiry cadence to that plan — one of **six**: 200/week (Weekly), 1,000/week (Weekly Pro), 1,000/month (Monthly), 2,000/month (Monthly Pro), 2,000/year (Yearly), or 4,000/year (Yearly Pro). **On desktop (≥1024px) there is no default selection** — each of the current duration's two cards carries its own Subscribe button; **below 1024px** a `selectedTier` toggle (default **Pro**) picks which of that duration's two plans the single shared Subscribe button acts on. _(Corrected 2026-08-19: the "default selection SHALL be Weekly Pro" clause contradicted `CR-P2-S1` in this same file and has not matched the code since slice 3f removed the shared selection state.)_ _(Corrected 2026-09-01: the plan list grew from 3 flat plans to 6 — a Weekly/Monthly/Yearly duration Tab Bar × Basic/Pro tiers, product owner 2026-08-28 — and the mobile/tablet collapsed list (2026-08-24) reintroduced a selection concept, `selectedTier`, that the 2026-08-19 note above did not anticipate. Full model in §1/§3.)_
 - **AC-CR-10** — WHILE the discount sample is switched on, THE SYSTEM SHALL render in `BuyCreditsModal`: a struck-through list price, an "N% OFF" badge per pack, and the sale price on the Buy CTA. The discount percentage, its rounding rule, and whether the sample is on at all are backend/marketing-owned and may change at any time — this AC states the elements, not the values. _(Corrected 2026-09-01, product owner: this AC used to cite `CREDIT_SALE_PCT > 0` and "rounded up to the nearest 5" as if they were the spec; UI elements are the spec, the numbers are not — `TBD-CR-07`.)_
 - **AC-CR-11** — WHEN the `apiError` demo flag is set, THE SYSTEM SHALL show `ApiErrorState` ("Something Went Wrong" + Retry) in `SubscribeModal` / `BuyCreditsModal` in place of their normal content, checked once per dialog open; Retry SHALL re-check the flag rather than clear it. _(Added 2026-09-01 — `CR-E6`.)_
+- **AC-CR-13** — WHEN a new account has been granted the sign-up gift, THE SYSTEM SHALL show, ~3 s after sign-up, a non-blocking toast "🎉 Welcome! {credits} free credits have been added to your account." exactly once per account; IF the gift cannot be confirmed, THE SYSTEM SHALL show nothing. _(Added 2026-10-01 — `CR-P4`.)_
 - **AC-CR-12** — WHEN the `creditsEmpty` demo flag is set, THE SYSTEM SHALL show `/profile/credits`'s empty state for every filter tab (All/Spend/Earn alike), with no purchase CTA inside the list area. _(Added 2026-09-01 — `CR-E7`.)_
 
 > Charging is now real within the in-memory economy (GL-01); persistence, a live ledger, real IAP, and real reset/expiry remain backend-deferred (§8).
@@ -312,9 +326,10 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, `/profile/credits`.
 
 - [ ] **CR-P1**: non-subscriber sees **Subscribe** everywhere, never Buy Credits (AC-08); subscriber sees 6 packs at the **2026-09-01 Web Final prices** (300 $14.89 · 600 $29.59 · 1,000 $39.59 POPULAR · 2,000 $65.49 BEST VALUE, preselected · 5,000 $140.49 · 8,000 $224.49) + the discount sample (struck price + N% OFF, AC-10); Buy adds pack credits + toast; balance updates (AC-01).
 - [ ] **CR-P2**: a **Weekly/Monthly/Yearly** duration Tab Bar (default Weekly) above that duration's Basic + Pro cards (six plans total; Pro `--featured`); **no preselection on desktop**, `selectedTier` (default Pro, persists across a duration switch) driving the shared CTA below 1024px; each card's credits/cadence/price come from `SUBSCRIPTION_PLANS` and every non-Weekly plan reads its own period ("/ month", "/ year"), not "/ week" (AC-09); a Subscribe action → subscriber + credits + PRO badge (AC-02).
-- [ ] **CR-P3**: detail shows balance + 7-entry ledger + a purchase CTA that reads **Buy More** for a subscriber and **Get Muse Pro** for a free user (AC-03).
+- [ ] **CR-P3**: detail shows balance + the 1-entry ledger (`Welcome bonus +10`) + a purchase CTA that reads **Buy More** for a subscriber and **Get Muse Pro** for a free user (AC-03).
 - [ ] **CR-E1**: reload resets balance/subscription. **CR-E2**: ledger static. **CR-E3**: already-Pro state shown. **CR-E5**: non-subscriber Buy Credits → `SubscribeModal` directly (no gate screen).
 - [ ] **AC-04/05**: SubscribeModal's footer shows **Terms of Use / Privacy Policy** only (no "demo only" disclaimer, no Restore Purchases — removed 2026-09-01), BuyCredits the expiry/refund copy, CreditsDetail none; dialogs clean at **six** widths _(visual)_.
+- [ ] **CR-P4**: clear `muse_signup_gift_seen`, sign in → toast appears ~3 s later, reads "🎉 Welcome! 10 free credits have been added to your account.", fades after ~4 s, does not block clicks; sign out + in again → no toast (AC-13).
 - [ ] **CR-E6** (`?demo=1` → `apiError`): open `SubscribeModal` and `BuyCreditsModal` and confirm each shows `ApiErrorState` + Retry instead of its normal content, including the already-Pro and non-subscriber branches (AC-11).
 - [ ] **CR-E7** (`?demo=1` → `creditsEmpty`): `/profile/credits` shows the empty state under All, Spend, AND Earn, with no CTA in the list area (AC-12).
 

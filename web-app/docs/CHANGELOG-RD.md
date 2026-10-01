@@ -23,6 +23,20 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-10-01 — **C4 UNCHANGED (internal only)** — sign-up gift toast rendered inside `AuthProvider`
+
+**Surface: C4 — touched, not changed.** `useAuth()` returns exactly the same keys and
+signatures; `providers.surface.test.ts`'s snapshot is unchanged. `AuthProvider.tsx` only gained
+private state and a toast it renders itself, next to `SignInModal`:
+
+- On the FIRST successful sign-in on a browser (`localStorage["muse_signup_gift_seen"]`, a new
+  key independent of C5's `muse_auth`), a non-blocking toast appears ~3 s later for ~4 s:
+  "🎉 Welcome! {credits} free credits have been added to your account." (`{credits}` =
+  `DEFAULT_CREDITS`, 10).
+- **What RD must do:** replace the mock trigger with the real one — after sign-up, query the
+  sign-up gift; show the toast once per account with the backend's amount; if the query fails or
+  is not answered in time, show nothing. Spec: `specs/areas/07-credits-iap.md` CR-P4 / AC-CR-13.
+
 ## 2026-09-29 — **C4 ADDITIVE** — `resetForRerender` takes an optional `source`; `upsertGenerating` re-renders in place (Merge MV)
 
 **Surface: C4.** No key added, renamed or removed; `providers.surface.test.ts`'s snapshot is
