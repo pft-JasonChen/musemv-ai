@@ -77,8 +77,8 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | **S2**  | `mv-creation`         | 2    | 02 (MV-P1…P4, P6) | `/mv/room` + 6 sheets, `/mv/thinking` `/mv/storyboard` `/mv/creating` `/mv/result` | 8     | 44    | ✅ v6, 2026-09-10                      |
 | **S3**  | `mv-edit`             | 2    | 02 (MV-P5)        | `/mv/edit`                                                                         | 5     | 24    | ✅ v2, 2026-09-10                      |
 | **S4**  | `history`             | 6    | 05                | `/history`                                                                         | 7     | 27    | ✅ v3, 2026-09-10                      |
-| **S5**  | `credits-iap`         | 5    | 07                | `SubscribeModal` `BuyCreditsModal` `/profile/credits`                              | 6     | 21    | ✅ v1, 2026-09-01                      |
-| **S6**  | `shell-auth`          | 1    | 01 + 09           | sidebar / tab bar / route navbars / `SignInModal` / marketing footer               | 8     | 27    | ✅ v2, 2026-09-02                      |
+| **S5**  | `credits-iap`         | 5    | 07                | `SubscribeModal` `BuyCreditsModal` `/profile/credits` + sign-up gift              | 7     | 23    | ✅ v2, 2026-10-01                      |
+| **S6**  | `shell-auth`          | 1    | 01 + 09           | sidebar / tab bar / route navbars / `SignInModal` / marketing footer               | 8     | 27    | ✅ v3, 2026-10-01                      |
 | **S7**  | `profile-account`     | 1    | 06                | `/profile` `/settings`, edit-profile, Send Feedback                                | 6     | 23    | ✅ v2, 2026-09-02                      |
 | **S8**  | `explore-community`   | 4    | 04                | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator`               | 7     | 38    | ✅ v2, 2026-09-09                      |
 | **S9**  | `share`               | 4    | 10                | `/share`, `ShareDialog`                                                            | 5     | 15    | ✅ v1, 2026-09-01                      |

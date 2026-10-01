@@ -39,8 +39,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v1'
-DATE = '2026-09-01'
+VERSION = 'v2'
+DATE = '2026-10-01'
 MARGIN = 40
 # Narrow enough that the 130px 'pick a card’s Subscribe' label fits in the
 # GAP between two columns instead of resting on both boxes: a label that
@@ -112,7 +112,7 @@ f.section(1150, 'Part 5 — /profile/credits  ·  P5')
 f.note(MARGIN, 1170, 'Reached two ways: the shell’s Credits tile (Part 1), or Buy More on the '
                      'Part 3 toast.')
 
-detail = f.node(COL_A, 1200, '/profile/credits', 'Balance + All/Spend/Earn + 7-entry ledger · P5-S1 (AC-CR-03)',
+detail = f.node(COL_A, 1200, '/profile/credits', 'Balance + All/Spend/Earn + 1-row seed ledger · P5-S1 (AC-CR-03)',
                 w=NW)
 cta = f.decision(600, 1300, 'Purchase CTA label?')
 f.edge(detail, cta, side=('bottom', 'left'))
@@ -138,7 +138,22 @@ f.note(MARGIN, 1670, 'apiError is checked once per dialog OPEN, on both Subscrib
 f.note(MARGIN, 1690, '?demo=1 changes what a screen renders, never how it is reached — which is why '
                      'neither has an entry edge of its own.')
 
-f.legend(1760)
+# ══ Part 7 — sign-up gift (v2) ══════════════════════════════════════════════
+f.section(1740, 'Part 7 — Sign-up gift  ·  P7')
+
+signup = f.node(COL_A, 1790, 'New sign-up',
+                'First sign-in here, or the demo switch on · P7', w=NW)
+welcome = f.node(COL_B, 1790, '"Welcome, Scott" success line',
+                 'Not "Welcome back" · P7-S1', w=NW)
+f.edge(signup, welcome, side='h')
+gift = f.node(COL_B, 1920, 'Free-credits toast, once',
+              '~3s after sign-up, ~4s on screen · P7-S2 (AC-CR-13)', w=NW)
+f.edge(welcome, gift, '~3s later')
+
+f.note(MARGIN, 2040, 'If the gift cannot be confirmed in time, nothing is shown — the credits '
+                     'still reach the balance and the ledger.')
+
+f.legend(2100)
 f.write(os.path.join(HERE, 'user-flowchart.svg'))
 print('Wrote', os.path.join(HERE, 'user-flowchart.svg'))
 if f.warnings:

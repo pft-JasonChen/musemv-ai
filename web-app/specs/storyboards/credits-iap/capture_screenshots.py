@@ -70,7 +70,7 @@ _SHARED = os.path.expanduser("~/Library/Caches/ms-playwright")
 if "PLAYWRIGHT_BROWSERS_PATH" not in os.environ and os.path.isdir(_SHARED):
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = _SHARED
 
-from capture_lib import Capture  # noqa: E402
+from capture_lib import Capture, chromium_path  # noqa: E402
 from playwright.async_api import async_playwright  # noqa: E402
 from PIL import Image  # noqa: E402
 
@@ -95,9 +95,13 @@ class NextCapture(Capture):
         os.makedirs(self.save_dir, exist_ok=True)
         self._pw = await async_playwright().start()
         self._browser = await self._pw.chromium.launch(
+            executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
+        # `locale` pinned: middleware picks the UI locale from Accept-Language, so a
+        # machine set to zh-TW otherwise captures the /cht tree (Language row
+        # reading 繁體中文) instead of the unprefixed English one.
         ctx = await self._browser.new_context(
-            viewport=self.viewport, device_scale_factor=1)
+            viewport=self.viewport, device_scale_factor=1, locale="en-US")
         if self.seed_auth:
             await ctx.add_init_script("window.localStorage.setItem('muse_auth', '1')")
         # Hide Next.js's dev-mode build-activity indicator (`<nextjs-portal>`),
@@ -553,10 +557,52 @@ async def main_demo(base):
         print("Session C console errors:", cap.errors or "none")
 
 
+# ════════════════════════════════════════════════════════════════════════════
+# Session D -- P7, the sign-up gift (added v2, 2026-10-01). A FRESH context
+# with NO auth seed: this browser has never signed in, so `isNewSignup()`
+# (`src/lib/signupGift.ts`) is true without touching the demo panel -- the
+# natural trigger, not the QA switch.
+# ════════════════════════════════════════════════════════════════════════════
+async def main_signup(base):
+    async with NextCapture(HERE, base, seed_auth=False) as cap:
+        page = cap.page
+
+        await page.goto(f"{base}/profile", wait_until="networkidle")
+        await page.wait_for_selector('button:has-text("Continue with Google")', state="visible")
+        await page.wait_for_timeout(400)
+        await page.click('button:has-text("Continue with Google")')
+        await page.wait_for_selector('.login-modal__success-subtitle', state="visible")
+        sub = await page.locator('.login-modal__success-subtitle').inner_text()
+        if not sub.startswith("Welcome,"):
+            raise SystemExit(f"first sign-in should read 'Welcome, …', got {sub!r}")
+        await page.wait_for_timeout(350)
+        await multi_focus(cap, page, "22_signup_welcome.png", [
+            (['.login-modal__success-subtitle'], 'New sign-up: "Welcome", not "Welcome back"', "info"),
+        ], full_page=False)
+
+        toast = '[role="status"]:has-text("free credits")'
+        # ~1.8s success animation + ~3s gift delay; the toast then shows ~4s.
+        await page.wait_for_selector(toast, state="visible", timeout=8000)
+        # Settle the slide-up so the frame measures the toast where it rests.
+        await page.evaluate("() => document.getAnimations().forEach(a => a.finish())")
+        await page.wait_for_timeout(100)
+        await multi_focus(cap, page, "23_signup_gift_toast.png", [
+            ([toast], "Sign-up gift toast", "info"),
+            (['.credit-balance'], "Balance: the 10 sign-up credits", "info"),
+        ], full_page=False)
+
+        print("Session D console errors:", cap.errors or "none")
+
+
+SESSIONS = {"subscriber": main_subscriber, "free": main_free,
+            "demo": main_demo, "signup": main_signup}
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://localhost:3000")
+    # Re-run only the sessions whose screens changed; focus.json is MERGED, so
+    # the others' entries survive (see `NextCapture.__aexit__`).
+    ap.add_argument("--only", nargs="+", choices=list(SESSIONS), default=list(SESSIONS))
     args = ap.parse_args()
-    asyncio.run(main_subscriber(args.base))
-    asyncio.run(main_free(args.base))
-    asyncio.run(main_demo(args.base))
+    for name in args.only:
+        asyncio.run(SESSIONS[name](args.base))

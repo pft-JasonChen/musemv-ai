@@ -266,15 +266,15 @@
       <tr>
         <td class="c-area">S5</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/credits-iap/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Credits &amp; IAP</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/credits-iap/specs/spec.html</div></td>
-        <td class="c-dev">SubscribeModal · BuyCreditsModal · /profile/credits</td>
-        <td><span class="badge st-ok">v1 · 2026-09-01</span></td>
+        <td class="c-dev">SubscribeModal · BuyCreditsModal · /profile/credits · sign-up gift</td>
+        <td><span class="badge st-ok">v2 · 2026-10-01</span></td>
         <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>
       <tr>
         <td class="c-area">S6</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/shell-auth/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">App Shell &amp; Auth</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/shell-auth/specs/spec.html</div></td>
         <td class="c-dev">sidebar / tab bar · route navbars · SignInModal · marketing footer</td>
-        <td><span class="badge st-ok">v2 · 2026-09-02</span></td>
+        <td><span class="badge st-ok">v3 · 2026-10-01</span></td>
         <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>
       <tr>
@@ -1024,6 +1024,46 @@ this file covers. When a change does both, it appears in both, and the row below
 <p><strong>A storyboard's own Changelog is the finer-grained one</strong> and worth opening second: it badges the<br>
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
+<hr>
+<h2 id="2026-10-01-sign-up-gift-welcome-line-free-credits-toast-credits-detail-seed-is-a-new-free-account">2026-10-01 — Sign-up gift: "Welcome" line + free-credits toast; Credits Detail seed is a new free account</h2>
+<p>Product owner decisions, no bug code.</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A new sign-up's success line reads <strong>"Welcome, {name}"</strong>, not "Welcome back"</td>
+<td>area 09 SignInModal · S6 <strong>P3-S2</strong> (note) · S5 <strong>P7-S1</strong></td>
+<td><code>src/components/auth/SignInModal.tsx</code>, <code>src/lib/signupGift.ts</code></td>
+<td><code>src/lib/signupGift.test.ts</code></td>
+</tr>
+<tr>
+<td>~3s after sign-up a non-blocking toast, once per account: "🎉 Welcome! {credits} free credits have been added to your account." Nothing if the gift cannot be confirmed</td>
+<td>area 07 <strong>CR-P4</strong>, <strong>AC-CR-13</strong> · S5 <strong>P7-S2</strong></td>
+<td><code>src/components/providers/AuthProvider.tsx</code></td>
+<td><code>src/lib/signupGift.test.ts</code> (decision); toast checked live</td>
+</tr>
+<tr>
+<td><code>?demo=1</code> switch <strong>"Sign-in counts as a NEW sign-up"</strong> replays the flow</td>
+<td>area 07 CR-P4 · S5 P7 entry</td>
+<td><code>src/lib/demoStore.ts</code> (<code>newSignup</code>)</td>
+<td><code>src/lib/signupGift.test.ts</code></td>
+</tr>
+<tr>
+<td>Ledger seed = one <strong>Welcome bonus +10</strong> row (deleted: +500 welcome, +300 pack purchase, daily sign-in bonus)</td>
+<td>area 07 CR-P3-S2 · S5 <strong>P5-S1..S3</strong>, D-08</td>
+<td><code>src/lib/user.ts</code> <code>CREDIT_TRANSACTIONS</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Storyboards: <strong>S5 → v2</strong> (new P7; shots 13–16 recaptured, 22–23 new; 01–12 recaptured with no behaviour change). <strong>S6 → v3</strong> (P3-S2 note only, nothing recaptured). Contract: <code>useAuth()</code> unchanged — see <code>../docs/CHANGELOG-RD.md</code> 2026-10-01 (a) and (b).</p>
 <hr>
 <h2 id="2026-09-23-mvresult-hides-like-dislike-until-they-persist">2026-09-23 — <code>/mv/result</code> hides Like / Dislike until they persist</h2>
 <h3 id="ymw260921p0013-like-dislike-are-hidden-not-fixed"><code>YMW260921P0013</code>: Like / Dislike are hidden, not fixed</h3>
@@ -5846,9 +5886,35 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 <h3 id="cr-p3-credits-detail">CR-P3 — Credits detail</h3>
 <ul>
 <li><strong>CR-P3-S1</strong> Navigate to <code>/profile/credits</code> (profile Credits tile / Muse Pro <strong>Manage</strong> — both <code>router.push</code>, no longer a modal). <strong>System:</strong> balance + All/Spend/Earn filter + static ledger + <strong>Buy More</strong> → <code>BuyCreditsModal</code>.</li>
-<li><strong>CR-P3-S2</strong> Pick <strong>Spend</strong> or <strong>Earn</strong> → the ledger filters to negative / positive entries; <strong>All</strong> restores all 7.</li>
+<li><strong>CR-P3-S2</strong> Pick <strong>Spend</strong> or <strong>Earn</strong> → the ledger filters to negative / positive entries; <strong>All</strong> restores the full ledger. <em>(The seed is now ONE entry — <code>Welcome bonus +10</code>, a brand-new free account — so Spend shows the empty state. Corrected 2026-10-01, product owner: the old 7-entry seed carried a +500 welcome bonus, a +300 pack purchase a free user cannot make (CR-06), and a daily sign-in bonus the product does not have.)</em></li>
 <li><strong>CR-P3-S3</strong> Back → <code>/profile</code>. The route is deep-linkable and survives browser back/forward — the reason it stopped being a modal.</li>
 </ul>
+<h3 id="cr-p4-sign-up-gift-toast-added-2026-10-01">CR-P4 — Sign-up gift toast <em>(added 2026-10-01)</em></h3>
+<ul>
+<li><strong>CR-P4-S1</strong> A new account finishes sign-up. RD queries the backend for the sign-up gift; the answer may not be ready immediately, so the toast appears <strong>~3 s after sign-up</strong> (provisional delay, RD-owned).</li>
+<li><strong>CR-P4-S2</strong> <strong>System:</strong> a non-blocking toast (no dialog, no CTA, does not intercept clicks), visible ~4 s: <strong>"🎉 Welcome! {credits} free credits have been added to your account."</strong> <code>{credits}</code> comes from the backend (today <code>DEFAULT_CREDITS</code> = 10) and is never hardcoded in the string. The header credit pill reflects the new balance.</li>
+<li><strong>CR-P4-S3</strong> Shown <strong>once per account</strong> — a later sign-in does not show it again.</li>
+<li><strong>CR-P4-S4</strong> If the gift query fails or has not answered in time, <strong>show nothing</strong> (no error toast); the credits still appear in the balance and in the ledger as <strong>"Welcome bonus"</strong>.</li>
+<li><em>Prototype:</em> the mock has no sign-up/sign-in distinction, so a sign-in counts as a new sign-up when it is the FIRST sign-in on a browser (<code>localStorage["muse_signup_gift_seen"]</code>) <strong>or</strong> while the <code>?demo=1</code> panel's <strong>"Sign-in counts as a NEW sign-up"</strong> (<code>newSignup</code>) switch is on — then every sign-in replays the flow, with no DevTools needed. The decision lives in <code>src/lib/signupGift.ts</code>; the sign-in success line reads <strong>"Welcome, {firstName}"</strong> instead of "Welcome back" for the same sign-ins (area 09).</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>String</th>
+<th>English</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>toast</td>
+<td><code>🎉 Welcome! {credits} free credits have been added to your account.</code></td>
+</tr>
+<tr>
+<td>ledger row label</td>
+<td><code>Welcome bonus</code></td>
+</tr>
+</tbody>
+</table>
 <hr>
 <h2 id="5-error-edge-states">5. Error &amp; edge states</h2>
 <table>
@@ -5911,6 +5977,7 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 <li><strong>AC-CR-09</strong> — WHEN a Muse Pro plan is subscribed to in <code>SubscribeModal</code>, THE SYSTEM SHALL update the header credit count and expiry cadence to that plan — one of <strong>six</strong>: 200/week (Weekly), 1,000/week (Weekly Pro), 1,000/month (Monthly), 2,000/month (Monthly Pro), 2,000/year (Yearly), or 4,000/year (Yearly Pro). <strong>On desktop (≥1024px) there is no default selection</strong> — each of the current duration's two cards carries its own Subscribe button; <strong>below 1024px</strong> a <code>selectedTier</code> toggle (default <strong>Pro</strong>) picks which of that duration's two plans the single shared Subscribe button acts on. <em>(Corrected 2026-08-19: the "default selection SHALL be Weekly Pro" clause contradicted <code>CR-P2-S1</code> in this same file and has not matched the code since slice 3f removed the shared selection state.)</em> <em>(Corrected 2026-09-01: the plan list grew from 3 flat plans to 6 — a Weekly/Monthly/Yearly duration Tab Bar × Basic/Pro tiers, product owner 2026-08-28 — and the mobile/tablet collapsed list (2026-08-24) reintroduced a selection concept, <code>selectedTier</code>, that the 2026-08-19 note above did not anticipate. Full model in §1/§3.)</em></li>
 <li><strong>AC-CR-10</strong> — WHILE the discount sample is switched on, THE SYSTEM SHALL render in <code>BuyCreditsModal</code>: a struck-through list price, an "N% OFF" badge per pack, and the sale price on the Buy CTA. The discount percentage, its rounding rule, and whether the sample is on at all are backend/marketing-owned and may change at any time — this AC states the elements, not the values. <em>(Corrected 2026-09-01, product owner: this AC used to cite <code>CREDIT_SALE_PCT &gt; 0</code> and "rounded up to the nearest 5" as if they were the spec; UI elements are the spec, the numbers are not — <code>TBD-CR-07</code>.)</em></li>
 <li><strong>AC-CR-11</strong> — WHEN the <code>apiError</code> demo flag is set, THE SYSTEM SHALL show <code>ApiErrorState</code> ("Something Went Wrong" + Retry) in <code>SubscribeModal</code> / <code>BuyCreditsModal</code> in place of their normal content, checked once per dialog open; Retry SHALL re-check the flag rather than clear it. <em>(Added 2026-09-01 — <code>CR-E6</code>.)</em></li>
+<li><strong>AC-CR-13</strong> — WHEN a new account has been granted the sign-up gift, THE SYSTEM SHALL show, ~3 s after sign-up, a non-blocking toast "🎉 Welcome! {credits} free credits have been added to your account." exactly once per account; IF the gift cannot be confirmed, THE SYSTEM SHALL show nothing. <em>(Added 2026-10-01 — <code>CR-P4</code>.)</em></li>
 <li><strong>AC-CR-12</strong> — WHEN the <code>creditsEmpty</code> demo flag is set, THE SYSTEM SHALL show <code>/profile/credits</code>'s empty state for every filter tab (All/Spend/Earn alike), with no purchase CTA inside the list area. <em>(Added 2026-09-01 — <code>CR-E7</code>.)</em></li>
 </ul>
 <blockquote>
@@ -5921,9 +5988,10 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 <ul>
 <li>[ ] <strong>CR-P1</strong>: non-subscriber sees <strong>Subscribe</strong> everywhere, never Buy Credits (AC-08); subscriber sees 6 packs at the <strong>2026-09-01 Web Final prices</strong> (300 $14.89 · 600 $29.59 · 1,000 $39.59 POPULAR · 2,000 $65.49 BEST VALUE, preselected · 5,000 $140.49 · 8,000 $224.49) + the discount sample (struck price + N% OFF, AC-10); Buy adds pack credits + toast; balance updates (AC-01).</li>
 <li>[ ] <strong>CR-P2</strong>: a <strong>Weekly/Monthly/Yearly</strong> duration Tab Bar (default Weekly) above that duration's Basic + Pro cards (six plans total; Pro <code>--featured</code>); <strong>no preselection on desktop</strong>, <code>selectedTier</code> (default Pro, persists across a duration switch) driving the shared CTA below 1024px; each card's credits/cadence/price come from <code>SUBSCRIPTION_PLANS</code> and every non-Weekly plan reads its own period ("/ month", "/ year"), not "/ week" (AC-09); a Subscribe action → subscriber + credits + PRO badge (AC-02).</li>
-<li>[ ] <strong>CR-P3</strong>: detail shows balance + 7-entry ledger + a purchase CTA that reads <strong>Buy More</strong> for a subscriber and <strong>Get Muse Pro</strong> for a free user (AC-03).</li>
+<li>[ ] <strong>CR-P3</strong>: detail shows balance + the 1-entry ledger (<code>Welcome bonus +10</code>) + a purchase CTA that reads <strong>Buy More</strong> for a subscriber and <strong>Get Muse Pro</strong> for a free user (AC-03).</li>
 <li>[ ] <strong>CR-E1</strong>: reload resets balance/subscription. <strong>CR-E2</strong>: ledger static. <strong>CR-E3</strong>: already-Pro state shown. <strong>CR-E5</strong>: non-subscriber Buy Credits → <code>SubscribeModal</code> directly (no gate screen).</li>
 <li>[ ] <strong>AC-04/05</strong>: SubscribeModal's footer shows <strong>Terms of Use / Privacy Policy</strong> only (no "demo only" disclaimer, no Restore Purchases — removed 2026-09-01), BuyCredits the expiry/refund copy, CreditsDetail none; dialogs clean at <strong>six</strong> widths <em>(visual)</em>.</li>
+<li>[ ] <strong>CR-P4</strong>: open any URL with <code>?demo=1</code>, turn on <strong>"Sign-in counts as a NEW sign-up"</strong> (or clear <code>muse_signup_gift_seen</code>), sign in → success line reads "Welcome, Scott", toast → toast appears ~3 s later, reads "🎉 Welcome! 10 free credits have been added to your account.", fades after ~4 s, does not block clicks; with the switch OFF, sign out + in again → "Welcome back", no toast (AC-13).</li>
 <li>[ ] <strong>CR-E6</strong> (<code>?demo=1</code> → <code>apiError</code>): open <code>SubscribeModal</code> and <code>BuyCreditsModal</code> and confirm each shows <code>ApiErrorState</code> + Retry instead of its normal content, including the already-Pro and non-subscriber branches (AC-11).</li>
 <li>[ ] <strong>CR-E7</strong> (<code>?demo=1</code> → <code>creditsEmpty</code>): <code>/profile/credits</code> shows the empty state under All, Spend, AND Earn, with no CTA in the list area (AC-12).</li>
 </ul>
@@ -6101,7 +6169,9 @@ rationale). <code>/settings</code> was added by PROF-03 (2026-07-23) and <code>/
   Apple</strong> and <strong>Continue with Google</strong> (white buttons); Terms of Service / Privacy Policy are <strong>real<br>
   links</strong> to <code>lib/legal.ts</code> (<code>TERMS_URL</code>/<code>PRIVACY_URL</code>, new tab) — same set as Settings (AUTH-03 /<br>
   PROF-06); picking a provider shows a 1.8s success state ("Signed in successfully! Welcome back,<br>
-  {firstName} · via {provider}") then calls <code>onSignedIn</code> → <code>authStore.set(true)</code>. Dismissal is<br>
+  {firstName} · via {provider}" — or <strong>"Welcome, {firstName} · via {provider}"</strong> for a NEW sign-up,<br>
+  i.e. the first sign-in on a browser or any sign-in while the <code>?demo=1</code> panel's <code>newSignup</code> flag is on;<br>
+<code>lib/signupGift.ts</code>, added 2026-10-01 with the sign-up gift toast, area 07 CR-P4) then calls <code>onSignedIn</code> → <code>authStore.set(true)</code>. Dismissal is<br>
 <strong>blocked during</strong> the success animation (<code>onClose</code> swallowed).</li>
 <li><strong>Sign-in trigger points (action-level, GL-02):</strong> header <strong>Sign In</strong> (<code>openSignIn</code>, area 01 — ⚠️<br>
   corrected there 2026-08-27: the live control reads <strong>"Login"</strong>, on each route's own<br>

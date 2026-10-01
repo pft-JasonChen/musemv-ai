@@ -25,6 +25,21 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-10-01 — Sign-up gift: "Welcome" line + free-credits toast; Credits Detail seed is a new free account
+
+Product owner decisions, no bug code.
+
+| What                                                                                                                                                                    | Spec IDs                                                 | Code                                                           | Test                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
+| A new sign-up's success line reads **"Welcome, {name}"**, not "Welcome back"                                                                                            | area 09 SignInModal · S6 **P3-S2** (note) · S5 **P7-S1** | `src/components/auth/SignInModal.tsx`, `src/lib/signupGift.ts` | `src/lib/signupGift.test.ts`                                |
+| ~3s after sign-up a non-blocking toast, once per account: "🎉 Welcome! {credits} free credits have been added to your account." Nothing if the gift cannot be confirmed | area 07 **CR-P4**, **AC-CR-13** · S5 **P7-S2**           | `src/components/providers/AuthProvider.tsx`                    | `src/lib/signupGift.test.ts` (decision); toast checked live |
+| `?demo=1` switch **"Sign-in counts as a NEW sign-up"** replays the flow                                                                                                 | area 07 CR-P4 · S5 P7 entry                              | `src/lib/demoStore.ts` (`newSignup`)                           | `src/lib/signupGift.test.ts`                                |
+| Ledger seed = one **Welcome bonus +10** row (deleted: +500 welcome, +300 pack purchase, daily sign-in bonus)                                                            | area 07 CR-P3-S2 · S5 **P5-S1..S3**, D-08                | `src/lib/user.ts` `CREDIT_TRANSACTIONS`                        | —                                                           |
+
+Storyboards: **S5 → v2** (new P7; shots 13–16 recaptured, 22–23 new; 01–12 recaptured with no behaviour change). **S6 → v3** (P3-S2 note only, nothing recaptured). Contract: `useAuth()` unchanged — see `../docs/CHANGELOG-RD.md` 2026-10-01 (a) and (b).
+
+---
+
 ## 2026-09-23 — `/mv/result` hides Like / Dislike until they persist
 
 ### `YMW260921P0013`: Like / Dislike are hidden, not fixed

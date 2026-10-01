@@ -57,8 +57,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Credits &amp; IAP',
     'breadcrumb': 'YouCam Muse Web &rarr; Credits &amp; IAP',
-    'author': 'Jason Chen', 'date': '2026-09-01', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-10-01', 'status': 'Draft',
+    'version': 'v2',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -83,7 +83,7 @@ cfg = {
     'overview': [
         ['Platform', 'YouCam Muse Web &mdash; captured at 1403&times;697 (desktop only, D8)'],
         ['Audience', 'QA'],
-        ['Scope', 'SubscribeModal (all three duration tabs, both tiers, subscribe, and the already-Pro branch), BuyCreditsModal (packs, selection, purchase), the CR-06 free-user gate on every entry point, /profile/credits (balance, filter, ledger, branching CTA), and the apiError / creditsEmpty states.'],
+        ['Scope', 'SubscribeModal (all three duration tabs, both tiers, subscribe, and the already-Pro branch), BuyCreditsModal (packs, selection, purchase), the CR-06 free-user gate on every entry point, /profile/credits (balance, filter, ledger, branching CTA), the apiError / creditsEmpty states, and the sign-up gift (the new-account Welcome line and the free-credits toast).'],
         ['Out of scope', 'The in-flow insufficient-balance route into IAP (GL-01/AC-CR-07 &mdash; it starts on /mv/room or /song/create, areas 02/03); how generation SPENDS credits (area 11); real store integration, which does not exist (see Prototype vs production).'],
         ['Source', 'specs/areas/07-credits-iap.md (&sect;&sect;1-9, AC-CR-01..11) and the running app'],
     ],
@@ -320,12 +320,16 @@ cfg = {
                          'It is deep-linkable and survives browser back/forward &mdash; the reason it stopped being a modal on 2026-08-11.'),
                         ('The ledger is a fixed seed and does NOT reflect purchases made in this session.',
                          'AC-CR-03 &mdash; the balance card is live, the rows below it are not. See Prototype vs production.'),
+                        ('The seed is a brand-new free account: ONE row, &ldquo;Welcome bonus +10&rdquo;.',
+                         'The sign-up grant (P7). Product owner, 2026-10-01: the old seven-row seed carried a +500 welcome bonus, a +300 pack purchase a free user cannot make (CR-06), and a daily sign-in bonus the product does not have.'),
                     ],
+                    'since': 'v2',
                 },
                 {
                     'shot': '14_credits_detail_spend.png', 'num': 2,
                     'user': 'Taps Spend.',
-                    'system': 'The ledger filters to debits only.',
+                    'system': 'The ledger filters to debits only &mdash; the new-account seed has none, so Spend shows the empty state.',
+                    'since': 'v2',
                     'limits': [
                         ('The filter derives from the SIGN of each entry&rsquo;s amount.',
                          'There is no stored category &mdash; Spend is the negative rows, Earn the positive ones.'),
@@ -334,7 +338,8 @@ cfg = {
                 {
                     'shot': '15_credits_detail_earn.png', 'num': 3,
                     'user': 'Taps Earn.',
-                    'system': 'The ledger filters to credits only; All restores every row.',
+                    'system': 'The ledger filters to credits only &mdash; the one Welcome bonus row; All restores it.',
+                    'since': 'v2',
                 },
                 {
                     'shot': '16_credits_detail_free_getmusepro.png', 'num': 4,
@@ -347,7 +352,7 @@ cfg = {
                         ('Both labels open the same control, which itself branches on subscription state.',
                          'AC-CR-08 &mdash; that is deliberate: the label and its destination cannot drift apart, because there is only one destination.'),
                         ('A brand-new account never sees an EMPTY ledger in practice.',
-                         'Sign-up grants 10 credits, so there is always at least one entry. The genuinely-empty case is P6-S4.'),
+                         'Sign-up grants 10 credits (P7), so there is always at least one entry. The genuinely-empty case is P6-S4.'),
                     ],
                 },
             ],
@@ -416,6 +421,49 @@ cfg = {
                 },
             ],
         },
+        {
+            'id': 'p7-signup-gift', 'num': 7,
+            'name': 'Sign-up gift',
+            'desc': 'A new account is told about its free credits: the sign-in success line says Welcome, and a toast confirms the grant ~3s later.',
+            'entry': 'First sign-in on a browser, or any sign-in with the ?demo=1 panel&rsquo;s &ldquo;Sign-in counts as a NEW sign-up&rdquo; switch on',
+            'outcome': 'Signed in with 10 credits, told so once',
+            'since': 'v2',
+            'steps': [
+                {
+                    'shot': '22_signup_welcome.png', 'num': 1,
+                    'user': 'Signs up (here: picks Google on a browser that has never signed in).',
+                    'system': 'The success state greets a NEW account with &ldquo;Welcome&rdquo; &mdash; not &ldquo;Welcome back&rdquo;.',
+                    'exact': [
+                        'Success title: &ldquo;Signed in successfully!&rdquo;',
+                        'Success subtitle (new account): &ldquo;Welcome, Scott &middot; via Google&rdquo;',
+                    ],
+                    'limits': [
+                        ('A returning account still reads &ldquo;Welcome back, {name}&rdquo;.',
+                         'That is the state S6&rsquo;s P3 captures. One decision drives both this line and the toast in P7-S2, so the two can never disagree.'),
+                        ('The prototype has no sign-up/sign-in distinction.',
+                         'A sign-in counts as a sign-up when it is the first on this browser, or while the demo switch is on &mdash; see Prototype vs production.'),
+                    ],
+                    'since': 'v2',
+                },
+                {
+                    'shot': '23_signup_gift_toast.png', 'num': 2,
+                    'user': 'Waits after the modal closes.',
+                    'system': 'About 3 seconds later a non-blocking toast confirms the grant and stays ~4 seconds; the balance already shows the 10 credits.',
+                    'exact': [
+                        'Toast: &ldquo;🎉 Welcome! 10 free credits have been added to your account.&rdquo;',
+                    ],
+                    'limits': [
+                        ('The delay is deliberate.',
+                         'RD has to ask the backend for the sign-up gift, and the answer may not be ready the moment sign-up completes; 3s is provisional and RD-owned.'),
+                        ('The amount is NOT part of the string.',
+                         '{credits} comes from the backend (today 10, `DEFAULT_CREDITS`).'),
+                        ('Shown once per account; it blocks nothing.',
+                         'A later sign-in does not repeat it, and the toast takes no clicks. If the gift cannot be confirmed in time, nothing is shown &mdash; no error toast.'),
+                    ],
+                    'since': 'v2',
+                },
+            ],
+        },
     ],
 
     'states': [
@@ -426,6 +474,8 @@ cfg = {
         ('Buy Credits', 'NOT subscribed', 'Renders the plan dialog instead &mdash; no pack UI at all', 'Whatever the plan dialog offers', 'N/A (CR-06)'),
         ('Credits detail CTA', 'Subscribed', '&ldquo;Buy More&rdquo;', 'Opens Buy Credits (packs)', 'N/A'),
         ('Credits detail CTA', 'NOT subscribed', '&ldquo;Get Muse Pro&rdquo;', 'Opens Buy Credits, which renders the plan dialog', 'N/A'),
+        ('Sign-in success line', 'New account', '&ldquo;Welcome, {name} &middot; via {provider}&rdquo;', 'Closes after 1.8s; the gift toast follows ~3s later', 'N/A (dismissal blocked)'),
+        ('Sign-up gift toast', 'Gift confirmed', 'Toast with the granted amount, ~4s', 'None &mdash; it takes no clicks', 'Fades on its own'),
         ('Credits ledger', 'Empty (demo)', 'Balance + filter retained, rows replaced by an empty state', 'Filters still switch; all three are empty', 'N/A'),
     ],
 
@@ -457,6 +507,13 @@ cfg = {
             'Balance and filter retained; rows replaced by an empty state, identically on all three filters',
             'Create something, or buy credits',
             'P6-S4, P6-S5',
+        ),
+        (
+            'Sign-up gift not confirmed',
+            'The backend&rsquo;s gift query fails, or has not answered in time',
+            'No toast at all &mdash; never an error message; the credits still appear in the balance and the ledger once granted',
+            'Nothing to recover',
+            'Not captured &mdash; the mock always confirms. Specified by AC-CR-13.',
         ),
         (
             'Insufficient balance for a generation',
@@ -512,6 +569,7 @@ cfg = {
         ('AC-CR-08', 'WHILE NOT subscribed, THE SYSTEM SHALL never present a Buy-Credits affordance: entry points SHALL show Subscribe, and Buy Credits SHALL render the plan dialog.', ['P4-S1', 'P4-S2', 'P5-S4', 'P6-S3']),
         ('AC-CR-09', 'WHEN a plan is subscribed to, THE SYSTEM SHALL update the header credit count and expiry cadence to that plan; there SHALL be no default selection on desktop &mdash; each card carries its own Subscribe.', ['P1-S2', 'P1-S3', 'P1-S4', 'P1-S6']),
         ('AC-CR-10', 'WHILE a discount is running, THE SYSTEM SHALL render a struck-through list price, an &ldquo;N% OFF&rdquo; badge per pack, and the discounted price on the Buy CTA. The values themselves are backend/marketing-owned and are not specified here.', ['P3-S1']),
+        ('AC-CR-13', 'WHEN a new account has been granted the sign-up gift, THE SYSTEM SHALL show, ~3s after sign-up, a non-blocking toast &ldquo;🎉 Welcome! {credits} free credits have been added to your account.&rdquo; exactly once per account; IF the gift cannot be confirmed, THE SYSTEM SHALL show nothing.', ['P7-S1', 'P7-S2']),
         ('AC-CR-11', 'THE SYSTEM SHALL show six subscription plans across three duration tabs and six credit packs at the confirmed final web prices.', ['P1-S2', 'P1-S3', 'P1-S4', 'P3-S1']),
     ],
 
@@ -530,6 +588,11 @@ cfg = {
             'The ledger is a fixed seed',
             'The rows on /profile/credits are a static list that never reflects a purchase or a spend made in the session &mdash; only the balance card above them is live.',
             'Production needs a real transaction ledger endpoint.',
+        ),
+        (
+            'A sign-in stands in for a sign-up',
+            'There is no sign-up step: a sign-in counts as a NEW account when it is the first on this browser (`localStorage[&quot;muse_signup_gift_seen&quot;]`) or while the demo switch is on (`src/lib/signupGift.ts`). The toast fires on a timer, not on a backend answer.',
+            'RD replaces that rule with the backend&rsquo;s sign-up-gift answer, which must drive BOTH the Welcome/Welcome back line and the toast.',
         ),
         (
             'The discount is a placeholder',
@@ -554,7 +617,20 @@ cfg = {
         ('D-03', 'How is CR-05&rsquo;s already-subscribed state reached for capture, given no control reopens the dialog once subscribed?', 'By the only route the code supports: open the dialog while free, then flip `subscribed` underneath it using the demo panel&rsquo;s real ACCOUNT &rarr; Subscribe action (a genuine `subscribe()` call, not a demo flag &mdash; the same bypass S7 used for its own P3-S2). This is a finding, not a workaround: it is recorded as Q-01 because it means the state may be unreachable for a real user.'),
         ('D-04', 'Why does P1 subscribe with a real card press when the demo panel has a one-click Subscribe?', 'Because AC-CR-02 is specifically that the credits granted are the PICKED plan&rsquo;s own value. The demo shortcut cannot demonstrate that &mdash; it does not pick a plan. The shortcut is also `disabled={subscribed}`, so it can only be used once per session; P1 needs the real press and P2 needs the shortcut, which is why they are separate browser sessions.'),
         ('D-05', 'Does this spec tour the in-flow insufficient-balance route (AC-CR-07)?', 'No &mdash; agreed at the Phase 0 gate. Its trigger is a generation CTA on /mv/room or /song/create, which belongs to areas 02/03 and to S2/S1. It is listed in the error table so QA can find it, with the criterion carrying the reason it has no step.'),
+        ('D-07', 'Toast or dialog for the sign-up gift?', 'Toast (product owner, 2026-10-01). It arrives ~3s after sign-up, by which time the user may already be acting, so it must not interrupt. Existing toasts come in two visual styles; unifying them was explicitly deferred, so this one uses the Credits/Profile style unchanged.'),
+        ('D-08', 'What does the Credits Detail ledger seed show?', 'A brand-new free account: one &ldquo;Welcome bonus +10&rdquo; row (product owner, 2026-10-01). The daily sign-in bonus row was deleted &mdash; there is no such feature &mdash; and so was the pack purchase a free user cannot make.'),
         ('D-06', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo yet, same as S1/S3/S4/S6/S7.'),
+    ],
+
+    'changelog': [   # newest first — (version, date, what changed)
+        ('v2', '2026-10-01',
+         '<b>New P7 &mdash; sign-up gift.</b> A new account&rsquo;s sign-in success line now reads '
+         '&ldquo;Welcome&rdquo;, and a free-credits toast follows ~3s later (AC-CR-13, D-07). '
+         '<b>P5 &mdash; ledger seed is now a new free account</b> (one Welcome bonus +10 row, D-08), so shots '
+         '13&ndash;16 were recaptured and Spend now shows the empty state. Shots 01&ndash;12 were recaptured '
+         'in the same run with no behaviour change (they pick up the current sidebar logo). '
+         'See <code>specs/CHANGELOG-SPEC.md</code>.'),
+        ('v1', '2026-09-01', 'First delivery &mdash; 6 paths, 21 shots.'),
     ],
 
     'references': [],
@@ -578,6 +654,8 @@ cfg = {
         '  Cta -->|no| Plans\n'
         '  Demo["?demo=1 panel"] -.->|backend error| Err["Error body + Retry, on either dialog"]\n'
         '  Demo -.->|empty ledger| Empty["No activity yet; balance + filter retained"]\n'
+        '  Signup["New sign-up"] --> Welcome["Welcome, name"]\n'
+        '  Welcome -->|~3s| Toast["Free-credits toast, once (AC-CR-13)"]\n'
     ),
     'svg_path': os.path.join(FEAT, 'user-flowchart.svg'),
 
@@ -600,6 +678,8 @@ cfg = {
         os.path.join(WEB_APP, 'src', 'components', 'shell', 'RoomNavbar.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'shell', 'DetailNavbar.tsx'),
         os.path.join(WEB_APP, 'src', 'components', 'demo', 'DemoPanel.tsx'),
+        os.path.join(WEB_APP, 'src', 'components', 'auth', 'SignInModal.tsx'),
+        os.path.join(WEB_APP, 'src', 'components', 'providers', 'AuthProvider.tsx'),
         os.path.join(WEB_APP, 'src', 'lib', 'user.ts'),
         os.path.join(WEB_APP, 'src', 'lib', 'demoStore.ts'),
         os.path.join(WEB_APP, 'src', 'lib', 'i18n', 'dictionaries', 'en.ts'),
@@ -625,6 +705,12 @@ cfg = {
         # em-dash/ellipsis entries. Confirmed live (07).
         'You&rsquo;re already on Muse Pro',
         "We couldn&rsquo;t load this right now. Please check your connection and try again.",
+        # Both composed at render time: `{newAccount ? "Welcome" : "Welcome back"},
+        # {firstName} · via {provider}` in SignInModal.tsx, and
+        # `🎉 Welcome! {DEFAULT_CREDITS} free credits …` in AuthProvider.tsx.
+        # Confirmed live (22, 23).
+        'Welcome, Scott &middot; via Google',
+        '🎉 Welcome! 10 free credits have been added to your account.',
     ],
 
     # ── comments (disabled — no Firebase backend in this repo) ────────────────

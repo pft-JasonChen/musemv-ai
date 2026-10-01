@@ -104,8 +104,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Shell & Auth',
     'breadcrumb': 'YouCam Muse Web &rarr; Shell &amp; Auth',
-    'author': 'Jason Chen', 'date': '2026-09-02', 'status': 'Draft',
-    'version': 'v2',
+    'author': 'Jason Chen', 'date': '2026-10-01', 'status': 'Draft',
+    'version': 'v3',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -281,7 +281,9 @@ cfg = {
                     'limits': [
                         ('No navigation happens.', 'openSignIn() queues no onSuccess callback, unlike the gated-nav path (P2) (AC-AUTH-02).'),
                         ('The logged-in cluster is a credit-balance pill and, while not subscribed, an Upgrade button.', 'No avatar appears &mdash; see the Feature block finding 1 (AC-SHELL-05).'),
+                        ('&ldquo;Welcome back&rdquo; is the RETURNING-account line.', 'A new sign-up reads &ldquo;Welcome, Scott &middot; via {provider}&rdquo; instead and is followed by a free-credits toast &mdash; S5 (Credits &amp; IAP) P7 owns that flow (AC-CR-13). This capture is of a returning account.'),
                     ],
+                    'since': 'v3',
                     'focus': [{'box': [82.0, 1.5, 6.1, 3.1], 'type': 'info', 'label': 'Credits'}],
                 },
             ],
@@ -560,6 +562,15 @@ cfg = {
         ('D-08', 'Phone viewport for the D8 exception?', '375&times;812 &mdash; well inside PHONE_QUERY (max-width: 767px) and the &ldquo;375&rdquo; tier of AGENTS.md&rsquo;s six-width scale. Documented in capture_screenshots.py&rsquo;s docstring so a later re-capture does not drift.'),
         ('D-09', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo yet, same as S1/S4.'),
         ('D-10', 'Q-01 &mdash; the account dropdown (AccountMenu &larr; HeaderActions &larr; TopBar) was reachable from no route. Wire a trigger back in, or delete it?', '<b>Deleted</b> (product owner, 2026-08-27, same day this build raised it). All three files are removed from src/, and AppShell&rsquo;s OWN_CHROME list went with them &mdash; its only job was gating TopBar. The invariant that replaces it: below /, the shell draws NO header; every route renders its own, so a new route must bring one. This spec&rsquo;s steps are unchanged by the deletion &mdash; every one of them was already photographing the reachable surface, and P5-S3&rsquo;s negative sweep is now true by construction rather than by accident. Area 01&rsquo;s AC-SHELL-06 is retired (id kept and struck, not renumbered, so QA traces do not silently re-point).'),
+    ],
+
+    'changelog': [   # newest first — (version, date, what changed)
+        ('v3', '2026-10-01',
+         '<b>P3-S2 &mdash; the success line now depends on whether the account is new.</b> A new sign-up reads '
+         '&ldquo;Welcome, {name}&rdquo; and gets the sign-up gift toast; the &ldquo;Welcome back&rdquo; shown here '
+         'is the returning-account case. S5 P7 owns the new-account flow. Nothing recaptured &mdash; shot 09 is still '
+         'correct for what it shows. See <code>specs/CHANGELOG-SPEC.md</code>.'),
+        ('v2', '2026-09-02', 'Delivered before this spec kept a per-version changelog; see <code>PLAN.md</code> for what v1&rarr;v2 changed.'),
     ],
 
     'references': [],

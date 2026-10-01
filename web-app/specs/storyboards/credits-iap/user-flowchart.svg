@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1940" viewBox="0 0 1180 1940" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="2280" viewBox="0 0 1180 2280" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
 <title>Credits &amp; IAP &#8212; User Flowchart</title>
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
-<rect width="1180" height="1940" fill="#ffffff"/>
+<rect width="1180" height="2280" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">Credits &amp; IAP &#8212; User Flowchart</text>
-<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 (D8) &#183; matches spec v1, 2026-09-01</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 (D8) &#183; matches spec v2, 2026-10-01</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; green = success / resolved &#183; blue = system response &#183; red = error state</text>
 
 <g transform="translate(0,80)">
@@ -71,7 +71,7 @@
 <text x="40" y="1170" font-size="12" fill="#5a6b78">Reached two ways: the shell&#8217;s Credits tile (Part 1), or Buy More on the Part 3 toast.</text>
 <rect x="40" y="1200" width="290" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
 <text x="185" y="1220" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">/profile/credits</text>
-<text x="185" y="1238" font-size="12" fill="#5a6b78" text-anchor="middle">Balance + All/Spend/Earn + 7-entry ledger &#183;</text>
+<text x="185" y="1238" font-size="12" fill="#5a6b78" text-anchor="middle">Balance + All/Spend/Earn + 1-row seed ledger &#183;</text>
 <text x="185" y="1253" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S1 (AC-CR-03)</text>
 <polygon points="600,1268 755.422,1300 600,1332 444.578,1300" fill="#fdf1df" stroke="#e0a24a" stroke-width="1.5"/>
 <text x="600" y="1305" font-size="13" font-weight="700" fill="#0c1c22" text-anchor="middle">Purchase CTA label?</text>
@@ -99,12 +99,28 @@
 <text x="625" y="1603" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-CR-12)</text>
 <text x="40" y="1670" font-size="12" fill="#5a6b78">apiError is checked once per dialog OPEN, on both Subscribe and Buy Credits; creditsEmpty applies to /profile/credits only.</text>
 <text x="40" y="1690" font-size="12" fill="#5a6b78">?demo=1 changes what a screen renders, never how it is reached &#8212; which is why neither has an entry edge of its own.</text>
-<line x1="40" y1="1736" x2="1140" y2="1736" stroke="#e5e9ed" stroke-width="1"/>
-<line x1="40" y1="1756" x2="74" y2="1756" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="86" y="1760" font-size="12" fill="#5a6b78">Primary happy path</text>
-<line x1="40" y1="1776" x2="74" y2="1776" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="86" y="1780" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
-<line x1="40" y1="1796" x2="74" y2="1796" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
-<text x="86" y="1800" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
+<line x1="40" y1="1718" x2="1140" y2="1718" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1740" font-size="15" font-weight="700" fill="#0c1c22">Part 7 &#8212; Sign-up gift  &#183;  P7</text>
+<rect x="40" y="1790" width="290" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="185" y="1810" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">New sign-up</text>
+<text x="185" y="1828" font-size="12" fill="#5a6b78" text-anchor="middle">First sign-in here, or the demo switch on &#183; P7</text>
+<rect x="480" y="1790" width="290" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="625" y="1810" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">&quot;Welcome, Scott&quot; success line</text>
+<text x="625" y="1828" font-size="12" fill="#5a6b78" text-anchor="middle">Not &quot;Welcome back&quot; &#183; P7-S1</text>
+<line x1="330" y1="1815" x2="480" y2="1815" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="480" y="1920" width="290" height="65" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="625" y="1940" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Free-credits toast, once</text>
+<text x="625" y="1958" font-size="12" fill="#5a6b78" text-anchor="middle">~3s after sign-up, ~4s on screen &#183; P7-S2</text>
+<text x="625" y="1973" font-size="12" fill="#5a6b78" text-anchor="middle">(AC-CR-13)</text>
+<line x1="625" y1="1840" x2="625" y2="1920" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="637" y="1874" font-size="12" fill="#5a6b78" text-anchor="start">~3s later</text>
+<text x="40" y="2040" font-size="12" fill="#5a6b78">If the gift cannot be confirmed in time, nothing is shown &#8212; the credits still reach the balance and the ledger.</text>
+<line x1="40" y1="2076" x2="1140" y2="2076" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="2096" x2="74" y2="2096" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="2100" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="2116" x2="74" y2="2116" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="2120" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+<line x1="40" y1="2136" x2="74" y2="2136" stroke="#a8b2ba" stroke-width="1.5" marker-end="url(#fc-structural)"/>
+<text x="86" y="2140" font-size="12" fill="#5a6b78">Structural navigation (entry, exit, close)</text>
 </g>
 </svg>

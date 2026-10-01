@@ -88,6 +88,12 @@ class NextCapture(Capture):
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
             viewport=self.viewport, device_scale_factor=1)
+        # P3 photographs a RETURNING account ("Welcome back"). Without this, the
+        # first modal sign-in in a fresh context counts as a new sign-up
+        # (`src/lib/signupGift.ts`) and reads "Welcome" + fires the gift toast,
+        # which S5 P7 owns.
+        await ctx.add_init_script(
+            "window.localStorage.setItem('muse_signup_gift_seen', '1')")
         self.page = await ctx.new_page()
         self.page.on("console", lambda m: self.errors.append(m.text)
                      if m.type == "error" else None)
