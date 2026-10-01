@@ -68,7 +68,9 @@ Like / publish call `requireLogin` at the action), synced to App F22 — `AuthGu
   Apple** and **Continue with Google** (white buttons); Terms of Service / Privacy Policy are **real
   links** to `lib/legal.ts` (`TERMS_URL`/`PRIVACY_URL`, new tab) — same set as Settings (AUTH-03 /
   PROF-06); picking a provider shows a 1.8s success state ("Signed in successfully! Welcome back,
-  {firstName} · via {provider}") then calls `onSignedIn` → `authStore.set(true)`. Dismissal is
+  {firstName} · via {provider}" — or **"Welcome, {firstName} · via {provider}"** for a NEW sign-up,
+  i.e. the first sign-in on a browser or any sign-in while the `?demo=1` panel's `newSignup` flag is on;
+  `lib/signupGift.ts`, added 2026-10-01 with the sign-up gift toast, area 07 CR-P4) then calls `onSignedIn` → `authStore.set(true)`. Dismissal is
   **blocked during** the success animation (`onClose` swallowed).
 - **Sign-in trigger points (action-level, GL-02):** header **Sign In** (`openSignIn`, area 01 — ⚠️
   corrected there 2026-08-27: the live control reads **"Login"**, on each route's own

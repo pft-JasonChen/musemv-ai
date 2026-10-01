@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialogTransition";
 import { MOCK_USER } from "@/lib/user";
+import { isNewSignup } from "@/lib/signupGift";
 import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
 
 /**
@@ -37,6 +38,13 @@ interface Props {
 
 export function SignInModal({ open, onClose, onSignedIn }: Props) {
   const [provider, setProvider] = useState<Provider | null>(null);
+  // Decided when the provider is picked, before `AuthProvider` marks the gift
+  // seen on success — so the copy and the toast agree (`lib/signupGift.ts`).
+  const [newAccount, setNewAccount] = useState(false);
+  const pick = (p: Provider) => {
+    setNewAccount(isNewSignup());
+    setProvider(p);
+  };
   const { mounted, visible } = useDialogTransition(open);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Block Escape/backdrop dismissal while the success stage plays, matching
@@ -84,7 +92,7 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
           <div className="login-modal__message">
             <p className="login-modal__title">Signed in successfully!</p>
             <p className="login-modal__success-subtitle">
-              Welcome back, {firstName} · via {provider}
+              {newAccount ? "Welcome" : "Welcome back"}, {firstName} · via {provider}
             </p>
           </div>
 
@@ -118,12 +126,12 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
 
             <div className="login-modal__cta">
               <div className="login-modal__buttons">
-                <button type="button" className="login-modal__social" onClick={() => setProvider("Apple")}>
+                <button type="button" className="login-modal__social" onClick={() => pick("Apple")}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/assets/icons/ui/ic_apple_logo.svg" alt="" className="login-modal__social-icon" />
                   Continue with Apple
                 </button>
-                <button type="button" className="login-modal__social" onClick={() => setProvider("Google")}>
+                <button type="button" className="login-modal__social" onClick={() => pick("Google")}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/assets/icons/ui/ic_google_logo.svg" alt="" className="login-modal__social-icon" />
                   Continue with Google

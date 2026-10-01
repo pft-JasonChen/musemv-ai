@@ -279,7 +279,7 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, `/profile/credits`.
 - **CR-P4-S2** **System:** a non-blocking toast (no dialog, no CTA, does not intercept clicks), visible ~4 s: **"🎉 Welcome! {credits} free credits have been added to your account."** `{credits}` comes from the backend (today `DEFAULT_CREDITS` = 10) and is never hardcoded in the string. The header credit pill reflects the new balance.
 - **CR-P4-S3** Shown **once per account** — a later sign-in does not show it again.
 - **CR-P4-S4** If the gift query fails or has not answered in time, **show nothing** (no error toast); the credits still appear in the balance and in the ledger as **"Welcome bonus"**.
-- _Prototype:_ the mock has no sign-up/sign-in distinction, so the FIRST sign-in on a browser stands in for sign-up (`localStorage["muse_signup_gift_seen"]`, `AuthProvider.tsx`). Clear that key to see it again.
+- _Prototype:_ the mock has no sign-up/sign-in distinction, so a sign-in counts as a new sign-up when it is the FIRST sign-in on a browser (`localStorage["muse_signup_gift_seen"]`) **or** while the `?demo=1` panel's **"Sign-in counts as a NEW sign-up"** (`newSignup`) switch is on — then every sign-in replays the flow, with no DevTools needed. The decision lives in `src/lib/signupGift.ts`; the sign-in success line reads **"Welcome, {firstName}"** instead of "Welcome back" for the same sign-ins (area 09).
 
 | String           | English                                                               |
 | ---------------- | --------------------------------------------------------------------- |
@@ -329,7 +329,7 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, `/profile/credits`.
 - [ ] **CR-P3**: detail shows balance + the 1-entry ledger (`Welcome bonus +10`) + a purchase CTA that reads **Buy More** for a subscriber and **Get Muse Pro** for a free user (AC-03).
 - [ ] **CR-E1**: reload resets balance/subscription. **CR-E2**: ledger static. **CR-E3**: already-Pro state shown. **CR-E5**: non-subscriber Buy Credits → `SubscribeModal` directly (no gate screen).
 - [ ] **AC-04/05**: SubscribeModal's footer shows **Terms of Use / Privacy Policy** only (no "demo only" disclaimer, no Restore Purchases — removed 2026-09-01), BuyCredits the expiry/refund copy, CreditsDetail none; dialogs clean at **six** widths _(visual)_.
-- [ ] **CR-P4**: clear `muse_signup_gift_seen`, sign in → toast appears ~3 s later, reads "🎉 Welcome! 10 free credits have been added to your account.", fades after ~4 s, does not block clicks; sign out + in again → no toast (AC-13).
+- [ ] **CR-P4**: open any URL with `?demo=1`, turn on **"Sign-in counts as a NEW sign-up"** (or clear `muse_signup_gift_seen`), sign in → success line reads "Welcome, Scott", toast → toast appears ~3 s later, reads "🎉 Welcome! 10 free credits have been added to your account.", fades after ~4 s, does not block clicks; with the switch OFF, sign out + in again → "Welcome back", no toast (AC-13).
 - [ ] **CR-E6** (`?demo=1` → `apiError`): open `SubscribeModal` and `BuyCreditsModal` and confirm each shows `ApiErrorState` + Retry instead of its normal content, including the already-Pro and non-subscriber branches (AC-11).
 - [ ] **CR-E7** (`?demo=1` → `creditsEmpty`): `/profile/credits` shows the empty state under All, Spend, AND Earn, with no CTA in the list area (AC-12).
 

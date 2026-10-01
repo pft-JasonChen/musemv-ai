@@ -9,6 +9,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { DEFAULT_CREDITS, MOCK_USER, type PlanId } from "@/lib/user";
 import { authStore, hydratedStore } from "@/lib/authStore";
 import { SignInModal } from "@/components/auth/SignInModal";
+import { isNewSignup, markSignupGiftSeen } from "@/lib/signupGift";
 
 interface AuthValue {
   loggedIn: boolean;
@@ -44,22 +45,11 @@ const Ctx = createContext<AuthValue | null>(null);
 
 // Sign-up gift toast. RD queries the backend for the gift after sign-up and the
 // answer may not be ready at once, so the toast is shown ~3s after sign-in, and
-// only once per account. The mock has no sign-up/sign-in distinction, so the
-// FIRST sign-in on this browser stands in for sign-up. If RD's query fails or
-// times out, show nothing — the credits still appear in the balance/ledger.
-const SIGNUP_GIFT_SEEN_KEY = "muse_signup_gift_seen";
+// only once per account. Which sign-ins count as a sign-up in the mock is
+// `isNewSignup()` (`src/lib/signupGift.ts`). If RD's query fails or times out,
+// show nothing — the credits still appear in the balance/ledger.
 const SIGNUP_GIFT_DELAY_MS = 3000;
 const SIGNUP_GIFT_VISIBLE_MS = 4000;
-
-function claimSignupGift(): boolean {
-  try {
-    if (localStorage.getItem(SIGNUP_GIFT_SEEN_KEY) === "1") return false;
-    localStorage.setItem(SIGNUP_GIFT_SEEN_KEY, "1");
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loggedIn = useSyncExternalStore(authStore.subscribe, authStore.getSnapshot, authStore.getServerSnapshot);
@@ -101,7 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleSignedIn = useCallback(() => {
     authStore.set(true);
     setModalOpen(false);
-    if (claimSignupGift()) {
+    if (isNewSignup()) {
+      markSignupGiftSeen();
       clearGiftTimers();
       giftTimers.current.push(
         setTimeout(() => setGiftToast(true), SIGNUP_GIFT_DELAY_MS),

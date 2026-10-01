@@ -108,6 +108,12 @@ export const DEMO_FLAGS = [
     status: "live" as FlagStatus,
   },
   {
+    key: "newSignup",
+    label: "Sign-in counts as a NEW sign-up",
+    hint: 'Every sign-in shows "Welcome" (not "Welcome back") and the free-credits toast ~3s later',
+    status: "live" as FlagStatus,
+  },
+  {
     key: "faqSearchEmpty",
     label: "FAQ search — no matches",
     hint: "/faq — forces the empty result state whatever is typed",

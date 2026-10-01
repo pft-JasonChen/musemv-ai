@@ -23,6 +23,19 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-10-01 (b) — **C4 UNCHANGED (internal only)** — new-sign-up decision moved to `lib/signupGift.ts`; "Welcome" copy; demo switch
+
+**Surface: C4 — touched, not changed.** `useAuth()` keys and signatures are identical. Inside
+`AuthProvider.tsx`, the private `claimSignupGift()` was replaced by `isNewSignup()` /
+`markSignupGiftSeen()` from the new `src/lib/signupGift.ts`, which `SignInModal` also reads so its
+success line says **"Welcome, {firstName}"** (not "Welcome back") for a new sign-up. The `?demo=1`
+panel gained a `newSignup` switch that makes every sign-in count as new, for QA.
+
+- **What RD must do:** the same backend answer that decides the gift toast should decide the
+  "Welcome" vs "Welcome back" line. Replace `isNewSignup()`'s mock rule with it.
+
+---
+
 ## 2026-10-01 — **C4 UNCHANGED (internal only)** — sign-up gift toast rendered inside `AuthProvider`
 
 **Surface: C4 — touched, not changed.** `useAuth()` returns exactly the same keys and
