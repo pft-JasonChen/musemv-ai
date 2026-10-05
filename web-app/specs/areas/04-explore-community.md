@@ -351,6 +351,10 @@ The rails:
   > 2026-08-14, because this page is public. And there is **no `⋯` menu at all** on someone else's
   > profile — `ownerMenu` is `self && loggedIn`, so a visitor gets Like and Share as inline
   > `IconButton`s on the row instead. Captured at S8 `P6-S1` / `P6-S2`.
+- **Published works only — self view included (product owner, 2026-10-05).** This is the
+  creator's PUBLIC page, so every row on it is published. The self view no longer seeds the
+  Storyboard / Failed / Generating rows (added 2026-08-31 / 09-01 from the Figma self-view) — none
+  of them can be published, and they live in `/history`. See EXP-P6-S2 for what that does to the menu.
 - This route is **both** the App's _My Community Profile_ (F16, via `/profile` stats → `/creator?self=1`, area 06) **and** _Community User Profile_ (F17, via any creator link).
 - ⚠️ Self mode shows `MOCK_USER`'s identity but the **sample creator's stats + content** (`CREATOR_MVS/SONGS`); no **Report/Block** (App F17) (`TBD-EXP-05`).
 - **`profileEmpty` demo flag — live, added to this spec 2026-09-01.** `CREATOR_MVS`/`CREATOR_SONGS`
@@ -469,6 +473,11 @@ Screens to capture later: `/`, `/explore/mvs`, `/explore/songs`, `/watch`, `/son
   > **Edit MV**) and a song row does not offer it at all. The visitor half was wrong in the other
   > direction — it named a `⋯` menu a visitor never sees. Captured at S8 `P6-S2` / `P6-S4` /
   > `P6-S5`.
+  > **Changed 2026-10-05 (published works only, §3.5).** An MV row's `⋯` now has **five** slots —
+  > **Like · Share · Publish · Download · Delete** — because MV-13 hides Edit MV on a published MV
+  > and every MV here is published. The song row keeps its six. **Publish** is always ON; switching
+  > it OFF unpublishes immediately (toast "Unpublished success", no confirm) and the row leaves
+  > this page. There is no OFF → ON path here any more — re-publishing happens in `/history`.
 - **EXP-P6-S3** _(new 2026-09-01)_ `?demo=1` + the `profileEmpty` toggle → the active tab's list renders empty: icon + "No works released yet", plus (self only) a subtitle and a **Create Music Video**/**Create Song** CTA. See §3.5.
 
 ---

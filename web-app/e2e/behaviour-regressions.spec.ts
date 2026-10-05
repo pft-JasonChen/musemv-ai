@@ -1958,7 +1958,7 @@ test("3e: all six options-menu actions exist and none of them is dead", async ({
 
   // All six are present. "Create MV", not "Edit" — synced onto History's own
   // menu (product owner, 2026-08-31): a song has no "Edit" here, it spins
-  // off a new MV instead. MVs get "Edit MV" here; same row, same behaviour.
+  // off a new MV instead.
   await expect(menu.getByRole("menuitem", { name: "Create MV" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: /^(Like|Unlike)$/ })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Share" })).toBeVisible();
@@ -1966,32 +1966,26 @@ test("3e: all six options-menu actions exist and none of them is dead", async ({
   await expect(menu.getByRole("menuitem", { name: "Download" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Delete" })).toBeVisible();
 
-  // Publish: confirms first, MV or Song alike. This asserted the opposite —
-  // "a Song publishes immediately (no confirm step — that's MV-only, per the
-  // MV-vs-Song split)" — which was true until `ca5c671` (product owner,
-  // 2026-09-16) made Song reuse the same `PublishConfirmDialog`. That commit
-  // changed `CreatorProfile.doPublish` without touching this spec, so the test
-  // sat waiting 30s for a toast that now only fires after Confirm. Same failure
-  // mode as MV-13 below: a passing test holding a decision that was reversed.
-  //
-  // What stays Song-specific is the other half: confirming publishes it
-  // straight away, with none of the MV review delay (`confirmPublish` returns
-  // early for `kind === "song"`), so the toast is "Published success" and not
-  // "Submitted for review". That distinction is the thing worth guarding here.
+  // Publish (product owner, 2026-10-05): this is the creator's PUBLIC page, so
+  // it lists published works only — the switch starts ON, and turning it off
+  // takes the row off the page (it stays in /history). This used to drive the
+  // OFF -> confirm -> "Published success" path, which no longer exists here.
+  const rowsBefore = await page.locator(".community-profile__item").count();
+  await expect(menu.getByRole("switch")).toBeChecked();
   await menu.getByRole("switch").click();
-  const pubConfirm = page.getByRole("dialog", { name: "Ready to Go Public?" });
-  await expect(pubConfirm).toBeVisible();
-  await pubConfirm.getByRole("button", { name: "Confirm" }).click();
-  await expect(page.getByText("Published success")).toBeVisible();
+  await expect(page.getByText("Unpublished success")).toBeVisible();
+  await expect(page.locator(".community-profile__item")).toHaveCount(rowsBefore - 1);
+  await expect(page.getByText(title, { exact: true })).toHaveCount(0);
 
   // Delete: confirms, then the row actually leaves the list.
   const before = await page.locator(".community-profile__item").count();
+  const deleted = await firstRow.locator(".community-profile__copy > strong").innerText();
   await firstRow.getByRole("button", { name: "More" }).click();
   await menu.getByRole("menuitem", { name: "Delete" }).click();
   await expect(page.getByRole("dialog", { name: "Delete" })).toBeVisible();
   await page.getByRole("button", { name: "Delete" }).click();
   await expect(page.locator(".community-profile__item")).toHaveCount(before - 1);
-  await expect(page.getByText(title, { exact: true })).toHaveCount(0);
+  await expect(page.getByText(deleted, { exact: true })).toHaveCount(0);
 });
 
 test("3e: Download triggers a real download, not a menu close", async ({ page }) => {
