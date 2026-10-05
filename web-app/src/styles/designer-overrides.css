@@ -203,22 +203,21 @@
   background: var(--neutral-dark-09);
 }
 
-/* Product owner, 2026-08-31 — the photo/name/email now open the public
-   creator profile (`ProfileView.tsx`), so they moved from two bare `<span>`s
-   into one `<Link>`. `AccountPage.css`'s own `.account-page__identity` is
-   `display:flex; gap:12px` over its (previously 3, now 2) children — this
-   reproduces that same flex/gap internally so `.account-page__avatar`'s
-   fixed 64px and `.account-page__identity-copy`'s `flex:1` still lay out
-   exactly as before, and `flex:1;min-width:0` on the link itself keeps it
-   (not the Edit button next to it) absorbing the row's remaining width. */
+/* Product owner, 2026-08-31 / 2026-10-05 — the photo and name open the
+   public creator profile (`ProfileView.tsx`); the email stays plain text.
+   Each is wrapped in its own `<Link>`, so DP's `.account-page__identity`
+   flex row is back to its original three children (avatar, copy, Edit).
+   The avatar's link must not shrink so `.account-page__avatar` keeps its
+   fixed 64px; the name's link is inline so its click target is the name's
+   width, not the whole column. */
 .account-page__identity-link {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
   color: inherit;
   text-decoration: none;
+}
+
+.account-page__identity-link--avatar {
+  display: flex;
+  flex: none;
 }
 
 /* Designer decision, 2026-08-07 — user-row click targets shouldn't span the

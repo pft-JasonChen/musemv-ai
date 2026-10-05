@@ -100,6 +100,7 @@ export function ProfileView() {
   const planName = subscribedPlanRow && planDisplayName(subscribedPlanRow);
   const { locale, setLocale } = useLocale();
   const t = useT();
+  const creatorHref = localePath(locale, "/creator?self=1");
   // Edit-profile draft state (committed to the provider on Save).
   const [nameDraft, setNameDraft] = useState(profile.name);
   const [avatarDraft, setAvatarDraft] = useState<string | null>(profile.avatar);
@@ -178,18 +179,18 @@ export function ProfileView() {
           <div className="account-page__profile">
             <div className="account-page__identity">
               {/* Product owner, 2026-08-31, REVERSED IN PART 2026-09-11
-                  (YMW260910P0001): the photo/name used to share this same
-                  destination with the MVs/Songs stat pills below — as of this
-                  bug the pills now go to History instead, but the identity
-                  block (photo/name/email) still opens the public creator
-                  profile; that half of the 08-31 decision stands. Grouped
-                  under one `Link` rather than three (image, name, email
-                  separately) since they're one identity, not three
-                  destinations — Edit stays its own control, outside the link,
-                  since it does something else entirely. */}
+                  (YMW260910P0001) and 2026-10-05: the photo and name open the
+                  public creator profile; the MVs/Songs stat pills below go to
+                  History; and the EMAIL is plain text (2026-10-05) — it is
+                  account info, not part of the creator identity. So photo and
+                  name are two links to one destination: the photo's is
+                  `tabIndex={-1}` + `aria-hidden` so keyboard and screen-reader
+                  users meet it once, on the name. Edit stays its own control. */}
               <Link
-                href={localePath(locale, "/creator?self=1")}
-                className="account-page__identity-link"
+                href={creatorHref}
+                className="account-page__identity-link account-page__identity-link--avatar"
+                tabIndex={-1}
+                aria-hidden="true"
               >
                 <span className="account-page__avatar">
                   {profile.avatar ? (
@@ -203,11 +204,15 @@ export function ProfileView() {
                     <DpIcon name="ic_user" />
                   )}
                 </span>
-                <span className="account-page__identity-copy">
-                  <strong>{profile.name}</strong>
-                  <span>{profile.email}</span>
-                </span>
               </Link>
+              <span className="account-page__identity-copy">
+                <strong>
+                  <Link href={creatorHref} className="account-page__identity-link">
+                    {profile.name}
+                  </Link>
+                </strong>
+                <span>{profile.email}</span>
+              </span>
               <button
                 type="button"
                 onClick={openEdit}

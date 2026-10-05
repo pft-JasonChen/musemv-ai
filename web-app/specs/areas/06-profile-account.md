@@ -20,8 +20,8 @@ the Edit-Profile / Language / Feedback modals. **Send Feedback is a real support
 **§3.1** for the form and its CSB param mapping.
 **Out of scope (cross-referenced):** the credits/IAP
 the Credits Detail route + modals reached from here (area 07 — `/profile/credits`, `BuyCreditsModal`, `SubscribeModal`); the
-**community profile content grid** at `/creator?self=1` that the photo/name/email identity block
-links to (area 04); **the user's own creations list** at `/history` that the MVs/Songs stat tiles
+**community profile content grid** at `/creator?self=1` that the photo and name
+link to (area 04); **the user's own creations list** at `/history` that the MVs/Songs stat tiles
 link to (area 05, `YMW260910P0001`, 2026-09-11 — see below); sign-in (area 09).
 
 **Key mapping note (important):** web `/profile` is closest to the **App's Account screen (F18)** — a
@@ -29,7 +29,7 @@ row-based hub — **not** the App's _My Community Profile_ (F16), whose tabbed c
 `/creator?self=1` (area 04). ⚠️ The overview parity matrix lists F16→06 for convenience; the
 content-grid half is actually area 04.
 **Two different destinations behind three similar-looking controls (2026-09-11):** the identity
-block (photo/name/email, one grouped link) still bridges to the **public** creator profile (area
+block (photo + name; the email is plain text since 2026-10-05) still bridges to the **public** creator profile (area
 04, `/creator?self=1`); the MVs/Songs stat tiles bridge to the user's **own** creations list
 instead (area 05, `/history?tab=mv`\|`songs`). Before `YMW260910P0001` all three shared the public-
 profile destination — don't assume they still do when reading older notes below.
