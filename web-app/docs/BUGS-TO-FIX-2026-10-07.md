@@ -32,7 +32,7 @@
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260930P0004
 - Retrieved at: 2026-10-07 18:42 CST
 - Triage: **Clear to fix** — reproduced in the prototype ("Same on mockup"); the spec's own ≥30s floor (MV-01) makes the 15%→70% default a dead end for every import 30–53s.
-- Local status: **Committed** (see Resolution).
+- Local status: **Shipped** — `7242bb2`, production check passed.
 - Decision needed: None for the defect. One small choice made: the short-track default is exactly 30s, widened at the end first (start stays at 15%), slid back if it would pass the track end. Say if you want it centred or starting at 0:00 instead.
 - Related code/spec: `src/components/mv/TrimAudioModal.tsx` (`defaultTrim`, the only place the default is set — initial state and the re-seed on open both call it); upload floor `MvRoom.importAudio` unchanged; spec `specs/areas/02-mv-creation.md` MV-P6-C; e2e `behaviour-regressions.spec.ts:773` (114s library song — unchanged path). Grepped `DEFAULT_START_PCT|DEFAULT_END_PCT|15%.*70%` across src/specs/e2e: no other copy.
 
@@ -60,12 +60,12 @@
 
 - Root cause: `TrimAudioModal` always opened at a fixed 15%→70% of the track = 55% of its length. Imports are allowed from 30s up (MV-P6-B upload floor), so any import ≤53s opened below `MIN_TRIM_SEC` (45s → 24s), Confirm disabled and the red `minimum 30s` hint shown before the user did anything. Library songs (114s/160s) never hit it.
 - Resolution: New exported `defaultTrim(total)`: keeps 15%→70% when that window is ≥30s; otherwise opens at exactly 30s (end widened first, then slid back to end at the track's end). Unit test `TrimAudioModal.test.ts` sweeps every length 30–300s. Spec MV-P6-C + `CHANGELOG-SPEC.md` 2026-10-07 updated, `specs/index.html` regenerated. No C1–C8 surface touched.
-- Verified: typecheck / lint (0 errors; 1 pre-existing warning in `scripts/computed-style-diff.mjs`) / test:run (165/165) / build all exit 0. Live, `localhost:3000/cht/mv/room`, signed in, Import Audio with a generated 45s WAV: Trim opens at 00:07–00:37, "Selected: 00:30", Confirm enabled.
+- Verified: typecheck / lint / test:run (165/165) / build exit 0. Local and Production `https://musemv-ai.vercel.app` after `7242bb2` deployed (2026-10-08): `/mv/room`, Import Audio with a generated 45s WAV → Trim opens 00:07–00:37, "Selected: 00:30", Confirm enabled.
 - Not verified: Not checked on testing-ycm (RD's build) — RD must port the same default. e2e is left to the Stop hook. Visual gate not evaluated (no baseline shows an imported track).
 
 ### Reply comment (paste into eBug)
 
-Reproduced in the mockup too, and it is now fixed there: when an imported track is too short for the 15%–70% default to reach 30s (any track up to ~53s), Trim Audio now opens with exactly 30s selected, so Confirm is usable right away; longer tracks keep the old default. Fixed locally only, not committed or deployed yet, so the mockup URL still shows the old behaviour, and RD's build needs the same change.
+Fixed on the mockup, live now at musemv-ai.vercel.app. When an imported track is too short for the default 15%–70% selection to reach 30s (anything up to ~53s), Trim Audio now opens with exactly 30s selected, so Confirm works straight away; longer tracks keep the old default. RD's build needs the same default — testing-ycm will show the old behaviour until it is ported.
 
 ---
 
@@ -227,7 +227,7 @@ Thank you very much!
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261005P0002
 - Retrieved at: 2026-10-07 18:42 CST
 - Triage: **Decided 2026-10-08 — option (b)**: keep Download and the watermark switch open to every plan; drop them from the Pro perk list.
-- Local status: **Committed** (see Resolution).
+- Local status: **Shipped** — `7242bb2`, production check passed.
 - Decision needed: Answered — see Triage.
 - Related code/spec: Perk list `src/lib/user.ts` `MUSE_PRO_FEATURES`, `SubscribeModal.tsx`, `en.ts` `profile.proSubtitle`; Download in `MvResult.tsx`, `SongResultView.tsx`, `HistoryView.tsx`, `CreatorProfile.tsx`, `ShareLinkView.tsx`; watermark toggle `SettingsModal.tsx`, `MvEditor.tsx`, default `types.ts` `watermark:false`; plan state `AuthProvider` (`guest|free|subscriber`, no expired). Specs: AC-MV-10, AC-SONG-06, AC-HIST-08, MV-P6-E.
 
@@ -256,12 +256,12 @@ Thank you very much!
 
 - Root cause: No decision recorded either way.
 - Resolution: Removed "MV without Watermark" and "Enable Download MV & Song" from `MUSE_PRO_FEATURES` (`src/lib/user.ts`); "watermark-free MVs" removed from SubscribeModal's already-Pro line; "no watermark" removed from `profile.proSubtitle` (`en.ts`; the 8 other dictionaries are empty). Spec 07 SubscribeModal note, `CHANGELOG-SPEC.md` 2026-10-08, storyboard S5 → v3 (recaptured).
-- Verified: typecheck / lint / test:run (165/165) / build exit 0; storyboard S5 recapture shows two benefit rows on every plan card and "Enjoy your 200 weekly credits and full playback." on the already-Pro state.
-- Not verified: —
+- Verified: typecheck / lint / test:run / build exit 0; S5 recapture. Production `https://musemv-ai.vercel.app` after `7242bb2` deployed (2026-10-08): `/profile` subtitle reads "More credits · faster renders"; Upgrade dialog cards list only Priority AI Generation, Commercial License, Credits Expire.
+- Not verified: `/profile` and Subscribe-dialog `-linux` visual baselines will need re-recording on Linux (copy changed); visual gate not evaluated here.
 
 ### Reply comment (paste into eBug)
 
-<!-- Pending the decision above. -->
+Confirmed as intended: Download and the watermark switch stay available on every plan, including Free / expired subscriptions, so no lock or upgrade prompt is needed. What was wrong is the upgrade dialog — "MV without Watermark" and "Enable Download MV & Song" are removed from the Muse Pro benefits (and "no watermark" from the Account Muse Pro subtitle) on the mockup, live now; RD's build needs the same copy change.
 
 ---
 
@@ -275,7 +275,7 @@ Thank you very much!
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261002P0006
 - Retrieved at: 2026-10-07 18:42 CST
 - Triage: **Decided 2026-10-08**: the refund belongs in **Spend** — product owner answered on the ticket as not-a-bug.
-- Local status: **Spec only** — no prototype change (no refund rows in the prototype ledger).
+- Local status: **Shipped** (spec only) — `7242bb2`. Answered on the ticket by the product owner.
 - Decision needed: Answered — see Triage.
 - Related code/spec: `src/components/credits/CreditsView.tsx` tab filter is by sign of `amount`; `src/lib/user.ts` `CreditTxn` has no type; refunds in `MvFlowProvider`/`SongFlowProvider` change the balance but write no ledger row (ledger is a static seed). Spec 07 CR-P3-S2, spec 11 §5 (refund on failure), TBD-CR-04.
 
@@ -308,7 +308,7 @@ Thank you very much!
 
 ### Reply comment (paste into eBug)
 
-<!-- Pending the decision above. -->
+<!-- Not needed: product owner answered on the ticket (refund belongs in Spend). -->
 
 ---
 
@@ -322,7 +322,7 @@ Thank you very much!
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260930P0009
 - Retrieved at: 2026-10-07 18:42 CST
 - Triage: **Decided 2026-10-08**: 25 entries per page, next page loaded on scroll.
-- Local status: **Spec only** — RD item.
+- Local status: **Shipped** (spec only) — `7242bb2`.
 - Decision needed: Answered — see Triage.
 - Related code/spec: `src/components/credits/CreditsView.tsx` renders the full list; spec 07 TBD-CR-04 (live ledger owed by RD); no spec on history length.
 
@@ -356,7 +356,7 @@ Thank you very much!
 
 ### Reply comment (paste into eBug)
 
-<!-- Pending the decision above. -->
+Expected behaviour: Credits Detail loads 25 records per page and fetches the next 25 when the user scrolls to the bottom, and older records must never drop off the list. The spec is updated (Credits Detail CR-P3-S2); this needs RD to add paging to the ledger request — the mockup has no real ledger, so there is nothing to compare there.
 
 ---
 
@@ -370,7 +370,7 @@ Thank you very much!
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260930P0002
 - Retrieved at: 2026-10-07 18:42 CST
 - Triage: **Decided 2026-10-08**: the form now uses `simple`; product owner closed the ticket.
-- Local status: **Spec only** — ticket already closed in ePF.
+- Local status: **Shipped** (spec only) — `7242bb2`. Ticket closed by the product owner.
 - Decision needed: Answered — see Triage.
 - Related code/spec: Root `[YCM] Credit Consume Cloud Config .json` uses `ai_song_simple_instrumental`; `specs/areas/11-credit-consumption.md` §3; `specs/areas/13-credit-history-display.md` §3/§5, AC-CD-06/07; `specs/CHANGELOG-SPEC.md` (keeps `simpe` on purpose).
 
@@ -411,7 +411,7 @@ https://eperfect.perfectcorp.com/MSR/Project/FormQuery.aspx?FormCode=PFA261002-0
 
 ### Reply comment (paste into eBug)
 
-<!-- Pending the decision above. -->
+<!-- Not needed: product owner closed the ticket. -->
 
 ---
 
@@ -425,7 +425,7 @@ https://eperfect.perfectcorp.com/MSR/Project/FormQuery.aspx?FormCode=PFA261002-0
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW260924P0003
 - Retrieved at: 2026-10-07 18:42 CST
 - Triage: **Decided 2026-10-08 — option (a)**: keep the Try YouCam Muse button; update the spec.
-- Local status: **Committed** (spec + storyboard; code unchanged).
+- Local status: **Shipped** — spec + storyboard in `7242bb2`; code unchanged.
 - Decision needed: Answered — see Triage.
 - Related code/spec: `src/components/share/ShareLinkView.tsx` unavailable branch (button + 09-09 comment); `src/styles/designer-overrides.css` spacing rule; commit `41c5b36`; specs `10-share.md` (note says the old "Go to YouCam Muse" button was removed 2026-07-23), `storyboards/share/build_spec.py`, `make_flowchart.py`, `capture_screenshots.py`, `specs/focus.json`.
 
@@ -462,12 +462,12 @@ Thank you!
 
 - Root cause: Spec drift: decision landed in code only.
 - Resolution: `10-share.md` unavailable state + AC-SHARE-02 now describe the pill (added 2026-09-09, reconfirmed); storyboard S9 → v2 (P4-S1 text, focus box, state/error tables, flowchart label; all 15 shots recaptured); `CHANGELOG-SPEC.md` 2026-10-08.
-- Verified: Recaptured S9 shot 10 shows the pill under the copy; spec validate OK.
+- Verified: Recaptured S9 shot 10; spec validate OK. Production `https://musemv-ai.vercel.app` after `7242bb2` deployed (2026-10-08): `/share?id=01M1WTBRG24S0JMKGJBG953XXW` shows "This link isn't available" and the Try YouCam Muse pill → `/cht` (locale-prefixed home).
 - Not verified: —
 
 ### Reply comment (paste into eBug)
 
-<!-- Pending the decision above. -->
+The button is intended, please keep it. "Try YouCam Muse" on the unavailable page was added on 09-09 (Figma "Share Page - Empty"), but the spec and storyboard were never updated, which is what this report tested against. Both are updated now (AC-SHARE-02, storyboard S9 P4-S1 v2): the page shows the unavailable message plus a Try YouCam Muse button to Home, and the logo also links Home — no UI change on the mockup or RD's build.
 
 ---
 
