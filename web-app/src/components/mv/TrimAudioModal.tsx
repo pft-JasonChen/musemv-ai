@@ -40,6 +40,29 @@ export const MIN_TRIM_SEC = 30;
 const MIN_GAP_PCT = 5;
 
 /**
+ * The handles' opening position when the song has no trim yet.
+ *
+ * YMW260930P0004 (2026-10-07): a flat 15%→70% is only 55% of the track, so
+ * every import between 30s (the upload floor) and 53s opened this sheet already
+ * below `MIN_TRIM_SEC` — Confirm disabled and the red hint showing before the
+ * user touched anything. The default now keeps 15%→70% whenever that clears
+ * the floor, and otherwise widens to exactly `MIN_TRIM_SEC`: the end moves out
+ * first, and if that runs past the track the window slides back to finish at
+ * the end of the song. Works in whole seconds so the rounded `selectedSec`
+ * below reads exactly 30, never 29.
+ */
+export function defaultTrim(total: number): { startPct: number; endPct: number } {
+  const start = (DEFAULT_START_PCT / 100) * total;
+  const end = (DEFAULT_END_PCT / 100) * total;
+  if (total <= 0 || Math.round(end) - Math.round(start) >= MIN_TRIM_SEC) {
+    return { startPct: DEFAULT_START_PCT, endPct: DEFAULT_END_PCT };
+  }
+  const widenedEnd = Math.min(total, Math.round(start) + MIN_TRIM_SEC);
+  const widenedStart = Math.max(0, widenedEnd - MIN_TRIM_SEC);
+  return { startPct: (widenedStart / total) * 100, endPct: (widenedEnd / total) * 100 };
+}
+
+/**
  * ── MIGRATED TO THE DESIGNER UI (plan Phase 3, slice 3g-2) ──────────────────
  *
  * DP source: `TrimAudioSheet` inside `MVCreatePage.tsx`. Classes from
@@ -83,10 +106,7 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
   // window `pointermove` listener below closes over the render that installed
   // it. A functional update reads both edges live; two separate `useState`s
   // would need refs written during render, which `react-hooks/refs` rejects.
-  const [{ startPct, endPct }, setTrim] = useState({
-    startPct: DEFAULT_START_PCT,
-    endPct: DEFAULT_END_PCT,
-  });
+  const [{ startPct, endPct }, setTrim] = useState(() => defaultTrim(total));
 
   const startSec = Math.round((startPct / 100) * total);
   const endSec = Math.round((endPct / 100) * total);
@@ -108,7 +128,7 @@ export function TrimAudioModal({ open, song, onClose, onConfirm }: Props) {
           endPct: (song.trim.end / total) * 100,
         });
       } else {
-        setTrim({ startPct: DEFAULT_START_PCT, endPct: DEFAULT_END_PCT });
+        setTrim(defaultTrim(total));
       }
     }
   }

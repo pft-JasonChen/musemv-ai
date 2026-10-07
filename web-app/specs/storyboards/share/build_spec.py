@@ -60,8 +60,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Share',
     'breadcrumb': 'YouCam Muse Web &rarr; Share',
-    'author': 'Jason Chen', 'date': '2026-09-01', 'status': 'Draft',
-    'version': 'v1',
+    'author': 'Jason Chen', 'date': '2026-10-08', 'status': 'Draft',
+    'version': 'v2',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -276,12 +276,13 @@ cfg = {
                     'exact': [
                         'Heading: &ldquo;This link isn&rsquo;t available&rdquo;',
                         'Body: &ldquo;We couldn&rsquo;t find this creation. Ask the sender to share it again.&rdquo;',
+                        'Button: &ldquo;Try YouCam Muse &rarr;&rdquo;',
                     ],
                     'limits': [
                         ('Share links DO NOT EXPIRE &mdash; this state means an id did not resolve, and nothing else.',
                          'AC-SHARE-02. The copy deliberately says so rather than naming a deadline the product does not enforce.'),
-                        ('There is no retry and no Try-the-app button &mdash; the header logo is the only way out.',
-                         'AC-SHARE-02.'),
+                        ('No retry. A &ldquo;Try YouCam Muse&rdquo; pill links home &mdash; the same pill as a live link &mdash; and the header logo links home too.',
+                         'AC-SHARE-02. Pill added 2026-09-09 (Figma &ldquo;Share Page - Empty&rdquo;), reconfirmed 2026-10-08 for YMW260924P0003.'),
                     ],
                 },
                 {
@@ -377,7 +378,7 @@ cfg = {
     'states': [
         ('/share', 'Id resolves to an MV', 'Logo, video, controller, Download + Create MV', 'Play, seek, mute, fullscreen, More; Download; Create', 'The logo, or Create'),
         ('/share', 'Id resolves to a song', 'Logo, art, title, creator, controller, Download + Create Song', 'Play, seek, mute, Download; Create', 'The logo, or Create'),
-        ('/share', 'Id does not resolve', 'Logo and an unavailable message', 'Nothing but the logo', 'The logo'),
+        ('/share', 'Id does not resolve', 'Logo, an unavailable message and a Try YouCam Muse pill', 'Try YouCam Muse or the logo, both to home', 'Try YouCam Muse, or the logo'),
         ('More menu', 'Open', 'Download, Playback Speed with its current rate, Picture in Picture', 'Speed cycles in place; the other two act and close', 'Escape, or an outside press'),
         ('Share dialog', 'Open', 'A read-only link and Copy', 'Copy writes to the clipboard', 'Close'),
         ('Share dialog', 'Just copied', 'The action reads as confirmed', 'Reverts by itself after 1.5s', 'Close'),
@@ -387,7 +388,7 @@ cfg = {
         (
             'Unresolvable id',
             'A share link whose id matches no creation',
-            'The unavailable state; the logo is the only way out',
+            'The unavailable state; Try YouCam Muse or the logo leads home',
             'Ask the sender for the link again',
             'P4-S1',
         ),
@@ -490,6 +491,15 @@ cfg = {
         ('D-07', 'Both Create pills went to the home page while their labels named a specific creation flow. Fix the label, or the destination?', 'The label &mdash; product owner, 2026-09-01. The destination was already decided on 2026-08-24 and for a good reason: the recipient has no account, so a creation flow drops them at a sign-in wall instead of at the product. What was wrong was a button naming a flow it never opened, which is the shape QA files as a broken link. One neutral string now serves both media kinds; only the pill&rsquo;s gradient still varies, which is decoration rather than a promise.'),
         ('D-08', 'The MV panel shows no title or creator while the song panel shows both. Intended, or an oversight in the redesign?', 'Intended &mdash; product owner, 2026-09-01. A music video usually carries its own title on screen, so repeating it above the player is redundant; a song&rsquo;s cover art carries no words, so the song panel has to name it. Specified as a rule on both panels rather than left as an open question, and area 10 is corrected to match.'),
         ('D-09', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo, same as S1 and S3 through S8.'),
+    ],
+
+    'changelog': [   # newest first — (version, date, what changed)
+        ('v2', '2026-10-08',
+         '<b>P4-S1 &mdash; the unavailable state has a &ldquo;Try YouCam Muse&rdquo; pill.</b> It was added on '
+         '2026-09-09 (Figma &ldquo;Share Page - Empty&rdquo;) after v1 was captured, and v1 still said the logo '
+         'was the only way out; reconfirmed by the product owner for YMW260924P0003. All shots recaptured in the '
+         'same run (the others pick up the current sidebar/logo only). See <code>specs/CHANGELOG-SPEC.md</code>.'),
+        ('v1', '2026-09-01', 'First delivery &mdash; 5 paths, 15 shots.'),
     ],
 
     'references': [

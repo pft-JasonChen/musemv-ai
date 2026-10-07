@@ -57,8 +57,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Credits &amp; IAP',
     'breadcrumb': 'YouCam Muse Web &rarr; Credits &amp; IAP',
-    'author': 'Jason Chen', 'date': '2026-10-01', 'status': 'Draft',
-    'version': 'v2',
+    'author': 'Jason Chen', 'date': '2026-10-08', 'status': 'Draft',
+    'version': 'v3',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -124,7 +124,7 @@ cfg = {
                         'Duration tabs: &ldquo;Weekly&rdquo;, &ldquo;Monthly&rdquo;, &ldquo;Yearly&rdquo;',
                         'Weekly: &ldquo;$9.99&rdquo; / week, &ldquo;200&rdquo; Weekly Credits, badge &ldquo;MOST POPULAR&rdquo;',
                         'Weekly Pro: &ldquo;$29.99&rdquo; / week, &ldquo;1,000&rdquo; Weekly Credits, badge &ldquo;BEST VALUE&rdquo;',
-                        'Benefit rows: &ldquo;MV without Watermark&rdquo;, &ldquo;Enable Download MV &amp; Song&rdquo;, &ldquo;Priority AI Generation&rdquo;, &ldquo;Commercial License&rdquo;',
+                        'Benefit rows: &ldquo;Priority AI Generation&rdquo;, &ldquo;Commercial License&rdquo; (watermark and download rows removed 2026-10-08, YMW261005P0002 &mdash; both stay free)',
                         'Expiry line: &ldquo;Credits Expire Weekly&rdquo;',
                         'Footer: &ldquo;Terms of Use&rdquo; | &ldquo;Privacy Policy&rdquo;',
                     ],
@@ -623,6 +623,11 @@ cfg = {
     ],
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v3', '2026-10-08',
+         '<b>P1 &mdash; the Muse Pro benefit list is two rows shorter.</b> &ldquo;MV without Watermark&rdquo; and '
+         '&ldquo;Enable Download MV &amp; Song&rdquo; were removed: Download and the watermark switch stay open to '
+         'every plan (YMW261005P0002). Subscribe-dialog shots recaptured; the run recaptured the rest with no '
+         'behaviour change. See <code>specs/CHANGELOG-SPEC.md</code>.'),
         ('v2', '2026-10-01',
          '<b>New P7 &mdash; sign-up gift.</b> A new account&rsquo;s sign-in success line now reads '
          '&ldquo;Welcome&rdquo;, and a free-credits toast follows ~3s later (AC-CR-13, D-07). '

@@ -325,8 +325,8 @@ export function SubscribeModal({ open, onClose, onSubscribed }: Props) {
               </div>
               <p className="upgrade-dialog__plan-desc">
                 {current
-                  ? `Enjoy your ${current.credits.toLocaleString()} ${current.cadence.toLowerCase()} credits, watermark-free MVs, and full playback.`
-                  : "Enjoy your Muse Pro credits, watermark-free MVs, and full playback."}
+                  ? `Enjoy your ${current.credits.toLocaleString()} ${current.cadence.toLowerCase()} credits and full playback.`
+                  : "Enjoy your Muse Pro credits and full playback."}
               </p>
             </div>
             <button

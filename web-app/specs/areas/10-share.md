@@ -93,7 +93,10 @@ Renders **bare** (no shell) — `AppShell` treats any `/share…` path as chrome
   **Share links DO NOT EXPIRE (product owner, 2026-08-19).** The previous copy advertised a 30-day
   window that was never implemented and is now decided against — creations are kept indefinitely, so
   a link to one has no reason to lapse. This state is reached only when an id cannot be resolved. (The former "Go to YouCam Muse" button was
-  removed 2026-07-23; the header logo is the way home.)
+  removed 2026-07-23.) **Re-added as "Try YouCam Muse →" — product owner 2026-09-09, Figma "Share Page - Empty"
+  (node 3738:70778), reconfirmed 2026-10-08 for YMW260924P0003:** the same gradient pill as the valid-link
+  state, linking home, so a visitor on a dead link gets the same way into the product as one on a live link.
+  The header logo still links home too; it is no longer the ONLY way out.
 - 🔒 **Prototype limit** (`lib/share.ts`): community items **and** the static History samples resolve
   from fixtures (survive reload + cross-tab). A user's **live** own creation still lives only in the
   in-memory `HistoryProvider`, so a fresh tab or reload cannot resolve it and the page shows the
@@ -145,7 +148,7 @@ Screens to capture later: `/share?id=…` (valid MV + valid song), `/share?type=
 
 - **AC-SHARE-01** — WHEN `/share?id={id}` resolves to media, THE SYSTEM SHALL render it bare (no app chrome) with a logo header (→ home), the media panel and its custom controller, and an action row carrying Download (only if a media URL exists) and a kind-labelled Create pill.
   > ⚠️ **Rewritten 2026-09-01 (D11), and this REVERSES the 2026-07-23 wording.** It read "…the media, and (if a URL exists) a Download button — **and nothing else**". The 2026-08-24 redesign added the controller, the More menu and the second pill, so "nothing else" was asserting the absence of four things that are on screen. See §3.
-- **AC-SHARE-02** — WHEN the id is missing/unresolvable or `?type=expired`, THE SYSTEM SHALL render the expired empty state; the logo header links home.
+- **AC-SHARE-02** — WHEN the id is missing/unresolvable or `?type=expired`, THE SYSTEM SHALL render the expired empty state — alert icon, "This link isn't available", the copy, no media — with a **Try YouCam Muse** pill that links home; the logo header links home too. _(Pill added 2026-09-09, reconfirmed 2026-10-08, YMW260924P0003.)_
 - **AC-SHARE-03** — WHEN `/share/mv/{id}` is opened, THE SYSTEM SHALL redirect to `/share?id={id}` preserving the locale.
 - **AC-SHARE-04** — WHEN Share is invoked, THE SYSTEM SHALL open `ShareDialog` exposing a copyable `buildShareUrl` link and a Copy button — and **no** social-platform targets or native-share button (MVP).
 - **AC-SHARE-05** — WHEN Download is tapped on a valid link, THE SYSTEM SHALL download the media as `{title}.mp4` (MV) or `{title}.mp3` (song).

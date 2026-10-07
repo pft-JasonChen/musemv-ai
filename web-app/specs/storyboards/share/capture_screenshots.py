@@ -331,7 +331,8 @@ async def main_recipient(base):
         await assert_bare(page)
         await multi_focus(cap, page, "10_unavailable_bad_id.png", [
             ([".share-page__expired-title"], "The unavailable state", "info"),
-            ([".share-page__logo-link"], "The header logo is the only way out", "action"),
+            ([".share-page__expired-actions .share-page__pill"], "Try YouCam Muse — links home", "action"),
+            ([".share-page__logo-link"], "The header logo also links home", "action"),
         ])
 
         await page.goto(f"{base}/share", wait_until="networkidle")

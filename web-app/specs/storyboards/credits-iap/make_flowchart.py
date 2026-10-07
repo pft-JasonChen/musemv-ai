@@ -39,8 +39,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v2'
-DATE = '2026-10-01'
+VERSION = 'v3'
+DATE = '2026-10-08'
 MARGIN = 40
 # Narrow enough that the 130px 'pick a card’s Subscribe' label fits in the
 # GAP between two columns instead of resting on both boxes: a label that

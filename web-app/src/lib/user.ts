@@ -310,9 +310,11 @@ export interface ProFeature {
   icon: string;
 }
 
+// YMW261005P0002 (product owner, 2026-10-08): Download and the watermark
+// switch stay open to every plan, so "MV without Watermark" and "Enable
+// Download MV & Song" are no longer listed as Pro perks — they promised
+// something a free account already had.
 export const MUSE_PRO_FEATURES: ProFeature[] = [
-  { label: "MV without Watermark", icon: "ic_video_ai" },
-  { label: "Enable Download MV & Song", icon: "ic_download" },
   { label: "Priority AI Generation", icon: "ic_flash" },
   { label: "Commercial License", icon: "ic_shield_check" },
 ];

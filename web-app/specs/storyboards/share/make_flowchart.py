@@ -38,8 +38,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v1'
-DATE = '2026-09-01'
+VERSION = 'v2'
+DATE = '2026-10-08'
 W, H = 1280, 1860
 MARGIN = 40
 
@@ -144,7 +144,7 @@ forced = place(900, 1110, '?type=expired — the QA switch',
                'Forces the state on an id that WOULD resolve · P4-S3', w=340, kind='error')
 
 gone = place(470, 1240, '“This link isn’t available”',
-             'One state, three ways in. The header logo is the only way out · AC-SHARE-02',
+             'One state, three ways in. Try YouCam Muse or the logo leads home · AC-SHARE-02',
              w=340, kind='error')
 f.edge(bad, gone, kind='error', side=('bottom', 'left'))
 f.edge(noid, gone, kind='error')

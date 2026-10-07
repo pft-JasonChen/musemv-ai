@@ -120,7 +120,7 @@ record = (ai_mv, edit_poster)
 | --- | --- | --- | --- | --- |
 | `ai_mv` | `ai_song_simple_vocal` | `create_song_name` | Create Song | `ic_song_ai.svg` |
 | `ai_mv` | `ai_song_custom_vocal` | `create_song_name` | Create Song | `ic_song_ai.svg` |
-| `ai_mv` | `ai_song_simpe_instrumental` | `create_song_name` | Create Song | `ic_song_ai.svg` |
+| `ai_mv` | `ai_song_simple_instrumental` | `create_song_name` | Create Song | `ic_song_ai.svg` |
 | `ai_mv` | `ai_song_custom_instrumental` | `create_song_name` | Create Song | `ic_song_ai.svg` |
 | `ai_mv` | `create_script_upload_song` | `create_storyboard_name` | Create Storyboard | `ic_script.svg` |
 | `ai_mv` | `generate_mv` | `storyboard_generate_mv_name` | Storyboard - Create MV | `ic_video_ai.svg` |
@@ -131,14 +131,14 @@ record = (ai_mv, edit_poster)
 
 ### 原始識別字注意事項
 
-- `ai_song_simpe_instrumental` 的 `simpe`（少一個 `l`）是 form 目前的原始值。
+- ~~`ai_song_simpe_instrumental` 的 `simpe`（少一個 `l`）是 form 目前的原始值。~~ **已修正（YMW260930P0002，產品負責人 2026-10-08 確認）：** form 已改為 `ai_song_simple_instrumental`（PFA261002-0001），與 `11-credit-consumption.md` 的扣點 action 一致。
 - `revreate_scene_name` 的 `revreate` 是 form 目前的原始值。
 - form 的葡萄牙語語系碼是 `prt`；目前 Web app 的產品語系碼是 `ptg`。兩者不相等，
   不得在沒有明確轉換契約時自動視為同一語系；因此 `ptg` 目前會 fallback 至 `enu`。
 - `11-credit-consumption.md` 已將扣點 action 定義為修正後的
-  `ai_song_simple_instrumental`。它與本 form 的 `ai_song_simpe_instrumental` 不一致；
-  若 record 傳修正後的名稱，本版 form **不會命中**。顯示 mapping 與計價 action 是兩份不同
-  契約，RD 不得私自選其中一個拼法替另一個兜底。
+  `ai_song_simple_instrumental`；form 自 2026-10-08 起使用同一拼法，兩份契約已一致。
+  （先前兩者不一致時，record 傳修正後名稱會**不會命中**而整筆消失 — 即 YMW260930P0002。）
+  顯示 mapping 與計價 action 仍是兩份不同契約，RD 不得私自用其中一個拼法替另一個兜底。
 
 ---
 
@@ -184,5 +184,5 @@ record = (ai_mv, edit_poster)
 3. 非英文翻譯缺少與為空字串時，兩者都顯示 `enu`。
 4. 錯誤的 `feature_name`、錯誤的 `action_name`、重複 mapping、缺 translation、空英文與缺 icon
    均走 config / contract error。
-5. `ai_song_simple_instrumental` 不應誤命中表內的 `ai_song_simpe_instrumental`。
+5. `ai_song_simple_instrumental`（Simple + Instrumental 生成）在 Credits Detail 顯示為 Create Song；舊拼法 `ai_song_simpe_instrumental` 不應命中任何 mapping。
 6. 使用者語言為 `ptg` 時，在沒有明確轉換契約前 fallback 至 `enu`。

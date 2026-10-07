@@ -38,7 +38,7 @@ export const en = {
   "profile.upgrade": "Upgrade",
   "profile.subscribe": "Subscribe",
   "profile.manage": "Manage",
-  "profile.proSubtitle": "More credits · faster renders · no watermark",
+  "profile.proSubtitle": "More credits · faster renders",
   "profile.proActive": "Active — thanks for being Pro",
   "profile.changePhoto": "Change Photo",
   "profile.toast.subscribed": "Welcome to Muse Pro!",

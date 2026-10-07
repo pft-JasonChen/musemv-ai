@@ -267,7 +267,7 @@
         <td class="c-area">S5</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/credits-iap/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Credits &amp; IAP</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/credits-iap/specs/spec.html</div></td>
         <td class="c-dev">SubscribeModal · BuyCreditsModal · /profile/credits · sign-up gift</td>
-        <td><span class="badge st-ok">v2 · 2026-10-01</span></td>
+        <td><span class="badge st-ok">v3 · 2026-10-08</span></td>
         <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>
       <tr>
@@ -295,7 +295,7 @@
         <td class="c-area">S9</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/share/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Share</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/share/specs/spec.html</div></td>
         <td class="c-dev">/share · ShareDialog</td>
-        <td><span class="badge st-ok">v1 · 2026-09-01</span></td>
+        <td><span class="badge st-ok">v2 · 2026-10-08</span></td>
         <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>
       <tr>
@@ -1024,6 +1024,74 @@ this file covers. When a change does both, it appears in both, and the row below
 <p><strong>A storyboard's own Changelog is the finer-grained one</strong> and worth opening second: it badges the<br>
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
+<hr>
+<h2 id="2026-10-08-ebug-decisions-pro-perk-list-share-page-button-credit-ledger-simple-spelling">2026-10-08 — eBug decisions: Pro perk list, share-page button, credit ledger, <code>simple</code> spelling</h2>
+<p>Product owner decisions on the 2026-10-07 eBug pull (<code>docs/BUGS-TO-FIX-2026-10-07.md</code>).</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>YMW261005P0002</strong> — Download and the Show Watermark switch stay open to every plan; "MV without Watermark" and "Enable Download MV &amp; Song" removed from the Muse Pro benefit list, "watermark-free" from the already-Pro line, "no watermark" from Profile's Muse Pro subtitle</td>
+<td>area 07 §3 <code>SubscribeModal</code> (<code>MUSE_PRO_FEATURES</code>) · S5 <strong>P1</strong> (v3) · AC-MV-10 / AC-SONG-06 / AC-HIST-08 / MV-P6-E unchanged</td>
+<td><code>src/lib/user.ts</code>, <code>src/components/credits/SubscribeModal.tsx</code>, <code>src/lib/i18n/dictionaries/en.ts</code></td>
+<td>— (copy only)</td>
+</tr>
+<tr>
+<td><strong>YMW260924P0003</strong> — the unavailable share page KEEPS its "Try YouCam Muse" pill (added 2026-09-09, Figma "Share Page - Empty"); the logo is no longer the only way home. Spec text and storyboard had never caught up</td>
+<td>area 10 unavailable state, <strong>AC-SHARE-02</strong> · S9 <strong>P4-S1</strong> (v2)</td>
+<td>none — code already matched</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>YMW261002P0006</strong> — a failed generation's refund is listed under <strong>Spend</strong>, not Earn</td>
+<td>area 07 <strong>CR-P3-S2</strong>, <code>TBD-CR-04</code></td>
+<td>none — the prototype ledger has no refund rows</td>
+<td>— (RD)</td>
+</tr>
+<tr>
+<td><strong>YMW260930P0009</strong> — the live ledger pages <strong>25 entries</strong> at a time and loads the next page on scroll</td>
+<td>area 07 <strong>CR-P3-S2</strong>, <code>TBD-CR-04</code></td>
+<td>none — the prototype ledger is a one-row seed</td>
+<td>— (RD)</td>
+</tr>
+<tr>
+<td><strong>YMW260930P0002</strong> — the credit-history form now uses <code>ai_song_simple_instrumental</code> (PFA261002-0001); <code>simpe</code> retired</td>
+<td>area 13 §4 table, identifier notes, QA item 5</td>
+<td>none — no action-name mapping in the prototype</td>
+<td>— (RD/QA)</td>
+</tr>
+</tbody>
+</table>
+<p>Storyboards: <strong>S5 → v3</strong> (benefit rows; all 23 shots recaptured, P1 is the only behaviour change). <strong>S9 → v2</strong> (P4-S1; all 15 shots recaptured, P4-S1 is the only behaviour change). Contract: none.</p>
+<hr>
+<h2 id="2026-10-07-trim-audio-never-opens-below-the-30s-floor">2026-10-07 — Trim Audio never opens below the 30s floor</h2>
+<h3 id="ymw260930p0004-default-trim-window-for-3053s-imports"><code>YMW260930P0004</code>: default trim window for 30–53s imports</h3>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>With no prior trim, the window still defaults to 15%→70%, but if that is under 30s (any import ≤53s) it opens at exactly 30s — end widened first, slid back if it would pass the track's end. Before: a 45s import opened at 24s with Confirm disabled.</td>
+<td>area 02 <strong>MV-P6-C</strong> (AC-MV-16 unchanged)</td>
+<td><code>src/components/mv/TrimAudioModal.tsx</code> <code>defaultTrim</code></td>
+<td><code>src/components/mv/TrimAudioModal.test.ts</code></td>
+</tr>
+</tbody>
+</table>
+<p>Storyboards: none recaptured — the S2 storyboard's trim shots use a 114s library song, whose default (15%→70%) is unchanged. Contract: none (no C1–C8 surface touched).</p>
 <hr>
 <h2 id="2026-10-01-sign-up-gift-welcome-line-free-credits-toast-credits-detail-seed-is-a-new-free-account">2026-10-01 — Sign-up gift: "Welcome" line + free-credits toast; Credits Detail seed is a new free account</h2>
 <p>Product owner decisions, no bug code.</p>
@@ -3177,7 +3245,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <ul>
 <li><strong>MV-P6-A ChooseSongModal:</strong> tabs <strong>My Songs</strong> (default) / <strong>Sample Songs</strong> (🔒 <code>MY_SONGS</code>/<code>SAMPLE_SONGS</code>); each row art/title/duration + <strong>Use</strong> → <code>onPick</code> (same handler for both tabs) → Trim. ⚠️ <strong>Stale as of slice 3g-2 (2026-08-06) — the migration ADDED an in-modal inline preview.</strong> Tapping a row now plays/pauses that song right there (art swaps to a pause icon, a live position readout replaces the duration) via <code>useAudioPlayer</code>; the row's <strong>Use</strong> pill is revealed on hover/tap/focus. This line used to say the opposite ("No in-modal inline preview"), true of the pre-migration <code>Modal</code> this document was written against but not of the current <code>MvSheet</code>-based component. Corrected 2026-08-27 from code (<code>ChooseSongModal.tsx</code>) during the S2 storyboard-spec capture; the song card on <code>/mv/room</code> still ALSO plays/pauses after selection, so both previews exist now, not one.</li>
 <li><strong>MV-P6-B Import audio:</strong> real local file picker. <strong>MV-02 (2026-07-23):</strong> accepts only MP3/AAC/WAV/M4A up to 50MB (by extension or MIME) — otherwise an error toast and no import. On accept, derives duration from metadata, <strong>falls back to 0 on error</strong> (then Trim math uses a 180s fallback while the card shows <code>0:00</code>) → Trim. <strong>New 2026-09-01 (product owner) — the ≥30s floor is now also checked HERE, before Trim ever opens:</strong> <code>MvRoom.importAudio</code> rejects a probed duration <code>&gt; 0</code> and <code>&lt; MIN_TRIM_SEC</code> with the toast <code>Audio must be at least 30 seconds.</code>, alongside the existing format/size toasts (MV-E8). <code>MIN_TRIM_SEC</code> is <strong>exported from <code>TrimAudioModal</code></strong> (<code>export const MIN_TRIM_SEC = 30</code>) and imported here, so this check and MV-P6-C's cannot drift apart — they are one rule (MV-01) enforced at two points, not two rules. Deliberate exception: a probed duration of exactly <code>0</code> means the metadata probe <strong>failed</strong>, not a zero-length file, so it is let through to Trim (the pre-existing <code>0</code>-duration behaviour) rather than rejected — an unreadable-but-valid track must stay usable. Why this exists: a track already shorter than 30s can never be trimmed <em>up</em> to 30s, so previously it sailed past this check and opened Trim on a dead end — permanently disabled Confirm, red "minimum 30s", no path forward except closing.</li>
-<li><strong>MV-P6-C TrimAudioModal:</strong> waveform + two drag handles; default select 15%→70%; min 5% gap; live preview of the selected region; a <strong>Confirm</strong> footer button (⚠️ <strong>not</strong> &ldquo;Use Trimmed Audio&rdquo; — that was the pre-migration <code>Modal</code>'s own label; slice 3g-2's <code>MvSheet</code> shell gives every one of the six sheets the same generic Cancel/Confirm footer, so this one reads plain &ldquo;Confirm&rdquo; like its siblings. Corrected 2026-08-27 from code during the S2 storyboard-spec capture, also visible in <code>e2e/mv-flow.spec.ts</code>'s own comment on the same rename) stores <code>trim{start,end}</code> (full <code>durationSec</code> unchanged). <strong>MV-01 (2026-07-23):</strong> the selected length must be <strong>≥30s</strong> — below that the button is disabled and a "minimum 30s" hint shows in <code>--color-action-danger</code>. <em>(Unchanged by the 2026-09-01 addition above — this is the SELECTION-time half of the same MIN_TRIM_SEC=30 rule; MV-P6-B added the upload-time half so a too-short source track never reaches this dead end.)</em> ⚠️ Sample-song trimming is web-new (app trims only library-import).</li>
+<li><strong>MV-P6-C TrimAudioModal:</strong> waveform + two drag handles; default select 15%→70% — <strong>YMW260930P0004 (2026-10-07):</strong> unless that window is under 30s (any track ≤53s), in which case it opens at exactly 30s: the end widens first, and if it would pass the end of the track the window slides back to end there; min 5% gap; live preview of the selected region; a <strong>Confirm</strong> footer button (⚠️ <strong>not</strong> &ldquo;Use Trimmed Audio&rdquo; — that was the pre-migration <code>Modal</code>'s own label; slice 3g-2's <code>MvSheet</code> shell gives every one of the six sheets the same generic Cancel/Confirm footer, so this one reads plain &ldquo;Confirm&rdquo; like its siblings. Corrected 2026-08-27 from code during the S2 storyboard-spec capture, also visible in <code>e2e/mv-flow.spec.ts</code>'s own comment on the same rename) stores <code>trim{start,end}</code> (full <code>durationSec</code> unchanged). <strong>MV-01 (2026-07-23):</strong> the selected length must be <strong>≥30s</strong> — below that the button is disabled and a "minimum 30s" hint shows in <code>--color-action-danger</code>. <em>(Unchanged by the 2026-09-01 addition above — this is the SELECTION-time half of the same MIN_TRIM_SEC=30 rule; MV-P6-B added the upload-time half so a too-short source track never reaches this dead end.)</em> ⚠️ Sample-song trimming is web-new (app trims only library-import).</li>
 <li><strong>MV-P6-D FacePickerModal:</strong> manual crop square + size slider (256×256 JPEG). Detected-face suggestions are supported by the component but <strong>not passed</strong> from <code>/mv/room</code> (manual-crop only as-built). ⚠️ App auto-detects up to 6 faces (→ <code>TBD-MV-03</code>).</li>
 <li><strong>MV-P6-E SettingsModal:</strong> Aspect Ratio 9:16/16:9 · Quality <strong>Standard/High</strong> (SD/HD icons). <strong>MV-04 (2026-07-23):</strong> on the free plan <strong>"High" is greyed with a crown</strong>; tapping it opens <code>SubscribeModal</code> (IAP) instead of selecting. Subscribers select it normally. · Title/Author toggles+inputs · Show Subtitle · Show Watermark.</li>
 <li><strong>MV-P6-F TemplateSheet</strong> (its own component since 3g-2 — it used to be an inline <code>&lt;Modal&gt;</code> in <code>MvRoom</code>): grid of <code>TEMPLATES</code>; selecting fills <code>description</code> with the template prompt. ⚠️ Does <strong>not</strong> auto-select/lock a song (the old web spec claimed it did → <code>TBD-MV-05</code>).</li>
@@ -4224,6 +4292,10 @@ profile — <code>ownerMenu</code> is <code>self &amp;&amp; loggedIn</code>, so 
 <code>IconButton</code>s on the row instead. Captured at S8 <code>P6-S1</code> / <code>P6-S2</code>.</p>
 </blockquote>
 </li>
+<li><strong>Published works only — self view included (product owner, 2026-10-05).</strong> This is the<br>
+  creator's PUBLIC page, so every row on it is published. The self view no longer seeds the<br>
+  Storyboard / Failed / Generating rows (added 2026-08-31 / 09-01 from the Figma self-view) — none<br>
+  of them can be published, and they live in <code>/history</code>. See EXP-P6-S2 for what that does to the menu.</li>
 <li>This route is <strong>both</strong> the App's <em>My Community Profile</em> (F16, via <code>/profile</code> stats → <code>/creator?self=1</code>, area 06) <strong>and</strong> <em>Community User Profile</em> (F17, via any creator link).</li>
 <li>⚠️ Self mode shows <code>MOCK_USER</code>'s identity but the <strong>sample creator's stats + content</strong> (<code>CREATOR_MVS/SONGS</code>); no <strong>Report/Block</strong> (App F17) (<code>TBD-EXP-05</code>).</li>
 <li><strong><code>profileEmpty</code> demo flag — live, added to this spec 2026-09-01.</strong> <code>CREATOR_MVS</code>/<code>CREATOR_SONGS</code><br>
@@ -4339,7 +4411,12 @@ on future fixture edits, and on RD's real catalog.</p>
 the running app: the count is six on both tabs, but "Edit" is the wrong label (it reads<br>
 <strong>Edit MV</strong>) and a song row does not offer it at all. The visitor half was wrong in the other<br>
 direction — it named a <code>⋯</code> menu a visitor never sees. Captured at S8 <code>P6-S2</code> / <code>P6-S4</code> /<br>
-<code>P6-S5</code>.</p>
+<code>P6-S5</code>.<br>
+<strong>Changed 2026-10-05 (published works only, §3.5).</strong> An MV row's <code>⋯</code> now has <strong>five</strong> slots —<br>
+<strong>Like · Share · Publish · Download · Delete</strong> — because MV-13 hides Edit MV on a published MV<br>
+and every MV here is published. The song row keeps its six. <strong>Publish</strong> is always ON; switching<br>
+it OFF unpublishes immediately (toast "Unpublished success", no confirm) and the row leaves<br>
+this page. There is no OFF → ON path here any more — re-publishing happens in <code>/history</code>.</p>
 </blockquote>
 </li>
 <li><strong>EXP-P6-S3</strong> <em>(new 2026-09-01)</em> <code>?demo=1</code> + the <code>profileEmpty</code> toggle → the active tab's list renders empty: icon + "No works released yet", plus (self only) a subtitle and a <strong>Create Music Video</strong>/<strong>Create Song</strong> CTA. See §3.5.</li>
@@ -4838,15 +4915,15 @@ the Edit-Profile / Language / Feedback modals. <strong>Send Feedback is a real s
 <strong>§3.1</strong> for the form and its CSB param mapping.<br>
 <strong>Out of scope (cross-referenced):</strong> the credits/IAP<br>
 the Credits Detail route + modals reached from here (area 07 — <code>/profile/credits</code>, <code>BuyCreditsModal</code>, <code>SubscribeModal</code>); the<br>
-<strong>community profile content grid</strong> at <code>/creator?self=1</code> that the photo/name/email identity block<br>
-links to (area 04); <strong>the user's own creations list</strong> at <code>/history</code> that the MVs/Songs stat tiles<br>
+<strong>community profile content grid</strong> at <code>/creator?self=1</code> that the photo and name<br>
+link to (area 04); <strong>the user's own creations list</strong> at <code>/history</code> that the MVs/Songs stat tiles<br>
 link to (area 05, <code>YMW260910P0001</code>, 2026-09-11 — see below); sign-in (area 09).</p>
 <p><strong>Key mapping note (important):</strong> web <code>/profile</code> is closest to the <strong>App's Account screen (F18)</strong> — a<br>
 row-based hub — <strong>not</strong> the App's <em>My Community Profile</em> (F16), whose tabbed content grid lives at<br>
 <code>/creator?self=1</code> (area 04). ⚠️ The overview parity matrix lists F16→06 for convenience; the<br>
 content-grid half is actually area 04.<br>
 <strong>Two different destinations behind three similar-looking controls (2026-09-11):</strong> the identity<br>
-block (photo/name/email, one grouped link) still bridges to the <strong>public</strong> creator profile (area<br>
+block (photo + name; the email is plain text since 2026-10-05) still bridges to the <strong>public</strong> creator profile (area<br>
 04, <code>/creator?self=1</code>); the MVs/Songs stat tiles bridge to the user's <strong>own</strong> creations list<br>
 instead (area 05, <code>/history?tab=mv</code>|<code>songs</code>). Before <code>YMW260910P0001</code> all three shared the public-<br>
 profile destination — don't assume they still do when reading older notes below.</p>
@@ -5816,7 +5893,10 @@ before the migration; the filter derives from the sign of <code>amount</code>.</
   above a two-row tappable list, with a single shared Subscribe button acting on the selection;<br>
 <code>selectedTier</code> persists across a duration switch. Each card/row carries a one-line <code>description</code>,<br>
   a "{credits} {cadence} Credits" row, the <code>MUSE_PRO_FEATURES</code> list (+ <code>YEARLY_EXTRA_FEATURES</code> on a<br>
-  Yearly card), and a <strong>"Credits Expire {cadence}"</strong> line derived from <code>cadence</code>, not hardcoded per<br>
+  Yearly card) — <strong>YMW261005P0002 (2026-10-08):</strong> "MV without Watermark" and "Enable Download MV &amp; Song"<br>
+  are no longer in that list: Download and the Show Watermark switch stay open to every plan (AC-MV-10,<br>
+  AC-SONG-06, AC-HIST-08, MV-P6-E unchanged), so they are not Pro perks; the already-Pro line and the<br>
+  Profile Muse Pro subtitle dropped "watermark-free" / "no watermark" for the same reason — and a <strong>"Credits Expire {cadence}"</strong> line derived from <code>cadence</code>, not hardcoded per<br>
   card. <strong>Subscribe</strong> → <code>subscribe(plan.id)</code> + <code>addCredits(plan.credits)</code> + <code>onSubscribed</code> toast +<br>
   close. Footer (rewritten 2026-09-01, product owner): <strong>Terms of Use</strong> / <strong>Privacy Policy</strong> links to<br>
   the real <code>TERMS_URL</code>/<code>PRIVACY_URL</code> (<code>lib/legal.ts</code>) — this <strong>replaces</strong> the previous <strong>Restore<br>
@@ -5886,7 +5966,7 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 <h3 id="cr-p3-credits-detail">CR-P3 — Credits detail</h3>
 <ul>
 <li><strong>CR-P3-S1</strong> Navigate to <code>/profile/credits</code> (profile Credits tile / Muse Pro <strong>Manage</strong> — both <code>router.push</code>, no longer a modal). <strong>System:</strong> balance + All/Spend/Earn filter + static ledger + <strong>Buy More</strong> → <code>BuyCreditsModal</code>.</li>
-<li><strong>CR-P3-S2</strong> Pick <strong>Spend</strong> or <strong>Earn</strong> → the ledger filters to negative / positive entries; <strong>All</strong> restores the full ledger. <em>(The seed is now ONE entry — <code>Welcome bonus +10</code>, a brand-new free account — so Spend shows the empty state. Corrected 2026-10-01, product owner: the old 7-entry seed carried a +500 welcome bonus, a +300 pack purchase a free user cannot make (CR-06), and a daily sign-in bonus the product does not have.)</em></li>
+<li><strong>CR-P3-S2</strong> Pick <strong>Spend</strong> or <strong>Earn</strong> → the ledger filters to negative / positive entries; <strong>All</strong> restores the full ledger. <strong>YMW261002P0006 (product owner, 2026-10-08):</strong> the credits returned for a FAILED generation are listed under <strong>Spend</strong> (beside the charge they reverse), never under Earn — so the filter is not purely the sign of the amount, and the live ledger (<code>TBD-CR-04</code>) must carry an explicit type per row. <strong>YMW260930P0009 (2026-10-08):</strong> the live ledger loads <strong>25 entries per page</strong> and fetches the next page when the list is scrolled to the bottom; the oldest entry is never pushed out. The prototype's seed is one row, so neither rule is observable here. <em>(The seed is now ONE entry — <code>Welcome bonus +10</code>, a brand-new free account — so Spend shows the empty state. Corrected 2026-10-01, product owner: the old 7-entry seed carried a +500 welcome bonus, a +300 pack purchase a free user cannot make (CR-06), and a daily sign-in bonus the product does not have.)</em></li>
 <li><strong>CR-P3-S3</strong> Back → <code>/profile</code>. The route is deep-linkable and survives browser back/forward — the reason it stopped being a modal.</li>
 </ul>
 <h3 id="cr-p4-sign-up-gift-toast-added-2026-10-01">CR-P4 — Sign-up gift toast <em>(added 2026-10-01)</em></h3>
@@ -6011,7 +6091,7 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 </tr>
 <tr>
 <td><strong>TBD-CR-04</strong></td>
-<td>🔧 <strong>Backend (RD)</strong> — live credit ledger. <code>/profile/credits</code> shows a static seed, not real transactions.</td>
+<td>🔧 <strong>Backend (RD)</strong> — live credit ledger. <code>/profile/credits</code> shows a static seed, not real transactions. Needs (2026-10-08): a per-row type so a failed-generation refund lands in Spend (YMW261002P0006), and paging at 25 per page with load-more on scroll (YMW260930P0009) — CR-P3-S2.</td>
 </tr>
 <tr>
 <td>~~<strong>TBD-CR-06a</strong>~~</td>
@@ -6416,7 +6496,10 @@ on both panels rather than left open.</p>
 <strong>Share links DO NOT EXPIRE (product owner, 2026-08-19).</strong> The previous copy advertised a 30-day<br>
   window that was never implemented and is now decided against — creations are kept indefinitely, so<br>
   a link to one has no reason to lapse. This state is reached only when an id cannot be resolved. (The former "Go to YouCam Muse" button was<br>
-  removed 2026-07-23; the header logo is the way home.)</li>
+  removed 2026-07-23.) <strong>Re-added as "Try YouCam Muse →" — product owner 2026-09-09, Figma "Share Page - Empty"<br>
+  (node 3738:70778), reconfirmed 2026-10-08 for YMW260924P0003:</strong> the same gradient pill as the valid-link<br>
+  state, linking home, so a visitor on a dead link gets the same way into the product as one on a live link.<br>
+  The header logo still links home too; it is no longer the ONLY way out.</li>
 <li>🔒 <strong>Prototype limit</strong> (<code>lib/share.ts</code>): community items <strong>and</strong> the static History samples resolve<br>
   from fixtures (survive reload + cross-tab). A user's <strong>live</strong> own creation still lives only in the<br>
   in-memory <code>HistoryProvider</code>, so a fresh tab or reload cannot resolve it and the page shows the<br>
@@ -6492,7 +6575,7 @@ on both panels rather than left open.</p>
 <p>⚠️ <strong>Rewritten 2026-09-01 (D11), and this REVERSES the 2026-07-23 wording.</strong> It read "…the media, and (if a URL exists) a Download button — <strong>and nothing else</strong>". The 2026-08-24 redesign added the controller, the More menu and the second pill, so "nothing else" was asserting the absence of four things that are on screen. See §3.</p>
 </blockquote>
 </li>
-<li><strong>AC-SHARE-02</strong> — WHEN the id is missing/unresolvable or <code>?type=expired</code>, THE SYSTEM SHALL render the expired empty state; the logo header links home.</li>
+<li><strong>AC-SHARE-02</strong> — WHEN the id is missing/unresolvable or <code>?type=expired</code>, THE SYSTEM SHALL render the expired empty state — alert icon, "This link isn't available", the copy, no media — with a <strong>Try YouCam Muse</strong> pill that links home; the logo header links home too. <em>(Pill added 2026-09-09, reconfirmed 2026-10-08, YMW260924P0003.)</em></li>
 <li><strong>AC-SHARE-03</strong> — WHEN <code>/share/mv/{id}</code> is opened, THE SYSTEM SHALL redirect to <code>/share?id={id}</code> preserving the locale.</li>
 <li><strong>AC-SHARE-04</strong> — WHEN Share is invoked, THE SYSTEM SHALL open <code>ShareDialog</code> exposing a copyable <code>buildShareUrl</code> link and a Copy button — and <strong>no</strong> social-platform targets or native-share button (MVP).</li>
 <li><strong>AC-SHARE-05</strong> — WHEN Download is tapped on a valid link, THE SYSTEM SHALL download the media as <code>{title}.mp4</code> (MV) or <code>{title}.mp3</code> (song).</li>

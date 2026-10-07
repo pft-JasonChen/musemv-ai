@@ -83,7 +83,7 @@ STORYBOARDS = [
      "/mv/edit", "5 paths / 24 shots"),
     ("S4", "history", "History (My Creations)", "v3 · 2026-09-10",
      "/history", "7 paths / 27 shots"),
-    ("S5", "credits-iap", "Credits &amp; IAP", "v2 · 2026-10-01",
+    ("S5", "credits-iap", "Credits &amp; IAP", "v3 · 2026-10-08",
      "SubscribeModal · BuyCreditsModal · /profile/credits · sign-up gift", "7 paths / 23 shots"),
     ("S6", "shell-auth", "App Shell &amp; Auth", "v3 · 2026-10-01",
      "sidebar / tab bar · route navbars · SignInModal · marketing footer", "8 paths / 27 shots"),
@@ -91,7 +91,7 @@ STORYBOARDS = [
      "/profile · /settings · edit profile · Send Feedback", "6 paths / 23 shots"),
     ("S8", "explore-community", "Explore &amp; Community", "v2 · 2026-09-09",
      "/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator", "7 paths / 38 shots"),
-    ("S9", "share", "Share", "v1 · 2026-09-01",
+    ("S9", "share", "Share", "v2 · 2026-10-08",
      "/share · ShareDialog", "5 paths / 15 shots"),
 ]
 # S10 (credit-consumption) has no spec.html — the product owner ruled it ships

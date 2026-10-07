@@ -25,6 +25,34 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-10-08 — eBug decisions: Pro perk list, share-page button, credit ledger, `simple` spelling
+
+Product owner decisions on the 2026-10-07 eBug pull (`docs/BUGS-TO-FIX-2026-10-07.md`).
+
+| What | Spec IDs | Code | Test |
+| --- | --- | --- | --- |
+| **YMW261005P0002** — Download and the Show Watermark switch stay open to every plan; "MV without Watermark" and "Enable Download MV & Song" removed from the Muse Pro benefit list, "watermark-free" from the already-Pro line, "no watermark" from Profile's Muse Pro subtitle | area 07 §3 `SubscribeModal` (`MUSE_PRO_FEATURES`) · S5 **P1** (v3) · AC-MV-10 / AC-SONG-06 / AC-HIST-08 / MV-P6-E unchanged | `src/lib/user.ts`, `src/components/credits/SubscribeModal.tsx`, `src/lib/i18n/dictionaries/en.ts` | — (copy only) |
+| **YMW260924P0003** — the unavailable share page KEEPS its "Try YouCam Muse" pill (added 2026-09-09, Figma "Share Page - Empty"); the logo is no longer the only way home. Spec text and storyboard had never caught up | area 10 unavailable state, **AC-SHARE-02** · S9 **P4-S1** (v2) | none — code already matched | — |
+| **YMW261002P0006** — a failed generation's refund is listed under **Spend**, not Earn | area 07 **CR-P3-S2**, `TBD-CR-04` | none — the prototype ledger has no refund rows | — (RD) |
+| **YMW260930P0009** — the live ledger pages **25 entries** at a time and loads the next page on scroll | area 07 **CR-P3-S2**, `TBD-CR-04` | none — the prototype ledger is a one-row seed | — (RD) |
+| **YMW260930P0002** — the credit-history form now uses `ai_song_simple_instrumental` (PFA261002-0001); `simpe` retired | area 13 §4 table, identifier notes, QA item 5 | none — no action-name mapping in the prototype | — (RD/QA) |
+
+Storyboards: **S5 → v3** (benefit rows; all 23 shots recaptured, P1 is the only behaviour change). **S9 → v2** (P4-S1; all 15 shots recaptured, P4-S1 is the only behaviour change). Contract: none.
+
+---
+
+## 2026-10-07 — Trim Audio never opens below the 30s floor
+
+### `YMW260930P0004`: default trim window for 30–53s imports
+
+| What | Spec IDs | Code | Test |
+| --- | --- | --- | --- |
+| With no prior trim, the window still defaults to 15%→70%, but if that is under 30s (any import ≤53s) it opens at exactly 30s — end widened first, slid back if it would pass the track's end. Before: a 45s import opened at 24s with Confirm disabled. | area 02 **MV-P6-C** (AC-MV-16 unchanged) | `src/components/mv/TrimAudioModal.tsx` `defaultTrim` | `src/components/mv/TrimAudioModal.test.ts` |
+
+Storyboards: none recaptured — the S2 storyboard's trim shots use a 114s library song, whose default (15%→70%) is unchanged. Contract: none (no C1–C8 surface touched).
+
+---
+
 ## 2026-10-01 — Sign-up gift: "Welcome" line + free-credits toast; Credits Detail seed is a new free account
 
 Product owner decisions, no bug code.
