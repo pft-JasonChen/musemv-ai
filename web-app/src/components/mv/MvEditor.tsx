@@ -13,6 +13,7 @@ import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { Modal } from "@/components/ui/Modal";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
+import { MobileScenePreview } from "@/components/mv/MobileScenePreview";
 import { Button } from "@/components/ui/Button";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
@@ -816,24 +817,98 @@ export function MvEditor() {
               >
                 <DpIcon name="ic_arrow_left" className="mv-edit-mobile-scene__back-icon" />
               </button>
-              <p className="mv-edit-mobile-scene__header-title">SCENE {scene.index}</p>
+              <p className="mv-edit-mobile-scene__header-title">Storyboard</p>
               <span className="mv-edit-mobile-scene__header-spacer" aria-hidden="true" />
             </div>
 
+            {/* Layout follows Figma "Edit MV — Scene Detail" (node 5038:76430,
+                product owner 2026-10-08): timeline strip → 180px preview with its
+                controller → SHORT DESCRIPTION box, and Recreate lifted out of the
+                input box into a docked CTA. Desktop keeps `sceneEditor` as-is. */}
             <div className="mv-edit-mobile-scene__body">
-              <div className="mv-edit-mobile-scene__preview">
-                <video
-                  className="mv-edit-mobile-scene__preview-video"
-                  src={activeVideo}
-                  poster={clipCover(selectedClip)}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                />
+              <div className="mv-edit-mobile-scene__section">
+                <p className="mv-edit-mobile-scene__label">TIMELINE</p>
+                <p className="mv-edit-mobile-scene__hint">Select to edit the short description</p>
+                <div className="mv-edit__clips mv-edit-mobile-scene__clips">
+                  {scenes.map((s, index) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className={`mv-edit__clip${index === selectedClip ? " mv-edit__clip--active" : ""}`}
+                      onClick={() => setSelectedClip(index)}
+                      aria-label={`Scene ${s.index}`}
+                      aria-pressed={index === selectedClip}
+                    >
+                      <img src={clipCover(index)} alt="" />
+                    </button>
+                  ))}
+                </div>
               </div>
-              {sceneEditor}
-              {sceneExplainer}
+
+              <MobileScenePreview key={scene.id} src={activeVideo} poster={clipCover(selectedClip)} />
+
+              <div className="mv-edit-mobile-scene__section">
+                <p className="mv-edit-mobile-scene__label">SHORT DESCRIPTION</p>
+                <div className="mv-edit__input-box">
+                  <textarea
+                    className="mv-edit__textarea"
+                    maxLength={DESCRIPTION_MAX}
+                    value={scene.text}
+                    onChange={(e) => updateScene(scene.id, e.target.value)}
+                    aria-label={`Scene ${scene.index}`}
+                  />
+                  <div className="mv-edit__input-footer">
+                    <EnhanceButton
+                      value={scene.text}
+                      kind="storyboard"
+                      onEnhanced={(t) => updateScene(scene.id, t)}
+                      bem="mv-edit"
+                    />
+                    <span className="mv-edit__char-count">
+                      {scene.text.length}/{DESCRIPTION_MAX}
+                    </span>
+                    {scene.text.length > 0 && (
+                      <button
+                        type="button"
+                        className="mv-edit__clear-btn"
+                        onClick={() => updateScene(scene.id, "")}
+                        aria-label="Clear scene"
+                      >
+                        <DpIcon name="ic_close" className="mv-edit__clear-icon" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {versions.length > 0 && (
+                  <div
+                    className="mv-edit__scene-versions"
+                    role="group"
+                    aria-label="Generated scene history"
+                  >
+                    {versions.map((v, i) => (
+                      <span key={`${v}-${i}`} className="mv-edit__scene-version">
+                        <img src={clipCover(selectedClip + i + 1)} alt="" />
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {sceneExplainer}
+              </div>
+            </div>
+
+            <div className="mv-edit-mobile-scene__cta">
+              <button
+                type="button"
+                className="button button--large button--primary-payg mv-edit__recreate-scene"
+                onClick={recreateScene}
+                disabled={regenBusy || !sceneTextEdited}
+              >
+                <span className="button__label">{regenBusy ? "Recreating…" : "Recreate"}</span>
+                <span className="button__credits">
+                  <img className="button__icon" src="/assets/icons/ui/ic_credit.svg" alt="" />
+                  <span className="button__credits-count">{sceneCost}</span>
+                </span>
+              </button>
             </div>
           </div>,
           document.body,

@@ -4674,3 +4674,136 @@ button:disabled {
   object-fit: contain;
   box-shadow: 0 24px 60px 0 rgba(0, 0, 0, 0.5);
 }
+
+/* Product owner, 2026-10-08 — phone-only Storyboard scene screen re-laid out to
+   Figma "Edit MV — Scene Detail" (node 5038:76430). `MVEditPage.css`'s
+   `.mv-edit-mobile-scene*` rules (gated) describe the older design: a 9:16
+   hero preview with the scene editor stacked below it. The new one is, top to
+   bottom: navbar → TIMELINE strip of 67.5px thumbs → 180px preview card with
+   the portrait video letterboxed in the middle and its controller overlaid on
+   the bottom edge → SHORT DESCRIPTION box → Recreate docked as a floating CTA
+   (it used to sit inside the input box). Markup lives in `MvEditor.tsx` /
+   `MobileScenePreview.tsx`; desktop is untouched, this overlay only mounts on
+   phones. */
+.mv-edit-mobile-scene__header {
+  border-bottom: 1px solid var(--white-15);
+}
+
+.mv-edit-mobile-scene__header-title {
+  font-size: 17px;
+  line-height: 22px;
+}
+
+.mv-edit-mobile-scene__body {
+  flex: 1 0 auto;
+  gap: 20px;
+  padding: 15px 16px 20px;
+}
+
+.mv-edit-mobile-scene__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mv-edit-mobile-scene__label {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 15px;
+  letter-spacing: -0.12px;
+}
+
+.mv-edit-mobile-scene__hint {
+  margin: -4px 0 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  line-height: 16px;
+  letter-spacing: -0.11px;
+}
+
+.mv-edit-mobile-scene__clips {
+  gap: 6px;
+}
+
+.mv-edit-mobile-scene .mv-edit__clip {
+  width: 67.5px;
+  height: 67.5px;
+}
+
+.mv-edit-mobile-scene__preview {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: auto;
+  height: 180px;
+}
+
+.mv-edit-mobile-scene__preview-video {
+  position: static;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 9 / 16;
+  cursor: pointer;
+}
+
+.mv-edit-mobile-scene__preview-controls {
+  gap: 6px;
+  padding: 8px 10px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.mv-edit-mobile-scene__preview-controls .mv-edit__time {
+  width: 28px;
+  color: var(--neutral-dark-64);
+  font-size: 10px;
+}
+
+.mv-edit-mobile-scene__preview-controls .mv-edit__time:first-of-type {
+  text-align: right;
+}
+
+.mv-edit-mobile-scene .mv-edit__input-box {
+  padding: 10px;
+}
+
+.mv-edit-mobile-scene .mv-edit__textarea,
+.mv-edit-mobile-scene .mv-edit__char-count {
+  font-size: 12px;
+}
+
+.mv-edit-mobile-scene .mv-edit__textarea {
+  line-height: normal;
+}
+
+.mv-edit-mobile-scene__cta {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 20px 16px max(env(safe-area-inset-bottom), 40px);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 4%, #070707 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.mv-edit-mobile-scene__cta .mv-edit__recreate-scene {
+  flex: 1;
+  width: 100%;
+}
+
+/* Product owner, 2026-10-08 — the MV-08 explainer under the scene text box sat
+   flush against it: `.mv-edit__sublabel`'s own `margin: -8px 0 0` is DP's
+   pull-up under a section label, and cancels the section's 6px gap here. A
+   4px top margin on top of that 6px gap gives the 10px the product owner asked
+   for between the box and the text. */
+.mv-edit-mobile-scene__section > .mv-edit__sublabel {
+  margin: 4px 0 0;
+}
