@@ -577,6 +577,27 @@ test("YMW260907P0011: MV settings default to the signed-in name and keep edits",
   await expect(page.getByPlaceholder("Enter author name")).toHaveValue("Custom Artist");
 });
 
+test("YMW261006P0001: MV title is capped at 40 characters and author at 35, with counters", async ({
+  page,
+}) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/mv/room");
+
+  await page.getByRole("button", { name: "Open MV settings" }).click();
+  await sheetSettled(page);
+  const title = page.getByPlaceholder("Enter MV name");
+  const author = page.getByPlaceholder("Enter author name");
+  // pressSequentially, not fill(): maxLength only stops typed input, which is what a user does.
+  await title.pressSequentially("x".repeat(45));
+  await author.fill("");
+  await author.pressSequentially("y".repeat(40));
+  await expect(title).toHaveValue("x".repeat(40));
+  await expect(author).toHaveValue("y".repeat(35));
+  await expect(page.locator(".mv-settings__group").getByText("40/40")).toBeVisible();
+  await expect(page.locator(".mv-settings__group").getByText("35/35")).toBeVisible();
+});
+
 // ── G5-d #7, PREVIEW HALF: INVERTED BY SLICE 3b (plan §5) ───────────────────
 //
 // This test used to assert the 30s cap EXISTED. §1.4 cancelled that gate long

@@ -38,6 +38,13 @@ import type {
 export const DESCRIPTION_MAX = 2500;
 /** YMW260916P0022 (product owner, 2026-09-17): Song Title had no documented cap at all. */
 export const SONG_TITLE_MAX = 120;
+/**
+ * YMW261006P0001 (product owner, 2026-10-08): MV Title and Author name had no
+ * cap, and a ~1M-character title made the real engine fail the job. Caps set
+ * by the product owner after checking with the Engine team.
+ */
+export const MV_TITLE_MAX = 40;
+export const MV_AUTHOR_MAX = 35;
 
 /**
  * ── CREDIT COSTS — read this before changing a number (TBD-CC-05) ───────────

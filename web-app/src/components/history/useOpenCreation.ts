@@ -6,7 +6,7 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { localePath } from "@/lib/i18n/config";
-import { DEFAULT_COMPOSE } from "@/lib/mv/types";
+import { DEFAULT_COMPOSE, MV_TITLE_MAX } from "@/lib/mv/types";
 import { lyricsForTitle, lyricsLrcForTitle, timedSongAudio } from "@/lib/mv/community";
 import { SAMPLE_AUDIO, SAMPLE_RESULT_VIDEO, mockStoryboard } from "@/lib/mv/mock";
 
@@ -117,7 +117,11 @@ export function useOpenCreation() {
         song: c.thumb
           ? { id: `h-${c.id}`, source: "sample", title: c.title, durationSec: 145, art: c.thumb }
           : null,
-        settings: { ...DEFAULT_COMPOSE.settings, title: { on: true, text: c.title } },
+        settings: {
+          ...DEFAULT_COMPOSE.settings,
+          // YMW261006P0001: the field is capped, so the seed is too.
+          title: { on: true, text: c.title.slice(0, MV_TITLE_MAX) },
+        },
       });
       setResultUrl(c.resultUrl ?? SAMPLE_RESULT_VIDEO);
       setResultDate(c.date ?? null);
@@ -156,7 +160,11 @@ export function useSeedMvFlow() {
         song: c.thumb
           ? { id: `h-${c.id}`, source: "sample", title: c.title, durationSec: 145, art: c.thumb }
           : null,
-        settings: { ...DEFAULT_COMPOSE.settings, title: { on: true, text: c.title } },
+        settings: {
+          ...DEFAULT_COMPOSE.settings,
+          // YMW261006P0001: the field is capped, so the seed is too.
+          title: { on: true, text: c.title.slice(0, MV_TITLE_MAX) },
+        },
       });
     },
     [setCompose, setStoryboard, saveStoryboard],

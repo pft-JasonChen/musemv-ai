@@ -6,7 +6,7 @@ import { DpIcon } from "@/components/ui/DpIcon";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { SubscribeModal } from "@/components/credits/SubscribeModal";
 import { useAuth } from "@/components/providers/AuthProvider";
-import type { MvSettings } from "@/lib/mv/types";
+import { MV_AUTHOR_MAX, MV_TITLE_MAX, type MvSettings } from "@/lib/mv/types";
 
 interface Props {
   open: boolean;
@@ -162,8 +162,17 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
                 className="mv-settings__input"
                 placeholder="Enter MV name"
                 value={settings.title.text}
+                maxLength={MV_TITLE_MAX}
                 onChange={(e) => set({ title: { ...settings.title, text: e.target.value } })}
               />
+            )}
+            {settings.title.on && (
+              // Layout-only wrapper (no DP class for a counter under this input) — YMW261006P0001.
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+                <span className="mv-create__char-count">
+                  {settings.title.text.length}/{MV_TITLE_MAX}
+                </span>
+              </div>
             )}
           </div>
 
@@ -184,8 +193,16 @@ export function SettingsModal({ open, onClose, settings, onChange }: Props) {
                 className="mv-settings__input"
                 placeholder="Enter author name"
                 value={settings.author.text}
+                maxLength={MV_AUTHOR_MAX}
                 onChange={(e) => set({ author: { ...settings.author, text: e.target.value } })}
               />
+            )}
+            {settings.author.on && (
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+                <span className="mv-create__char-count">
+                  {settings.author.text.length}/{MV_AUTHOR_MAX}
+                </span>
+              </div>
             )}
           </div>
 

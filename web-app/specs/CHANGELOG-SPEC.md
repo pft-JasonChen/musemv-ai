@@ -25,6 +25,18 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-10-08 — MV Title ≤40 and Author ≤35 characters
+
+### `YMW261006P0001`: no length cap on Title / Author (a ~1M-char title failed the real job)
+
+| What | Spec IDs | Code | Test |
+| --- | --- | --- | --- |
+| Title capped at **40**, Author at **35** (typed and pasted), with an `n/40` / `n/35` counter, in the MV Settings sheet and Edit MV. Pre-fills (signed-in name, a reopened creation's title) are cut to the same cap. Limits from the product owner after checking with the Engine team | area 02 **AC-MV-03b** (new), `settings` schema line, **MV-P5-S4**, **MV-P6-E** | `src/lib/mv/types.ts` (`MV_TITLE_MAX`, `MV_AUTHOR_MAX`), `SettingsModal.tsx`, `MvEditor.tsx`, `MvRoom.tsx`, `useOpenCreation.ts` | `e2e/behaviour-regressions.spec.ts` → "YMW261006P0001" |
+
+Storyboards: none recaptured — S2/S3 describe these fields without a length rule, so the existing shots don't contradict the prose; the counters appear in the next capture. Contract: none — the caps are UI-side; `MvSettingsSchema` is unchanged, so RD should enforce the same numbers server-side.
+
+---
+
 ## 2026-10-08 — eBug decisions: Pro perk list, share-page button, credit ledger, `simple` spelling
 
 Product owner decisions on the 2026-10-07 eBug pull (`docs/BUGS-TO-FIX-2026-10-07.md`).

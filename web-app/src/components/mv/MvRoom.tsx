@@ -41,6 +41,7 @@ import {
   DESCRIPTION_MAX,
   effectiveDurationSec,
   isComposeReady,
+  MV_AUTHOR_MAX,
   type CharacterPhoto,
   type MvMode,
   type MvType,
@@ -291,7 +292,7 @@ export function MvRoom() {
         patchCompose({
           settings: {
             ...compose.settings,
-            author: { ...compose.settings.author, text: profile.name },
+            author: { ...compose.settings.author, text: profile.name.slice(0, MV_AUTHOR_MAX) },
           },
         });
       }

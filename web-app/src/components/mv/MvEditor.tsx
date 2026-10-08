@@ -32,6 +32,8 @@ import {
   sceneDurationSec,
   shotKind,
   DESCRIPTION_MAX,
+  MV_AUTHOR_MAX,
+  MV_TITLE_MAX,
   type Scene,
 } from "@/lib/mv/types";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
@@ -342,8 +344,8 @@ export function MvEditor() {
   // class, no override.
   const sceneExplainer = (
     <p className="mv-edit__sublabel">
-      Recreate ({sceneCost} credits) replaces a scene directly. Edits aren&apos;t saved — Merge MV
-      ({COST_MERGE} credits) re-renders the video with your changes.
+      Recreate ({sceneCost} credits) replaces a scene directly. Edits aren&apos;t saved — Merge MV (
+      {COST_MERGE} credits) re-renders the video with your changes.
     </p>
   );
 
@@ -714,12 +716,16 @@ export function MvEditor() {
                 type="text"
                 className="mv-edit__field-input"
                 value={settings.title.text}
+                maxLength={MV_TITLE_MAX}
                 disabled={!settings.title.on}
                 onChange={(e) =>
                   patchSettings({ title: { ...settings.title, text: e.target.value } })
                 }
                 aria-label="MV title"
               />
+              <span className="mv-edit__char-count">
+                {settings.title.text.length}/{MV_TITLE_MAX}
+              </span>
               {settings.title.text.length > 0 && (
                 <button
                   type="button"
@@ -751,12 +757,16 @@ export function MvEditor() {
                 type="text"
                 className="mv-edit__field-input"
                 value={settings.author.text}
+                maxLength={MV_AUTHOR_MAX}
                 disabled={!settings.author.on}
                 onChange={(e) =>
                   patchSettings({ author: { ...settings.author, text: e.target.value } })
                 }
                 aria-label="Author name"
               />
+              <span className="mv-edit__char-count">
+                {settings.author.text.length}/{MV_AUTHOR_MAX}
+              </span>
               {settings.author.text.length > 0 && (
                 <button
                   type="button"
