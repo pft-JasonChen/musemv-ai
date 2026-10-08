@@ -171,9 +171,9 @@ Fixed on the mockup, live now at musemv-ai.vercel.app. When an imported track is
 - Reported by CRUZ_CHU at 2026-10-06T08:47:20
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261006P0001
 - Retrieved at: 2026-10-07 18:42 CST
-- Triage: **Needs PM — needs a number** (RD's comment: confirm the Engine's limit and update the mockup).
-- Local status: **Blocked** — diagnosed, no change made.
-- Decision needed: The character caps for MV **Title** and **Author** (and probably the character-photo **Name**, which has none either), from the Engine team. Once given, the change is mechanical — `maxLength` + counter at the 4 inputs, following the Song Title 120 precedent (YMW260916P0022).
+- Triage: **Decided 2026-10-08**: Title max **40**, Author max **35** characters (product owner, confirmed with the Engine team).
+- Local status: **Shipped** — `a6213d8`, production check passed.
+- Decision needed: Answered — see Triage.
 - Related code/spec: `src/components/mv/SettingsModal.tsx` Title/Author inputs; `src/components/mv/MvEditor.tsx` Title/Author inputs; `MvRoom.tsx` character Name input; `MvSettingsSchema` (`schemas.ts`) has no `.max()`; precedent `SONG_TITLE_MAX = 120` in `src/lib/mv/types.ts`. Spec 02 gives no title/author cap.
 
 ### Report
@@ -207,13 +207,13 @@ Thank you very much!
 ### Resolution and verification
 
 - Root cause: No cap specified or implemented.
-- Resolution: —
-- Verified: —
-- Not verified: —
+- Resolution: `MV_TITLE_MAX = 40` / `MV_AUTHOR_MAX = 35` in `src/lib/mv/types.ts`; `maxLength` + `n/40` · `n/35` counter on both inputs in the Settings sheet (`SettingsModal.tsx`) and Edit MV (`MvEditor.tsx`, counter inside the field box); pre-fills cut to the cap (`MvRoom.tsx` signed-in name, `useOpenCreation.ts` reopened title). Spec 02 AC-MV-03b (new), settings line, MV-P5-S4, MV-P6-E; `CHANGELOG-SPEC.md`. `MvSettingsSchema` unchanged — RD should enforce the caps server-side too. Character-photo Name is still uncapped (not part of this decision).
+- Verified: typecheck / lint / test:run (165/165) / build exit 0; new e2e "YMW261006P0001" passes and fails with the cap removed (mutation-tested), neighbour YMW260907P0011 still passes. Local live: Settings sheet at 1440 and 390 shows `0/40` and `8/35` under the inputs; Edit MV shows `15/40` / `0/35` inside the fields. Production after `a6213d8`: `/mv/room` Settings inputs report maxLength 40 / 35 with both counters.
+- Not verified: Visual gate not evaluated — the Settings sheet / Edit MV `-linux` baselines will need re-recording on Linux (counters added). RD build not tested.
 
 ### Reply comment (paste into eBug)
 
-<!-- Pending the decision above. -->
+Added on the mockup, live now at musemv-ai.vercel.app: MV Title is limited to 40 characters and Author name to 35, in both the MV Settings sheet and Edit MV, each with a character counter (e.g. 12/40); typing or pasting past the limit is blocked. The limits were confirmed with the Engine team. RD's build needs the same limits in the UI, and the backend should reject longer values as well.
 
 ---
 
