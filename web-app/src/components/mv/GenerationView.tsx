@@ -152,6 +152,7 @@ export function GenerationView({
               <button
                 type="button"
                 className="button button--medium button--primary"
+                data-gtm="tool-generation-retry"
                 onClick={start}
               >
                 <span className="button__label">Retry</span>

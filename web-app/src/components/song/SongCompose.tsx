@@ -174,6 +174,7 @@ export function SongCompose() {
       type="button"
       className={`song-create__cta${ready ? " song-create__cta--active" : ""}`}
       disabled={!ready}
+      data-gtm="tool-song-generate"
       onClick={generate}
     >
       <span>Create Song</span>

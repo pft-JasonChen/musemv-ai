@@ -411,6 +411,7 @@ export function MvEditor() {
           <button
             type="button"
             className="button button--large button--primary-payg mv-edit__recreate-scene"
+            data-gtm="tool-scene-recreate"
             onClick={recreateScene}
             disabled={regenBusy || !sceneTextEdited}
           >
@@ -595,7 +596,13 @@ export function MvEditor() {
           </div>
 
           <FloatingCTA alignToParent>
-            <button type="button" className="mv-edit__merge-btn" onClick={merge} disabled={!dirty}>
+            <button
+              type="button"
+              className="mv-edit__merge-btn"
+              data-gtm="tool-mv-merge"
+              onClick={merge}
+              disabled={!dirty}
+            >
               <span>Merge MV</span>
               <span className="mv-edit__merge-credits">
                 <img src="/assets/icons/ui/ic_credit.svg" alt="" />
@@ -680,6 +687,7 @@ export function MvEditor() {
               <button
                 type="button"
                 className="mv-edit__regen-btn"
+                data-gtm="tool-cover-recreate"
                 onClick={recreateCover}
                 disabled={coverBusy}
               >
@@ -910,6 +918,7 @@ export function MvEditor() {
               <button
                 type="button"
                 className="button button--large button--primary-payg mv-edit__recreate-scene"
+                data-gtm="tool-scene-recreate"
                 onClick={recreateScene}
                 disabled={regenBusy || !sceneTextEdited}
               >

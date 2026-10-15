@@ -133,6 +133,7 @@ export function DetailNavbar({
               goBack();
             }}
             className={`detail-navbar__back${title ? " detail-navbar__back--icon-only" : ""}`}
+            data-gtm="header-back"
             /*
               ALWAYS labelled, which is a deliberate divergence from DP.
 
@@ -182,6 +183,7 @@ export function DetailNavbar({
               <button
                 type="button"
                 className="credit-balance"
+                data-gtm="header-credits"
                 aria-label={t("profile.credits")}
                 onClick={() => openBuyCredits()}
               >
@@ -195,7 +197,12 @@ export function DetailNavbar({
               {!subscribed && (
                 // Designer fix, 2026-08-11: was `<Link href="/profile">` —
                 // same no-op bug, same fix as RoomNavbar's Upgrade pill.
-                <button type="button" className="upgrade-button" onClick={() => openSubscribe()}>
+                <button
+                  type="button"
+                  className="upgrade-button"
+                  data-gtm="header-upgrade"
+                  onClick={() => openSubscribe()}
+                >
                   <DpIcon name="ic_crown" className="upgrade-button__icon" />
                   {t("nav.upgrade")}
                 </button>
@@ -205,6 +212,7 @@ export function DetailNavbar({
             <button
               type="button"
               className="button button--medium button--tertiary detail-navbar__login"
+              data-gtm="header-login"
               onClick={() => openSignIn()}
             >
               <span className="button__label">Login</span>
