@@ -791,6 +791,7 @@ function Menu(p: MenuProps) {
   const hideDelete = (isMv && (p.published || p.reviewing)) || (isSong && p.published);
 
   const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   // See this component's render below ("MOBILE BOTTOM SHEET, 2026-08-23").
   const isPhone = useMediaQuery(PHONE_QUERY);
   // Fade in/out, 0.2s (2026-08-14): the portal is now ALWAYS mounted (see the
@@ -804,7 +805,10 @@ function Menu(p: MenuProps) {
   // enough for the browser to animate from the resting (opacity: 0) state.
   // A start position of `{0, 0}` is fine — it's `inert` and invisible until
   // the first open, at which point `toggle()` below computes the real one.
-  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; right: number }>({
+    top: 0,
+    right: 0,
+  });
 
   function toggle() {
     if (!p.open) {
@@ -820,10 +824,18 @@ function Menu(p: MenuProps) {
         // intended few px. Product owner request, 2026-08-14 ("much closer
         // to the menu button") also drops the vertical gap 6px -> 4px.
         const viewportWidth = document.documentElement.getBoundingClientRect().width;
-        setPos({
-          top: rect.bottom + 4,
-          right: Math.max(8, viewportWidth - rect.right),
-        });
+        // Product owner, 2026-10-22: when the viewport below the button cannot
+        // show the whole menu, open it ABOVE the button instead of letting it
+        // run off the bottom edge. The menu is always mounted (inert while
+        // closed), so its real height is measurable before it opens.
+        const menuHeight = menuRef.current?.offsetHeight ?? 0;
+        const roomBelow = window.innerHeight - rect.bottom - 4 - 8;
+        const right = Math.max(8, viewportWidth - rect.right);
+        setPos(
+          menuHeight > roomBelow && rect.top - 4 - 8 > roomBelow
+            ? { bottom: window.innerHeight - rect.top + 4, right }
+            : { top: rect.bottom + 4, right },
+        );
       }
     }
     p.setOpen(!p.open);
@@ -889,10 +901,20 @@ function Menu(p: MenuProps) {
               portal + JS-computed fixed position is kept (proven to escape the
               grid card's stacking context); only the visual classes change. */}
           <div
+            ref={menuRef}
             className={`history-card__menu${p.open ? " history-card__menu--visible" : ""}${p.removal ? " history-card__menu--notice" : ""}`}
             role="menu"
             inert={!p.open}
-            style={isPhone ? undefined : { position: "fixed", top: pos.top, right: pos.right }}
+            style={
+              isPhone
+                ? undefined
+                : {
+                    position: "fixed",
+                    top: pos.top ?? "auto",
+                    bottom: pos.bottom ?? "auto",
+                    right: pos.right,
+                  }
+            }
           >
             {isPhone && <div className="history-card__menu-handle" aria-hidden="true" />}
             {/* Product owner, 2026-10-21, Figma "Menu + Removed Notice" (5323:170908):
