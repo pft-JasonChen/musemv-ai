@@ -47,6 +47,7 @@ export const en = {
   "profile.on": "On",
   "profile.off": "Off",
   "profile.sendFeedback": "Send Feedback",
+  "profile.userId": "User ID",
   "profile.language": "Language",
   "profile.settings": "Settings",
   "profile.signOut": "Sign Out",
@@ -91,6 +92,7 @@ export const en = {
 
   // Profile toasts
   "profile.toast.updated": "Profile updated",
+  "profile.toast.userIdCopied": "User ID copied",
   // `profile.toast.feedback` was removed 2026-08-17: the feedback dialog now
   // confirms in place with its own "Feedback Sent" step (AC-PROF-13), so a toast
   // would be a second, redundant acknowledgement of the same submit.

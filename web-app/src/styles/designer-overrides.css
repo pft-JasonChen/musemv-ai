@@ -5715,3 +5715,19 @@ button:disabled {
     letter-spacing: -0.13px;
   }
 }
+
+/* Product owner, 2026-10-22 — Account's User ID row (Figma "Account — Profile",
+   1700:33262). Its trailing glyph is a copy icon, not a chevron: white rather
+   than the chevron's dim `--neutral-dark-24`, since it is the row's action. */
+.account-page__row-copy-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  background: var(--neutral-dark-100);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}

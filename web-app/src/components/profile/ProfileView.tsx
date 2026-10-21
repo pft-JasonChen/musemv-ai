@@ -14,7 +14,8 @@ import { Modal } from "@/components/ui/Modal";
 import { FeedbackDialog } from "./FeedbackDialog";
 import { FacePickerModal } from "@/components/mv/FacePickerModal";
 import { SAMPLE_CREATIONS } from "@/lib/mv/mock";
-import { SUBSCRIPTION_PLANS, planDisplayName } from "@/lib/user";
+import { MOCK_USER, SUBSCRIPTION_PLANS, planDisplayName } from "@/lib/user";
+import { useToast } from "@/components/ui/Toast";
 
 /**
  * Slice 3c — migrated to DP's `AccountPage` (Figma 1700:33262).
@@ -116,6 +117,27 @@ export function ProfileView() {
     setToast(m);
     setTimeout(() => setToast(null), 1800);
   };
+  // The Figma "Popup/Toast" (`ui/Toast`), used by the User ID row. The older
+  // `flash` pill above is left as-is for the rows that already use it.
+  const { show: showCopyToast, toast: copyToast } = useToast();
+
+  async function copyUserId() {
+    try {
+      await navigator.clipboard.writeText(MOCK_USER.id);
+    } catch {
+      // Insecure context / permission denied: fall back to a hidden textarea.
+      const ta = document.createElement("textarea");
+      ta.value = MOCK_USER.id;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      if (!ok) return;
+    }
+    showCopyToast(t("profile.toast.userIdCopied"));
+  }
 
   // Reset the draft to the live profile each time the edit dialog opens.
   function openEdit() {
@@ -320,6 +342,16 @@ export function ProfileView() {
               title={t("profile.sendFeedback")}
               onClick={() => setFbOpen(true)}
             />
+            {/* Product owner, 2026-10-22, Figma "Account — Profile" (1700:33262):
+                the whole row copies the user's ID, so it is a button with a copy
+                glyph where the other rows have a chevron. */}
+            <AccountRow
+              icon="ic_user"
+              title={t("profile.userId")}
+              subtitle={MOCK_USER.id}
+              right={<DpIcon name="ic_copy" className="account-page__row-copy-icon" />}
+              onClick={copyUserId}
+            />
             <AccountRow
               icon="ic_settings"
               title={t("profile.settings")}
@@ -473,6 +505,8 @@ export function ProfileView() {
           setPendingAvatar(null);
         }}
       />
+
+      {copyToast}
 
       {toast && (
         <div

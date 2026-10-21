@@ -87,6 +87,8 @@ export function displayDiscountPct(pct: number): number {
 export const MOCK_USER = {
   name: "Scott Wu",
   email: "scott_wu@mail.com",
+  /** Shown (and copyable) on the Account screen — Figma "Account — Profile" (1700:33262). */
+  id: "491071328493766906",
 };
 
 /**
