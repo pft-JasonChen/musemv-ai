@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { useReportContent } from "@/components/ui/ReportDialog";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { SeekBar } from "@/components/ui/SeekBar";
 import { useVolumePopup } from "@/components/ui/useVolumePopup";
@@ -234,6 +235,7 @@ export function CommunityMvPlayer() {
   const volumePopup = useVolumePopup(volumeWrapRef);
   const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const { openReport, reportNode } = useReportContent("mv", mv.id);
   // See this file's "REWRITTEN AS A 3-SLOT ROTATING TRACK" header comment.
   // `dragY` is the slots' shared live translateY while a drag is in progress
   // (springs back to 0, or is driven to ±stageH to slide fully off before a
@@ -579,6 +581,9 @@ export function CommunityMvPlayer() {
               <p>{mv.title}</p>
               <span>{mobileSubtitle}</span>
             </div>
+            <button type="button" className="report-flag" onClick={openReport} aria-label="Report">
+              <DpIcon name="ic_flag" className="report-flag__icon" />
+            </button>
           </div>
 
           <div
@@ -728,6 +733,14 @@ export function CommunityMvPlayer() {
                   >
                     <DpIcon name="ic_share" className="icon-button__icon" />
                   </button>
+                  <button
+                    type="button"
+                    onClick={openReport}
+                    aria-label="Report"
+                    className="icon-button icon-button--medium icon-button--ghost mv-player__action-icon mv-player__report"
+                  >
+                    <DpIcon name="ic_flag" className="icon-button__icon" />
+                  </button>
                 </div>
                 <button
                   type="button"
@@ -839,6 +852,7 @@ export function CommunityMvPlayer() {
         title={mv.title}
         url={buildShareUrl(mv.id)}
       />
+      {reportNode}
     </>
   );
 }

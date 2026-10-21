@@ -1,3 +1,4 @@
+import type { ContentRemoval } from "@/lib/report";
 import type { MvType, Song, Storyboard } from "./types";
 import { DEFAULT_STORYBOARD_LYRICS } from "@/lib/api/schemas";
 
@@ -269,6 +270,8 @@ export interface HistorySample {
   shares: number;
   liked: boolean;
   published?: boolean;
+  /** Taken down by a reviewer after a community report — see `ContentRemoval`. */
+  removal?: ContentRemoval;
   /** Community rows open this song in the player. */
   communitySongId?: string;
   /**
@@ -396,6 +399,47 @@ export const HISTORY_SAMPLES: HistorySample[] = [
     likes: 0,
     shares: 0,
     liked: false,
+  },
+  // Two takedown fixtures (2026-10-21, Figma "Menu + Removed Notice"): one of each
+  // severity, one MV and one song, so the menu notice and both notice screens can
+  // be reached without a demo switch.
+  {
+    id: "h-love-melody-removed",
+    kind: "mv",
+    title: "Love Melody",
+    thumb: "/assets/videos/sample-mvs/mv_02_late_night_stage.jpg",
+    status: "done",
+    date: "2026-09-22",
+    plays: 214,
+    likes: 31,
+    shares: 9,
+    liked: false,
+    published: false,
+    removal: {
+      kind: "removed",
+      reason: "Spam or commercial advertising",
+      publishedOn: "2026-09-22",
+      removedOn: "2026-10-13",
+    },
+  },
+  {
+    id: "h-velvet-skyline-permanent",
+    kind: "song",
+    title: "Velvet Skyline",
+    thumb: "/assets/images/album-art/album_03.jpg",
+    status: "done",
+    date: "2026-09-22",
+    plays: 87,
+    likes: 14,
+    shares: 5,
+    liked: false,
+    published: false,
+    removal: {
+      kind: "permanent",
+      reason: "Copyright or unauthorized use",
+      publishedOn: "2026-09-22",
+      removedOn: "2026-10-13",
+    },
   },
 ];
 

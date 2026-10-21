@@ -9,6 +9,8 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath, type Locale } from "@/lib/i18n/config";
 import { creationHref, useOpenCreation, useSeedMvFlow } from "@/components/history/useOpenCreation";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { ContentNotice, type NoticeSubject } from "@/components/history/ContentNotice";
+import type { ContentRemoval } from "@/lib/report";
 import { buildShareUrl } from "@/lib/share";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -185,6 +187,19 @@ export function HistoryView() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [share, setShare] = useState<{ title: string; url: string } | null>(null);
   const [del, setDel] = useState<HistorySample | null>(null);
+  const [noticeRow, setNoticeRow] = useState<HistorySample | null>(null);
+  const notice = useMemo<NoticeSubject | null>(
+    () =>
+      noticeRow?.removal
+        ? {
+            title: noticeRow.title,
+            thumb: noticeRow.thumb,
+            kind: noticeRow.kind,
+            removal: noticeRow.removal,
+          }
+        : null,
+    [noticeRow],
+  );
   const [pubConfirm, setPubConfirm] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
@@ -244,9 +259,7 @@ export function HistoryView() {
         : s;
     });
     const seedIds = new Set(HISTORY_SAMPLES.map((s) => s.id));
-    return [...live.filter((r) => !seedIds.has(r.id)), ...seeded].filter(
-      (r) => !removed.has(r.id),
-    );
+    return [...live.filter((r) => !seedIds.has(r.id)), ...seeded].filter((r) => !removed.has(r.id));
   }, [history, removed]);
 
   // `demoEmpty` (`?demo=1` panel) has to be the LAST thing that decides what
@@ -491,6 +504,7 @@ export function HistoryView() {
                             published={published(r)}
                             reviewing={reviewing(r)}
                             rejectReason={rejectReason(r)}
+                            removal={r.removal}
                             open={openMenu === r.id}
                             setOpen={(v) => setOpenMenu(v ? r.id : null)}
                             onLike={() => toggleLike(r)}
@@ -508,6 +522,10 @@ export function HistoryView() {
                             }
                             onEditMv={() => editMv(r)}
                             onCreateMv={() => createMv(r)}
+                            onOpenNotice={() => {
+                              setOpenMenu(null);
+                              setNoticeRow(r);
+                            }}
                           />
                         )
                       }
@@ -518,6 +536,8 @@ export function HistoryView() {
             )}
           </>
         )}
+
+        <ContentNotice subject={notice} onClose={() => setNoticeRow(null)} />
 
         <ShareDialog
           open={share != null}
@@ -747,6 +767,8 @@ interface MenuProps {
   published: boolean;
   reviewing: boolean;
   rejectReason: PublishRejectCode | null;
+  /** Set when a reviewer took the creation down — see `ContentRemoval`. */
+  removal?: ContentRemoval;
   open: boolean;
   setOpen: (v: boolean) => void;
   onLike: () => void;
@@ -756,6 +778,7 @@ interface MenuProps {
   onPublish: () => void;
   onEditMv: () => void;
   onCreateMv: () => void;
+  onOpenNotice: () => void;
 }
 
 function Menu(p: MenuProps) {
@@ -866,12 +889,31 @@ function Menu(p: MenuProps) {
               portal + JS-computed fixed position is kept (proven to escape the
               grid card's stacking context); only the visual classes change. */}
           <div
-            className={`history-card__menu${p.open ? " history-card__menu--visible" : ""}`}
+            className={`history-card__menu${p.open ? " history-card__menu--visible" : ""}${p.removal ? " history-card__menu--notice" : ""}`}
             role="menu"
             inert={!p.open}
             style={isPhone ? undefined : { position: "fixed", top: pos.top, right: pos.right }}
           >
             {isPhone && <div className="history-card__menu-handle" aria-hidden="true" />}
+            {/* Product owner, 2026-10-21, Figma "Menu + Removed Notice" (5323:170908):
+                a reviewer took this down after a community report. The notice sits
+                above everything else and opens the Content Notice; the Publish row
+                is gone (below) — there is nothing left to publish. */}
+            {p.removal && (
+              <div className="history-card__menu-notice" role="none">
+                <button type="button" role="menuitem" onClick={p.onOpenNotice}>
+                  <span className="history-card__menu-notice-title">
+                    <span className="history-card__menu-notice-icon" aria-hidden="true">
+                      <DpIcon name="ic_alert" />
+                    </span>
+                    <span className="history-card__menu-notice-heading">Remove from community</span>
+                  </span>
+                  <span className="history-card__menu-notice-text">
+                    A reviewer removed this content. Tap to see the reason.
+                  </span>
+                </button>
+              </div>
+            )}
             {!community && !failed && (
               <>
                 {/* MV-13: a published / in-review MV must be unpublished before
@@ -915,42 +957,44 @@ function Menu(p: MenuProps) {
                 could be shared before it was ever published — the link
                 worked, but nothing backed it. Community rows are already
                 someone else's published content, so they're unaffected. */}
-            {!failed && (community || ((isMv || isSong) && p.published)) && (
+            {!failed && (community || p.removal || ((isMv || isSong) && p.published)) && (
               <OptRow icon="ic_share" label="Share" onClick={p.onShare} />
             )}
 
             {!community && !failed && (isMv || isSong) && (
               <>
-                <div className="history-card__menu-publish">
-                  <span>
-                    <DpIcon as="i" name={isMv && p.reviewing ? "ic_timer" : "ic_publish"} />
-                    {isMv && p.rejectReason ? (
-                      // Product owner, 2026-08-28, Figma "History - Menu"
-                      // (node 2695:117710): title gains a red "(Rejected)"
-                      // suffix, plus a reason line no other Publish state has.
-                      <span className="history-card__menu-publish-text">
-                        <span className="history-card__menu-publish-title">
-                          Publish <em>(Rejected)</em>
+                {!p.removal && (
+                  <div className="history-card__menu-publish">
+                    <span>
+                      <DpIcon as="i" name={isMv && p.reviewing ? "ic_timer" : "ic_publish"} />
+                      {isMv && p.rejectReason ? (
+                        // Product owner, 2026-08-28, Figma "History - Menu"
+                        // (node 2695:117710): title gains a red "(Rejected)"
+                        // suffix, plus a reason line no other Publish state has.
+                        <span className="history-card__menu-publish-text">
+                          <span className="history-card__menu-publish-title">
+                            Publish <em>(Rejected)</em>
+                          </span>
+                          <span className="history-card__menu-publish-reason">
+                            {publishRejectLabel(p.rejectReason)}
+                          </span>
                         </span>
-                        <span className="history-card__menu-publish-reason">
-                          {publishRejectLabel(p.rejectReason)}
-                        </span>
-                      </span>
-                    ) : isMv && p.reviewing ? (
-                      "Publish (Review)"
-                    ) : (
-                      "Publish"
-                    )}
-                  </span>
-                  {/* Product owner, 2026-08-28: the toggle stays OFF through
+                      ) : isMv && p.reviewing ? (
+                        "Publish (Review)"
+                      ) : (
+                        "Publish"
+                      )}
+                    </span>
+                    {/* Product owner, 2026-08-28: the toggle stays OFF through
                         the pending phase (`reviewing`) and only turns on once
                         approved (`published`) — it is no longer "on for either". */}
-                  <ToggleSwitch
-                    checked={p.published}
-                    onChange={() => p.onPublish()}
-                    ariaLabel={isMv && p.reviewing ? "Publish (Review)" : "Publish"}
-                  />
-                </div>
+                    <ToggleSwitch
+                      checked={p.published}
+                      onChange={() => p.onPublish()}
+                      ariaLabel={isMv && p.reviewing ? "Publish (Review)" : "Publish"}
+                    />
+                  </div>
+                )}
                 <OptRow icon="ic_download" label="Download" onClick={p.onDownload} />
                 {!hideDelete && (
                   <OptRow icon="ic_delete" label="Delete" danger onClick={p.onDelete} />

@@ -60,6 +60,7 @@ export function DetailNavbar({
   mobileTitle,
   tabsSlot,
   hideMobileBar = false,
+  mobileAction,
 }: {
   /** Where "back" goes when there is no history — the section entry, per Q6. */
   fallbackPath: string;
@@ -87,6 +88,9 @@ export function DetailNavbar({
    * which is what WA's retired `phoneBack={false}` meant.
    */
   hideMobileBar?: boolean;
+  /** Phone-only control in the compact bar's right-hand cell (the credit pill and
+   *  Upgrade are hidden there). Rendered by the Report flag on community players. */
+  mobileAction?: React.ReactNode;
 }) {
   const { loggedIn, subscribed, openSignIn } = useAuth();
   const { openSubscribe, openBuyCredits } = useSubscribe();
@@ -210,6 +214,7 @@ export function DetailNavbar({
               <span className="button__label">Login</span>
             </button>
           )}
+          {mobileAction && <div className="detail-navbar__mobile-action">{mobileAction}</div>}
         </div>
 
         {tabsSlot && <div className="detail-navbar__tabs">{tabsSlot}</div>}

@@ -12,6 +12,7 @@ import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { PublishConfirmDialog } from "@/components/ui/PublishConfirmDialog";
 import { LyricsSheet } from "@/components/ui/LyricsSheet";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { useReportContent } from "@/components/ui/ReportDialog";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useHistory } from "@/components/providers/HistoryProvider";
@@ -231,6 +232,8 @@ export function SongResultView() {
   }, [songResult, history, communityOrigin]);
 
   const active = playlist[activeIndex] ?? playlist[0];
+  // Community songs only — the flag is for someone else's work, never your own.
+  const { openReport, reportNode } = useReportContent("song", active?.id ?? "");
 
   /**
    * Recreate clears `songResult` (via `resetForRecreate`) in the same handler
@@ -376,7 +379,18 @@ export function SongResultView() {
         IS the player (`.song-result__creations` below it is other tracks, not
         a list this title describes), matching `MobileNowPlaying`'s own header.
       */}
-      <DetailNavbar title="Now Playing" fallbackPath="/history" />
+      <DetailNavbar
+        title="Now Playing"
+        fallbackPath="/history"
+        mobileAction={
+          communityOrigin ? (
+            <button type="button" className="report-flag" onClick={openReport} aria-label="Report">
+              <DpIcon name="ic_flag" className="report-flag__icon" />
+            </button>
+          ) : undefined
+        }
+      />
+      {reportNode}
 
       <div className="song-create">
         <div className="song-create__panel song-create__panel--full">
@@ -466,6 +480,16 @@ export function SongResultView() {
                         >
                           <DpIcon name="ic_share" className="song-result__icon" />
                         </button>
+                        {communityOrigin && (
+                          <button
+                            type="button"
+                            className="song-result__icon-btn song-result__icon-btn--report"
+                            onClick={openReport}
+                            aria-label="Report"
+                          >
+                            <DpIcon name="ic_flag" className="song-result__icon" />
+                          </button>
+                        )}
                         {!communityOrigin && (
                           <button
                             type="button"

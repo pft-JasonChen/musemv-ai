@@ -4807,3 +4807,911 @@ button:disabled {
 .mv-edit-mobile-scene__section > .mv-edit__sublabel {
   margin: 4px 0 0;
 }
+
+/* =========================================================================
+   Report content — product owner, 2026-10-21. Figma "Report Song" (5319:56800)
+   and "Video Player" (5319:56991): a flag on community song / MV players opens
+   a six-reason report dialog (centred on desktop, bottom sheet on phones),
+   then a "Thank you for keeping Muse safe" confirmation; reporting the same
+   content again shows a toast instead. All hand-authored, so it lives here
+   rather than in the gated stylesheets. Markup: `ui/ReportDialog.tsx`,
+   `ui/Toast.tsx`.
+   ========================================================================= */
+
+/* The flag itself. Desktop: it is one more icon in each player's action row
+   (`.song-result__icon-btn--report`, `.mv-player__report`). Phones: the same
+   action moves into the screen's top bar, as Figma draws it. */
+.report-flag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--neutral-dark-64);
+  cursor: pointer;
+}
+
+.report-flag--header {
+  width: 32px;
+  height: 32px;
+}
+
+.report-flag__icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.detail-navbar__mobile-action {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .detail-navbar__mobile-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .song-result__icon-btn--report,
+  .mv-player__report {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .mv-player__mobile-header .report-flag {
+    display: none;
+  }
+}
+
+/* Dialog / sheet. */
+.report-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.report-overlay--visible {
+  opacity: 1;
+}
+
+.report-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.report-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 32px;
+  border-radius: var(--radius-3xl);
+  background: var(--neutral-dark-09);
+}
+
+.report-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.report-dialog__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 24px;
+  letter-spacing: -0.2px;
+}
+
+.report-dialog__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0.6px solid var(--white-15);
+  border-radius: 20px;
+  background: var(--white-15);
+  color: var(--neutral-dark-100);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.report-dialog__close-icon {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.report-dialog__subtitle {
+  margin: 0 0 16px;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
+}
+
+.report-dialog__reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 22px;
+}
+
+.report-dialog__reason {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.report-dialog__reason--selected {
+  color: var(--color-accent-purple);
+}
+
+.report-dialog__reason-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.report-dialog__radio {
+  position: relative;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--neutral-dark-64);
+  border-radius: 50%;
+}
+
+.report-dialog__reason--selected .report-dialog__radio {
+  border-color: var(--color-accent-purple);
+}
+
+.report-dialog__reason--selected .report-dialog__radio::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--color-accent-purple);
+}
+
+.report-dialog__cta {
+  width: 100%;
+  height: 46px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 34px;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.report-dialog__cta--submit {
+  background: linear-gradient(90deg, #ff6bce 0%, #a855f7 50%, #4338ca 100%);
+}
+
+.report-dialog__cta--submit:disabled {
+  background: var(--neutral-dark-24);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: default;
+}
+
+.report-dialog__cta--done {
+  border: 1px solid var(--white-15);
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-84);
+}
+
+/* Confirmation step. */
+.report-dialog__done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.report-dialog__success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 44px;
+  background: linear-gradient(90deg, #ffb347 0%, #ff4e50 50%, #d63af9 100%);
+  color: var(--neutral-dark-100);
+}
+
+.report-dialog__success-icon {
+  width: 38px;
+  height: 38px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.report-dialog__message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.report-dialog__message-title {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 26px;
+  letter-spacing: -0.2px;
+}
+
+.report-dialog__message .report-dialog__subtitle {
+  margin: 0;
+}
+
+/* Phone: the same card as a bottom sheet (Figma "Report Sheet", 5126:62262). */
+.report-overlay:has(.report-dialog--sheet) {
+  align-items: flex-end;
+  padding: 0;
+}
+
+.report-dialog--sheet {
+  gap: 10px;
+  width: 100%;
+  max-width: none;
+  padding: 12px 20px max(env(safe-area-inset-bottom), 40px);
+  border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.report-overlay--visible .report-dialog--sheet {
+  transform: none;
+}
+
+.report-dialog__handle {
+  align-self: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--white-15);
+}
+
+.report-dialog--sheet .report-dialog__header {
+  margin-bottom: 0;
+  padding: 4px 0;
+}
+
+.report-dialog--sheet .report-dialog__title {
+  order: 1;
+  font-size: 15px;
+  line-height: 18px;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.report-dialog--sheet .report-dialog__header:has(.report-dialog__title)::after {
+  content: "";
+  order: 2;
+  flex-shrink: 0;
+  width: 28px;
+}
+
+.report-dialog--sheet .report-dialog__subtitle {
+  margin: 0;
+  font-size: 12px;
+  line-height: normal;
+  letter-spacing: 0;
+}
+
+.report-dialog--sheet .report-dialog__reasons {
+  margin-bottom: 6px;
+}
+
+.report-dialog--sheet .report-dialog__reason {
+  min-height: 40px;
+  gap: 12px;
+  font-size: 12px;
+  line-height: normal;
+  letter-spacing: 0;
+}
+
+.report-dialog--sheet .report-dialog__done {
+  padding: 8px 0 0;
+}
+
+.report-dialog--sheet .report-dialog__message .report-dialog__subtitle {
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.14px;
+}
+
+/* Figma "Popup/Toast" (5319:56985). */
+.popup-toast {
+  position: fixed;
+  bottom: calc(60px + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 310;
+  box-sizing: border-box;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  border: 1px solid rgba(145, 50, 255, 0.6);
+  border-radius: 14px;
+  background: rgba(9, 9, 11, 0.8);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  letter-spacing: -0.13px;
+  text-align: center;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+/* Product owner, 2026-10-21 — `/watch` phone header. `.mv-detail--selected`
+   already insets the whole player by 16px a side, and DP's
+   `.mv-player__mobile-header` then pads itself by another 16px
+   (`padding: 54px 16px 22px`), so Back and the Report flag sat 32px from the
+   screen edge instead of 16px. Drop the header's own side padding. */
+@media (max-width: 767px) {
+  .mv-player__mobile-header {
+    padding-right: 0;
+    padding-left: 0;
+  }
+}
+
+/* =========================================================================
+   Removed-content notice — product owner, 2026-10-21. Figma "Menu + Removed
+   Notice" (5323:170908): when a reviewer takes a creation down after a
+   community report, its History ⋯ menu leads with a notice (no Publish row),
+   and tapping it opens the Content Notice — a dialog on desktop, a full page
+   on phones. Markup: `history/ContentNotice.tsx`, `HistoryView.tsx`'s Menu.
+   The dialog reuses the Report dialog's `.report-*` shell above.
+   ========================================================================= */
+
+/* The notice is wrapped in a `role="none"` div on purpose: DP's
+   `.history-card__menu > button > span` rule turns every span INSIDE a direct
+   child button into a 20px mask icon, which would flatten this two-line block. */
+/* Desktop dropdown only — on phones the menu is a full-width bottom sheet. */
+@media (min-width: 768px) {
+  .history-card__menu--notice {
+    width: 243px;
+  }
+}
+
+.history-card__menu-notice {
+  margin-bottom: 8px;
+}
+
+.history-card__menu-notice > button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-md);
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.history-card__menu-notice-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  letter-spacing: -0.13px;
+}
+
+.history-card__menu-notice-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 23px;
+  background: var(--white-15);
+}
+
+.history-card__menu-notice-icon > span {
+  width: 14px;
+  height: 14px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.history-card__menu-notice-text {
+  color: var(--neutral-dark-64);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  line-height: 16px;
+  letter-spacing: -0.11px;
+}
+
+/* Content Notice body — shared by the dialog and the phone page. */
+.content-notice__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 16px 4px;
+  text-align: center;
+}
+
+.content-notice__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 44px;
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-100);
+}
+
+.content-notice__icon-glyph {
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.content-notice__message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.content-notice__headline {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 26px;
+  letter-spacing: -0.2px;
+}
+
+.content-notice__text {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
+}
+
+.content-notice__card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-md);
+  background: var(--neutral-dark-09);
+}
+
+.content-notice__art {
+  position: relative;
+  flex-shrink: 0;
+  width: 58px;
+  height: 58px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--neutral-dark-14);
+}
+
+.content-notice__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.content-notice__art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.content-notice__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.content-notice__title {
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  letter-spacing: -0.13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content-notice__meta {
+  margin: -2px 0 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  line-height: 16px;
+  letter-spacing: -0.11px;
+  white-space: nowrap;
+}
+
+.content-notice__badge {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 3px 4px;
+  border-radius: 14px;
+  background: rgba(255, 38, 0, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: var(--pf-red);
+  font-family: var(--font-family-primary);
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  line-height: 11px;
+  white-space: nowrap;
+}
+
+.content-notice__badge-icon {
+  width: 12px;
+  height: 12px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.content-notice__reason {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.content-notice__label {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 15px;
+  letter-spacing: -0.12px;
+}
+
+.content-notice__chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 52px;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-md);
+  background: var(--neutral-dark-09);
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  line-height: 16px;
+}
+
+.content-notice__chip-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* Desktop dialog: Figma's content stack is 16px apart under a 12px header. */
+.content-notice-dialog {
+  gap: 16px;
+}
+
+.content-notice-dialog .report-dialog__header {
+  margin-bottom: -4px;
+}
+
+.content-notice-dialog .report-dialog__cta {
+  margin-top: 6px;
+}
+
+/* Phone: a full page (Figma "Content Notice — Removed", 5319:55196). */
+.content-notice-page {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  display: flex;
+  flex-direction: column;
+  background: var(--neutral-dark-04);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.content-notice-page--visible {
+  opacity: 1;
+}
+
+.content-notice-page__bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: max(env(safe-area-inset-top), 8px) 16px 2px;
+  border-bottom: 1px solid var(--white-15);
+  background: var(--neutral-dark-04);
+}
+
+.content-notice-page__back {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 18px;
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+.content-notice-page__back-icon {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.content-notice-page__title {
+  flex: 1;
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  line-height: 38px;
+  text-align: center;
+}
+
+.content-notice-page__spacer {
+  flex-shrink: 0;
+  width: 32px;
+}
+
+.content-notice-page__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  padding-bottom: 140px;
+}
+
+.content-notice-page .content-notice__hero {
+  gap: 20px;
+  padding-top: 32px;
+}
+
+.content-notice-page .content-notice__card,
+.content-notice-page .content-notice__reason {
+  margin: 0 16px;
+}
+
+.content-notice-page__cta {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 20px 16px max(env(safe-area-inset-bottom), 40px);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 4%, #070707 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.content-notice-page__cta .content-notice__got-it {
+  width: 100%;
+  height: 44px;
+  padding: 12px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-md);
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
+  cursor: pointer;
+}
+
+/* Product owner, 2026-10-21 — phone bottom sheet for a removed creation, per
+   Figma "History — Option Menu — Removed Notice" (5313:52267 / 5313:52272).
+   DP's phone sheet (`HistoryPage.css`, ≤767px) is built for bigger rows —
+   48px pills at 16px type, 28px corner radius — while the Figma sheet is a
+   tighter list: 12px top / 40px bottom padding, a 6px rhythm between blocks,
+   the notice as an icon beside TWO text lines (the desktop popover puts the
+   icon beside the title only), a 12px-type CTA pill, and 40px full-width
+   rows at 13px bold with 20px side padding. Scoped to `--notice` so the other
+   History menus are untouched until the designer redraws them. */
+@media (max-width: 767px) {
+  .history-card__menu--notice {
+    gap: 6px;
+    padding: 12px 0 max(40px, env(safe-area-inset-bottom));
+    border-width: 0;
+    border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+  }
+
+  .history-card__menu--notice .history-card__menu-handle {
+    width: 36px;
+    margin: 0 auto;
+    background: var(--white-15);
+  }
+
+  .history-card__menu--notice .history-card__menu-notice {
+    margin: 0;
+    padding: 10px 20px 0;
+  }
+
+  .history-card__menu--notice .history-card__menu-notice > button {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 0;
+    padding: 10px;
+  }
+
+  .history-card__menu--notice .history-card__menu-notice-title {
+    display: contents;
+  }
+
+  .history-card__menu--notice .history-card__menu-notice-icon {
+    grid-row: 1 / span 2;
+  }
+
+  .history-card__menu--notice .history-card__menu-notice-heading {
+    grid-column: 2;
+  }
+
+  .history-card__menu--notice .history-card__menu-notice-text {
+    grid-column: 2;
+  }
+
+  .history-card__menu--notice > .history-card__menu-primary {
+    min-height: 0;
+    margin: 10px 20px 0;
+    padding: 12px 14px;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: var(--font-weight-semibold);
+    line-height: 15px;
+    letter-spacing: -0.12px;
+  }
+
+  .history-card__menu--notice > .history-card__menu-primary > span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .history-card__menu--notice > button:not(.history-card__menu-primary) {
+    gap: 12px;
+    min-height: 40px;
+    padding: 8px 20px;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: var(--font-weight-bold);
+    line-height: 18px;
+    letter-spacing: -0.13px;
+  }
+}

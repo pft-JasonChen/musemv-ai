@@ -14,6 +14,7 @@ import { LyricsSheet, formatTime } from "@/components/ui/LyricsSheet";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { ShareDialog } from "@/components/ui/ShareDialog";
+import { useReportContent } from "@/components/ui/ReportDialog";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
@@ -313,6 +314,7 @@ function MobileNowPlaying({
   const { seek } = useSeek(audioRef);
   const volumeWrapRef = useRef<HTMLDivElement>(null);
   const volumePopup = useVolumePopup(volumeWrapRef);
+  const { openReport, reportNode } = useReportContent("song", song.id);
 
   if (!mounted) return null;
 
@@ -339,7 +341,14 @@ function MobileNowPlaying({
           <DpIcon name="ic_arrow_left" className="song-detail-mobile-player__back-icon" />
         </button>
         <p className="song-detail-mobile-player__header-title">Now Playing</p>
-        <span className="song-detail-mobile-player__header-spacer" aria-hidden="true" />
+        <button
+          type="button"
+          className="report-flag report-flag--header"
+          onClick={openReport}
+          aria-label="Report"
+        >
+          <DpIcon name="ic_flag" className="report-flag__icon" />
+        </button>
       </div>
 
       <div className="song-detail-mobile-player__art-wrap">
@@ -487,6 +496,7 @@ function MobileNowPlaying({
         title={song.title}
         url={buildShareUrl(song.id)}
       />
+      {reportNode}
 
       {/* Mounted only while the full-screen player is open — which is the only
           place it can be reached from. It stays mounted ACROSS its own open/close
