@@ -5731,3 +5731,43 @@ button:disabled {
   -webkit-mask-position: center;
   -webkit-mask-size: contain;
 }
+
+/* Product owner, 2026-10-22 — the share page's song controller gets a ⋯ menu
+   (Download / Report). Reuses the MV menu's panel, anchored to the button
+   instead of the controller's right edge: the button sits inside the pill, so
+   the panel opens above it, right-aligned. */
+.share-song__more {
+  position: relative;
+  display: flex;
+}
+
+.share-song__more .share-mv__menu {
+  right: 0;
+  bottom: calc(100% + 16px);
+}
+
+/* Product owner, 2026-10-23 — the share page's video and both CTAs must be fully
+   visible without scrolling, so the video scales with the window instead of
+   being a fixed 441px. The panel is a 9:16 box, so its width is capped at what
+   the remaining height allows: viewport height minus everything else on the page
+   (header, paddings, the gap, the CTA row), times 9/16. `--share-mv-chrome` is
+   that "everything else" and is re-measured per breakpoint below, because the
+   CTA pills stack on phones. Still capped at 441px and at the column width, and
+   a very short window simply scrolls rather than shrinking the video to nothing. */
+.share-page__main:has(.share-mv) {
+  --share-mv-chrome: 190px;
+  padding-bottom: 24px;
+}
+
+.share-mv {
+  width: min(100%, max(160px, calc((100vh - var(--share-mv-chrome, 190px)) * 9 / 16)));
+  width: min(100%, max(160px, calc((100dvh - var(--share-mv-chrome, 190px)) * 9 / 16)));
+}
+
+/* Phone: 72px header + 16px top padding + 20px gap + two stacked 46px pills with a
+   12px gap (104px) + 24px bottom padding. */
+@media (max-width: 767px) {
+  .share-page__main:has(.share-mv) {
+    --share-mv-chrome: 236px;
+  }
+}

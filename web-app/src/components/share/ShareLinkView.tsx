@@ -24,6 +24,7 @@ import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { SeekBar } from "@/components/ui/SeekBar";
 import { useVolumePopup } from "@/components/ui/useVolumePopup";
+import { useReportContent } from "@/components/ui/ReportDialog";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -45,13 +46,16 @@ function MvMoreMenu({
   onCycleRate,
   onDownload,
   onPictureInPicture,
+  onReport,
 }: {
   open: boolean;
   onClose: () => void;
-  rate: number;
-  onCycleRate: () => void;
+  /** Playback speed and Picture-in-Picture are video-only; the song page omits them. */
+  rate?: number;
+  onCycleRate?: () => void;
   onDownload: () => void;
-  onPictureInPicture: () => void;
+  onPictureInPicture?: () => void;
+  onReport: () => void;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -78,20 +82,43 @@ function MvMoreMenu({
         >
           Download
         </button>
-        <button type="button" role="menuitem" className="share-mv__menu-item" onClick={onCycleRate}>
-          Playback Speed
-          <span className="share-mv__menu-item-value">{rate}x</span>
-        </button>
+        {onCycleRate && (
+          <button
+            type="button"
+            role="menuitem"
+            className="share-mv__menu-item"
+            onClick={onCycleRate}
+          >
+            Playback Speed
+            <span className="share-mv__menu-item-value">{rate}x</span>
+          </button>
+        )}
+        {onPictureInPicture && (
+          <button
+            type="button"
+            role="menuitem"
+            className="share-mv__menu-item"
+            onClick={() => {
+              onPictureInPicture();
+              onClose();
+            }}
+          >
+            Picture in Picture
+          </button>
+        )}
+        {/* Product owner, 2026-10-22: the share page is public, so this is how a
+            visitor flags a creation. Closes the menu first so the dialog is not
+            stacked under its backdrop. */}
         <button
           type="button"
           role="menuitem"
           className="share-mv__menu-item"
           onClick={() => {
-            onPictureInPicture();
             onClose();
+            onReport();
           }}
         >
-          Picture in Picture
+          Report
         </button>
       </div>
     </>
@@ -129,8 +156,17 @@ function Logo() {
 /** Song panel: album art + title/creator + a pill-shaped media controller
  *  (play/pause, combined time, seek, mute, download) — matches
  *  `SongPlayBar.tsx`'s icon vocabulary, laid out per the Figma "Song Panel". */
-function SongPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => void }) {
+function SongPanel({
+  media,
+  onDownload,
+  onReport,
+}: {
+  media: SharedMedia;
+  onDownload: () => void;
+  onReport: () => void;
+}) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   // Product owner, 2026-09-16: hover-revealed volume-slider popup on the
@@ -253,14 +289,27 @@ function SongPanel({ media, onDownload }: { media: SharedMedia; onDownload: () =
             />
           </button>
         </div>
-        <button
-          type="button"
-          className="share-song__icon-btn"
-          onClick={onDownload}
-          aria-label="Download"
-        >
-          <DpIcon name="ic_download" className="share-song__icon" />
-        </button>
+        {/* Product owner, 2026-10-22: the trailing download icon becomes a ⋯ menu
+            holding Download and Report, mirroring the MV controller (the
+            Download pill below the panel still downloads directly). */}
+        <div className="share-song__more">
+          <button
+            type="button"
+            className="share-song__icon-btn"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="More"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+          >
+            <DpIcon name="ic_more" className="share-song__icon" />
+          </button>
+          <MvMoreMenu
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            onDownload={onDownload}
+            onReport={onReport}
+          />
+        </div>
       </div>
     </div>
   );
@@ -269,7 +318,15 @@ function SongPanel({ media, onDownload }: { media: SharedMedia; onDownload: () =
 /** MV panel: portrait video + a bottom gradient-scrim controller (play/pause,
  *  combined time, seek, mute, fullscreen, download) — same control row as
  *  `/watch`'s `CommunityMvPlayer.tsx`, plus the download icon Figma adds. */
-function MvPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => void }) {
+function MvPanel({
+  media,
+  onDownload,
+  onReport,
+}: {
+  media: SharedMedia;
+  onDownload: () => void;
+  onReport: () => void;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   // Reported bug, 2026-09-22 (found on `/mv/edit`, same shared button
@@ -432,6 +489,7 @@ function MvPanel({ media, onDownload }: { media: SharedMedia; onDownload: () => 
           onCycleRate={cycleRate}
           onDownload={onDownload}
           onPictureInPicture={requestPip}
+          onReport={onReport}
         />
       </div>
     </div>
@@ -446,6 +504,7 @@ export function ShareLinkView() {
   const id = params.get("id");
   const forcedExpired = params.get("type") === "expired";
   const media = forcedExpired ? null : resolveShare(id, history);
+  const { openReport, reportNode } = useReportContent(media?.kind ?? "mv", id ?? "");
 
   const home = localePath(locale, "/");
 
@@ -521,12 +580,16 @@ export function ShareLinkView() {
       <main className="share-page__main">
         <div className="share-page__list">
           {media.kind === "mv" ? (
-            <MvPanel media={media} onDownload={download} />
+            <MvPanel media={media} onDownload={download} onReport={openReport} />
           ) : (
-            <SongPanel media={media} onDownload={download} />
+            <SongPanel media={media} onDownload={download} onReport={openReport} />
           )}
           <div className="share-page__actions">
-            <button type="button" className="share-page__pill share-page__pill--dark" onClick={download}>
+            <button
+              type="button"
+              className="share-page__pill share-page__pill--dark"
+              onClick={download}
+            >
               Download
               <DpIcon name="ic_download" className="share-page__pill-icon" />
             </button>
@@ -540,6 +603,7 @@ export function ShareLinkView() {
           </div>
         </div>
       </main>
+      {reportNode}
     </div>
   );
 }
