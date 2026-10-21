@@ -14,6 +14,11 @@ import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { Modal } from "@/components/ui/Modal";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { MobileScenePreview } from "@/components/mv/MobileScenePreview";
+import {
+  EditTitleSubtitleDialog,
+  type TextEffectSelection,
+} from "@/components/mv/EditTitleSubtitleDialog";
+import { DEFAULT_SUBTITLE_STYLE, DEFAULT_TITLE_EFFECT } from "@/lib/mv/textEffects";
 import { Button } from "@/components/ui/Button";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
@@ -160,6 +165,14 @@ export function MvEditor() {
   const [coverLightbox, setCoverLightbox] = useState(false);
   const [mobileSceneOpen, setMobileSceneOpen] = useState(false);
   const [settingsDirty, setSettingsDirty] = useState(false);
+  // Title effect / subtitle style picked in the "Edit Title & Subtitle" popup.
+  // Component state only — NOT `MvSettings` (RD contract C2); see `lib/mv/textEffects.ts`.
+  const [textEffects, setTextEffects] = useState<TextEffectSelection>({
+    titleEffect: DEFAULT_TITLE_EFFECT,
+    subtitleStyle: DEFAULT_SUBTITLE_STYLE,
+  });
+  const [effectsOpen, setEffectsOpen] = useState(false);
+  const [effectsDirty, setEffectsDirty] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
 
@@ -214,7 +227,11 @@ export function MvEditor() {
   // recreated cover, an output-settings change, or an edited scene/cover prompt
   // (`storyboardDirty`), since there is no separate Save to commit text edits.
   const dirty =
-    Object.keys(sceneVideo).length > 0 || coverImage != null || settingsDirty || storyboardDirty;
+    Object.keys(sceneVideo).length > 0 ||
+    coverImage != null ||
+    settingsDirty ||
+    storyboardDirty ||
+    effectsDirty;
 
   const settings = compose.settings;
   function patchSettings(p: Partial<typeof settings>) {
@@ -696,15 +713,26 @@ export function MvEditor() {
             </div>
           </div>
 
+          {/* Product owner, 2026-10-23, Figma "Edit MV_L" (1351:28314): ONE full-width
+              button for the title effect and the subtitle style, between the cover
+              and MV TITLE. (An earlier list-row version of this entry was judged
+              not intuitive and replaced by Figma's own.) */}
+          <button
+            type="button"
+            className="mv-edit__effects-btn"
+            onClick={() => setEffectsOpen(true)}
+            aria-haspopup="dialog"
+          >
+            Edit Title &amp; Subtitle Effects
+          </button>
+
           <div className="mv-edit__section mv-edit__section--title">
-            <p className="mv-edit__label">MV TITLE</p>
             {/* The ON/OFF switch is WA-only — `settings.title.on` is a contract
-                field and decides whether the caption is burned in at all. */}
-            <div className="mv-edit__toggle-row">
-              <div className="mv-edit__toggle-text">
-                <p className="mv-edit__toggle-title">Show MV title</p>
-                <p className="mv-edit__toggle-state">{settings.title.on ? "On" : "Off"}</p>
-              </div>
+                field and decides whether the caption is burned in at all. Figma
+                (1351:28314) puts it on the heading row; the separate "Show MV
+                title — On" row is gone. */}
+            <div className="mv-edit__field-head">
+              <p className="mv-edit__label">MV TITLE</p>
               <ToggleSwitch
                 checked={settings.title.on}
                 ariaLabel="Show MV title"
@@ -740,12 +768,8 @@ export function MvEditor() {
           </div>
 
           <div className="mv-edit__section mv-edit__section--author">
-            <p className="mv-edit__label">AUTHOR NAME</p>
-            <div className="mv-edit__toggle-row">
-              <div className="mv-edit__toggle-text">
-                <p className="mv-edit__toggle-title">Show author name</p>
-                <p className="mv-edit__toggle-state">{settings.author.on ? "On" : "Off"}</p>
-              </div>
+            <div className="mv-edit__field-head">
+              <p className="mv-edit__label">AUTHOR NAME</p>
               <ToggleSwitch
                 checked={settings.author.on}
                 ariaLabel="Show author name"
@@ -855,7 +879,11 @@ export function MvEditor() {
                 </div>
               </div>
 
-              <MobileScenePreview key={scene.id} src={activeVideo} poster={clipCover(selectedClip)} />
+              <MobileScenePreview
+                key={scene.id}
+                src={activeVideo}
+                poster={clipCover(selectedClip)}
+              />
 
               <div className="mv-edit-mobile-scene__section">
                 <p className="mv-edit-mobile-scene__label">SHORT DESCRIPTION</p>
@@ -923,6 +951,22 @@ export function MvEditor() {
           </div>,
           document.body,
         )}
+
+      <EditTitleSubtitleDialog
+        open={effectsOpen}
+        onClose={() => setEffectsOpen(false)}
+        onSave={(next) => {
+          setTextEffects(next);
+          // Saving counts as a pending edit: the effects change how Merge renders
+          // the video, so Merge MV becomes available (product owner, 2026-10-23).
+          setEffectsDirty(true);
+          setEffectsOpen(false);
+        }}
+        selection={textEffects}
+        titleText={settings.title.text}
+        videoSrc={activeVideo}
+        poster={clipCover(selectedClip)}
+      />
 
       <ImageLightbox
         src={activeCover}

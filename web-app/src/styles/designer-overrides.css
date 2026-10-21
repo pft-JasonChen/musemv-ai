@@ -5771,3 +5771,551 @@ button:disabled {
     --share-mv-chrome: 236px;
   }
 }
+
+/* Product owner, 2026-10-23 — MV Title / Author Name fields (`/mv/edit`): the
+   character count and the clear (✕) button touched, because DP's
+   `.mv-edit__field-box` is a flex row with no gap. 4px between the field's
+   children (input · count · clear). */
+.mv-edit__field-box {
+  gap: 4px;
+}
+
+/* =========================================================================
+   Edit Title & Subtitle — product owner, 2026-10-23, Figma 5356:174566.
+   ONE entry row on `/mv/edit` opens a popup (centred dialog on desktop, bottom
+   sheet on phones) with a live preview, a Title / Subtitle switch and a strip of
+   looks. Markup: `mv/EditTitleSubtitleDialog.tsx`, `lib/mv/textEffects.ts`.
+   The dialog reuses the Report dialog's `.report-*` shell.
+   ========================================================================= */
+
+/* Entry button — Figma "Edit MV_L" (1351:28314) "Edit Title & Subtitle Effects": a
+   full-width dark pill between the cover and MV TITLE. */
+.mv-edit__effects-btn {
+  width: 100%;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--white-15);
+  border-radius: 34px;
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  text-align: center;
+}
+
+/* MV TITLE / AUTHOR NAME — the heading row now carries the switch, with the
+   field 8px under it (was a 12px section gap plus a separate "Show … On" row). */
+.mv-edit__section--title,
+.mv-edit__section--author {
+  gap: 8px;
+}
+
+.mv-edit__field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.mv-edit__field-head .mv-edit__label {
+  white-space: nowrap;
+}
+
+/* On phones every section is ordered explicitly (`MVEditPage.css`). The button
+   leads the title group: it takes MV TITLE's slot and wins the tie by coming
+   first in the DOM. */
+@media (max-width: 767px) {
+  .mv-edit__effects-btn {
+    order: 3;
+  }
+}
+
+/* Dialog shell. */
+.effects-dialog {
+  width: 654px;
+}
+
+.effects-dialog .report-dialog__header::after {
+  display: none;
+}
+
+.effects-dialog .report-dialog__title {
+  text-align: center;
+}
+
+.effects-dialog:not(.report-dialog--sheet) .report-dialog__header::before {
+  content: "";
+  flex-shrink: 0;
+  width: 28px;
+}
+
+.effects-dialog__icon-btn {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 18px;
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+.effects-dialog__icon-btn--done {
+  order: 2;
+  background: var(--color-accent-purple);
+}
+
+/* Preview. The frame comes from `.mv-edit-mobile-scene__preview`; the stage is the
+   9:16 video box the overlays are laid out against, so text scales with the video
+   (container units) rather than the dialog. */
+/* Product owner, 2026-10-23: the preview keeps a fixed 16:9 shape and scales with the
+   dialog's width instead of holding a fixed height (Figma's 590x331 and 280x180 are
+   both ~16:9) — a wide phone sheet no longer stretches into a letterbox. */
+.effects-dialog .mv-edit-mobile-scene__preview {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 16px;
+}
+
+.mv-edit-mobile-scene__stage {
+  position: relative;
+  flex-shrink: 0;
+  height: 100%;
+  aspect-ratio: 9 / 16;
+  container-type: size;
+}
+
+.mv-edit-mobile-scene__stage .mv-edit-mobile-scene__preview-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Switch. */
+.effects-dialog__tabs {
+  display: flex;
+  align-self: center;
+  gap: 4px;
+  width: 288px;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  padding: 4px;
+  border-radius: 55px;
+  background: var(--neutral-dark-14);
+}
+
+.effects-dialog__tab {
+  flex: 1;
+  min-width: 100px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 20px;
+  background: none;
+  color: var(--neutral-dark-64);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 15px;
+  letter-spacing: -0.12px;
+}
+
+.effects-dialog__tab--active {
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}
+
+/* Looks. `margin: 0 auto` on the inner row centres a strip that fits (Title's six)
+   and lets one that does not (Subtitle's ten) scroll from the left. */
+/* Product owner, 2026-10-23: the strip bleeds to the dialog's edges so thumbnails
+   scrolling past the sides are seen right up to the edge, not cut off at the
+   content padding. The negative margin undoes the dialog's side padding (32px
+   here, 20px on the phone sheet below) and the inner row puts the same padding
+   back, so the first and last look still line up with the content at the ends. */
+.effects-dialog__strip {
+  overflow-x: auto;
+  margin: 0 -32px 16px;
+  scrollbar-width: none;
+}
+
+.effects-dialog__strip::-webkit-scrollbar {
+  display: none;
+}
+
+.effects-dialog__strip-inner {
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  margin: 0 auto;
+  padding: 3px 32px;
+}
+
+.effects-dialog__thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  box-sizing: border-box;
+  padding: 0;
+  overflow: hidden;
+  border: 1.1px solid var(--white-15);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+}
+
+.effects-dialog__thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.effects-dialog__thumb--selected {
+  border: 3px solid var(--color-accent-purple);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+}
+
+.effects-dialog__check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  padding: 3.6px;
+  border-radius: 20px;
+  background: var(--color-accent-purple);
+  color: var(--neutral-dark-100);
+}
+
+.effects-dialog__check-icon {
+  width: 10.8px;
+  height: 10.8px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.effects-dialog__actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.effects-dialog__btn {
+  width: 200px;
+  min-width: 200px;
+  max-width: 230px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 20px;
+  background: var(--white-15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 15px;
+  letter-spacing: -0.12px;
+}
+
+.effects-dialog__btn--primary {
+  background: var(--color-accent-purple);
+}
+
+/* Phone sheet: Figma "Sheet / Settings" (5356:174397) — 280px content, 180px preview,
+   66px looks, and ✕ / ✓ in the header instead of Cancel / Save. */
+.effects-dialog.report-dialog--sheet .mv-edit-mobile-scene__preview {
+  margin-bottom: 0;
+}
+
+.effects-dialog.report-dialog--sheet .effects-dialog__tabs {
+  width: 100%;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.effects-dialog.report-dialog--sheet .effects-dialog__tab {
+  min-width: 48px;
+  padding: 8px 4px;
+  border-radius: 16px;
+}
+
+.effects-dialog.report-dialog--sheet .effects-dialog__strip {
+  margin: 0 -20px;
+}
+
+.effects-dialog.report-dialog--sheet .effects-dialog__strip-inner {
+  gap: 6px;
+  margin: 0;
+  padding: 3px 20px;
+}
+
+.effects-dialog.report-dialog--sheet .effects-dialog__thumb {
+  width: 66px;
+  height: 66px;
+  border-radius: 12px;
+}
+
+.effects-dialog.report-dialog--sheet .effects-dialog__thumb--selected {
+  border-width: 2.5px;
+}
+
+/* ── Preview text ────────────────────────────────────────────────────────────
+   Drawn in CSS from the thumbnails in /assets/images/{title-effect,subtitle-style}.
+   Sizes are `cqh` (a % of the video's height) so the same rules serve the 331px
+   desktop preview and the 180px phone one. Fonts are system stacks: no web fonts
+   are loaded for these looks, so exact letterforms vary by OS — PENDING the
+   designer's type spec. */
+.fx-title,
+.fx-sub {
+  position: absolute;
+  left: 50%;
+  margin: 0;
+  color: #fff;
+  pointer-events: none;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.fx-title {
+  top: 47%;
+  width: 82%;
+  font-size: 5.7cqh;
+  line-height: 1.15;
+  transform: translate(-50%, -50%);
+}
+
+.fx-sub {
+  top: 79.5%;
+  width: 83%;
+  font-family: var(--font-family-primary);
+  font-size: 3.6cqh;
+  line-height: 1.25;
+}
+
+.fx-title--cinematic {
+  padding: 0.12em 0;
+  border-block: 0.5cqh solid #fff;
+  font-family: "Times New Roman", Times, serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1cqh 2cqh rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+}
+
+.fx-title--bold {
+  font-family: Impact, "Arial Narrow", "Helvetica Neue", sans-serif;
+  font-size: 6.6cqh;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0.8cqh 0.8cqh 0 rgba(0, 0, 0, 0.45);
+  text-transform: uppercase;
+}
+
+.fx-title--neon {
+  background: repeating-linear-gradient(0deg, #fff 0, #fff 0.4cqh, transparent 0.4cqh, transparent 0.8cqh);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 1cqh rgba(255, 255, 255, 0.7));
+  font-family: "Arial Black", var(--font-family-primary), sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fx-title--script {
+  font-family: "Snell Roundhand", "Apple Chancery", "Segoe Script", "Brush Script MT", cursive;
+  font-size: 8.4cqh;
+  font-style: italic;
+  font-weight: 400;
+  text-shadow: 0 0.6cqh 1.2cqh rgba(0, 0, 0, 0.5);
+}
+
+.fx-title--editorial {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 7.6cqh;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.fx-title--editorial::after {
+  content: "THE MUSIC VIDEO";
+  display: block;
+  margin-top: 0.7em;
+  font-family: var(--font-family-primary);
+  font-size: 0.3em;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+}
+
+.fx-title--glitch {
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow:
+    0.5cqh 0 0 rgba(255, 255, 255, 0.35),
+    -0.4cqh 0 0 rgba(120, 120, 120, 0.55);
+  text-transform: uppercase;
+}
+
+.fx-sub--classic {
+  font-weight: 700;
+  text-shadow: 0 0.3cqh 0.8cqh rgba(0, 0, 0, 0.6);
+}
+
+.fx-sub--box,
+.fx-sub--highlight {
+  width: max-content;
+  max-width: 88%;
+  padding: 0.15em 0.5em;
+  border-radius: 0.35em;
+}
+
+.fx-sub--box {
+  background: rgba(10, 10, 10, 0.92);
+  font-weight: 500;
+}
+
+.fx-sub--highlight {
+  background: #fff;
+  color: #111;
+  font-weight: 800;
+}
+
+.fx-sub--outline {
+  font-weight: 900;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 0.8cqh #000;
+}
+
+.fx-sub--karaoke {
+  background: linear-gradient(90deg, #fff 0, #fff 45%, rgba(255, 255, 255, 0.5) 45%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+.fx-sub--karaoke::after {
+  content: "";
+  display: block;
+  height: 0.3cqh;
+  margin-top: 0.5em;
+  border-radius: 1cqh;
+  background: linear-gradient(90deg, #fff 0, #fff 45%, rgba(255, 255, 255, 0.35) 45%);
+}
+
+.fx-sub--typewriter {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 500;
+}
+
+.fx-sub--typewriter::after {
+  content: "";
+  display: inline-block;
+  width: 0.14em;
+  height: 1em;
+  margin-left: 0.15em;
+  background: #fff;
+  vertical-align: text-bottom;
+}
+
+.fx-sub--twoline {
+  font-weight: 700;
+  text-shadow: 0 0.3cqh 0.8cqh rgba(0, 0, 0, 0.6);
+}
+
+.fx-sub--twoline::after {
+  content: "Second line";
+  display: block;
+  margin-top: 0.2em;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.fx-sub--italic {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 700;
+  text-shadow: 0 0.3cqh 0.8cqh rgba(0, 0, 0, 0.6);
+}
+
+.fx-sub--glow {
+  font-weight: 600;
+  text-shadow:
+    0 0 1cqh #fff,
+    0 0 2.4cqh rgba(255, 255, 255, 0.7);
+}
+
+.fx-sub--spaced {
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0.3cqh 0.8cqh rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+}
+
+/* Product owner, 2026-10-23 — `/mv/edit` at tablet width (768–1023px): "Delete this
+   Project" must be the last thing on the page. Below 1024px the layout is one
+   column, but `.mv-edit__panel` and `.mv-edit__side` are still two boxes stacked
+   panel-then-side, so Delete (and the Merge bar's reserved spacer) sat in the
+   middle, above the whole cover / title / author group. Phones already solve this
+   with `display: contents` plus explicit `order`s (`MVEditPage.css`, ≤767px); this
+   applies the same trick to the tablet range. The panel's own children (storyboard,
+   scene editor, explainer) keep `order: 0` and so still come first, in DOM order. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mv-edit__panel,
+  .mv-edit__side {
+    display: contents;
+  }
+
+  .mv-edit__section--cover {
+    order: 1;
+  }
+
+  .mv-edit__effects-btn {
+    order: 2;
+  }
+
+  .mv-edit__section--title {
+    order: 3;
+  }
+
+  .mv-edit__section--author {
+    order: 4;
+  }
+
+  .mv-edit__toggle-row--subtitle {
+    order: 5;
+  }
+
+  .mv-edit__toggle-row--watermark {
+    order: 6;
+  }
+
+  .mv-edit__ctas {
+    order: 7;
+  }
+
+  .mv-edit .floating-cta__spacer,
+  .mv-edit .floating-cta {
+    order: 8;
+  }
+}

@@ -23,7 +23,16 @@ function formatClock(seconds: number): string {
  * `videoRef`/`currentTime` belong to a player nobody can see. Keyed by scene id
  * at the call site, so switching clips remounts it with a fresh clock.
  */
-export function MobileScenePreview({ src, poster }: { src: string; poster: string }) {
+export function MobileScenePreview({
+  src,
+  poster,
+  overlay,
+}: {
+  src: string;
+  poster: string;
+  /** Drawn over the video itself (not the letterbox) — the Title & Subtitle popup's text. */
+  overlay?: React.ReactNode;
+}) {
   const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const isFullscreen = useIsFullscreen();
@@ -47,23 +56,34 @@ export function MobileScenePreview({ src, poster }: { src: string; poster: strin
     v.currentTime = Math.min(v.duration, Math.max(0, next));
   }
 
+  const video = (
+    <video
+      ref={videoRef}
+      className="mv-edit-mobile-scene__preview-video"
+      src={src}
+      poster={poster}
+      autoPlay
+      loop
+      muted={muted}
+      playsInline
+      onPlay={() => setPlaying(true)}
+      onPause={() => setPlaying(false)}
+      onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+      onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+      onClick={togglePlay}
+    />
+  );
+
   return (
     <div ref={frameRef} className="mv-edit-mobile-scene__preview">
-      <video
-        ref={videoRef}
-        className="mv-edit-mobile-scene__preview-video"
-        src={src}
-        poster={poster}
-        autoPlay
-        loop
-        muted={muted}
-        playsInline
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-        onClick={togglePlay}
-      />
+      {overlay ? (
+        <div className="mv-edit-mobile-scene__stage">
+          {video}
+          {overlay}
+        </div>
+      ) : (
+        video
+      )}
       <div className="mv-edit-mobile-scene__preview-controls">
         <button
           type="button"
