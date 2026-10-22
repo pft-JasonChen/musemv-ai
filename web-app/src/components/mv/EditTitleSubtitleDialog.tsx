@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { MobileScenePreview } from "@/components/mv/MobileScenePreview";
 import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialogTransition";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
@@ -22,28 +23,45 @@ export interface TextEffectSelection {
   subtitleStyle: SubtitleStyleId;
 }
 
+/** What Save hands back: the picked looks plus the two switches the popup can flip. */
+export interface TextEffectDraft extends TextEffectSelection {
+  titleOn: boolean;
+  subtitleOn: boolean;
+}
+
 /**
  * Figma "Edit Title & Subtitle" (node 5356:174566): a live preview of the MV with
  * its title and subtitle drawn over it, a Title / Subtitle switch, and a strip
- * of looks to pick from. Desktop is a centred dialog with Cancel / Save; phones
- * are a bottom sheet whose ✕ cancels and ✓ saves.
+ * of looks to pick from. Desktop is a centred dialog with a single Save; phones
+ * are a bottom sheet with ✕ and ✓ in the header. The ✕ is the only way to back out
+ * (there is no Cancel button, product owner 2026-10-22).
  *
- * The draft lives in the body, which unmounts on close, so Cancel (or Escape, or
- * the backdrop) discards it and the next open starts from the saved choice.
+ * Save stays disabled until something differs from what is saved — a different
+ * look, or one of the switches flipped. When the title or the subtitles are OFF
+ * outside, the popup says so under the Title / Subtitle switch with a toggle to turn
+ * them back on; until that is switched on the looks below are disabled, and once it
+ * is, the notice goes away.
+ *
+ * The draft lives in the body, which unmounts on close, so ✕ (or Escape, or the
+ * backdrop) discards it and the next open starts from the saved choice.
  */
 export function EditTitleSubtitleDialog({
   open,
   onClose,
   onSave,
   selection,
+  titleOn,
+  subtitleOn,
   titleText,
   videoSrc,
   poster,
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (next: TextEffectSelection) => void;
+  onSave: (next: TextEffectDraft) => void;
   selection: TextEffectSelection;
+  titleOn: boolean;
+  subtitleOn: boolean;
   titleText: string;
   videoSrc: string;
   poster: string;
@@ -60,6 +78,8 @@ export function EditTitleSubtitleDialog({
       onClose={onClose}
       onSave={onSave}
       selection={selection}
+      titleOn={titleOn}
+      subtitleOn={subtitleOn}
       titleText={titleText}
       videoSrc={videoSrc}
       poster={poster}
@@ -74,6 +94,8 @@ function DialogBody({
   onClose,
   onSave,
   selection,
+  titleOn,
+  subtitleOn,
   titleText,
   videoSrc,
   poster,
@@ -81,18 +103,27 @@ function DialogBody({
   open: boolean;
   visible: boolean;
   onClose: () => void;
-  onSave: (next: TextEffectSelection) => void;
+  onSave: (next: TextEffectDraft) => void;
   selection: TextEffectSelection;
+  titleOn: boolean;
+  subtitleOn: boolean;
   titleText: string;
   videoSrc: string;
   poster: string;
 }) {
   const isPhone = useMediaQuery(PHONE_QUERY);
   const [tab, setTab] = useState<Tab>("title");
-  const [draft, setDraft] = useState(selection);
+  const [draft, setDraft] = useState<TextEffectDraft>({ ...selection, titleOn, subtitleOn });
 
   const options = tab === "title" ? TITLE_EFFECTS : SUBTITLE_STYLES;
   const current = tab === "title" ? draft.titleEffect : draft.subtitleStyle;
+  const tabOn = tab === "title" ? draft.titleOn : draft.subtitleOn;
+
+  const dirty =
+    draft.titleEffect !== selection.titleEffect ||
+    draft.subtitleStyle !== selection.subtitleStyle ||
+    draft.titleOn !== titleOn ||
+    draft.subtitleOn !== subtitleOn;
 
   // Keep the picked look fully in view: the strip scrolls sideways (always on a
   // phone, and for Subtitle's ten on desktop), so a saved choice near the end —
@@ -119,7 +150,7 @@ function DialogBody({
       type="button"
       className={isPhone ? "effects-dialog__icon-btn" : "report-dialog__close"}
       onClick={onClose}
-      aria-label={isPhone ? "Cancel" : "Close"}
+      aria-label="Close"
     >
       <DpIcon name="ic_close" className="report-dialog__close-icon" />
     </button>
@@ -145,6 +176,7 @@ function DialogBody({
               type="button"
               className="effects-dialog__icon-btn effects-dialog__icon-btn--done"
               onClick={() => onSave(draft)}
+              disabled={!dirty}
               aria-label="Save"
             >
               <DpIcon name="ic_check" className="report-dialog__close-icon" />
@@ -159,10 +191,14 @@ function DialogBody({
           poster={poster}
           overlay={
             <>
-              <p className={`fx-title fx-title--${draft.titleEffect}`}>
-                {titleText || "Your Title"}
-              </p>
-              <p className={`fx-sub fx-sub--${draft.subtitleStyle}`}>{SAMPLE_SUBTITLE}</p>
+              {draft.titleOn && (
+                <p className={`fx-title fx-title--${draft.titleEffect}`}>
+                  {titleText || "Your Title"}
+                </p>
+              )}
+              {draft.subtitleOn && (
+                <p className={`fx-sub fx-sub--${draft.subtitleStyle}`}>{SAMPLE_SUBTITLE}</p>
+              )}
             </>
           }
         />
@@ -182,9 +218,24 @@ function DialogBody({
           ))}
         </div>
 
+        {!tabOn && (
+          <div className="effects-dialog__notice">
+            <span>{tab === "title" ? "Title is off" : "Subtitles are off"}</span>
+            <ToggleSwitch
+              checked={false}
+              ariaLabel={tab === "title" ? "Turn title on" : "Turn subtitles on"}
+              onChange={() =>
+                setDraft((d) =>
+                  tab === "title" ? { ...d, titleOn: true } : { ...d, subtitleOn: true },
+                )
+              }
+            />
+          </div>
+        )}
+
         <div
           ref={stripRef}
-          className="effects-dialog__strip"
+          className={`effects-dialog__strip${tabOn ? "" : " effects-dialog__strip--off"}`}
           role="radiogroup"
           aria-label={tab === "title" ? "Title effect" : "Subtitle style"}
         >
@@ -198,6 +249,7 @@ function DialogBody({
                   role="radio"
                   aria-checked={selected}
                   aria-label={o.label}
+                  disabled={!tabOn}
                   className={`effects-dialog__thumb${selected ? " effects-dialog__thumb--selected" : ""}`}
                   onClick={() =>
                     setDraft((d) =>
@@ -221,13 +273,11 @@ function DialogBody({
 
         {!isPhone && (
           <div className="effects-dialog__actions">
-            <button type="button" className="effects-dialog__btn" onClick={onClose}>
-              Cancel
-            </button>
             <button
               type="button"
               className="effects-dialog__btn effects-dialog__btn--primary"
               onClick={() => onSave(draft)}
+              disabled={!dirty}
             >
               Save
             </button>

@@ -750,6 +750,7 @@ export function MvEditor() {
                   patchSettings({ title: { ...settings.title, text: e.target.value } })
                 }
                 aria-label="MV title"
+                placeholder="Enter MV name"
               />
               <span className="mv-edit__char-count">
                 {settings.title.text.length}/{MV_TITLE_MAX}
@@ -787,6 +788,7 @@ export function MvEditor() {
                   patchSettings({ author: { ...settings.author, text: e.target.value } })
                 }
                 aria-label="Author name"
+                placeholder="Enter author name"
               />
               <span className="mv-edit__char-count">
                 {settings.author.text.length}/{MV_AUTHOR_MAX}
@@ -956,13 +958,22 @@ export function MvEditor() {
         open={effectsOpen}
         onClose={() => setEffectsOpen(false)}
         onSave={(next) => {
-          setTextEffects(next);
+          setTextEffects({ titleEffect: next.titleEffect, subtitleStyle: next.subtitleStyle });
+          // The popup can also switch the title / subtitles back on.
+          if (next.titleOn !== settings.title.on || next.subtitleOn !== settings.showSubtitle) {
+            patchSettings({
+              title: { ...settings.title, on: next.titleOn },
+              showSubtitle: next.subtitleOn,
+            });
+          }
           // Saving counts as a pending edit: the effects change how Merge renders
           // the video, so Merge MV becomes available (product owner, 2026-10-23).
           setEffectsDirty(true);
           setEffectsOpen(false);
         }}
         selection={textEffects}
+        titleOn={settings.title.on}
+        subtitleOn={settings.showSubtitle}
         titleText={settings.title.text}
         videoSrc={activeVideo}
         poster={clipCover(selectedClip)}

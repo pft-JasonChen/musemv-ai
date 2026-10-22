@@ -6319,3 +6319,50 @@ button:disabled {
     order: 8;
   }
 }
+
+/* Product owner, 2026-10-22 — MV Title / Author Name show a hint ("Enter MV name" /
+   "Enter author name") while empty. DP's field has no `::placeholder` rule, so the
+   browser's default grey would apply; tint it like the field's own count (white 40%). */
+.mv-edit__field-input::placeholder {
+  color: var(--white-40);
+  opacity: 1;
+}
+
+/* Edit Title & Subtitle — UX pass, product owner 2026-10-22 (Figma 5356:174566,
+   "Subtitles are off" frames 5365:176527 / 5365:176162).
+   · No Cancel button: the ✕ in the header is the way out, so Save stands alone.
+   · Save (and the phone's ✓) is disabled until something differs from what is saved.
+   · When the title or subtitles are OFF outside, a notice with a toggle sits under
+     the Title / Subtitle switch, and the looks below are disabled until it is on. */
+.effects-dialog__btn:disabled,
+.effects-dialog__icon-btn--done:disabled {
+  background: var(--neutral-dark-24);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: default;
+}
+
+.effects-dialog__notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.13px;
+}
+
+.effects-dialog.report-dialog--sheet .effects-dialog__notice {
+  margin-bottom: 0;
+}
+
+.effects-dialog__strip--off {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.effects-dialog__thumb:disabled {
+  cursor: default;
+}
