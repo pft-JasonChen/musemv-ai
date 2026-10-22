@@ -5189,6 +5189,183 @@ button:disabled {
   letter-spacing: -0.14px;
 }
 
+/* "Something else" — Figma 5375:181583 (dialog) / 5375:178526 (sheet). The list's
+   last row is an ordinary reason row (same type size as the others, product owner
+   2026-10-24) with a chevron instead of a radio. */
+.report-dialog__chevron {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background-color: var(--neutral-dark-64);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+/* Details page: the same header, a hairline, then Back + hint + the box. The page
+   is as tall as the list was, so the dialog does not jump between the two. */
+.report-dialog__divider {
+  flex-shrink: 0;
+  width: 100%;
+  height: 0;
+  margin: 0 0 12px;
+  border: none;
+  border-top: 1px solid var(--white-15);
+}
+
+.report-dialog--sheet .report-dialog__divider {
+  margin-bottom: 0;
+}
+
+.report-dialog__other {
+  margin-bottom: 6px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Desktop: 548px, the height of the list page (Figma draws 544 with a 40px last row;
+   it is a normal 44px row now). */
+.report-dialog:has(.report-dialog__other):not(.report-dialog--sheet) {
+  min-height: 548px;
+}
+
+/* Phone sheet: Figma's content block is 322px tall. */
+.report-dialog--sheet .report-dialog__other {
+  gap: 12px;
+  min-height: 322px;
+}
+
+/* The whole row — arrow and label — is one button back to the list. */
+.report-dialog__back-row {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.report-dialog__back {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 18px;
+  color: var(--neutral-dark-100);
+}
+
+.report-dialog__back-title {
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  letter-spacing: -0.13px;
+}
+
+.report-dialog__hint {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+}
+
+.report-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.report-dialog__field-label {
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 15px;
+  letter-spacing: -0.12px;
+}
+
+.report-dialog__input-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-md);
+  background: var(--neutral-dark-09);
+}
+
+.report-dialog__textarea {
+  width: 100%;
+  height: 84px;
+  padding: 0;
+  border: none;
+  outline: none;
+  resize: none;
+  background: none;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: 16px;
+}
+
+.report-dialog__textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.report-dialog__counter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 20px;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: var(--font-family-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
+.report-dialog__clear {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 0.6px solid var(--white-15);
+  border-radius: 20px;
+  background: var(--white-15);
+  color: var(--neutral-dark-100);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.report-dialog__clear-icon {
+  width: 12px;
+  height: 12px;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
 /* Figma "Popup/Toast" (5319:56985). */
 .popup-toast {
   position: fixed;

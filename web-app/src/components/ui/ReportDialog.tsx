@@ -9,10 +9,15 @@ import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import {
   hasReported,
   markReported,
+  REPORT_DETAILS_MAX,
+  REPORT_OTHER,
   REPORT_REASONS,
   type ReportKind,
   type ReportReason,
 } from "@/lib/report";
+
+/** What a report carries: a listed reason, or "Something else" with the user's own words. */
+export type ReportChoice = ReportReason | typeof REPORT_OTHER;
 
 const TITLE: Record<ReportKind, string> = {
   song: "Report Song",
@@ -24,8 +29,13 @@ export const ALREADY_REPORTED = "You already reported this content.";
 /**
  * Report flow for community content — Figma "Report Song" (nodes 5319:56800 /
  * 5319:56991): a centred dialog on desktop, a bottom sheet on phones, the same
- * two steps in both. Pick one of six reasons → Submit Report → "Thank you for
+ * steps in both. Pick one of six reasons → Submit Report → "Thank you for
  * keeping Muse safe". Submit stays disabled until a reason is picked.
+ *
+ * A seventh row, "Something else" (Figma 5375:181583 / 5375:178526), pushes a
+ * second page with a Back row and a 1000-character "Details" box (✕ clears it).
+ * Submit is on that page too — enabled once there is text — so nobody has to go
+ * back to send it. The text survives Back and re-entering; it is in memory only.
  *
  * The body unmounts when closed (like `DpDialog`), so the picked reason and the
  * submitted step reset themselves on the next open — no reset effect needed.
@@ -39,7 +49,7 @@ export function ReportDialog({
   open: boolean;
   kind: ReportKind;
   onClose: () => void;
-  onSubmitted: (reason: ReportReason) => void;
+  onSubmitted: (reason: ReportChoice, details?: string) => void;
 }) {
   const { mounted, visible } = useDialogTransition(open);
   useEscapeToClose(open, onClose);
@@ -69,15 +79,21 @@ function ReportDialogBody({
   visible: boolean;
   kind: ReportKind;
   onClose: () => void;
-  onSubmitted: (reason: ReportReason) => void;
+  onSubmitted: (reason: ReportChoice, details?: string) => void;
 }) {
   const isPhone = useMediaQuery(PHONE_QUERY);
   const [reason, setReason] = useState<ReportReason | null>(null);
+  const [view, setView] = useState<"list" | "other">("list");
+  const [details, setDetails] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
+  const inOther = view === "other";
+  const canSubmit = inOther ? details.trim().length > 0 : reason !== null;
+
   function submit() {
-    if (!reason) return;
-    onSubmitted(reason);
+    if (!canSubmit) return;
+    if (inOther) onSubmitted(REPORT_OTHER, details.trim());
+    else if (reason) onSubmitted(reason);
     setSubmitted(true);
   }
 
@@ -129,32 +145,98 @@ function ReportDialogBody({
               <h2 className="report-dialog__title">{TITLE[kind]}</h2>
               {!isPhone && closeButton}
             </div>
-            <p className="report-dialog__subtitle">
-              Why are you reporting this? Your report is anonymous.
-            </p>
-            <div className="report-dialog__reasons" role="radiogroup" aria-label="Reason">
-              {REPORT_REASONS.map((r) => {
-                const selected = r === reason;
-                return (
+
+            {inOther ? (
+              <>
+                <hr className="report-dialog__divider" />
+                <div className="report-dialog__other">
                   <button
-                    key={r}
                     type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    className={`report-dialog__reason${selected ? " report-dialog__reason--selected" : ""}`}
-                    onClick={() => setReason(r)}
+                    className="report-dialog__back-row"
+                    onClick={() => setView("list")}
+                    aria-label="Back from Something else"
                   >
-                    <span className="report-dialog__reason-label">{r}</span>
-                    <span className="report-dialog__radio" aria-hidden="true" />
+                    <span className="report-dialog__back">
+                      <DpIcon name="ic_arrow_left" className="report-dialog__close-icon" />
+                    </span>
+                    <span className="report-dialog__back-title">{REPORT_OTHER}</span>
                   </button>
-                );
-              })}
-            </div>
+                  <p className="report-dialog__hint">
+                    Share as much detail as you can. Don&apos;t include personal or sensitive info.
+                  </p>
+                  <div className="report-dialog__field">
+                    <label className="report-dialog__field-label" htmlFor="report-details">
+                      Details
+                    </label>
+                    <div className="report-dialog__input-box">
+                      <textarea
+                        id="report-details"
+                        className="report-dialog__textarea"
+                        value={details}
+                        maxLength={REPORT_DETAILS_MAX}
+                        placeholder="Tell us what’s wrong with this content"
+                        autoFocus={!isPhone}
+                        onChange={(e) => setDetails(e.target.value)}
+                      />
+                      <div className="report-dialog__counter">
+                        <span>
+                          {details.length}/{REPORT_DETAILS_MAX}
+                        </span>
+                        {details.length > 0 && (
+                          <button
+                            type="button"
+                            className="report-dialog__clear"
+                            onClick={() => setDetails("")}
+                            aria-label="Clear"
+                          >
+                            <DpIcon name="ic_close" className="report-dialog__clear-icon" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="report-dialog__subtitle">
+                  Why are you reporting this? Your report is anonymous.
+                </p>
+                <div className="report-dialog__reasons" role="radiogroup" aria-label="Reason">
+                  {REPORT_REASONS.map((r) => {
+                    const selected = r === reason;
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        className={`report-dialog__reason${selected ? " report-dialog__reason--selected" : ""}`}
+                        onClick={() => setReason(r)}
+                      >
+                        <span className="report-dialog__reason-label">{r}</span>
+                        <span className="report-dialog__radio" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                  {/* Not a radio: it does not pick a reason, it opens the details page. */}
+                  <button
+                    type="button"
+                    className="report-dialog__reason report-dialog__reason--other"
+                    onClick={() => setView("other")}
+                  >
+                    <span className="report-dialog__reason-label">{REPORT_OTHER}</span>
+                    <DpIcon name="ic_chevron-right" className="report-dialog__chevron" />
+                  </button>
+                </div>
+              </>
+            )}
+
             <button
               type="button"
               className="report-dialog__cta report-dialog__cta--submit"
               onClick={submit}
-              disabled={!reason}
+              disabled={!canSubmit}
             >
               Submit Report
             </button>

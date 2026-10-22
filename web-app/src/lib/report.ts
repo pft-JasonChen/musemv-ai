@@ -13,6 +13,14 @@ export const REPORT_REASONS = [
 export type ReportReason = (typeof REPORT_REASONS)[number];
 
 /**
+ * The seventh choice, "Something else" (Figma 5375:181583 / 5375:178526): it is not
+ * one of the six removal reasons (so it is NOT in `REPORT_REASONS`, which
+ * `REMOVAL_REASON_COPY` is keyed on) — it opens a free-text page instead.
+ */
+export const REPORT_OTHER = "Something else";
+export const REPORT_DETAILS_MAX = 1000;
+
+/**
  * Content this visit has already reported, by `kind:id`.
  *
  * Module scope, in memory only (product owner, 2026-10-21): it survives
