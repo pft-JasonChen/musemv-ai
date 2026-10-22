@@ -857,11 +857,7 @@ export function MvRoom() {
       />
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
       {toast && (
-        <div
-          {...toastHold}
-          className="fixed bottom-24 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
-          style={{ background: "rgba(20,20,24,.95)" }}
-        >
+        <div role="alert" {...toastHold} className="popup-toast popup-toast--error">
           {toast}
         </div>
       )}

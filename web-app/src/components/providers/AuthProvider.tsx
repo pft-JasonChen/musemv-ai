@@ -5,7 +5,16 @@
 // is the gate: run the action if signed in, otherwise open the sign-in modal
 // and queue the action to run after a successful sign-in.
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { DEFAULT_CREDITS, MOCK_USER, type PlanId } from "@/lib/user";
 import { authStore, hydratedStore } from "@/lib/authStore";
 import { SignInModal } from "@/components/auth/SignInModal";
@@ -53,8 +62,16 @@ const SIGNUP_GIFT_DELAY_MS = 3000;
 const SIGNUP_GIFT_VISIBLE_MS = 4000;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const loggedIn = useSyncExternalStore(authStore.subscribe, authStore.getSnapshot, authStore.getServerSnapshot);
-  const hydrated = useSyncExternalStore(hydratedStore.subscribe, hydratedStore.getSnapshot, hydratedStore.getServerSnapshot);
+  const loggedIn = useSyncExternalStore(
+    authStore.subscribe,
+    authStore.getSnapshot,
+    authStore.getServerSnapshot,
+  );
+  const hydrated = useSyncExternalStore(
+    hydratedStore.subscribe,
+    hydratedStore.getSnapshot,
+    hydratedStore.getServerSnapshot,
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [subscribedPlan, setSubscribedPlan] = useState<PlanId | null>(null);
@@ -62,8 +79,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pending = useRef<(() => void) | null>(null);
   const cancel = useRef<(() => void) | null>(null);
   // Visible window via `useToastTimer`, so hovering it holds it (2026-10-22).
-  const { toast: giftToast, show: showGiftToast, dismiss: dismissGiftToast, hold: giftHold } =
-    useToastTimer<true>(SIGNUP_GIFT_VISIBLE_MS);
+  const {
+    toast: giftToast,
+    show: showGiftToast,
+    dismiss: dismissGiftToast,
+    hold: giftHold,
+  } = useToastTimer<true>(SIGNUP_GIFT_VISIBLE_MS);
   const giftTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const clearGiftTimers = useCallback(() => {
@@ -97,9 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isNewSignup()) {
       markSignupGiftSeen();
       clearGiftTimers();
-      giftTimers.current.push(
-        setTimeout(() => showGiftToast(true), SIGNUP_GIFT_DELAY_MS),
-      );
+      giftTimers.current.push(setTimeout(() => showGiftToast(true), SIGNUP_GIFT_DELAY_MS));
     }
     const fn = pending.current;
     pending.current = null;
@@ -136,8 +155,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const status: AccountStatus = !loggedIn ? "guest" : subscribed ? "subscriber" : "free";
 
   const value = useMemo<AuthValue>(
-    () => ({ loggedIn, hydrated, status, subscribed, subscribedPlan, profile, requireLogin, openSignIn, signOut, subscribe, updateProfile }),
-    [loggedIn, hydrated, status, subscribed, subscribedPlan, profile, requireLogin, openSignIn, signOut, subscribe, updateProfile],
+    () => ({
+      loggedIn,
+      hydrated,
+      status,
+      subscribed,
+      subscribedPlan,
+      profile,
+      requireLogin,
+      openSignIn,
+      signOut,
+      subscribe,
+      updateProfile,
+    }),
+    [
+      loggedIn,
+      hydrated,
+      status,
+      subscribed,
+      subscribedPlan,
+      profile,
+      requireLogin,
+      openSignIn,
+      signOut,
+      subscribe,
+      updateProfile,
+    ],
   );
 
   return (
@@ -145,12 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
       <SignInModal open={modalOpen} onClose={handleClose} onSignedIn={handleSignedIn} />
       {giftToast && (
-        <div
-          role="status"
-          {...giftHold}
-          className="anim-toast fixed bottom-24 left-1/2 z-[120] w-max max-w-[calc(100vw-32px)] rounded-full px-4 py-2 text-center text-[13px] font-semibold"
-          style={{ background: "var(--neutral-dark-100)", color: "var(--neutral-dark-04)" }}
-        >
+        <div role="status" {...giftHold} className="popup-toast">
           🎉 Welcome! {DEFAULT_CREDITS} free credits have been added to your account.
         </div>
       )}

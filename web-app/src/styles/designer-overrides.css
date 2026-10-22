@@ -5368,14 +5368,21 @@ button:disabled {
   -webkit-mask-size: contain;
 }
 
-/* Figma "Popup/Toast" (5319:56985). */
+/* Figma "Popup/Toast" (5319:56985, component set 252:2800 "Common"): the ONE toast
+   style in the app — dark 80% pill with a purple 60% border. Product owner,
+   2026-10-24: every toast (History, MV Room, Creator profile, Profile, Settings,
+   Credits, the sign-up gift, the AI Song language error, the report toasts) had
+   one of three looks; they all use this now — purple for success / neutral, red
+   (`--error`) for errors. Messages may wrap (the error ones
+   are long), centred, up to the screen width minus 16px a side. */
 .popup-toast {
   position: fixed;
   bottom: calc(60px + env(safe-area-inset-bottom));
   left: 50%;
   z-index: 310;
   box-sizing: border-box;
-  max-width: calc(100vw - 32px);
+  width: max-content;
+  max-width: min(calc(100vw - 32px), 480px);
   padding: 16px;
   border: 1px solid rgba(145, 50, 255, 0.6);
   border-radius: 14px;
@@ -5389,8 +5396,42 @@ button:disabled {
   line-height: 18px;
   letter-spacing: -0.13px;
   text-align: center;
-  white-space: nowrap;
   transform: translateX(-50%);
+}
+
+/* Errors take Figma's red 40% border (Common / error, 2029:45637); success and
+   neutral toasts keep the purple. Product owner, 2026-10-24. */
+.popup-toast--error {
+  border-color: rgba(255, 38, 0, 0.4);
+}
+
+/* The AI Song language error ends in "languages ( i )": keep the last word and the
+   icon together so the icon never wraps onto a line of its own, and let the
+   tooltip card inside wrap and align as usual (it inherits the toast's centring). */
+.popup-toast__nowrap {
+  white-space: nowrap;
+}
+
+.popup-toast .song-create__tooltip {
+  text-align: left;
+  white-space: normal;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .popup-toast {
+    animation: popup-toast-in 0.26s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+}
+
+@keyframes popup-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 /* Product owner, 2026-10-21 — `/watch` phone header. `.mv-detail--selected`

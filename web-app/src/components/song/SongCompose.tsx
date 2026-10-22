@@ -131,7 +131,11 @@ export function SongCompose() {
   // 2026-10-22 — unsupported-language error. Stays while hovered (`useToastTimer`).
   // The value is a counter, used as the toast's `key`: a second click while it
   // is showing remounts it, so screen readers announce the alert again.
-  const { toast: langError, show: showLangError, hold: langErrorHold } = useToastTimer<number>(4000);
+  const {
+    toast: langError,
+    show: showLangError,
+    hold: langErrorHold,
+  } = useToastTimer<number>(4000);
   const demoLangUnsupported = useDemoFlag("songLangUnsupported");
   const ready = isSongReady(s);
 
@@ -618,11 +622,13 @@ export function SongCompose() {
           key={langError}
           role="alert"
           {...langErrorHold}
-          className="fixed bottom-24 left-1/2 z-[60] w-max max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
-          style={{ background: "rgba(20,20,24,.95)" }}
+          className="popup-toast popup-toast--error"
         >
-          {UNSUPPORTED_LANGUAGE_MESSAGE} See supported languages
-          <SupportedLanguagesInfo above />
+          {UNSUPPORTED_LANGUAGE_MESSAGE} See supported{" "}
+          <span className="popup-toast__nowrap">
+            languages
+            <SupportedLanguagesInfo above />
+          </span>
         </div>
       )}
     </>

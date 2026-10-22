@@ -596,11 +596,7 @@ export function CreatorProfile() {
       </Modal>
 
       {toast && (
-        <div
-          {...toastHold}
-          className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
-          style={{ background: "rgba(20,20,24,.95)" }}
-        >
+        <div role="status" {...toastHold} className="popup-toast">
           {toast}
         </div>
       )}

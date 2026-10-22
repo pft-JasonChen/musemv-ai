@@ -113,7 +113,14 @@ export function ProfileView() {
   // cropped; `avatarDraft` is the cropped result, committed by Save.
   const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
   const avatarFileRef = useRef<HTMLInputElement>(null);
-  const { toast, show: flash, hold: toastHold } = useToastTimer(1800);
+  const {
+    toast,
+    show: showToast,
+    hold: toastHold,
+  } = useToastTimer<{ text: string; error: boolean }>(1800);
+  const flash = (text: string) => showToast({ text, error: false });
+  // Upload rejections — the red-bordered error toast, not the purple one.
+  const flashError = (text: string) => showToast({ text, error: true });
   // The Figma "Popup/Toast" (`ui/Toast`), used by the User ID row. The older
   // `flash` pill above is left as-is for the rows that already use it.
   const { show: showCopyToast, toast: copyToast } = useToast();
@@ -170,11 +177,11 @@ export function ProfileView() {
     const okExt = [".jpg", ".jpeg", ".png"].some((ext) => name.endsWith(ext));
     const okType = /image\/(jpeg|png)/.test(file.type);
     if (!okExt && !okType) {
-      flash("This image format isn't supported. Please use JPG or PNG.");
+      flashError("This image format isn't supported. Please use JPG or PNG.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      flash("File too large. Maximum size is 10MB.");
+      flashError("File too large. Maximum size is 10MB.");
       return;
     }
     setPendingAvatar(URL.createObjectURL(file));
@@ -507,11 +514,11 @@ export function ProfileView() {
 
       {toast && (
         <div
+          role={toast.error ? "alert" : "status"}
           {...toastHold}
-          className="anim-toast fixed bottom-24 left-1/2 z-[120] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold"
-          style={{ background: "var(--neutral-dark-14)", color: "var(--neutral-dark-100)" }}
+          className={`popup-toast${toast.error ? " popup-toast--error" : ""}`}
         >
-          {toast}
+          {toast.text}
         </div>
       )}
     </>

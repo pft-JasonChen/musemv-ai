@@ -4143,7 +4143,7 @@ test("PROF-P5: four fields in spec order, Email prefilled, Send gated until vali
   await send.click();
   await expect(dialog.getByText("Feedback Sent")).toBeVisible();
   await expect(dialog.getByText(/we'll reply to jason@example\.com/i)).toBeVisible();
-  await expect(page.locator(".anim-toast")).toHaveCount(0);
+  await expect(page.locator(".popup-toast")).toHaveCount(0);
   await dialog.getByRole("button", { name: "Done" }).click();
   await expect(dialog).toBeHidden();
 
@@ -4181,7 +4181,7 @@ test("PROF-E5: an oversized attachment is refused WHOLE and explained inline", a
   await expect(dialog.getByText("small.log")).toBeVisible(); // the earlier pick survives
 
   // Inline, never a toast — the CS spec is explicit about this (AC-22).
-  await expect(page.locator(".anim-toast")).toHaveCount(0);
+  await expect(page.locator(".popup-toast")).toHaveCount(0);
 
   // Removing a chip clears the refusal and the chip.
   await dialog.getByRole("button", { name: /Remove file: small\.log/ }).click();

@@ -120,33 +120,33 @@ export function CreditsView() {
               </div>
             </div>
           ) : (
-          <div className="credits-page__list">
-            {entries.map((t) => (
-              <div className="credits-page__entry" key={t.id}>
-                <span className="credits-page__entry-icon">
-                  {t.icon === "ic_credit" ? (
-                    <img src="/assets/icons/ui/ic_credit.svg" alt="" />
-                  ) : (
-                    <DpIcon name={t.icon} />
-                  )}
-                </span>
-                <span className="credits-page__entry-copy">
-                  <strong>{t.label}</strong>
-                  <time>{t.date}</time>
-                </span>
-                <strong
-                  className={
-                    t.amount > 0
-                      ? "credits-page__amount credits-page__amount--earned"
-                      : "credits-page__amount"
-                  }
-                >
-                  {t.amount > 0 ? "+" : ""}
-                  {t.amount}
-                </strong>
-              </div>
-            ))}
-          </div>
+            <div className="credits-page__list">
+              {entries.map((t) => (
+                <div className="credits-page__entry" key={t.id}>
+                  <span className="credits-page__entry-icon">
+                    {t.icon === "ic_credit" ? (
+                      <img src="/assets/icons/ui/ic_credit.svg" alt="" />
+                    ) : (
+                      <DpIcon name={t.icon} />
+                    )}
+                  </span>
+                  <span className="credits-page__entry-copy">
+                    <strong>{t.label}</strong>
+                    <time>{t.date}</time>
+                  </span>
+                  <strong
+                    className={
+                      t.amount > 0
+                        ? "credits-page__amount credits-page__amount--earned"
+                        : "credits-page__amount"
+                    }
+                  >
+                    {t.amount > 0 ? "+" : ""}
+                    {t.amount}
+                  </strong>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </section>
@@ -158,12 +158,7 @@ export function CreditsView() {
       />
 
       {toast && (
-        <div
-          role="status"
-          {...toastHold}
-          className="anim-toast fixed bottom-24 left-1/2 z-[120] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold"
-          style={{ background: "var(--neutral-dark-100)", color: "var(--neutral-dark-04)" }}
-        >
+        <div role="status" {...toastHold} className="popup-toast">
           {toast}
         </div>
       )}
