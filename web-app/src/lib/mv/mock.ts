@@ -443,6 +443,11 @@ export const HISTORY_SAMPLES: HistorySample[] = [
   },
 ];
 
+/** The takedown on a seeded History row, if a reviewer removed it — Result pages look it up by `?id=`. */
+export function removalForId(id: string | null | undefined): ContentRemoval | undefined {
+  return id ? HISTORY_SAMPLES.find((h) => h.id === id)?.removal : undefined;
+}
+
 export const SAMPLE_CREATIONS: Creation[] = [
   {
     id: "c1",

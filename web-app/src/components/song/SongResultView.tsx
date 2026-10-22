@@ -13,6 +13,7 @@ import { PublishConfirmDialog } from "@/components/ui/PublishConfirmDialog";
 import { LyricsSheet } from "@/components/ui/LyricsSheet";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { useReportContent } from "@/components/ui/ReportDialog";
+import { RemovedNoticeCard } from "@/components/history/ContentNotice";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useHistory } from "@/components/providers/HistoryProvider";
@@ -25,6 +26,7 @@ import { songRecreateCost } from "@/lib/mv/types";
 import { activeLineIndex, timedLyrics } from "@/lib/mv/lyrics";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
+import { removalForId } from "@/lib/mv/mock";
 import {
   NEW_SONGS,
   getCommunitySong,
@@ -365,6 +367,9 @@ export function SongResultView() {
     idParam ??
     history.find((h) => h.kind === "song" && h.resultUrl === songResult.audioUrl)?.id ??
     "";
+  // Taken down by a reviewer (Figma "Song Result_Removed_L", 5374:177624). Only
+  // the song on stage counts — the rail below can hold other, unremoved rows.
+  const removal = activeIndex === 0 && !communityOrigin ? removalForId(shareId) : undefined;
 
   return (
     <>
@@ -668,7 +673,16 @@ export function SongResultView() {
                     )}
                   </div>
 
-                  {!communityOrigin && (
+                  {removal && (
+                    <RemovedNoticeCard
+                      title={songResult.title}
+                      thumb={songResult.cover}
+                      kind="song"
+                      removal={removal}
+                    />
+                  )}
+
+                  {!communityOrigin && !removal && (
                     <div className="song-result__publish">
                       <DpIcon name="ic_publish" className="song-result__publish-icon" />
                       <div className="song-result__publish-text">

@@ -10,6 +10,7 @@ import { useVolumePopup } from "@/components/ui/useVolumePopup";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { PublishConfirmDialog } from "@/components/ui/PublishConfirmDialog";
+import { RemovedNoticeCard } from "@/components/history/ContentNotice";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useHistory } from "@/components/providers/HistoryProvider";
@@ -18,7 +19,7 @@ import { localePath } from "@/lib/i18n/config";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
-import { MV_TYPES, mockStoryboard } from "@/lib/mv/mock";
+import { MV_TYPES, mockStoryboard, removalForId } from "@/lib/mv/mock";
 import { MOCK_USER } from "@/lib/user";
 import { useDemoState } from "@/components/demo/useDemo";
 import {
@@ -152,6 +153,7 @@ export function MvResult() {
   // Share would build `/share?id=`, which resolves to the expired state.
   // `resolveShare` handles both live jobs and seed ids.
   const shareId = idParam ?? entry?.id ?? "";
+  const removal = removalForId(shareId);
   // DP has a separate `resultVideo.cover`; WA's equivalent is the job thumb that
   // the History entry already carries. It matters twice: as the video POSTER
   // (the frame shown before the first decoded frame) and as the blurred backdrop
@@ -374,6 +376,13 @@ export function MvResult() {
                 it appears, including `/song/result`. */}
           </div>
 
+          {/* Product owner, 2026-10-22, Figma "MV Result_Removed_L" (5374:177172):
+              a reviewer took this MV down. The notice leads the column, Share
+              and Edit MV stay as drawn, and the Publish row below is gone. */}
+          {removal && (
+            <RemovedNoticeCard title={title} thumb={poster} kind="mv" removal={removal} />
+          )}
+
           <div className="mv-result__section">
             <p className="mv-result__label">QUICK ACTIONS</p>
             <div className="mv-result__actions">
@@ -392,7 +401,7 @@ export function MvResult() {
                     History's own row menu already applies (2026-09-11,
                     YMW260903P0012) — a link that resolves to nothing shouldn't
                     be offered. */}
-                {published && (
+                {(published || removal) && (
                   <button
                     type="button"
                     className="mv-result__action"
@@ -429,35 +438,39 @@ export function MvResult() {
               </div>
             </div>
 
-            <div className="mv-result__publish">
-              <DpIcon name="ic_publish" className="mv-result__publish-icon" />
-              <div className="mv-result__publish-text">
-                <p className="mv-result__publish-title">
-                  Publish
-                  {/* Product owner, 2026-08-28, Figma "MV Result_Rejected_L"
+            {!removal && (
+              <div className="mv-result__publish">
+                <DpIcon name="ic_publish" className="mv-result__publish-icon" />
+                <div className="mv-result__publish-text">
+                  <p className="mv-result__publish-title">
+                    Publish
+                    {/* Product owner, 2026-08-28, Figma "MV Result_Rejected_L"
                       (node 3213:71460): a red "(Rejected)" suffix on the
                       title, reason in place of the state line below. The
                       "In Review" line ("MV Result_Review_L", node
                       2695:118282) is the pending phase — the toggle stays
                       OFF through it and only turns on once approved. */}
-                  {rejectReason && <span className="mv-result__publish-rejected"> (Rejected)</span>}
-                </p>
-                <p className="mv-result__publish-state">
-                  {rejectReason
-                    ? publishRejectLabel(rejectReason)
-                    : pending
-                      ? "In Review"
-                      : published
-                        ? "On"
-                        : "Off"}
-                </p>
+                    {rejectReason && (
+                      <span className="mv-result__publish-rejected"> (Rejected)</span>
+                    )}
+                  </p>
+                  <p className="mv-result__publish-state">
+                    {rejectReason
+                      ? publishRejectLabel(rejectReason)
+                      : pending
+                        ? "In Review"
+                        : published
+                          ? "On"
+                          : "Off"}
+                  </p>
+                </div>
+                <ToggleSwitch
+                  checked={published}
+                  ariaLabel="Publish to community"
+                  onChange={togglePublish}
+                />
               </div>
-              <ToggleSwitch
-                checked={published}
-                ariaLabel="Publish to community"
-                onChange={togglePublish}
-              />
-            </div>
+            )}
           </div>
 
           <div className="mv-result__section">

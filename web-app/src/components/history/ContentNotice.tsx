@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialogTransition";
@@ -149,7 +149,12 @@ export function ContentNotice({
       >
         <div className="report-dialog__header">
           <h2 className="report-dialog__title">Content Notice</h2>
-          <button type="button" className="report-dialog__close" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            className="report-dialog__close"
+            onClick={onClose}
+            aria-label="Close"
+          >
             <DpIcon name="ic_close" className="report-dialog__close-icon" />
           </button>
         </div>
@@ -164,5 +169,53 @@ export function ContentNotice({
       </div>
     </div>,
     document.body,
+  );
+}
+
+/**
+ * Figma "MV Result_Removed_L" (5374:177172) / "Song Result_Removed_L"
+ * (5374:177624): on a Result page, content a reviewer took down shows this card
+ * in place of the Publish row. Tapping it opens the same Content Notice as
+ * History's ⋯ menu. Owns its own open state, so a page only has to render it
+ * when `removal` is set.
+ */
+export function RemovedNoticeCard({
+  title,
+  thumb,
+  kind,
+  removal,
+  className,
+}: {
+  title: string;
+  thumb?: string;
+  kind: NoticeSubject["kind"];
+  removal: ContentRemoval;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const subject = useMemo<NoticeSubject | null>(
+    () => (open ? { title, thumb, kind, removal } : null),
+    [open, title, thumb, kind, removal],
+  );
+  return (
+    <>
+      <button
+        type="button"
+        className={`removed-notice-card${className ? ` ${className}` : ""}`}
+        onClick={() => setOpen(true)}
+      >
+        <span className="removed-notice-card__icon" aria-hidden="true">
+          <DpIcon name="ic_alert" className="removed-notice-card__icon-glyph" />
+        </span>
+        <span className="removed-notice-card__info">
+          <span className="removed-notice-card__title">Remove from community</span>
+          <span className="removed-notice-card__text">
+            A reviewer removed this content. Tap to see the reason.
+          </span>
+        </span>
+        <DpIcon name="ic_chevron-right" className="removed-notice-card__next" />
+      </button>
+      <ContentNotice subject={subject} onClose={() => setOpen(false)} />
+    </>
   );
 }

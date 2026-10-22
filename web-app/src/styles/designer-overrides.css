@@ -5305,6 +5305,81 @@ button:disabled {
   letter-spacing: -0.11px;
 }
 
+/* Result-page card — product owner, 2026-10-22, Figma 5374:177172 / 5374:177624.
+   Same look as the History menu notice, full width of its column, with the
+   chevron on the right. */
+.removed-notice-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-md);
+  background: var(--neutral-dark-14);
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.removed-notice-card__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 23px;
+  background: var(--white-15);
+}
+
+.removed-notice-card__icon-glyph,
+.removed-notice-card__next {
+  display: block;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.removed-notice-card__icon-glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.removed-notice-card__next {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--neutral-dark-64);
+}
+
+.removed-notice-card__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.removed-notice-card__title {
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  letter-spacing: -0.13px;
+}
+
+.removed-notice-card__text {
+  color: var(--neutral-dark-64);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  line-height: 16px;
+  letter-spacing: -0.11px;
+}
+
 /* Content Notice body — shared by the dialog and the phone page. */
 .content-notice__hero {
   display: flex;
