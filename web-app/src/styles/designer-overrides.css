@@ -4831,7 +4831,9 @@ button:disabled {
   padding: 0;
   border: none;
   background: none;
-  color: var(--neutral-dark-64);
+  /* Full white, not the 64% grey (product owner, 2026-10-24) — it is the only
+     control in the top bar's corner and was reading as disabled. */
+  color: var(--neutral-dark-100);
   cursor: pointer;
 }
 
