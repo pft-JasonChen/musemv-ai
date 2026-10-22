@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useToastTimer } from "@/components/ui/useToastTimer";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { FloatingCTA } from "@/components/ui/FloatingCTA";
@@ -132,7 +133,7 @@ export function MvRoom() {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateOption | null>(null);
   const [modeOpen, setModeOpen] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, show: showToast, hold: toastHold } = useToastTimer(2600);
   const [editingName, setEditingName] = useState<number | null>(null);
   // Product owner, 2026-09-22: "Create MV Directly" gets a 3s preparing
   // transition (blurred glass + the app's one 3-dot loading animation)
@@ -147,11 +148,6 @@ export function MvRoom() {
   useEffect(() => {
     return () => window.clearTimeout(preparingTimeoutRef.current);
   }, []);
-
-  function showToast(msg: string) {
-    setToast(msg);
-    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2600);
-  }
   const [pendingSong, setPendingSong] = useState<Song | null>(null);
   const [trimOpen, setTrimOpen] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
@@ -862,6 +858,7 @@ export function MvRoom() {
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
       {toast && (
         <div
+          {...toastHold}
           className="fixed bottom-24 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
           style={{ background: "rgba(20,20,24,.95)" }}
         >

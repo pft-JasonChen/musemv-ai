@@ -4403,6 +4403,10 @@ test("consent: the open notice is axe-clean at 1440 and 375", async ({ page }) =
   await expect(page.locator(".consent-dialog-overlay")).toHaveClass(
     /consent-dialog-overlay--visible/,
   );
+  // The class lands at the START of a 300ms opacity fade. Under load axe ran
+  // mid-fade and measured the half-transparent text as a contrast failure
+  // (Stop hook, 2026-10-22; passed 3/3 run alone). Wait for the fade to end.
+  await expect(page.locator(".consent-dialog-overlay")).toHaveCSS("opacity", "1");
 
   for (const width of [1440, 375]) {
     await page.setViewportSize({ width, height: 900 });
@@ -5289,4 +5293,58 @@ test("YMW260903P0005: My Creations -> the result screen carries the real timing"
   const seeked = await currentTime(page);
   expect(seeked).toBeGreaterThan(NEON_FIRST_CUE - 1);
   expect(seeked).toBeLessThan(NEON_FIRST_CUE + 5);
+});
+
+test("2026-10-22: the LYRICS / IDEA ( i ) opens its Supported Languages tooltip on hover", async ({
+  page,
+}) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/song/create");
+  await page.locator(".song-create__row-header .song-create__info-btn").hover();
+  await expect(page.getByRole("tooltip")).toContainText("Supported Languages");
+  await page.mouse.move(0, 0);
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+});
+
+test("2026-10-22: songLangUnsupported shows the language error, and it stays while hovered", async ({
+  page,
+}) => {
+  // Product owner: AI Song jobs failed with the backend's "invalid parameter"
+  // for unsupported-language lyrics. RD owns the detection; the front end only
+  // shows the error, reachable today through this `?demo=1` flag.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  const lyrics = page.getByRole("textbox", { name: "Lyrics" });
+  const cta = page.getByRole("button", { name: /Create Song/ });
+  const error = page.getByRole("alert").filter({ hasText: "This language isn’t supported yet." });
+
+  // Flag OFF: the front end does not judge the text, any language goes through.
+  await page.goto("/song/create");
+  await lyrics.fill("Я люблю тебя всем сердцем");
+  await cta.click();
+  await expect(page).toHaveURL(/\/song\/creating/);
+
+  await page.goto("/song/create?demo=1");
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "muse_demo",
+      JSON.stringify({ enabled: true, flags: { songLangUnsupported: true } }),
+    ),
+  );
+  await page.goto("/song/create");
+  await lyrics.fill("A plain English lyric");
+  await cta.click();
+  await expect(error).toBeVisible();
+  await expect(page).toHaveURL(/\/song\/create/); // no job started
+
+  // Hovering the toast holds it past its 4s window; the ( i ) inside shows the list.
+  await error.locator(".song-create__info-btn").hover();
+  await page.waitForTimeout(4600);
+  await expect(error).toBeVisible();
+  await expect(error.getByRole("tooltip")).toContainText("Hindi");
+  // Leaving restarts the window and it goes.
+  await page.mouse.move(0, 0);
+  await expect(error).toHaveCount(0, { timeout: 6000 });
+  await page.evaluate(() => localStorage.removeItem("muse_demo"));
 });

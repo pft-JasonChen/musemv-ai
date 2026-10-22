@@ -8,6 +8,7 @@ import { useHistory } from "@/components/providers/HistoryProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath, type Locale } from "@/lib/i18n/config";
 import { creationHref, useOpenCreation, useSeedMvFlow } from "@/components/history/useOpenCreation";
+import { useToastTimer } from "@/components/ui/useToastTimer";
 import { ShareDialog } from "@/components/ui/ShareDialog";
 import { ContentNotice, type NoticeSubject } from "@/components/history/ContentNotice";
 import type { ContentRemoval } from "@/lib/report";
@@ -201,16 +202,12 @@ export function HistoryView() {
     [noticeRow],
   );
   const [pubConfirm, setPubConfirm] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, show: showToast, hold: toastHold } = useToastTimer(2200);
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const demoEmpty = useDemoFlag("historyEmpty");
   const demoLoading = useDemoFlag("historyLoading");
   const demo = useDemoState();
 
-  function showToast(msg: string) {
-    setToast(msg);
-    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2200);
-  }
   const patch = (id: string, p: Override) => setOv((o) => ({ ...o, [id]: { ...o[id], ...p } }));
   const liked = (r: HistorySample) => ov[r.id]?.liked ?? r.liked;
   const published = (r: HistorySample) => ov[r.id]?.published ?? r.published ?? false;
@@ -576,6 +573,7 @@ export function HistoryView() {
 
         {toast && (
           <div
+            {...toastHold}
             className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
             style={{ background: "rgba(20,20,24,.95)" }}
           >

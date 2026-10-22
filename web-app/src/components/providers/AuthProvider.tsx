@@ -9,6 +9,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { DEFAULT_CREDITS, MOCK_USER, type PlanId } from "@/lib/user";
 import { authStore, hydratedStore } from "@/lib/authStore";
 import { SignInModal } from "@/components/auth/SignInModal";
+import { useToastTimer } from "@/components/ui/useToastTimer";
 import { isNewSignup, markSignupGiftSeen } from "@/lib/signupGift";
 
 interface AuthValue {
@@ -60,7 +61,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const pending = useRef<(() => void) | null>(null);
   const cancel = useRef<(() => void) | null>(null);
-  const [giftToast, setGiftToast] = useState(false);
+  // Visible window via `useToastTimer`, so hovering it holds it (2026-10-22).
+  const { toast: giftToast, show: showGiftToast, dismiss: dismissGiftToast, hold: giftHold } =
+    useToastTimer<true>(SIGNUP_GIFT_VISIBLE_MS);
   const giftTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const clearGiftTimers = useCallback(() => {
@@ -95,15 +98,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       markSignupGiftSeen();
       clearGiftTimers();
       giftTimers.current.push(
-        setTimeout(() => setGiftToast(true), SIGNUP_GIFT_DELAY_MS),
-        setTimeout(() => setGiftToast(false), SIGNUP_GIFT_DELAY_MS + SIGNUP_GIFT_VISIBLE_MS),
+        setTimeout(() => showGiftToast(true), SIGNUP_GIFT_DELAY_MS),
       );
     }
     const fn = pending.current;
     pending.current = null;
     cancel.current = null;
     fn?.();
-  }, [clearGiftTimers]);
+  }, [clearGiftTimers, showGiftToast]);
 
   const handleClose = useCallback(() => {
     setModalOpen(false);
@@ -116,11 +118,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(() => {
     authStore.set(false);
     clearGiftTimers();
-    setGiftToast(false);
+    dismissGiftToast();
     setSubscribed(false);
     setSubscribedPlan(null);
     setProfile(DEFAULT_PROFILE);
-  }, [clearGiftTimers]);
+  }, [clearGiftTimers, dismissGiftToast]);
 
   const subscribe = useCallback((plan: PlanId) => {
     setSubscribed(true);
@@ -145,7 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {giftToast && (
         <div
           role="status"
-          className="anim-toast pointer-events-none fixed bottom-24 left-1/2 z-[120] w-max max-w-[calc(100vw-32px)] rounded-full px-4 py-2 text-center text-[13px] font-semibold"
+          {...giftHold}
+          className="anim-toast fixed bottom-24 left-1/2 z-[120] w-max max-w-[calc(100vw-32px)] rounded-full px-4 py-2 text-center text-[13px] font-semibold"
           style={{ background: "var(--neutral-dark-100)", color: "var(--neutral-dark-04)" }}
         >
           🎉 Welcome! {DEFAULT_CREDITS} free credits have been added to your account.

@@ -8,6 +8,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useLocale, useT } from "@/components/providers/LocaleProvider";
 import { LOCALE_NAMES, LOCALES, localePath } from "@/lib/i18n/config";
+import { useToastTimer } from "@/components/ui/useToastTimer";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { Modal } from "@/components/ui/Modal";
@@ -112,11 +113,7 @@ export function ProfileView() {
   // cropped; `avatarDraft` is the cropped result, committed by Save.
   const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
   const avatarFileRef = useRef<HTMLInputElement>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const flash = (m: string) => {
-    setToast(m);
-    setTimeout(() => setToast(null), 1800);
-  };
+  const { toast, show: flash, hold: toastHold } = useToastTimer(1800);
   // The Figma "Popup/Toast" (`ui/Toast`), used by the User ID row. The older
   // `flash` pill above is left as-is for the rows that already use it.
   const { show: showCopyToast, toast: copyToast } = useToast();
@@ -510,6 +507,7 @@ export function ProfileView() {
 
       {toast && (
         <div
+          {...toastHold}
           className="anim-toast fixed bottom-24 left-1/2 z-[120] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold"
           style={{ background: "var(--neutral-dark-14)", color: "var(--neutral-dark-100)" }}
         >

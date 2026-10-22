@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToastTimer } from "@/components/ui/useToastTimer";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { DpIcon } from "@/components/ui/DpIcon";
@@ -87,11 +88,7 @@ export function SettingsView() {
   const { locale } = useLocale();
   const demo = useDemoState();
   const [dialog, setDialog] = useState<Dialog>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const flash = (m: string) => {
-    setToast(m);
-    setTimeout(() => setToast(null), 1800);
-  };
+  const { toast, show: flash, hold: toastHold } = useToastTimer(1800);
   const close = () => setDialog(null);
   // PROF-06 / AUTH-03: open the real legal pages in a new tab.
   const openLegal = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
@@ -261,6 +258,7 @@ export function SettingsView() {
 
       {toast && (
         <div
+          {...toastHold}
           className="anim-toast fixed bottom-24 left-1/2 z-[120] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold"
           style={{ background: "var(--neutral-dark-14)", color: "var(--neutral-dark-100)" }}
         >

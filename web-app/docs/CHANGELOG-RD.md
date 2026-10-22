@@ -23,6 +23,18 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-10-22 — **C4 UNCHANGED (internal only)** — sign-up gift toast stays while hovered
+
+**Surface: C4 — touched, not changed.** `useAuth()` keys and signatures are identical. Inside
+`AuthProvider.tsx` the gift toast's visible window now runs through the shared
+`src/components/ui/useToast.ts` (product owner: every toast stays while hovered), so the second
+hide-timer was replaced by that hook and the toast lost `pointer-events: none`. Same 3 s delay,
+same 4 s window, same copy and trigger.
+
+- **What RD must do:** nothing.
+
+---
+
 ## 2026-10-01 (b) — **C4 UNCHANGED (internal only)** — new-sign-up decision moved to `lib/signupGift.ts`; "Welcome" copy; demo switch
 
 **Surface: C4 — touched, not changed.** `useAuth()` keys and signatures are identical. Inside

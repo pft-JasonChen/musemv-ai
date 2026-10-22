@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { RoomNavbar } from "@/components/shell/RoomNavbar";
@@ -10,6 +10,8 @@ import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { ListItem } from "@/components/ui/ListItem";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
+import { useToastTimer } from "@/components/ui/useToastTimer";
+import { useDemoFlag } from "@/components/demo/useDemo";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -21,6 +23,7 @@ import { localePath } from "@/lib/i18n/config";
 import { GENRES, MOODS, VOCALS } from "@/lib/mv/mock";
 import { SONG_IDEA_PROMPTS, LYRIC_PRESETS, pickIdea } from "@/lib/mv/songIdeas";
 import { TOP_PICKS_SONGS } from "@/lib/mv/community";
+import { SUPPORTED_SONG_LANGUAGES, UNSUPPORTED_LANGUAGE_MESSAGE } from "@/lib/mv/songLanguage";
 import {
   DESCRIPTION_MAX,
   SONG_TITLE_MAX,
@@ -125,7 +128,11 @@ export function SongCompose() {
   const mySongs = useMyCreations("song");
   const showMine = mySongs.length > 0;
   const [buyOpen, setBuyOpen] = useState(false);
-  const [tipOpen, setTipOpen] = useState(false);
+  // 2026-10-22 — unsupported-language error. Stays while hovered (`useToastTimer`).
+  // The value is a counter, used as the toast's `key`: a second click while it
+  // is showing remounts it, so screen readers announce the alert again.
+  const { toast: langError, show: showLangError, hold: langErrorHold } = useToastTimer<number>(4000);
+  const demoLangUnsupported = useDemoFlag("songLangUnsupported");
   const ready = isSongReady(s);
 
   /**
@@ -152,6 +159,14 @@ export function SongCompose() {
   const cost = songCost(s.instrumental);
 
   function generate() {
+    // Unsupported-language error (2026-10-22). RD owns the detection, so the
+    // front end does not inspect the text: only the `?demo=1` flag reaches
+    // this today. RD replaces the flag with its own answer. It runs before
+    // sign-in and credits because it is about what was typed.
+    if (demoLangUnsupported) {
+      showLangError((langError ?? 0) + 1);
+      return;
+    }
     // GL-02: this screen is open to guests (the route lost its AuthGuard on
     // 2026-08-12), so "Create Song" is where the sign-in gate lives — same
     // shape as `MvRoom`'s "Create Music Video". The credit check runs INSIDE
@@ -296,24 +311,7 @@ export function SongCompose() {
                       file's own comments, which had said DP calls it
                       "LYRICS / IDEA" all along. */}
                   <p className="song-create__label">LYRICS / IDEA</p>
-                  <button
-                    type="button"
-                    className="song-create__info-btn"
-                    onClick={() => setTipOpen((open) => !open)}
-                    aria-label="Supported languages"
-                    aria-expanded={tipOpen}
-                  >
-                    <DpIcon name="ic_info" className="song-create__info-icon" />
-                  </button>
-                  {tipOpen && (
-                    <div className="song-create__tooltip">
-                      <p className="song-create__tooltip-title">Supported Languages</p>
-                      <p className="song-create__tooltip-body">
-                        English, Japanese, German, Portuguese, Italian, French, Spanish, Turkish,
-                        Chinese, Korean, and Hindi
-                      </p>
-                    </div>
-                  )}
+                  <SupportedLanguagesInfo />
                 </div>
                 <ToggleSwitch
                   label="Instrumental"
@@ -614,6 +612,105 @@ export function SongCompose() {
       </div>
 
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
+
+      {langError && (
+        <div
+          key={langError}
+          role="alert"
+          {...langErrorHold}
+          className="fixed bottom-24 left-1/2 z-[60] w-max max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
+          style={{ background: "rgba(20,20,24,.95)" }}
+        >
+          {UNSUPPORTED_LANGUAGE_MESSAGE} See supported languages
+          <SupportedLanguagesInfo above />
+        </div>
+      )}
     </>
+  );
+}
+
+/**
+ * The `( i )` + "Supported Languages" tooltip, used beside LYRICS / IDEA and
+ * inside the unsupported-language error. Hover (or focus) shows it; a tap pins
+ * it open, so it still works on touch screens with no hover. Escape closes it
+ * (WCAG 1.4.13), and the 8px gap to the card is bridged in
+ * `designer-overrides.css` so the pointer can move onto it.
+ *
+ * Inside the toast it opens directly ABOVE the ( i ), centred on it, and is
+ * nudged back on-screen near an edge (`--above`, same file).
+ */
+function SupportedLanguagesInfo({ above = false }: { above?: boolean }) {
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const open = hovered || pinned;
+  const tipId = useId();
+  const tipRef = useRef<HTMLDivElement>(null);
+
+  // `--above` centres the card on the ( i ). Near a screen edge (the icon sits
+  // at the left of a wrapped toast on a phone, or the right end on desktop)
+  // that would cut it off, so shift it back inside a 16px gutter. Measured
+  // after layout, before paint, so it never flashes at the wrong place.
+  useLayoutEffect(() => {
+    const el = tipRef.current;
+    if (!open || !above || !el) return;
+    el.style.removeProperty("--tip-shift");
+    const { left, right } = el.getBoundingClientRect();
+    const gutter = 16;
+    const shift =
+      left < gutter
+        ? gutter - left
+        : right > window.innerWidth - gutter
+          ? window.innerWidth - gutter - right
+          : 0;
+    if (shift) el.style.setProperty("--tip-shift", `${shift}px`);
+  }, [open, above]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setHovered(false);
+      setPinned(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <span
+      // Beside the label the tooltip anchors to the whole label group (left
+      // edge of "LYRICS / IDEA", as designed), so this wrapper takes no box
+      // there. Inside the toast the wrapper IS the anchor, sitting inline after
+      // the text so it follows the last word when the message wraps.
+      className={above ? "song-create__info-inline" : "song-create__info-contents"}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <button
+        type="button"
+        className="song-create__info-btn"
+        onClick={() => setPinned((p) => !p)}
+        onFocus={() => setHovered(true)}
+        onBlur={() => {
+          setHovered(false);
+          setPinned(false);
+        }}
+        aria-label="Supported languages"
+        aria-describedby={open ? tipId : undefined}
+      >
+        <DpIcon name="ic_info" className="song-create__info-icon" />
+      </button>
+      {open && (
+        <div
+          ref={tipRef}
+          id={tipId}
+          role="tooltip"
+          className={`song-create__tooltip${above ? " song-create__tooltip--above" : ""}`}
+        >
+          <p className="song-create__tooltip-title">Supported Languages</p>
+          <p className="song-create__tooltip-body">{SUPPORTED_SONG_LANGUAGES}</p>
+        </div>
+      )}
+    </span>
   );
 }

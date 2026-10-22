@@ -119,6 +119,12 @@ export const DEMO_FLAGS = [
     hint: "/faq — forces the empty result state whatever is typed",
     status: "live" as FlagStatus,
   },
+  {
+    key: "songLangUnsupported",
+    label: "AI Song — unsupported language",
+    hint: "/song/create — Create Song shows the language error whatever is typed (RD owns the real detection)",
+    status: "live" as FlagStatus,
+  },
 ] as const satisfies readonly {
   key: string;
   label: string;

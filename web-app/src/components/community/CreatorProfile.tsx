@@ -10,6 +10,7 @@ import { localePath } from "@/lib/i18n/config";
 import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { Tabs } from "@/components/shell/RoomNavbar";
 import { useSeedMvFlow } from "@/components/history/useOpenCreation";
+import { useToastTimer } from "@/components/ui/useToastTimer";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { IconButton } from "@/components/ui/IconButton";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
@@ -301,7 +302,7 @@ export function CreatorProfile() {
   const [removed, setRemoved] = useState<ReadonlySet<string>>(() => new Set());
   const [share, setShare] = useState<ProfileItem | null>(null);
   const [del, setDel] = useState<ProfileItem | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const { toast, show: showToast, hold: toastHold } = useToastTimer(2200);
   const creator = DEFAULT_CREATOR;
   const name = self ? MOCK_USER.name : creator.name;
   // Only your own items are yours to edit, publish or delete — DP gates the menu
@@ -311,11 +312,6 @@ export function CreatorProfile() {
   // constants and can never be empty for real, so the flag is the only way
   // to reach this state. Last render-time branch, per `demoStore.ts`.
   const demoEmpty = useDemoFlag("profileEmpty");
-
-  function showToast(msg: string) {
-    setToast(msg);
-    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2200);
-  }
 
   const items = useMemo<ProfileItem[]>(() => {
     const rows: ProfileItem[] =
@@ -601,6 +597,7 @@ export function CreatorProfile() {
 
       {toast && (
         <div
+          {...toastHold}
           className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full px-4 py-2 text-[13px] font-semibold text-white shadow-lg"
           style={{ background: "rgba(20,20,24,.95)" }}
         >

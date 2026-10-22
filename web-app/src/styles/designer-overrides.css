@@ -6498,3 +6498,46 @@ button:disabled {
 .effects-dialog__thumb:disabled {
   cursor: default;
 }
+
+/* 2026-10-22 — AI Song's Supported Languages ( i ), now opened on hover and
+   also shown inside the unsupported-language toast (SongCompose.tsx).
+   · `__info-contents` — beside the label the wrapper takes no box, so DP's
+     tooltip still anchors to `.song-create__label-group` as designed.
+   · `__info-inline` — inside the toast the ( i ) follows the last word.
+   · `::before` bridges DP's 8px gap so the pointer can cross onto the card
+     without the hover closing it (WCAG 1.4.13).
+   · `--above` — in the toast it opens directly above the ( i ), centred on
+     it (product owner: "show it right where I hovered"); `__info-inline` is
+     its anchor. SongCompose nudges it sideways if that would leave the
+     screen. DP only knows "below, left-aligned". */
+.song-create__info-contents {
+  display: contents;
+}
+
+.song-create__info-inline {
+  position: relative;
+  display: inline-flex;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.song-create__tooltip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -9px;
+  height: 9px;
+}
+
+.song-create__tooltip--above {
+  top: auto;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(calc(-50% + var(--tip-shift, 0px)));
+}
+
+.song-create__tooltip--above::before {
+  top: auto;
+  bottom: -9px;
+}
