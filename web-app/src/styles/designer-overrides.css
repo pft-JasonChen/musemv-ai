@@ -5788,7 +5788,41 @@ button:disabled {
    The dialog reuses the Report dialog's `.report-*` shell.
    ========================================================================= */
 
-/* Entry button — Figma "Edit MV_L" (1351:28314) "Edit Title & Subtitle Effects": a
+/* Entry group — Figma "Edit MV_L" (1351:28314): a "Title & Subtitles" heading and one
+   line of description (8px above and below, 2px apart) over the button. */
+.mv-edit__effects-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mv-edit__effects-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+}
+
+.mv-edit__effects-heading {
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  line-height: 22px;
+  letter-spacing: -0.17px;
+}
+
+.mv-edit__effects-desc {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
+}
+
+/* Entry button — Figma "Edit MV_L" (1351:28314) "Edit Text Effects": a
    full-width dark pill between the cover and MV TITLE. */
 .mv-edit__effects-btn {
   width: 100%;
@@ -5829,7 +5863,7 @@ button:disabled {
    leads the title group: it takes MV TITLE's slot and wins the tie by coming
    first in the DOM. */
 @media (max-width: 767px) {
-  .mv-edit__effects-btn {
+  .mv-edit__effects-group {
     order: 3;
   }
 }
@@ -6290,7 +6324,7 @@ button:disabled {
     order: 1;
   }
 
-  .mv-edit__effects-btn {
+  .mv-edit__effects-group {
     order: 2;
   }
 

@@ -713,18 +713,28 @@ export function MvEditor() {
             </div>
           </div>
 
-          {/* Product owner, 2026-10-23, Figma "Edit MV_L" (1351:28314): ONE full-width
-              button for the title effect and the subtitle style, between the cover
-              and MV TITLE. (An earlier list-row version of this entry was judged
-              not intuitive and replaced by Figma's own.) */}
-          <button
-            type="button"
-            className="mv-edit__effects-btn"
-            onClick={() => setEffectsOpen(true)}
-            aria-haspopup="dialog"
-          >
-            Edit Title &amp; Subtitle Effects
-          </button>
+          {/* Product owner, 2026-10-23 / 10-22, Figma "Edit MV_L" (1351:28314): ONE
+              entry for the title effect and the subtitle style — a "Title &
+              Subtitles" heading with a one-line description over a full-width
+              "Edit Text Effects" button, between the cover and MV TITLE. (An
+              earlier list-row version was judged not intuitive and replaced by
+              Figma's own.) Grouped in one box so phones/tablets order it as one. */}
+          <div className="mv-edit__effects-group">
+            <div className="mv-edit__effects-copy">
+              <p className="mv-edit__effects-heading">Title &amp; Subtitles</p>
+              <p className="mv-edit__effects-desc">
+                Edit the text shown in your MV and style it your way.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="mv-edit__effects-btn"
+              onClick={() => setEffectsOpen(true)}
+              aria-haspopup="dialog"
+            >
+              Edit Text Effects
+            </button>
+          </div>
 
           <div className="mv-edit__section mv-edit__section--title">
             {/* The ON/OFF switch is WA-only — `settings.title.on` is a contract
