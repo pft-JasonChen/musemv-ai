@@ -25,6 +25,32 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-10-22 — AI Song unsupported-language error; Supported Languages tooltip on hover; toasts hold on hover
+
+Product owner decisions, no bug code. Backend "invalid parameter" errors on AI Song traced to lyrics in
+a language the song model does not take.
+
+| What | Spec IDs | Code | Test |
+| --- | --- | --- | --- |
+| Create Song with lyrics/idea in an unsupported language → toast "This language isn't supported yet. See supported languages ( i )"; no job, sign-in or IAP. **RD implements the detection** — a front-end check was built and removed the same day; the prototype reaches the state only via the `?demo=1` switch `songLangUnsupported` | area 03 **SONG-E5**, **AC-SONG-22** · S1 **P8-S1**, **P8-E2** | `components/song/SongCompose.tsx`, `lib/mv/songLanguage.ts`, `lib/demoStore.ts` | `e2e/behaviour-regressions.spec.ts` → `2026-10-22: songLangUnsupported …` |
+| The LYRICS / IDEA ( i ) opens on hover/focus as well as tap, closes on Escape; inside the error toast it opens directly above itself | area 03 **AC-SONG-22** · S1 **P2-S2** | `SongCompose.tsx` (`SupportedLanguagesInfo`), `styles/designer-overrides.css` | `2026-10-22: the LYRICS / IDEA ( i ) …` |
+| Every toast still hides itself after a few seconds, but not while hovered or focused | S1 **P8-E2** (limits) | `components/ui/useToastTimer.ts`, adopted by every toast incl. `ui/Toast` | the `songLangUnsupported` case above (hover hold) |
+
+**ID correction.** The first commit of this change (`ffe66f0`) numbered the new criterion **AC-SONG-20** and,
+in doing so, **overwrote the existing AC-SONG-20** (2026-09-21, `YMW260911P0004`, the side-rail skeleton —
+see the 2026-09-21 entry below). The skeleton criterion is restored verbatim and the new one is **AC-SONG-22**.
+
+**Toast restyle (2026-10-24, designer, `2dd942f`).** Every toast now uses the Figma "Popup/Toast" (`.popup-toast`);
+this error takes the red-bordered error variant. On `/song/create` it then sat directly on the floating Create
+Song button at desktop widths and took its clicks, so (product owner, 2026-10-24) it now opens 12px above the
+button whenever its usual 60px spot would overlap it — measured at open, because the button floats only when
+the page scrolls. Area 03 **AC-SONG-22**, S1 **P8-E2**; code `SongCompose.tsx` (`bottomAboveCta`); test: the
+`songLangUnsupported` case asserts no overlap at 1024×768 (mutation-tested both ways). S1's shot 34 re-captured.
+
+Storyboards: **S1 → v5** (new P8, P2-S2 rewritten; only shots 18, 33, 34 captured — `capture_screenshots.py --only-v5`, the other 31 are v4's). Contract: none (C4 touched, not changed — `../docs/CHANGELOG-RD.md` 2026-10-22).
+
+---
+
 ## 2026-10-08 — MV Title ≤40 and Author ≤35 characters
 
 ### `YMW261006P0001`: no length cap on Title / Author (a ~1M-char title failed the real job)

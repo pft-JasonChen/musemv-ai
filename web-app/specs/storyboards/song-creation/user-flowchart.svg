@@ -3,8 +3,8 @@
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
 <rect width="1100" height="1100" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">AI Song Creation &#8212; User Flowchart</text>
-<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v4, 2026-09-09</text>
-<text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; green = success / resolved &#183; red = error state</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1440 &#183; matches spec v5, 2026-10-24</text>
+<text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; red = error state &#183; green = success / resolved</text>
 
 <g transform="translate(0,80)">
 <text x="40" y="65" font-size="12" fill="#5a6b78">Simple and Custom converge at Create Song; the generation, result and History screens are shared (drawn once).</text>
@@ -42,6 +42,12 @@
 <text x="890" y="382" font-size="11" fill="#5a6b78" text-anchor="middle">guest</text>
 <path d="M640 442.5 L720 442.5 L720 515 L800 515" fill="none" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
 <text x="890" y="482" font-size="11" fill="#5a6b78" text-anchor="middle">insufficient credits</text>
+<rect x="120" y="430" width="180" height="65" rx="8" fill="#fdecec" stroke="#e08a8a" stroke-width="1.5"/>
+<text x="210" y="450" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Unsupported language</text>
+<text x="210" y="468" font-size="12" fill="#5a6b78" text-anchor="middle">Error toast, no job &#183; P8-S1 &#8594;</text>
+<text x="210" y="483" font-size="12" fill="#5a6b78" text-anchor="middle">P8-E2</text>
+<path d="M460 442.5 L380 442.5 L380 462.5 L300 462.5" fill="none" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="210" y="422" font-size="11" fill="#5a6b78" text-anchor="middle">demo switch / RD</text>
 <rect x="30" y="300" width="180" height="65" rx="8" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5" stroke-dasharray="5 4"/>
 <text x="120" y="320" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Side rail</text>
 <text x="120" y="338" font-size="12" fill="#5a6b78" text-anchor="middle">Trending Songs, or My</text>

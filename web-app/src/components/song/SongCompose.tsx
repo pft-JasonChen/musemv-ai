@@ -137,6 +137,7 @@ export function SongCompose() {
     hold: langErrorHold,
   } = useToastTimer<number>(4000);
   const demoLangUnsupported = useDemoFlag("songLangUnsupported");
+  const [langErrorBottom, setLangErrorBottom] = useState<number | undefined>();
   const ready = isSongReady(s);
 
   /**
@@ -168,6 +169,7 @@ export function SongCompose() {
     // this today. RD replaces the flag with its own answer. It runs before
     // sign-in and credits because it is about what was typed.
     if (demoLangUnsupported) {
+      setLangErrorBottom(bottomAboveCta());
       showLangError((langError ?? 0) + 1);
       return;
     }
@@ -623,6 +625,7 @@ export function SongCompose() {
           role="alert"
           {...langErrorHold}
           className="popup-toast popup-toast--error"
+          style={langErrorBottom ? { bottom: langErrorBottom } : undefined}
         >
           {UNSUPPORTED_LANGUAGE_MESSAGE} See supported{" "}
           <span className="popup-toast__nowrap">
@@ -633,6 +636,36 @@ export function SongCompose() {
       )}
     </>
   );
+}
+
+/** `.popup-toast`'s shared offset from the bottom edge (designer-overrides.css). */
+const TOAST_BOTTOM = 60;
+const TOAST_CTA_GAP = 12;
+/** Tallest the toast gets: two lines when it wraps on a phone (measured 70px). */
+const TOAST_MAX_HEIGHT = 80;
+
+/**
+ * Where the language-error toast must sit to clear Create Song, or undefined
+ * for the shared 60px. Product owner, 2026-10-24: at desktop widths the toast
+ * landed directly ON the button and took its clicks. The button has no fixed
+ * height — `FloatingCTA adaptive` floats it only when the page scrolls,
+ * otherwise it is the panel's last row (measured: 60–106px up when floating at
+ * 1403×697, 92–138px up inline at 1440×900) — so it is measured, not assumed.
+ * Read once, in the click handler: the button does not move while the 4s toast
+ * is up unless the user scrolls.
+ */
+function bottomAboveCta(): number | undefined {
+  // `FloatingCTA` also renders a hidden measuring copy of the button.
+  const cta = Array.from(document.querySelectorAll<HTMLElement>(".song-create__cta")).find(
+    (el) => getComputedStyle(el).visibility !== "hidden",
+  );
+  if (!cta) return undefined;
+  const { top, bottom } = cta.getBoundingClientRect();
+  if (bottom <= 0 || top >= window.innerHeight) return undefined; // off-screen
+  // Higher up the page than the toast's usual spot — no collision, no move.
+  if (bottom < window.innerHeight - TOAST_BOTTOM - TOAST_MAX_HEIGHT) return undefined;
+  const clear = Math.ceil(window.innerHeight - top + TOAST_CTA_GAP);
+  return clear > TOAST_BOTTOM ? clear : undefined;
 }
 
 /**

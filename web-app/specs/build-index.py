@@ -75,8 +75,8 @@ ROWS = [
 CHANGELOG_SLUGS = {"mv-creation", "history", "mv-edit", "explore-community", "song-creation"}
 
 STORYBOARDS = [
-    ("S1", "song-creation", "AI Song Creation", "v4 · 2026-09-09",
-     "/song/create · /song/creating · /song/result", "7 paths / 32 shots"),
+    ("S1", "song-creation", "AI Song Creation", "v5 · 2026-10-24",
+     "/song/create · /song/creating · /song/result", "8 paths / 34 shots"),
     ("S2", "mv-creation", "AI Music Video Creation", "v7 · 2026-09-23",
      "/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result", "8 paths / 43 shots"),
     ("S3", "mv-edit", "MV Edit", "v3 · 2026-09-29",

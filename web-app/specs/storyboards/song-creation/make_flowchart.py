@@ -20,8 +20,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v3'
-DATE = '2026-09-02'
+VERSION = 'v5'
+DATE = '2026-10-24'
 
 f = Flow('AI Song Creation', 'YouCam Muse Web — desktop 1440',
           version=VERSION, date=DATE, width=1100)
@@ -48,6 +48,12 @@ guest = f.node(S + 340, 390, 'No active session', 'Sign-in gate opens · P4-S1 �
 low_balance = f.node(S + 340, 490, 'Balance below cost', 'Buy-credits IAP · P5-S1', kind='aside')
 f.elbow(create, guest, 'guest', kind='deferred', out='right', into='left', gap=90)
 f.elbow(create, low_balance, 'insufficient credits', kind='deferred', out='right', into='left', gap=90)
+
+# v5 — refused before the two gates above, so it hangs off the same node, on
+# the left where this chart puts errors. RD decides "unsupported"; the
+# prototype raises it only through the demo switch.
+lang = f.node(S - 340, 430, 'Unsupported language', 'Error toast, no job · P8-S1 → P8-E2', kind='error')
+f.elbow(create, lang, 'demo switch / RD', kind='error', out='left', into='right', gap=90)
 
 # The side rail is an annotation on BOTH compose screens, so it is drawn as a
 # dashed aside rather than a floating paragraph: at 880px wide, the paragraph

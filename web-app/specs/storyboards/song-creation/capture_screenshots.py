@@ -35,8 +35,15 @@ ONE DEVIATION FROM THE SHARED HARNESS
 
 USAGE
     npm run dev                        # in another terminal
-    python3 capture_screenshots.py [--base http://localhost:3000]
+    python3 capture_screenshots.py [--base http://localhost:3000] [--only-v5]
     python3 build_spec.py
+
+--only-v5 (2026-10-22)
+    Captures ONLY the three shots v5 changed: 18 (the tooltip, now opened by
+    hover) and the new 33/34 (unsupported-language error, P8). A full run also
+    re-shoots 29 others that v5 did not touch, and its `CUSTOM_TAB` selector
+    predates YMW260910P0021 (Custom became the FIRST tab on 2026-09-11), so it
+    would now click Simple. Fix that selector before the next full recapture.
 
 VIEWPORT
     1403x697 — matches the screenshots already committed. Changing it silently
@@ -70,6 +77,9 @@ SIMPLE_IDEA = (
     "Modern J-Pop, racing through a bright city at dawn, fast driving pop rhythm, "
     "bittersweet cinematic energy"
 )
+# P8: a Russian lyric. The front end does not judge it (RD owns detection) —
+# the demo flag is what raises the error; the text just makes the scenario read.
+UNSUPPORTED_LYRICS = "Я люблю тебя всем сердцем\nНочь уходит, а ты со мной"
 FAIL_IDEA = "A glitchy synthwave night drive that falls apart halfway through [fail]"
 LYRICS = """[Verse]
 Headlights cutting through the dark
@@ -134,7 +144,7 @@ class NextCapture(Capture):
         return await super().__aexit__(*a)
 
 
-async def main(base):
+async def main(base, only_v5=False):
     async with NextCapture(HERE, base) as cap:
         page = cap.page
 
@@ -180,6 +190,50 @@ async def main(base):
                         f"{name}: focus box {got} is outside its own "
                         f"screenshot — the frame would miss the control")
 
+        async def shoot_tooltip():
+            # v5: the ( i ) opens on HOVER (2026-10-22), so the shot hovers
+            # rather than clicks — a click now pins it, which looks the same
+            # but is not the interaction the step describes.
+            await page.hover(INFO_BTN)
+            await page.wait_for_selector(TOOLTIP, state="visible")
+            await shoot("18_custom_supported_languages.png", [INFO_BTN, TOOLTIP],
+                        "Supported languages", kind="info")
+
+        if only_v5:
+            # P2-S2 — Custom is the default tab since 2026-09-11.
+            await go("/song/create")
+            await shoot_tooltip()
+
+            # P8 — unsupported language. RD owns the detection; the prototype
+            # reaches the state only through the demo flag. `enabled: false`
+            # keeps the demo panel itself out of the shot — the flag still
+            # applies (`useDemoFlag` reads `flags`, not `enabled`).
+            await page.evaluate(
+                "localStorage.setItem('muse_demo', JSON.stringify("
+                "{enabled: false, flags: {songLangUnsupported: true}}))")
+            await go("/song/create")
+            await page.fill(BOX, UNSUPPORTED_LYRICS)
+            await shoot("33_unsupported_lang_create_song.png", [CTA], "Create Song")
+
+            await page.click(CTA)
+            # Not bare `[role=alert]`: Next.js's route announcer is one too.
+            alert = "[role=alert]:has(.song-create__info-btn)"
+            await page.wait_for_selector(alert, state="visible")
+            # `.popup-toast` (2026-10-24 restyle) slides up over 0.26s; never
+            # photograph it mid-animation.
+            await page.wait_for_function(
+                "s => document.querySelector(s).getAnimations()"
+                ".every(a => a.playState === 'finished')",
+                arg=alert, timeout=5000)
+            await page.hover(f"{alert} {INFO_BTN}")
+            await page.wait_for_selector(f"{alert} {TOOLTIP}", state="visible")
+            await shoot("34_unsupported_lang_toast.png",
+                        [alert, f"{alert} {TOOLTIP}"],
+                        "Unsupported language", kind="info")
+            await page.evaluate("localStorage.removeItem('muse_demo')")
+            print("console errors:", cap.errors or "none")
+            return
+
         # ── P1 · Simple ──────────────────────────────────────────────────────
         await go("/song/create")
         await page.fill(BOX, SIMPLE_IDEA)
@@ -192,10 +246,7 @@ async def main(base):
         await shoot("06_custom_empty.png", [CUSTOM_TAB], "Custom tab")
 
         # ── P2-S2 · Supported languages popover (amber info frame) ───────────
-        await page.click(INFO_BTN)
-        await page.wait_for_selector(TOOLTIP, state="visible")
-        await shoot("18_custom_supported_languages.png", [INFO_BTN, TOOLTIP],
-                    "Supported languages", kind="info")
+        await shoot_tooltip()
 
         # ── P2-S3 · Instrumental ON with an empty box ────────────────────────
         await custom()
@@ -263,4 +314,6 @@ async def main(base):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://localhost:3000")
-    asyncio.run(main(ap.parse_args().base))
+    ap.add_argument("--only-v5", action="store_true")
+    args = ap.parse_args()
+    asyncio.run(main(args.base, args.only_v5))

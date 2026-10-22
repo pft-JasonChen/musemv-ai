@@ -5338,6 +5338,25 @@ test("2026-10-22: songLangUnsupported shows the language error, and it stays whi
   await expect(error).toBeVisible();
   await expect(page).toHaveURL(/\/song\/create/); // no job started
 
+  // 2026-10-24: the toast must not sit on the Create Song button (it did at
+  // desktop widths after the `.popup-toast` restyle, and took its clicks).
+  // Measured at 1024x768 because the button only FLOATS when the page has to
+  // scroll; at this test's 1440x950 it is inline, well above the toast, and a
+  // check here would pass with or without the fix.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await cta.click(); // re-measured on every click
+  // It slides up 12px on entry — the same as the gap — so measure it settled.
+  await error.evaluate((el) =>
+    Promise.all(el.getAnimations().map((a) => a.finished)).then(() => undefined),
+  );
+  const toastBox = await error.boundingBox();
+  const ctaBox = await page.locator(".song-create__cta:visible").boundingBox();
+  expect(toastBox && ctaBox, "toast and CTA both rendered").toBeTruthy();
+  const overlaps =
+    toastBox!.y < ctaBox!.y + ctaBox!.height && ctaBox!.y < toastBox!.y + toastBox!.height;
+  expect(overlaps, "toast must not cover the Create Song button").toBe(false);
+  await page.setViewportSize({ width: 1440, height: 950 });
+
   // Hovering the toast holds it past its 4s window; the ( i ) inside shows the list.
   await error.locator(".song-create__info-btn").hover();
   await page.waitForTimeout(4600);

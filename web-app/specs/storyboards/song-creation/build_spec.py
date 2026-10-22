@@ -119,8 +119,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Song Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Song',
-    'author': 'Jason Chen', 'date': '2026-09-09', 'status': 'Draft',
-    'version': 'v4',
+    'author': 'Jason Chen', 'date': '2026-10-24', 'status': 'Draft',
+    'version': 'v5',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -142,7 +142,7 @@ cfg = {
     'overview': [
         ['Platform', 'YouCam Muse Web (desktop) &mdash; captured at 1440px'],
         ['Audience', 'QA'],
-        ['Scope', 'Simple compose, Custom compose, a generation-failure path, and the full set of /song/result controls (P7) &mdash; plus three independent single-screen scenarios: guest sign-in gate (P4), insufficient credits (P5), and the Trending/My Creations side-rail swap (P6).'],
+        ['Scope', 'Simple compose, Custom compose, a generation-failure path, and the full set of /song/result controls (P7) &mdash; plus four independent short scenarios: guest sign-in gate (P4), insufficient credits (P5), the Trending/My Creations side-rail swap (P6), and the unsupported-language error (P8, v5).'],
         ['Out of scope', 'History&rsquo;s own behavior (filters, &ctdot; menu, publish, delete) &mdash; see specs/areas/05-history.md'],
         ['Source', 'specs/areas/03-song-creation.md, specs/areas/05-history.md, specs/00-overview.md, and the running app'],
     ],
@@ -150,7 +150,7 @@ cfg = {
     'short_nav': [
         'Simple compose (happy path)', 'Custom compose + Lyrics (happy path)', 'Generation failure',
         'Guest sign-in gate', 'Insufficient credits', 'Trending Songs vs My Creations',
-        'Result screen — remaining controls',
+        'Result screen — remaining controls', 'Unsupported language',
     ],
 
     # ── the spine: user paths ────────────────────────────────────────────────
@@ -287,14 +287,20 @@ cfg = {
                     'focus': [{'box': [26.46, 11.11, 5.63, 3.78], 'type': 'action', 'label': 'Custom tab'}],
                 },
                 {
-                    'shot': '18_custom_supported_languages.png', 'num': 2,
-                    'user': 'Taps the &ldquo;i&rdquo; icon beside LYRICS / IDEA.',
-                    'system': 'A popover lists the languages lyric generation supports.',
+                    'shot': '18_custom_supported_languages.png', 'num': 2, 'since': 'v5',
+                    'user': 'Hovers (or, on a touch screen, taps) the &ldquo;i&rdquo; icon beside LYRICS / IDEA.',
+                    'system': 'A tooltip lists the languages lyric generation supports, left-aligned under the label.',
                     'exact': [
                         'Title: &ldquo;Supported Languages&rdquo;',
                         'Body: &ldquo;English, Japanese, German, Portuguese, Italian, French, Spanish, Turkish, Chinese, Korean, and Hindi&rdquo;',
                     ],
-                    'limits': ['The popover only toggles on the icon&rsquo;s own click &mdash; it does not auto-close on an outside click.'],
+                    'limits': [
+                        ('Changed in v5 (2026-10-22, product owner): it opens on HOVER, not only on click. Hover or keyboard focus shows it; moving away hides it.',
+                         'Until v5 it toggled only on the icon&rsquo;s own click.'),
+                        'A tap/click pins it open, so it works without hover; it closes on Escape, or when focus leaves the icon.',
+                        'The pointer can move from the icon onto the tooltip without it closing (WCAG 1.4.13).',
+                        'The same tooltip opens from the ( i ) inside the unsupported-language error (P8-E2).',
+                    ],
                     'focus': [{'box': [24.79, 18.0, 1.25, 1.67], 'type': 'action', 'label': 'Supported languages'}],
                 },
                 {
@@ -612,6 +618,48 @@ cfg = {
                 },
             ],
         },
+        {
+            'id': 'p8-unsupported-language', 'num': 8, 'since': 'v5',
+            'name': 'Unsupported language',
+            'desc': ('The lyrics or idea are in a language the song model does not take. <b>RD owns the detection</b> '
+                     '(product owner, 2026-10-22) &mdash; the front end never inspects the text &mdash; so in this '
+                     'prototype the state is reached only through the <code>?demo=1</code> panel switch '
+                     '&ldquo;AI Song &mdash; unsupported language&rdquo; (<code>songLangUnsupported</code>).'),
+            'entry': '/song/create with the demo switch ON', 'outcome': 'Error toast; no generation starts',
+            'steps': [
+                {
+                    'shot': '33_unsupported_lang_create_song.png', 'num': 1,
+                    'user': 'Types lyrics (shown: Russian, which is not supported) and taps Create Song.',
+                    'system': 'With the switch ON, Create Song is refused whatever was typed.',
+                    'limits': [
+                        ('The switch, not the text, raises the error: with it OFF, these same Russian lyrics generate normally.',
+                         'RD replaces the switch with its own answer (AC-SONG-22).'),
+                        'Checked BEFORE the sign-in gate (P4) and the credit gate (P5): it is about what was typed, so a guest is not asked to sign in first.',
+                    ],
+                    'focus': [{'box': [35.9, 84.8, 16.4, 6.6], 'type': 'action', 'label': 'Create Song'}],
+                },
+                {
+                    'shot': '34_unsupported_lang_toast.png', 'num': 2, 'role': 'error',
+                    'user': 'Hovers the ( i ) at the end of the error.',
+                    'system': ('A toast reports the language is not supported; no job starts, nothing is charged, the screen does '
+                               'not change. The ( i ) opens the Supported Languages tooltip directly above itself.'),
+                    'exact': [
+                        'Toast: &ldquo;This language isn&rsquo;t supported yet. See supported languages ( i )&rdquo;',
+                        'Tooltip: the P2-S2 list, unchanged',
+                    ],
+                    'limits': [
+                        'The toast hides itself after ~4 s, but NOT while the pointer is on it or focus is inside it; leaving restarts the full 4 s. (Since 2026-10-22 every toast in the app behaves this way.)',
+                        'Tapping Create Song again while it shows re-announces it to screen readers.',
+                        ('Figma &ldquo;Popup/Toast&rdquo;, Common / error variant: dark 80% pill with a <b>red</b> 40% border, 60px above the bottom edge, slides up on entry (2026-10-24 restyle).',
+                         'Since that restyle every toast in the app uses this one component; success and neutral toasts keep the purple border.'),
+                        'On a phone the message wraps to two lines; &ldquo;languages ( i )&rdquo; is kept together so the icon never wraps alone, and the tooltip shifts sideways to stay inside a 16px gutter.',
+                        ('It always clears the Create Song button: it opens 12px above the button whenever its usual spot (60px up) would overlap it, and keeps the usual spot otherwise (product owner, 2026-10-24).',
+                         'The button floats only when the page scrolls and is otherwise the panel&rsquo;s last row, so its height varies; the position is measured when the toast opens. Before this fix the restyled toast sat directly ON the button at desktop widths and took its clicks.'),
+                    ],
+                    'focus': [{'box': [34.8, 62.7, 37.2, 20.4], 'type': 'info', 'label': 'Unsupported language'}],
+                },
+            ],
+        },
     ],
 
     # ── reference sections ───────────────────────────────────────────────────
@@ -654,6 +702,13 @@ cfg = {
             'Compose again from /song/create; nothing to retry, since the job that would have generated the missing state existed only in memory',
             'N/A &mdash; a reload this deep never reaches a charge in the first place',
         ),
+        (
+            'Unsupported language (new in v5)',
+            'Lyrics/idea in a language the song model does not take &mdash; RD decides; the prototype reaches it only via the demo switch <code>songLangUnsupported</code> (P8)',
+            'Toast: &ldquo;This language isn&rsquo;t supported yet. See supported languages ( i )&rdquo;; the ( i ) lists the supported languages',
+            'Rewrite in a supported language and tap Create Song again',
+            'N/A &mdash; never charged, refused before generation starts',
+        ),
     ],
     'errors_note': (
         'Production trigger for a real generation failure is undefined &mdash; the &ldquo;[fail]&rdquo; marker is a '
@@ -691,6 +746,7 @@ cfg = {
         ('AC-SONG-01b', 'Logged-out users see the full compose screen with no sign-in modal; the modal opens only on Create Song, and the insufficient-credit upsell never shows to a guest.', ['P4-S1', 'P4-S2']),
         ('GL-01', 'When credits are below the generation cost, the CTA routes to the buy-credits IAP instead of starting generation.', ['P5-S1']),
         ('SONG-P1-S0', 'The compose side rail shows Trending Songs to a signed-out visitor and My Creations to a signed-in user, over their own finished songs (live session jobs merged with the seeded creations /history shows). Corrected 2026-09-09, YMW260902P0013 / AC-SONG-19.', ['P6-S1']),
+        ('AC-SONG-22', 'When the lyrics/idea are in an unsupported language, Create Song starts no job, sign-in or IAP and shows the unsupported-language toast; the LYRICS / IDEA ( i ) opens on hover as well as tap. Detection is RD&rsquo;s; the prototype shows it via the demo switch.', ['P2-S2', 'P8-S1', 'P8-E2']),
     ],
 
     'prototype_deltas': [
@@ -726,6 +782,31 @@ cfg = {
     ],
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v5', '2026-10-24',
+         '<b>Unsupported-language error, and the Supported Languages tooltip opens on hover.</b><br><br>'
+         '<b>Why.</b> Many AI Song jobs failed with the backend&rsquo;s &ldquo;invalid parameter&rdquo;, traced to '
+         'lyrics written in a language the song model does not take. The product owner asked for a clear error '
+         'instead. <b>RD implements the detection</b>: a front-end check was built and then removed at the product '
+         'owner&rsquo;s request the same day, so the front end never inspects the text.<br><br>'
+         '<b>New path P8</b> (shots 33, 34): the error toast &ldquo;This language isn&rsquo;t supported yet. See '
+         'supported languages ( i )&rdquo;, reachable through the <code>?demo=1</code> switch '
+         '<code>songLangUnsupported</code>. New criterion <b>AC-SONG-22</b> and error state <b>SONG-E5</b> in '
+         '<code>specs/areas/03-song-creation.md</code>, plus a row in the Errors table.<br><br>'
+         '<b>Changed: P2-S2</b> (shot 18 recaptured by hovering). The ( i ) opens on hover or focus as well as tap, '
+         'closes on Escape, and the pointer can cross onto the tooltip without it closing.<br><br>'
+         '<b>Every toast now stays while hovered</b> (product owner): it still hides itself after a few seconds, '
+         'but not while the pointer is on it or focus is inside it. That applies app-wide, not only to this '
+         'screen.<br><br>'
+         '<b>Toast restyle (2026-10-24, designer).</b> Every toast now uses the Figma &ldquo;Popup/Toast&rdquo; '
+         '(<code>.popup-toast</code>): this error takes the red-bordered error variant. On this screen it is '
+         'lifted to sit 12px above Create Song whenever its usual spot would cover the button (it did at desktop '
+         'widths). Shot 34 re-captured on both.<br><br>'
+         'Code: <code>src/components/song/SongCompose.tsx</code>, <code>src/lib/mv/songLanguage.ts</code>, '
+         '<code>src/components/ui/useToastTimer.ts</code>, <code>src/lib/demoStore.ts</code>, '
+         '<code>src/components/ui/Toast.tsx</code>, '
+         '<code>src/styles/designer-overrides.css</code>. Tests: the two <code>2026-10-22</code> cases in '
+         '<code>e2e/behaviour-regressions.spec.ts</code>. Only shots 18, 33 and 34 were captured for v5 '
+         '(<code>capture_screenshots.py --only-v5</code>); the other 31 are unchanged from v4.'),
         ('v4', '2026-09-09',
          '<b>Two bug fixes, both on /song/result and the compose side rail.</b><br><br>'
          '<b>YMW260903P0005 &mdash; clicking a lyric jumps to that timestamp.</b> '

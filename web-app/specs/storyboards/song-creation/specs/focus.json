@@ -1,40 +1,4 @@
 {
-  "02_simple_idea_filled.png": [
-    {
-      "box": [
-        22.6,
-        76.4,
-        3.7,
-        3.5
-      ],
-      "type": "action",
-      "label": "Idea"
-    }
-  ],
-  "30_simple_create_song.png": [
-    {
-      "box": [
-        36.7,
-        85.8,
-        16.4,
-        6.6
-      ],
-      "type": "action",
-      "label": "Create Song"
-    }
-  ],
-  "06_custom_empty.png": [
-    {
-      "box": [
-        27.1,
-        14.3,
-        5.8,
-        4.9
-      ],
-      "type": "action",
-      "label": "Custom tab"
-    }
-  ],
   "18_custom_supported_languages.png": [
     {
       "box": [
@@ -47,22 +11,10 @@
       "label": "Supported languages"
     }
   ],
-  "07_custom_lyrics_filled.png": [
+  "33_unsupported_lang_create_song.png": [
     {
       "box": [
-        26.6,
-        42.3,
-        4.3,
-        3.5
-      ],
-      "type": "action",
-      "label": "Lyrics"
-    }
-  ],
-  "31_custom_create_song.png": [
-    {
-      "box": [
-        36.7,
+        35.9,
         84.8,
         16.4,
         6.6
@@ -71,16 +23,16 @@
       "label": "Create Song"
     }
   ],
-  "32_error_create_song.png": [
+  "34_unsupported_lang_toast.png": [
     {
       "box": [
-        36.7,
-        85.8,
-        16.4,
-        6.6
+        34.8,
+        62.7,
+        37.2,
+        20.4
       ],
-      "type": "action",
-      "label": "Create Song"
+      "type": "info",
+      "label": "Unsupported language"
     }
   ]
 }

@@ -239,7 +239,7 @@
         <td class="c-area">S1</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/song-creation/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">AI Song Creation</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/song-creation/specs/spec.html</div></td>
         <td class="c-dev">/song/create · /song/creating · /song/result</td>
-        <td><span class="badge st-ok">v4 · 2026-09-09</span></td>
+        <td><span class="badge st-ok">v5 · 2026-10-24</span></td>
         <td class="c-cl"><a class="sb-link" href="storyboards/song-creation/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
       </tr>
       <tr>
@@ -1024,6 +1024,50 @@ this file covers. When a change does both, it appears in both, and the row below
 <p><strong>A storyboard's own Changelog is the finer-grained one</strong> and worth opening second: it badges the<br>
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
+<hr>
+<h2 id="2026-10-22-ai-song-unsupported-language-error-supported-languages-tooltip-on-hover-toasts-hold-on-hover">2026-10-22 — AI Song unsupported-language error; Supported Languages tooltip on hover; toasts hold on hover</h2>
+<p>Product owner decisions, no bug code. Backend "invalid parameter" errors on AI Song traced to lyrics in<br>
+a language the song model does not take.</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create Song with lyrics/idea in an unsupported language → toast "This language isn't supported yet. See supported languages ( i )"; no job, sign-in or IAP. <strong>RD implements the detection</strong> — a front-end check was built and removed the same day; the prototype reaches the state only via the <code>?demo=1</code> switch <code>songLangUnsupported</code></td>
+<td>area 03 <strong>SONG-E5</strong>, <strong>AC-SONG-22</strong> · S1 <strong>P8-S1</strong>, <strong>P8-E2</strong></td>
+<td><code>components/song/SongCompose.tsx</code>, <code>lib/mv/songLanguage.ts</code>, <code>lib/demoStore.ts</code></td>
+<td><code>e2e/behaviour-regressions.spec.ts</code> → <code>2026-10-22: songLangUnsupported …</code></td>
+</tr>
+<tr>
+<td>The LYRICS / IDEA ( i ) opens on hover/focus as well as tap, closes on Escape; inside the error toast it opens directly above itself</td>
+<td>area 03 <strong>AC-SONG-22</strong> · S1 <strong>P2-S2</strong></td>
+<td><code>SongCompose.tsx</code> (<code>SupportedLanguagesInfo</code>), <code>styles/designer-overrides.css</code></td>
+<td><code>2026-10-22: the LYRICS / IDEA ( i ) …</code></td>
+</tr>
+<tr>
+<td>Every toast still hides itself after a few seconds, but not while hovered or focused</td>
+<td>S1 <strong>P8-E2</strong> (limits)</td>
+<td><code>components/ui/useToastTimer.ts</code>, adopted by every toast incl. <code>ui/Toast</code></td>
+<td>the <code>songLangUnsupported</code> case above (hover hold)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ID correction.</strong> The first commit of this change (<code>ffe66f0</code>) numbered the new criterion <strong>AC-SONG-20</strong> and,<br>
+in doing so, <strong>overwrote the existing AC-SONG-20</strong> (2026-09-21, <code>YMW260911P0004</code>, the side-rail skeleton —<br>
+see the 2026-09-21 entry below). The skeleton criterion is restored verbatim and the new one is <strong>AC-SONG-22</strong>.</p>
+<p><strong>Toast restyle (2026-10-24, designer, <code>2dd942f</code>).</strong> Every toast now uses the Figma "Popup/Toast" (<code>.popup-toast</code>);<br>
+this error takes the red-bordered error variant. On <code>/song/create</code> it then sat directly on the floating Create<br>
+Song button at desktop widths and took its clicks, so (product owner, 2026-10-24) it now opens 12px above the<br>
+button whenever its usual 60px spot would overlap it — measured at open, because the button floats only when<br>
+the page scrolls. Area 03 <strong>AC-SONG-22</strong>, S1 <strong>P8-E2</strong>; code <code>SongCompose.tsx</code> (<code>bottomAboveCta</code>); test: the<br>
+<code>songLangUnsupported</code> case asserts no overlap at 1024×768 (mutation-tested both ways). S1's shot 34 re-captured.</p>
+<p>Storyboards: <strong>S1 → v5</strong> (new P8, P2-S2 rewritten; only shots 18, 33, 34 captured — <code>capture_screenshots.py --only-v5</code>, the other 31 are v4's). Contract: none (C4 touched, not changed — <code>../docs/CHANGELOG-RD.md</code> 2026-10-22).</p>
 <hr>
 <h2 id="2026-10-08-mv-title-40-and-author-35-characters">2026-10-08 — MV Title ≤40 and Author ≤35 characters</h2>
 <h3 id="ymw261006p0001-no-length-cap-on-title-author-a-1m-char-title-failed-the-real-job"><code>YMW261006P0001</code>: no length cap on Title / Author (a ~1M-char title failed the real job)</h3>
@@ -3795,6 +3839,11 @@ It remains local state until <code>TBD-EXP-08</code> gives likes a real backing 
 <td>Instrumental ON (Custom)</td>
 <td>Lyrics field keeps its contents and only the <strong>Lyrics</strong> sample-fill hides; result typically has no Lyrics sheet. ⚠️ Because the toggle never clears the box, a path of type lyrics → enable Instrumental can still carry lyrics into the result (→ <code>TBD-SONG-01</code>). <strong>VOCAL is the opposite of this row</strong> (product owner, 2026-09-01, §3): the VOCAL chip group is unmounted from the DOM and its stored value cleared to <code>null</code> on toggle-on, and is NOT restored on toggle-off — read as the VOCAL twin of this error state, not a re-statement of it. See <code>AC-SONG-17</code>.</td>
 </tr>
+<tr>
+<td><strong>SONG-E5</strong></td>
+<td>Backend reports the lyrics/idea are in an unsupported language — reachable today only through the <code>?demo=1</code> flag <code>songLangUnsupported</code></td>
+<td><em>(new 2026-10-22, product owner)</em> No job starts. A toast reads "This language isn’t supported yet. See supported languages ( i )"; hovering/tapping its ( i ) shows the Supported Languages list. The toast stays while hovered (every toast in the app does, since the same day). <strong>RD owns the detection</strong> — the front end does not inspect the text (a front-end check was built and removed the same day). See <code>AC-SONG-22</code>.</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -3856,6 +3905,7 @@ The same rule applies to <code>/song/play</code>'s Lyrics sheet — see <code>AC
 <li><strong>AC-SONG-15</strong> — WHEN Custom mode renders the STYLE section, THE SYSTEM SHALL offer exactly the <strong>nine</strong> GENRE chips, in this order: <code>Pop, Hip-Hop, R&amp;B, Rock, Jazz, Electronic, Rap, Classical, Country</code> (<code>GENRES</code>, <code>src/lib/mv/mock.ts</code>). <em>(new 2026-09-01, product owner — replaces the previous eight-value list; see §1/§3.)</em></li>
 <li><strong>AC-SONG-16</strong> — WHEN a GENRE or MOOD chip is tapped, THE SYSTEM SHALL select it if it is not already the selected chip in its row (single-select — selecting one clears any other in the same row), and SHALL clear the row back to no selection if the tapped chip is already selected. Neither field SHALL be required by <code>isSongReady()</code>. <em>(new 2026-09-01, product owner — GENRE and MOOD were single-select but could not previously be cleared once touched; VOCAL already behaved this way, see <code>AC-SONG-17</code>.)</em></li>
 <li><strong>AC-SONG-17</strong> — WHILE Instrumental is ON, THE SYSTEM SHALL NOT render the VOCAL chip group (removed from the DOM, not merely visually hidden or disabled) and SHALL clear any stored <code>vocal</code> value to <code>null</code>. WHEN Instrumental is toggled back OFF, THE SYSTEM SHALL re-render the VOCAL group with <strong>no</strong> chip selected — the prior pick is NOT restored. <em>(new 2026-09-01, product owner: "If Instrumental toggle on, hide the VOCAL field." Deliberately the opposite of <code>AC-SONG-02</code>'s Lyrics-box treatment — see §3 for why the two fields cannot both be handled the same way.)</em></li>
+<li><strong>AC-SONG-22</strong> <em>(new 2026-10-22, product owner — backend "invalid parameter" errors traced to unsupported-language input)</em> — WHEN Create Song is activated AND the lyrics/idea are in an unsupported language, THE SYSTEM SHALL NOT start a job, sign-in or IAP, and SHALL show the unsupported-language toast (<code>SONG-E5</code>). Supported: English, Japanese, German, Portuguese, Italian, French, Spanish, Turkish, Chinese, Korean, Hindi. <strong>Deciding "unsupported" is RD's</strong> (product owner: RD implements the detection); the prototype reaches this state only through the <code>?demo=1</code> flag <code>songLangUnsupported</code>, and RD replaces that flag with its own answer. The LYRICS / IDEA ( i ) SHALL show the Supported Languages tooltip on hover as well as on tap. The toast SHALL NOT cover the Create Song button: WHEN its usual position would overlap the button, it SHALL open 12px above it <em>(2026-10-24)</em>.</li>
 </ul>
 <hr>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
