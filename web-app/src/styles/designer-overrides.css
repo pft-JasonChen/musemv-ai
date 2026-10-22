@@ -5863,17 +5863,22 @@ button:disabled {
    The dialog reuses the Report dialog's `.report-*` shell.
    ========================================================================= */
 
-/* Entry group — Figma "Edit MV_L" (1351:28314): a "Title & Subtitles" heading and one
-   line of description (8px above and below, 2px apart) over the button. */
+/* Entry group — Figma "Edit MV_L" (1351:28314) "Edit Text Effects" list row: the
+   "Title & Subtitles" heading and one line of description on the left (8px above
+   and below, 2px apart), a small purple "Edit Effects" pill on the right. */
 .mv-edit__effects-group {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
 }
 
 .mv-edit__effects-copy {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
   padding: 8px 0;
 }
 
@@ -5897,23 +5902,22 @@ button:disabled {
   letter-spacing: -0.14px;
 }
 
-/* Entry button — Figma "Edit MV_L" (1351:28314) "Edit Text Effects": a
-   full-width dark pill between the cover and MV TITLE. */
 .mv-edit__effects-btn {
-  width: 100%;
+  flex-shrink: 0;
   box-sizing: border-box;
-  height: 44px;
-  padding: 0 16px;
-  border: 1px solid var(--white-15);
-  border-radius: 34px;
-  background: var(--neutral-dark-14);
+  min-width: 48px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 20px;
+  background: var(--color-accent-purple);
   color: var(--neutral-dark-100);
   cursor: pointer;
   font-family: var(--font-family-primary);
-  font-size: 15px;
-  font-weight: var(--font-weight-bold);
-  line-height: 18px;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
   text-align: center;
+  white-space: nowrap;
 }
 
 /* MV TITLE / AUTHOR NAME — the heading row now carries the switch, with the
@@ -5944,8 +5948,9 @@ button:disabled {
 }
 
 /* Dialog shell. */
+/* Figma "Popup/Dialog - Edit" (5356:173124): 764px wide, 32px padding. */
 .effects-dialog {
-  width: 654px;
+  width: 764px;
 }
 
 .effects-dialog .report-dialog__header::after {
@@ -5993,6 +5998,24 @@ button:disabled {
   height: auto;
   aspect-ratio: 16 / 9;
   margin-bottom: 16px;
+}
+
+/* Desktop / tablet dialog: Figma's preview is 700x393 (the 218x393 video centred in
+   it). It holds that size while the screen is tall enough and scales down with the
+   viewport height once it is not — 348px is everything else in the dialog (padding,
+   header, switch, looks, Save) plus the overlay's own margin — so the whole popup
+   keeps fitting without scrolling. Never narrower than 280px. */
+.effects-dialog:not(.report-dialog--sheet) .mv-edit-mobile-scene__preview {
+  flex-shrink: 0;
+  align-self: center;
+  width: min(100%, max(280px, calc((100dvh - 348px) * 700 / 393)));
+  aspect-ratio: 700 / 393;
+}
+
+/* The "Title is off" notice row adds 36px to the dialog. */
+.effects-dialog:not(.report-dialog--sheet):has(.effects-dialog__notice)
+  .mv-edit-mobile-scene__preview {
+  width: min(100%, max(280px, calc((100dvh - 384px) * 700 / 393)));
 }
 
 .mv-edit-mobile-scene__stage {

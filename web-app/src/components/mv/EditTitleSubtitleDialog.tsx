@@ -135,7 +135,11 @@ function DialogBody({
     const strip = stripRef.current;
     const picked = strip?.querySelector<HTMLElement>('[aria-checked="true"]');
     if (!strip || !picked) return;
-    const margin = 12; // the selected ring + a sliver of the neighbour
+    // Leave the same gap the row keeps at its ends (the dialog's side padding: 32px
+    // on desktop, 20px on the phone sheet), so a look picked at either edge sits
+    // where it would at rest instead of against the dialog's border.
+    const inner = strip.firstElementChild;
+    const margin = inner ? parseFloat(getComputedStyle(inner).paddingLeft) || 12 : 12;
     const box = strip.getBoundingClientRect();
     const rect = picked.getBoundingClientRect();
     if (rect.left - margin < box.left) {

@@ -715,10 +715,9 @@ export function MvEditor() {
 
           {/* Product owner, 2026-10-23 / 10-22, Figma "Edit MV_L" (1351:28314): ONE
               entry for the title effect and the subtitle style — a "Title &
-              Subtitles" heading with a one-line description over a full-width
-              "Edit Text Effects" button, between the cover and MV TITLE. (An
-              earlier list-row version was judged not intuitive and replaced by
-              Figma's own.) Grouped in one box so phones/tablets order it as one. */}
+              Subtitles" heading with a one-line description and a small purple
+              "Edit Effects" pill beside it, between the cover and MV TITLE.
+              Grouped in one box so phones/tablets order it as one. */}
           <div className="mv-edit__effects-group">
             <div className="mv-edit__effects-copy">
               <p className="mv-edit__effects-heading">Title &amp; Subtitles</p>
@@ -732,7 +731,7 @@ export function MvEditor() {
               onClick={() => setEffectsOpen(true)}
               aria-haspopup="dialog"
             >
-              Edit Text Effects
+              Edit Effects
             </button>
           </div>
 
