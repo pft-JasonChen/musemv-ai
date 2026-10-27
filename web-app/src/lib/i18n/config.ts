@@ -1,8 +1,21 @@
-// Locale model for the 9 supported languages. URL-facing codes are lowercase
-// versions of the product locale codes (ENU/JPN/…). Everything is pure so it
+// Locale model for the 10 supported languages. URL-facing codes are lowercase
+// versions of the product locale codes (ENU/JPN/…; Hindi and Indonesian use
+// `hi` / `id`). Order is the picker order (sorted by BCP-47 tag, as in the
+// production picker). Everything is pure so it
 // can be imported from middleware (edge runtime) as well as client components.
 
-export const LOCALES = ["enu", "jpn", "kor", "cht", "chs", "deu", "fra", "esp", "ptg"] as const;
+export const LOCALES = [
+  "deu",
+  "enu",
+  "esp",
+  "fra",
+  "hi",
+  "id",
+  "jpn",
+  "kor",
+  "ptg",
+  "cht",
+] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "enu";
 
@@ -12,28 +25,30 @@ export function isLocale(value: string | undefined | null): value is Locale {
 
 /** Native + English display names for the language picker. */
 export const LOCALE_NAMES: Record<Locale, { native: string; english: string }> = {
+  deu: { native: "Deutsch", english: "German" },
   enu: { native: "English", english: "English" },
+  esp: { native: "Español", english: "Spanish" },
+  fra: { native: "Français", english: "French" },
+  hi: { native: "हिन्दी", english: "Hindi" },
+  id: { native: "Bahasa Indonesia", english: "Indonesian" },
   jpn: { native: "日本語", english: "Japanese" },
   kor: { native: "한국어", english: "Korean" },
+  ptg: { native: "Português (Brasil)", english: "Portuguese (Brazil)" },
   cht: { native: "繁體中文", english: "Chinese (Traditional)" },
-  chs: { native: "简体中文", english: "Chinese (Simplified)" },
-  deu: { native: "Deutsch", english: "German" },
-  fra: { native: "Français", english: "French" },
-  esp: { native: "Español", english: "Spanish" },
-  ptg: { native: "Português", english: "Portuguese" },
 };
 
 /** BCP-47 tag used for the <html lang> attribute per locale. */
 export const HTML_LANG: Record<Locale, string> = {
+  deu: "de",
   enu: "en",
+  esp: "es",
+  fra: "fr",
+  hi: "hi",
+  id: "id",
   jpn: "ja",
   kor: "ko",
+  ptg: "pt-BR",
   cht: "zh-Hant",
-  chs: "zh-Hans",
-  deu: "de",
-  fra: "fr",
-  esp: "es",
-  ptg: "pt",
 };
 
 /**
@@ -59,10 +74,10 @@ export function stripLocalePrefix(pathname: string): string {
 }
 
 function tagToLocale(tag: string): Locale | null {
-  // Chinese needs script/region disambiguation before the primary-subtag fallback.
+  // Only Traditional Chinese is offered; Simplified (zh, zh-cn, zh-hans, zh-sg)
+  // falls through to English.
   if (tag.startsWith("zh")) {
-    if (/zh-(hant|tw|hk|mo)/.test(tag)) return "cht";
-    return "chs"; // zh, zh-cn, zh-hans, zh-sg → Simplified
+    return /zh-(hant|tw|hk|mo)/.test(tag) ? "cht" : null;
   }
   switch (tag.split("-")[0]) {
     case "en": return "enu";
@@ -72,6 +87,9 @@ function tagToLocale(tag: string): Locale | null {
     case "fr": return "fra";
     case "es": return "esp";
     case "pt": return "ptg";
+    case "hi": return "hi";
+    case "id": return "id";
+    case "in": return "id"; // legacy ISO 639 code some Android builds still send
     default: return null;
   }
 }

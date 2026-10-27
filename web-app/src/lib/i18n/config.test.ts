@@ -90,10 +90,16 @@ describe("matchLocale", () => {
     expect(matchLocale("zh-TW")).toBe("cht");
     expect(matchLocale("zh-Hant")).toBe("cht");
     expect(matchLocale("zh-HK")).toBe("cht");
-    expect(matchLocale("zh-CN")).toBe("chs");
-    expect(matchLocale("zh-Hans")).toBe("chs");
-    expect(matchLocale("zh-SG")).toBe("chs");
-    expect(matchLocale("zh")).toBe("chs"); // bare zh => Simplified
+    // Simplified Chinese is not offered: it falls through to the next tag, else English.
+    expect(matchLocale("zh-CN")).toBe("enu");
+    expect(matchLocale("zh-Hans")).toBe("enu");
+    expect(matchLocale("zh-SG")).toBe("enu");
+    expect(matchLocale("zh")).toBe("enu");
+    expect(matchLocale("zh-CN,ja;q=0.8")).toBe("jpn");
+  });
+
+  it("maps the legacy Indonesian code `in` to id", () => {
+    expect(matchLocale("in-ID")).toBe("id");
   });
 
   it("is case-insensitive and tolerates whitespace", () => {
@@ -108,6 +114,7 @@ describe("matchLocale", () => {
   it("maps every primary subtag the product supports", () => {
     const expected: Record<string, string> = {
       en: "enu", ja: "jpn", ko: "kor", de: "deu", fr: "fra", es: "esp", pt: "ptg",
+      hi: "hi", id: "id",
     };
     for (const [tag, locale] of Object.entries(expected)) {
       expect(matchLocale(tag)).toBe(locale);

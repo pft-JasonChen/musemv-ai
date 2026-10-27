@@ -21,7 +21,7 @@ import { DpIcon } from "@/components/ui/DpIcon";
  *
  * ── WHAT'S ADAPTED, NOT PORTED VERBATIM ──────────────────────────────────
  * DP's language picker is mock UI — its own CSS comment says so, and it just
- * sets local component state that goes nowhere. WA has real i18n (9 locales,
+ * sets local component state that goes nowhere. WA has real i18n (10 locales,
  * `localePath`/`setLocale`), so the picker below is the same markup wired to
  * the real thing instead of a second, fake switcher living next to it.
  *

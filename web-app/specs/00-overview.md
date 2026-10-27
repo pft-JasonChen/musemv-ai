@@ -111,8 +111,8 @@ locales are prefixed (`/jpn/mv/room`). "Auth" = wrapped in `<AuthGuard>` (§5).
 
 ## 4. i18n 🔒
 
-- 9 locales (product codes, not BCP-47): `enu jpn kor cht chs deu fra esp ptg`. `enu` default & unprefixed.
-- Dictionaries cover **~40 keys (nav + Profile only)**; the 8 non-English files are intentionally empty stubs (English fallback per key). Everything else is hardcoded English JSX by current convention.
+- 10 locales (product codes, not BCP-47): `deu enu esp fra hi id jpn kor ptg cht` (picker order). `enu` default & unprefixed.
+- Dictionaries cover **~40 keys (nav + Profile only)**; the 9 non-English files are intentionally empty stubs (English fallback per key). Everything else is hardcoded English JSX by current convention.
 - Specs are authored in English; localization QA is out of scope here → `TBD-GL-06` _(registered in `OPEN-QUESTIONS.md` on 2026-08-19 — it had only ever existed in this sentence)_.
 
 ## 5. Auth model 🔒

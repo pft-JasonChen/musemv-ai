@@ -33,7 +33,7 @@ import { localePath } from "@/lib/i18n/config";
  *  · THE CREATOR LINK IS A `next/link` + `localePath` (R-9). DP assigns
  *    `communityProfileHref(username)` straight onto the document's location,
  *    which is a full page load AND drops the locale prefix — invisible in
- *    English, broken in the other 8 locales. G1-b's greps catch the two literal
+ *    English, broken in the other 9 locales. G1-b's greps catch the two literal
  *    shapes of that mistake; this one they cannot see, so it is held by hand.
  *
  *  · CREATE IS GATED (GL-02 / EXP-02). DP's Create button is inert. WA's old
