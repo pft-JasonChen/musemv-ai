@@ -1,7 +1,7 @@
-// Locale model for the 10 supported languages. URL-facing codes are lowercase
+// Locale model for the 11 supported languages. URL-facing codes are lowercase
 // versions of the product locale codes (ENU/JPN/…; Hindi and Indonesian use
 // `hi` / `id`). Order is the picker order (sorted by BCP-47 tag, as in the
-// production picker). Everything is pure so it
+// production picker, with Simplified Chinese last). Everything is pure so it
 // can be imported from middleware (edge runtime) as well as client components.
 
 export const LOCALES = [
@@ -15,6 +15,7 @@ export const LOCALES = [
   "kor",
   "ptg",
   "cht",
+  "chs",
 ] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "enu";
@@ -35,6 +36,7 @@ export const LOCALE_NAMES: Record<Locale, { native: string; english: string }> =
   kor: { native: "한국어", english: "Korean" },
   ptg: { native: "Português (Brasil)", english: "Portuguese (Brazil)" },
   cht: { native: "繁體中文", english: "Chinese (Traditional)" },
+  chs: { native: "简体中文", english: "Chinese (Simplified)" },
 };
 
 /** BCP-47 tag used for the <html lang> attribute per locale. */
@@ -49,6 +51,7 @@ export const HTML_LANG: Record<Locale, string> = {
   kor: "ko",
   ptg: "pt-BR",
   cht: "zh-Hant",
+  chs: "zh-Hans",
 };
 
 /**
@@ -74,10 +77,10 @@ export function stripLocalePrefix(pathname: string): string {
 }
 
 function tagToLocale(tag: string): Locale | null {
-  // Only Traditional Chinese is offered; Simplified (zh, zh-cn, zh-hans, zh-sg)
-  // falls through to English.
+  // Chinese needs script/region disambiguation before the primary-subtag fallback.
   if (tag.startsWith("zh")) {
-    return /zh-(hant|tw|hk|mo)/.test(tag) ? "cht" : null;
+    if (/zh-(hant|tw|hk|mo)/.test(tag)) return "cht";
+    return "chs"; // zh, zh-cn, zh-hans, zh-sg → Simplified
   }
   switch (tag.split("-")[0]) {
     case "en": return "enu";

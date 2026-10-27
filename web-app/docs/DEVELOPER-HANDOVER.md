@@ -45,7 +45,7 @@ src/
 │   │   ├── mock.ts         #   MockMuseApi — the ONLY fake-backend code
 │   │   ├── poll.ts         #   pollJob() helper (framework-free)
 │   │   └── index.ts        #   exports `api` — the single swap point
-│   ├── i18n/               #   locale config (10 locales) + dictionaries (`config.ts`, `dictionaries/`)
+│   ├── i18n/               #   locale config (11 locales) + dictionaries (`config.ts`, `dictionaries/`)
 │   ├── mv/
 │   │   ├── types.ts        #   domain constants/rules; re-exports entity types
 │   │   ├── mock.ts         #   static fixtures (sample songs, templates, history seeds)
@@ -137,8 +137,8 @@ Also budget for these **production gaps** (fine for a demo, not for launch):
 
 ## 5. Internationalization (i18n)
 
-**Locale model** (`src/lib/i18n/config.ts`): 10 product-code locales — `deu enu esp fra hi id jpn
-kor ptg cht` (`LOCALES`, in picker order; Simplified Chinese dropped 2026-10-27), NOT BCP-47 tags. `DEFAULT_LOCALE` is `enu` (English). A separate
+**Locale model** (`src/lib/i18n/config.ts`): 11 product-code locales — `deu enu esp fra hi id jpn
+kor ptg cht chs` (`LOCALES`, in picker order), NOT BCP-47 tags. `DEFAULT_LOCALE` is `enu` (English). A separate
 `HTML_LANG` map holds the actual BCP-47 tag per locale (`enu → en`, `cht → zh-Hant`, …) for the
 `<html lang>` attribute — the two naming schemes are deliberately kept apart.
 
@@ -156,12 +156,12 @@ dot): for each request it inspects the first path segment —
   `/enu` prefix stripped (default locale must never appear in the URL bar).
 - No locale segment → resolve the target locale from `NEXT_LOCALE` cookie first, else
   `matchLocale(Accept-Language)` (quality-ordered tag match, e.g. `zh-Hant`/`zh-TW`/`zh-HK`/`zh-MO`
-  → `cht`; other `zh*` is unsupported and falls through), else English. English resolves via an internal `rewrite()` (URL
+  → `cht`, other `zh*` → `chs`), else English. English resolves via an internal `rewrite()` (URL
   stays clean); any other resolved locale is a `redirect()` to its prefixed URL.
 
 **Dictionaries** (`src/lib/i18n/dictionaries/`): `en.ts` is the source of truth and the fallback —
-today it holds ~40 keys covering nav and the Profile screen only. The 9 other files (`jpn.ts`,
-`kor.ts`, `cht.ts`, `deu.ts`, `fra.ts`, `esp.ts`, `ptg.ts`, `hi.ts`, `id.ts`) are each `export const <code>:
+today it holds ~40 keys covering nav and the Profile screen only. The 10 other files (`jpn.ts`,
+`kor.ts`, `cht.ts`, `chs.ts`, `deu.ts`, `fra.ts`, `esp.ts`, `ptg.ts`, `hi.ts`, `id.ts`) are each `export const <code>:
 Partial<Dictionary> = {}` — intentionally empty stubs, not missing work. `LocaleProvider`'s `t(key)`
 looks up `DICTIONARIES[locale]?.[key]` and falls back to the English value whenever the key is
 missing or an empty string, so the app always renders even with zero translations. Filling these in

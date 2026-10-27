@@ -72,7 +72,7 @@ localized surfaces (nav + Profile). `/settings` copy is hardcoded English.
 **Rows** (`:129-146`):
 
 - **Muse Pro** — not subscribed → an **Upgrade** pill (`.button--secondary`) + row click → `SubscribeModal` (area 07); subscribed → plan name + hardcoded "validity 2026-08-10", **no pill**, row click → `/profile/credits` (product owner, 2026-08-14).
-- **Language** — opens a 10-locale picker (native names only, production order) → `setLocale(code)` (i18n, area-wide).
+- **Language** — opens an 11-locale picker (native names only, production order) → `setLocale(code)` (i18n, area-wide).
 - **History** — navigates to `/history` (area 05).
 - **Send Feedback** — opens `FeedbackDialog`: a **5-field support ticket** submitted through `MuseApi.submitFeedback` → **§3.1**. _(Replaced the one-textarea modal whose content was discarded, 2026-08-17. `TBD-PROF-02`'s frontend half is closed; the endpoint itself stays RD's.)_
 - **Settings** — navigates to `/settings` (via `localePath`). Sign Out is no longer on this screen (PROF-03 moved it into Settings).
@@ -164,7 +164,7 @@ spec`). **The word "ticket" never appears in the UI** — the row and the dialog
 | Description               | **Yes**   | "Tell us what you think…" · max **1000** chars + counter | **Yes**  | `q` — the **raw description only** ⚠️ (see divergences)                                                                  |
 | Attachment                | **Yes**   | any file type, **5 MB total** across all files           | No       | `attachment` (multipart)                                                                                                 |
 | Email                     | **Yes**   | autofill from `profile.email`, else "Enter your email"   | **Yes**  | `email`                                                                                                                  |
-| UI language               | No        | —                                                        | —        | `language` — the **active product locale code** (`deu`…`cht` from `LOCALES`), **not** BCP-47; RD maps if CSB differs     |
+| UI language               | No        | —                                                        | —        | `language` — the **active product locale code** (`deu`…`chs` from `LOCALES`), **not** BCP-47; RD maps if CSB differs     |
 | User ID                   | No        | —                                                        | —        | injected **server-side** from the session ⚠️ — WA's `Profile` has no id field                                            |
 | Order ID / Invoice #      | **No** ⚠️ | —                                                        | —        | **dropped** from T3 (product owner, 2026-08-17)                                                                          |
 | RD log · chat history     | No        | —                                                        | —        | out of scope — there is no chatbot on web                                                                                |
@@ -250,7 +250,7 @@ place, and `contract.surface.test.ts`'s C1/C2 snapshots were re-recorded to incl
 
 New keys under **`profile.feedback.*`** in `src/lib/i18n/dictionaries/en.ts` (labels, placeholders,
 the five type names, the attachment refusal, the success/error copy). `/profile` is one of only two
-`useT()` surfaces, so this is inside the existing R-8 boundary — not a widening. The 9 non-English
+`useT()` surfaces, so this is inside the existing R-8 boundary — not a widening. The 10 non-English
 dictionaries stay **empty**; per-key English fallback applies. ⚠️ These strings are e2e-visible.
 
 ### Deliberate divergences from T3

@@ -200,15 +200,14 @@ House style in one line:
 
 ## i18n
 
-- 10 locales, product codes not BCP-47 (Hindi/Indonesian are `hi`/`id`; Simplified Chinese was
-  dropped 2026-10-27 to match the production picker): `deu enu esp fra hi id jpn kor ptg cht` —
-  that array order IS the picker order
+- 11 locales, product codes not BCP-47 (Hindi/Indonesian are `hi`/`id`):
+  `deu enu esp fra hi id jpn kor ptg cht chs` — that array order IS the picker order
   (`LOCALES` in `src/lib/i18n/config.ts`). English (`enu`) is the `DEFAULT_LOCALE` and is served
   UNPREFIXED (`/profile`); every other locale is URL-prefixed (`/jpn/profile`) — build paths with
   `localePath(locale, path)`, never string-concat a prefix.
 - Dictionaries (`src/lib/i18n/dictionaries/`) currently cover ~40 keys — nav + the Profile screen
-  only. `en.ts` is the source of truth and the fallback; all 9 non-English files (`jpn.ts`, `kor.ts`,
-  `cht.ts`, `deu.ts`, `fra.ts`, `esp.ts`, `ptg.ts`, `hi.ts`, `id.ts`) are intentionally EMPTY (`{}` typed
+  only. `en.ts` is the source of truth and the fallback; all 10 non-English files (`jpn.ts`, `kor.ts`,
+  `cht.ts`, `chs.ts`, `deu.ts`, `fra.ts`, `esp.ts`, `ptg.ts`, `hi.ts`, `id.ts`) are intentionally EMPTY (`{}` typed
   `Partial<Dictionary>`). This is deliberate, not a bug — translation is deferred, an RD will fill
   them in later. `useT()`'s `t(key)` already falls back to English per-key when a translation is
   missing or empty, so the empty files render correctly today. Do not "fix" them by copying English
@@ -231,7 +230,7 @@ House style in one line:
   through `next/link` + `localePath()`. DP navigates with `<a href="/home">` and reads
   `window.location.pathname`; copy that across and each navigation becomes a full page load
   **and** loses the locale prefix. The cookie redirect still lands you on the right page, so
-  **it looks perfect in English and is broken in the other 9 locales** — nobody testing in
+  **it looks perfect in English and is broken in the other 10 locales** — nobody testing in
   English will ever see it. `guard-greps.sh` now fails on a literal `<a href="/`, but 20 of DP's
   links are `href={variable}` and no grep sees those: the rule is yours to hold, the grep only
   catches the easy half.
@@ -255,7 +254,7 @@ House style in one line:
 - a11y-coverage caveat: `a11y.spec.ts` does NOT seed auth, so the four guarded routes (`mv/room`,
   `song/create`, `history`, `profile`) render only the sign-in modal to axe, not the real screen —
   the gate is real but narrower than it looks. It also only scans unprefixed English URLs
-  (`discoverRoutes()` strips the `[locale]` segment); the 9 non-English locale trees aren't
+  (`discoverRoutes()` strips the `[locale]` segment); the 10 non-English locale trees aren't
   axe-scanned at all.
 - **`npm run e2e` IS NOT THE WHOLE SUITE — it is `playwright test --grep-invert @visual`.** Both
   screenshot specs title every test `@visual …` (`visual-baseline.spec.ts`,

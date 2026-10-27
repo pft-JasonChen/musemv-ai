@@ -24,7 +24,7 @@ import { useToast } from "@/components/ui/Toast";
  * Structure and classes come from `src/styles/designer/AccountPage.css`; every
  * behaviour below is WA's and predates the migration. Two things DP does NOT
  * have, kept deliberately (they are real product behaviour, not decoration):
- * Language opens WA's 10-locale picker rather than being a static "English"
+ * Language opens WA's 11-locale picker rather than being a static "English"
  * subtitle, and Send Feedback opens a real support-ticket form (`FeedbackDialog`,
  * spec areas/06 §3.1) rather than a dead row.
  * (The notification toggle this comment used to cite is gone — the row was
@@ -33,7 +33,7 @@ import { useToast } from "@/components/ui/Toast";
  * R-8: this screen is one of only two real `useT()` consumers. Every visible
  * string stays on `t()` — DP hardcodes English, and copying that across is the
  * one change here that would look perfect in English and be broken in the
- * other 9 locales.
+ * other 10 locales.
  */
 
 /** DP's account row. `href` renders a link, `onClick` a button, neither a div. */

@@ -9,6 +9,7 @@ import { jpn } from "./jpn";
 import { kor } from "./kor";
 import { ptg } from "./ptg";
 import { cht } from "./cht";
+import { chs } from "./chs";
 
 export type { Dictionary };
 export { en as EN };
@@ -25,4 +26,5 @@ export const DICTIONARIES: Record<Locale, Partial<Dictionary>> = {
   kor,
   ptg,
   cht,
+  chs,
 };

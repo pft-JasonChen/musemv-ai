@@ -90,12 +90,10 @@ describe("matchLocale", () => {
     expect(matchLocale("zh-TW")).toBe("cht");
     expect(matchLocale("zh-Hant")).toBe("cht");
     expect(matchLocale("zh-HK")).toBe("cht");
-    // Simplified Chinese is not offered: it falls through to the next tag, else English.
-    expect(matchLocale("zh-CN")).toBe("enu");
-    expect(matchLocale("zh-Hans")).toBe("enu");
-    expect(matchLocale("zh-SG")).toBe("enu");
-    expect(matchLocale("zh")).toBe("enu");
-    expect(matchLocale("zh-CN,ja;q=0.8")).toBe("jpn");
+    expect(matchLocale("zh-CN")).toBe("chs");
+    expect(matchLocale("zh-Hans")).toBe("chs");
+    expect(matchLocale("zh-SG")).toBe("chs");
+    expect(matchLocale("zh")).toBe("chs"); // bare zh => Simplified
   });
 
   it("maps the legacy Indonesian code `in` to id", () => {

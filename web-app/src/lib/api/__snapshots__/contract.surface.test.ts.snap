@@ -393,6 +393,7 @@ exports[`C6 — locale model (src/lib/i18n/config.ts) > LOCALES, default, and HT
 {
   "DEFAULT_LOCALE": "enu",
   "HTML_LANG": {
+    "chs": "zh-Hans",
     "cht": "zh-Hant",
     "deu": "de",
     "enu": "en",
@@ -415,6 +416,7 @@ exports[`C6 — locale model (src/lib/i18n/config.ts) > LOCALES, default, and HT
     "kor",
     "ptg",
     "cht",
+    "chs",
   ],
 }
 `;

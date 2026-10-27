@@ -18,7 +18,7 @@
 //     7  Pro gate: High crown ........................ "Pro gate: High"
 //        …its 30s-preview half INVERTED by slice 3b ... "S3 / G5-d#7 inverted"
 //     8  publish -> confirm -> reviewing ............. "publish"
-//     9  i18n: 10 locales, localePath not bypassed .... "i18n"
+//     9  i18n: 11 locales, localePath not bypassed .... "i18n"
 //    10  enhancePrompt goes through api .............. "enhancePrompt"
 //
 // COSTS ARE IMPORTED, NOT HARDCODED — if C8 changes, these tests follow it instead
@@ -914,7 +914,7 @@ test("S13 mobile IA: the + tab opens the create sheet with both creators", async
 test("R9 shell: every sidebar link carries the locale prefix", async ({ page }) => {
   // The failure this guards is invisible in English: DP links with a bare
   // <a href="/home">, the NEXT_LOCALE cookie redirects to the right page anyway,
-  // and only the other 9 locales are broken. Assert the prefix is really in the DOM.
+  // and only the other 10 locales are broken. Assert the prefix is really in the DOM.
   await login(page);
   await page.goto("/jpn/history");
   const hrefs = await page
@@ -1454,7 +1454,7 @@ test("3b / GL-02: Create still requires sign-in", async ({ page }) => {
 });
 
 test("3b / R9: the migrated links carry the locale prefix", async ({ page }) => {
-  // Invisible in English, broken in the other 9 locales — the failure mode R-9
+  // Invisible in English, broken in the other 10 locales — the failure mode R-9
   // exists for. DP navigates by assigning to the document location.
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/jpn/explore/songs");
@@ -1686,7 +1686,7 @@ test("3c: the Credits stat reaches /profile/credits, locale prefix intact", asyn
 test("3c / R-8: the migrated profile still renders through useT()", async ({ page }) => {
   // /profile is one of only two real useT() consumers. DP hardcodes English, so
   // the failure mode here is invisible in English: the screen would look perfect
-  // and the other 9 locales would silently lose their dictionary. Asserting the
+  // and the other 10 locales would silently lose their dictionary. Asserting the
   // locale-prefixed tree renders and keeps its prefix is the cheap proxy.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
