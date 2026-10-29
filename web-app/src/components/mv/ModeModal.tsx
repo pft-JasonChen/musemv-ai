@@ -62,6 +62,8 @@ export function ModeModal({ open, onClose, onSelect, storyboardCost, directCost 
       <button
         type="button"
         className="mv-mode-card mv-mode-card--featured"
+        data-gtm="modal-mv-mode-select"
+        data-gtm-variant="storyboard"
         onClick={() => onSelect("storyboard_first")}
       >
         <div className="mv-mode-card__top">
@@ -82,7 +84,13 @@ export function ModeModal({ open, onClose, onSelect, storyboardCost, directCost 
         </div>
       </button>
 
-      <button type="button" className="mv-mode-card" onClick={() => onSelect("direct")}>
+      <button
+        type="button"
+        className="mv-mode-card"
+        data-gtm="modal-mv-mode-select"
+        data-gtm-variant="direct"
+        onClick={() => onSelect("direct")}
+      >
         <div className="mv-mode-card__top">
           <DpIcon name="ic_video_ai" className="mv-mode-card__icon" />
         </div>
