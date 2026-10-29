@@ -21,6 +21,8 @@ export const en = {
   // unhide without touching this file.
   "nav.storybook": "AI Storybook",
   "nav.blog": "Blog",
+  // Promo entry under History for the AI Music Video Challenge (2026-10-29).
+  "nav.challenge": "AI Music Video Challenge",
   // Sidebar profile footer
   "nav.freePlan": "Free plan",
   "nav.upgrade": "Upgrade",

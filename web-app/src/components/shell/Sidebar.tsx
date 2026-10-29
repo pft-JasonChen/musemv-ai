@@ -169,6 +169,19 @@ export function Sidebar() {
               </span>
             </Link>
           ))}
+          {/* AI Music Video Challenge (Figma 5447:90576, 2026-10-29). The
+              challenge page belongs to another team, so in the prototype the
+              entry is drawn and deliberately does nothing yet. A button, not a
+              Link, because there is no destination to link to. Collapsed, it
+              is the trophy alone, so the label moves to aria-label. */}
+          <button
+            type="button"
+            className="sidebar__challenge"
+            aria-label={collapsed ? t("nav.challenge") : undefined}
+          >
+            <span className="sidebar__challenge-icon" style={mask("ic_trophy")} aria-hidden="true" />
+            <span className="sidebar__challenge-label">{t("nav.challenge")}</span>
+          </button>
         </nav>
       </div>
 

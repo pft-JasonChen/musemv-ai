@@ -6,6 +6,7 @@ import { HeroBannerSection } from "./HeroBannerSection";
 import { HeroBannerSectionV3 } from "./HeroBannerSectionV3";
 import { ToolSelectorSection } from "./ToolSelectorSection";
 import { ToolSelectorSectionV3 } from "./ToolSelectorSectionV3";
+import { ChallengeBanner } from "./ChallengeBanner";
 import { NewMVsSection } from "./NewMVsSection";
 import { TopPicksSection } from "./TopPicksSection";
 import { NewSongsSection } from "./NewSongsSection";
@@ -107,9 +108,13 @@ export function HomeView() {
         <>
           <ToolSelectorSectionV3 />
           <HeroBannerSectionV3 />
+          {/* AI Music Video Challenge (2026-10-29): desktop puts it straight
+              under the hero, phones further down — see ChallengeBanner. */}
+          <ChallengeBanner />
         </>
       )}
       <NewMVsSection />
+      {isPhone && <ChallengeBanner compact />}
       <TopPicksSection
         suspend={activeSongSection === "new-songs"}
         onPreviewOpen={() => setActiveSongSection("top-picks")}
