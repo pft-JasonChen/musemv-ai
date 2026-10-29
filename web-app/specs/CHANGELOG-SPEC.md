@@ -4,6 +4,18 @@
 > **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
 > get from "what changed?" to the exact file without diffing.
 
+## 2026-10-29 — MV effect samples play when visible
+
+MV-P5-EFX / AC-MV-26 / S3 v9 D-13: current-tab samples loop at 50% image visibility, independently of selection. Scroll-out, tab change, close and page background stop motion and restore covers. Motion does not dirty the draft. Implemented in EffectSample / EditTitleSubtitleDialog; covered by visibility/lifecycle unit tests and scoped desktop/phone E2E scrolling assertions.
+
+## 2026-10-29 — MV effects card layout and Subtitle review fixtures
+
+MV-P5-EFX / S3 v8: use a full 16:9 image with its name below, and enable Subtitle review on Cinematic Night / Neon City Nights through explicit prototype-only timed cues. Other samples/imports still require synchronized lyrics. Card geometry/Subtitle selection are covered by the scoped desktop/phone E2E; fixture isolation is covered by synchronizedMvLyrics unit tests. Canvas behavior and production engine requirements are unchanged.
+
+## 2026-10-29 — MV effects canvas and current selection correction
+
+MV-P5-EFX / S3 v7 P6 now require a selected current effect on open with no Use default action. The mockup canvas plays the existing video without text overlays; selected cards retain motion samples. Legacy prototype null choices resolve to the POC current-look fixture, not a claimed engine-wide default. Implemented in EditTitleSubtitleDialog/textEffects/prototypeTextEffects and covered by dialog/snapshot unit tests plus three scoped desktop/phone/Merge E2E cases.
+
 ## What belongs here, and what does not
 
 There are three change logs in this repo and they answer three different questions. Reaching for the
@@ -22,6 +34,41 @@ this file covers. When a change does both, it appears in both, and the row below
 **A storyboard's own Changelog is the finer-grained one** and worth opening second: it badges the
 individual steps that moved with a green `NEW · vN` marker, and it is where a stale SCREENSHOT is
 recorded. This file points you at which storyboards to open.
+
+---
+
+## 2026-10-29 — MV Effects mockup boundary / S3 v6
+
+Product owner clarified that actual MV engine preview and effect output are production RD/engine work, not mockup implementation. EFX-3 retains the expected production behavior; mockup only demonstrates supplied animated samples and settings. Removed the artificial unavailable-engine error, Retry, preparation locking and timeout service/tests. Save/discard/default/revert, 60-unit limits, timed-lyrics eligibility and successful-only prototype snapshots remain. Updated desktop/phone captures and regression checks assert the absence of engine errors/Retry. API/schema unchanged.
+
+---
+
+## 2026-10-29 — MV Effects prototype implementation / S3 v5
+
+Product owner supplied 25 animated WebP samples under `public/assets/title_mv` and approved prototype-only persistence without API/schema changes. Unselected cards use extracted still frames; selected samples animate and can be viewed enlarged with a sample label.
+
+| What | Spec IDs | Code | Verification |
+| --- | --- | --- | --- |
+| 8/17 sample catalog, 60/60 text limits, independent drafts, Off/no-timing gating and baseline-based Merge enablement | AC-MV-03b, 23–26, 28–29; S3 P6 | `textEffects.ts`, `MvEditor.tsx`, `EditTitleSubtitleDialog.tsx`, `ToggleSwitch.tsx` | Dialog unit checks; targeted length regression; desktop/phone browser checks |
+| Actual-preview lifecycle: locks, 30-second timeout, Retry, cancellation, stale-result guard | AC-MV-27–28 | `TextEffectPreview.tsx`, `textEffectPreview.ts`, `MobileScenePreview.tsx` | Controlled-response lifecycle checks; timeout/late-response/cleanup guards mutation-tested |
+| Successful-only prototype snapshots, restored from History; failed Merge preserves prior version | AC-MV-30 (prototype persistence portion) | `prototypeTextEffects.ts`, render completion callback and History opening helpers | Snapshot/provider checks and Merge-to-History browser scenario |
+
+**Remaining:** no actual engine preview service, wire IDs/versions/defaults, exact typography/timing/60-unit layout or effects burned into mock output. Supplied samples are not actual user-video previews. API/schema and domain-hook interfaces remain unchanged. S3 v5 retains 24 historical captures and adds two current sample-dialog screenshots; production visual baselines are not updated here.
+
+---
+
+## 2026-10-29 — MV Edit Title / Subtitle Effects: approved target specification
+
+Product-owner decisions from 2026-10-28/29, grounded in the designer dialog and engine POC inspection. Documentation only; runtime, API/schema, dependencies and tests are unchanged.
+
+| What | Spec IDs | Code | Test |
+| --- | --- | --- | --- |
+| Designer dialog/sheet + engine 8 Title / 17 Subtitle catalog; Title styles Author, Off gating and missing synchronized lyrics | area 02 MV-P5-EFX / EFX-1–2; AC-MV-23–25; S3 P6-S1–S2 | Not implemented; current prototype differences recorded in EFX-6 and S3 deltas | Required scenarios only; not executed acceptance results |
+| Both fields target 60 UTF-16 units; blank omission and complete engine layout in both ratios | AC-MV-03b supersedes 40/35 requirement; AC-MV-24 | Existing 40/35 code unchanged; engine support pending | Boundary/paste/prefill/emoji/mixed-language scenarios required |
+| WebM samples + actual MV preview; preparation lock, 30-second timeout, Retry and obsolete-result handling | AC-MV-26–28; S3 P6-S3–S4 | Not implemented end to end | Required failure/replay/close scenarios documented |
+| Local Save versus Merge, baseline-based dirty state and successful-version restoration | AC-MV-13/29–30; S3 P6-S5–S6 | Wire contract unchanged; shared identity/version and persistence are required future capabilities | Save/discard/revert/Merge success and failure scenarios required |
+
+**S3 v4:** six paths, 24 retained historical screenshots; P6 is a text-only target journey pending implementation/capture. Flowchart updated. No screenshot was fabricated or re-recorded. **TBD-MV-EFX-01–04** enumerate engine IDs/defaults/assets/timing/layout/lyrics/preview/persistence handoffs. English effect display names are not approved translations of the observed POC catalog.
 
 ---
 

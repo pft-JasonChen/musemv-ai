@@ -6315,26 +6315,36 @@ button:disabled {
 .effects-dialog__thumb {
   position: relative;
   flex: 0 0 auto;
-  width: 76px;
-  height: 76px;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 144px;
   padding: 0;
-  overflow: hidden;
-  border: 1.1px solid var(--white-15);
-  border-radius: var(--radius-md);
+  border: 0;
   background: none;
+  color: var(--neutral-dark-100);
   cursor: pointer;
 }
 
-.effects-dialog__thumb img {
-  position: absolute;
-  inset: 0;
+.effects-dialog__sample-frame {
+  position: relative;
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  aspect-ratio: 16 / 9;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1.1px solid var(--white-15);
+  border-radius: var(--radius-md);
+  background: #000;
 }
 
-.effects-dialog__thumb--selected {
+.effects-dialog__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.effects-dialog__thumb--selected .effects-dialog__sample-frame {
   border: 3px solid var(--color-accent-purple);
   box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
 }
@@ -6420,208 +6430,13 @@ button:disabled {
 }
 
 .effects-dialog.report-dialog--sheet .effects-dialog__thumb {
-  width: 66px;
-  height: 66px;
-  border-radius: 12px;
+  width: 128px;
 }
 
-.effects-dialog.report-dialog--sheet .effects-dialog__thumb--selected {
+.effects-dialog.report-dialog--sheet
+  .effects-dialog__thumb--selected
+  .effects-dialog__sample-frame {
   border-width: 2.5px;
-}
-
-/* ── Preview text ────────────────────────────────────────────────────────────
-   Drawn in CSS from the thumbnails in /assets/images/{title-effect,subtitle-style}.
-   Sizes are `cqh` (a % of the video's height) so the same rules serve the 331px
-   desktop preview and the 180px phone one. Fonts are system stacks: no web fonts
-   are loaded for these looks, so exact letterforms vary by OS — PENDING the
-   designer's type spec. */
-.fx-title,
-.fx-sub {
-  position: absolute;
-  left: 50%;
-  margin: 0;
-  color: #fff;
-  pointer-events: none;
-  text-align: center;
-  transform: translateX(-50%);
-}
-
-.fx-title {
-  top: 47%;
-  width: 82%;
-  font-size: 5.7cqh;
-  line-height: 1.15;
-  transform: translate(-50%, -50%);
-}
-
-.fx-sub {
-  top: 79.5%;
-  width: 83%;
-  font-family: var(--font-family-primary);
-  font-size: 3.6cqh;
-  line-height: 1.25;
-}
-
-.fx-title--cinematic {
-  padding: 0.12em 0;
-  border-block: 0.5cqh solid #fff;
-  font-family: "Times New Roman", Times, serif;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-shadow: 0 1cqh 2cqh rgba(0, 0, 0, 0.5);
-  text-transform: uppercase;
-}
-
-.fx-title--bold {
-  font-family: Impact, "Arial Narrow", "Helvetica Neue", sans-serif;
-  font-size: 6.6cqh;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  text-shadow: 0.8cqh 0.8cqh 0 rgba(0, 0, 0, 0.45);
-  text-transform: uppercase;
-}
-
-.fx-title--neon {
-  background: repeating-linear-gradient(0deg, #fff 0, #fff 0.4cqh, transparent 0.4cqh, transparent 0.8cqh);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 1cqh rgba(255, 255, 255, 0.7));
-  font-family: "Arial Black", var(--font-family-primary), sans-serif;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.fx-title--script {
-  font-family: "Snell Roundhand", "Apple Chancery", "Segoe Script", "Brush Script MT", cursive;
-  font-size: 8.4cqh;
-  font-style: italic;
-  font-weight: 400;
-  text-shadow: 0 0.6cqh 1.2cqh rgba(0, 0, 0, 0.5);
-}
-
-.fx-title--editorial {
-  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
-  font-size: 7.6cqh;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.fx-title--editorial::after {
-  content: "THE MUSIC VIDEO";
-  display: block;
-  margin-top: 0.7em;
-  font-family: var(--font-family-primary);
-  font-size: 0.3em;
-  font-weight: 500;
-  letter-spacing: 0.35em;
-}
-
-.fx-title--glitch {
-  font-family: "Courier New", Courier, monospace;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-shadow:
-    0.5cqh 0 0 rgba(255, 255, 255, 0.35),
-    -0.4cqh 0 0 rgba(120, 120, 120, 0.55);
-  text-transform: uppercase;
-}
-
-.fx-sub--classic {
-  font-weight: 700;
-  text-shadow: 0 0.3cqh 0.8cqh rgba(0, 0, 0, 0.6);
-}
-
-.fx-sub--box,
-.fx-sub--highlight {
-  width: max-content;
-  max-width: 88%;
-  padding: 0.15em 0.5em;
-  border-radius: 0.35em;
-}
-
-.fx-sub--box {
-  background: rgba(10, 10, 10, 0.92);
-  font-weight: 500;
-}
-
-.fx-sub--highlight {
-  background: #fff;
-  color: #111;
-  font-weight: 800;
-}
-
-.fx-sub--outline {
-  font-weight: 900;
-  paint-order: stroke fill;
-  -webkit-text-stroke: 0.8cqh #000;
-}
-
-.fx-sub--karaoke {
-  background: linear-gradient(90deg, #fff 0, #fff 45%, rgba(255, 255, 255, 0.5) 45%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-weight: 700;
-}
-
-.fx-sub--karaoke::after {
-  content: "";
-  display: block;
-  height: 0.3cqh;
-  margin-top: 0.5em;
-  border-radius: 1cqh;
-  background: linear-gradient(90deg, #fff 0, #fff 45%, rgba(255, 255, 255, 0.35) 45%);
-}
-
-.fx-sub--typewriter {
-  font-family: "SF Mono", Menlo, Consolas, monospace;
-  font-weight: 500;
-}
-
-.fx-sub--typewriter::after {
-  content: "";
-  display: inline-block;
-  width: 0.14em;
-  height: 1em;
-  margin-left: 0.15em;
-  background: #fff;
-  vertical-align: text-bottom;
-}
-
-.fx-sub--twoline {
-  font-weight: 700;
-  text-shadow: 0 0.3cqh 0.8cqh rgba(0, 0, 0, 0.6);
-}
-
-.fx-sub--twoline::after {
-  content: "Second line";
-  display: block;
-  margin-top: 0.2em;
-  font-size: 0.9em;
-  font-weight: 500;
-}
-
-.fx-sub--italic {
-  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
-  font-style: italic;
-  font-weight: 700;
-  text-shadow: 0 0.3cqh 0.8cqh rgba(0, 0, 0, 0.6);
-}
-
-.fx-sub--glow {
-  font-weight: 600;
-  text-shadow:
-    0 0 1cqh #fff,
-    0 0 2.4cqh rgba(255, 255, 255, 0.7);
-}
-
-.fx-sub--spaced {
-  font-weight: 300;
-  letter-spacing: 0.3em;
-  text-shadow: 0 0.3cqh 0.8cqh rgba(0, 0, 0, 0.5);
-  text-transform: uppercase;
 }
 
 /* Product owner, 2026-10-23 — `/mv/edit` at tablet width (768–1023px): "Delete this
@@ -6767,3 +6582,20 @@ button:disabled {
 
 /* Report duplicate feedback uses a neutral border per Content Report v1.2. */
 .popup-toast--report-neutral { border-color: var(--neutral-dark-34); }
+
+/* MV effects: visible cards play supplied animated WebP samples; inactive or
+   offscreen cards show covers. The canvas remains the existing scene video. */
+.effects-dialog__sample-label {
+  display: block;
+  width: 100%;
+  padding: 6px 0 0;
+  color: var(--neutral-dark-100);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+.effects-dialog .toggle-switch__track:disabled,
+.mv-edit__toggle-row--subtitle .toggle-switch__track:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}

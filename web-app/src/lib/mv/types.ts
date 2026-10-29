@@ -42,9 +42,11 @@ export const SONG_TITLE_MAX = 120;
  * YMW261006P0001 (product owner, 2026-10-08): MV Title and Author name had no
  * cap, and a ~1M-character title made the real engine fail the job. Caps set
  * by the product owner after checking with the Engine team.
+ * 2026-10-29: AC-MV-03b raises both UI limits to 60 UTF-16 units;
+ * engine layout support is tracked separately in TBD-MV-EFX-02.
  */
-export const MV_TITLE_MAX = 40;
-export const MV_AUTHOR_MAX = 35;
+export const MV_TITLE_MAX = 60;
+export const MV_AUTHOR_MAX = 60;
 
 /**
  * ── CREDIT COSTS — read this before changing a number (TBD-CC-05) ───────────

@@ -1,27 +1,24 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
-import { MobileScenePreview } from "@/components/mv/MobileScenePreview";
+import { EffectSample } from "./EffectSample";
+import { MobileScenePreview } from "./MobileScenePreview";
 import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialogTransition";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import {
-  SAMPLE_SUBTITLE,
   SUBTITLE_STYLES,
   TITLE_EFFECTS,
   type SubtitleStyleId,
   type TitleEffectId,
+  type TextEffectSelection,
 } from "@/lib/mv/textEffects";
 
 type Tab = "title" | "subtitle";
 
-export interface TextEffectSelection {
-  titleEffect: TitleEffectId;
-  subtitleStyle: SubtitleStyleId;
-}
+export type { TextEffectSelection } from "@/lib/mv/textEffects";
 
 /** What Save hands back: the picked looks plus the two switches the popup can flip. */
 export interface TextEffectDraft extends TextEffectSelection {
@@ -30,9 +27,9 @@ export interface TextEffectDraft extends TextEffectSelection {
 }
 
 /**
- * Figma "Edit Title & Subtitle" (node 5356:174566): a live preview of the MV with
- * its title and subtitle drawn over it, a Title / Subtitle switch, and a strip
- * of looks to pick from. Desktop is a centred dialog with a single Save; phones
+ * Figma "Edit Title & Subtitle" (node 5356:174566): supplied animated samples,
+ * independent Title / Subtitle drafts and the existing video player without text overlays. Actual engine preview and rendered
+ * output belong to the production specification, not this mockup. Desktop is a centred dialog with a single Save; phones
  * are a bottom sheet with ✕ and ✓ in the header. The ✕ is the only way to back out
  * (there is no Cancel button, product owner 2026-10-22).
  *
@@ -52,7 +49,7 @@ export function EditTitleSubtitleDialog({
   selection,
   titleOn,
   subtitleOn,
-  titleText,
+  subtitlesAvailable = true,
   videoSrc,
   poster,
 }: {
@@ -62,17 +59,24 @@ export function EditTitleSubtitleDialog({
   selection: TextEffectSelection;
   titleOn: boolean;
   subtitleOn: boolean;
-  titleText: string;
+  subtitlesAvailable?: boolean;
   videoSrc: string;
   poster: string;
 }) {
   const { mounted, visible } = useDialogTransition(open);
+  const [wasOpen, setWasOpen] = useState(open);
+  const [session, setSession] = useState(0);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) setSession((s) => s + 1);
+  }
   useEscapeToClose(open, onClose);
 
   if (!mounted || typeof document === "undefined") return null;
 
   return createPortal(
     <DialogBody
+      key={session}
       open={open}
       visible={visible}
       onClose={onClose}
@@ -80,7 +84,7 @@ export function EditTitleSubtitleDialog({
       selection={selection}
       titleOn={titleOn}
       subtitleOn={subtitleOn}
-      titleText={titleText}
+      subtitlesAvailable={subtitlesAvailable}
       videoSrc={videoSrc}
       poster={poster}
     />,
@@ -96,7 +100,7 @@ function DialogBody({
   selection,
   titleOn,
   subtitleOn,
-  titleText,
+  subtitlesAvailable = true,
   videoSrc,
   poster,
 }: {
@@ -107,7 +111,7 @@ function DialogBody({
   selection: TextEffectSelection;
   titleOn: boolean;
   subtitleOn: boolean;
-  titleText: string;
+  subtitlesAvailable?: boolean;
   videoSrc: string;
   poster: string;
 }) {
@@ -115,9 +119,17 @@ function DialogBody({
   const [tab, setTab] = useState<Tab>("title");
   const [draft, setDraft] = useState<TextEffectDraft>({ ...selection, titleOn, subtitleOn });
 
+  const [pageVisible, setPageVisible] = useState(() => document.visibilityState !== "hidden");
+  useEffect(() => {
+    const onVisibilityChange = () => setPageVisible(document.visibilityState !== "hidden");
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, []);
+  const [replayKey, setReplayKey] = useState(0);
+  const [failedSamples, setFailedSamples] = useState<Set<string>>(() => new Set());
   const options = tab === "title" ? TITLE_EFFECTS : SUBTITLE_STYLES;
   const current = tab === "title" ? draft.titleEffect : draft.subtitleStyle;
-  const tabOn = tab === "title" ? draft.titleOn : draft.subtitleOn;
+  const tabOn = tab === "title" ? draft.titleOn : draft.subtitleOn && subtitlesAvailable;
 
   const dirty =
     draft.titleEffect !== selection.titleEffect ||
@@ -190,22 +202,7 @@ function DialogBody({
           )}
         </div>
 
-        <MobileScenePreview
-          src={videoSrc}
-          poster={poster}
-          overlay={
-            <>
-              {draft.titleOn && (
-                <p className={`fx-title fx-title--${draft.titleEffect}`}>
-                  {titleText || "Your Title"}
-                </p>
-              )}
-              {draft.subtitleOn && (
-                <p className={`fx-sub fx-sub--${draft.subtitleStyle}`}>{SAMPLE_SUBTITLE}</p>
-              )}
-            </>
-          }
-        />
+        {open && <MobileScenePreview src={videoSrc} poster={poster} />}
 
         <div className="effects-dialog__tabs" role="tablist" aria-label="Edit">
           {(["title", "subtitle"] as const).map((t) => (
@@ -224,15 +221,22 @@ function DialogBody({
 
         {!tabOn && (
           <div className="effects-dialog__notice">
-            <span>{tab === "title" ? "Title is off" : "Subtitles are off"}</span>
+            <span>
+              {tab === "subtitle" && !subtitlesAvailable
+                ? "Synchronized lyrics are not available for this song."
+                : tab === "title"
+                  ? "Title is off"
+                  : "Subtitles are off"}
+            </span>
             <ToggleSwitch
               checked={false}
+              disabled={tab === "subtitle" && !subtitlesAvailable}
               ariaLabel={tab === "title" ? "Turn title on" : "Turn subtitles on"}
-              onChange={() =>
+              onChange={() => {
                 setDraft((d) =>
                   tab === "title" ? { ...d, titleOn: true } : { ...d, subtitleOn: true },
-                )
-              }
+                );
+              }}
             />
           </div>
         )}
@@ -241,6 +245,24 @@ function DialogBody({
           ref={stripRef}
           className={`effects-dialog__strip${tabOn ? "" : " effects-dialog__strip--off"}`}
           role="radiogroup"
+          onKeyDown={(event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            const buttons = Array.from(
+              event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"),
+            );
+            if (!buttons.length) return;
+            event.preventDefault();
+            const index = buttons.indexOf(event.target as HTMLButtonElement);
+            const next =
+              event.key === "Home"
+                ? 0
+                : event.key === "End"
+                  ? buttons.length - 1
+                  : (index + (event.key === "ArrowLeft" ? -1 : 1) + buttons.length) %
+                    buttons.length;
+            buttons[next].focus();
+            buttons[next].click();
+          }}
           aria-label={tab === "title" ? "Title effect" : "Subtitle style"}
         >
           <div className="effects-dialog__strip-inner">
@@ -248,27 +270,36 @@ function DialogBody({
               const selected = o.id === current;
               return (
                 <button
-                  key={o.id}
+                  key={o.sample}
                   type="button"
                   role="radio"
+                  tabIndex={selected ? 0 : -1}
                   aria-checked={selected}
                   aria-label={o.label}
                   disabled={!tabOn}
                   className={`effects-dialog__thumb${selected ? " effects-dialog__thumb--selected" : ""}`}
-                  onClick={() =>
+                  onClick={() => {
+                    if (selected) {
+                      setReplayKey((k) => k + 1);
+                      return;
+                    }
                     setDraft((d) =>
                       tab === "title"
                         ? { ...d, titleEffect: o.id as TitleEffectId }
                         : { ...d, subtitleStyle: o.id as SubtitleStyleId },
-                    )
-                  }
+                    );
+                  }}
                 >
-                  <img src={o.thumb} alt="" />
-                  {selected && (
-                    <span className="effects-dialog__check" aria-hidden="true">
-                      <DpIcon name="ic_check" className="effects-dialog__check-icon" />
-                    </span>
-                  )}
+                  <EffectSample
+                    sample={o.sample}
+                    cover={o.thumb}
+                    selected={selected}
+                    enabled={open && pageVisible}
+                    replayKey={selected ? replayKey : 0}
+                    failed={failedSamples.has(o.sample)}
+                    onError={() => setFailedSamples((previous) => new Set(previous).add(o.sample))}
+                  />
+                  <span className="effects-dialog__sample-label">{o.label}</span>
                 </button>
               );
             })}

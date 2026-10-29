@@ -35,8 +35,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v3'
-DATE = '2026-09-29'
+VERSION = 'v9'
+DATE = '2026-10-29'
 W = 1180
 MARGIN = 40
 COL_A, COL_C = MARGIN, 820      # left lead-in column; right outcome column
@@ -128,7 +128,13 @@ mve5 = f.node(COL_A, 1500, 'Leave with no Merge → every edit lost', 'MV-E5', w
 f.note(COL_C - 380, 1530, 'Reachable from every band above, not just this one — nothing on')
 f.note(COL_C - 380, 1550, '/mv/edit is persisted until Merge MV completes.')
 
-f.legend(1640)
+# P6 target extension: historical P1-P5 images are not acceptance evidence.
+f.section(1640, 'Part 6 — Title / Subtitle Effects (plain-video mockup) · P6')
+effectentry = f.node(COL_A, 1680, 'Edit Effects: draft + preview', 'Title / Subtitle · P6-S1..S4, P6-S7', w=NW, kind='entry')
+effectsave = f.node(COL_C, 1680, 'Save confirms session settings', 'No charge; Merge produces output · P6-S5..S6', w=NW)
+f.edge(effectentry, effectsave, 'Save', side='h')
+f.note(MARGIN, 1810, 'Close discards the dialog draft; leaving without Merge discards the session edit.')
+f.legend(1880)
 f.write(os.path.join(HERE, 'user-flowchart.svg'))
 print('Wrote', os.path.join(HERE, 'user-flowchart.svg'))
 if f.warnings:

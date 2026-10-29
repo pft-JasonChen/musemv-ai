@@ -257,7 +257,7 @@
         <td class="c-area">S3</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">MV Edit</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-edit/specs/spec.html</div></td>
         <td class="c-dev">/mv/edit</td>
-        <td><span class="badge st-ok">v3 · 2026-09-29</span></td>
+        <td><span class="badge st-ok">v9 · 2026-10-29</span></td>
         <td class="c-cl"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
       </tr>
       <tr>
@@ -1008,6 +1008,12 @@ no mail capability at all; this is a backend contract only, and its links to <co
 <strong>spec IDs</strong> that moved, the <strong>code</strong> that implements it, and the <strong>test</strong> that holds it — so you can<br>
 get from "what changed?" to the exact file without diffing.</p>
 </blockquote>
+<h2 id="2026-10-29-mv-effect-samples-play-when-visible">2026-10-29 — MV effect samples play when visible</h2>
+<p>MV-P5-EFX / AC-MV-26 / S3 v9 D-13: current-tab samples loop at 50% image visibility, independently of selection. Scroll-out, tab change, close and page background stop motion and restore covers. Motion does not dirty the draft. Implemented in EffectSample / EditTitleSubtitleDialog; covered by visibility/lifecycle unit tests and scoped desktop/phone E2E scrolling assertions.</p>
+<h2 id="2026-10-29-mv-effects-card-layout-and-subtitle-review-fixtures">2026-10-29 — MV effects card layout and Subtitle review fixtures</h2>
+<p>MV-P5-EFX / S3 v8: use a full 16:9 image with its name below, and enable Subtitle review on Cinematic Night / Neon City Nights through explicit prototype-only timed cues. Other samples/imports still require synchronized lyrics. Card geometry/Subtitle selection are covered by the scoped desktop/phone E2E; fixture isolation is covered by synchronizedMvLyrics unit tests. Canvas behavior and production engine requirements are unchanged.</p>
+<h2 id="2026-10-29-mv-effects-canvas-and-current-selection-correction">2026-10-29 — MV effects canvas and current selection correction</h2>
+<p>MV-P5-EFX / S3 v7 P6 now require a selected current effect on open with no Use default action. The mockup canvas plays the existing video without text overlays; selected cards retain motion samples. Legacy prototype null choices resolve to the POC current-look fixture, not a claimed engine-wide default. Implemented in EditTitleSubtitleDialog/textEffects/prototypeTextEffects and covered by dialog/snapshot unit tests plus three scoped desktop/phone/Merge E2E cases.</p>
 <h2 id="what-belongs-here-and-what-does-not">What belongs here, and what does not</h2>
 <p>There are three change logs in this repo and they answer three different questions. Reaching for the<br>
 wrong one is why this file exists.</p>
@@ -1043,6 +1049,83 @@ this file covers. When a change does both, it appears in both, and the row below
 <p><strong>A storyboard's own Changelog is the finer-grained one</strong> and worth opening second: it badges the<br>
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
+<hr>
+<h2 id="2026-10-29-mv-effects-mockup-boundary-s3-v6">2026-10-29 — MV Effects mockup boundary / S3 v6</h2>
+<p>Product owner clarified that actual MV engine preview and effect output are production RD/engine work, not mockup implementation. EFX-3 retains the expected production behavior; mockup only demonstrates supplied animated samples and settings. Removed the artificial unavailable-engine error, Retry, preparation locking and timeout service/tests. Save/discard/default/revert, 60-unit limits, timed-lyrics eligibility and successful-only prototype snapshots remain. Updated desktop/phone captures and regression checks assert the absence of engine errors/Retry. API/schema unchanged.</p>
+<hr>
+<h2 id="2026-10-29-mv-effects-prototype-implementation-s3-v5">2026-10-29 — MV Effects prototype implementation / S3 v5</h2>
+<p>Product owner supplied 25 animated WebP samples under <code>public/assets/title_mv</code> and approved prototype-only persistence without API/schema changes. Unselected cards use extracted still frames; selected samples animate and can be viewed enlarged with a sample label.</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code</th>
+<th>Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8/17 sample catalog, 60/60 text limits, independent drafts, Off/no-timing gating and baseline-based Merge enablement</td>
+<td>AC-MV-03b, 23–26, 28–29; S3 P6</td>
+<td><code>textEffects.ts</code>, <code>MvEditor.tsx</code>, <code>EditTitleSubtitleDialog.tsx</code>, <code>ToggleSwitch.tsx</code></td>
+<td>Dialog unit checks; targeted length regression; desktop/phone browser checks</td>
+</tr>
+<tr>
+<td>Actual-preview lifecycle: locks, 30-second timeout, Retry, cancellation, stale-result guard</td>
+<td>AC-MV-27–28</td>
+<td><code>TextEffectPreview.tsx</code>, <code>textEffectPreview.ts</code>, <code>MobileScenePreview.tsx</code></td>
+<td>Controlled-response lifecycle checks; timeout/late-response/cleanup guards mutation-tested</td>
+</tr>
+<tr>
+<td>Successful-only prototype snapshots, restored from History; failed Merge preserves prior version</td>
+<td>AC-MV-30 (prototype persistence portion)</td>
+<td><code>prototypeTextEffects.ts</code>, render completion callback and History opening helpers</td>
+<td>Snapshot/provider checks and Merge-to-History browser scenario</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Remaining:</strong> no actual engine preview service, wire IDs/versions/defaults, exact typography/timing/60-unit layout or effects burned into mock output. Supplied samples are not actual user-video previews. API/schema and domain-hook interfaces remain unchanged. S3 v5 retains 24 historical captures and adds two current sample-dialog screenshots; production visual baselines are not updated here.</p>
+<hr>
+<h2 id="2026-10-29-mv-edit-title-subtitle-effects-approved-target-specification">2026-10-29 — MV Edit Title / Subtitle Effects: approved target specification</h2>
+<p>Product-owner decisions from 2026-10-28/29, grounded in the designer dialog and engine POC inspection. Documentation only; runtime, API/schema, dependencies and tests are unchanged.</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Designer dialog/sheet + engine 8 Title / 17 Subtitle catalog; Title styles Author, Off gating and missing synchronized lyrics</td>
+<td>area 02 MV-P5-EFX / EFX-1–2; AC-MV-23–25; S3 P6-S1–S2</td>
+<td>Not implemented; current prototype differences recorded in EFX-6 and S3 deltas</td>
+<td>Required scenarios only; not executed acceptance results</td>
+</tr>
+<tr>
+<td>Both fields target 60 UTF-16 units; blank omission and complete engine layout in both ratios</td>
+<td>AC-MV-03b supersedes 40/35 requirement; AC-MV-24</td>
+<td>Existing 40/35 code unchanged; engine support pending</td>
+<td>Boundary/paste/prefill/emoji/mixed-language scenarios required</td>
+</tr>
+<tr>
+<td>WebM samples + actual MV preview; preparation lock, 30-second timeout, Retry and obsolete-result handling</td>
+<td>AC-MV-26–28; S3 P6-S3–S4</td>
+<td>Not implemented end to end</td>
+<td>Required failure/replay/close scenarios documented</td>
+</tr>
+<tr>
+<td>Local Save versus Merge, baseline-based dirty state and successful-version restoration</td>
+<td>AC-MV-13/29–30; S3 P6-S5–S6</td>
+<td>Wire contract unchanged; shared identity/version and persistence are required future capabilities</td>
+<td>Save/discard/revert/Merge success and failure scenarios required</td>
+</tr>
+</tbody>
+</table>
+<p><strong>S3 v4:</strong> six paths, 24 retained historical screenshots; P6 is a text-only target journey pending implementation/capture. Flowchart updated. No screenshot was fabricated or re-recorded. <strong>TBD-MV-EFX-01–04</strong> enumerate engine IDs/defaults/assets/timing/layout/lyrics/preview/persistence handoffs. English effect display names are not approved translations of the observed POC catalog.</p>
 <hr>
 <h2 id="2026-10-29-content-report-decisions-and-implementation">2026-10-29 — Content Report decisions and implementation</h2>
 <p>Product owner approved the complete adjustment list after three clarification rounds.</p>
@@ -3238,7 +3321,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <tr>
 <td><code>/mv/edit</code></td>
 <td><code>MvEditor</code></td>
-<td>Back, cover (+ lightbox), per-clip storyboard strip w/ preview + scene-version row, scene editor (phones: a full-screen scene view, DP's <code>MobileSceneDetail</code> — implemented inline in <code>MvEditor.tsx</code> behind <code>isPhone</code>, not a separate component file), output settings, Delete this Project, Merge MV (MV-08: no Save, no take tray)</td>
+<td>Back, cover (+ lightbox), per-clip storyboard strip w/ preview + scene-version row, scene editor (phones: a full-screen scene view, DP's <code>MobileSceneDetail</code> — implemented inline in <code>MvEditor.tsx</code> behind <code>isPhone</code>, not a separate component file), output settings, Delete this Project, Merge MV (MV-08: no project-level Save or take tray; effects-dialog Save only)</td>
 <td><code>storyboard</code>, <code>compose</code>, <code>useCredits().{credits,addCredits}</code></td>
 <td><code>enhancePrompt</code> (scene, cover)</td>
 </tr>
@@ -3256,7 +3339,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <li><code>song</code>: <code>null</code> | <code>{ id, source: library|import|sample|link, title, durationSec, art, url?, trim?{start,end}, lyrics? }</code> — <strong>required</strong>.</li>
 <li><code>description</code>: string, <strong>hard cap 2500</strong> (<code>DESCRIPTION_MAX</code>) — <strong>required</strong> (non-empty after trim).</li>
 <li><code>photos</code>: 0–2 <code>CharacterPhoto</code> (optional).</li>
-<li><code>settings</code>: <code>ratio</code> 16:9(def)/9:16 · <code>resolution</code> <strong>Standard(def)/High</strong> · <code>title{on:true,text}</code> (<strong>≤40 chars</strong>) · <code>author{on:true,text}</code> (<strong>≤35 chars</strong>) — YMW261006P0001, 2026-10-08 · <code>showSubtitle:true</code> · <code>watermark:false</code>.</li>
+<li><code>settings</code>: <code>ratio</code> 16:9(def)/9:16 · <code>resolution</code> <strong>Standard(def)/High</strong> · <code>title{on:true,text}</code> (<strong>≤60 UTF-16 code units</strong>, target requirement) · <code>author{on:true,text}</code> (<strong>≤60 UTF-16 code units</strong>, target requirement) — 2026-10-29 supersedes YMW261006P0001 limits; UI now enforces 60/60; engine support remains pending · <code>showSubtitle:true</code> · <code>watermark:false</code>.</li>
 <li><strong>CTA-ready</strong> (<code>isComposeReady</code>): <code>song != null &amp;&amp; description.trim() !== ""</code>.</li>
 </ul>
 <p><strong>Job (<code>MvJob</code>)</strong> — <code>queued → processing(0–100, step) → done | failed</code>. <code>mode: storyboard_first | direct</code>.</p>
@@ -3358,7 +3441,7 @@ insufficient-balance → IAP route, in addition to the Edit-MV micro-charges (GL
 <h3 id="mv-p5-edit-mv-mvedit">MV-P5 — Edit MV (<code>/mv/edit</code>)</h3>
 <blockquote>
 <p><strong>DECIDED (<code>TBD-MV-08</code>, sync App — supersedes the earlier "keep the multi-take tray" reading):</strong><br>
-this version has <strong>no "Project" mode</strong> → <strong>no Save</strong>; edits are <strong>ephemeral</strong> (leaving <code>/mv/edit</code><br>
+this version has <strong>no "Project" mode</strong> → <strong>no project-level Save</strong> (the effects dialog has a local Save; see MV-P5-EFX); edits are <strong>ephemeral</strong> (leaving <code>/mv/edit</code><br>
 loses them). Regenerate <strong>overwrites in place</strong> with <strong>no take/cover picker</strong> and <strong>no undo</strong>. The<br>
 prototype's multi-take + cover-variant trays and the Save button were <strong>hidden and code-marked</strong><br>
 (not deleted) for a future richer version. Behaviour matches App F09.</p>
@@ -3374,23 +3457,94 @@ migrated screen is worse than the decision it recorded. MV-08's rule is unchange
 escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 </blockquote>
 <ul>
-<li><strong>MV-P5-S1</strong> Header: DP renders <strong><code>DetailNavbar</code> alone</strong> — back, the title "Edit Music Video", and the credit balance (<code>MVEditPage.tsx:404</code>). <strong>Merge MV</strong> lives in the page footer, priced at <code>COST_MERGE</code>. <strong>No Save button.</strong><blockquote>
+<li><strong>MV-P5-S1</strong> Header: DP renders <strong><code>DetailNavbar</code> alone</strong> — back, the title "Edit Music Video", and the credit balance (<code>MVEditPage.tsx:404</code>). <strong>Merge MV</strong> lives in the page footer, priced at <code>COST_MERGE</code>. <strong>No project-level Save button; Edit Effects has its own local Save.</strong><blockquote>
 <p><em>Corrected 2026-08-20 以 DP 為準.</em> The previous wording required a <strong>"N shots" count</strong> and <strong>read-only type/song/ratio chips</strong> carrying "Style &amp; song are locked after creation". <strong>DP has none of the three</strong>, and <code>MVEditPage.css</code> has no class for any of them — they described the pre-migration WA screen. Removed rather than left as a gap; <code>DESIGNER-TODO</code> <strong>A25</strong> is closed by this.</p>
 </blockquote>
 </li>
 <li><strong>MV-P5-S2</strong> <strong>Cover:</strong> large preview (Expand → lightbox, Download); a <strong>Cover description</strong> textarea + Enhance; <strong>Recreate</strong> cover (<code>COST_COVER</code>, currently <strong>4</strong>) <strong>overwrites the cover directly</strong> — no "pick which cover" tray, no undo. <em>(Was 10; repriced 2026-08-12, spec corrected 2026-08-19.)</em></li>
 <li><strong>MV-P5-S3</strong> <strong>Scenes:</strong> a per-clip storyboard strip with an inline video preview and its own transport; the scene editor edits the active scene's prompt (max 2500 + Enhance) and shows a <strong>scene-version history row</strong>; <strong>Recreate scene</strong> (<code>20</code>, <code>addCredits(-20)</code>) <strong>overwrites that scene's video directly</strong> — no "pick which take" tray, no undo. <strong>Below 768px the inline editor and the preview are replaced by a full-screen <code>MobileSceneDetail</code></strong> (DP's phone frame has no room for the inline pair).</li>
-<li><strong>MV-P5-S4</strong> <strong>Output settings are inline sections of the right rail, not a modal</strong>: MV title toggle+input (max 40, <code>n/40</code> counter), Author name toggle+input (max 35, <code>n/35</code> counter), Show Subtitle, Show Watermark (no ratio/quality here). The two ON-OFF switches are WA's — DP ships the text inputs alone, but <code>settings.title.on</code> / <code>settings.author.on</code> are <code>MvSettingsSchema</code> fields (contract surface C2) and decide whether the caption is burned in at all.</li>
+<li><strong>MV-P5-S4</strong> <strong>Output settings are inline sections of the right rail, not a modal</strong>: MV title toggle+input (target max 60 UTF-16 units, <code>n/60</code> counter), Author name toggle+input (target max 60 UTF-16 units, <code>n/60</code> counter), Show Subtitle, Show Watermark (no ratio/quality here). The two ON-OFF switches are WA's — DP ships the text inputs alone, but <code>settings.title.on</code> / <code>settings.author.on</code> are <code>MvSettingsSchema</code> fields (contract surface C2) and decide whether the caption is burned in at all.</li>
 <li><strong>MV-P5-S6</strong> <strong>Delete this Project</strong> (DP's control; DP's own handler is dead) confirms with History's wording, then <strong>deletes the creation it was opened from</strong> and leaves to <code>/history</code>. The creation is identified by <code>/mv/edit?id=&lt;historyId&gt;</code>, which <code>/history</code>'s own "Edit MV" action puts in the URL — and which <code>/mv/result</code>'s Edit MV forwards as well: the row's id when that result was opened from History (<code>/mv/result?id=&lt;historyId&gt;</code>), or the live job's id right after a generation, since a just-generated MV is already a History entry. <em>(2026-09-29, product owner, <code>YMW260917P0008</code> retest — QA's path was History → open the MV → Edit MV, which carried no id and so deleted nothing; supersedes "opened from <code>/mv/result</code> there is no <code>id</code>, nothing is in History yet", which was never true of a fresh generation.)</em> Opened from <code>/creator</code> there is no <code>id</code> and it discards the in-memory flow only. <em>(Extended 2026-09-20, product owner, <code>YMW260917P0008</code> — supersedes the original "discards the in-memory flow and leaves", which left the edited MV sitting in History and made the control appear to do nothing.)</em> It still does <strong>not</strong> call a backend delete: removal is a session-local filter over the History grid's two sources (<code>useHistory().remove</code>), never a mutation of the <code>HISTORY_SAMPLES</code> seed.</li>
 <li><strong>MV-P5-S5</strong> <strong>Merge MV</strong> → <code>resetForRerender()</code> → <code>/mv/creating</code>, where <code>startRender</code> charges the flat <code>COST_MERGE</code> (10, refunded on failure — GL-01; ⚠️ corrected 2026-08-28 during the S3 storyboard-spec capture — was wrongly stated as <code>COST_RENDER</code> 200, a constant that does not exist; see the §3 Costs correction); re-renders the MV from the current (overwritten) cover/scenes + edited text. <strong>It re-renders the SAME creation, in place</strong> <em>(product owner, 2026-09-29)</em>: opened from <code>/mv/edit?id=&lt;historyId&gt;</code>, that History row keeps its id and its slot, title, date and stats, shows <strong>Generating…</strong> while the render runs, then <strong>Done</strong> with the merged video — no second row. The id rides along (<code>/mv/creating?id=</code> → <code>/mv/result?id=</code>), so the result screen, its Share, and a later Delete this Project (MV-P5-S6) all still name that row. With no <code>id</code> (<code>/creator</code>) the Merge is filed as a new History row. Enabled by <strong>any</strong> pending edit (text, regenerate, cover, or settings — incl. <code>storyboardDirty</code>). If <code>credits &lt; COST_MERGE</code>, Merge opens <code>BuyCreditsModal</code> instead (which itself falls back to <code>SubscribeModal</code> for a non-subscriber — CR-06, per S6 D-04 — confirmed live in this spec's own capture <code>22_merge_insufficient_credits.png</code>, which shows "Upgrade Your Plan").</li>
 </ul>
+<h3 id="mv-p5-efx-title-subtitle-effects-target-behavior-approved-2026-10-29">MV-P5-EFX — Title / Subtitle Effects (target behavior, approved 2026-10-29)</h3>
+<p><strong>Provenance and status.</strong> Product-owner decisions from the 2026-10-28–29 discussion; designer entry/dialog referenced by the existing implementation (Figma <code>1351:28314</code>, <code>5356:174566</code>); engine POC observed at <a href="https://runner.makeupar.com/ai-mv/projects/story/JASON_CHEN_7afa849157ab4371b1f846231b24e1a1">Neon Horizon</a>. POC inspection verified effect selection, Preparing preview, transport, timed lyric changes and the catalogs below; it did <strong>not</strong> submit Save or verify persisted output. The local designer-prototype checkout lacks the new dialog. This section defines intended behavior, not a claim that the web prototype or engine already satisfies it.</p>
+<h4 id="efx-1-entry-and-effect-catalog">EFX-1 — Entry and effect catalog</h4>
+<p>Keep the designer's Edit Effects entry between Cover and MV TITLE, desktop centered dialog and phone bottom sheet. Open on Title every time; immediately select the effect currently used by this MV in each tab and retain drafts across tab changes. There is no Use default action or unselected state. Production resolves missing legacy settings to the engine default before showing the selection. No lyric/timing editor or manual font, color, size or position controls. Title Effect styles both Title and Author; their display switches remain independent. Effect names below identify the observed engine catalog, not approved English UI copy or wire IDs.</p>
+<table>
+<thead>
+<tr>
+<th>Catalog</th>
+<th>Engine POC names in observed order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Title (8)</td>
+<td>置中靜態; 作者接標題; 快速淡入; 柔和淡入; 快切彈入; 右側靜態; 經典KTV標題; 下沉襯線變色</td>
+</tr>
+<tr>
+<td>Subtitle (17)</td>
+<td>置中靜態; 向上捲動; 靠左淡入; 楷體淡入; 右側直排; 書法淡入; 手寫交替; 灰字展開; 揭示模糊; 經典KTV大字; 點綴雙行淡入; 漸層暈染淡入; 場景黑底標籤; 簡約淡入; 雙行襯線淡入; 寬距簡約淡入; 筆刷揭示</td>
+</tr>
+</tbody>
+</table>
+<h4 id="efx-2-content-and-display-rules">EFX-2 — Content and display rules</h4>
+<p>Title and Author each allow 60 UTF-16 units (AC-MV-03b). Empty or whitespace-only text is omitted without placeholder text, switch changes, or blocking Save/Merge. Long text remains complete: engine controls shrinking/wrapping, with no truncation or ellipsis. Title/Author appear only in the opening, using the selected engine effect's timing; omit hidden/blank items without shifting the remaining items earlier. All 25 effects support both existing ratios (16:9 and 9:16); engine owns layout per ratio. Existing versions restore their settings; missing effect settings use engine defaults.</p>
+<p>Title Off disables Title Effect choices and offers a turn-on notice, even when Author is On. Subtitle Off behaves equivalently. Turning either on inside the dialog updates its draft only until Save. This intentionally differs from POC, whose Title choices remain available with Title Off. If synchronized lyrics are unavailable, disable the outer subtitle switch and the dialog's subtitle choices/turn-on control, explain the reason in both places, and keep the Subtitle tab accessible. Never substitute sample lyrics for missing actual content.</p>
+<h4 id="efx-3-sample-and-actual-preview">EFX-3 — Sample and actual preview</h4>
+<p><strong>Scope clarification (product owner, 2026-10-29):</strong> actual user-MV preview, its loading/timeout/Retry lifecycle and effects burned into video are <strong>production RD/engine requirements only</strong>. The mockup plays the existing MV scene video in the canvas without title/subtitle overlays, plays supplied motion samples on visible cards, and demonstrates selection/Save/Merge settings. It does not attempt engine preparation or show unavailable-engine errors, Retry or preparation locks.</p>
+<p>In the current Title or Subtitle tab, every card whose image frame is at least 50% visible within the viewport and clipped scroll strip loops silently, independently of selection. Below 50%, show its static cover. Switching tabs, closing the dialog or putting the browser tab in the background stops sample playback; returning resumes eligible visible cards. Playback alone never changes selection or enables Save. Production samples use WebM; supplied prototype assets are silent animated WebP, stopped by replacing them with covers. Cards use a 16:9 image frame with the full sample visible; names appear below the image rather than over it. The horizontal strip scrolls when needed. Motion samples may use a fixed sample ratio. The mockup canvas remains the existing video player with its playback controls and no text-effect overlay; selecting a card does not render its effect onto the canvas. The actual preview uses this MV's ratio, title, author and synchronized lyrics; it is distinct from the illustrative sample. First open is muted. Opening on Title and selecting a Title effect starts at the opening; selecting Subtitle starts at the first timed lyric, playing automatically when ready. Clicking an already-selected effect replays from that tab's start using its available preview, without changing settings or regenerating an available preview.</p>
+<p>While actual preview is preparing, show loading and disable effect selection, preview-changing switches, player controls and Save. Tabs and close remain available; tab changes retain the draft and do not alter the settings being prepared. Timeout after <strong>30 seconds</strong>: mark failure, unlock and offer Retry. On failure retain selection, clearly label the failed preview and allow Save; an old preview must not masquerade as the selected effect. Ignore obsolete results; closing discards the draft, stops playback and ignores pending results. WebM failure preserves its name/cover and selectability, independently of actual-preview failures. A tab may be accessible while its controls are disabled by Off, missing lyrics or preparation.</p>
+<h4 id="efx-4-save-merge-and-persistence">EFX-4 — Save, Merge and persistence</h4>
+<p>Save is available only when the draft differs from the latest confirmed settings and actual-preview preparation is not in progress. Save confirms effect choices and dialog switch changes, closes the dialog and costs nothing. Reopening restores the latest confirmed session settings. Desktop uses Save; phone uses the header checkmark. Close, Escape and backdrop discard unsaved dialog changes immediately, without confirmation, including during loading.</p>
+<p>Effects are unmerged session edits: leaving MV Edit without Merge discards them under MV-E5. Merge availability compares the current confirmed settings with the entry baseline, together with other pending edits: restoring all original settings with no other edits disables Merge again. Selecting/replaying a card alone is not a billable operation. Merge retains the existing charge, insufficient-balance and refund rules. Successful output stores effect choices, text and switches with that output version; History re-entry restores them. Failed Merge never overwrites the previous successful version's settings. Preview and Merge must use the same effect identity/version and settings; preview failure does not bypass Merge's independent validation.</p>
+<h4 id="efx-5-engine-delivery-dependencies-tbd-mv-efx-0104">EFX-5 — Engine delivery dependencies (TBD-MV-EFX-01–04)</h4>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Required handoff</th>
+<th>Acceptance impact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TBD-MV-EFX-01</td>
+<td>IDs, versions, defaults and missing-setting compatibility for all 25 effects</td>
+<td>Exact preview/output mapping and restoration; production must resolve the current effect before opening; the mockup seeds records without a snapshot with the observed POC selection (Title: fadein_fast; Subtitle: legacy_static), without claiming these are global engine defaults. English display names remain a designer/content handoff, not invented translations</td>
+</tr>
+<tr>
+<td>TBD-MV-EFX-02</td>
+<td>Animated WebP samples/covers supplied 2026-10-29; production WebM if required, plus exact typography, position and animation timing; 60-unit text and both-ratio layout support</td>
+<td>Long/multilingual text stays complete; hidden items retain original timing; CSS approximations are not the output oracle</td>
+</tr>
+<tr>
+<td>TBD-MV-EFX-03</td>
+<td>Synchronized-lyrics availability and timing data, including first lyric and any word-level timing required by an effect</td>
+<td>Subtitle eligibility, seeking and timed effects; no fabricated timings</td>
+</tr>
+<tr>
+<td>TBD-MV-EFX-04</td>
+<td>Actual-preview success/error/timeout behavior and the shared render/persistence contract</td>
+<td>Loading/retry, request obsolescence, identical Merge settings and successful-version restoration; payload names are not specified yet</td>
+</tr>
+</tbody>
+</table>
+<h4 id="efx-6-known-implementation-gaps-and-qa-status">EFX-6 — Known implementation gaps and QA status</h4>
+<p><strong>Review fixtures (product owner, 2026-10-29):</strong> History samples <strong>Cinematic Night</strong> and <strong>Neon City Nights</strong> have explicit prototype-only timed lyric cues so Subtitle choices and selected-card animations can be reviewed. These are demo cues, not measured alignment or production engine evidence. They apply only to the named sample records; imports and other records without synchronized lyrics remain disabled. The canvas still plays the existing video without newly overlaid lyrics.</p>
+<p>Implementation checkpoint (2026-10-29): the prototype now uses all <strong>8/17 supplied animated WebP</strong> samples from <code>public/assets/title_mv</code>, with still covers on frames below 50% visibility or when playback is suspended and the existing scene video playing in the canvas without text overlays. It enforces 60/60, uses real timestamp availability for subtitle eligibility, and compares confirmed settings/effects against the entry baseline. Close/reopen discards the dialog draft even during its exit animation. The currently used effect is selected on open; no Use default action exists. Older prototype snapshots with null effects resolve to the prototype current-look seed. Global engine default IDs remain unconfirmed.</p>
+<p>By explicit product-owner approval, prototype-only snapshots use a separate local storage record: successful Merge commits effect asset keys, output settings and the source song (preserving synchronized-lyrics eligibility), and History re-entry restores them; failed Merge leaves the successful version intact. Existing API/schema and domain-hook interfaces are unchanged. These asset keys are <strong>not verified engine wire IDs or versions</strong>, and the mock render does not burn these effects into the returned video.</p>
+<p>Mockup scope clarified by the product owner: the mockup plays the existing scene video without text overlays, with supplied animated samples confined to visible effect cards. The artificial actual-preview preparation service, unavailable-engine message, Retry and timeout/cancellation implementation were removed. Production expectations for those behaviors remain in EFX-3 / AC-MV-26–28 for RD/engine. CSS approximations and fixed lyric substitutions remain removed; the canvas uses the existing playback controls and does not display an enlarged effect sample. Actual MV preview and effects burned into video are intentionally outside mockup acceptance.</p>
+<p>S3 v9 includes two current video-dialog captures at 1440/390, alongside 24 historical images. The 25 assets resolve the sample-artwork handoff; exact production defaults/IDs/versioning, final English names, 60-unit layout/ratios, timing/lyrics and actual preview/render/persistence contracts remain open under EFX-5. Automated coverage includes dialog drafts and sample fallback, successful/failed snapshot commit, plus desktop/phone actions and Merge-to-History restoration. Production engine output acceptance is separate from mockup completion.</p>
+<p>QA must cover AC-MV-23–30, both ratios and desktop/phone presentation; test 60/61 UTF-16 units, paste/prefill, emoji, mixed languages, whitespace, all Title/Author switch/blank combinations, long text, no lyrics, visible/unselected card playback, 50% threshold, scroll-out and background suspension, selected-card replay, loading/timeout/retry/close and stale results, WebM-only failure, Save/discard/reopen, reverting all edits, Merge success restoration and failure preservation. These are required scenarios, <strong>not passed results</strong>.</p>
 <h3 id="mv-p6-supporting-sheets-external-entries">MV-P6 — Supporting sheets &amp; external entries</h3>
 <ul>
 <li><strong>MV-P6-A ChooseSongModal:</strong> tabs <strong>My Songs</strong> (default) / <strong>Sample Songs</strong> (🔒 <code>MY_SONGS</code>/<code>SAMPLE_SONGS</code>); each row art/title/duration + <strong>Use</strong> → <code>onPick</code> (same handler for both tabs) → Trim. ⚠️ <strong>Stale as of slice 3g-2 (2026-08-06) — the migration ADDED an in-modal inline preview.</strong> Tapping a row now plays/pauses that song right there (art swaps to a pause icon, a live position readout replaces the duration) via <code>useAudioPlayer</code>; the row's <strong>Use</strong> pill is revealed on hover/tap/focus. This line used to say the opposite ("No in-modal inline preview"), true of the pre-migration <code>Modal</code> this document was written against but not of the current <code>MvSheet</code>-based component. Corrected 2026-08-27 from code (<code>ChooseSongModal.tsx</code>) during the S2 storyboard-spec capture; the song card on <code>/mv/room</code> still ALSO plays/pauses after selection, so both previews exist now, not one.</li>
 <li><strong>MV-P6-B Import audio:</strong> real local file picker. <strong>MV-02 (2026-07-23):</strong> accepts only MP3/AAC/WAV/M4A up to 50MB (by extension or MIME) — otherwise an error toast and no import. On accept, derives duration from metadata, <strong>falls back to 0 on error</strong> (then Trim math uses a 180s fallback while the card shows <code>0:00</code>) → Trim. <strong>New 2026-09-01 (product owner) — the ≥30s floor is now also checked HERE, before Trim ever opens:</strong> <code>MvRoom.importAudio</code> rejects a probed duration <code>&gt; 0</code> and <code>&lt; MIN_TRIM_SEC</code> with the toast <code>Audio must be at least 30 seconds.</code>, alongside the existing format/size toasts (MV-E8). <code>MIN_TRIM_SEC</code> is <strong>exported from <code>TrimAudioModal</code></strong> (<code>export const MIN_TRIM_SEC = 30</code>) and imported here, so this check and MV-P6-C's cannot drift apart — they are one rule (MV-01) enforced at two points, not two rules. Deliberate exception: a probed duration of exactly <code>0</code> means the metadata probe <strong>failed</strong>, not a zero-length file, so it is let through to Trim (the pre-existing <code>0</code>-duration behaviour) rather than rejected — an unreadable-but-valid track must stay usable. Why this exists: a track already shorter than 30s can never be trimmed <em>up</em> to 30s, so previously it sailed past this check and opened Trim on a dead end — permanently disabled Confirm, red "minimum 30s", no path forward except closing.</li>
 <li><strong>MV-P6-C TrimAudioModal:</strong> waveform + two drag handles; default select 15%→70% — <strong>YMW260930P0004 (2026-10-07):</strong> unless that window is under 30s (any track ≤53s), in which case it opens at exactly 30s: the end widens first, and if it would pass the end of the track the window slides back to end there; min 5% gap; live preview of the selected region; a <strong>Confirm</strong> footer button (⚠️ <strong>not</strong> &ldquo;Use Trimmed Audio&rdquo; — that was the pre-migration <code>Modal</code>'s own label; slice 3g-2's <code>MvSheet</code> shell gives every one of the six sheets the same generic Cancel/Confirm footer, so this one reads plain &ldquo;Confirm&rdquo; like its siblings. Corrected 2026-08-27 from code during the S2 storyboard-spec capture, also visible in <code>e2e/mv-flow.spec.ts</code>'s own comment on the same rename) stores <code>trim{start,end}</code> (full <code>durationSec</code> unchanged). <strong>MV-01 (2026-07-23):</strong> the selected length must be <strong>≥30s</strong> — below that the button is disabled and a "minimum 30s" hint shows in <code>--color-action-danger</code>. <em>(Unchanged by the 2026-09-01 addition above — this is the SELECTION-time half of the same MIN_TRIM_SEC=30 rule; MV-P6-B added the upload-time half so a too-short source track never reaches this dead end.)</em> ⚠️ Sample-song trimming is web-new (app trims only library-import).</li>
 <li><strong>MV-P6-D FacePickerModal:</strong> manual crop square + size slider (256×256 JPEG). Detected-face suggestions are supported by the component but <strong>not passed</strong> from <code>/mv/room</code> (manual-crop only as-built). ⚠️ App auto-detects up to 6 faces (→ <code>TBD-MV-03</code>).</li>
-<li><strong>MV-P6-E SettingsModal:</strong> Aspect Ratio 9:16/16:9 · Quality <strong>Standard/High</strong> (SD/HD icons). <strong>MV-04 (2026-07-23):</strong> on the free plan <strong>"High" is greyed with a crown</strong>; tapping it opens <code>SubscribeModal</code> (IAP) instead of selecting. Subscribers select it normally. · Title/Author toggles+inputs (max <strong>40</strong> / <strong>35</strong>, <code>n/40</code> · <code>n/35</code> counter under each input — AC-MV-03b) · Show Subtitle · Show Watermark.</li>
+<li><strong>MV-P6-E SettingsModal:</strong> Aspect Ratio 9:16/16:9 · Quality <strong>Standard/High</strong> (SD/HD icons). <strong>MV-04 (2026-07-23):</strong> on the free plan <strong>"High" is greyed with a crown</strong>; tapping it opens <code>SubscribeModal</code> (IAP) instead of selecting. Subscribers select it normally. · Title/Author toggles+inputs (target max <strong>60</strong> each, UTF-16 length, <code>n/60</code> counters — AC-MV-03b; UI implemented at 60/60; engine support pending) · Show Subtitle · Show Watermark.</li>
 <li><strong>MV-P6-F TemplateSheet</strong> (its own component since 3g-2 — it used to be an inline <code>&lt;Modal&gt;</code> in <code>MvRoom</code>): grid of <code>TEMPLATES</code>; selecting fills <code>description</code> with the template prompt. ⚠️ Does <strong>not</strong> auto-select/lock a song (the old web spec claimed it did → <code>TBD-MV-05</code>).</li>
 <li><strong>MV-P6-G FaceConsentDialog</strong> (<code>src/components/mv/FaceConsentDialog.tsx</code>, product owner 2026-08-19) — <strong>FINAL as-built; no designer artwork is owed.</strong> Product owner, verbatim: "目前我們畫的就是結案,請直接用" ("what we've drawn is the decision — use it as-is"). This closes <code>DESIGNER-TODO</code> <strong>A22</strong> ("no comp, we are standing in for the designer"); do not describe this dialog as awaiting design. A <code>DpDialog</code> (not one of the six <code>MvSheet</code>s — see §1), shown the <strong>first</strong> time <code>openPhotoPicker()</code> runs in the session, before the character-photo file input opens; accepting calls <code>onContinue</code> (which opens the file input in the same click, a trusted-activation requirement) and dismissing opens nothing. Content: two paragraphs of biometric-data-processing consent copy (face/hair scan, "Biometric Data", 7-day server retention, "neither Biometric Data nor outcome... transmitted to any third party... unless you choose to publish"), a required checkbox ("your action of checking this box constitutes an express written consent...") linking Privacy Policy / Terms of Service, and a <strong>CONTINUE</strong> button <strong>disabled until the checkbox is checked</strong>. Consent state (<code>hasFaceConsent()</code>/<code>grantFaceConsent()</code>, <code>src/lib/mv/faceConsent.ts</code>) is a <strong>module-level boolean, not persisted</strong> — true for the rest of the session (surviving navigation away from and back to <code>/mv/room</code>) but reset on reload; 🔒 a real backend replaces this with an account-level consent record (product owner: "a real consent record belongs on the ACCOUNT, server-side"). Sample Photos deliberately skip this dialog (MV-P1-S5) — those faces are bundled assets, not the user's, so there is no Biometric Data of theirs to consent over.</li>
 <li><strong>External entries (area 05's <code>useOpenCreation</code> / <code>useSeedMvFlow</code>):</strong> from History — <strong>Create MV</strong> → <code>/mv/room</code>, <strong>Edit MV</strong> → <code>/mv/edit</code>, and opening a done row → <code>/mv/result</code>. All three fabricate flow state from the row (a <code>mockStoryboard()</code> plus a synthetic song with <code>durationSec:145</code>). RD/QA: these enter the flow with placeholder state, not a real compose. <em>(Until 2026-08-06 this went through <code>CreationDialog</code>, now deleted.)</em></li>
@@ -3429,7 +3583,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <tr>
 <td><strong>MV-E5</strong></td>
 <td>Edit MV: leaving the page / regenerate</td>
-<td><strong>DECIDED:</strong> no Save/Project mode — edits are <strong>ephemeral</strong> and lost on leaving <code>/mv/edit</code>; regenerate (scene/cover) <strong>overwrites</strong> with <strong>no undo</strong>; <strong>Merge</strong> re-renders from the current state (<code>TBD-MV-08</code>/<code>TBD-MV-10</code>).</td>
+<td><strong>DECIDED:</strong> no project-level Save/Project mode; effects-dialog Save confirms only the current edit session — edits are <strong>ephemeral</strong> and lost on leaving <code>/mv/edit</code>; regenerate (scene/cover) <strong>overwrites</strong> with <strong>no undo</strong>; <strong>Merge</strong> re-renders from the current state (<code>TBD-MV-08</code>/<code>TBD-MV-10</code>).</td>
 </tr>
 <tr>
 <td><strong>MV-E6</strong></td>
@@ -3465,7 +3619,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>AC-MV-01</strong> — WHEN <code>/mv/room</code> loads, THE SYSTEM SHALL default <code>mvType=singing</code> and keep <strong>Create</strong> disabled until <code>song != null</code> AND <code>description.trim() !== ""</code>.</li>
 <li><strong>AC-MV-01b</strong> — WHILE logged out, WHEN <code>/mv/room</code> is opened, THE SYSTEM SHALL render the full compose screen with no sign-in modal; and THE SYSTEM SHALL open the sign-in modal only when the user activates <strong>Song Library</strong> or <strong>Create Music Video</strong>. <strong>Import Audio stays ungated</strong> — a file the user already holds is not account data, and it is therefore the only way a guest can reach a CTA-ready state (AC-MV-01 needs a song). <em>(new 2026-08-12; see area 09 AC-AUTH-08)</em></li>
 <li><strong>AC-MV-02</strong> — WHEN a song is selected from any source (My Songs, Sample Songs, or Import), THE SYSTEM SHALL route it through Trim, and on confirm show the song card (art/title/effective duration) and re-evaluate CTA-ready.</li>
-<li><strong>AC-MV-03b</strong> — WHEN the MV Title or Author name is typed or pasted (Settings sheet or Edit MV), THE SYSTEM SHALL reject input past <strong>40</strong> (Title) / <strong>35</strong> (Author) characters and show an <code>n/40</code> / <code>n/35</code> counter; a pre-filled value (the signed-in name, a reopened creation's title) is cut to the same cap. <em>(YMW261006P0001, product owner 2026-10-08, limits confirmed with the Engine team — an uncapped ~1M-char title failed the real job. RD should enforce the same caps server-side.)</em></li>
+<li><strong>AC-MV-03b</strong> — WHEN MV Title or Author is typed or pasted (Settings sheet or Edit MV), THE SYSTEM SHALL limit each to <strong>60 UTF-16 code units</strong>, show an <code>n/60</code> counter, and constrain pre-filled values to the same limit. Some emoji occupy multiple units. <em>(Product owner, 2026-10-29; supersedes the 2026-10-08 40/35 requirement. Target behavior only: UI now enforces 60/60. Engine must confirm 60-unit support before release; no API/schema change in this documentation update.)</em></li>
 <li><strong>AC-MV-03</strong> — WHEN the description is typed or pasted beyond 2500 chars, THE SYSTEM SHALL reject input past 2500 and show <code>2500/2500</code>. (Programmatic fills — Templates/Enhance — are not length-capped; fixtures stay under the cap.)</li>
 <li><strong>AC-MV-04</strong> — WHEN <strong>Create</strong> is tapped, THE SYSTEM SHALL run <code>resetForNewMv()</code> and open <code>ModeModal</code> preserving compose state.</li>
 <li><strong>AC-MV-05</strong> — WHEN <strong>Storyboard First</strong> is chosen, THE SYSTEM SHALL navigate to <code>/mv/thinking</code> and start a storyboard job; WHEN <strong>Directly</strong>, navigate to <code>/mv/creating</code> and start a render job.</li>
@@ -3477,7 +3631,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>AC-MV-10</strong> — WHEN <code>/mv/result</code> loads, THE SYSTEM SHALL loop the video muted and expose Share, Download, a <strong>Publish toggle that opens a "Ready to Go Public?" confirm on turn-on</strong>, Recreate, and <strong>Edit MV</strong> — where, while the MV is published/in-review, <strong>Edit MV is removed from the actions row</strong> and the Publish toggle is the only route back to editable. <em>(Same correction as MV-P4-S1: hand-built controls, not native ones — 2026-08-19. Removal supersedes the earlier "Unpublish to edit" replacement — product owner 2026-08-28, spec synced 2026-09-10. Like/Dislike removed until they persist server-side — <code>YMW260921P0013</code>, 2026-09-22.)</em></li>
 <li><strong>AC-MV-11</strong> — IF a job <code>failed</code>, THEN THE SYSTEM SHALL show the error state with <strong>Back</strong> and mark the History row Failed. WHEN the failed job is a render or song job (<code>/mv/creating</code>, <code>/song/creating</code>), THE SYSTEM SHALL additionally offer <strong>Retry</strong> (with an unchanged <code>[fail]</code> description re-failing). ⚠️ <strong>Changed 2026-09-02, product owner:</strong> the storyboard job's error state (<code>/mv/thinking</code>) no longer offers Retry — it previously did, identically to the render/song screens, but Retry there only ever re-ran the same <code>[fail]</code> compose and re-failed deterministically, so it was a dead end kept for visual symmetry rather than because it could ever succeed.</li>
 <li><strong>AC-MV-12</strong> — WHEN Regenerate scene or Recreate cover is invoked in Edit MV, THE SYSTEM SHALL <strong>overwrite</strong> that scene/cover in place (no take/cover picker, no undo) and decrement the balance by <code>recreateShotCost(kind, resolution, sceneDurationSec)</code> for a scene (a per-second/per-tier rate per spec 11 §3.5 — <strong>not</strong> a flat number; e.g. 26 for a 9s <code>sing</code>/<code>720p</code> shot) / flat <code>COST_COVER</code> −4 for the cover. <em>(Cover corrected from −10 on 2026-08-19; the scene-cost wording corrected from a flat <code>COST_REGEN</code> −20 — a constant that no longer exists — on 2026-08-28 during the S3 storyboard-spec capture.)</em></li>
-<li><strong>AC-MV-13</strong> — WHEN <strong>Merge MV</strong> is invoked with sufficient balance, THE SYSTEM SHALL re-render the MV from the current cover/scenes + edited text and charge the flat <code>COST_MERGE</code> (−10; ⚠️ corrected 2026-08-28 during the S3 storyboard-spec capture — was wrongly stated as <code>COST_RENDER</code> −200, a constant that does not exist in the codebase) on generation start (refunded on failure); there is <strong>no Save</strong> and edits do not persist across leaving the page. WHEN the balance is insufficient, it SHALL open the buy-credits IAP instead.</li>
+<li><strong>AC-MV-13</strong> — WHEN <strong>Merge MV</strong> is invoked with sufficient balance, THE SYSTEM SHALL re-render the MV from the current cover/scenes + edited text and charge the flat <code>COST_MERGE</code> (−10; ⚠️ corrected 2026-08-28 during the S3 storyboard-spec capture — was wrongly stated as <code>COST_RENDER</code> −200, a constant that does not exist in the codebase) on generation start (refunded on failure); there is <strong>no project-level Save</strong>; effects-dialog Save confirms the session settings only, and unmerged edits do not persist across leaving the page. Successful Merge preserves its effect settings for later editing; failure does not overwrite the last successful settings (AC-MV-30). WHEN the balance is insufficient, it SHALL open the buy-credits IAP instead.</li>
 <li><strong>AC-MV-14</strong> — WHEN <strong>Enhance</strong> is invoked on visual style, scene prompt, cover description, or the MV description, THE SYSTEM SHALL replace that field with the value returned by <code>enhancePrompt</code> for the matching <code>kind</code>. All four fields again — <code>/mv/room</code>'s Enhance button was removed 2026-08-25 (<code>3bdff87</code>, product owner, "not available in V1" — no supported backend API at the time) and <strong>restored 2026-08-27</strong> once RD confirmed the API exists. Corrected 2026-08-27 twice in one day during the S2 storyboard-spec capture: first to drop description (the removal), then to add it back (the reversal).</li>
 <li><strong>AC-MV-15</strong> — ~~WHEN a storyboard, render, or song job starts, THE SYSTEM SHALL NOT change the credit balance (only Edit-MV actions do).~~ <strong>WITHDRAWN 2026-08-19 — this was written backwards.</strong> It contradicted <code>AC-MV-19</code> in this same file, and the code, <code>00-overview</code> §6, the e2e guard <code>G5-d#1</code> and the QA checklist below all implement the opposite. <strong>The charging rule is <code>AC-MV-19</code>: charge on generation start, refund on failure.</strong> Nothing replaces this ID; it is retired rather than renumbered so existing references resolve to this note.</li>
 <li><strong>AC-MV-16</strong> — WHEN Trim is confirmed, THE SYSTEM SHALL store <code>{start,end}</code> (leaving <code>durationSec</code> unchanged) only when the selected length is <strong>≥30s</strong> (MV-01); below that the confirm is disabled.</li>
@@ -3490,13 +3644,23 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>AC-MV-22</strong> <em>(new 2026-09-21, <code>YMW260911P0004</code>, product owner)</em> — WHILE <code>/mv/room</code>'s side rail is waiting on its data, THE SYSTEM SHALL render a <strong>skeleton</strong> of the list (placeholder blocks in the shape of the rows, occupying the rail's normal footprint) rather than an empty column, a spinner, or the app's 3-dot loading animation. THE SYSTEM SHALL NOT wrap the route in a page-level loading fallback to achieve this. <strong>This rail is the ONE exception to the app-wide loading UI</strong> — everywhere else keeps the 3-dot animation (<code>HistoryLoadingDots</code>, product owner 2026-09-14: "loading 狀況請統一改成用那個 UI，不要寫新的 UI"). <em>Why the exception: the rail is a single panel inside an otherwise fully-rendered page, and its row shape is known before the data arrives — a skeleton holds the layout still and says which part is late, whereas a centred animation in a side column reads as that column being broken. The alternative that was tried, a page-level fallback over the whole route, was removed on 2026-09-21: it made Next stream every page in two parts and left a duplicate in a hidden staging div, which took the e2e suite from 6 failures to 24. That is why this AC forbids solving it at the route level.</em> <em>Scope: RD implements this on the real backend. It is <strong>not</strong> implemented in this prototype and cannot be — <code>useMyCreations()</code> reads in-memory state synchronously, so the rail has no loading state to render (MV-E10).</em></li>
 </ul>
 <hr>
+<ul>
+<li><strong>AC-MV-23</strong> — Edit Effects SHALL keep the designer desktop/phone presentation, open on Title, retain per-tab single-selection drafts and provide the engine's 8/17 catalog without manual styling or lyric editors (EFX-1).</li>
+<li><strong>AC-MV-24</strong> — Blank/hidden text SHALL be omitted without placeholders or timing shifts; long text SHALL remain complete under engine layout in both ratios, with Title Effect styling Author too (EFX-2).</li>
+<li><strong>AC-MV-25</strong> — Title Off SHALL disable Title Effect even with Author On; dialog turn-on changes SHALL remain draft until Save. Missing synchronized lyrics SHALL disable subtitle activation/choices and explain why in both locations (EFX-2).</li>
+<li><strong>AC-MV-26</strong> — Current-tab samples at least 50% visible SHALL loop muted independently of selection, reverting to covers below 50%, on close, tab change or page background; playback SHALL NOT dirty the draft; actual preview SHALL use current content, start at the opening/first lyric for Title/Subtitle and support selected-card replay without a setting change (EFX-3).</li>
+<li><strong>AC-MV-27</strong> — Actual-preview preparation SHALL lock changing controls/player/Save while preserving tabs/close; after 30 seconds SHALL expose failure and Retry, unlock, and allow Save without showing old output as the new result (EFX-3).</li>
+<li><strong>AC-MV-28</strong> — Closing SHALL discard dialog changes, stop playback and ignore pending results; obsolete results SHALL not replace newer previews; sample failure SHALL preserve effect selection independently (EFX-3/4).</li>
+<li><strong>AC-MV-29</strong> — Save SHALL confirm only changed session settings without charge; preparing preview SHALL disable Save; leaving without Merge SHALL discard edits, and restoring the entry baseline with no other edits SHALL disable Merge (EFX-4).</li>
+<li><strong>AC-MV-30</strong> — Preview and Merge SHALL share effect identities/versions/settings; successful Merge SHALL restore those settings on re-edit, failed Merge SHALL preserve the previous successful settings, and absent settings SHALL use engine defaults (EFX-4/5).</li>
+</ul>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
 <ul>
 <li>[ ] <strong>MV-P1</strong>: fresh room CTA disabled → add song only → still disabled → add description → enabled (AC-01/02/03).</li>
 <li>[ ] <strong>MV-P2</strong>: Storyboard First → Generating row appears in History at start → progress 0→100 <em>(visual)</em> → storyboard with ≥1 editable scene; <strong>MV Song plays on tap, not editable</strong>; <strong>no Save button</strong>; edits carried into Generate MV (AC-05/06/07/08).</li>
 <li>[ ] <strong>MV-P3</strong>: Directly → progress → result with <code>&lt;video&gt;</code> (AC-05/09/10).</li>
 <li>[ ] <strong>MV-P4</strong>: NO Like/Dislike (<code>YMW260921P0013</code>); Share dialog opens; Download triggers; <strong>Publish on → "Ready to Go Public?" confirm</strong>; <strong>published → Edit MV is GONE from the actions row</strong> (not relabelled), and toggling Publish off brings it back; Recreate returns to room prefilled; Edit MV opens editor when unpublished (AC-10, MV-E7).</li>
-<li>[ ] <strong>MV-P5</strong>: regen scene <strong>overwrites</strong> in place (dynamic per-shot rate, e.g. −26, no picker — ⚠️ not a flat −20, corrected 2026-08-28); cover recreate <strong>overwrites</strong> (−4 — ⚠️ not −10, corrected 2026-08-28, matching the already-corrected MV-P5-S2 line above); <strong>no Save button and no tray markup at all</strong> (the <code>LEGACY_TAKE_TRAY_UI</code> flag was deleted in 3k); Merge charges the flat <code>COST_MERGE</code> (−10 — ⚠️ not <code>COST_RENDER</code> −200, corrected 2026-08-28 during the S3 storyboard-spec capture) on re-render, or opens IAP when short; edits lost on leaving the page (AC-12/13/19). Check the phone path too: below 768px the scene editor is <code>MobileSceneDetail</code>, not the inline pair.</li>
+<li>[ ] <strong>MV-P5</strong>: regen scene <strong>overwrites</strong> in place (dynamic per-shot rate, e.g. −26, no picker — ⚠️ not a flat −20, corrected 2026-08-28); cover recreate <strong>overwrites</strong> (−4 — ⚠️ not −10, corrected 2026-08-28, matching the already-corrected MV-P5-S2 line above); <strong>no project-level Save button and no tray markup; effects-dialog Save only</strong> (the <code>LEGACY_TAKE_TRAY_UI</code> flag was deleted in 3k); Merge charges the flat <code>COST_MERGE</code> (−10 — ⚠️ not <code>COST_RENDER</code> −200, corrected 2026-08-28 during the S3 storyboard-spec capture) on re-render, or opens IAP when short; edits lost on leaving the page (AC-12/13/19). Check the phone path too: below 768px the scene editor is <code>MobileSceneDetail</code>, not the inline pair.</li>
 <li>[ ] <strong>MV-P6-B/MV-E8</strong>: import a &lt;30s file → rejected at upload with the "at least 30 seconds" toast, Trim never opens; import a file whose metadata probe fails (duration <code>0</code>) → NOT rejected, falls through to Trim (AC-20).</li>
 <li>[ ] <strong>MV-P6-C</strong>: trim handles move, 5% min gap holds, preview plays selected region; select &lt;30s → Confirm disabled + red "minimum 30s" hint (AC-16).</li>
 <li>[ ] <strong>MV-P6-G</strong>: first character-photo upload of the session → <code>FaceConsentDialog</code> blocks the file picker until the checkbox is checked and CONTINUE tapped; second upload same session → straight to the picker, no dialog; Sample Photos never show it.</li>
@@ -3533,6 +3697,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 </tr>
 </tbody>
 </table>
+<p>Engine extension dependencies: <strong>TBD-MV-EFX-01–04</strong>, see MV-P5-EFX / EFX-5. Product behavior is approved; engine delivery and implementation acceptance remain pending.</p>
 <p>See also global: <code>TBD-GL-01</code> (credit charging), <code>TBD-GL-02</code> (auth granularity).</p>
 <hr>
 <h2 id="9-flow-diagram">9. Flow diagram</h2>
@@ -7791,6 +7956,39 @@ storyboard spec 狀態、gate 結果)見 <code>docs/RD-HANDOFF-READINESS-2026-09
 結論優先於本檔案下方 §🚦 這段 08-12 的舊版口吻。</p>
 </blockquote>
 <hr>
+<h2 id="2026-10-29-mv-effects-engine-handoff">2026-10-29 — MV Effects engine handoff</h2>
+<p>Actual engine preview/output are production-only dependencies and do not block the plain-video mockup (product owner, 2026-10-29). Product behavior is approved in area 02 <strong>MV-P5-EFX</strong> and S3 v9 <strong>P6</strong>. These are delivery dependencies, not invitations to invent defaults or claim prototype acceptance:</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Owner</th>
+<th>Required confirmation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TBD-MV-EFX-01</td>
+<td>Engine / Design</td>
+<td>All 8/17 production IDs, versions, defaults, compatibility and final English names; samples now supplied and local asset keys implemented</td>
+</tr>
+<tr>
+<td>TBD-MV-EFX-02</td>
+<td>Engine / Design</td>
+<td>Animated WebP samples/covers delivered; remaining production timing/type/layout, both ratios and 60 UTF-16-unit Title/Author support; UI now supports 60/60; engine support remains pending</td>
+</tr>
+<tr>
+<td>TBD-MV-EFX-03</td>
+<td>Engine</td>
+<td>Synchronized-lyrics availability, first lyric and effect-required timing granularity</td>
+</tr>
+<tr>
+<td>TBD-MV-EFX-04</td>
+<td>Engine / RD</td>
+<td>Preview success/error/timeout and shared Merge identity/settings/persisted-version contract; no wire fields changed yet</td>
+</tr>
+</tbody>
+</table>
 <h2 id="rd-2026-08-12-tbd-09-02">🚦 可以交接給 RD 了嗎?(2026-08-12 盤點;下方 TBD 狀態已更新到 09-02)</h2>
 <p><strong>一句話:生成(MV / Song)那一半可以交,社群(Explore / Community)那一半不行 —— 而缺的是「還沒寫的<br>
 section」,不是「小的 UI 問題」。</strong></p>

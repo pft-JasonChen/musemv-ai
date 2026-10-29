@@ -84,8 +84,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Music Video Edit',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video Edit',
-    'author': 'Jason Chen', 'date': '2026-09-10', 'status': 'Draft',
-    'version': 'v3',
+    'author': 'Jason Chen', 'date': '2026-10-29', 'status': 'Draft',
+    'version': 'v9',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -94,7 +94,7 @@ cfg = {
     'description': (
         '<code>/mv/edit</code> &mdash; the post-generation editor for a music video: recreate the '
         'cover or any single scene in place, adjust the output settings (title/author/subtitle/'
-        'watermark), and Merge to re-render. No Project mode and no Save; every edit is ephemeral '
+        'watermark), and Merge to re-render. No Project mode or project-level Save; the effects dialog confirms session settings with Save; every edit is ephemeral '
         'until Merge, and lost if the user leaves first.'
     ),
     'background': (
@@ -138,7 +138,7 @@ cfg = {
                     'user': 'Arrives on /mv/edit.',
                     'system': 'DetailNavbar alone: Back, the title, and the credit balance.',
                     'exact': ['Title: &ldquo;Edit Music Video&rdquo;'],
-                    'limits': ['No Save button anywhere on this screen (MV-08) &mdash; every edit below is ephemeral until Merge.'],
+                    'limits': ['No project-level Save button (MV-08); the effects dialog has a local Save &mdash; every edit below is ephemeral until Merge.'],
                     'focus': [
                         {'box': [21.4, 1.6, 2.7, 3.0], 'type': 'info', 'label': 'Back'},
                         {'box': [80.1, 1.6, 6.9, 3.1], 'type': 'info', 'label': 'Credits'},
@@ -561,6 +561,179 @@ cfg = {
     # ── comments (disabled — no Firebase backend in this repo) ────────────────
     'comments_enabled': False,
 }
+
+# v4 is a product-approved target extension, not a new live-screen capture.
+# The original 24 images remain historical; P6 deliberately carries no screenshot.
+cfg['description'] += (' <b>v4 target extension (2026-10-29):</b> Title/Subtitle Effects follow '
+    'the engine catalog and preview behavior. P6 includes current video-dialog captures; '
+    'P1-P5 images are historical and do not prove the new requirements.')
+cfg['overview'].append(['Source/status', 'Product-owner decisions, 2026-10-28/29; supplied motion samples; engine POC inspection; area 02 MV-P5-EFX. Prototype UI and local snapshots implemented. Actual engine preview/output are production-only requirements, intentionally excluded from mockup. No wire-contract change.'])
+cfg['overview'].append(['Capture status', '24 historical images plus two current video-dialog captures at 1440/390. Engine preview/output are outside mockup scope.'])
+cfg['short_nav'].append('Title / Subtitle Effects')
+cfg['paths'].append({
+    'id': 'p6-text-effects', 'num': 6, 'name': 'Title / Subtitle Effects (target)',
+    'desc': 'Designer dialog/sheet with supplied motion samples and prototype-only snapshots. Actual preview/output expectations are for production RD/engine only; mockup captures show samples.',
+    'entry': 'Edit Effects between Cover and MV TITLE', 'outcome': 'Session settings confirmed; Merge produces the persisted result',
+    'steps': [
+        {'num': 1, 'user': 'Opens Edit Effects.',
+         'system': 'Shows the desktop dialog or phone bottom sheet on Title, restoring confirmed session settings.',
+         'limits': ['Title has eight effects; Subtitle has seventeen engine effects.',
+                    'Each tab retains one draft selection across tab changes.',
+                    'Missing settings use engine defaults; existing versions restore their saved effects.',
+                    'No manual text styling, lyric editing or timing controls.']},
+        {'num': 2, 'user': 'Checks text and display switches before choosing a look.',
+         'system': 'Shows actual title, author and synchronized lyrics according to the enabled controls.',
+         'limits': ['Title and Author each allow 60 UTF-16 units, including typed, pasted and pre-filled text.',
+                    'Blank or whitespace-only text is omitted without placeholders or changing its switch.',
+                    'Engine layout preserves complete text in both existing aspect ratios without ellipsis or truncation.',
+                    'Title Effect styles Author too; opening timing remains unchanged when either item is hidden.',
+                    'Title Off disables Title Effect even with Author On; turning on remains draft until Save.',
+                    'Missing synchronized lyrics disable subtitle activation and choices, with explanations outside and inside the dialog.']},
+        {'num': 3, 'user': 'Selects an effect or clicks the selected effect again.',
+         'system': 'Plays the selected sample and prepares the actual MV preview for the chosen look.',
+         'limits': ['Current-tab samples at least 50% visible loop muted; others show covers.',
+                    'First open is muted; Title starts at the opening and Subtitle at the first timed lyric.',
+                    'Actual preview uses this MV and starts playing automatically when ready.',
+                    'Clicking the selected card replays its available preview without changing settings.',
+                    'Sample ratio may be fixed; actual preview uses the MV ratio.']},
+        {'num': 4, 'user': 'Waits for preview preparation, retries failure, or closes.',
+         'system': 'Shows loading, then a usable preview or a clearly identified failure with Retry.',
+         'limits': ['Preparation locks effects, preview-changing switches, player controls and Save; tabs and close remain available.',
+                    'After 30 seconds, timeout unlocks controls and permits Save.',
+                    'Failure retains selection; old output never represents a newly selected effect.',
+                    'Closing stops playback and ignores pending results; obsolete results cannot replace newer choices.',
+                    'WebM failure preserves the name, cover and selectability independently of actual-preview failure.']},
+        {'num': 5, 'user': 'Saves the draft, or closes without saving.',
+         'system': 'Save confirms the session settings; closing restores the previously confirmed settings on the next open.',
+         'limits': ['Save requires a changed draft and no preview preparation; preview failure alone does not block Save.',
+                    'Save and previews cost nothing; phone uses the header checkmark.',
+                    'Close, Escape and backdrop discard draft changes without confirmation, including during loading.',
+                    'Leaving MV Edit without Merge discards confirmed session edits too.']},
+        {'num': 6, 'user': 'Merges the edits and later reopens the resulting MV.',
+         'system': 'Successful output restores the same effects, text and switches when edited again.',
+         'limits': ['Restoring the entry baseline with no other edits disables Merge.',
+                    'Merge keeps the existing charge, insufficient-balance and refund rules.',
+                    'Preview and Merge share effect identity, version and settings.',
+                    'Failed Merge preserves the previous successful settings; preview failure does not bypass Merge validation.']},
+    ],
+})
+for ac, rule, steps in [
+    ('AC-MV-03b', 'Both text fields use a 60 UTF-16-unit limit and counter; UI implemented, engine support pending.', ['P6-S2']),
+    ('AC-MV-23', 'Designer presentation, 8/17 engine catalog and independent tab drafts.', ['P6-S1']),
+    ('AC-MV-24', 'Complete text, blank omission, both ratios and engine opening timing.', ['P6-S2']),
+    ('AC-MV-25', 'Off controls and missing-lyrics explanations gate selection and activation.', ['P6-S2']),
+    ('AC-MV-26', 'Selected sample playback and actual-content preview/replay.', ['P6-S3']),
+    ('AC-MV-27', 'Preparation lock, 30-second timeout and recoverable actual-preview failure.', ['P6-S4']),
+    ('AC-MV-28', 'Discard, stop playback, obsolete-result protection and independent sample failure.', ['P6-S4', 'P6-S5']),
+    ('AC-MV-29', 'Local Save, unmerged discard and baseline-based Merge availability.', ['P6-S5', 'P6-S6']),
+    ('AC-MV-30', 'Shared preview/render settings and successful-version restoration.', ['P6-S6']),
+]:
+    cfg['criteria'].append((ac, rule, steps))
+cfg['changelog'].insert(0, ('v4', '2026-10-29',
+    'Approved Title/Subtitle Effects target: P6-S1 to P6-S6, 8/17 catalog, 60-unit text limits, '
+    'actual preview, loading/failure, local Save and Merge restoration. No runtime/schema changes. '
+    'All 24 screenshots are retained historical captures; no new pixel or behavioral acceptance is claimed.'))
+cfg['decisions'].append(('D-08', 'Which source defines the effects extension?',
+    'Product-owner decisions from 2026-10-28/29 approve P6. Keep designer presentation; use engine catalog and actual preview. '
+    'The engine catalog, exact artwork, IDs/defaults, timing and rendering contract remain delivery dependencies in area 02 EFX-5.'))
+cfg['open_questions'].append(('Q-02', 'Engine effect delivery dependencies (TBD-MV-EFX-01 through 04)',
+    'IDs/versions/defaults; WebM/covers; exact timing/layout with 60-unit text and both ratios; synchronized lyrics; preview/render/persistence contract. '
+    'Exact English display names are a design/content handoff. Product behavior is approved; integration acceptance remains pending.', 'Engine / Design / RD'))
+cfg['prototype_deltas'].append(('Effects extension is not implemented end to end',
+    'UI now has 8/17 supplied animated WebP samples with still covers, 60/60 limits, baseline comparison, timed-lyrics gating and successful-version local snapshots. '
+    'Mockup intentionally plays samples only, without engine preparation, timeout, Retry or unavailable-engine errors. Effects are not burned into mock output; actual preview/rendering and precise engine metadata belong to production.',
+    'Implement the approved P6 target and area 02 EFX-1 through EFX-6 after engine handoff. '
+    'POC observation verified selection/loading/transport/lyrics, not Save persistence. Two current P6 screenshots certify sample presentation only, not actual engine rendering.'))
+cfg['states'].extend([
+    ('Effects Save', 'Changed draft, preview not preparing', 'Enabled', 'Confirms session settings without charge', 'Does not persist an unmerged edit'),
+    ('Effects Save', 'Unchanged draft or preview preparing', 'Disabled', 'Wait or change a setting', 'Failure unlocks and permits a changed draft to be saved'),
+    ('Effect selection', 'Title Off or Subtitle Off', 'Disabled for that tab', 'Turn on in draft first', 'Title Off applies even when Author is On'),
+    ('Subtitle activation', 'No synchronized lyrics', 'Disabled outside and inside dialog', 'Explain reason in both locations', 'No fabricated/sample lyric in actual preview'),
+])
+cfg['data_contract']['intro'] += (' Target extension: preview and Merge require the same effect identities/versions and settings, '
+    'persisted only with successful output. Exact wire fields are pending engine handoff; no schema changes in this document update.')
+
+# v5: supplied samples and prototype-only persistence, approved 2026-10-29.
+p6 = cfg['paths'][-1]
+p6['steps'][2]['shot'] = '25_effects_desktop.png'
+p6['steps'].append({
+    'num': 7, 'shot': '26_effects_phone.png',
+    'user': 'On a phone, reopens Edit Effects with the previously confirmed selection.',
+    'system': 'Shows the bottom sheet, selected effect sample, close and header Save controls.',
+    'limits': ['Same draft, eligibility, failure and Save rules as desktop.',
+               'The enlarged preview is explicitly labeled as an effect sample.'],
+})
+cfg['criteria'][5] = ('AC-MV-03b', 'Both text fields use a 60 UTF-16-unit limit and counter; engine layout support remains pending.', ['P6-S2'])
+cfg['decisions'].append(('D-09', 'How are the delivered samples and settings handled before engine integration?',
+    'Product owner supplied all 25 animated WebP assets and approved prototype-only snapshot storage on 2026-10-29. '
+    'Use supplied engine labels and asset stems as local keys, not wire IDs. No guessed engine defaults. '
+    'Historical decision superseded by D-10/D-11: Use default cleared an override and actual preview was unavailable; '
+    'the selected sample is enlarged and labeled. New captures use 1440/390; original 24 captures retain their dimensions.'))
+cfg['changelog'].insert(0, ('v5', '2026-10-29',
+    'Prototype implementation: supplied 8/17 animated WebP samples and covers, 60-unit limits, '
+    'draft/default/revert rules, preview lifecycle and successful-only local snapshots restored from History. '
+    'Two new sample-dialog captures at P6-S3 and P6-S7; actual engine preview/rendering remain pending. '
+    'No API/schema or domain-hook surface change.'))
+
+# v6: user clarifies engine preview/output are not mockup work.
+cfg['overview'].append(['Mockup boundary', 'Samples, selection, Save/discard and local successful-Merge settings are testable. Actual MV preparation, timeout/Retry and effect rendering are production expectations only; no integration errors are shown in mockup.'])
+p6['steps'][3]['user'] = 'In production, waits for actual MV preview preparation, retries failure, or closes.'
+p6['steps'][3]['system'] = 'Production expectation only: loading resolves to an actual preview or a recoverable error; mockup does not simulate it.'
+cfg['decisions'].append(('D-10', 'Does mockup need actual engine preview or effect output?',
+    'No. Product owner explicitly excluded actual MV preview/output from mockup on 2026-10-29. '
+    'Retain production behavior in the spec, remove artificial preparation/error/Retry machinery from mockup, '
+    'and demonstrate supplied animated samples and local settings only.'))
+cfg['changelog'].insert(0, ('v6', '2026-10-29',
+    'Scope correction: actual MV preview/output and their timeout/Retry lifecycle are production-only requirements. '
+    'Mockup now plays samples without unavailable-engine errors, Retry or preparation locks. '
+    'P6-S3/P6-S7 recaptured; selection, Save/discard and successful-only local snapshots retained.'))
+
+# v7: current selection and plain-video canvas, product owner 2026-10-29.
+cfg['overview'].append(['v7 correction', 'Always show this MV current effect selected. No Use default or unselected state. Mockup canvas plays the existing scene video with playback controls and no text overlays; motion samples stay on effect cards (current playback rules: D-13). This supersedes D-09 and the v5/v6 enlarged-sample presentation.'])
+p6['desc'] = 'Designer dialog/sheet with the current effect selected, a plain-video canvas, motion sample cards and prototype-only snapshots.'
+p6['steps'][0]['system'] = 'Opens on Title with the current effect selected and the existing scene video playing without text overlays.'
+p6['steps'][2]['system'] = 'Changes the draft selection and plays that card motion sample. Mockup canvas continues playing the existing video without rendering text effects.'
+p6['steps'][6]['system'] = 'Shows the bottom sheet with the current selection, existing video player, close and header Save controls.'
+p6['steps'][6]['limits'] = ['Same draft, eligibility and Save rules as desktop.', 'No Use default action; no title or subtitle effect overlay in mockup.']
+cfg['decisions'].append(('D-11', 'What selection and canvas appear when the dialog opens?',
+    'Product owner, 2026-10-29: select the current effect immediately and remove Use default. '
+    'Keep the existing video playing in the canvas without mock text overlays; RD implements actual effects later. '
+    'For records without a saved prototype snapshot, use the inspected POC current selection as a fixture, not a claimed engine-wide default. '
+    'Older null prototype choices migrate to that fixture. This supersedes the unset/default and enlarged-sample statements in D-09 and v5/v6.'))
+cfg['changelog'].insert(0, ('v7', '2026-10-29',
+    'Removed Use default/unselected state, restored the existing video canvas without text overlays, '
+    'and retained selected-card motion samples. Current effects restore on open; legacy prototype null choices migrate to the current-look fixture. '
+    'P6-S3/P6-S7 recaptured on desktop/phone. Production engine rendering remains outside mockup scope.'))
+
+# v8: owner-approved image/name layout and reviewable Subtitle fixtures.
+cfg['overview'].append(['v8 review fixtures', 'Cards use complete 16:9 sample images with names below. Cinematic Night and Neon City Nights have prototype-only timed cues to unlock Subtitle review; these cues do not certify audio alignment or engine rendering. Other missing-lyric records remain disabled.'])
+p6['steps'][2]['limits'].append('Keep the complete sample in a 16:9 frame with its name below the image.')
+p6['steps'][6]['limits'].append('Use the same 16:9 card layout; scroll horizontally to review every effect.')
+cfg['decisions'].append(('D-12', 'How can the delivered cards and Subtitle effects be reviewed?',
+    'Product owner, 2026-10-29: move names below complete 16:9 sample images. '
+    'Provide prototype-only timed lyric cues on Cinematic Night and Neon City Nights so Subtitle cards can be selected and reviewed. '
+    'No new text overlay in the canvas; production requires real synchronized lyrics. Imports do not inherit these cues.'))
+cfg['changelog'].insert(0, ('v8', '2026-10-29',
+    'Changed sample images to 16:9 with names below, and unlocked Subtitle review for two explicit History sample MVs. '
+    'Other missing-lyric records stay disabled. Desktop/phone captures refreshed; no API/schema changes.'))
+
+# v9: independent viewport-driven motion, approved 2026-10-29.
+p6['steps'][2]['system'] = 'Visible cards loop silently, independently of selection; clicking changes the draft choice while the canvas continues playing the existing video.'
+p6['steps'][2]['limits'].extend([
+    'Measure visibility on the image frame within the viewport and clipped horizontal strip, not on its label.',
+    'Below 50% visible, on tab switch, dialog close or page background, stop sample motion and show covers.',
+    'Returning resumes eligible visible cards.',
+    'Motion alone never changes the selected effect or enables Save.',
+    'Sample failure falls back to the cover and keeps the card selectable.',
+])
+cfg['overview'].append(['v9 sample playback', 'Both effect tabs use viewport-driven motion: at least 50% image visibility, independent of selection. Offscreen/background/inactive samples show covers. Animated WebP is used in mockup; production WebM follows the same playback rules.'])
+cfg['decisions'].append(('D-13', 'Which effect samples play?',
+    'Product owner approved viewport-driven playback on 2026-10-29. In the current tab, every image frame at least 50% visible loops silently. '
+    'Stop below the threshold, on tab switch, close or page background; resume eligible visible cards on return. '
+    'Playback and selection are independent; motion never makes the draft dirty. This supersedes selected-only sample playback.'))
+cfg['changelog'].insert(0, ('v9', '2026-10-29',
+    'Replaced selected-only sample motion with 50%-visible current-tab playback. Offscreen, inactive and background samples show covers. '
+    'Selection, Save, failure fallback and the plain-video canvas retain their existing behavior.'))
 
 if __name__ == '__main__':
     spec_builder.write_specs(cfg)

@@ -16,11 +16,13 @@ export function ToggleSwitch({
   onChange,
   label,
   ariaLabel,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   /** Visible text rendered beside the switch. DP uses it on Song Create. */
   label?: string;
+  disabled?: boolean;
   /**
    * Accessible name when the visible text is NOT part of this component — the
    * `/creator` menu puts "Publish" in a sibling span, which DP's version leaves
@@ -33,6 +35,7 @@ export function ToggleSwitch({
     <div className="toggle-switch">
       {label && <span className="toggle-switch__label">{label}</span>}
       <button
+        disabled={disabled}
         type="button"
         role="switch"
         aria-checked={checked}

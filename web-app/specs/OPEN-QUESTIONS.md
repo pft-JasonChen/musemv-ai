@@ -16,6 +16,18 @@
 
 ---
 
+## 2026-10-29 — MV Effects engine handoff
+
+Actual engine preview/output are production-only dependencies and do not block the plain-video mockup (product owner, 2026-10-29). Product behavior is approved in area 02 **MV-P5-EFX** and S3 v9 **P6**. These are delivery dependencies, not invitations to invent defaults or claim prototype acceptance:
+
+| ID | Owner | Required confirmation |
+| --- | --- | --- |
+| TBD-MV-EFX-01 | Engine / Design | All 8/17 production IDs, versions, defaults, compatibility and final English names; samples now supplied and local asset keys implemented |
+| TBD-MV-EFX-02 | Engine / Design | Animated WebP samples/covers delivered; remaining production timing/type/layout, both ratios and 60 UTF-16-unit Title/Author support; UI now supports 60/60; engine support remains pending |
+| TBD-MV-EFX-03 | Engine | Synchronized-lyrics availability, first lyric and effect-required timing granularity |
+| TBD-MV-EFX-04 | Engine / RD | Preview success/error/timeout and shared Merge identity/settings/persisted-version contract; no wire fields changed yet |
+
+
 ## 🚦 可以交接給 RD 了嗎?(2026-08-12 盤點;下方 TBD 狀態已更新到 09-02)
 
 **一句話:生成(MV / Song)那一半可以交,社群(Explore / Community)那一半不行 —— 而缺的是「還沒寫的

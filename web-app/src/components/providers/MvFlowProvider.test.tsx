@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/lib/api";
 import type { MvJob } from "@/lib/api/schemas";
 import { mockStoryboard } from "@/lib/mv/mock";
+import { stagePrototypeEffects, readPrototypeMvVersion } from "@/lib/mv/prototypeTextEffects";
 import { DEFAULT_COMPOSE } from "@/lib/mv/types";
 import { CreditsProvider } from "./CreditsProvider";
 import { HistoryProvider, useHistory } from "./HistoryProvider";
@@ -43,9 +44,7 @@ function job(id: string, status: MvJob["status"] = "processing"): MvJob {
 }
 
 function mockApi() {
-  const create = vi
-    .spyOn(api, "createMvJob")
-    .mockImplementation(async () => job(`job-${++seq}`));
+  const create = vi.spyOn(api, "createMvJob").mockImplementation(async () => job(`job-${++seq}`));
   const render = vi.spyOn(api, "renderMvJob").mockImplementation(async (id) => job(id));
   vi.spyOn(api, "getMvJob").mockImplementation(async (id) => job(id, "done"));
   return { create, render };
@@ -99,5 +98,37 @@ describe("MvFlowProvider — Merge re-renders the creation in place", () => {
     );
     expect(render.mock.calls.map((c) => c[0])).not.toContain(earlier);
     expect(result.current.hist.history.find((h) => h.id === earlier)?.status).toBe("completed");
+  });
+});
+
+describe("prototype-only effect persistence at render completion", () => {
+  it("commits only on success and preserves that version when a later Merge fails", async () => {
+    const { render } = mockApi();
+    const { result } = setup();
+    const settings = { ...DEFAULT_COMPOSE.settings, title: { on: true, text: "Saved caption" } };
+    const successful = {
+      settings,
+      effects: { titleEffect: "author_title", subtitleStyle: "legacy_rollup" },
+    } as const;
+    act(() => {
+      result.current.flow.setCompose((c) => ({ ...c, settings }));
+      result.current.flow.setStoryboard(mockStoryboard());
+    });
+    stagePrototypeEffects(successful);
+    act(() => result.current.flow.resetForRerender("merge", "effects-persistence-case"));
+    expect(readPrototypeMvVersion("effects-persistence-case")).toBeNull();
+    act(() => result.current.flow.startRender());
+    await waitFor(() =>
+      expect(readPrototypeMvVersion("effects-persistence-case")).toEqual(successful),
+    );
+    render.mockRejectedValueOnce(new Error("render unavailable"));
+    stagePrototypeEffects({
+      ...successful,
+      effects: { titleEffect: "fadein_fast", subtitleStyle: "legacy_static" },
+    });
+    act(() => result.current.flow.resetForRerender("merge", "effects-persistence-case"));
+    act(() => result.current.flow.startRender());
+    await waitFor(() => expect(result.current.flow.gen.status).toBe("failed"));
+    expect(readPrototypeMvVersion("effects-persistence-case")).toEqual(successful);
   });
 });

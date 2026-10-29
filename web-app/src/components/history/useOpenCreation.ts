@@ -8,6 +8,7 @@ import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { localePath } from "@/lib/i18n/config";
 import { DEFAULT_COMPOSE, MV_TITLE_MAX } from "@/lib/mv/types";
 import { lyricsForTitle, lyricsLrcForTitle, timedSongAudio } from "@/lib/mv/community";
+import { activatePrototypeEffects, readPrototypeMvVersion } from "@/lib/mv/prototypeTextEffects";
 import { SAMPLE_AUDIO, SAMPLE_RESULT_VIDEO, mockStoryboard } from "@/lib/mv/mock";
 
 /**
@@ -107,6 +108,8 @@ export function useOpenCreation() {
       // MV. The storyboard is seeded too because `/mv/result`'s Edit MV needs
       // one to hand to `/mv/edit`; a direct-mode render has none either, and
       // that path already falls back to `mockStoryboard()`.
+      const savedVersion = readPrototypeMvVersion(c.id);
+      activatePrototypeEffects(savedVersion);
       const base = mockStoryboard({ description: c.title, title: c.title });
       const sb = c.thumb ? { ...base, coverImage: c.thumb, characterImage: c.thumb } : base;
       setStoryboard(sb);
@@ -114,13 +117,23 @@ export function useOpenCreation() {
       setCompose({
         ...DEFAULT_COMPOSE,
         description: c.title,
-        song: c.thumb
-          ? { id: `h-${c.id}`, source: "sample", title: c.title, durationSec: 145, art: c.thumb }
-          : null,
+        song:
+          savedVersion?.song !== undefined
+            ? savedVersion.song
+            : c.thumb
+              ? {
+                  id: `h-${c.id}`,
+                  source: "sample",
+                  title: c.title,
+                  durationSec: 145,
+                  art: c.thumb,
+                }
+              : null,
         settings: {
           ...DEFAULT_COMPOSE.settings,
           // YMW261006P0001: the field is capped, so the seed is too.
           title: { on: true, text: c.title.slice(0, MV_TITLE_MAX) },
+          ...savedVersion?.settings,
         },
       });
       setResultUrl(c.resultUrl ?? SAMPLE_RESULT_VIDEO);
@@ -150,6 +163,8 @@ export function useSeedMvFlow() {
 
   return useCallback(
     (c: Pick<OpenableCreation, "id" | "title" | "thumb">) => {
+      const savedVersion = readPrototypeMvVersion(c.id);
+      activatePrototypeEffects(savedVersion);
       const base = mockStoryboard({ description: c.title, title: c.title });
       const sb = c.thumb ? { ...base, coverImage: c.thumb, characterImage: c.thumb } : base;
       setStoryboard(sb);
@@ -157,13 +172,23 @@ export function useSeedMvFlow() {
       setCompose({
         ...DEFAULT_COMPOSE,
         description: c.title,
-        song: c.thumb
-          ? { id: `h-${c.id}`, source: "sample", title: c.title, durationSec: 145, art: c.thumb }
-          : null,
+        song:
+          savedVersion?.song !== undefined
+            ? savedVersion.song
+            : c.thumb
+              ? {
+                  id: `h-${c.id}`,
+                  source: "sample",
+                  title: c.title,
+                  durationSec: 145,
+                  art: c.thumb,
+                }
+              : null,
         settings: {
           ...DEFAULT_COMPOSE.settings,
           // YMW261006P0001: the field is capped, so the seed is too.
           title: { on: true, text: c.title.slice(0, MV_TITLE_MAX) },
+          ...savedVersion?.settings,
         },
       });
     },

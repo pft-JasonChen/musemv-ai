@@ -577,7 +577,7 @@ test("YMW260907P0011: MV settings default to the signed-in name and keep edits",
   await expect(page.getByPlaceholder("Enter author name")).toHaveValue("Custom Artist");
 });
 
-test("YMW261006P0001: MV title is capped at 40 characters and author at 35, with counters", async ({
+test("YMW261006P0001: Title and Author are capped at 60 UTF-16 units, with counters", async ({
   page,
 }) => {
   await login(page);
@@ -589,13 +589,13 @@ test("YMW261006P0001: MV title is capped at 40 characters and author at 35, with
   const title = page.getByPlaceholder("Enter MV name");
   const author = page.getByPlaceholder("Enter author name");
   // pressSequentially, not fill(): maxLength only stops typed input, which is what a user does.
-  await title.pressSequentially("x".repeat(45));
+  await title.pressSequentially("x".repeat(65));
   await author.fill("");
-  await author.pressSequentially("y".repeat(40));
-  await expect(title).toHaveValue("x".repeat(40));
-  await expect(author).toHaveValue("y".repeat(35));
-  await expect(page.locator(".mv-settings__group").getByText("40/40")).toBeVisible();
-  await expect(page.locator(".mv-settings__group").getByText("35/35")).toBeVisible();
+  await author.pressSequentially("y".repeat(65));
+  await expect(title).toHaveValue("x".repeat(60));
+  await expect(author).toHaveValue("y".repeat(60));
+  await expect(page.locator(".mv-settings__group").getByText("60/60").first()).toBeVisible();
+  await expect(page.locator(".mv-settings__group").getByText("60/60").last()).toBeVisible();
 });
 
 // ── G5-d #7, PREVIEW HALF: INVERTED BY SLICE 3b (plan §5) ───────────────────

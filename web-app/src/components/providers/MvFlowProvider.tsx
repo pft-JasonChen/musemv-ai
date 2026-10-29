@@ -21,6 +21,12 @@ import {
   type MvJob,
   type Storyboard,
 } from "@/lib/mv/types";
+import {
+  takePrototypeEffects,
+  commitPrototypeMvVersion,
+  activatePrototypeEffects,
+  getPrototypeEffects,
+} from "@/lib/mv/prototypeTextEffects";
 import { useHistory } from "./HistoryProvider";
 import { useCredits } from "./CreditsProvider";
 import { IDLE_GEN, toGen, type Gen } from "./progress";
@@ -222,6 +228,11 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
     addCredits(-cost);
     const refund = () => addCredits(cost);
     const merging = renderIntent.current === "merge";
+    const effectSnapshot = (merging ? takePrototypeEffects() : null) ?? {
+      settings: compose.settings,
+      song: compose.song,
+      effects: getPrototypeEffects(),
+    };
     const rowId = merging ? mergeTarget.current : null;
     const mergeJob = rowId ? apiJobFor.current.get(rowId) : undefined;
     const start = merging
@@ -257,6 +268,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
             if (!done.resultUrl) return;
             setResultUrl(done.resultUrl);
             markCompleted(row, done.resultUrl);
+            commitPrototypeMvVersion(row, effectSnapshot);
           },
           refund,
           row,
@@ -275,6 +287,7 @@ export function MvFlowProvider({ children }: { children: React.ReactNode }) {
     // A fresh MV always starts on the Create MV price (§3.2); the storyboard
     // route overwrites this when it reaches Generate MV.
     renderIntent.current = "create";
+    activatePrototypeEffects();
     cancelPoll.current?.();
     jobId.current = null;
     setGen(IDLE_GEN);

@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="1820" viewBox="0 0 1180 1820" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="2060" viewBox="0 0 1180 2060" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
 <title>AI Music Video Edit &#8212; User Flowchart</title>
 <defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
-<rect width="1180" height="1820" fill="#ffffff"/>
+<rect width="1180" height="2060" fill="#ffffff"/>
 <text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">AI Music Video Edit &#8212; User Flowchart</text>
-<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1403×697 AND phone 375×812 (D8 exception) &#183; matches spec v3, 2026-09-29</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">YouCam Muse Web &#8212; desktop 1403×697 AND phone 375×812 (D8 exception) &#183; matches spec v9, 2026-10-29</text>
 <text x="40" y="70" font-size="12" fill="#5a6b78">amber = decision &#183; red = error state &#183; green = success / resolved</text>
 
 <g transform="translate(0,80)">
@@ -113,12 +113,23 @@
 <text x="190" y="1538" font-size="12" fill="#5a6b78" text-anchor="middle">MV-E5</text>
 <text x="440" y="1530" font-size="12" fill="#5a6b78">Reachable from every band above, not just this one &#8212; nothing on</text>
 <text x="440" y="1550" font-size="12" fill="#5a6b78">/mv/edit is persisted until Merge MV completes.</text>
-<line x1="40" y1="1616" x2="1140" y2="1616" stroke="#e5e9ed" stroke-width="1"/>
-<line x1="40" y1="1636" x2="74" y2="1636" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
-<text x="86" y="1640" font-size="12" fill="#5a6b78">Primary happy path</text>
-<line x1="40" y1="1656" x2="74" y2="1656" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
-<text x="86" y="1660" font-size="12" fill="#5a6b78">Error branch</text>
-<line x1="40" y1="1676" x2="74" y2="1676" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
-<text x="86" y="1680" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
+<line x1="40" y1="1618" x2="1140" y2="1618" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1640" font-size="15" font-weight="700" fill="#0c1c22">Part 6 &#8212; Title / Subtitle Effects (plain-video mockup) &#183; P6</text>
+<rect x="40" y="1680" width="300" height="50" rx="20" fill="#f4f6f8" stroke="#c0ccd3" stroke-width="1.5"/>
+<text x="190" y="1700" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Edit Effects: draft + preview</text>
+<text x="190" y="1718" font-size="12" fill="#5a6b78" text-anchor="middle">Title / Subtitle &#183; P6-S1..S4, P6-S7</text>
+<rect x="820" y="1680" width="300" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="970" y="1700" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Save confirms session settings</text>
+<text x="970" y="1718" font-size="12" fill="#5a6b78" text-anchor="middle">No charge; Merge produces output &#183; P6-S5..S6</text>
+<line x1="340" y1="1705" x2="820" y2="1705" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="580" y="1691" font-size="12" fill="#5a6b78" text-anchor="middle">Save</text>
+<text x="40" y="1810" font-size="12" fill="#5a6b78">Close discards the dialog draft; leaving without Merge discards the session edit.</text>
+<line x1="40" y1="1856" x2="1140" y2="1856" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="1876" x2="74" y2="1876" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1880" font-size="12" fill="#5a6b78">Primary happy path</text>
+<line x1="40" y1="1896" x2="74" y2="1896" stroke="#d6484a" stroke-width="1.5" marker-end="url(#fc-error)"/>
+<text x="86" y="1900" font-size="12" fill="#5a6b78">Error branch</text>
+<line x1="40" y1="1916" x2="74" y2="1916" stroke="#a8b2ba" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fc-deferred)"/>
+<text x="86" y="1920" font-size="12" fill="#5a6b78">Deferred / reused elsewhere</text>
 </g>
 </svg>

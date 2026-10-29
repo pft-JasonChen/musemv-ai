@@ -18,7 +18,7 @@ import {
   EditTitleSubtitleDialog,
   type TextEffectSelection,
 } from "@/components/mv/EditTitleSubtitleDialog";
-import { DEFAULT_SUBTITLE_STYLE, DEFAULT_TITLE_EFFECT } from "@/lib/mv/textEffects";
+import { getPrototypeEffects, stagePrototypeEffects } from "@/lib/mv/prototypeTextEffects";
 import { Button } from "@/components/ui/Button";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
@@ -41,6 +41,7 @@ import {
   MV_TITLE_MAX,
   type Scene,
 } from "@/lib/mv/types";
+import { synchronizedMvLyrics } from "@/lib/mv/synchronizedMvLyrics";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
 
 function formatTime(seconds: number): string {
@@ -164,15 +165,12 @@ export function MvEditor() {
   const [coverBusy, setCoverBusy] = useState(false);
   const [coverLightbox, setCoverLightbox] = useState(false);
   const [mobileSceneOpen, setMobileSceneOpen] = useState(false);
-  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [entrySettings] = useState(() => JSON.stringify(compose.settings));
   // Title effect / subtitle style picked in the "Edit Title & Subtitle" popup.
   // Component state only — NOT `MvSettings` (RD contract C2); see `lib/mv/textEffects.ts`.
-  const [textEffects, setTextEffects] = useState<TextEffectSelection>({
-    titleEffect: DEFAULT_TITLE_EFFECT,
-    subtitleStyle: DEFAULT_SUBTITLE_STYLE,
-  });
+  const [textEffects, setTextEffects] = useState<TextEffectSelection>(getPrototypeEffects);
   const [effectsOpen, setEffectsOpen] = useState(false);
-  const [effectsDirty, setEffectsDirty] = useState(false);
+  const [entryEffects] = useState(() => JSON.stringify(getPrototypeEffects()));
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
 
@@ -229,14 +227,17 @@ export function MvEditor() {
   const dirty =
     Object.keys(sceneVideo).length > 0 ||
     coverImage != null ||
-    settingsDirty ||
+    JSON.stringify(compose.settings) !== entrySettings ||
     storyboardDirty ||
-    effectsDirty;
+    JSON.stringify(textEffects) !== entryEffects;
 
   const settings = compose.settings;
+  // Only actual timestamped lyric data qualifies; never spread plain lyrics
+  // across a track to manufacture synchronization for the effects editor.
+  const timedLines = synchronizedMvLyrics(compose.song);
+  const subtitlesAvailable = timedLines.length > 0;
   function patchSettings(p: Partial<typeof settings>) {
     setCompose((c) => ({ ...c, settings: { ...c.settings, ...p } }));
-    setSettingsDirty(true); // output settings change the rendered video → needs Merge
   }
 
   function updateScene(id: string, text: string) {
@@ -306,6 +307,7 @@ export function MvEditor() {
     // time, same as `deleteProject`, and carried through `/mv/creating` so the
     // result screen after the render still knows which MV it is showing.
     const source = new URLSearchParams(window.location.search).get("id");
+    stagePrototypeEffects({ settings: compose.settings, effects: textEffects, song: compose.song });
     resetForRerender("merge", source ?? undefined);
     router.push(localePath(locale, source ? `/mv/creating?id=${source}` : "/mv/creating"));
   }
@@ -818,10 +820,17 @@ export function MvEditor() {
           <div className="mv-edit__toggle-row mv-edit__toggle-row--subtitle">
             <div className="mv-edit__toggle-text">
               <p className="mv-edit__toggle-title">Show Subtitle</p>
-              <p className="mv-edit__toggle-state">{settings.showSubtitle ? "On" : "Off"}</p>
+              <p className="mv-edit__toggle-state">
+                {!subtitlesAvailable
+                  ? "Synchronized lyrics are not available for this song."
+                  : settings.showSubtitle
+                    ? "On"
+                    : "Off"}
+              </p>
             </div>
             <ToggleSwitch
-              checked={settings.showSubtitle}
+              checked={settings.showSubtitle && subtitlesAvailable}
+              disabled={!subtitlesAvailable}
               ariaLabel="Show Subtitle"
               onChange={(showSubtitle) => patchSettings({ showSubtitle })}
             />
@@ -975,17 +984,16 @@ export function MvEditor() {
               showSubtitle: next.subtitleOn,
             });
           }
-          // Saving counts as a pending edit: the effects change how Merge renders
-          // the video, so Merge MV becomes available (product owner, 2026-10-23).
-          setEffectsDirty(true);
+          // Merge compares confirmed choices to the entry baseline, so reverting
+          // every change restores the disabled state (AC-MV-29).
           setEffectsOpen(false);
         }}
+        videoSrc={activeVideo}
+        poster={clipCover(selectedClip)}
         selection={textEffects}
         titleOn={settings.title.on}
         subtitleOn={settings.showSubtitle}
-        titleText={settings.title.text}
-        videoSrc={activeVideo}
-        poster={clipCover(selectedClip)}
+        subtitlesAvailable={subtitlesAvailable}
       />
 
       <ImageLightbox
