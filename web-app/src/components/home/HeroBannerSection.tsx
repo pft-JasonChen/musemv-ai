@@ -10,8 +10,10 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import type { Locale } from "@/lib/i18n/config";
 import { IconButton } from "@/components/ui/IconButton";
+import { DpIcon } from "@/components/ui/DpIcon";
 import { useModeration } from "@/components/community/useModeration";
 import { isPubliclyRemoved } from "@/lib/contentModeration";
+import { getCommunityMv } from "@/lib/mv/community";
 import { HERO_ITEMS as HERO_CATALOG } from "./heroItems";
 
 /**
@@ -379,7 +381,7 @@ function HeroBannerMobile({ onCreate, locale }: { onCreate: () => void; locale: 
                   aria-hidden={!isActive}
                 >
                   <p className="hero-banner-mobile__title">{item.title}</p>
-                  <p className="hero-banner-mobile__subtitle">{item.subtitle}</p>
+                  <HeroCreator itemId={item.id} />
                 </Link>
                 <button
                   type="button"
@@ -400,6 +402,20 @@ function HeroBannerMobile({ onCreate, locale }: { onCreate: () => void; locale: 
         })}
       </div>
     </div>
+  );
+}
+
+function HeroCreator({ itemId }: { itemId: string }) {
+  const creator = getCommunityMv(itemId)?.creator;
+  if (!creator) return null;
+
+  return (
+    <span className="mv-player__user">
+      <span className="mv-player__avatar">
+        <DpIcon name="ic_account" className="mv-player__avatar-icon" />
+      </span>
+      <span className="mv-player__username">{creator}</span>
+    </span>
   );
 }
 
