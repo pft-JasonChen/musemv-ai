@@ -36,9 +36,9 @@ function NoticeBody({ subject }: { subject: NoticeSubject }) {
           <DpIcon name="ic_alert" className="content-notice__icon-glyph" />
         </span>
         <div className="content-notice__message">
-          <p className="content-notice__headline">
-            {permanent ? "Permanently Removed" : "Content Removed"}
-          </p>
+          {/* One headline for both kinds (product owner, 2026-10-29); the
+              line below and the reason still say which kind it was. */}
+          <p className="content-notice__headline">Content Removed</p>
           <p className="content-notice__text">
             {permanent
               ? "This content violated our content policy."
@@ -58,7 +58,8 @@ function NoticeBody({ subject }: { subject: NoticeSubject }) {
           </p>
           <span className="content-notice__badge">
             <DpIcon name="ic_close" className="content-notice__badge-icon" />
-            {permanent ? "Permanently Removed" : `Removed ${formatNoticeDate(removal.removedOn)}`}
+            {/* Always the removal date, permanent or not (2026-10-29). */}
+            Removed {formatNoticeDate(removal.removedOn)}
           </span>
         </div>
       </div>
