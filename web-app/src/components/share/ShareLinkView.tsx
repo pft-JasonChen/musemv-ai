@@ -12,6 +12,8 @@
 // yet (there is nothing in `src/styles/designer/` to copy from).
 // This route renders WITHOUT the app shell (see AppShell) and is not behind AuthGuard.
 
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -55,7 +57,7 @@ function MvMoreMenu({
   onCycleRate?: () => void;
   onDownload: () => void;
   onPictureInPicture?: () => void;
-  onReport: () => void;
+  onReport?: () => void;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -109,17 +111,19 @@ function MvMoreMenu({
         {/* Product owner, 2026-10-22: the share page is public, so this is how a
             visitor flags a creation. Closes the menu first so the dialog is not
             stacked under its backdrop. */}
-        <button
-          type="button"
-          role="menuitem"
-          className="share-mv__menu-item"
-          onClick={() => {
-            onClose();
-            onReport();
-          }}
-        >
-          Report
-        </button>
+        {onReport && (
+          <button
+            type="button"
+            role="menuitem"
+            className="share-mv__menu-item"
+            onClick={() => {
+              onClose();
+              onReport?.();
+            }}
+          >
+            Report
+          </button>
+        )}
       </div>
     </>
   );
@@ -163,7 +167,7 @@ function SongPanel({
 }: {
   media: SharedMedia;
   onDownload: () => void;
-  onReport: () => void;
+  onReport?: () => void;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -325,7 +329,7 @@ function MvPanel({
 }: {
   media: SharedMedia;
   onDownload: () => void;
-  onReport: () => void;
+  onReport?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -503,8 +507,11 @@ export function ShareLinkView() {
 
   const id = params.get("id");
   const forcedExpired = params.get("type") === "expired";
-  const media = forcedExpired ? null : resolveShare(id, history);
-  const { openReport, reportNode } = useReportContent(media?.kind ?? "mv", id ?? "");
+  useModeration();
+  const resolved = resolveShare(id, history);
+  const media =
+    forcedExpired || (resolved && isPubliclyRemoved(resolved.kind, id ?? "")) ? null : resolved;
+  const { openReport, reportNode, canReport } = useReportContent(media?.kind ?? "mv", id ?? "");
 
   const home = localePath(locale, "/");
 
@@ -580,9 +587,17 @@ export function ShareLinkView() {
       <main className="share-page__main">
         <div className="share-page__list">
           {media.kind === "mv" ? (
-            <MvPanel media={media} onDownload={download} onReport={openReport} />
+            <MvPanel
+              media={media}
+              onDownload={download}
+              onReport={canReport ? openReport : undefined}
+            />
           ) : (
-            <SongPanel media={media} onDownload={download} onReport={openReport} />
+            <SongPanel
+              media={media}
+              onDownload={download}
+              onReport={canReport ? openReport : undefined}
+            />
           )}
           <div className="share-page__actions">
             <button

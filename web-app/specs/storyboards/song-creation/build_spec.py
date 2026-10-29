@@ -849,6 +849,7 @@ cfg = {
     ],
 
     'references': [
+        ('Content Report (S11)', '<a href="../../content-report/specs/spec.html">Open S11</a>'),
         ('Credit Consume MSR &mdash; generation cost numbers', '', 'TBD'),
         ('[YCM] AI Song Ideas &amp; Lyrics &mdash; source sheet for T1 (shipped as <code>src/lib/mv/songIdeas.ts</code>)', 'https://docs.google.com/spreadsheets/d/1768iG99Kdz7wFdP8maemE5zkeghxP4SKAazxkUOIKEQ/edit?gid=1249424592#gid=1249424592', 'Product owner'),
     ],

@@ -1,5 +1,8 @@
 "use client";
 
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
+import { ModeratedAccess } from "@/components/community/ModeratedAccess";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -164,7 +167,7 @@ import { MvGridSections } from "@/components/community/MvGridSections";
  * move (verified live: their measured rects are unchanged from idle at every
  * point during a drag).
  */
-const MV_LIST = [...TRENDING_MVS, ...NEW_MVS];
+const MV_CATALOG = [...TRENDING_MVS, ...NEW_MVS];
 /** Screen-height-relative drag distance before it commits to prev/next
  *  instead of springing back — the snippet's own `THRESHOLD_RATIO` (80/693). */
 const SWIPE_THRESHOLD_RATIO = 80 / 693;
@@ -177,13 +180,23 @@ const SWIPE_TRANSITION = "transform .28s cubic-bezier(.4, 0, .2, 1)";
 const SWIPE_COMMIT_MS = 280;
 
 export function CommunityMvPlayer() {
+  const id = useSearchParams().get("id") ?? "";
+  return (
+    <ModeratedAccess kind="mv" id={id} privateResult={false}>
+      <CommunityMvPlayerBody />
+    </ModeratedAccess>
+  );
+}
+function CommunityMvPlayerBody() {
+  useModeration();
+  const MV_LIST = MV_CATALOG.filter((m) => !isPubliclyRemoved("mv", m.id));
   const router = useRouter();
   const params = useSearchParams();
   const { locale } = useLocale();
   const id = params.get("id");
   const found = getCommunityMv(id);
   // AC-EXP-07: a missing/invalid id falls back to a default item rather than crashing.
-  const mv = found ?? NEW_MVS[0];
+  const mv = found ?? MV_LIST[0] ?? NEW_MVS[0];
   // Designer fix, 2026-08-07: this was hardcoded to `--portrait` regardless of
   // the video's own cover ratio. DP picks the stage shape from `item.ratio`
   // (`isPortrait = item.ratio === '3:4'`); `mvCoverRatio` is the same per-id
@@ -235,7 +248,7 @@ export function CommunityMvPlayer() {
   const volumePopup = useVolumePopup(volumeWrapRef);
   const [liked, setLiked] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const { openReport, reportNode } = useReportContent("mv", mv.id);
+  const { openReport, reportNode, canReport } = useReportContent("mv", mv.id);
   // See this file's "REWRITTEN AS A 3-SLOT ROTATING TRACK" header comment.
   // `dragY` is the slots' shared live translateY while a drag is in progress
   // (springs back to 0, or is driven to ±stageH to slide fully off before a
@@ -581,9 +594,16 @@ export function CommunityMvPlayer() {
               <p>{mv.title}</p>
               <span>{mobileSubtitle}</span>
             </div>
-            <button type="button" className="report-flag" onClick={openReport} aria-label="Report">
-              <DpIcon name="ic_flag" className="report-flag__icon" />
-            </button>
+            {canReport && (
+              <button
+                type="button"
+                className="report-flag"
+                onClick={openReport}
+                aria-label="Report"
+              >
+                <DpIcon name="ic_flag" className="report-flag__icon" />
+              </button>
+            )}
           </div>
 
           <div
@@ -733,14 +753,16 @@ export function CommunityMvPlayer() {
                   >
                     <DpIcon name="ic_share" className="icon-button__icon" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={openReport}
-                    aria-label="Report"
-                    className="icon-button icon-button--medium icon-button--ghost mv-player__action-icon mv-player__report"
-                  >
-                    <DpIcon name="ic_flag" className="icon-button__icon" />
-                  </button>
+                  {canReport && (
+                    <button
+                      type="button"
+                      onClick={openReport}
+                      aria-label="Report"
+                      className="icon-button icon-button--medium icon-button--ghost mv-player__action-icon mv-player__report"
+                    >
+                      <DpIcon name="ic_flag" className="icon-button__icon" />
+                    </button>
+                  )}
                 </div>
                 <button
                   type="button"

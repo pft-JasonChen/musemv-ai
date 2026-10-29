@@ -104,7 +104,7 @@ section」,不是「小的 UI 問題」。**
 | TBD-MV-11        | MV      | ⚠️ **描述已過時(2026-08-19 查證)** — 空狀態 UI **已經實作**(`ChooseSongModal.tsx:116-131`,含 Create Song CTA),只是 `MY_SONGS` 固定兩筆讓它永遠碰不到。是「已建但死碼」,不是「未實作」。                                                                  |
 | TBD-SONG-07      | Song    | 歌詞生成支援的語言清單。                                                                                                                                                                                                                                 |
 | ~~TBD-EXP-03~~   | Explore | ✅ **2026-09-01 結案 — 維持現狀,不用切換。** 播放器比例由內容自動決定(`AC-EXP-04`),web 沒有、也不需要 9:16↔3:4 手動切換;上滑看下一支的手勢**保留**(`CommunityMvPlayer.tsx` 已實作並確認,見 `areas/04` §8)。`DESIGNER-TODO` A26 是過期文件,以程式碼為準。 |
-| TBD-EXP-05       | Explore | 真實多元創作者 + 檢舉/封鎖。                                                                                                                                                                                                                             |
+| TBD-EXP-05       | Explore | 真實多元創作者 + 創作者帳號檢舉/封鎖。內容檢舉 UI 已存在，需求差異見 area 14。                                                                                                                                                                                                                             |
 | TBD-AUTH-04      | Auth    | **Web 專屬**的訪客瀏覽/門檻規範(需詳細訂,不能直接照 App)。                                                                                                                                                                                               |
 | ~~TBD-SHARE-02~~ | Share   | ✅ **2026-08-19 結案 — V1 只做複製連結。** 社群分享管道移到下一階段 roadmap。                                                                                                                                                                            |
 | TBD-SHARE-03     | Share   | 📋 **BA 待設計(2026-08-19)** — 需要完整的成效追蹤,但收集哪些欄位由 BA 定義。前端刻意留空,不先猜著埋參數。                                                                                                                                                |
@@ -135,3 +135,9 @@ section」,不是「小的 UI 問題」。**
 - **每份 `areas/<n>.md` 第 8 節** — 各領域仍待處理項目的完整說明。
 - **`00-overview.md` 第 9 節** — 全域仍待處理項目 + 第 8 節 App→Web 對照表。
 - **`index.html`** — 視覺化導覽首頁。
+
+
+## Content Report — 2026-10-29 產品行為已確認
+
+`TBD-RPT-01`–`06` 已結案，依 [area 14](areas/14-content-report.md) 的已確認規則實作。
+僅 `TBD-RPT-07`（endpoint、識別、冪等、reviewer 同步與授權契約）仍由 RD 提供；它不阻擋本地 prototype 與 storyboard。

@@ -8,6 +8,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { IconButton } from "@/components/ui/IconButton";
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
 import { HERO_ITEMS } from "./heroItems";
 
 /**
@@ -72,12 +74,19 @@ import { HERO_ITEMS } from "./heroItems";
 const GAP = 20;
 const AUTO_MS = 4000;
 const SETTLE_MS = 150;
-const REAL = HERO_ITEMS.length;
+
 // domIndex 0 = clone of the last real card, 1..REAL = real cards,
 // REAL+1 = clone of the first real card.
-const PADDED_ITEMS = [HERO_ITEMS[REAL - 1], ...HERO_ITEMS, HERO_ITEMS[0]];
 
 export function HeroBannerSectionV3() {
+  const moderation = useModeration();
+  if (!HERO_ITEMS.some((m) => !isPubliclyRemoved("mv", m.id))) return null;
+  return <HeroCarousel key={Object.keys(moderation.removals).join("|")} />;
+}
+function HeroCarousel() {
+  const items = HERO_ITEMS.filter((m) => !isPubliclyRemoved("mv", m.id));
+  const REAL = items.length;
+  const PADDED_ITEMS = REAL ? [items[REAL - 1], ...items, items[0]] : [];
   const router = useRouter();
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
@@ -188,7 +197,11 @@ export function HeroBannerSectionV3() {
           const detailHref = localePath(locale, `/watch?id=${item.id}`);
           return (
             <div className="hero-banner-v3__card" key={`${domIndex}-${item.title}`}>
-              <Link href={detailHref} className="hero-banner-v3__media-link" aria-label={item.title}>
+              <Link
+                href={detailHref}
+                className="hero-banner-v3__media-link"
+                aria-label={item.title}
+              >
                 {isActive ? (
                   <video
                     className="hero-banner-v3__bg"
@@ -209,7 +222,12 @@ export function HeroBannerSectionV3() {
                     playsInline
                   />
                 ) : (
-                  <img src={item.thumbnail} alt="" className="hero-banner-v3__bg" draggable={false} />
+                  <img
+                    src={item.thumbnail}
+                    alt=""
+                    className="hero-banner-v3__bg"
+                    draggable={false}
+                  />
                 )}
                 <div className="hero-banner-v3__scrim" aria-hidden="true" />
               </Link>

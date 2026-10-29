@@ -1,5 +1,7 @@
 "use client";
 
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -144,7 +146,9 @@ export function NewSongsSection({
     if (suspend) setPreviewId(null);
   }
 
-  const previewSong = PREVIEW_SONGS.find((s) => s.id === previewId) ?? null;
+  useModeration();
+  const previewSong =
+    PREVIEW_SONGS.find((s) => s.id === previewId && !isPubliclyRemoved("song", s.id)) ?? null;
 
   /**
    * Load and play whenever the previewed song changes. The rejection MUST be
@@ -163,6 +167,10 @@ export function NewSongsSection({
     setDuration(0);
     audio.src = songAudioUrl(previewSong.id);
     void audio.play().catch(() => {});
+  }, [previewSong]);
+
+  useEffect(() => {
+    if (!previewSong) audioRef.current?.pause();
   }, [previewSong]);
 
   // The render-time reset above clears `previewId`, but pausing the actual
@@ -211,7 +219,9 @@ export function NewSongsSection({
   }
 
   function stepPreview(delta: 1 | -1) {
-    const index = PREVIEW_SONGS.findIndex((s) => s.id === previewId);
+    const index = PREVIEW_SONGS.findIndex(
+      (s) => s.id === previewId && !isPubliclyRemoved("song", s.id),
+    );
     if (index < 0) return;
     const next = (index + delta + PREVIEW_SONGS.length) % PREVIEW_SONGS.length;
     setPreviewId(PREVIEW_SONGS[next].id);
@@ -240,27 +250,29 @@ export function NewSongsSection({
   }
 
   function column(songs: readonly CommunitySong[]) {
-    return songs.map((song) => (
-      <div key={song.id} className="new-songs__item">
-        <ListItem
-          variant="community"
-          title={song.title}
-          username={song.creator}
-          coverImage={song.cover}
-          plays={song.plays}
-          likes={song.likes}
-          shares={song.shares}
-          shareUrl={buildShareUrl(song.id)}
-          cta
-          isPlaying={previewId === song.id && playing}
-          liked={likedIds.has(song.id)}
-          onToggleLike={() => toggleLike(song.id)}
-          onSelect={() => openSong(song.id)}
-          onPlay={() => handlePlay(song.id)}
-          onCreate={createFromSong}
-        />
-      </div>
-    ));
+    return songs
+      .filter((s) => !isPubliclyRemoved("song", s.id))
+      .map((song) => (
+        <div key={song.id} className="new-songs__item">
+          <ListItem
+            variant="community"
+            title={song.title}
+            username={song.creator}
+            coverImage={song.cover}
+            plays={song.plays}
+            likes={song.likes}
+            shares={song.shares}
+            shareUrl={buildShareUrl(song.id)}
+            cta
+            isPlaying={previewId === song.id && playing}
+            liked={likedIds.has(song.id)}
+            onToggleLike={() => toggleLike(song.id)}
+            onSelect={() => openSong(song.id)}
+            onPlay={() => handlePlay(song.id)}
+            onCreate={createFromSong}
+          />
+        </div>
+      ));
   }
 
   return (

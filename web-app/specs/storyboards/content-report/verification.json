@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-29",
+  "viewports": [
+    1440,
+    390
+  ],
+  "checks": [
+    "guest-report",
+    "six-reasons",
+    "disabled-submit",
+    "details-validation-and-retention",
+    "done-only",
+    "duplicate",
+    "five-success-cap",
+    "duplicate-priority",
+    "toast-hover-focus",
+    "reload-reset",
+    "failure-retry",
+    "owner-no-report",
+    "public-share-removal",
+    "private-result",
+    "history-notice"
+  ],
+  "screenshots": 15
+}

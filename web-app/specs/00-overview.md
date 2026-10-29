@@ -52,6 +52,8 @@ a `TBD-*`). "spec-pending" and "❓" are different states: one is our backlog, t
 
 ---
 
+**Content Report（2026-10-28）：** [area 14](areas/14-content-report.md) 整理 Word v1.1 的內建原因、送出、防濫用與審核後下架。產品行為已於 2026-10-29 確認並同步實作，包含 session cap、失敗重試與 QA 下架；真實後端契約仍列 TBD-RPT-07。
+
 ## 1. Site map — route inventory
 
 All routes live under `src/app/[locale]/`. English (`enu`) is served **unprefixed** (`/mv/room`); other

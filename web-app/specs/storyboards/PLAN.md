@@ -83,6 +83,7 @@ calibrated against the finished song spec: **7 paths / 33 screenshots / 774-line
 | **S8**  | `explore-community`   | 4    | 04                | `/` `/explore/mvs` `/explore/songs` `/watch` `/song/play` `/creator`               | 7     | 38    | ✅ v2, 2026-09-09                      |
 | **S9**  | `share`               | 4    | 10                | `/share`, `ShareDialog`                                                            | 5     | 15    | ✅ v1, 2026-09-01                      |
 | **S10** | `credit-consumption`  | —    | 11                | none — **the area 11 md IS the spec** (D13)                                        | —     | 0     | ✅ 2026-09-01, one blank: `TBD-CC-06`  |
+| **S11** | `content-report` | shared | 14 | report flow, History / Result removal, public visibility | 6 | 15 | ✅ v1, 2026-10-29 |
 | —       | ~~proof-of-creation~~ | —    | 08                | —                                                                                  | —     | —     | ❌ out of web scope (area 08 § Status) |
 
 **Coverage check.** Areas 01–07, 09, 10 are covered by S2–S9 plus the finished S1; area 08 is

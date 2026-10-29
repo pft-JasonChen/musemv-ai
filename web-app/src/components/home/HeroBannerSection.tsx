@@ -10,7 +10,9 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import type { Locale } from "@/lib/i18n/config";
 import { IconButton } from "@/components/ui/IconButton";
-import { HERO_ITEMS } from "./heroItems";
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
+import { HERO_ITEMS as HERO_CATALOG } from "./heroItems";
 
 /**
  * ── MIGRATED FROM THE DESIGNER PROTOTYPE (landing page, the 17th route) ─────
@@ -121,14 +123,6 @@ const MOBILE_DRAG_THRESHOLD = 60;
 /** How far a pointer has to move before a press commits to a drag — see
  *  `handlePointerMove`'s comment for why this can't be 0. */
 const MOBILE_DRAG_COMMIT_PX = 8;
-const MOBILE_REAL = HERO_ITEMS.length;
-// domIndex 0 = clone of the last real card, 1..MOBILE_REAL = real cards,
-// MOBILE_REAL+1 = clone of the first real card.
-const MOBILE_PADDED_ITEMS = [HERO_ITEMS[MOBILE_REAL - 1], ...HERO_ITEMS, HERO_ITEMS[0]];
-
-function mobileRealIndex(domIndex: number) {
-  return (((domIndex - 1) % MOBILE_REAL) + MOBILE_REAL) % MOBILE_REAL;
-}
 
 /**
  * The phone hero: an infinite, draggable, auto-advancing carousel. Card width
@@ -172,13 +166,17 @@ function mobileRealIndex(domIndex: number) {
  * file's sibling `CommunityMvPlayer`'s autoplay-with-sound/rejection-fallback
  * complexity entirely.
  */
-function HeroBannerMobile({
-  onCreate,
-  locale,
-}: {
-  onCreate: () => void;
-  locale: Locale;
-}) {
+function HeroBannerMobile({ onCreate, locale }: { onCreate: () => void; locale: Locale }) {
+  const items = HERO_CATALOG.filter((m) => !isPubliclyRemoved("mv", m.id));
+  const MOBILE_REAL = items.length;
+  // domIndex 0 = clone of the last real card, 1..MOBILE_REAL = real cards,
+  // MOBILE_REAL+1 = clone of the first real card.
+  const MOBILE_PADDED_ITEMS = [items[MOBILE_REAL - 1], ...items, items[0]];
+
+  function mobileRealIndex(domIndex: number) {
+    return (((domIndex - 1) % MOBILE_REAL) + MOBILE_REAL) % MOBILE_REAL;
+  }
+
   const trackRef = useRef<HTMLDivElement>(null);
   const domIndexRef = useRef(1);
   const dragRef = useRef({ startX: 0, dragging: false });
@@ -326,7 +324,11 @@ function HeroBannerMobile({
           const detailHref = localePath(locale, `/watch?id=${item.id}`);
           return (
             <div className="hero-banner-mobile__card" key={`${domIndex}-${item.title}`}>
-              <Link href={detailHref} className="hero-banner-mobile__media-link" aria-label={item.title}>
+              <Link
+                href={detailHref}
+                className="hero-banner-mobile__media-link"
+                aria-label={item.title}
+              >
                 {isVideoActive ? (
                   <video
                     className="hero-banner-mobile__bg"
@@ -402,6 +404,12 @@ function HeroBannerMobile({
 }
 
 export function HeroBannerSection() {
+  const moderation = useModeration();
+  if (!HERO_CATALOG.some((m) => !isPubliclyRemoved("mv", m.id))) return null;
+  return <HeroBannerBody key={Object.keys(moderation.removals).join("|")} />;
+}
+function HeroBannerBody() {
+  const HERO_ITEMS = HERO_CATALOG.filter((m) => !isPubliclyRemoved("mv", m.id));
   const router = useRouter();
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
@@ -423,7 +431,7 @@ export function HeroBannerSection() {
 
   useEffect(() => {
     activeIndexRef.current = activeIndex;
-  }, [activeIndex]);
+  }, [activeIndex, HERO_ITEMS.length]);
 
   function goTo(index: number) {
     if (index === activeIndexRef.current) return;
@@ -441,8 +449,8 @@ export function HeroBannerSection() {
       goTo((activeIndexRef.current + 1) % HERO_ITEMS.length);
     }, ROTATE_INTERVAL_MS);
     return () => clearInterval(timer);
-    // Mount-only: goTo closes over refs and setters, not state.
-  }, []);
+    // Remounted whenever moderation changes the catalog.
+  }, [HERO_ITEMS.length]);
 
   useEffect(() => () => window.clearTimeout(fadeTimeoutRef.current), []);
 
@@ -467,7 +475,7 @@ export function HeroBannerSection() {
     } else if (thumbRight > visibleRight) {
       row.scrollTo({ left: thumbRight - row.clientWidth, behavior: "smooth" });
     }
-  }, [activeIndex]);
+  }, [activeIndex, HERO_ITEMS.length]);
 
   const displayed = HERO_ITEMS[displayedIndex];
 

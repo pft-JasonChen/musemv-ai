@@ -1,6 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -313,6 +315,7 @@ export function CreatorProfile() {
   // to reach this state. Last render-time branch, per `demoStore.ts`.
   const demoEmpty = useDemoFlag("profileEmpty");
 
+  const moderation = useModeration();
   const items = useMemo<ProfileItem[]>(() => {
     const rows: ProfileItem[] =
       tab === "mv"
@@ -344,8 +347,15 @@ export function CreatorProfile() {
             downloadName: `${s.title}.mp3`,
             video: "",
           }));
-    return demoEmpty ? [] : rows.filter((r) => !removed.has(r.id) && !unpublished.has(r.id));
-  }, [tab, removed, unpublished, demoEmpty]);
+    return demoEmpty
+      ? []
+      : rows.filter(
+          (r) =>
+            !removed.has(r.id) &&
+            !unpublished.has(r.id) &&
+            !isPubliclyRemoved(r.kind, r.id, moderation),
+        );
+  }, [tab, removed, unpublished, demoEmpty, moderation]);
 
   function open(item: ProfileItem) {
     router.push(localePath(locale, item.href));

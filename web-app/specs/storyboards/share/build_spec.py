@@ -503,6 +503,7 @@ cfg = {
     ],
 
     'references': [
+        ('Content Report (S11)', '<a href="../../content-report/specs/spec.html">Open S11</a>'),
         (
             'Area spec 10 — Share',
             'specs/areas/10-share.md',

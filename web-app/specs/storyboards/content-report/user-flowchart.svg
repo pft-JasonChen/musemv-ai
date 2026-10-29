@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1590" viewBox="0 0 1280 1590" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" role="img">
+<title>Content Report &#8212; User Flowchart</title>
+<defs><marker id="fc-primary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#5a6b78" stroke-width="1.5"/></marker><marker id="fc-error" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#d6484a" stroke-width="1.5"/></marker><marker id="fc-structural" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-deferred" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#a8b2ba" stroke-width="1.5"/></marker><marker id="fc-retry" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#6cc7e6" stroke-width="1.5"/></marker></defs>
+<rect width="1280" height="1590" fill="#ffffff"/>
+<text x="40" y="30" font-size="17" font-weight="700" fill="#0c1c22">Content Report &#8212; User Flowchart</text>
+<text x="40" y="50" font-size="13" fill="#5a6b78">Approved Web behavior &#183; matches spec v1, 2026-10-29</text>
+
+<g transform="translate(0,80)">
+<line x1="40" y1="53" x2="1240" y2="53" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="75" font-size="15" font-weight="700" fill="#0c1c22">P1 Report</text>
+<rect x="40" y="120" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="205" y="140" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Report entry</text>
+<text x="205" y="158" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S1</text>
+<rect x="440" y="120" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="605" y="140" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Reason or Details</text>
+<text x="605" y="158" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S2 / P1-S3</text>
+<line x1="370" y1="145" x2="440" y2="145" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="840" y="120" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="1005" y="140" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Success and Done</text>
+<text x="1005" y="158" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S4</text>
+<line x1="770" y1="145" x2="840" y2="145" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="273" x2="1240" y2="273" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="295" font-size="15" font-weight="700" fill="#0c1c22">P2 Guard feedback</text>
+<rect x="40" y="340" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="205" y="360" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Already reported</text>
+<text x="205" y="378" font-size="12" fill="#5a6b78" text-anchor="middle">P2-S1</text>
+<rect x="440" y="340" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="605" y="360" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Five successes reached</text>
+<text x="605" y="378" font-size="12" fill="#5a6b78" text-anchor="middle">P2-S2</text>
+<line x1="370" y1="365" x2="440" y2="365" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="493" x2="1240" y2="493" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="515" font-size="15" font-weight="700" fill="#0c1c22">P3 Recovery</text>
+<rect x="40" y="560" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="205" y="580" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Submission fails</text>
+<text x="205" y="598" font-size="12" fill="#5a6b78" text-anchor="middle">P3-S1</text>
+<rect x="440" y="560" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="605" y="580" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Keep draft and retry</text>
+<text x="605" y="598" font-size="12" fill="#5a6b78" text-anchor="middle">P3-S2</text>
+<line x1="370" y1="585" x2="440" y2="585" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="713" x2="1240" y2="713" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="735" font-size="15" font-weight="700" fill="#0c1c22">P4 Ownership</text>
+<rect x="40" y="780" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="205" y="800" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Signed-in owner</text>
+<text x="205" y="818" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S1</text>
+<rect x="440" y="780" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="605" y="800" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Report hidden and blocked</text>
+<text x="605" y="818" font-size="12" fill="#5a6b78" text-anchor="middle">P4-S1</text>
+<line x1="370" y1="805" x2="440" y2="805" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="933" x2="1240" y2="933" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="955" font-size="15" font-weight="700" fill="#0c1c22">P5 Removal</text>
+<rect x="40" y="1000" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="205" y="1020" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Public unavailable</text>
+<text x="205" y="1038" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S1</text>
+<rect x="440" y="1000" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="605" y="1020" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Owner private playback</text>
+<text x="605" y="1038" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S2</text>
+<line x1="370" y1="1025" x2="440" y2="1025" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="840" y="1000" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="1005" y="1020" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">History notice and detail</text>
+<text x="1005" y="1038" font-size="12" fill="#5a6b78" text-anchor="middle">P5-S3 / P5-S4</text>
+<line x1="770" y1="1025" x2="840" y2="1025" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="1153" x2="1240" y2="1153" stroke="#e5e9ed" stroke-width="1"/>
+<text x="40" y="1175" font-size="15" font-weight="700" fill="#0c1c22">P6 Phone</text>
+<rect x="40" y="1220" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="205" y="1240" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Bottom sheet</text>
+<text x="205" y="1258" font-size="12" fill="#5a6b78" text-anchor="middle">P6-S1</text>
+<rect x="440" y="1220" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="605" y="1240" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Details</text>
+<text x="605" y="1258" font-size="12" fill="#5a6b78" text-anchor="middle">P6-S2</text>
+<line x1="370" y1="1245" x2="440" y2="1245" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<rect x="840" y="1220" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
+<text x="1005" y="1240" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Success and Done</text>
+<text x="1005" y="1258" font-size="12" fill="#5a6b78" text-anchor="middle">P6-S3</text>
+<line x1="770" y1="1245" x2="840" y2="1245" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<line x1="40" y1="1426" x2="1240" y2="1426" stroke="#e5e9ed" stroke-width="1"/>
+<line x1="40" y1="1446" x2="74" y2="1446" stroke="#5a6b78" stroke-width="1.8" marker-end="url(#fc-primary)"/>
+<text x="86" y="1450" font-size="12" fill="#5a6b78">Primary happy path</text>
+</g>
+</svg>

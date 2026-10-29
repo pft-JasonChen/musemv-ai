@@ -1,5 +1,7 @@
 "use client";
 
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { NEW_MVS, mvCoverRatio } from "@/lib/mv/community";
@@ -46,6 +48,7 @@ import { IconButton } from "@/components/ui/IconButton";
 export function NewMVsSection() {
   const { locale } = useLocale();
   const demoEmpty = useDemoFlag("feedEmpty");
+  useModeration();
   const rowRef = useRef<HTMLDivElement>(null);
   const [canScrollBack, setCanScrollBack] = useState(false);
   const [canScrollForward, setCanScrollForward] = useState(false);
@@ -92,7 +95,7 @@ export function NewMVsSection() {
       ) : (
         <div className="new-mvs__row-wrapper">
           <div className="new-mvs__row" ref={rowRef} onScroll={updateScrollState}>
-            {NEW_MVS.map((mv) => (
+            {NEW_MVS.filter((m) => !isPubliclyRemoved("mv", m.id)).map((mv) => (
               <Link
                 key={mv.id}
                 href={localePath(locale, `/watch?id=${mv.id}`)}

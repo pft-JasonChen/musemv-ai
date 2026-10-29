@@ -189,6 +189,10 @@
         <span class="nav-area">S9</span><span class="nav-name">Share</span>
         <span class="nav-dot st-ok"></span>
       </a>
+      <a class="nav-item" href="storyboards/content-report/specs/spec.html" target="_blank" rel="noopener" data-ext="1">
+        <span class="nav-area">S11</span><span class="nav-name">Content Report</span>
+        <span class="nav-dot st-ok"></span>
+      </a>
       <button class="nav-item" type="button" data-doc="11">
         <span class="nav-area">S10</span><span class="nav-name">Credit Consumption (RD)</span>
         <span class="nav-dot st-ref"></span>
@@ -299,6 +303,13 @@
         <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>
       <tr>
+        <td class="c-area">S11</td>
+        <td class="c-feat"><a class="sb-link" href="storyboards/content-report/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Content Report</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/content-report/specs/spec.html</div></td>
+        <td class="c-dev">MV / Song / Share report · History / Result removal notice</td>
+        <td><span class="badge st-ok">v1 · 2026-10-29</span></td>
+        <td class="c-cl"><a class="sb-link" href="storyboards/content-report/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
+      </tr>
+      <tr>
         <td class="c-area">S10</td>
         <td class="c-feat"><a class="sb-link" href="#11" data-jump="11"><span class="feat-name">Credit Consumption (RD)</span><span class="feat-open">Open spec →</span></a><div class="c-file">areas/11-credit-consumption.md — no spec.html, the md IS the spec (D13)</div></td>
         <td class="c-dev">— (no journey to walk; contract-shaped, see Area 11 above)</td>
@@ -401,6 +412,12 @@
         <td><span class="badge st-warn">as-built</span></td>
         <td class="c-dev">MSR Credit Consume Form (credit_consume 1.0); main-action + subActions payload per scenario; cloud-config action map.</td>
       </tr>
+      <tr data-doc="14" tabindex="0" role="button" aria-label="Open Content Report Mechanism spec">
+        <td class="c-area">14</td>
+        <td class="c-feat"><span class="feat-name">Content Report Mechanism</span><span class="feat-open">Open spec →</span><div class="c-file">areas/14-content-report.md</div></td>
+        <td><span class="badge st-ok">validated</span></td>
+        <td class="c-dev">Approved guest reports, self-report protection, five-success cap, retry and session moderation; Word v1.2 and S11.</td>
+      </tr>
       <tr data-doc="OQ" tabindex="0" role="button" aria-label="Open Open Questions spec">
         <td class="c-area">OQ</td>
         <td class="c-feat"><span class="feat-name">Open Questions</span><span class="feat-open">Open spec →</span><div class="c-file">OPEN-QUESTIONS.md</div></td>
@@ -415,6 +432,7 @@
         <b>Status:</b> <span class="badge st-ok">validated</span> rendered + checked ·
         <span class="badge st-base">golden sample</span> reference build ·
         <span class="badge st-warn">as-built</span> shipped, curation/back-end deferred ·
+        <span class="badge st-warn">spec-pending</span> requirements recorded, decisions pending ·
         <span class="badge st-ref">reference</span> conventions / registry ·
         <span class="badge st-removed">removed</span> deleted from the codebase.
         &nbsp; IDs are area-qualified (<code>AC-MV-01</code>, <code>TBD-GL-01</code>); ⚠️ = divergence from App v3.0 ·
@@ -513,6 +531,7 @@ redesign), <strong>Reduced</strong> (subset of app), <strong>Dropped</strong> (d
 behaviour not yet documented — resolved when that area spec is written), <strong>❓</strong> (product-undecided →<br>
 a <code>TBD-*</code>). "spec-pending" and "❓" are different states: one is our backlog, the other needs the PO.</p>
 <hr>
+<p><strong>Content Report（2026-10-28）：</strong> <a href="areas/14-content-report.md">area 14</a> 整理 Word v1.1 的內建原因、送出、防濫用與審核後下架。產品行為已於 2026-10-29 確認並同步實作，包含 session cap、失敗重試與 QA 下架；真實後端契約仍列 TBD-RPT-07。</p>
 <h2 id="1-site-map-route-inventory">1. Site map — route inventory</h2>
 <p>All routes live under <code>src/app/[locale]/</code>. English (<code>enu</code>) is served <strong>unprefixed</strong> (<code>/mv/room</code>); other<br>
 locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;AuthGuard&gt;</code> (§5).</p>
@@ -699,8 +718,8 @@ locales are prefixed (<code>/jpn/mv/room</code>). "Auth" = wrapped in <code>&lt;
 </ul>
 <h2 id="4-i18n">4. i18n 🔒</h2>
 <ul>
-<li>9 locales (product codes, not BCP-47): <code>enu jpn kor cht chs deu fra esp ptg</code>. <code>enu</code> default &amp; unprefixed.</li>
-<li>Dictionaries cover <strong>~40 keys (nav + Profile only)</strong>; the 8 non-English files are intentionally empty stubs (English fallback per key). Everything else is hardcoded English JSX by current convention.</li>
+<li>11 locales (product codes, not BCP-47): <code>deu enu esp fra hi id jpn kor ptg cht chs</code> (picker order). <code>enu</code> default &amp; unprefixed.</li>
+<li>Dictionaries cover <strong>~40 keys (nav + Profile only)</strong>; the 10 non-English files are intentionally empty stubs (English fallback per key). Everything else is hardcoded English JSX by current convention.</li>
 <li>Specs are authored in English; localization QA is out of scope here → <code>TBD-GL-06</code> <em>(registered in <code>OPEN-QUESTIONS.md</code> on 2026-08-19 — it had only ever existed in this sentence)</em>.</li>
 </ul>
 <h2 id="5-auth-model">5. Auth model 🔒</h2>
@@ -1024,6 +1043,64 @@ this file covers. When a change does both, it appears in both, and the row below
 <p><strong>A storyboard's own Changelog is the finer-grained one</strong> and worth opening second: it badges the<br>
 individual steps that moved with a green <code>NEW · vN</code> marker, and it is where a stale SCREENSHOT is<br>
 recorded. This file points you at which storyboards to open.</p>
+<hr>
+<h2 id="2026-10-29-content-report-decisions-and-implementation">2026-10-29 — Content Report decisions and implementation</h2>
+<p>Product owner approved the complete adjustment list after three clarification rounds.</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code / evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Guest reporting, six reasons plus Something else, disabled Submit, Done-only success, three-second held toasts, five successful reports, duplicate priority, retry without counting failure, no self-report</td>
+<td>area 14 AC-RPT-01–08, 12–14</td>
+<td>ReportDialog, report.ts, contentModeration; report unit tests and S11 browser capture assertions</td>
+</tr>
+<tr>
+<td>Public removal, owner-only private playback, retained notice design, corrected Removed from community, session-only QA controls</td>
+<td>AC-RPT-09–11, 15</td>
+<td>ModeratedAccess, shared moderation snapshot, History / Result / public surfaces, DemoPanel</td>
+</tr>
+<tr>
+<td>Product TBD-RPT-01–06 resolved; only RD contract TBD-RPT-07 remains. Word v1.2 and S11 carry the same approved rules</td>
+<td>area 14; S11 P1–P5</td>
+<td>docs/requirements/YCM-content-report-v1.2-web.docx; content-report storyboard</td>
+</tr>
+</tbody>
+</table>
+<p>No MuseApi, provider, schema, route or token value changes. Linux visual baselines are not re-recorded on this Mac.</p>
+<hr>
+<h2 id="2026-10-28-content-report-v11-requirement-mockup">2026-10-28 — Content Report v1.1 requirement整理與 mockup 差異審查</h2>
+<p><strong>產品負責人後續確認：</strong> 保留六個內建原因＋Something else；成功後維持 Done 手動關閉，不加 3 秒自動關閉。已同步 area 14 §3 / §4 / AC-RPT-02、04 / §7–9；這兩項不需調整 prototype。TBD-RPT-01 僅剩 Submit 初始呈現；第三項防濫用仍待核對 Word 第 1 頁 §1 原文。</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>依 Darren Liu 的 Word PRD v1.1 整理六內建原因、送出確認、session cap / duplicate、History 移除通知及私人／公開可見性；Word 與 web 不同處保留待決議，未改 prototype</td>
+<td>area 14 <strong>RPT-P1–P3</strong>, <strong>RPT-E1–E6</strong>, <strong>AC-RPT-01–12</strong>, <strong>TBD-RPT-01–07</strong></td>
+<td>無程式變更；核對 <code>ReportDialog.tsx</code>、<code>lib/report.ts</code>、<code>ContentNotice.tsx</code> 等</td>
+<td>文件核對；area 14 §7 為待決議後測試清單，非已通過測試</td>
+</tr>
+<tr>
+<td>修正 area 04 / Open Questions 的泛稱「no Report/Block」，區分已建的內容檢舉與未建的帳號檢舉；History 加交叉引用</td>
+<td>area 04 / 05；TBD-EXP-05 範圍釐清</td>
+<td>無</td>
+<td>無 UI 變更</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Wire contract:</strong> 未變更。<strong>Mockup / storyboard:</strong> 本次只評估，未改畫面、截圖或版號；area 14 §9 列出待批准更新項目。</p>
 <hr>
 <h2 id="2026-10-22-ai-song-unsupported-language-error-supported-languages-tooltip-on-hover-toasts-hold-on-hover">2026-10-22 — AI Song unsupported-language error; Supported Languages tooltip on hover; toasts hold on hover</h2>
 <p>Product owner decisions, no bug code. Backend "invalid parameter" errors on AI Song traced to lyrics in<br>
@@ -4007,10 +4084,13 @@ feature on <code>.mv-player__stage</code>, <strong>at every width</strong>, ship
 product owner 2026-09-01, the gesture <strong>stays</strong> (<code>TBD-EXP-03</code>, ✅ closed). <code>/song/play</code> is still a<br>
 <strong>simulated timer with no real audio</strong>, but now has <strong>real <code>&lt;audio&gt;</code> playback and no free-preview cap</strong> <em>(and deliberately no shuffle/repeat — 2026-08-19)</em> ~~shuffle + repeat and the 30s free-preview gate~~<br>
 (EXP-04 / SONG-02, 2026-07-23) ⚠️; there is a <strong>single sample creator</strong> (<code>DEFAULT_CREATOR</code>) behind<br>
-every avatar and <strong>no Report/Block</strong> (App F17) ⚠️ (<code>TBD-EXP-05</code>). <strong>GL-02 (2026-07-23):</strong> Create MV /<br>
+every avatar and <strong>no creator-account Report/Block</strong> (App F17) ⚠️ (<code>TBD-EXP-05</code>). <strong>GL-02 (2026-07-23):</strong> Create MV /<br>
 Create Song / Like on community surfaces now <strong>gate at the action</strong> (<code>requireLogin</code>); like/share are<br>
 still local, non-persistent (real counters → <code>TBD-EXP-08</code>).</p>
 <hr>
+<blockquote>
+<p><strong>Content report 補記（2026-10-28）：</strong> MV / Song 的內容檢舉 UI 已存在；與此處未建的創作者帳號 Report / Block 不同。需求、現況差異與待決議 → <a href="14-content-report.md">area 14</a>。公開下架管線仍未串接。</p>
+</blockquote>
 <h2 id="2-route-component-state-api-map-rd">2. Route / component / state / API map (RD)</h2>
 <table>
 <thead>
@@ -4370,7 +4450,7 @@ profile — <code>ownerMenu</code> is <code>self &amp;&amp; loggedIn</code>, so 
   Storyboard / Failed / Generating rows (added 2026-08-31 / 09-01 from the Figma self-view) — none<br>
   of them can be published, and they live in <code>/history</code>. See EXP-P6-S2 for what that does to the menu.</li>
 <li>This route is <strong>both</strong> the App's <em>My Community Profile</em> (F16, via <code>/profile</code> stats → <code>/creator?self=1</code>, area 06) <strong>and</strong> <em>Community User Profile</em> (F17, via any creator link).</li>
-<li>⚠️ Self mode shows <code>MOCK_USER</code>'s identity but the <strong>sample creator's stats + content</strong> (<code>CREATOR_MVS/SONGS</code>); no <strong>Report/Block</strong> (App F17) (<code>TBD-EXP-05</code>).</li>
+<li>⚠️ Self mode shows <code>MOCK_USER</code>'s identity but the <strong>sample creator's stats + content</strong> (<code>CREATOR_MVS/SONGS</code>); no <strong>creator-account Report/Block</strong> (App F17) (<code>TBD-EXP-05</code>).</li>
 <li><strong><code>profileEmpty</code> demo flag — live, added to this spec 2026-09-01.</strong> <code>CREATOR_MVS</code>/<code>CREATOR_SONGS</code><br>
   are fixed constants and can never be empty for real, so <code>?demo=1</code>'s <code>profileEmpty</code> toggle<br>
   (<code>src/lib/demoStore.ts</code>, <code>status: "live"</code>) is the only way to reach this UI: <code>CreatorProfile</code><br>
@@ -4662,7 +4742,7 @@ playback IS asserted, by <code>AC-EXP-05</code> above — corrected 2026-09-01, 
 </tr>
 <tr>
 <td><strong>TBD-EXP-05</strong></td>
-<td>⏳ <strong>TBD</strong> — a single <code>DEFAULT_CREATOR</code> backs every avatar; self mode mixes <code>MOCK_USER</code> identity with sample content/stats; no Report/Block (App F17). Wire real creators + moderation actions.</td>
+<td>⏳ <strong>TBD</strong> — a single <code>DEFAULT_CREATOR</code> backs every avatar; self mode mixes <code>MOCK_USER</code> identity with sample content/stats; no creator-account Report/Block (App F17). Wire real creators + moderation actions.</td>
 </tr>
 <tr>
 <td>~~<strong>TBD-EXP-06</strong>~~</td>
@@ -4746,6 +4826,9 @@ edit MV"</strong> entry that unpublishes first (MV-13). Matches the app on: "My 
 All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation ("Get Proof") was<br>
 <strong>removed 2026-07-24</strong> — out of web scope (area 08).</p>
 <hr>
+<blockquote>
+<p><strong>Content removal 補記（2026-10-28）：</strong> 被檢舉後審核移除的 seed 項目、更多選單 notice 與 Content Notice 已存在；完整規格及 Word 差異 → <a href="14-content-report.md">area 14</a>。不要將此狀態與發布審核 Rejected 或使用者 Delete 混為一談。</p>
+</blockquote>
 <h2 id="2-route-component-state-api-map-rd">2. Route / component / state / API map (RD)</h2>
 <table>
 <thead>
@@ -5071,7 +5154,7 @@ localized surfaces (nav + Profile). <code>/settings</code> copy is hardcoded Eng
 <strong>Rows</strong> (<code>:129-146</code>):</p>
 <ul>
 <li><strong>Muse Pro</strong> — not subscribed → an <strong>Upgrade</strong> pill (<code>.button--secondary</code>) + row click → <code>SubscribeModal</code> (area 07); subscribed → plan name + hardcoded "validity 2026-08-10", <strong>no pill</strong>, row click → <code>/profile/credits</code> (product owner, 2026-08-14).</li>
-<li><strong>Language</strong> — opens a 9-locale picker → <code>setLocale(code)</code> (i18n, area-wide).</li>
+<li><strong>Language</strong> — opens an 11-locale picker (native names only, production order) → <code>setLocale(code)</code> (i18n, area-wide).</li>
 <li><strong>History</strong> — navigates to <code>/history</code> (area 05).</li>
 <li><strong>Send Feedback</strong> — opens <code>FeedbackDialog</code>: a <strong>5-field support ticket</strong> submitted through <code>MuseApi.submitFeedback</code> → <strong>§3.1</strong>. <em>(Replaced the one-textarea modal whose content was discarded, 2026-08-17. <code>TBD-PROF-02</code>'s frontend half is closed; the endpoint itself stays RD's.)</em></li>
 <li><strong>Settings</strong> — navigates to <code>/settings</code> (via <code>localePath</code>). Sign Out is no longer on this screen (PROF-03 moved it into Settings).<br>
@@ -5210,7 +5293,7 @@ spec</code>). <strong>The word "ticket" never appears in the UI</strong> — the
 <td>No</td>
 <td>—</td>
 <td>—</td>
-<td><code>language</code> — the <strong>active product locale code</strong> (<code>enu</code>…<code>ptg</code> from <code>LOCALES</code>), <strong>not</strong> BCP-47; RD maps if CSB differs</td>
+<td><code>language</code> — the <strong>active product locale code</strong> (<code>deu</code>…<code>chs</code> from <code>LOCALES</code>), <strong>not</strong> BCP-47; RD maps if CSB differs</td>
 </tr>
 <tr>
 <td>User ID</td>
@@ -5346,7 +5429,7 @@ place, and <code>contract.surface.test.ts</code>'s C1/C2 snapshots were re-recor
 <h3 id="i18n">i18n</h3>
 <p>New keys under <strong><code>profile.feedback.*</code></strong> in <code>src/lib/i18n/dictionaries/en.ts</code> (labels, placeholders,<br>
 the five type names, the attachment refusal, the success/error copy). <code>/profile</code> is one of only two<br>
-<code>useT()</code> surfaces, so this is inside the existing R-8 boundary — not a widening. The 8 non-English<br>
+<code>useT()</code> surfaces, so this is inside the existing R-8 boundary — not a widening. The 10 non-English<br>
 dictionaries stay <strong>empty</strong>; per-key English fallback applies. ⚠️ These strings are e2e-visible.</p>
 <h3 id="deliberate-divergences-from-t3">Deliberate divergences from T3</h3>
 <table>
@@ -7401,6 +7484,297 @@ ai_song_custom_vocal_refine                                          ← 移除
   Edit --&gt;|Merge MV| A6[&quot;merge_mv&lt;br/&gt;（省略 rule）&quot;]
 </code></pre>
 </article>
+<article class="doc" id="doc-14" data-name="Content Report Mechanism" data-file="areas/14-content-report.md">
+<h1 id="area-14-content-report-mechanism">Area 14 — Content Report Mechanism（內建檢舉原因）</h1>
+<blockquote>
+<p><strong>Audience:</strong> PM、Designer、RD、QA。遵循 <code>../00-overview.md</code> 的 Path / Step / EARS 格式。<br>
+<strong>Source:</strong> Darren Liu 的 YCM Content Report PRD v1.1（October 2026）及產品負責人 2026-10-28–29 本次逐項決策。<br>
+<strong>狀態：產品行為已確認，2026-10-29。</strong> Web 決策優先於舊 Word v1.1 的不同敘述。<br>
+🔒 無後端。Prototype 用目前文件生命週期內的記憶體模擬成功、失敗與 reviewer 下架；重新整理重設。正式 API 仍由 RD 串接。<br>
+Related: <a href="../storyboards/content-report/specs/spec.html">S11 Content Report storyboard</a>、<a href="../../docs/requirements/YCM-content-report-v1.2-web.docx">Word 修訂版</a>。</p>
+</blockquote>
+<h2 id="1-overview-scope">1. Overview &amp; scope</h2>
+<p>訪客與登入使用者都能檢舉 MV / Song；不要求登入。匿名代表<strong>不向被檢舉創作者揭露檢舉者身分</strong>，不代表後端不記錄識別資訊。後者由 RD 定義。<br>
+登入使用者不能檢舉自己的作品：隱藏 Report 並阻擋送出；訪客則可檢舉公開作品，登入後才依帳號判定是否本人。官方作品可檢舉。<br>
+成功檢舉<strong>不會立即隱藏或下架</strong>內容；審核確認後才移除公開存取，創作者保有私人播放。<br>
+不包含帳號檢舉／封鎖、申訴、重新送審、審核後台 UI 或 Profile Send Feedback 的 Community Report 分類。</p>
+<h2 id="2-route-component-state-api-maprd">2. Route / component / state / API map（RD）</h2>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>行為</th>
+<th>Prototype 狀態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/watch</code></td>
+<td>MV flag，Report Music Video</td>
+<td>共用 useReportContent</td>
+</tr>
+<tr>
+<td><code>/song/play</code>、<code>/explore/songs</code></td>
+<td>Song flag，Report Song</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>/song/result</code></td>
+<td>保留既有 community Report 入口；自己的作品不顯示</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>/share</code></td>
+<td>MV / Song More → Report；自己的作品不顯示</td>
+<td>同上；公開下架後不可解析</td>
+</tr>
+<tr>
+<td><code>/history</code></td>
+<td>私人保留、更多選單通知、隱藏 Publish、Got It</td>
+<td>History seed / job + moderation snapshot</td>
+</tr>
+<tr>
+<td><code>/mv/result</code>、<code>/song/result</code></td>
+<td>創作者私人播放與下架通知；未授權不可用</td>
+<td>ModeratedAccess + ContentNotice</td>
+</tr>
+<tr>
+<td><code>/</code>、Explore、<code>/creator</code></td>
+<td>公共列表過濾下架項目</td>
+<td>同一 moderation snapshot</td>
+</tr>
+<tr>
+<td><code>?demo=1</code></td>
+<td>Report submission fails、reviewer 下架與 reset</td>
+<td>只限目前分頁，不寫入持久儲存</td>
+</tr>
+</tbody>
+</table>
+<p>不新增 provider、MuseApi endpoint、資料庫或網路請求。<br>
+Prototype 的唯一 mock 帳號以固定 fixture 歸屬、History 自有資料判定所有權，不能以使用者可編輯的顯示名稱作為正式身分契約。</p>
+<h2 id="3-state-model-rules">3. State model &amp; rules</h2>
+<h3 id="31">3.1 原因與按鈕</h3>
+<p>以下六項依序單選；第七項 <strong>Something else</strong> 開啟 Details 子頁，不是第七個內建分類。</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>英文原因</th>
+<th>涵蓋範圍</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Sexual or adult content</td>
+<td>裸露、露骨內容、涉及未成年人的性行為</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Harassment or hate speech</td>
+<td>針對性辱罵、仇恨言論、人身攻擊</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Spam or commercial advertising</td>
+<td>重複垃圾內容、假互動、誤導標題／縮圖</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Violent or disturbing content</td>
+<td>血腥暴力、傷害描繪或威脅</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Misinformation or misleading</td>
+<td>不實健康宣稱、捏造新聞、假訊息</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Copyright or unauthorized use</td>
+<td>未授權音樂、影片或美術作品</td>
+</tr>
+</tbody>
+</table>
+<p>Submit Report <strong>一直顯示</strong>，未選原因時 disabled。Something else 的 Details 最多 1000 字（沿用瀏覽器 textarea maxLength）；trim 後非空才可送出，可清空，返回再進入保留文字；整個視窗關閉後重設。<br>
+手機 bottom sheet，桌機置中 dialog；保留目前 Close、Escape、點背景關閉方式。</p>
+<h3 id="32">3.2 送出、成功與失敗</h3>
+<p>送出中 Submit 停用，顯示 Submitting…，避免連點。<br>
+成功才標記已檢舉並計次，顯示：</p>
+<ul>
+<li><code>Thank you for keeping Muse safe</code></li>
+<li><code>We'll review this content. If it violates our community guidelines, we'll take action — usually within 24 hours.</code>（畫面沿用英文彎引號排版）</li>
+<li>Done 手動關閉；<strong>不加 3 秒自動關閉</strong>。原有關閉方式仍可使用。</li>
+</ul>
+<p>失敗不計次、不標記已檢舉、不進成功畫面，保留原因與 Details，顯示：<br>
+<code>Couldn’t submit your report. Please try again.</code>；使用者可再次按 Submit 重試。<br>
+24 小時為現有對外文案，不表示 prototype 有審核排程。成功檢舉不觸發下架。</p>
+<h3 id="33">3.3 兩項防濫用</h3>
+<p>正式修正舊 Word 的「three independent safeguards」為<strong>兩項</strong>：</p>
+<ol>
+<li><strong>Duplicate guard</strong>：同 kind:id 在本 session 已成功檢舉，不開 sheet，顯示 <code>You already reported this content.</code>（neutral border）。</li>
+<li><strong>Session cap</strong>：MV＋Song 成功送出合計最多 5 次，第 5 次可送，第 6 個不同內容阻擋，不開 sheet，顯示 <code>You have reached the report limit for this session.</code>（amber border）。</li>
+</ol>
+<p>同時成立時 duplicate 優先。取消、失敗不計次。送出前再次檢查，避免開啟中的視窗繞過上限。<br>
+Session 為<strong>同一分頁目前文件生命週期</strong>：client navigation 保留；重新整理／新文件／新分頁重設；登入、登出不重設。song:id 與 mv:id 是不同內容。<br>
+兩種 toast 統一 <strong>3000ms</strong>，hover／focus 暫停；離開後重新倒數完整 3 秒，沿用全域 toast 行為。手機位於 tab bar 上方。</p>
+<h3 id="34">3.4 審核後下架與通知</h3>
+<p>下架後從公開 feed（含首頁與 Explore）、公開 creator profile 移除。公開 Share、播放器直連不可用，即使創作者已登入也不走公開路徑繞過。<br>
+只有登入的創作者能從 History／自己的 Result 私人播放；Result 保留下架通知。未登入或非本人不可私人播放。<br>
+History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；<code>···</code> 頂部顯示警告 notice：</p>
+<ul>
+<li><code>Removed from community</code></li>
+<li><code>A reviewer removed this content. Tap to see the reason.</code></li>
+</ul>
+<p>被下架項目隱藏 Publish。點 notice 開啟 Content Notice；手機全頁、桌機 dialog。<br>
+<strong>沿用現有設計</strong>：保留 Content Removed / Permanently Removed、縮圖／標題／類型／發布日期／移除資訊、六分類 reason chip 與原因說明、Got It；不提供重新送審指引或資格資訊。六分類既有敘述全部沿用。<br>
+永久下架與一般下架對本版的公開／私人存取規則相同。</p>
+<h3 id="35-qa">3.5 QA 模擬</h3>
+<p>僅既有 <code>?demo=1</code> 面板提供檢舉失敗、選擇作品／六原因／下架類型、Simulate reviewer removal 及 Reset report QA session。<br>
+同一作品的移除狀態即時影響列表、公開連結與私人頁；不改動固定 fixtures。一般檢舉成功不會觸發 reviewer 動作。<br>
+面板新狀態只保留於目前分頁記憶體；重新整理重設。Reset 清除本次 reviewer 模擬、失敗與檢舉次數，固定下架範例仍保留。關閉面板清除本次 reviewer 模擬與失敗，正常檢舉次數不受影響。</p>
+<h2 id="4-user-journeys">4. User journeys</h2>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>操作</th>
+<th>回應</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RPT-P1-S1</td>
+<td>訪客／登入者點他人或官方作品 Report</td>
+<td>duplicate → cap 檢查後開正確標題</td>
+</tr>
+<tr>
+<td>RPT-P1-S2</td>
+<td>選一原因，或 Something else 填 Details</td>
+<td>有效輸入才啟用 Submit</td>
+</tr>
+<tr>
+<td>RPT-P1-S3</td>
+<td>Submit</td>
+<td>送出中停用；成功進確認，Done 手動關閉</td>
+</tr>
+<tr>
+<td>RPT-P2-S1</td>
+<td>已成功檢舉同作品再點 Report</td>
+<td>duplicate toast，不開 sheet</td>
+</tr>
+<tr>
+<td>RPT-P2-S2</td>
+<td>成功檢舉 5 次後對新作品點 Report</td>
+<td>cap toast，不開 sheet</td>
+</tr>
+<tr>
+<td>RPT-P3-S1</td>
+<td>開 QA 失敗再送出</td>
+<td>保留輸入，錯誤提示、不計次</td>
+</tr>
+<tr>
+<td>RPT-P3-S2</td>
+<td>關 QA 失敗再按 Submit</td>
+<td>重試成功；不重複計次</td>
+</tr>
+<tr>
+<td>RPT-P4-S1</td>
+<td>登入者檢視自己的作品</td>
+<td>Report 隱藏，送出也被禁止</td>
+</tr>
+<tr>
+<td>RPT-P5-S1</td>
+<td>QA reviewer 下架</td>
+<td>公開列表／直連／Share 不可用</td>
+</tr>
+<tr>
+<td>RPT-P5-S2</td>
+<td>創作者進 History → 更多選單 → notice</td>
+<td>私人播放保留、Publish 隱藏，Got It 返回</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-error-edge-states">5. Error &amp; edge states</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>狀態</th>
+<th>規則</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RPT-E1</td>
+<td>第六筆不同內容</td>
+<td>cap，3 秒 warning toast</td>
+</tr>
+<tr>
+<td>RPT-E2</td>
+<td>重複，包含已滿 5 次</td>
+<td>duplicate 優先，3 秒 neutral toast</td>
+</tr>
+<tr>
+<td>RPT-E3</td>
+<td>未選原因／Details 全空白</td>
+<td>Submit disabled</td>
+</tr>
+<tr>
+<td>RPT-E4</td>
+<td>取消未送出</td>
+<td>不計次，下次開啟重設輸入</td>
+</tr>
+<tr>
+<td>RPT-E5</td>
+<td>送出失敗</td>
+<td>已確認文案，保留輸入，可重試，不計次</td>
+</tr>
+<tr>
+<td>RPT-E6</td>
+<td>下架作品公開直連或非本人私人頁</td>
+<td>unavailable；不得掛載可播放媒體</td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-acceptance-criteriaears">6. Acceptance criteria（EARS）</h2>
+<ul>
+<li><strong>AC-RPT-01</strong> — WHEN 訪客或登入者點非本人作品 Report，THE SYSTEM SHALL 在未受防濫用阻擋時開對應標題的檢舉 UI，不要求登入。</li>
+<li><strong>AC-RPT-02</strong> — THE SYSTEM SHALL 依 §3.1 顯示六分類＋Something else，並執行單選、1000 字上限、trim 非空及返回保留規則。</li>
+<li><strong>AC-RPT-03</strong> — THE SYSTEM SHALL 一直顯示 Submit；未選有效原因／說明或正在送出時 SHALL disabled。</li>
+<li><strong>AC-RPT-04</strong> — WHEN 成功，THE SYSTEM SHALL 顯示 §3.2 確認與 Done，SHALL NOT 在 3 秒自動關閉。</li>
+<li><strong>AC-RPT-05</strong> — WHEN 成功檢舉，THE SYSTEM SHALL NOT 因此立即隱藏、移除或阻擋內容播放。</li>
+<li><strong>AC-RPT-06</strong> — THE SYSTEM SHALL 依 §3.3 合計成功次數，只允許前 5 次；取消／失敗不計次。</li>
+<li><strong>AC-RPT-07</strong> — WHEN 同內容重複，THE SYSTEM SHALL 優先顯示 duplicate 而非 cap，並在送出時再次防護。</li>
+<li><strong>AC-RPT-08</strong> — THE SYSTEM SHALL 依 §3.3 顯示兩種 3 秒 toast，hover／focus 暫停，離開後重新倒數。</li>
+<li><strong>AC-RPT-09</strong> — WHEN 審核下架，THE SYSTEM SHALL 阻擋所有公開存取，保留登入創作者的 History／Result 私人播放。</li>
+<li><strong>AC-RPT-10</strong> — THE SYSTEM SHALL 保持 History 列表普通外觀，在更多選單顯示 Removed from community notice 並隱藏 Publish。</li>
+<li><strong>AC-RPT-11</strong> — WHEN 開 notice，THE SYSTEM SHALL 沿用 §3.4 完整詳情設計、六原因說明與 Got It，不提供重新送審。</li>
+<li><strong>AC-RPT-12</strong> — THE SYSTEM SHALL 區別本功能與 Send Feedback 的 Community Report，不共用未確認 CS reason ID；匿名僅承諾不向創作者揭露檢舉者。</li>
+<li><strong>AC-RPT-13</strong> — WHEN 登入者是作品擁有者，THE SYSTEM SHALL 隱藏 Report 並禁止送出；官方作品仍可檢舉。</li>
+<li><strong>AC-RPT-14</strong> — WHEN 送出失敗，THE SYSTEM SHALL 顯示已確認錯誤文案、保留輸入並允許重試，不標記成功。</li>
+<li><strong>AC-RPT-15</strong> — THE SYSTEM SHALL 依 §3.5 提供可重設的分頁記憶體 QA 狀態，不持久化或改動固定 fixtures。</li>
+</ul>
+<h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
+<p>2026-10-29：174 項單元測試、定向 browser report／access 檢查及 15 張 390／1440 截圖已通過。逐項證據與測試範圍見 <a href="../storyboards/content-report/VERIFICATION.md">S11 verification</a>；下表保留為完整回歸清單，不代表 Linux visual／全套 axe 已在本次執行。</p>
+<ul>
+<li>[ ] RPT-P1：免登入、雙標題、六分類＋其他、disabled、成功超過 3 秒仍開啟、Done。</li>
+<li>[ ] RPT-P2：跨 MV／Song 五次、duplicate 優先、第六次 cap、hover／focus hold、reload 重設。</li>
+<li>[ ] RPT-P3：連點不重複提交、失敗輸入保留、不計次、關 QA 後重試成功。</li>
+<li>[ ] RPT-P4：登入自己無入口；訪客與他人／官方可檢舉。</li>
+<li>[ ] RPT-P5：同作品跨公開列表／profile／player／share 同步；只有本人登入可私人播放；登出即阻擋。</li>
+<li>[ ] History 通知、無 Publish、一般／永久下架與六原因說明、Got It。</li>
+<li>[ ] 390 / 1440 視覺檢查；其餘六階寬度與既有全站行為交給專案 gate，不宣告本次已重錄 Linux baseline。</li>
+</ul>
+<h2 id="8-open-items-for-rd">8. Open items for RD</h2>
+<p>產品決策 <code>TBD-RPT-01</code>–<code>06</code> <strong>已結案（2026-10-29）</strong>；完整取代先前提問，不再保留候選方案。<br>
+唯一未定為 <strong>TBD-RPT-07 — RD 整合契約</strong>：endpoint、reason IDs、payload、reporter/session 識別、送出成功回應、冪等／重試協定、reviewer 狀態來源及授權／跨裝置同步。RD 須依已定 UI 行為提供契約，不能因尚未串接便改動產品規則。<br>
+Prototype 不宣稱具有匿名安全、防濫用安全或真正私人授權；這些須由正式後端執行。</p>
+<h2 id="9-mockup-prototype-update-assessment">9. Mockup / prototype update assessment</h2>
+<p>已批准調整：五次上限與 amber 提示、三秒 toast、失敗重試、自有作品入口與送出防護、History notice 文案、跨頁 reviewer 狀態與公開／私人存取、QA 控制。<br>
+沿用：六原因＋Something else、disabled Submit、Done-only、手機／桌機設計、永久下架與既有原因敘述。<br>
+S11 是共用功能的單一 storyboard；S4 / S8 / S9 / Result storyboard 交叉引用，避免不同流程重複定義同一檢舉規則。</p>
+</article>
 <article class="doc" id="doc-OQ" data-name="Open Questions" data-file="OPEN-QUESTIONS.md">
 <h1 id="open-questions">待確認事項總表(Open Questions — 仍待處理項目)</h1>
 <blockquote>
@@ -7682,7 +8056,7 @@ section」,不是「小的 UI 問題」。</strong></p>
 <tr>
 <td>TBD-EXP-05</td>
 <td>Explore</td>
-<td>真實多元創作者 + 檢舉/封鎖。</td>
+<td>真實多元創作者 + 創作者帳號檢舉/封鎖。內容檢舉 UI 已存在，需求差異見 area 14。</td>
 </tr>
 <tr>
 <td>TBD-AUTH-04</td>
@@ -7727,6 +8101,9 @@ section」,不是「小的 UI 問題」。</strong></p>
 <li><strong><code>00-overview.md</code> 第 9 節</strong> — 全域仍待處理項目 + 第 8 節 App→Web 對照表。</li>
 <li><strong><code>index.html</code></strong> — 視覺化導覽首頁。</li>
 </ul>
+<h2 id="content-report-2026-10-29">Content Report — 2026-10-29 產品行為已確認</h2>
+<p><code>TBD-RPT-01</code>–<code>06</code> 已結案，依 <a href="areas/14-content-report.md">area 14</a> 的已確認規則實作。<br>
+僅 <code>TBD-RPT-07</code>（endpoint、識別、冪等、reviewer 同步與授權契約）仍由 RD 提供；它不阻擋本地 prototype 與 storyboard。</p>
 </article>
         </div>
       </div>

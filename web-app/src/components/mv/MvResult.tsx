@@ -1,6 +1,10 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { contentRemoval, isOwnContent } from "@/lib/contentModeration";
+import { useModeration } from "@/components/community/useModeration";
+import { CommunityEmpty } from "@/components/community/EmptyState";
+import { ModeratedAccess } from "@/components/community/ModeratedAccess";
 import { useEffect, useRef, useState } from "react";
 import { SeekBar } from "@/components/ui/SeekBar";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,7 +23,7 @@ import { localePath } from "@/lib/i18n/config";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
-import { MV_TYPES, mockStoryboard, removalForId } from "@/lib/mv/mock";
+import { MV_TYPES, mockStoryboard } from "@/lib/mv/mock";
 import { MOCK_USER } from "@/lib/user";
 import { useDemoState } from "@/components/demo/useDemo";
 import {
@@ -85,10 +89,18 @@ function formatTime(seconds: number): string {
  * either wrong paints nothing and throws nothing.
  */
 export function MvResult() {
+  const id = useSearchParams().get("id") ?? "";
+  return (
+    <ModeratedAccess kind="mv" id={id} privateResult={true}>
+      <MvResultBody />
+    </ModeratedAccess>
+  );
+}
+function MvResultBody() {
   const router = useRouter();
   const idParam = useSearchParams().get("id");
   const { locale } = useLocale();
-  const { requireLogin } = useAuth();
+  const { requireLogin, loggedIn } = useAuth();
   const {
     resultUrl,
     resultDate,
@@ -153,7 +165,8 @@ export function MvResult() {
   // Share would build `/share?id=`, which resolves to the expired state.
   // `resolveShare` handles both live jobs and seed ids.
   const shareId = idParam ?? entry?.id ?? "";
-  const removal = removalForId(shareId);
+  useModeration();
+  const removal = contentRemoval("mv", shareId);
   // DP has a separate `resultVideo.cover`; WA's equivalent is the job thumb that
   // the History entry already carries. It matters twice: as the video POSTER
   // (the frame shown before the first decoded frame) and as the blurred backdrop
@@ -176,6 +189,18 @@ export function MvResult() {
   }, [resultUrl, router, locale]);
 
   if (!resultUrl) return null;
+  if (
+    removal &&
+    !(
+      loggedIn &&
+      isOwnContent(
+        "mv",
+        shareId,
+        history.filter((h) => h.kind === "mv").map((h) => h.id),
+      )
+    )
+  )
+    return <CommunityEmpty variant="not-found" />;
 
   const typeName = MV_TYPES.find((t) => t.id === compose.mvType)?.name ?? "Singing";
   const songTitle = compose.song?.title ?? "Untitled";

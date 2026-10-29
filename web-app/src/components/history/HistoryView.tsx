@@ -1,6 +1,9 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { contentRemoval, isOwnContent } from "@/lib/contentModeration";
+import { useModeration } from "@/components/community/useModeration";
+import { ALL_COMMUNITY_SONGS } from "@/lib/mv/community";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -214,6 +217,7 @@ export function HistoryView() {
   const reviewing = (r: HistorySample) => ov[r.id]?.reviewing ?? false;
   const rejectReason = (r: HistorySample) => ov[r.id]?.rejectReason ?? null;
 
+  const moderation = useModeration();
   const rows: HistorySample[] = useMemo(() => {
     const live: HistorySample[] = history.map((h) => ({
       id: h.id,
@@ -256,8 +260,30 @@ export function HistoryView() {
         : s;
     });
     const seedIds = new Set(HISTORY_SAMPLES.map((s) => s.id));
-    return [...live.filter((r) => !seedIds.has(r.id)), ...seeded].filter((r) => !removed.has(r.id));
-  }, [history, removed]);
+    const ownRemoved: HistorySample[] = ALL_COMMUNITY_SONGS.filter(
+      (s) => isOwnContent("song", s.id) && contentRemoval("song", s.id, moderation),
+    ).map((s) => ({
+      id: s.id,
+      kind: "song",
+      title: s.title,
+      thumb: s.cover,
+      status: "done",
+      date: "Just now",
+      plays: 0,
+      likes: 0,
+      shares: 0,
+      liked: false,
+    }));
+    return [...live.filter((r) => !seedIds.has(r.id)), ...seeded, ...ownRemoved]
+      .filter((r) => !removed.has(r.id))
+      .map((r) => ({
+        ...r,
+        removal:
+          r.kind === "storyboard"
+            ? r.removal
+            : (contentRemoval(r.kind, r.id, moderation) ?? r.removal),
+      }));
+  }, [history, removed, moderation]);
 
   // `demoEmpty` (`?demo=1` panel) has to be the LAST thing that decides what
   // renders, not a change to `rows` itself — see `src/lib/demoStore.ts`. Both
@@ -922,7 +948,9 @@ function Menu(p: MenuProps) {
                     <span className="history-card__menu-notice-icon" aria-hidden="true">
                       <DpIcon name="ic_alert" />
                     </span>
-                    <span className="history-card__menu-notice-heading">Remove from community</span>
+                    <span className="history-card__menu-notice-heading">
+                      Removed from community
+                    </span>
                   </span>
                   <span className="history-card__menu-notice-text">
                     A reviewer removed this content. Tap to see the reason.

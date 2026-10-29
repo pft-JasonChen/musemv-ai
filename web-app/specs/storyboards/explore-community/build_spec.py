@@ -949,6 +949,7 @@ cfg = {
     ],
 
     'references': [
+        ('Content Report (S11)', '<a href="../../content-report/specs/spec.html">Open S11</a>'),
         (
             'YouCam Muse Explore Curation PRD (V2)',
             'ycmuse-app-skill/YouCam_Muse_Explore_Curation_PRD  -  V2.pdf',

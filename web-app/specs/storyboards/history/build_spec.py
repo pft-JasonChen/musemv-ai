@@ -529,7 +529,7 @@ cfg = {
         ('D-04', 'Comments layer for this spec?', 'Disabled &mdash; no Firebase backend exists in this repo yet, same as S1.'),
     ],
 
-    'references': [],
+    'references': [('Content Report (S11)', '<a href="../../content-report/specs/spec.html">Open S11</a>')],
 
     # ── flow diagram ───────────────────────────────────────────────────────
     'mermaid': (

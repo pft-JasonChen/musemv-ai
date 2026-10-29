@@ -208,7 +208,7 @@ export function RemovedNoticeCard({
           <DpIcon name="ic_alert" className="removed-notice-card__icon-glyph" />
         </span>
         <span className="removed-notice-card__info">
-          <span className="removed-notice-card__title">Remove from community</span>
+          <span className="removed-notice-card__title">Removed from community</span>
           <span className="removed-notice-card__text">
             A reviewer removed this content. Tap to see the reason.
           </span>

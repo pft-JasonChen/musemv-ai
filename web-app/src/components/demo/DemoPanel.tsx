@@ -1,6 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useModeration } from "@/components/community/useModeration";
+import { moderationStore } from "@/lib/contentModeration";
+import { REPORT_REASONS, resetReports, type ReportKind, type ContentRemoval } from "@/lib/report";
+import {
+  NEW_MVS,
+  TRENDING_MVS,
+  ALL_COMMUNITY_SONGS,
+  CREATOR_MVS,
+  CREATOR_SONGS,
+  HERO_MVS,
+} from "@/lib/mv/community";
+import { HISTORY_SAMPLES } from "@/lib/mv/mock";
+import { useHistory } from "@/components/providers/HistoryProvider";
 import { authStore } from "@/lib/authStore";
 import { demoStore, DEMO_FLAGS, type SubPlatform } from "@/lib/demoStore";
 import { PUBLISH_REJECT_CODES, PUBLISH_REJECT_COPY } from "@/lib/publishReview";
@@ -114,7 +127,7 @@ export function DemoPanel() {
       <button
         type="button"
         onClick={() => demoStore.set({ collapsed: false })}
-        className="fixed bottom-3 left-3 z-[300] h-[30px] rounded-full border px-3 text-[11px] font-bold"
+        className="fixed bottom-3 left-3 z-[400] h-[30px] rounded-full border px-3 text-[11px] font-bold"
         style={card}
       >
         DEMO
@@ -125,7 +138,7 @@ export function DemoPanel() {
   return (
     <aside
       aria-label="Demo state panel"
-      className="fixed bottom-3 left-3 z-[300] flex max-h-[70vh] w-[290px] flex-col overflow-hidden rounded-xl border text-[11px]"
+      className="fixed bottom-3 left-3 z-[400] flex max-h-[70vh] w-[290px] flex-col overflow-hidden rounded-xl border text-[11px]"
       style={card}
     >
       <header
@@ -144,7 +157,10 @@ export function DemoPanel() {
         </button>
         <button
           type="button"
-          onClick={() => demoStore.dismiss()}
+          onClick={() => {
+            moderationStore.reset();
+            demoStore.dismiss();
+          }}
           aria-label="Close demo panel"
           className="px-1 font-bold"
           style={{ color: "var(--neutral-dark-64)" }}
@@ -215,6 +231,8 @@ export function DemoPanel() {
           </label>
         )}
 
+        <ReportControls />
+
         {/* ── Account actions ───────────────────────────────────────────────
             These are ACTIONS, not flags, because the real stores already own
             this state: faking it with a flag would give two sources of truth
@@ -260,5 +278,109 @@ export function DemoPanel() {
         </div>
       </div>
     </aside>
+  );
+}
+
+/** QA actions are in-memory only, independent from the persisted demo flags. */
+function ReportControls() {
+  const state = useModeration();
+  const { history } = useHistory();
+  const [target, setTarget] = useState("song:sp-neon-static");
+  const [reason, setReason] = useState<(typeof REPORT_REASONS)[number]>(REPORT_REASONS[2]);
+  const [severity, setSeverity] = useState<ContentRemoval["kind"]>("removed");
+  const options = [
+    ...NEW_MVS.map((m) => ({ kind: "mv", id: m.id, title: m.title })),
+    ...HERO_MVS.map((m) => ({ kind: "mv", id: m.id, title: m.title })),
+    ...TRENDING_MVS.map((m) => ({ kind: "mv", id: m.id, title: m.title })),
+    ...CREATOR_MVS.map((m) => ({ kind: "mv", id: m.id, title: m.title })),
+    ...ALL_COMMUNITY_SONGS.map((m) => ({ kind: "song", id: m.id, title: m.title })),
+    ...CREATOR_SONGS.map((m) => ({ kind: "song", id: m.id, title: m.title })),
+    ...HISTORY_SAMPLES.filter((m) => m.kind !== "storyboard" && m.source !== "community").map(
+      (m) => ({ kind: m.kind, id: m.id, title: m.title }),
+    ),
+    ...history.map((m) => ({ kind: m.kind, id: m.id, title: m.title })),
+  ];
+  const selected = options.find((m) => `${m.kind}:${m.id}` === target) ?? options[0];
+  const controlStyle = {
+    background: "var(--card-2)",
+    color: "var(--text-1)",
+    borderColor: "var(--border-2)",
+  };
+  return (
+    <section
+      className="mt-2 border-t pt-2"
+      style={{ borderColor: "var(--border-2)" }}
+      aria-label="Content report QA"
+    >
+      <p className="font-bold">CONTENT REPORT</p>
+      <Switch
+        checked={state.failReports}
+        onChange={moderationStore.setFailure}
+        label="Report submission fails"
+      />
+      <label className="block py-1">
+        Review content
+        <select
+          aria-label="Review content"
+          className="w-full rounded-lg border p-1"
+          style={controlStyle}
+          value={`${selected.kind}:${selected.id}`}
+          onChange={(e) => setTarget(e.target.value)}
+        >
+          {options.map((m) => (
+            <option key={`${m.kind}:${m.id}`} value={`${m.kind}:${m.id}`}>
+              {m.kind}: {m.title}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block py-1">
+        Removal reason
+        <select
+          aria-label="Removal reason"
+          className="w-full rounded-lg border p-1"
+          style={controlStyle}
+          value={reason}
+          onChange={(e) => setReason(e.target.value as typeof reason)}
+        >
+          {REPORT_REASONS.map((r) => (
+            <option key={r}>{r}</option>
+          ))}
+        </select>
+      </label>
+      <label className="block py-1">
+        Removal type
+        <select
+          aria-label="Removal type"
+          style={controlStyle}
+          value={severity}
+          onChange={(e) => setSeverity(e.target.value as typeof severity)}
+        >
+          <option value="removed">Removed</option>
+          <option value="permanent">Permanently removed</option>
+        </select>
+      </label>
+      <button
+        type="button"
+        className="rounded-lg border p-1"
+        style={controlStyle}
+        onClick={() =>
+          moderationStore.remove(selected.kind as ReportKind, selected.id, reason, severity)
+        }
+      >
+        Simulate reviewer removal
+      </button>
+      <button
+        type="button"
+        className="rounded-lg border p-1"
+        style={controlStyle}
+        onClick={() => {
+          moderationStore.reset();
+          resetReports();
+        }}
+      >
+        Reset report QA session
+      </button>
+    </section>
   );
 }

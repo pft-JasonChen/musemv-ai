@@ -857,6 +857,7 @@ cfg = {
     ],
 
     'references': [
+        ('Content Report (S11)', '<a href="../../content-report/specs/spec.html">Open S11</a>'),
         ('Credit Consume MSR &mdash; generation cost numbers', '', 'TBD'),
         ('specs/areas/02-mv-creation.md &sect;8 TBD-MV-03', '', 'Multi-face auto-detect deferred &mdash; MVP keeps manual crop (P4-S7).'),
         ('specs/areas/02-mv-creation.md &sect;8 TBD-MV-06', '', 'Publish-to-community backend pipeline undefined (P8-S4).'),

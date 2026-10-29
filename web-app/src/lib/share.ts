@@ -10,6 +10,7 @@
 // expired state. Production resolves every id server-side (see spec §
 // "Prototype Simplifications").
 
+import { isPubliclyRemoved } from "@/lib/contentModeration";
 import type { HistoryItem } from "@/components/providers/HistoryProvider";
 import { getCommunityMv, getCommunitySong } from "@/lib/mv/community";
 import { SAMPLE_AUDIO, SAMPLE_RESULT_VIDEO, HISTORY_SAMPLES } from "@/lib/mv/mock";
@@ -39,22 +40,46 @@ export function buildShareUrl(id: string): string {
  * expired/invalid empty state.
  */
 export function resolveShare(id: string | null, history: HistoryItem[]): SharedMedia | null {
-  if (!id) return null;
+  if (!id || isPubliclyRemoved("mv", id) || isPubliclyRemoved("song", id)) return null;
 
   const cMv = getCommunityMv(id);
   if (cMv) {
-    return { kind: "mv", title: cMv.title, posterUrl: cMv.thumb, videoUrl: cMv.video, creator: cMv.creator };
+    return {
+      kind: "mv",
+      title: cMv.title,
+      posterUrl: cMv.thumb,
+      videoUrl: cMv.video,
+      creator: cMv.creator,
+    };
   }
   const cSong = getCommunitySong(id);
   if (cSong) {
-    return { kind: "song", title: cSong.title, posterUrl: cSong.cover, audioUrl: SAMPLE_AUDIO, creator: cSong.creator };
+    return {
+      kind: "song",
+      title: cSong.title,
+      posterUrl: cSong.cover,
+      audioUrl: SAMPLE_AUDIO,
+      creator: cSong.creator,
+    };
   }
 
   const own = history.find((h) => h.id === id && h.status === "completed");
   if (own) {
     return own.kind === "mv"
-      ? { kind: "mv", title: own.title, posterUrl: own.thumb, videoUrl: own.resultUrl, creator: MOCK_USER.name }
-      : { kind: "song", title: own.title, posterUrl: own.thumb, audioUrl: own.resultUrl, creator: MOCK_USER.name };
+      ? {
+          kind: "mv",
+          title: own.title,
+          posterUrl: own.thumb,
+          videoUrl: own.resultUrl,
+          creator: MOCK_USER.name,
+        }
+      : {
+          kind: "song",
+          title: own.title,
+          posterUrl: own.thumb,
+          audioUrl: own.resultUrl,
+          creator: MOCK_USER.name,
+        };
   }
 
   // Static History samples resolve like community fixtures (survive reload), so a
@@ -66,8 +91,20 @@ export function resolveShare(id: string | null, history: HistoryItem[]): SharedM
   const sample = HISTORY_SAMPLES.find((s) => s.id === id && s.status === "done" && s.thumb);
   if (sample && (sample.kind === "mv" || sample.kind === "song")) {
     return sample.kind === "mv"
-      ? { kind: "mv", title: sample.title, posterUrl: sample.thumb!, videoUrl: SAMPLE_RESULT_VIDEO, creator: MOCK_USER.name }
-      : { kind: "song", title: sample.title, posterUrl: sample.thumb!, audioUrl: SAMPLE_AUDIO, creator: MOCK_USER.name };
+      ? {
+          kind: "mv",
+          title: sample.title,
+          posterUrl: sample.thumb!,
+          videoUrl: SAMPLE_RESULT_VIDEO,
+          creator: MOCK_USER.name,
+        }
+      : {
+          kind: "song",
+          title: sample.title,
+          posterUrl: sample.thumb!,
+          audioUrl: SAMPLE_AUDIO,
+          creator: MOCK_USER.name,
+        };
   }
 
   return null;

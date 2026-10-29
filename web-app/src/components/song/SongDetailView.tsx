@@ -1,6 +1,9 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
+import { ModeratedAccess } from "@/components/community/ModeratedAccess";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { SeekBar } from "@/components/ui/SeekBar";
 import type { RefObject } from "react";
@@ -314,7 +317,7 @@ function MobileNowPlaying({
   const { seek } = useSeek(audioRef);
   const volumeWrapRef = useRef<HTMLDivElement>(null);
   const volumePopup = useVolumePopup(volumeWrapRef);
-  const { openReport, reportNode } = useReportContent("song", song.id);
+  const { openReport, reportNode, canReport } = useReportContent("song", song.id);
 
   if (!mounted) return null;
 
@@ -341,14 +344,16 @@ function MobileNowPlaying({
           <DpIcon name="ic_arrow_left" className="song-detail-mobile-player__back-icon" />
         </button>
         <p className="song-detail-mobile-player__header-title">Now Playing</p>
-        <button
-          type="button"
-          className="report-flag report-flag--header"
-          onClick={openReport}
-          aria-label="Report"
-        >
-          <DpIcon name="ic_flag" className="report-flag__icon" />
-        </button>
+        {canReport && (
+          <button
+            type="button"
+            className="report-flag report-flag--header"
+            onClick={openReport}
+            aria-label="Report"
+          >
+            <DpIcon name="ic_flag" className="report-flag__icon" />
+          </button>
+        )}
       </div>
 
       <div className="song-detail-mobile-player__art-wrap">
@@ -527,6 +532,14 @@ function MobileNowPlaying({
 }
 
 export function SongDetailView() {
+  const id = useSearchParams().get("id") ?? "";
+  return (
+    <ModeratedAccess kind="song" id={id} privateResult={false}>
+      <SongDetailViewBody />
+    </ModeratedAccess>
+  );
+}
+function SongDetailViewBody() {
   const router = useRouter();
   const params = useSearchParams();
   const { locale } = useLocale();
@@ -670,9 +683,13 @@ export function SongDetailView() {
   // holds no songs, which until now rendered a bare list with no message at
   // all (`DESIGNER-TODO` A30). Last render-time branch, per demoStore's rule.
   const demoEmpty = useDemoFlag("feedEmpty");
+  const moderation = useModeration();
   const displayedSongs = useMemo(
-    () => (demoEmpty ? [] : activeTab === null ? CREATOR_SONGS : songsForTab(activeTab)),
-    [activeTab, demoEmpty],
+    () =>
+      (demoEmpty ? [] : activeTab === null ? CREATOR_SONGS : songsForTab(activeTab)).filter(
+        (s) => !isPubliclyRemoved("song", s.id, moderation),
+      ),
+    [activeTab, demoEmpty, moderation],
   );
 
   /**
@@ -719,7 +736,9 @@ export function SongDetailView() {
   const [defaultId] = useState(() => displayedSongs[0]?.id ?? "");
 
   const activeId = localChoice ?? requestedSong?.id ?? defaultId;
-  const activeSong = getCommunitySong(activeId) ?? displayedSongs[0];
+  const activeSong =
+    (isPubliclyRemoved("song", activeId) ? undefined : getCommunitySong(activeId)) ??
+    displayedSongs[0];
 
   /**
    * "Is the full-screen player open" is DERIVED from the URL, not a state flag

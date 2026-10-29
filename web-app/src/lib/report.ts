@@ -29,7 +29,14 @@ export const REPORT_DETAILS_MAX = 1000;
  * remembered tab use. There is no backend to record a report against, so
  * this is the whole of the "already reported" state.
  */
+export const REPORT_SESSION_MAX = 5;
 const reported = new Set<string>();
+export function reportCount(): number {
+  return reported.size;
+}
+export function resetReports(): void {
+  reported.clear();
+}
 
 const key = (kind: ReportKind, id: string) => `${kind}:${id}`;
 

@@ -25,6 +25,33 @@ recorded. This file points you at which storyboards to open.
 
 ---
 
+## 2026-10-29 — Content Report decisions and implementation
+
+Product owner approved the complete adjustment list after three clarification rounds.
+
+| What | Spec IDs | Code / evidence |
+| --- | --- | --- |
+| Guest reporting, six reasons plus Something else, disabled Submit, Done-only success, three-second held toasts, five successful reports, duplicate priority, retry without counting failure, no self-report | area 14 AC-RPT-01–08, 12–14 | ReportDialog, report.ts, contentModeration; report unit tests and S11 browser capture assertions |
+| Public removal, owner-only private playback, retained notice design, corrected Removed from community, session-only QA controls | AC-RPT-09–11, 15 | ModeratedAccess, shared moderation snapshot, History / Result / public surfaces, DemoPanel |
+| Product TBD-RPT-01–06 resolved; only RD contract TBD-RPT-07 remains. Word v1.2 and S11 carry the same approved rules | area 14; S11 P1–P5 | docs/requirements/YCM-content-report-v1.2-web.docx; content-report storyboard |
+
+No MuseApi, provider, schema, route or token value changes. Linux visual baselines are not re-recorded on this Mac.
+
+---
+
+## 2026-10-28 — Content Report v1.1 requirement整理與 mockup 差異審查
+
+**產品負責人後續確認：** 保留六個內建原因＋Something else；成功後維持 Done 手動關閉，不加 3 秒自動關閉。已同步 area 14 §3 / §4 / AC-RPT-02、04 / §7–9；這兩項不需調整 prototype。TBD-RPT-01 僅剩 Submit 初始呈現；第三項防濫用仍待核對 Word 第 1 頁 §1 原文。
+
+| What | Spec IDs | Code | Test |
+| --- | --- | --- | --- |
+| 依 Darren Liu 的 Word PRD v1.1 整理六內建原因、送出確認、session cap / duplicate、History 移除通知及私人／公開可見性；Word 與 web 不同處保留待決議，未改 prototype | area 14 **RPT-P1–P3**, **RPT-E1–E6**, **AC-RPT-01–12**, **TBD-RPT-01–07** | 無程式變更；核對 `ReportDialog.tsx`、`lib/report.ts`、`ContentNotice.tsx` 等 | 文件核對；area 14 §7 為待決議後測試清單，非已通過測試 |
+| 修正 area 04 / Open Questions 的泛稱「no Report/Block」，區分已建的內容檢舉與未建的帳號檢舉；History 加交叉引用 | area 04 / 05；TBD-EXP-05 範圍釐清 | 無 | 無 UI 變更 |
+
+**Wire contract:** 未變更。**Mockup / storyboard:** 本次只評估，未改畫面、截圖或版號；area 14 §9 列出待批准更新項目。
+
+---
+
 ## 2026-10-22 — AI Song unsupported-language error; Supported Languages tooltip on hover; toasts hold on hover
 
 Product owner decisions, no bug code. Backend "invalid parameter" errors on AI Song traced to lyrics in

@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { authStore } from "@/lib/authStore";
+import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { DpIcon } from "@/components/ui/DpIcon";
-import { useToast } from "@/components/ui/Toast";
+import { useToastTimer } from "@/components/ui/useToastTimer";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useHistory } from "@/components/providers/HistoryProvider";
+import { isOwnContent, isPubliclyRemoved, moderationStore } from "@/lib/contentModeration";
+import { useModeration } from "@/components/community/useModeration";
 import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialogTransition";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
 import {
   hasReported,
+  reportCount,
+  REPORT_SESSION_MAX,
   markReported,
   REPORT_DETAILS_MAX,
   REPORT_OTHER,
@@ -23,6 +30,9 @@ const TITLE: Record<ReportKind, string> = {
   song: "Report Song",
   mv: "Report Music Video",
 };
+
+export const REPORT_LIMIT = "You have reached the report limit for this session.";
+export const REPORT_FAILED = "Couldn’t submit your report. Please try again.";
 
 export const ALREADY_REPORTED = "You already reported this content.";
 
@@ -49,7 +59,7 @@ export function ReportDialog({
   open: boolean;
   kind: ReportKind;
   onClose: () => void;
-  onSubmitted: (reason: ReportChoice, details?: string) => void;
+  onSubmitted: (reason: ReportChoice, details?: string) => void | Promise<void>;
 }) {
   const { mounted, visible } = useDialogTransition(open);
   useEscapeToClose(open, onClose);
@@ -79,7 +89,7 @@ function ReportDialogBody({
   visible: boolean;
   kind: ReportKind;
   onClose: () => void;
-  onSubmitted: (reason: ReportChoice, details?: string) => void;
+  onSubmitted: (reason: ReportChoice, details?: string) => void | Promise<void>;
 }) {
   const isPhone = useMediaQuery(PHONE_QUERY);
   const [reason, setReason] = useState<ReportReason | null>(null);
@@ -87,14 +97,26 @@ function ReportDialogBody({
   const [details, setDetails] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const inFlight = useRef(false);
   const inOther = view === "other";
   const canSubmit = inOther ? details.trim().length > 0 : reason !== null;
 
-  function submit() {
-    if (!canSubmit) return;
-    if (inOther) onSubmitted(REPORT_OTHER, details.trim());
-    else if (reason) onSubmitted(reason);
-    setSubmitted(true);
+  async function submit() {
+    if (!canSubmit || inFlight.current) return;
+    inFlight.current = true;
+    setSending(true);
+    setError("");
+    try {
+      await onSubmitted(inOther ? REPORT_OTHER : reason!, inOther ? details.trim() : undefined);
+      setSubmitted(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : REPORT_FAILED);
+    } finally {
+      inFlight.current = false;
+      setSending(false);
+    }
   }
 
   const closeButton = (
@@ -232,13 +254,18 @@ function ReportDialogBody({
               </>
             )}
 
+            {error && (
+              <p role="alert" className="report-dialog__subtitle">
+                {error}
+              </p>
+            )}
             <button
               type="button"
               className="report-dialog__cta report-dialog__cta--submit"
               onClick={submit}
-              disabled={!canSubmit}
+              disabled={!canSubmit || sending}
             >
-              Submit Report
+              {sending ? "Submitting…" : "Submit Report"}
             </button>
           </>
         )}
@@ -255,24 +282,72 @@ function ReportDialogBody({
  */
 export function useReportContent(kind: ReportKind, contentId: string) {
   const [open, setOpen] = useState(false);
-  const { show, toast } = useToast();
-
+  const { loggedIn } = useAuth();
+  const { history } = useHistory();
+  useModeration();
+  const canReport =
+    !!contentId &&
+    !(
+      loggedIn &&
+      isOwnContent(
+        kind,
+        contentId,
+        history.filter((h) => h.kind === kind).map((h) => h.id),
+      )
+    ) &&
+    !isPubliclyRemoved(kind, contentId);
+  const { toast: message, show, hold } = useToastTimer<string>(3000);
+  function blocked() {
+    if (
+      !canReport ||
+      isPubliclyRemoved(kind, contentId) ||
+      (authStore.getSnapshot() &&
+        isOwnContent(
+          kind,
+          contentId,
+          history.filter((h) => h.kind === kind).map((h) => h.id),
+        ))
+    )
+      return "This content cannot be reported.";
+    if (hasReported(kind, contentId)) return ALREADY_REPORTED;
+    if (reportCount() >= REPORT_SESSION_MAX) return REPORT_LIMIT;
+    return null;
+  }
   function openReport() {
-    if (hasReported(kind, contentId)) show(ALREADY_REPORTED);
+    if (!canReport) return;
+    const error = blocked();
+    if (error) show(error);
     else setOpen(true);
   }
-
   const reportNode = (
     <>
       <ReportDialog
-        open={open}
+        key={`${kind}:${contentId}`}
+        open={open && canReport}
         kind={kind}
         onClose={() => setOpen(false)}
-        onSubmitted={() => markReported(kind, contentId)}
+        onSubmitted={async () => {
+          const error = blocked();
+          if (error) throw new Error(error);
+          // Yield one frame with a disabled CTA; this is a local mock, not an API.
+          await new Promise<void>((resolve) => window.setTimeout(resolve, 250));
+          const latest = blocked();
+          if (latest) throw new Error(latest);
+          if (moderationStore.getSnapshot().failReports) throw new Error(REPORT_FAILED);
+          markReported(kind, contentId);
+        }}
       />
-      {toast}
+      {message && (
+        <div
+          tabIndex={0}
+          role="status"
+          {...hold}
+          className={`popup-toast${message === REPORT_LIMIT ? " popup-toast--warning" : " popup-toast--report-neutral"}`}
+        >
+          {message}
+        </div>
+      )}
     </>
   );
-
-  return { openReport, reportNode };
+  return { openReport, reportNode, canReport };
 }

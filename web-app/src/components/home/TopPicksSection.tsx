@@ -1,5 +1,7 @@
 "use client";
 
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -78,6 +80,7 @@ export function TopPicksSection({
   const { setSongResult } = useSongFlow();
   const isPhone = useMediaQuery(PHONE_QUERY);
   const audioRef = useRef<HTMLAudioElement>(null);
+  useModeration();
   const rowRef = useRef<HTMLDivElement>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -104,7 +107,8 @@ export function TopPicksSection({
     if (suspend) setPreviewId(null);
   }
 
-  const previewSong = TOP_PICKS_SONGS.find((s) => s.id === previewId) ?? null;
+  const previewSong =
+    TOP_PICKS_SONGS.find((s) => s.id === previewId && !isPubliclyRemoved("song", s.id)) ?? null;
 
   function updateScrollState() {
     const row = rowRef.current;
@@ -133,6 +137,10 @@ export function TopPicksSection({
     setDuration(0);
     audio.src = songAudioUrl(previewSong.id);
     void audio.play().catch(() => {});
+  }, [previewSong]);
+
+  useEffect(() => {
+    if (!previewSong) audioRef.current?.pause();
   }, [previewSong]);
 
   // The render-time reset above clears `previewId`, but pausing the actual
@@ -194,7 +202,9 @@ export function TopPicksSection({
   }
 
   function stepPreview(delta: 1 | -1) {
-    const index = TOP_PICKS_SONGS.findIndex((s) => s.id === previewId);
+    const index = TOP_PICKS_SONGS.findIndex(
+      (s) => s.id === previewId && !isPubliclyRemoved("song", s.id),
+    );
     if (index < 0) return;
     const next = (index + delta + TOP_PICKS_SONGS.length) % TOP_PICKS_SONGS.length;
     setPreviewId(TOP_PICKS_SONGS[next].id);
@@ -232,7 +242,7 @@ export function TopPicksSection({
       ) : (
         <div className="top-picks__row-wrapper">
           <div className="top-picks__row" ref={rowRef} onScroll={updateScrollState}>
-            {TOP_PICKS_SONGS.map((song) => (
+            {TOP_PICKS_SONGS.filter((s) => !isPubliclyRemoved("song", s.id)).map((song) => (
               <Link
                 key={song.id}
                 href={localePath(

@@ -1,5 +1,7 @@
 "use client";
 
+import { useModeration } from "@/components/community/useModeration";
+import { isPubliclyRemoved } from "@/lib/contentModeration";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { NEW_MVS, TRENDING_MVS, mvCoverRatio, type CommunityMv } from "@/lib/mv/community";
@@ -329,8 +331,9 @@ function MvGrid({ items, asRow = false }: { items: readonly GridItem[]; asRow?: 
 
 /** The two sections together, exactly as both `/explore/mvs` and `/watch` mount them. */
 export function MvGridSections() {
-  const topPicks = withRatio(TOP_PICKS);
-  const newlyReleased = withRatio(NEWLY_RELEASED);
+  useModeration();
+  const topPicks = withRatio(TOP_PICKS.filter((m) => !isPubliclyRemoved("mv", m.id)));
+  const newlyReleased = withRatio(NEWLY_RELEASED.filter((m) => !isPubliclyRemoved("mv", m.id)));
 
   return (
     <>

@@ -26,7 +26,10 @@ import { songRecreateCost } from "@/lib/mv/types";
 import { activeLineIndex, timedLyrics } from "@/lib/mv/lyrics";
 import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
-import { removalForId } from "@/lib/mv/mock";
+import { contentRemoval, isPubliclyRemoved, isOwnContent } from "@/lib/contentModeration";
+import { useModeration } from "@/components/community/useModeration";
+import { CommunityEmpty } from "@/components/community/EmptyState";
+import { ModeratedAccess } from "@/components/community/ModeratedAccess";
 import {
   NEW_SONGS,
   getCommunitySong,
@@ -136,6 +139,15 @@ function formatTime(seconds: number): string {
  * belongs to the form.
  */
 export function SongResultView() {
+  const id = useSearchParams().get("id") ?? "";
+  return (
+    <ModeratedAccess kind="song" id={id} privateResult>
+      <SongResultViewBody />
+    </ModeratedAccess>
+  );
+}
+function SongResultViewBody() {
+  const moderation = useModeration();
   const router = useRouter();
   const params = useSearchParams();
   const idParam = params.get("id");
@@ -149,7 +161,7 @@ export function SongResultView() {
   const { patchCompose } = useMvFlow();
   const { history } = useHistory();
   const { credits } = useCredits();
-  const { requireLogin, profile } = useAuth();
+  const { requireLogin, profile, loggedIn } = useAuth();
 
   const audioRef = useRef<HTMLAudioElement>(null);
   // A callback ref, not an object ref: since YMW260903P0005 the active line is
@@ -217,7 +229,9 @@ export function SongResultView() {
     if (communityOrigin) {
       return [
         head,
-        ...NEW_SONGS.filter((s) => s.id !== songResult.id).map((s) => ({
+        ...NEW_SONGS.filter(
+          (s) => s.id !== songResult.id && !isPubliclyRemoved("song", s.id, moderation),
+        ).map((s) => ({
           id: s.id,
           title: s.title,
           cover: s.cover,
@@ -231,11 +245,11 @@ export function SongResultView() {
       )
       .map((h) => ({ id: h.id, title: h.title, cover: h.thumb, audioUrl: h.resultUrl }));
     return [head, ...earlier];
-  }, [songResult, history, communityOrigin]);
+  }, [songResult, history, communityOrigin, moderation]);
 
   const active = playlist[activeIndex] ?? playlist[0];
   // Community songs only — the flag is for someone else's work, never your own.
-  const { openReport, reportNode } = useReportContent("song", active?.id ?? "");
+  const { openReport, reportNode, canReport } = useReportContent("song", active?.id ?? "");
 
   /**
    * Recreate clears `songResult` (via `resetForRecreate`) in the same handler
@@ -304,6 +318,18 @@ export function SongResultView() {
   }, [activeLine]);
 
   if (!songResult || !active) return null;
+  if (
+    contentRemoval("song", active.id) &&
+    !(
+      loggedIn &&
+      isOwnContent(
+        "song",
+        active.id,
+        history.filter((h) => h.kind === "song").map((h) => h.id),
+      )
+    )
+  )
+    return <CommunityEmpty variant="not-found" />;
 
   function togglePlay() {
     const audio = audioRef.current;
@@ -369,7 +395,7 @@ export function SongResultView() {
     "";
   // Taken down by a reviewer (Figma "Song Result_Removed_L", 5374:177624). Only
   // the song on stage counts — the rail below can hold other, unremoved rows.
-  const removal = activeIndex === 0 && !communityOrigin ? removalForId(shareId) : undefined;
+  const removal = contentRemoval("song", active?.id ?? shareId);
 
   return (
     <>
@@ -388,7 +414,7 @@ export function SongResultView() {
         title="Now Playing"
         fallbackPath="/history"
         mobileAction={
-          communityOrigin ? (
+          communityOrigin && canReport ? (
             <button type="button" className="report-flag" onClick={openReport} aria-label="Report">
               <DpIcon name="ic_flag" className="report-flag__icon" />
             </button>
@@ -485,7 +511,7 @@ export function SongResultView() {
                         >
                           <DpIcon name="ic_share" className="song-result__icon" />
                         </button>
-                        {communityOrigin && (
+                        {communityOrigin && canReport && (
                           <button
                             type="button"
                             className="song-result__icon-btn song-result__icon-btn--report"

@@ -58,6 +58,9 @@ ROWS = [
     ("11", "areas/11-credit-consumption.md", "Credit Consumption (RD)", "as-built",
      "MSR Credit Consume Form (credit_consume 1.0); main-action + subActions payload per scenario; cloud-config action map.",
      "Which action/subActions each generation sends, charge-on-start + refund-on-fail, reserved actions. 2 TBD."),
+    ("14", "areas/14-content-report.md", "Content Report Mechanism", "validated",
+     "Approved guest reports, self-report protection, five-success cap, retry and session moderation; Word v1.2 and S11.",
+     "Six reasons plus Something else, Done-only success, cap/duplicate, retry, owner private playback; 15 AC, RD integration pending."),
     ("OQ", "OPEN-QUESTIONS.md", "Open Questions", "reference",
      "Cross-area items still needing a PM/designer/RD decision — resolved items live in each area spec instead.",
      "Skim before a review — flags what's still genuinely undecided across areas."),
@@ -72,7 +75,7 @@ ROWS = [
 # Storyboards whose build_spec.py defines a 'changelog' key — only those emit a
 # `#changelog` anchor (spec_builder._changelog_html), so only those get a Change
 # Log link in the table below. Add a slug here when you add that section.
-CHANGELOG_SLUGS = {"mv-creation", "history", "mv-edit", "explore-community", "song-creation"}
+CHANGELOG_SLUGS = {"content-report", "mv-creation", "history", "mv-edit", "explore-community", "song-creation"}
 
 STORYBOARDS = [
     ("S1", "song-creation", "AI Song Creation", "v5 · 2026-10-24",
@@ -93,6 +96,8 @@ STORYBOARDS = [
      "/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator", "7 paths / 38 shots"),
     ("S9", "share", "Share", "v2 · 2026-10-08",
      "/share · ShareDialog", "5 paths / 15 shots"),
+    ("S11", "content-report", "Content Report", "v1 · 2026-10-29",
+     "MV / Song / Share report · History / Result removal notice", "6 paths / 15 shots"),
 ]
 # S10 (credit-consumption) has no spec.html — the product owner ruled it ships
 # AS `areas/11-credit-consumption.md` itself (PLAN.md D13). It gets a row here
@@ -106,6 +111,7 @@ STATUS_CLASS = {
     "validated": "st-ok",
     "golden sample": "st-base",
     "as-built": "st-warn",
+    "spec-pending": "st-warn",
     "reference": "st-ref",
     "removed": "st-removed",
 }
@@ -429,6 +435,7 @@ TEMPLATE = r"""<!doctype html>
         <b>Status:</b> <span class="badge st-ok">validated</span> rendered + checked ·
         <span class="badge st-base">golden sample</span> reference build ·
         <span class="badge st-warn">as-built</span> shipped, curation/back-end deferred ·
+        <span class="badge st-warn">spec-pending</span> requirements recorded, decisions pending ·
         <span class="badge st-ref">reference</span> conventions / registry ·
         <span class="badge st-removed">removed</span> deleted from the codebase.
         &nbsp; IDs are area-qualified (<code>AC-MV-01</code>, <code>TBD-GL-01</code>); ⚠️ = divergence from App v3.0 ·

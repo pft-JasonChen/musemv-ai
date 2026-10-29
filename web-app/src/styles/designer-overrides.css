@@ -6761,3 +6761,9 @@ button:disabled {
   top: auto;
   bottom: -9px;
 }
+
+/* Content Report: session-cap warning, product owner 2026-10-29. */
+.popup-toast--warning { border-color: var(--color-action-warning); }
+
+/* Report duplicate feedback uses a neutral border per Content Report v1.2. */
+.popup-toast--report-neutral { border-color: var(--neutral-dark-34); }

@@ -41,6 +41,8 @@ All/Music Videos/Songs/Liked tabs, and the Edit MV menu CTA. Proof of Creation (
 
 ---
 
+> **Content removal 補記（2026-10-28）：** 被檢舉後審核移除的 seed 項目、更多選單 notice 與 Content Notice 已存在；完整規格及 Word 差異 → [area 14](14-content-report.md)。不要將此狀態與發布審核 Rejected 或使用者 Delete 混為一談。
+
 ## 2. Route / component / state / API map (RD)
 
 | Route / Component                  | Owns UI                                                                                                     | Reads/writes state                                                                                                                            | `MuseApi` |
