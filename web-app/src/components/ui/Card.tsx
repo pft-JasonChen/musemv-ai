@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
@@ -59,6 +60,14 @@ interface CardProps {
   /** e.g. "HOT" / "NEW" — optional, works in any Type/Community/Ratio combination. */
   badge?: string;
   coverImage?: string;
+  /** Flat Video only (community=off), opt-in: draw Figma's 4:3 flat variant
+   *  (5459:91262). Deliberately NOT derived from `ratio` — callers such as
+   *  NewMVsSection already pass `ratio="4:3"` to flat cards, which DP's Card
+   *  has always drawn at 3:4, and honouring it squashed that rail. */
+  flat43?: boolean;
+  /** Flat Video only: a muted loop over `coverImage` (the poster), played only
+   *  while the card is on screen. Added for the Video Shorts template rails. */
+  coverVideo?: string;
   className?: string;
   /** Swaps the play icon for a pause icon — for Song cards with real audio. */
   isPlaying?: boolean;
@@ -78,6 +87,8 @@ export function Card({
   avatarUrl,
   badge,
   coverImage,
+  coverVideo,
+  flat43 = false,
   className,
   isPlaying = false,
   onPlayClick,
@@ -93,6 +104,9 @@ export function Card({
     "card",
     `card--${isVideo ? "video" : "song"}`,
     hasCover ? `card--cover-${effectiveRatio.replace(":", "-")}` : "card--flat",
+    // Figma's flat Video 4:3 variant (5459:91262) postdates DP's Card.css, whose
+    // flat layout is 3:4 only — the ratio lives in `designer-overrides.css`.
+    !hasCover && flat43 ? "card--flat-4-3" : null,
     className,
   ]
     .filter(Boolean)
@@ -145,6 +159,7 @@ export function Card({
           {coverImage && (
             <img src={coverImage} alt="" className="card__cover-image card__cover-image--flat" />
           )}
+          {coverVideo && <CoverVideo src={coverVideo} />}
           <div className="card__cover-scrim card__cover-scrim--flat" aria-hidden="true" />
           {badgeElement}
         </>
@@ -183,5 +198,36 @@ export function Card({
         )}
       </div>
     </div>
+  );
+}
+
+/** Plays while at least 60% on screen, pauses otherwise; fades in over the
+ *  poster once a frame is actually playing, so a slow load never shows black. */
+function CoverVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = ref.current;
+    if (!v || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) v.play().catch(() => {});
+        else v.pause();
+      },
+      { threshold: 0.6 },
+    );
+    io.observe(v);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <video
+      ref={ref}
+      className="card__cover-image card__cover-image--flat card__cover-video"
+      src={src}
+      muted
+      loop
+      playsInline
+      preload="none"
+      onPlaying={(e) => e.currentTarget.classList.add("card__cover-video--live")}
+    />
   );
 }

@@ -424,6 +424,7 @@ exports[`C6 — locale model (src/lib/i18n/config.ts) > LOCALES, default, and HT
 exports[`C7 — route map (src/app/**/page.tsx) > the URL shapes RD deep-links against are unchanged 1`] = `
 [
   "/[locale]",
+  "/[locale]/agent",
   "/[locale]/creator",
   "/[locale]/explore/mvs",
   "/[locale]/explore/songs",

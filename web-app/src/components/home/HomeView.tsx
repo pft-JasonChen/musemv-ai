@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMediaQuery, PHONE_QUERY } from "@/lib/ssr";
-import { HeroBannerSection } from "./HeroBannerSection";
-import { HeroBannerSectionV3 } from "./HeroBannerSectionV3";
-import { ToolSelectorSection } from "./ToolSelectorSection";
-import { ToolSelectorSectionV3 } from "./ToolSelectorSectionV3";
+import { AgentComposer } from "./AgentComposer";
 import { NewMVsSection } from "./NewMVsSection";
 import { TopPicksSection } from "./TopPicksSection";
 import { NewSongsSection } from "./NewSongsSection";
@@ -91,24 +87,21 @@ import { NewSongsSection } from "./NewSongsSection";
  * needs to know that regardless of which section's bar is actually showing.
  */
 export function HomeView() {
-  const isPhone = useMediaQuery(PHONE_QUERY);
   const [activeSongSection, setActiveSongSection] = useState<"top-picks" | "new-songs" | null>(
     null,
   );
 
   return (
     <div className="home-page">
-      {isPhone ? (
-        <>
-          <HeroBannerSection />
-          <ToolSelectorSection />
-        </>
-      ) : (
-        <>
-          <ToolSelectorSectionV3 />
-          <HeroBannerSectionV3 />
-        </>
-      )}
+      {/* feature/video-agent-home: the Agent composer replaces both tool
+          selectors, and the hero filmstrip now lives INSIDE it as the Music
+          Video tab's inspiration row (compact, "Use this style" fills the
+          prompt) — so this screen no longer branches on width at all. Phones
+          follow the chat-based Figma draft (4854:71391) and open on the
+          composer. `ToolSelectorSection(V3)` and the phone
+          `HeroBannerSection` stay in the tree until the design is signed off,
+          so reverting is a small change. */}
+      <AgentComposer />
       <NewMVsSection />
       <TopPicksSection
         suspend={activeSongSection === "new-songs"}

@@ -3989,49 +3989,102 @@ test("item 3: Share from an opened history row carries that row's id", async ({ 
 //    back — the same reason A19's loss is asserted rather than left implicit.
 // ════════════════════════════════════════════════════════════════════════════
 
-test("landing page: each width mounts its own hero and tool selector", async ({ page }) => {
-  // Both treatments ship and the JS branch picks. If the branch inverted, the
-  // page would still render something plausible at both widths — DP's phone hero
-  // is `display:none` above 768px and its desktop hero below it, so an inverted
-  // branch is a BLANK hero, not a wrong one. Assert presence at both ends.
+test("landing page: the Agent composer leads, and the hero is the Music Video tab's inspiration row", async ({
+  page,
+}) => {
+  // feature/video-agent-home: one composer replaces both tool selectors, and
+  // the hero filmstrip moved inside it as the Music Video tab's compact
+  // inspiration row (2026-10-28). Same at both widths now — the old phone hero
+  // is gone (chat-based Figma draft 4854:71391). Video Shorts is the default
+  // tab and shows its templates instead, so the hero must NOT be there.
+  for (const width of [1440, 375]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(page.locator(".agent-composer")).toBeVisible();
+    await expect(page.locator(".tool-selector-v3, .tool-selector, .hero-banner-mobile")).toHaveCount(0);
+    await expect(page.locator(".shorts-tpl")).toBeVisible();
+    await expect(page.locator(".hero-banner-v3")).toHaveCount(0);
+
+    await page.getByRole("tab", { name: "Music Video" }).click();
+    await expect(page.locator(".hero-banner-v3--compact")).toBeVisible();
+    await expect(page.locator(".shorts-tpl")).toHaveCount(0);
+  }
+});
+
+test("video-agent-home: Use loads the hero card into the Music Video prompt", async ({
+  page,
+}) => {
+  // The hero's CTA no longer leaves Home for /mv/room: it puts a Style chip
+  // and a starter sentence into the composer and focuses it. Text the user
+  // typed themselves is never overwritten.
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/");
-  await expect(page.locator(".hero-banner-v3")).toBeVisible();
-  await expect(page.locator(".tool-selector-v3")).toBeVisible();
-  await expect(page.locator(".hero-banner-mobile")).toHaveCount(0);
+  await page.getByRole("tab", { name: "Music Video" }).click();
+  const prompt = page.locator(".agent-composer__input");
+  await page.getByRole("button", { name: "Use", exact: true }).nth(1).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".agent-composer__style")).toContainText("Style:");
+  await expect(prompt).toHaveValue(/music video inspired by “.+”\.$/);
+  await expect(prompt).toBeFocused();
 
-  await page.setViewportSize({ width: 375, height: 800 });
+  await prompt.fill("My own idea");
+  await page.getByRole("button", { name: "Use", exact: true }).nth(2).click();
+  await expect(prompt).toHaveValue("My own idea");
+});
+
+test("video-agent-home: the Song tab has its own inspiration strip, and each tab keeps its own style", async ({
+  page,
+}) => {
+  // Same strip, Top Picks songs as the catalog. "Use" — and, since
+  // 2026-10-29, a click anywhere on the card — writes a genre + mood starter
+  // instead of navigating. A style picked on one tab must not leak into the other.
+  await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/");
-  await expect(page.locator(".hero-banner-mobile")).toBeVisible();
-  await expect(page.locator(".tool-selector")).toBeVisible();
-  await expect(page.locator(".hero-banner-v3")).toHaveCount(0);
+  await page.getByRole("tab", { name: "Song" }).click();
+  const strip = page.locator(".hero-banner-v3--compact");
+  await expect(strip).toBeVisible();
+  await expect(strip.locator("a")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Use", exact: true }).nth(1).click();
+  await expect(page.locator(".agent-composer__input")).toHaveValue(/ song inspired by “.+”\.$/);
+  await expect(page.locator(".agent-composer__style")).toBeVisible();
+
+  await page.getByRole("tab", { name: "Music Video" }).click();
+  await expect(page.locator(".agent-composer__style")).toHaveCount(0);
+  await page.getByRole("tab", { name: "Song" }).click();
+  await expect(page.locator(".agent-composer__style")).toBeVisible();
 });
 
 test("landing page: every mask icon has something to clip on a phone too", async ({ page }) => {
-  // The 3f sweep runs at 1440 and never sees `.tool-selector__icon` or anything
-  // else inside the phone branch. `.tool-selector__icon` is `background-color`
-  // + `mask-*` (a DpIcon); rendering it as an `<img>` — or under a tag DP's CSS
-  // does not select — is invisible and silent.
+  // The 3f sweep runs at 1440 and never sees the phone branch. Every icon in
+  // the composer (mode tabs, +, Create) is `background-color` + `mask-*` (a
+  // DpIcon); rendering one as an `<img>` — or under a tag the CSS does not
+  // select — is invisible and silent.
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto("/");
   await page.waitForLoadState("networkidle");
   expect(await invisibleMaskIcons(page), "invisible mask icons on / at 375px").toEqual([]);
 });
 
-test("landing page: both hero CTAs require login", async ({ page }) => {
-  // AC-EXP-02 / GL-02. DP navigates straight to its create page; WA must not.
-  // Checked on BOTH branches, because they are two different components with two
-  // separate handlers — fixing one and not the other is exactly the kind of miss
-  // a single-width test lets through.
-  for (const [width, cta] of [
-    [1440, ".tool-selector-v3__card"],
-    [375, ".tool-selector__card"],
-  ] as const) {
+test("landing page: the composer's Create requires login", async ({ page }) => {
+  // AC-EXP-02 / GL-02, carried over from the two tool cards the composer
+  // replaced. Checked at both widths and for both kinds of destination: an
+  // existing flow (Music Video → /mv/room) and the Agent (Video Shorts →
+  // /agent), because they are separate branches of the same handler.
+  for (const width of [1440, 375]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    await page.locator(cta).first().click();
+    await page.getByRole("tab", { name: "Music Video" }).click();
+    await page.locator(".agent-composer").getByRole("button", { name: "Create", exact: true }).click();
     await expect(page.getByRole("dialog", { name: /sign in/i })).toBeVisible();
     await expect(page).not.toHaveURL(/\/mv\/room/);
+
+    await page.goto("/");
+    await page.getByRole("tab", { name: "AI Shorts" }).click();
+    await page.getByRole("button", { name: "UGC Review" }).click();
+    await page.locator(".agent-composer").getByRole("button", { name: "Create", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: /sign in/i })).toBeVisible();
+    await expect(page).not.toHaveURL(/\/agent/);
   }
 });
 
@@ -5366,4 +5419,54 @@ test("2026-10-22: songLangUnsupported shows the language error, and it stays whi
   await page.mouse.move(0, 0);
   await expect(error).toHaveCount(0, { timeout: 6000 });
   await page.evaluate(() => localStorage.removeItem("muse_demo"));
+});
+
+test("video-agent-home: UGC Review → Product URL → Create opens the Agent on its first question", async ({
+  page,
+}) => {
+  // The launcher half of handoff §1.2 / §5.0 end to end: the recipe takes the
+  // demo URL, Create carries `product=url` to `/agent`, and the chat reaches
+  // the Ratio / Duration / Resolution card. Next stays disabled until a row is
+  // picked — a tap only SELECTS (2026-10-08 rule), Next is what sends.
+  await page.addInitScript(() => localStorage.setItem("muse_auth", "1"));
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await page.getByRole("tab", { name: "AI Shorts" }).click();
+  await page.getByRole("button", { name: "UGC Review" }).click();
+  await page.getByRole("button", { name: "Product URL", exact: true }).click();
+  await page.getByRole("dialog", { name: "Product URL" }).getByRole("button", { name: "Send" }).click();
+  await expect(page.getByRole("button", { name: "www.anthropologie.com" })).toBeVisible();
+  await page.locator(".agent-composer").getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page).toHaveURL(/\/agent\?flow=ugc&product=url/);
+
+  await expect(page.getByRole("group", { name: "Which aspect ratio?" })).toBeVisible({ timeout: 15_000 });
+  const next = page.getByRole("button", { name: "Next" });
+  await expect(next).toBeDisabled();
+  await page.getByRole("button", { name: /^9:16/ }).click();
+  await expect(next).toBeEnabled();
+});
+
+test("video-agent-home: a click anywhere on an inspiration card applies its style, and phones show no CTA", async ({
+  page,
+}) => {
+  // Product owner, 2026-10-29: the whole card is the target, same as its
+  // "Use" CTA, and it stays on Home. On phones the CTA is gone entirely.
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Music Video" }).click();
+  const strip = page.locator(".hero-banner-v3--compact");
+  // The title sits over the card's media button and lets the click through
+  // (pointer-events: none), so click its POSITION — locator.click() would
+  // refuse, because the media button is what is actually under the pointer.
+  const title = strip.locator(".hero-banner-v3__title").nth(2);
+  await title.scrollIntoViewIfNeeded();
+  const box = (await title.boundingBox())!;
+  await page.mouse.click(box.x + 10, box.y + box.height / 2);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".agent-composer__input")).toHaveValue(/music video inspired by “.+”\.$/);
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Music Video" }).click();
+  await expect(strip.locator(".hero-banner-v3__cta").first()).toBeHidden();
 });

@@ -6761,3 +6761,25 @@ button:disabled {
   top: auto;
   bottom: -9px;
 }
+
+/* Card — Figma's flat Video 4:3 variant (Card set, node 5459:91262), added
+   2026-10-28 for the Video Shorts template rails. DP's Card.css only draws the
+   flat (community=off) Video card at 3:4; every other value of the variant —
+   12px padding, 20px radius, the black-40 scrim, the 20px title and 12px
+   subtitle — is already Card.css's own, so this override is the ratio alone. */
+.card--flat.card--flat-4-3 {
+  aspect-ratio: 4 / 3;
+}
+
+/* `Card`'s optional muted cover loop: invisible until a frame plays, so the
+   poster underneath shows through any load gap. */
+.card__cover-video {
+  opacity: 0;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.card__cover-video--live {
+  opacity: 1;
+}

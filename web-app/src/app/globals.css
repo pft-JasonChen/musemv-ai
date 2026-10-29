@@ -31,6 +31,10 @@
    is irrelevant (disjoint selectors: `.faq-*` vs the two lyric-line classes),
    unlike the four imports above `designer-overrides.css`. */
 @import "../styles/lyric-seek.css";
+/* Fifth: the Video Shorts Agent (feature/video-agent-home) — Home's composer
+   and the `/agent` chat. Disjoint `.agent-*` / `.shorts-*` selectors, so its
+   order against the files above does not matter; see the file's header. */
+@import "../styles/agent.css";
 
 /* Map design tokens -> Tailwind v4 theme so utilities resolve to our tokens. */
 @theme inline {

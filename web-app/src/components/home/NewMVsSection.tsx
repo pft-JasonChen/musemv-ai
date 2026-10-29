@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { NEW_MVS, mvCoverRatio } from "@/lib/mv/community";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -10,6 +10,7 @@ import { FeedEmpty } from "@/components/community/FeedEmpty";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
+import { useEdgeFade } from "@/components/agent/useEdgeFade";
 
 /**
  * ── MIGRATED FROM THE DESIGNER PROTOTYPE (landing page, the 17th route) ─────
@@ -46,7 +47,9 @@ import { IconButton } from "@/components/ui/IconButton";
 export function NewMVsSection() {
   const { locale } = useLocale();
   const demoEmpty = useDemoFlag("feedEmpty");
-  const rowRef = useRef<HTMLDivElement>(null);
+  // Fades whichever edge still has cards beyond it — the same treatment as
+  // the AI Shorts skill rails (product owner, 2026-10-29).
+  const rowRef = useEdgeFade<HTMLDivElement>();
   const [canScrollBack, setCanScrollBack] = useState(false);
   const [canScrollForward, setCanScrollForward] = useState(false);
 
@@ -91,7 +94,7 @@ export function NewMVsSection() {
         <FeedEmpty />
       ) : (
         <div className="new-mvs__row-wrapper">
-          <div className="new-mvs__row" ref={rowRef} onScroll={updateScrollState}>
+          <div className="new-mvs__row edge-fade" ref={rowRef} onScroll={updateScrollState}>
             {NEW_MVS.map((mv) => (
               <Link
                 key={mv.id}

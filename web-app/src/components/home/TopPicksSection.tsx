@@ -14,6 +14,7 @@ import { FeedEmpty } from "@/components/community/FeedEmpty";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
+import { useEdgeFade } from "@/components/agent/useEdgeFade";
 import { SongPlayBar } from "@/components/song/SongPlayBar";
 
 /**
@@ -78,7 +79,9 @@ export function TopPicksSection({
   const { setSongResult } = useSongFlow();
   const isPhone = useMediaQuery(PHONE_QUERY);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const rowRef = useRef<HTMLDivElement>(null);
+  // Fades whichever edge still has cards beyond it — the same treatment as
+  // the AI Shorts skill rails (product owner, 2026-10-29).
+  const rowRef = useEdgeFade<HTMLDivElement>();
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -231,7 +234,7 @@ export function TopPicksSection({
         <FeedEmpty />
       ) : (
         <div className="top-picks__row-wrapper">
-          <div className="top-picks__row" ref={rowRef} onScroll={updateScrollState}>
+          <div className="top-picks__row edge-fade" ref={rowRef} onScroll={updateScrollState}>
             {TOP_PICKS_SONGS.map((song) => (
               <Link
                 key={song.id}

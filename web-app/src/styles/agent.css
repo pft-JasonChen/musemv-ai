@@ -1,0 +1,2260 @@
+/*
+  Video Shorts Agent (feature/video-agent-home) — Home's Agent composer, the
+  Video Shorts template rails, and the `/agent` chat.
+
+  WA-authored, no DP source: written in DP's vocabulary (tokens, BEM, mask
+  icons via DpIcon) like `faq-page.css`, and kept out of `styles/designer/`
+  because nothing here has a designer file to stay byte-identical with.
+  DRAFT STYLING — the mobile layout follows the chat-based Figma draft
+  (Guideline_YCM 4854:71391), desktop the reference the product owner
+  supplied; both get restyled when the final Figma lands. Behaviour and copy
+  are fixed by the YCA handoff and are not the styling's to change.
+*/
+
+/* ── Guide hint (handoff §3.1) ─────────────────────────────────────────── */
+
+.agent-hint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+  opacity: 0;
+  animation: agent-hint-in 200ms ease-out 600ms forwards, agent-hint-pulse 1.4s ease-in-out 800ms infinite;
+}
+
+@keyframes agent-hint-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes agent-hint-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-hint {
+    animation: agent-hint-in 200ms ease-out 600ms forwards;
+  }
+}
+
+/* ── Edge fade for horizontal scrollers (useEdgeFade) ───────────────────── */
+
+.edge-fade[data-fade="l"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 56px);
+  mask-image: linear-gradient(to right, transparent, #000 56px);
+}
+
+.edge-fade[data-fade="r"] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
+}
+
+.edge-fade[data-fade="lr"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+}
+
+/* ── Home composer ─────────────────────────────────────────────────────── */
+
+.agent-composer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding-top: 10px;
+  box-sizing: border-box;
+}
+
+/* Phones open straight on the composer (Figma draft) — the heading is kept
+   for the document outline but not drawn. */
+@media (max-width: 767px) {
+  .agent-composer {
+    padding-top: 4px;
+    gap: 12px;
+  }
+  .agent-composer__heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+.agent-composer__modes {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--white-15);
+  background: rgba(9, 9, 11, 0.5);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.agent-composer__mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--neutral-dark-74);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+/* Selected: white fill, near-black icon + label — the Upgrade button's own
+   pairing (UpgradeButton.css), so the two white pills read as one family.
+   The icon is a mask painted with currentColor, so it follows the label. */
+.agent-composer__mode--on {
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}
+
+.agent-composer__mode-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+@media (max-width: 767px) {
+  .agent-composer__modes {
+    align-self: stretch;
+    padding: 0;
+    border: 0;
+    background: none;
+    gap: 6px;
+  }
+  .agent-composer__mode {
+    height: 32px;
+    padding: 0 10px;
+    gap: 4px;
+    border: 1px solid var(--white-15);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: var(--font-label-m);
+  }
+
+  .agent-composer__mode--on {
+    border-color: transparent;
+    background: var(--neutral-dark-100);
+  }
+}
+
+.agent-composer__card {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  border-radius: 24px;
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  background: rgba(14, 12, 20, 0.85);
+  box-shadow: 0 0 40px rgba(168, 85, 247, 0.22);
+}
+
+.agent-composer__input {
+  width: 100%;
+  min-height: 84px;
+  resize: none;
+  border: 0;
+  background: transparent;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 16px;
+  line-height: 1.45;
+  outline: none;
+}
+
+.agent-composer__input::placeholder {
+  color: var(--neutral-dark-54);
+}
+
+.agent-composer__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.agent-composer__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--neutral-dark-84);
+}
+
+.agent-composer__add-icon,
+.agent-composer__create-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.agent-composer__create {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px 0 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-mv);
+  color: #fff;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  opacity: 0.4;
+}
+
+.agent-composer__create--on {
+  opacity: 1;
+}
+
+.agent-composer__create:disabled {
+  cursor: default;
+}
+
+.agent-composer__skills {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0 10px;
+}
+
+.agent-composer__skill {
+  position: relative;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--white-15);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--neutral-dark-84);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+/* `border-box`: the 1px border stays (transparent) so the chip keeps its size,
+   and a gradient sized to the padding box would REPEAT under it — a sliver of
+   blue at the left edge and pink at the right. Sized to the border box, the
+   gradient runs edge to edge. */
+.agent-composer__skill--on {
+  border-color: transparent;
+  background: var(--gradient-mv) border-box;
+  color: #fff;
+}
+
+@media (max-width: 767px) {
+  .agent-composer__skills {
+    margin: 0 -16px;
+    padding: 2px 16px 10px;
+    width: calc(100% + 32px);
+  }
+  .agent-composer__skill {
+    height: 32px;
+    padding: 0 12px;
+    font-size: var(--font-label-m);
+  }
+}
+
+/* Music Video: the style a hero card loaded into the prompt. */
+.agent-composer__style {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 4px 6px 4px 4px;
+  border-radius: 10px;
+  background: rgba(168, 85, 247, 0.16);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  color: var(--neutral-dark-84);
+  font-size: var(--font-label-m);
+}
+
+.agent-composer__style img {
+  width: 44px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.agent-composer__style b {
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-composer__style-x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Music Video inspiration row: the hero filmstrip at ~60% of its home-page
+   size (HeroBannerSectionV3.css is verbatim DP, so the compact treatment is a
+   scoped modifier here). Width and the track's centring padding must change
+   together — that file's own note says the two must match. */
+.hero-banner-v3--compact .hero-banner-v3__track {
+  gap: 16px;
+  padding-inline: max(0px, calc((100% - min(26.7vw, 475px)) / 2));
+}
+
+.hero-banner-v3--compact .hero-banner-v3__card {
+  width: min(26.7vw, 475px);
+  aspect-ratio: 16 / 9;
+  padding: 16px;
+  border-radius: var(--radius-xl);
+}
+
+/* The whole card applies the style (2026-10-29): the media is a <button>
+   covering the card, and the title row lets clicks fall through to it — only
+   the CTA inside that row stays its own target. */
+.hero-banner-v3--compact button.hero-banner-v3__media-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.hero-banner-v3--compact .hero-banner-v3__bottom {
+  pointer-events: none;
+}
+
+.hero-banner-v3--compact .hero-banner-v3__cta {
+  pointer-events: auto;
+}
+
+.hero-banner-v3--compact .hero-banner-v3__title {
+  font-size: var(--font-title-m);
+  line-height: 24px;
+}
+
+.hero-banner-v3--compact .hero-banner-v3__subtitle {
+  font-size: var(--font-body-s);
+}
+
+@media (max-width: 1023px) {
+  .hero-banner-v3--compact .hero-banner-v3__track {
+    padding-inline: max(0px, calc((100% - 56vw) / 2));
+  }
+  .hero-banner-v3--compact .hero-banner-v3__card {
+    width: 56vw;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-banner-v3--compact .hero-banner-v3__track {
+    gap: 10px;
+    padding-inline: max(0px, calc((100% - 78vw) / 2));
+  }
+  .hero-banner-v3--compact .hero-banner-v3__card {
+    width: 78vw;
+    padding: 12px;
+  }
+  .hero-banner-v3--compact .hero-banner-v3__title {
+    font-size: var(--font-title-s);
+    line-height: 20px;
+  }
+  /* Phones: no CTA at all — tapping the card applies the style
+     (product owner, 2026-10-29), and the title gets the full width. */
+  .hero-banner-v3--compact .hero-banner-v3__cta {
+    display: none;
+  }
+}
+
+/* "Use" appears on the hovered card only, so a row of cards is not a row of
+   identical buttons (product owner, 2026-10-28). Opacity, not display, so the
+   title never jumps; keyboard focus reveals it too. Touch tablets have no
+   hover, so there it stays visible; phones drop it entirely (above). */
+@media (hover: hover) {
+  .hero-banner-v3--compact .hero-banner-v3__cta {
+    opacity: 0;
+    transform: translateY(4px);
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .hero-banner-v3--compact .hero-banner-v3__card:hover .hero-banner-v3__cta,
+  .hero-banner-v3--compact .hero-banner-v3__card:focus-within .hero-banner-v3__cta {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .hero-banner-v3--compact .hero-banner-v3__cta {
+    transform: none;
+  }
+}
+
+/* Song inspiration: square album covers. Narrower cards, so
+   the track's centring padding is recomputed from the same width. */
+/* Same HEIGHT as the Music Video strip (product owner, 2026-10-29): a square
+   whose side is the 16:9 MV card's height, i.e. the MV width × 9/16 at every
+   breakpoint (26.7vw → 15.02vw, 56vw → 31.5vw, 78vw → 43.88vw). Padding is
+   the MV card's too, so the two rows line up. */
+.hero-banner-v3--square .hero-banner-v3__track {
+  padding-inline: max(0px, calc((100% - min(15.02vw, 267px)) / 2));
+}
+
+.hero-banner-v3--square .hero-banner-v3__card {
+  width: min(15.02vw, 267px);
+  aspect-ratio: 1 / 1;
+}
+
+/* CTA beside the title, as on the Music Video cards — "Use" is short enough
+   to share the row even on a ~200px square. */
+.hero-banner-v3--square .hero-banner-v3__bottom {
+  gap: 8px;
+}
+
+/* Title size is NOT overridden here: the Song strip uses the same title as
+   the Music Video strip (product owner, 2026-10-29). */
+
+.hero-banner-v3--square .hero-banner-v3__subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1023px) {
+  .hero-banner-v3--square .hero-banner-v3__track {
+    padding-inline: max(0px, calc((100% - 31.5vw) / 2));
+  }
+  .hero-banner-v3--square .hero-banner-v3__card {
+    width: 31.5vw;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-banner-v3--square .hero-banner-v3__track {
+    padding-inline: max(0px, calc((100% - 43.88vw) / 2));
+  }
+  .hero-banner-v3--square .hero-banner-v3__card {
+    width: 43.88vw;
+  }
+}
+
+/* UGC Review recipe (handoff §1.2) */
+
+.agent-recipe {
+  display: flex;
+  gap: 14px;
+  min-height: 84px;
+}
+
+.agent-recipe__slots {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Phones: the slots sit above the wording so the sentence keeps the full width. */
+@media (max-width: 767px) {
+  .agent-recipe {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+.agent-recipe__slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.agent-recipe__ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px dashed rgba(168, 85, 247, 0.7);
+  background: rgba(168, 85, 247, 0.08);
+  cursor: pointer;
+}
+
+.agent-recipe__ph img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.agent-recipe__ph--fit img {
+  object-fit: contain;
+  background: #fff;
+}
+
+.agent-recipe__plus {
+  width: 20px;
+  height: 20px;
+  background-color: var(--color-accent-purple);
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.agent-recipe__lb {
+  color: var(--neutral-dark-64);
+  font-size: 11px;
+}
+
+.agent-recipe__x {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #3a3a44;
+  color: #fff;
+  cursor: pointer;
+}
+
+.agent-recipe__x-icon {
+  width: 12px;
+  height: 12px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.agent-recipe__text {
+  flex: 1;
+  min-width: 0;
+  min-height: 60px;
+  color: var(--neutral-dark-100);
+  font-size: 15px;
+  line-height: 30px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+  caret-color: #c084fc;
+  cursor: text;
+}
+
+.agent-recipe__text .agent-recipe__chip,
+.agent-recipe__text .agent-recipe__tok {
+  margin: 0 2px;
+  user-select: none;
+}
+
+/* Guide dot on a chip the editor owns (not a React node, so no <GuideHint>). */
+.agent-recipe__chip[data-hint]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+  opacity: 0;
+  animation: agent-hint-in 200ms ease-out 600ms forwards, agent-hint-pulse 1.4s ease-in-out 800ms infinite;
+}
+
+.agent-recipe__chip-icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.agent-composer__attach {
+  display: flex;
+  gap: 8px;
+}
+
+.agent-recipe__chip,
+.agent-recipe__tok {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-medium);
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.agent-recipe__chip {
+  border: 1px dashed rgba(168, 85, 247, 0.7);
+  background: rgba(168, 85, 247, 0.1);
+  color: #d8b4fe;
+}
+
+.agent-recipe__tok {
+  border: 0;
+  background: rgba(168, 85, 247, 0.3);
+  color: #fff;
+}
+
+/* ── Video Shorts templates ────────────────────────────────────────────── */
+
+.shorts-tpl {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Template categories use DP's `.tabs` / `.tabs__tab` (Tabs.css, verbatim)
+   — the selected tab is solid purple, as on History (2026-10-29). Tabs.css
+   wraps its row; eleven categories must stay one scrollable row instead. */
+.tabs.shorts-tpl__cats {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.shorts-tpl__cats::-webkit-scrollbar {
+  display: none;
+}
+
+.shorts-tpl__cats .tabs__tab {
+  flex-shrink: 0;
+}
+
+/* Unselected categories here are frosted glass — translucent white over a
+   blur — instead of Tabs.css's flat dark fill (product owner, 2026-10-29).
+   Scoped to this row; History's tabs keep the component default. */
+.shorts-tpl__cats .tabs__tab:not(.tabs__tab--active) {
+  background: var(--white-15);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--neutral-dark-100);
+}
+
+@media (max-width: 767px) {
+  .shorts-tpl__cats {
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+}
+
+.shorts-tpl__sec {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Previous / Next on hover — the same treatment as `.new-mvs__previous` /
+   `__next` in NewMVsSection.css, scoped to one row instead of the section. */
+.shorts-tpl__row {
+  position: relative;
+}
+
+.shorts-tpl__previous,
+.shorts-tpl__next {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+/* Home's carousel arrows at 46px, not IconButton's 56px "large" (product
+   owner, 2026-10-29) — every row on the home page: the hero inspiration strip,
+   the AI Shorts skills, Trending MV and Top Picks Songs. Still the large ghost
+   (glass fill, hairline border, white glyph); only the box shrinks, and the
+   glyph with it in proportion (32 × 46/56 ≈ 26px). Each wrapper centres its
+   button with translateY(-50%), so nothing else moves. Scoped to
+   `.home-page`: `.top-picks` / `.new-mvs` are reused on other routes. */
+.home-page :is(.hero-banner-v3, .shorts-tpl, .new-mvs, .top-picks)
+  :is(
+    .hero-banner-v3__previous,
+    .hero-banner-v3__next,
+    .shorts-tpl__previous,
+    .shorts-tpl__next,
+    .new-mvs__previous,
+    .new-mvs__next,
+    .top-picks__previous,
+    .top-picks__next
+  )
+  .icon-button--large {
+  width: 46px;
+  height: 46px;
+}
+
+.home-page :is(.hero-banner-v3, .shorts-tpl, .new-mvs, .top-picks)
+  :is(
+    .hero-banner-v3__previous,
+    .hero-banner-v3__next,
+    .shorts-tpl__previous,
+    .shorts-tpl__next,
+    .new-mvs__previous,
+    .new-mvs__next,
+    .top-picks__previous,
+    .top-picks__next
+  )
+  .icon-button--large
+  .icon-button__icon {
+  width: 26px;
+  height: 26px;
+}
+
+.shorts-tpl__previous {
+  left: 8px;
+}
+
+.shorts-tpl__next {
+  right: 8px;
+}
+
+.shorts-tpl__row:hover .shorts-tpl__previous,
+.shorts-tpl__row:hover .shorts-tpl__next,
+.shorts-tpl__row:focus-within .shorts-tpl__previous,
+.shorts-tpl__row:focus-within .shorts-tpl__next {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.shorts-tpl__rail {
+  scroll-behavior: smooth;
+  display: flex;
+  align-items: flex-start;
+  /* Same gutter as Trending MV / Top Picks (`.new-mvs__row`: 20px, 10px on
+     phones) so the three home rails line up (product owner, 2026-10-29). */
+  gap: 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.shorts-tpl__rail::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .shorts-tpl__rail {
+    gap: 10px;
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+}
+
+/* The tile is only a click target around the shared `Card` (Video · 4:3 ·
+   community off, Figma 5459:91262); the card draws everything itself.
+   Width is a share of the rail so a row shows ~4.5 cards on desktop (the half
+   card says "scroll me"), fewer as the page narrows. The widths predate the
+   20px gap and are kept as they were on purpose (product owner, 2026-10-29). */
+.shorts-card {
+  position: relative;
+  flex-shrink: 0;
+  width: calc((100% - 4 * 12px) / 4.5);
+  min-width: 200px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.shorts-card--live {
+  cursor: pointer;
+}
+
+/* "Use Skill" — a white pill centred on the card, shown on hover / keyboard
+   focus only (product owner, 2026-10-29), the same reveal as the hero strip's
+   "Use". Touch screens have no hover and the whole card is the target, so
+   there it is not drawn at all. While it shows, the demo's pulse hint (which
+   sits on the same centre point) steps aside. */
+.shorts-card__cta {
+  display: none;
+}
+
+@media (hover: hover) {
+  .shorts-card__cta {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 4;
+    display: block;
+    padding: 12px 24px;
+    border-radius: var(--radius-pill);
+    background: var(--neutral-dark-100);
+    color: var(--neutral-dark-04);
+    font-size: var(--font-body-l);
+    font-weight: var(--font-weight-semibold);
+    line-height: 24px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 4px));
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .shorts-card:hover .shorts-card__cta,
+  .shorts-card:focus-visible .shorts-card__cta {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+
+  .shorts-card:hover .agent-hint,
+  .shorts-card:focus-visible .agent-hint {
+    visibility: hidden;
+  }
+}
+
+/* Phone widths (a narrow desktop window, where hover still exists): the cards
+   are ~170px wide, so the pill steps down to match their 13px titles
+   (product owner, 2026-10-29). */
+@media (hover: hover) and (max-width: 767px) {
+  .shorts-card__cta {
+    padding: 6px 14px;
+    font-size: var(--font-label-m);
+    line-height: 18px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .shorts-card {
+    width: calc((100% - 2 * 12px) / 2.5);
+  }
+}
+
+/* Phones: two whole cards plus a sliver of the third (product owner,
+   2026-10-28). At that size the card takes the same compact treatment Home's
+   phone MV rail gives the shared Card (`.app-layout--mobile-app .new-mvs
+   .card--flat` in NewMVsSection.css: 8px padding, 12px radius, 13px title). */
+@media (max-width: 767px) {
+  .shorts-card {
+    width: calc((100% - 2 * 12px) / 2.25);
+    min-width: 0;
+    border-radius: 12px;
+  }
+
+  .shorts-card .card--flat {
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  /* Same as the phone Trending MV card (NewMVsSection.css), so the three
+     home rails — MV, Song, Shorts — share one tile title size (2026-10-29). */
+  .shorts-card .card__title {
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: -0.13px;
+  }
+}
+
+/* ── Shared sheets: photo picker, product URL ──────────────────────────── */
+
+.agent-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agent-sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  animation: agent-fade-in 200ms ease-out;
+}
+
+.agent-sheet__panel {
+  position: relative;
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(720px, calc(100dvh - 64px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #18181d;
+  border: 1px solid var(--white-15);
+  color: var(--neutral-dark-100);
+  animation: agent-pop-in 240ms ease-out;
+}
+
+@media (max-width: 767px) {
+  .agent-sheet {
+    align-items: flex-end;
+  }
+  .agent-sheet__panel {
+    width: 100%;
+    max-height: 88dvh;
+    border-radius: 24px 24px 0 0;
+    border-width: 1px 0 0;
+    animation: agent-slide-up 260ms ease-out;
+  }
+}
+
+@keyframes agent-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes agent-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes agent-slide-up {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+.agent-sheet__top {
+  display: flex;
+  align-items: center;
+  padding: 14px 14px 10px;
+}
+
+.agent-sheet__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+.agent-sheet__close-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.agent-sheet__title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+}
+
+.agent-sheet__spacer {
+  width: 32px;
+}
+
+.agent-picker__albums {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.agent-picker__album {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--neutral-dark-64);
+  font-size: var(--font-label-m);
+}
+
+.agent-picker__album--on {
+  background: rgba(168, 85, 247, 0.22);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  overflow-y: auto;
+}
+
+.agent-picker__cell,
+.agent-picker__cam {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  background: #26262e;
+}
+
+.agent-picker__cell {
+  cursor: pointer;
+}
+
+.agent-picker__cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.agent-picker__cam {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neutral-dark-74);
+}
+
+.agent-picker__cam-icon {
+  width: 32px;
+  height: 32px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.agent-link {
+  padding-bottom: 20px;
+}
+
+.agent-link__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 16px 0;
+  padding: 6px 6px 6px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--white-15);
+}
+
+.agent-link__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  outline: none;
+}
+
+/* ── /agent ────────────────────────────────────────────────────────────── */
+
+.agent-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+}
+
+.agent-page__bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  height: 64px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--white-15);
+}
+
+@media (max-width: 767px) {
+  .agent-page__bar {
+    height: 56px;
+    padding: 0 16px;
+  }
+}
+
+.agent-page__back {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+.agent-page__back-icon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.agent-page__title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+}
+
+.agent-page__credits {
+  margin-left: auto;
+}
+
+.agent-page__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.agent-page__list,
+.agent-page__dock {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.agent-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* The dock floats over the list, so the list ends --dock-h lower (measured
+     in AgentView) and its last message still clears the composer. */
+  padding: 20px 20px calc(24px + var(--dock-h, 0px));
+}
+
+/* No backdrop of its own (product owner, 2026-10-29): the dock floats over
+   the conversation, which stays visible behind and around the survey card and
+   the composer. Only those two take pointer events; the gaps scroll the list.
+   It lines up with the messages above it: the same 20px side padding as the
+   list, and it stops short of the list's scrollbar (--sb, measured in
+   AgentView), or it would centre 7.5px right of the column it sits under. */
+.agent-page__dock {
+  position: absolute;
+  right: var(--sb, 0px);
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 20px calc(14px + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+.agent-page__dock > * {
+  pointer-events: auto;
+}
+
+/* Anchored to the composer (`.agent-input`, its positioned parent): 12px above
+   it and centred on it, not on the viewport (product owner, 2026-10-29). */
+.agent-page__toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  z-index: 150;
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: agent-fade-in 200ms ease-out;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(145, 50, 255, 0.6);
+  background: rgba(9, 9, 11, 0.85);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+/* Messages */
+
+.agent-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Every new message fades up as a whole (product owner, 2026-10-29). */
+  animation: agent-msg-in 500ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes agent-msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.agent-msg--gone {
+  overflow: hidden;
+  max-height: 0 !important;
+  margin-bottom: -20px;
+  opacity: 0;
+  transition: opacity 0.3s ease, max-height 0.38s ease 0.22s, margin 0.38s ease 0.22s;
+}
+
+.agent-msg--think.agent-msg--gone {
+  transition: opacity 0.16s ease, max-height 0.26s ease 0.06s, margin 0.26s ease 0.06s;
+}
+
+.agent-msg--agent,
+.agent-msg--think {
+  max-height: 4000px;
+}
+
+.agent-msg__hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--neutral-dark-74);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gradient-mv);
+}
+
+.agent-avatar__icon {
+  width: 14px;
+  height: 14px;
+  background-color: #fff;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.agent-msg__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agent-tx {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+/* The inline "your pet" / "your product" opens the photo picker, so it reads
+   as a control, not underlined prose (product owner, 2026-10-29). Of five
+   treatments tried, the dashed "drop a photo here" box was picked: it says
+   upload, not just "clickable". Sits on the text's baseline. */
+.agent-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 2px;
+  padding: 0 10px 0 8px;
+  border: 1px dashed #c084fc;
+  border-radius: 8px;
+  background: rgba(168, 85, 247, 0.08);
+  color: #d8b4fe;
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  /* 20px + the 1px borders = 22px, inside the 23.25px text line, so the pill
+     never pushes its line apart from the next. */
+  line-height: 20px;
+  vertical-align: baseline;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.agent-pick:hover {
+  background: rgba(168, 85, 247, 0.2);
+  color: #fff;
+}
+
+.agent-pick__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+.agent-think {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-size: 15px;
+}
+
+.agent-think__dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.agent-think__dots b {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: agent-dot 1s ease-in-out infinite;
+}
+
+.agent-think__dots b:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.agent-think__dots b:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.agent-think__dots b:nth-child(4) {
+  animation-delay: 0.45s;
+}
+
+@keyframes agent-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* User */
+
+.agent-msg--user {
+  align-items: flex-end;
+}
+
+.agent-bub {
+  max-width: 82%;
+  padding: 12px 14px;
+  /* Tail at the top-right, pointing up at the photo it sends (product owner,
+     2026-10-29). */
+  border-radius: 18px 4px 18px 18px;
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  background: rgba(88, 40, 140, 0.35);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.agent-bub p {
+  margin: 0;
+}
+
+.agent-tag {
+  display: inline-block;
+  margin: 0 4px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: rgba(168, 85, 247, 0.35);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-photos {
+  display: flex;
+  gap: 8px;
+}
+
+.agent-photo {
+  position: relative;
+  width: 96px;
+  height: 128px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #26262e;
+}
+
+/* Desktop shows sent photos 1.5× the phone size (product owner, 2026-10-29). */
+@media (min-width: 768px) {
+  .agent-photo {
+    width: 144px;
+    height: 192px;
+  }
+}
+
+.agent-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.agent-photo--fit img {
+  object-fit: contain;
+  background: #fff;
+}
+
+.agent-photo__tg {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Cards */
+
+.agent-card {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--white-15);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.agent-card__lb {
+  margin: 0 0 4px;
+  color: var(--neutral-dark-54);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-pinfo__name {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+}
+
+.agent-pinfo__desc {
+  margin: 0;
+  color: var(--neutral-dark-84);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.agent-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--white-15);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-meta i {
+  margin-right: 6px;
+  color: var(--neutral-dark-54);
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+}
+
+.agent-shots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agent-shot {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.agent-shot__tc {
+  flex: 0 0 52px;
+  color: #c084fc;
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  line-height: 20px;
+}
+
+.agent-shot__d {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agent-shot__vo {
+  color: var(--neutral-dark-74);
+  font-style: italic;
+}
+
+.agent-shot__vo i {
+  display: block;
+  color: var(--neutral-dark-54);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-sum {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.agent-sum span {
+  margin-right: 6px;
+  color: var(--neutral-dark-54);
+}
+
+.agent-sum em {
+  font-style: normal;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-script__lb {
+  margin-bottom: 8px;
+}
+
+.agent-board img {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 14px;
+}
+
+/* Ready */
+
+.agent-yn {
+  display: flex;
+  gap: 8px;
+  transition: opacity 0.38s ease;
+}
+
+.agent-yn--gone {
+  opacity: 0;
+}
+
+.agent-yn__yes,
+.agent-yn__no {
+  position: relative;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.agent-yn__yes {
+  border: 0;
+  background: var(--gradient-mv);
+  color: #fff;
+  transition: transform 0.18s ease;
+}
+
+.agent-yn__yes--press {
+  transform: scale(0.95);
+}
+
+.agent-yn__no {
+  border: 1px solid var(--white-15);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--neutral-dark-84);
+  cursor: default;
+}
+
+/* Processing */
+
+.agent-proc {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agent-proc__card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 200px;
+  height: 120px;
+  justify-content: center;
+  flex-direction: column;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--white-15);
+  font-size: 13px;
+  color: var(--neutral-dark-74);
+}
+
+/* Generating: three bouncing dots instead of a spinner (product owner,
+   2026-10-29). Each dot is a third of one orange → pink → purple → blue sweep
+   (the MV gradient with a warm lead-in), so together they read as one band. */
+.agent-proc__dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+}
+
+.agent-proc__dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #ff8a3d, #ff6bce, #a855f7, #4f6bff) 0 0 / 300% 100%;
+  animation: agent-gen-dot 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.agent-proc__dots i:nth-child(2) {
+  background-position: 50% 0;
+  animation-delay: 0.15s;
+}
+
+.agent-proc__dots i:nth-child(3) {
+  background-position: 100% 0;
+  animation-delay: 0.3s;
+}
+
+@keyframes agent-gen-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-5px);
+  }
+}
+
+.agent-proc__note {
+  margin: 0;
+  color: var(--neutral-dark-54);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.agent-proc__new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-proc__new-icon {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+/* Result */
+
+.agent-res {
+  position: relative;
+  width: 200px;
+  height: 267px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #000;
+}
+
+.agent-res video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.agent-res__btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.agent-res--playing .agent-res__btn {
+  opacity: 0;
+}
+
+.agent-res--playing:hover .agent-res__btn {
+  opacity: 1;
+}
+
+.agent-res__btn-icon {
+  width: 22px;
+  height: 22px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.agent-res__du {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Feedback + keep exploring */
+
+.agent-acts {
+  display: flex;
+  gap: 4px;
+  animation: agent-fade-in 300ms ease-out;
+}
+
+.agent-acts button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--neutral-dark-64);
+  cursor: pointer;
+}
+
+.agent-acts__icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.agent-next {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.agent-next__lb {
+  margin: 0;
+  color: var(--neutral-dark-54);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-next__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.agent-next__row button {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--white-15);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+.agent-next__row button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Input bar */
+
+.agent-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 24px;
+  border: 1px solid var(--white-15);
+  /* Over the conversation now, so it needs its own frosted fill to stay legible. */
+  background: rgba(24, 24, 30, 0.72);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.agent-input__photo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+.agent-input__photo:disabled {
+  color: var(--neutral-dark-44);
+  cursor: default;
+}
+
+.agent-input__photo-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.agent-input__field {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+}
+
+.agent-input__field::placeholder {
+  color: var(--neutral-dark-54);
+}
+
+.agent-send {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--neutral-dark-44);
+}
+
+.agent-send--on {
+  background: var(--gradient-mv);
+  color: #fff;
+  cursor: pointer;
+}
+
+.agent-send__icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+/* Survey (handoff §3.4) */
+
+.agent-survey {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 16px 14px;
+  border-radius: 24px;
+  border: 1px solid var(--white-15);
+  /* Frosted rather than solid, so the messages it covers still show through. */
+  background: rgba(29, 29, 35, 0.72);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+  animation: agent-slide-up 280ms ease-out;
+  transition: transform 0.2s ease, opacity 0.14s ease;
+}
+
+.agent-survey--drag {
+  transition: none;
+}
+
+.agent-survey--swap {
+  opacity: 0;
+}
+
+.agent-survey__grab {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 8px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.agent-survey__grab i {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.agent-survey__hd {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.agent-survey__q {
+  flex: 1;
+  margin: 0;
+  font-size: var(--font-title-s);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.35;
+}
+
+.agent-survey__pg {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  color: var(--neutral-dark-64);
+  font-size: 13px;
+}
+
+.agent-survey__prev {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.agent-survey__prev:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Desktop's collapse chevron (2026-10-29) — the grabber's job for a mouse.
+   Hidden on touch, where the grabber stays; see the media query below. */
+.agent-survey__fold {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin: -2px -6px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--neutral-dark-64);
+  cursor: pointer;
+}
+
+.agent-survey__fold:hover {
+  background: var(--white-15);
+  color: var(--neutral-dark-100);
+}
+
+.agent-survey__fold-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .agent-survey__grab {
+    display: none;
+  }
+
+  .agent-survey__fold {
+    display: flex;
+  }
+
+  /* The grabber's 18px band is gone, so the header takes the top padding. */
+  .agent-survey__hd {
+    padding-top: 14px;
+  }
+}
+
+.agent-survey__prev-icon,
+.agent-survey__next-icon,
+.agent-survey__pen,
+.agent-survey__check {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.agent-survey__ops {
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-survey__op,
+.agent-survey__own {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 10px;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  text-align: left;
+  font-family: var(--font-family-primary);
+  cursor: pointer;
+}
+
+.agent-survey__op--on {
+  border-radius: 12px;
+  background: rgba(168, 85, 247, 0.16);
+  border-top-color: transparent;
+}
+
+.agent-survey__op--on + .agent-survey__op,
+.agent-survey__op--on + .agent-survey__own {
+  border-top-color: transparent;
+}
+
+.agent-survey__nm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--neutral-dark-74);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+}
+
+.agent-survey__op--on .agent-survey__nm {
+  background: var(--color-accent-purple);
+  color: #fff;
+}
+
+.agent-survey__nm--bare {
+  background: transparent;
+  width: 0;
+  overflow: hidden;
+  transition: width 0.18s ease;
+}
+
+.agent-survey__op--on .agent-survey__nm--bare {
+  width: 24px;
+}
+
+.agent-survey__tx {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.agent-survey__tx b {
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.agent-survey__tx span {
+  color: var(--neutral-dark-64);
+  font-size: 13px;
+}
+
+.agent-survey__own {
+  cursor: text;
+  color: var(--neutral-dark-64);
+}
+
+.agent-survey__own input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-family: var(--font-family-primary);
+  font-size: 15px;
+  outline: none;
+}
+
+.agent-survey__own input::placeholder {
+  color: var(--neutral-dark-54);
+}
+
+.agent-survey__ft {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+}
+
+.agent-survey__next {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 14px 0 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-mv);
+  color: #fff;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.agent-survey__next:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.agent-survey-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--white-15);
+  background: #1d1d23;
+  color: #fff;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-survey-bar__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-survey-bar__icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-msg,
+  .agent-survey,
+  .agent-sheet__panel,
+  .agent-sheet__backdrop {
+    animation: none;
+  }
+}

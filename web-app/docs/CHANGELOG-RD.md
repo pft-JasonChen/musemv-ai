@@ -23,6 +23,23 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-10-28 — **C7 ADDITIVE (branch `feature/video-agent-home` only)** — new route `/[locale]/agent`
+
+**Surface: C7 — one route added, none changed.** `src/app/[locale]/agent/page.tsx` is the
+Video Shorts Agent chat (YCA handoff 2026-10-27), behind `AuthGuard`. Query params, read
+client-side only: `flow=ugc|pet|bag`, and for `ugc` `product=url|photo|none`. Every existing URL
+shape is untouched. This lives on the feature branch for the CEO's UX review and is NOT on `main`;
+per the C7 rule it lands on `main` as its own PR once the flow is signed off.
+
+No C1–C6/C8 change: the demo's credit charge is a local `COST_VIDEO_SHORT` placeholder in
+`src/lib/agent/content.ts` (not in `lib/mv/types.ts`), spent through the existing
+`useCredits().addCredits`.
+
+- **What RD must do:** nothing yet. When the branch is approved, RD names the real Video Shorts
+  price (it becomes a C8 `COST_*`) and the agent endpoint the scripted engine stands in for.
+
+---
+
 ## 2026-10-22 — **C4 UNCHANGED (internal only)** — sign-up gift toast stays while hovered
 
 **Surface: C4 — touched, not changed.** `useAuth()` keys and signatures are identical. Inside
