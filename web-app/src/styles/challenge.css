@@ -1,0 +1,275 @@
+/*
+  AI Music Video Challenge promo (Figma "AI MV Contest", 5489:188328) —
+  2026-10-29. Two pieces:
+
+  · Home's banner: under the hero on desktop (728×90, node 5447:90699),
+    between Trending MV and Top Picks Songs on phones (288×76, 5398:82850).
+    The artwork is the background only; title, subtitle and CTA are live text.
+  · The sidebar entry under History (inside 5447:90576), and its collapsed
+    trophy-only state (5424:86959).
+
+  WA-authored, no DP source, so it lives outside `styles/designer/` (which
+  must stay byte-identical to DP). `.sidebar__challenge*` are NEW class names
+  beside Sidebar.css's own, not overrides of them. The challenge page is
+  another team's; every CTA here is drawn and intentionally inert for now.
+*/
+
+/* ── Home banner ──────────────────────────────────────────────────────── */
+
+.challenge-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  max-width: 728px;
+  min-height: 90px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-lg);
+  background: none;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  text-align: inherit;
+  cursor: pointer;
+  transition: border-color 240ms ease;
+}
+
+/* The banner is a <button> (one click target); a light edge on hover says so. */
+.challenge-banner:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.challenge-banner__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.challenge-banner__body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* Figma balances the centred title with an invisible copy of the CTA on the
+   left, so the text centres on the banner rather than on the space left of
+   the button. Same trick here; hidden from everyone, not just the eye. */
+.challenge-banner__balance {
+  visibility: hidden;
+}
+
+/* Positioned so it paints above the absolutely-positioned artwork — on phones
+   it is a direct child of the banner, with no positioned wrapper to lift it. */
+.challenge-banner__text {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: center;
+}
+
+.challenge-banner__title,
+.challenge-banner__subtitle {
+  display: block;
+}
+
+.challenge-banner__title {
+  margin: 0;
+  font-size: var(--font-title-m);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-title-m);
+  letter-spacing: -0.2px;
+}
+
+.challenge-banner__subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  font-weight: var(--font-weight-medium);
+  line-height: 22px;
+}
+
+.challenge-banner__cta {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 87px;
+  min-width: 48px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-s);
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 480–639px on the phone layout: the desktop banner's type and "Get Started"
+   pill, but left-aligned copy over the phone art — centred, the title would
+   wrap to two lines at this width. No balancing spacer: nothing to centre. */
+.challenge-banner--mid .challenge-banner__text {
+  text-align: left;
+}
+
+/* One step down (Title/S, Body/M) so the title stays on one line from 480px,
+   where the copy column is only ~320px beside the pill. */
+.challenge-banner--mid .challenge-banner__title {
+  font-size: var(--font-title-s);
+  line-height: 22px;
+  letter-spacing: -0.17px;
+}
+
+.challenge-banner--mid .challenge-banner__subtitle {
+  font-size: var(--font-body-m);
+  line-height: 20px;
+}
+
+/* Phones (the instance in 5489:187930): left-aligned copy centred vertically,
+   and a round arrow CTA pinned to the bottom-right corner (its wrapper is
+   full-height, bottom-aligned in Figma — `align-self` here). */
+.challenge-banner--compact {
+  align-items: center;
+  max-width: none;
+  min-height: 76px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+}
+
+.challenge-banner--compact .challenge-banner__text {
+  text-align: left;
+}
+
+.challenge-banner--compact .challenge-banner__title {
+  font-size: var(--font-title-xs);
+  line-height: 18px;
+  letter-spacing: 0;
+}
+
+.challenge-banner--compact .challenge-banner__subtitle {
+  color: var(--neutral-dark-100);
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: -0.11px;
+}
+
+.challenge-banner__arrow {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-self: flex-end;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+}
+
+.challenge-banner__arrow-icon {
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+/* ── Sidebar entry ────────────────────────────────────────────────────── */
+
+.sidebar__challenge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 208px;
+  /* Figma's 8px 12px + the 1px border, which is drawn by ::before below. */
+  padding: 9px 13px;
+  border: 0;
+  border-radius: var(--radius-3xl);
+  background: linear-gradient(to bottom, rgba(0, 18, 183, 0), rgba(163, 0, 188, 0.45));
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+/* The 1px border is Figma's Color/Gradient/MV (`--gradient-mv`), not a flat
+   pink — its exported `#FF6BCE` is only the variable's fallback. A CSS border
+   cannot take a gradient, and painting it as a border-box background would
+   show through the translucent fill, so it is a ring cut out of a pseudo-
+   element with a mask: only the 1px edge is painted. */
+.sidebar__challenge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--gradient-mv);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+.sidebar__challenge-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+/* Two lines in Figma ("AI Music Video" / "Challenge"): the width is what
+   breaks it, so a translated label wraps the same way instead of overflowing. */
+.sidebar__challenge-label {
+  max-width: 120px;
+  overflow: hidden;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  letter-spacing: -0.13px;
+  text-align: left;
+}
+
+.sidebar--collapsed .sidebar__challenge {
+  width: 44px;
+  height: 44px;
+  gap: 0;
+  padding: 0;
+}
+
+/* Not max-width:0 like the plain nav labels: this one wraps, so squeezing it
+   to zero width would stack it one word per line and grow the button. */
+.sidebar--collapsed .sidebar__challenge-label {
+  display: none;
+}

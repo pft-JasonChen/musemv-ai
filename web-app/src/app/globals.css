@@ -31,6 +31,10 @@
    is irrelevant (disjoint selectors: `.faq-*` vs the two lyric-line classes),
    unlike the four imports above `designer-overrides.css`. */
 @import "../styles/lyric-seek.css";
+/* Fifth: the AI Music Video Challenge promo — Home's banner and the sidebar
+   entry. Disjoint `.challenge-*` / `.sidebar__challenge*` selectors (the
+   latter are new names, not overrides of Sidebar.css); see the file's header. */
+@import "../styles/challenge.css";
 
 /* Map design tokens -> Tailwind v4 theme so utilities resolve to our tokens. */
 @theme inline {
