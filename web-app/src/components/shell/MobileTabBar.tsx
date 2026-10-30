@@ -21,6 +21,12 @@ import { localePath } from "@/lib/i18n/config";
  *
  * DP renders Explore and History as dead `<button>`s with no handler — this is a
  * visual prototype. They are real links here.
+ *
+ * feature/video-agent-home (product owner, 2026-10-30): AI Shorts is the
+ * create sheet's FIRST option, ahead of AI Music Video and AI Song — the bar
+ * holds places (Explore, History), ＋ holds the three creators, the same trio
+ * as Home's composer tabs and the desktop Sidebar. A tab of its own (tried on
+ * 2026-10-29) ranked it above the other two creators and pushed ＋ off centre.
  */
 
 const mask = (name: string) => {
@@ -127,6 +133,38 @@ export function MobileTabBar() {
         >
           <div className="mobile-tabbar-sheet__handle" aria-hidden="true" />
           <p className="mobile-tabbar-sheet__title">What would you like to create?</p>
+
+          {/* First of the three (product owner, 2026-10-30). Opens the AI Shorts
+              landing, not the chat: there the user picks a
+              skill or types an idea. The NEW pill is the Sidebar's own
+              `.sidebar__nav-badge`, so both say "new" the same way. */}
+          <Link
+            href={localePath(locale, "/shorts")}
+            onClick={(e) => go(e, "/shorts")}
+            className="mobile-tabbar-sheet__option"
+          >
+            <span className="mobile-tabbar-sheet__badge mobile-tabbar-sheet__badge--shorts">
+              <span
+                className="mobile-tabbar-sheet__badge-icon"
+                style={mask("ic_video_shorts")}
+                aria-hidden="true"
+              />
+            </span>
+            <span className="mobile-tabbar-sheet__option-info">
+              <span className="mobile-tabbar-sheet__option-title">
+                {t("nav.shorts")}
+                <span className="sidebar__nav-badge mobile-tabbar-sheet__new">NEW</span>
+              </span>
+              <span className="mobile-tabbar-sheet__option-subtitle">
+                Pick a skill + photo → short video
+              </span>
+            </span>
+            <span
+              className="mobile-tabbar-sheet__chevron"
+              style={mask("ic_chevron-right")}
+              aria-hidden="true"
+            />
+          </Link>
 
           <Link
             href={localePath(locale, "/mv/room")}

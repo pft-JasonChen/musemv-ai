@@ -15,6 +15,8 @@ export const en = {
   "nav.home": "Home",
   "nav.createMv": "AI Music Video",
   "nav.createSong": "AI Song",
+  // feature/video-agent-home: the AI Shorts landing (`/shorts`).
+  "nav.shorts": "AI Shorts",
   "nav.history": "History",
   "nav.profile": "Profile",
   // Present in DP's sidebar but hidden for MVP (CH6) — keys exist so V2 can

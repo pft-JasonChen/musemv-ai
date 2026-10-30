@@ -888,6 +888,9 @@ test("S13 mobile IA: the bar is Explore / Create / History — Profile is not on
   // Profile left the bottom bar (5 -> 3). Losing it here without a replacement
   // would strand the account on phones, so assert both halves of that change.
   await expect(bar.getByText("Profile")).toHaveCount(0);
+  // feature/video-agent-home: AI Shorts is NOT a tab — it lives in the create
+  // sheet with the other two creators (product owner, 2026-10-30).
+  await expect(bar.getByText("AI Shorts")).toHaveCount(0);
   // The account link is still here and still a plain link to /profile — but it
   // moved out of `.mobile-header`, which /history stopped mounting on
   // 2026-08-23 (see R12's note above and AppShell.tsx). It now sits in
@@ -900,7 +903,7 @@ test("S13 mobile IA: the bar is Explore / Create / History — Profile is not on
   ).toBeVisible();
 });
 
-test("S13 mobile IA: the + tab opens the create sheet with both creators", async ({ page }) => {
+test("S13 mobile IA: the + tab opens the create sheet with all three creators", async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 375, height: 800 });
   await page.goto("/history");
@@ -909,6 +912,12 @@ test("S13 mobile IA: the + tab opens the create sheet with both creators", async
   await expect(sheet).toBeVisible();
   await expect(sheet.getByText("AI Music Video")).toBeVisible();
   await expect(sheet.getByText("AI Song")).toBeVisible();
+  // feature/video-agent-home (2026-10-30): the third creator, marked NEW.
+  const shorts = sheet.getByRole("link", { name: /AI Shorts/ });
+  await expect(shorts).toHaveAttribute("href", "/shorts");
+  await expect(shorts.getByText("NEW")).toBeVisible();
+  await shorts.click();
+  await expect(page).toHaveURL(/\/shorts$/);
 });
 
 test("R9 shell: every sidebar link carries the locale prefix", async ({ page }) => {
@@ -4014,21 +4023,23 @@ test("landing page: the Agent composer leads, and the hero is the Music Video ta
 test("video-agent-home: Use loads the hero card into the Music Video prompt", async ({
   page,
 }) => {
-  // The hero's CTA no longer leaves Home for /mv/room: it puts a Style chip
-  // and a starter sentence into the composer and focuses it. Text the user
-  // typed themselves is never overwritten.
+  // The hero's CTA no longer leaves Home for /mv/room: it puts the card on the
+  // MV input's Templates button (2026-10-30; it was a Style chip) and a
+  // starter sentence into the prompt, and focuses it. Text the user typed
+  // themselves is never overwritten.
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/");
   await page.getByRole("tab", { name: "Music Video" }).click();
   const prompt = page.locator(".agent-composer__input");
-  await page.getByRole("button", { name: "Use", exact: true }).nth(1).click();
+  await expect(page.locator(".agent-mv__templates-label")).toHaveText("Templates");
+  await page.getByRole("button", { name: "Use Style", exact: true }).nth(1).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.locator(".agent-composer__style")).toContainText("Style:");
+  await expect(page.locator(".agent-mv__templates-label")).not.toHaveText("Templates");
   await expect(prompt).toHaveValue(/music video inspired by “.+”\.$/);
   await expect(prompt).toBeFocused();
 
   await prompt.fill("My own idea");
-  await page.getByRole("button", { name: "Use", exact: true }).nth(2).click();
+  await page.getByRole("button", { name: "Use Style", exact: true }).nth(2).click();
   await expect(prompt).toHaveValue("My own idea");
 });
 
@@ -4045,14 +4056,129 @@ test("video-agent-home: the Song tab has its own inspiration strip, and each tab
   await expect(strip).toBeVisible();
   await expect(strip.locator("a")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Use", exact: true }).nth(1).click();
-  await expect(page.locator(".agent-composer__input")).toHaveValue(/ song inspired by “.+”\.$/);
-  await expect(page.locator(".agent-composer__style")).toBeVisible();
+  // Since 2026-10-30 the Song tab is the `/song/create` form (SongInput): the
+  // card's genre + mood become the Song Style picks, the starter fills the box.
+  const songStyle = page.locator(".agent-song__style-label");
+  await expect(songStyle).toHaveText("Song Style");
+  await page.getByRole("button", { name: "Use Style", exact: true }).nth(1).click();
+  await expect(page.locator(".agent-song__input")).toHaveValue(/ song inspired by “.+”\.$/);
+  await expect(songStyle).not.toHaveText("Song Style");
 
   await page.getByRole("tab", { name: "Music Video" }).click();
   await expect(page.locator(".agent-composer__style")).toHaveCount(0);
   await page.getByRole("tab", { name: "Song" }).click();
-  await expect(page.locator(".agent-composer__style")).toBeVisible();
+  await expect(songStyle).not.toHaveText("Song Style");
+});
+
+test("video-agent-home: the MV tab — Song slot → Choose Song → Trim, Templates, Create hands off to /mv/room", async ({
+  page,
+}) => {
+  // Product owner, 2026-10-30 (Figma 4584:69040 / 5555:193768): no `+`;
+  // a Song slot opens /mv/room's own Choose Song → Trim overlays, Templates
+  // its Template picker; Create carries song + prompt + template to the room.
+  await page.addInitScript(() => localStorage.setItem("muse_auth", "1"));
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Music Video" }).click();
+  const card = page.locator(".agent-composer__card");
+  await expect(card.getByRole("button", { name: "Add photo" })).toHaveCount(0);
+  const create = card.getByRole("button", { name: "Create", exact: true });
+  await expect(create).toBeDisabled();
+
+  // The Song slot opens a menu first (2026-10-30): Choose from Song Library /
+  // Import Audio, in that order.
+  await card.getByRole("button", { name: "Add music" }).click();
+  const menu = card.getByRole("menu", { name: "Add music" });
+  await expect(menu.getByRole("menuitem")).toHaveText(["Choose from Song Library", "Import Audio"]);
+  await menu.getByRole("menuitem", { name: "Choose from Song Library" }).click();
+  // The picker reveals a row's "Use" only while the row is active — hover first
+  // (the same overlays /mv/room uses; see that test's note).
+  const songRow = page.getByRole("dialog", { name: "Choose Song" }).locator(".mv-song-picker__row").first();
+  await songRow.hover();
+  await songRow.getByRole("button", { name: "Use", exact: true }).click();
+  await trimConfirm(page).click();
+  await expect(card.getByRole("button", { name: "Remove song" })).toBeVisible();
+  const songTitle = (await card.locator(".agent-mv__song-art").getAttribute("aria-label"))!
+    .replace(/^Song: /, "")
+    .replace(/\. Change trim$/, "");
+
+  await card.getByRole("button", { name: /Templates/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Select a Template" });
+  const template = sheet.locator(".mv-template-sheet__item").nth(2);
+  const templateName = (await template.locator(".mv-template-sheet__label").textContent())!;
+  await template.click();
+  await sheet.getByRole("button", { name: "Confirm", exact: true }).click();
+  await expect(page.locator(".agent-mv__templates-label")).toHaveText(templateName);
+  await expect(card.getByRole("button", { name: "Enhance" })).toBeVisible();
+
+  await create.click();
+  await expect(page).toHaveURL(/\/mv\/room/);
+  await expect(page.locator(".mv-create__song-title")).toHaveText(songTitle);
+  await expect(page.locator(".mv-create__idea-btn")).toContainText(templateName);
+  await expect(page.locator(".mv-create__textarea")).not.toHaveValue("");
+});
+
+test("video-agent-home: the Song tab — Song Style sheet, Idea → Enhance, Create with its cost", async ({
+  page,
+}) => {
+  // Product owner, 2026-10-30 (Figma 4829:43216 / 4092:162157): no `+`;
+  // Custom / Simple + Instrumental on top; Song Style opens a sheet and the
+  // button then reads the picks; Enhance appears once there is text; Create
+  // shows the credit cost and starts the real generation.
+  await page.addInitScript(() => localStorage.setItem("muse_auth", "1"));
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Song" }).click();
+  const card = page.locator(".agent-composer__card");
+  await expect(card.getByRole("button", { name: "Add photo" })).toHaveCount(0);
+  await expect(card.getByRole("tab", { name: "Custom" })).toHaveAttribute("aria-selected", "true");
+  await expect(card.getByRole("switch", { name: "Instrumental" })).toBeVisible();
+
+  await card.getByRole("button", { name: "Song Style" }).click();
+  const sheet = page.getByRole("dialog", { name: "Song Style" });
+  await sheet.getByRole("button", { name: "Jazz", exact: true }).click();
+  await sheet.getByRole("button", { name: "Calm", exact: true }).click();
+  await sheet.getByRole("button", { name: "Male", exact: true }).click();
+  await sheet.getByRole("button", { name: "Apply" }).click();
+  await expect(page.locator(".agent-song__style-label")).toHaveText("Jazz / Calm / Male");
+
+  await expect(card.getByRole("button", { name: "Enhance" })).toHaveCount(0);
+  await card.getByRole("button", { name: "Idea" }).click();
+  await expect(page.locator(".agent-song__input")).not.toHaveValue("");
+  await expect(card.getByRole("button", { name: "Enhance" })).toBeVisible();
+
+  await card.getByRole("tab", { name: "Simple" }).click();
+  await expect(card.getByRole("button", { name: /Song Style|Jazz/ })).toHaveCount(0);
+  await card.getByRole("tab", { name: "Custom" }).click();
+
+  const create = card.getByRole("button", { name: /^Create, \d+ credits$/ });
+  await expect(create).toContainText("6");
+  await create.click();
+  await expect(page).toHaveURL(/\/song\/creating/);
+});
+
+test("video-agent-home: the AI Shorts tab — Idea writes a prompt, Enhance rewrites it, both step aside for UGC Review", async ({
+  page,
+}) => {
+  // Product owner, 2026-10-30 (Figma 5559:194908): `+` and Idea on the left,
+  // Enhance (once there is text) beside Create. The UGC Review recipe is a
+  // fixed sentence with chip gaps, so neither applies to it.
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/?nohint");
+  const card = page.locator(".agent-composer__card");
+  const prompt = card.locator(".agent-composer__input");
+  await expect(card.getByRole("button", { name: "Enhance" })).toHaveCount(0);
+
+  await card.getByRole("button", { name: "Idea" }).click();
+  const idea = await prompt.inputValue();
+  expect(idea).not.toBe("");
+  await card.getByRole("button", { name: "Enhance" }).click();
+  await expect(prompt).not.toHaveValue(idea);
+
+  await page.getByRole("button", { name: "UGC Review" }).click();
+  await expect(card.getByRole("button", { name: "Add photo" })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Idea" })).toHaveCount(0);
+  await expect(card.getByRole("button", { name: "Enhance" })).toHaveCount(0);
 });
 
 test("landing page: every mask icon has something to clip on a phone too", async ({ page }) => {
@@ -4075,6 +4201,8 @@ test("landing page: the composer's Create requires login", async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await page.getByRole("tab", { name: "Music Video" }).click();
+    // MV's Create waits for a song or a prompt (MvInput, 2026-10-30).
+    await page.getByRole("textbox", { name: "Describe your MV" }).fill("A night drive");
     await page.locator(".agent-composer").getByRole("button", { name: "Create", exact: true }).click();
     await expect(page.getByRole("dialog", { name: /sign in/i })).toBeVisible();
     await expect(page).not.toHaveURL(/\/mv\/room/);
@@ -5446,6 +5574,39 @@ test("video-agent-home: UGC Review → Product URL → Create opens the Agent on
   await expect(next).toBeEnabled();
 });
 
+test("video-agent-home: the Sidebar's AI Shorts opens /shorts — composer without tabs, Recent, the whole catalogue", async ({
+  page,
+}) => {
+  // Product owner, 2026-10-29: an AI Shorts landing page, kept apart from
+  // Home by role — no mode tabs, a Recent row into History, and every category
+  // laid out as a section under a sticky bar that follows the scroll.
+  await page.addInitScript(() => localStorage.setItem("muse_auth", "1"));
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await expect(page.locator(".shorts-tpl").getByRole("link", { name: "See all" })).toHaveAttribute(
+    "href",
+    "/shorts",
+  );
+  await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "AI Shorts" }).click();
+  await expect(page).toHaveURL(/\/shorts$/);
+  await expect(page.getByRole("heading", { level: 1, name: "AI Shorts Agent" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Music Video" })).toHaveCount(0);
+  await expect(page.locator(".shorts-recent__item")).toHaveCount(2);
+  await expect(page.getByRole("link", { name: "View all in History" })).toHaveAttribute("href", "/history");
+  await expect(page.locator(".shorts-cat__sec")).toHaveCount(11);
+
+  const nav = page.getByRole("navigation", { name: "Skill categories" });
+  await nav.getByRole("button", { name: "Sale Event" }).click();
+  await expect(nav.getByRole("button", { name: "Sale Event" })).toHaveAttribute("aria-current", "true");
+  await expect(page.getByRole("heading", { name: "Sale Event" })).toBeInViewport();
+
+  await page.getByRole("button", { name: "Pet Diary", exact: true }).click();
+  await expect(page).toHaveURL(/\/agent\?flow=pet/);
+  await expect(
+    page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "AI Shorts" }),
+  ).toHaveAttribute("aria-current", "page");
+});
+
 test("video-agent-home: a click anywhere on an inspiration card applies its style, and phones show no CTA", async ({
   page,
 }) => {
@@ -5468,5 +5629,5 @@ test("video-agent-home: a click anywhere on an inspiration card applies its styl
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/");
   await page.getByRole("tab", { name: "Music Video" }).click();
-  await expect(strip.locator(".hero-banner-v3__cta").first()).toBeHidden();
+  await expect(strip.locator(".hover-cta").first()).toBeHidden();
 });

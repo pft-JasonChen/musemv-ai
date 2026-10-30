@@ -11,7 +11,8 @@ import { FloatingCTA } from "@/components/ui/FloatingCTA";
 import { ListItem } from "@/components/ui/ListItem";
 import { RoomNavbar } from "@/components/shell/RoomNavbar";
 import { ChooseSongModal } from "./ChooseSongModal";
-import { TrimAudioModal, MIN_TRIM_SEC } from "./TrimAudioModal";
+import { TrimAudioModal } from "./TrimAudioModal";
+import { importAudioFile } from "./importAudio";
 import { FacePickerModal } from "./FacePickerModal";
 import { FaceConsentDialog } from "./FaceConsentDialog";
 import { SettingsModal } from "./SettingsModal";
@@ -130,7 +131,12 @@ export function MvRoom() {
   // one's been picked, instead of always reading "Templates". Local to
   // this component: `TemplateSheet` only ever hands back the FULL template
   // (see its own onApply type), never persists a choice itself.
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateOption | null>(null);
+  // feature/video-agent-home (2026-10-30): Home's MV input applies a template
+  // into the shared `compose` before sending the user here; recognise it by
+  // the prompt it wrote, so the button carries it over without a new field.
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateOption | null>(
+    () => TEMPLATES.find((t) => t.prompt === compose.description) ?? null,
+  );
   const [modeOpen, setModeOpen] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
   const { toast, show: showToast, hold: toastHold } = useToastTimer(2600);
@@ -213,62 +219,11 @@ export function MvRoom() {
     setPendingPhoto(URL.createObjectURL(file));
     setFaceOpen(true);
   }
-  /** Import a local audio file → derive duration from metadata → open the trim dialog. */
+  /** Import a local audio file → derive duration from metadata → open the trim
+   *  dialog. The rules (MV-02 formats / size, S2's 30s floor) live in
+   *  `importAudio.ts`, shared with Home's MV input since 2026-10-30. */
   function importAudio(file: File) {
-    // MV-02: accept only MP3 / AAC / WAV / M4A up to 50MB; reject anything else.
-    const name = file.name.toLowerCase();
-    const okExt = [".mp3", ".aac", ".wav", ".m4a"].some((ext) => name.endsWith(ext));
-    const okType = /audio\/(mpeg|mp3|aac|wav|x-wav|wave|mp4|x-m4a)/.test(file.type);
-    if (!okExt && !okType) {
-      showToast("Unsupported format. Use MP3, AAC, WAV, or M4A.");
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      showToast("File too large. Maximum size is 50MB.");
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    const title = file.name.replace(/\.[^/.]+$/, "").trim() || "Imported audio";
-    const open = (durationSec: number) => {
-      // MV-01 / S2, added 2026-09-01 (product owner). An MV needs at least 30s
-      // of audio, and `TrimAudioModal` already enforces that on the SELECTION.
-      // But a track that is itself shorter than 30s cannot be trimmed UP to it,
-      // so letting it through opened the trim dialog on a dead end: red
-      // "· minimum 30s", Confirm permanently disabled, and no way forward
-      // except closing. Reject it here instead, with the same toast treatment
-      // the format and size rules above already use.
-      //
-      // `durationSec === 0` is the probe's FAILURE fallback (metadata never
-      // loaded), not a zero-length file — do not reject on it, or an
-      // unreadable-but-valid track becomes unusable. It falls through to the
-      // trim dialog, which is the pre-existing behaviour for that case.
-      if (durationSec > 0 && durationSec < MIN_TRIM_SEC) {
-        showToast(`Audio must be at least ${MIN_TRIM_SEC} seconds.`);
-        URL.revokeObjectURL(url);
-        return;
-      }
-      pickSong({
-        id: crypto.randomUUID(),
-        source: "import",
-        title,
-        durationSec,
-        // A user's own local file has no album art this app can read (no
-        // ID3/metadata extraction, no backend) — leave it empty so every
-        // `song.art && <img .../>` consumer falls through to its CSS
-        // `--neutral-dark-24` placeholder background instead of a fake cover.
-        art: "",
-        url,
-      });
-    };
-    const probe = new Audio();
-    probe.preload = "metadata";
-    probe.src = url;
-    probe.addEventListener(
-      "loadedmetadata",
-      () => open(Number.isFinite(probe.duration) ? Math.round(probe.duration) : 0),
-      { once: true },
-    );
-    probe.addEventListener("error", () => open(0), { once: true });
+    importAudioFile(file, pickSong, showToast);
   }
   function addCroppedPhoto(url: string) {
     const photo: CharacterPhoto = { id: crypto.randomUUID(), url };

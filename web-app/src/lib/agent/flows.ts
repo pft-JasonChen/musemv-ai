@@ -313,7 +313,7 @@ async function pet(r: Run) {
   await r.generate({ video: media("Pet_diary_vdo.mp4"), poster: media("Pet_diary_vdo.jpg"), dur: duration(cfg) });
 }
 
-/* ── 流程 2 · Marketer template Polished Bag (F9) ──────────────────────────── */
+/* ── 流程 2 · Marketer template Handbag Showcase (YCA: "Polished Bag", F9) ── */
 
 async function bag(r: Run) {
   const cfg: Cfg = { ratio: "9:16", dur: 15 };

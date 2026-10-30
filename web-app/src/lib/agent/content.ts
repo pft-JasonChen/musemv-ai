@@ -66,9 +66,15 @@ export const PICK_CELL = {
 
 /* ── Templates (handoff §1.3; YCA Creator / Marketer tabs) ────────────────── */
 
+/* Card and category names were renamed for clarity by the product owner on
+   2026-10-30 — they no longer match the YCA handoff word for word (e.g. its
+   "Polished Bag" is "Handbag Showcase", "Beauty Brian" is "Brian · Beauty
+   Host", "Foodie Lover" is "Food Review"). Slugs and media files keep YCA's
+   names, so a new YCA drop still maps by slug. */
+
 const LABEL: Record<string, string> = {
   ballet: "Ballet",
-  breaking: "Breaking",
+  breaking: "Breakdance",
   "group-dance": "Group Dance",
   "pet-diary": "Pet Diary",
   "outer-space-journey": "Outer Space Journey",
@@ -76,33 +82,33 @@ const LABEL: Record<string, string> = {
   "fantasy-anime": "Fantasy Anime",
   "supernatural-action": "Supernatural Action",
   "mystery-thriller": "Mystery Thriller",
-  "product-detail-demo": "Polished Bag",
-  "luxe-product-reveal": "Luxe Product Reveal",
-  "product-demo-jewelry": "Product Demo Jewelry",
-  "close-up-demo": "Close-up Demo",
-  "product-demo-car": "Product Demo Car",
-  "product-feature-demo": "Product Feature Demo",
-  "ugc-hand-gesture": "UGC with Hand Gesture",
-  "home-shopping-demo": "Home Shopping Demo",
-  "skin-renewal-effect": "Skin Renewal Effect",
-  "product-demo-watch": "Product Demo Watch",
-  "beauty-brian": "Beauty Brian",
-  "beauty-natalie": "Beauty Natalie",
-  "electronics-steven": "Electronics Steven",
-  "fashion-trevor": "Fashion Trevor",
-  "commercial-display": "Commercial Display",
-  "nature-bloom": "Nature Bloom",
-  "woodland-swing": "Woodland Swing",
-  "themed-sale-display": "Themed Sale Display",
-  "themed-sale-unbox": "Themed Sale Unbox",
-  "themed-sale-hightech": "Themed Sale High-Tech",
-  "fashion-erica": "Fashion Erica",
-  "fashion-kian": "Fashion Kian",
-  "fashion-ava": "Fashion Ava",
-  "fashion-lara": "Fashion Lara",
-  "foodie-kevin": "Foodie Kevin",
-  "foodie-amy": "Foodie Amy",
-  "foodie-kira": "Foodie Kira",
+  "product-detail-demo": "Handbag Showcase",
+  "luxe-product-reveal": "Luxury Product Reveal",
+  "product-demo-jewelry": "Jewelry Showcase",
+  "close-up-demo": "Product Close-up",
+  "product-demo-car": "Car Showcase",
+  "product-feature-demo": "Feature Walkthrough",
+  "ugc-hand-gesture": "Handheld Review",
+  "home-shopping-demo": "At-home Demo",
+  "skin-renewal-effect": "Skin Before & After",
+  "product-demo-watch": "Watch Review",
+  "beauty-brian": "Brian · Beauty Host",
+  "beauty-natalie": "Natalie · Beauty Host",
+  "electronics-steven": "Steven · Tech Host",
+  "fashion-trevor": "Trevor · Fashion Host",
+  "commercial-display": "Launch Key Visual",
+  "nature-bloom": "Spring Bloom Scene",
+  "woodland-swing": "Enchanted Forest Scene",
+  "themed-sale-display": "Seasonal Sale Promo",
+  "themed-sale-unbox": "Bundle Deal Promo",
+  "themed-sale-hightech": "Tech Deal Promo",
+  "fashion-erica": "Erica · Fashion Host",
+  "fashion-kian": "Kian · Fashion Host",
+  "fashion-ava": "Ava · Fashion Host",
+  "fashion-lara": "Lara · Fashion Host",
+  "foodie-kevin": "Kevin · Food Taster",
+  "foodie-amy": "Amy · Food Taster",
+  "foodie-kira": "Kira · Food Taster",
 };
 
 /** The Creator cards whose files are named differently from their slug. */
@@ -175,10 +181,37 @@ export const TEMPLATE_TABS: { id: "creator" | "marketer"; label: string; rows: T
       rail("KOL Seller", ["beauty-brian", "beauty-natalie", "electronics-steven", "fashion-trevor"]),
       rail("Campaign", ["commercial-display", "nature-bloom", "woodland-swing"]),
       rail("Sale Event", ["themed-sale-display", "themed-sale-unbox", "themed-sale-hightech"]),
-      rail("Fashion Speaker", ["fashion-erica", "fashion-kian", "fashion-ava", "fashion-lara"]),
-      rail("Foodie Lover", ["foodie-kevin", "foodie-amy", "foodie-kira"]),
+      rail("Fashion Host", ["fashion-erica", "fashion-kian", "fashion-ava", "fashion-lara"]),
+      rail("Food Review", ["foodie-kevin", "foodie-amy", "foodie-kira"]),
     ],
   },
+];
+
+/* ── /shorts catalogue copy ───────────────────────────────────────────────────
+   PLACEHOLDER (product owner, 2026-10-29: "you write it for now, we replace it
+   later") — NOT from the YCA handoff, unlike everything above. One line per
+   category. Skills have no description: the card's sample clip shows what it
+   makes (2026-10-30). */
+
+export const CATEGORY_DESC: Record<string, string> = {
+  Drama: "Turn one photo into a short story with a beginning, a twist and an ending.",
+  Dance: "Put anyone on the dance floor — from classical to street moves.",
+  Action: "High-energy scenes with bold effects, chases and cinematic camera work.",
+  "Luxury Ads": "Slow, premium product reveals with rich light and texture.",
+  "Feature Demo": "Show how your product works, one close-up at a time.",
+  "User Testimonial": "Authentic, creator-style reviews that feel filmed at home.",
+  "KOL Seller": "A virtual host presents your product like a live seller.",
+  Campaign: "Brand moments built for a launch, a season or a slogan.",
+  "Sale Event": "Countdown-ready promos for sales, drops and holidays.",
+  "Fashion Host": "A styled presenter talks your look through, outfit by outfit.",
+  "Food Review": "Mouth-watering food moments with a host who loves to eat.",
+};
+
+/** PLACEHOLDER history for the /shorts "Recent" row — two finished demo runs.
+ *  Muse's real History is its own page; this only points into it. */
+export const RECENT_SHORTS: { id: string; title: string; when: string; poster: string; flow: AgentFlowId }[] = [
+  { id: "r-pet", title: "Pet Diary · First snow", when: "Yesterday", poster: media("Creator_petdiary.jpg"), flow: "pet" },
+  { id: "r-bag", title: "Handbag Showcase · Luxury ad", when: "Oct 27", poster: media("product-detail-demo.jpg"), flow: "bag" },
 ];
 
 /* ── Agent chat copy (handoff §3–§5) ──────────────────────────────────────── */

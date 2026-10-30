@@ -243,7 +243,7 @@ export function AgentSurvey({
       <div className="agent-survey__ft">
         <button type="button" className="agent-survey__next" disabled={!canNext} onClick={next}>
           <span>Next</span>
-          <DpIcon name="ic_chevron-right" className="agent-survey__next-icon" />
+          <DpIcon name="ic_arrow_right" className="agent-survey__next-icon" />
           <GuideHint show={hint === "next"} />
         </button>
       </div>

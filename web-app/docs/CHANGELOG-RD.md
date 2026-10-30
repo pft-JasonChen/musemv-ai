@@ -23,6 +23,22 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-10-29 — **C7 ADDITIVE (branch `feature/video-agent-home` only)** — new route `/[locale]/shorts`
+
+**Surface: C7 — one route added, none changed.** `src/app/[locale]/shorts/page.tsx` is the AI
+Shorts landing page: the Agent composer (AI Shorts only), a "Recent" row and the full skill
+catalogue. Public like `/` (starting a skill asks for sign-in); no query params. The Sidebar gains
+an "AI Shorts" item (`nav.shorts`, English only — the other locales fall back) that also lights
+up on `/agent`. Same rule as `/agent`: branch only, lands on `main` as its own PR once signed off.
+
+No C1–C6/C8 change. The catalogue copy (`CATEGORY_DESC`, `SKILL_DESC`) and the two "Recent"
+entries (`RECENT_SHORTS`) in `src/lib/agent/content.ts` are placeholders, not data RD serves.
+
+- **What RD must do:** nothing yet. Later: the real skill catalogue and a user's recent AI Shorts
+  runs replace those three constants.
+
+---
+
 ## 2026-10-28 — **C7 ADDITIVE (branch `feature/video-agent-home` only)** — new route `/[locale]/agent`
 
 **Surface: C7 — one route added, none changed.** `src/app/[locale]/agent/page.tsx` is the

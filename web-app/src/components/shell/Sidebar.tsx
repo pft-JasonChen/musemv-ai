@@ -27,8 +27,17 @@ import type { TKey } from "@/lib/i18n/dictionaries/en";
  * components now (plan CH5).
  */
 
-type NavKey = "home" | "mv" | "song" | "story" | "history" | "blog";
-type NavItem = { key: NavKey; href: string; labelKey: TKey; icon: string };
+type NavKey = "home" | "mv" | "song" | "shorts" | "story" | "history" | "blog";
+/** `also`: other routes that light this item up (an AI Shorts chat is still AI Shorts).
+ *  `badge`: DP's own `.sidebar__nav-badge` pill after the label (DP Sidebar.tsx). */
+type NavItem = {
+  key: NavKey;
+  href: string;
+  labelKey: TKey;
+  icon: string;
+  also?: string[];
+  badge?: string;
+};
 
 /**
  * DP ships six items; two are hidden for MVP (CH6). AI Storybook has no screen
@@ -40,6 +49,17 @@ const HIDDEN: ReadonlySet<NavKey> = new Set<NavKey>(["story", "blog"]);
 
 const NAV: NavItem[] = [
   { key: "home", href: "/", labelKey: "nav.home", icon: "ic_compass_OL" },
+  // feature/video-agent-home (2026-10-29): the AI Shorts landing, and the
+  // `/agent` chat it starts, which has no nav item of its own. First of the
+  // three creators (product owner, 2026-10-30).
+  {
+    key: "shorts",
+    href: "/shorts",
+    labelKey: "nav.shorts",
+    icon: "ic_video_shorts",
+    also: ["/agent"],
+    badge: "NEW",
+  },
   { key: "mv", href: "/mv/room", labelKey: "nav.createMv", icon: "ic_video_ai" },
   { key: "song", href: "/song/create", labelKey: "nav.createSong", icon: "ic_song_ai" },
   { key: "story", href: "#", labelKey: "nav.storybook", icon: "ic_story_ai" },
@@ -117,8 +137,9 @@ export function Sidebar() {
   }
 
   const homePath = localePath(locale, "/");
-  function isActive(href: string) {
+  function isActive(href: string, also: string[] = []) {
     if (href === "#") return false;
+    if (also.some((a) => pathname.startsWith(localePath(locale, a)))) return true;
     const target = localePath(locale, href);
     return href === "/" ? pathname === homePath : pathname.startsWith(target);
   }
@@ -159,13 +180,14 @@ export function Sidebar() {
             <Link
               key={item.key}
               href={localePath(locale, item.href)}
-              className={`sidebar__nav-item${isActive(item.href) ? " sidebar__nav-item--active" : ""}`}
-              aria-current={isActive(item.href) ? "page" : undefined}
+              className={`sidebar__nav-item${isActive(item.href, item.also) ? " sidebar__nav-item--active" : ""}`}
+              aria-current={isActive(item.href, item.also) ? "page" : undefined}
               onClick={(e) => onNavClick(e, item.href)}
             >
               <span className="sidebar__nav-icon" style={mask(item.icon)} aria-hidden="true" />
               <span className="sidebar__nav-label">
                 <span className="sidebar__nav-label-text">{t(item.labelKey)}</span>
+                {item.badge && <span className="sidebar__nav-badge">{item.badge}</span>}
               </span>
             </Link>
           ))}

@@ -8,6 +8,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { IconButton } from "@/components/ui/IconButton";
+import { HoverCta } from "@/components/ui/HoverCta";
 import { HERO_ITEMS, type HeroItem } from "./heroItems";
 
 /**
@@ -321,13 +322,19 @@ export function HeroBannerSectionV3({
                     <p className="hero-banner-v3__subtitle">{item.subtitle}</p>
                   </Link>
                 )}
-                <button
-                  type="button"
-                  className="button button--medium button--secondary hero-banner-v3__cta"
-                  onClick={() => (onCta ? onCta(item) : createMv())}
-                >
-                  <span className="button__label">{ctaLabel}</span>
-                </button>
+                {onCta ? (
+                  // Home's inspiration strip: the shared centred hover CTA,
+                  // the same component as the skill cards' "Use Skill".
+                  <HoverCta label={ctaLabel} onClick={() => onCta(item)} />
+                ) : (
+                  <button
+                    type="button"
+                    className="button button--medium button--secondary hero-banner-v3__cta"
+                    onClick={createMv}
+                  >
+                    <span className="button__label">{ctaLabel}</span>
+                  </button>
+                )}
               </div>
             </div>
           );

@@ -97,15 +97,35 @@
     clip: rect(0 0 0 0);
     white-space: nowrap;
   }
+
+  /* /shorts keeps its title on phones: "AI Shorts Agent" is what tells the
+     page apart from Home, whose composer opens bare. */
+  .agent-composer--shorts .agent-composer__heading {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    font-size: var(--font-title-l);
+    line-height: 32px;
+  }
 }
 
+/* Equal-width tabs (product owner, 2026-10-30), 120px at least: the pill sizes
+   to its content, so the `1fr` columns all resolve to the widest label.
+   Sizes from Figma 5559:194908 "Tab Bar": 32px tabs, 12px semibold labels. */
 .agent-composer__modes {
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(120px, 1fr);
   gap: 4px;
   padding: 4px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--white-15);
-  background: rgba(9, 9, 11, 0.5);
+  background: rgba(9, 9, 11, 0.4);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: none;
@@ -114,17 +134,20 @@
 .agent-composer__mode {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  flex-shrink: 0;
-  height: 36px;
-  padding: 0 16px;
+  white-space: nowrap;
+  height: 32px;
+  padding: 0 12px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--neutral-dark-74);
+  color: var(--white-80);
   font-family: var(--font-family-primary);
-  font-size: var(--font-body-m);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-semibold);
+  line-height: 15px;
+  letter-spacing: -0.12px;
   cursor: pointer;
 }
 
@@ -137,8 +160,8 @@
 }
 
 .agent-composer__mode-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   background-color: currentColor;
   mask-size: contain;
   mask-repeat: no-repeat;
@@ -146,25 +169,21 @@
 }
 
 @media (max-width: 767px) {
+  /* Phones use the desktop look (product owner, 2026-10-30): one bordered dark
+     pill holding the tabs, the selected one white — only smaller. It spans the
+     column, as wide as the input card below, split in three equal tabs. `1fr`
+     keeps its content minimum, so at 320px, too narrow for three equal tabs,
+     "Music Video" keeps its one line and the other two share the rest. */
   .agent-composer__modes {
     align-self: stretch;
-    padding: 0;
-    border: 0;
-    background: none;
-    gap: 6px;
+    grid-auto-columns: 1fr;
+    gap: 2px;
+    padding: 3px;
   }
   .agent-composer__mode {
-    height: 32px;
-    padding: 0 10px;
+    height: 30px;
+    padding: 0 2px;
     gap: 4px;
-    border: 1px solid var(--white-15);
-    background: rgba(255, 255, 255, 0.06);
-    font-size: var(--font-label-m);
-  }
-
-  .agent-composer__mode--on {
-    border-color: transparent;
-    background: var(--neutral-dark-100);
   }
 }
 
@@ -174,55 +193,75 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 18px 18px 14px;
-  border-radius: 24px;
-  border: 1px solid rgba(168, 85, 247, 0.55);
-  background: rgba(14, 12, 20, 0.85);
-  box-shadow: 0 0 40px rgba(168, 85, 247, 0.22);
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-accent-purple);
+  background: var(--neutral-light-94);
+  box-shadow: 0 10px 20px rgba(168, 84, 247, 0.35);
 }
 
+/* Phones: 12px inside the card on every tab — MV, Song, AI Shorts (Figma
+   4860:71450 / 5543:192609 "Create Input Card", product owner 2026-10-30).
+   After the base rule on purpose: same specificity, so order decides. */
+@media (max-width: 767px) {
+  .agent-composer__card {
+    padding: 12px;
+  }
+}
+
+/* Figma 5559:194908 "Prompt Area": 14px medium on a 20px line, 3 lines. */
 .agent-composer__input {
   width: 100%;
-  min-height: 84px;
+  min-height: 60px;
   resize: none;
   border: 0;
   background: transparent;
   color: var(--neutral-dark-100);
   font-family: var(--font-family-primary);
-  font-size: 16px;
-  line-height: 1.45;
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  letter-spacing: -0.14px;
   outline: none;
 }
 
 .agent-composer__input::placeholder {
-  color: var(--neutral-dark-54);
+  color: var(--white-40);
 }
 
 .agent-composer__bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
+}
+
+/* AI Shorts: `+` and Idea on the left (Figma "Button row", 8px apart). */
+.agent-composer__tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .agent-composer__add {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 32px;
-  padding: 0;
+  height: 30px;
+  padding: 0 20px;
   border: 0;
   cursor: pointer;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--neutral-dark-84);
+  background: var(--neutral-dark-24);
+  color: var(--neutral-dark-100);
 }
 
 .agent-composer__add-icon,
 .agent-composer__create-icon {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   background-color: currentColor;
   mask-size: contain;
   mask-repeat: no-repeat;
@@ -233,18 +272,22 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 14px 0 18px;
+  justify-content: center;
+  gap: 4px;
+  min-width: 70px;
+  height: 30px;
+  padding: 0 6px 0 10px;
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--gradient-mv);
+  box-shadow: 0 4px 6px rgba(168, 84, 247, 0.4);
   color: #fff;
   font-family: var(--font-family-primary);
-  font-size: var(--font-body-m);
+  font-size: var(--font-label-s);
   font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.12px;
   cursor: pointer;
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 .agent-composer__create--on {
@@ -255,10 +298,13 @@
   cursor: default;
 }
 
+/* Figma "Quick Actions": 10px under the card (the section's 16px gap less
+   8px, plus the 2px top padding), 6px apart. */
 .agent-composer__skills {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
+  margin-top: -8px;
   overflow-x: auto;
   scrollbar-width: none;
   padding: 2px 0 10px;
@@ -267,15 +313,18 @@
 .agent-composer__skill {
   position: relative;
   flex-shrink: 0;
-  height: 36px;
+  height: 37px;
   padding: 0 16px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--white-15);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--neutral-dark-84);
+  background: rgba(9, 9, 11, 0.4);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  color: var(--neutral-dark-100);
   font-family: var(--font-family-primary);
-  font-size: var(--font-body-m);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.12px;
   cursor: pointer;
 }
 
@@ -352,10 +401,12 @@
   padding-inline: max(0px, calc((100% - min(26.7vw, 475px)) / 2));
 }
 
+/* 12px padding like the cards below (`.card--flat`); 8px on phones, as
+   theirs is (product owner, 2026-10-30). */
 .hero-banner-v3--compact .hero-banner-v3__card {
   width: min(26.7vw, 475px);
   aspect-ratio: 16 / 9;
-  padding: 16px;
+  padding: 12px;
   border-radius: var(--radius-xl);
 }
 
@@ -369,12 +420,24 @@
   cursor: pointer;
 }
 
+/* The title row stops being a positioned layer here so "Use" can centre on
+   the whole CARD; the text keeps its own layer above the media instead. */
 .hero-banner-v3--compact .hero-banner-v3__bottom {
+  position: static;
   pointer-events: none;
 }
 
-.hero-banner-v3--compact .hero-banner-v3__cta {
-  pointer-events: auto;
+.hero-banner-v3--compact .hero-banner-v3__text {
+  position: relative;
+  z-index: 1;
+}
+
+/* "Use Style" is the shared `HoverCta` (`.hover-cta`, below). Here only its
+   context: phones never show it. */
+@media (max-width: 767px) {
+  .hero-banner-v3--compact .hover-cta {
+    display: none;
+  }
 }
 
 .hero-banner-v3--compact .hero-banner-v3__title {
@@ -386,58 +449,40 @@
   font-size: var(--font-body-s);
 }
 
+/* Tablet and phone strips are smaller than they were (product owner,
+   2026-10-30): 56vw → 44vw on tablets, 78vw → 52vw on phones. */
 @media (max-width: 1023px) {
   .hero-banner-v3--compact .hero-banner-v3__track {
-    padding-inline: max(0px, calc((100% - 56vw) / 2));
+    padding-inline: max(0px, calc((100% - 44vw) / 2));
   }
   .hero-banner-v3--compact .hero-banner-v3__card {
-    width: 56vw;
+    width: 44vw;
+  }
+  .hero-banner-v3--compact .hero-banner-v3__title {
+    font-size: var(--font-title-s);
+    line-height: 20px;
   }
 }
 
 @media (max-width: 767px) {
   .hero-banner-v3--compact .hero-banner-v3__track {
     gap: 10px;
-    padding-inline: max(0px, calc((100% - 78vw) / 2));
+    padding-inline: max(0px, calc((100% - 52vw) / 2));
   }
+  /* Phones match the Trending MV cards below: 12px corners, 8px padding,
+     13px title (NewMVsSection.css's phone `.card--flat`). */
   .hero-banner-v3--compact .hero-banner-v3__card {
-    width: 78vw;
-    padding: 12px;
+    width: 52vw;
+    padding: 8px;
+    border-radius: 12px;
   }
   .hero-banner-v3--compact .hero-banner-v3__title {
-    font-size: var(--font-title-s);
-    line-height: 20px;
+    font-size: var(--font-label-m);
+    line-height: 18px;
+    letter-spacing: -0.13px;
   }
-  /* Phones: no CTA at all — tapping the card applies the style
-     (product owner, 2026-10-29), and the title gets the full width. */
-  .hero-banner-v3--compact .hero-banner-v3__cta {
-    display: none;
-  }
-}
-
-/* "Use" appears on the hovered card only, so a row of cards is not a row of
-   identical buttons (product owner, 2026-10-28). Opacity, not display, so the
-   title never jumps; keyboard focus reveals it too. Touch tablets have no
-   hover, so there it stays visible; phones drop it entirely (above). */
-@media (hover: hover) {
-  .hero-banner-v3--compact .hero-banner-v3__cta {
-    opacity: 0;
-    transform: translateY(4px);
-    transition:
-      opacity 0.2s ease,
-      transform 0.2s ease;
-  }
-
-  .hero-banner-v3--compact .hero-banner-v3__card:hover .hero-banner-v3__cta,
-  .hero-banner-v3--compact .hero-banner-v3__card:focus-within .hero-banner-v3__cta {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@media (hover: hover) and (prefers-reduced-motion: reduce) {
-  .hero-banner-v3--compact .hero-banner-v3__cta {
-    transform: none;
+  .hero-banner-v3--compact .hero-banner-v3__subtitle {
+    font-size: 11px;
   }
 }
 
@@ -445,7 +490,9 @@
    the track's centring padding is recomputed from the same width. */
 /* Same HEIGHT as the Music Video strip (product owner, 2026-10-29): a square
    whose side is the 16:9 MV card's height, i.e. the MV width × 9/16 at every
-   breakpoint (26.7vw → 15.02vw, 56vw → 31.5vw, 78vw → 43.88vw). Padding is
+   breakpoint on desktop (26.7vw → 15.02vw). Tablets and phones break that on
+   purpose (product owner, 2026-10-30): a fixed 144px square on tablets, 90px
+   with no subtitle on phones — shorter than the MV cards. Padding is
    the MV card's too, so the two rows line up. */
 .hero-banner-v3--square .hero-banner-v3__track {
   padding-inline: max(0px, calc((100% - min(15.02vw, 267px)) / 2));
@@ -473,19 +520,22 @@
 
 @media (max-width: 1023px) {
   .hero-banner-v3--square .hero-banner-v3__track {
-    padding-inline: max(0px, calc((100% - 31.5vw) / 2));
+    padding-inline: max(0px, calc((100% - 144px) / 2));
   }
   .hero-banner-v3--square .hero-banner-v3__card {
-    width: 31.5vw;
+    width: 144px;
   }
 }
 
 @media (max-width: 767px) {
   .hero-banner-v3--square .hero-banner-v3__track {
-    padding-inline: max(0px, calc((100% - 43.88vw) / 2));
+    padding-inline: max(0px, calc((100% - 90px) / 2));
   }
   .hero-banner-v3--square .hero-banner-v3__card {
-    width: 43.88vw;
+    width: 90px;
+  }
+  .hero-banner-v3--square .hero-banner-v3__subtitle {
+    display: none;
   }
 }
 
@@ -582,13 +632,24 @@
   mask-repeat: no-repeat;
 }
 
+/* Same type as the plain prompt (`.agent-composer__input`: 14px / 20px), so
+   switching a skill on does not move the text. The 30px line it needs for the
+   chips adds (30 - 20) / 2 = 5px of half-leading over the textarea's, so the
+   block is pulled up by exactly that and line one lands where the
+   placeholder was (product owner, 2026-10-30). */
 .agent-recipe__text {
+  /* The line the chips need. Phones set a shorter one (end of this file);
+     the margin below keeps line one level with the plain prompt either way. */
+  --recipe-lh: 30px;
   flex: 1;
   min-width: 0;
   min-height: 60px;
+  margin-top: calc((20px - var(--recipe-lh)) / 2);
   color: var(--neutral-dark-100);
-  font-size: 15px;
-  line-height: 30px;
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.14px;
+  line-height: var(--recipe-lh);
   white-space: pre-wrap;
   word-break: break-word;
   outline: none;
@@ -830,31 +891,34 @@
   cursor: pointer;
 }
 
-/* "Use Skill" — a white pill centred on the card, shown on hover / keyboard
-   focus only (product owner, 2026-10-29), the same reveal as the hero strip's
-   "Use". Touch screens have no hover and the whole card is the target, so
-   there it is not drawn at all. While it shows, the demo's pulse hint (which
-   sits on the same centre point) steps aside. */
-.shorts-card__cta {
+/* ── HoverCta (`components/ui/HoverCta.tsx`) ─────────────────────────────
+   The one hover CTA for cards (product owner, 2026-10-30): "Use Skill" on the
+   skill cards, "Use" on Home's inspiration cards. A white pill centred on the
+   card, revealed on hover / keyboard focus; never drawn on touch screens,
+   where the whole card is the target. A card that hosts one is
+   `position: relative` and is listed in the reveal rule below. */
+.hover-cta {
   display: none;
 }
 
 @media (hover: hover) {
-  .shorts-card__cta {
+  .hover-cta {
     position: absolute;
     left: 50%;
     top: 50%;
     z-index: 4;
     display: block;
-    padding: 12px 24px;
+    padding: 8px 18px;
+    border: 0;
     border-radius: var(--radius-pill);
     background: var(--neutral-dark-100);
     color: var(--neutral-dark-04);
-    font-size: var(--font-body-l);
+    font-family: var(--font-family-primary);
+    font-size: var(--font-title-xs);
     font-weight: var(--font-weight-semibold);
-    line-height: 24px;
+    line-height: 20px;
     white-space: nowrap;
-    pointer-events: none;
+    cursor: pointer;
     opacity: 0;
     transform: translate(-50%, calc(-50% + 4px));
     transition:
@@ -862,23 +926,48 @@
       transform 0.2s ease;
   }
 
-  .shorts-card:hover .shorts-card__cta,
-  .shorts-card:focus-visible .shorts-card__cta {
+  /* The decorative span (inside a button-tile) lets the tile take the click;
+     the real button takes its own, even inside a click-through row (the
+     inspiration card's title row is `pointer-events: none`). */
+  span.hover-cta {
+    pointer-events: none;
+  }
+
+  button.hover-cta {
+    pointer-events: auto;
+  }
+
+  /* globals.css scales every pressed button (0,2,1); here that would replace
+     the centring transform and throw the pill off-centre for a frame. */
+  button.hover-cta:not(:disabled):active {
+    transform: translate(-50%, -50%);
+  }
+
+  .shorts-card:hover .hover-cta,
+  .shorts-card:focus-visible .hover-cta,
+  .hero-banner-v3__card:hover .hover-cta,
+  .hero-banner-v3__card:focus-within .hover-cta {
     opacity: 1;
     transform: translate(-50%, -50%);
   }
 
+  /* The demo's pulse hint sits on the same centre point — it steps aside. */
   .shorts-card:hover .agent-hint,
   .shorts-card:focus-visible .agent-hint {
     visibility: hidden;
   }
 }
 
-/* Phone widths (a narrow desktop window, where hover still exists): the cards
-   are ~170px wide, so the pill steps down to match their 13px titles
-   (product owner, 2026-10-29). */
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .hover-cta {
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Skill cards at phone widths (a narrow desktop window — hover still
+   exists): the cards are ~170px wide, so the small pill. */
 @media (hover: hover) and (max-width: 767px) {
-  .shorts-card__cta {
+  .shorts-card .hover-cta {
     padding: 6px 14px;
     font-size: var(--font-label-m);
     line-height: 18px;
@@ -2256,5 +2345,1075 @@
   .agent-sheet__panel,
   .agent-sheet__backdrop {
     animation: none;
+  }
+}
+
+/* ── /shorts — the AI Shorts landing page (2026-10-29) ─────────────────────
+   Same column as Home (`.home-page`: 1440 max, 32px gutters, 16px on phones)
+   so the two pages line up, but laid out as a workspace: composer, Recent,
+   then the whole catalogue as a grid under a sticky category bar. */
+
+.shorts-page {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 32px 40px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .shorts-page {
+    gap: 28px;
+    padding: 0 16px 24px;
+  }
+}
+
+.shorts-page__top {
+  scroll-margin-top: 96px;
+}
+
+/* The composer's own heading block on /shorts (no mode tabs under it). */
+.agent-composer__intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+/* 16px on a 24px line, wide enough for one line on desktop (2026-10-30). */
+.agent-composer__lede {
+  max-width: 720px;
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@media (max-width: 767px) {
+  .agent-composer__lede {
+    font-size: var(--font-body-m);
+    line-height: 22px;
+  }
+}
+
+/* The card box inside a skill tile: the hover CTA and the demo hint centre on
+   the card. */
+.shorts-card__media {
+  position: relative;
+  display: block;
+}
+
+/* Recent */
+
+.shorts-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shorts-recent__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.shorts-recent__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--white-15);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shorts-recent__item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.shorts-recent__thumb {
+  flex-shrink: 0;
+  width: 72px;
+  height: 54px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.shorts-recent__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.shorts-recent__meta b {
+  overflow: hidden;
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shorts-recent__meta span {
+  color: var(--neutral-dark-64);
+  font-size: var(--font-label-m);
+}
+
+/* Catalogue */
+
+.shorts-cat {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Sticks under the marketing Navbar (80px tall, itself sticky) on desktop and
+   under MobileHeader (56px) on phones. Solid page colour, not a fade: once it
+   is stuck (`--stuck`, set from ShortsView) the same colour also runs up
+   behind the navbar — whose own background is a gradient that is clear at its
+   bottom edge — so header + bar read as ONE opaque band from the top of the
+   window (product owner, 2026-10-29). A short fade under it lets cards slide
+   beneath. Unstuck, both extensions are off: the band above would cover the
+   "All Skills" heading, the fade the first section's kicker. */
+.shorts-cat__bar {
+  --shorts-bar-top: 80px;
+  position: sticky;
+  top: var(--shorts-bar-top);
+  z-index: 15;
+  margin: 0 -32px;
+  padding: 8px 32px 12px;
+  background: #09090b;
+}
+
+.shorts-cat__bar--stuck::before,
+.shorts-cat__bar--stuck::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.shorts-cat__bar--stuck::before {
+  bottom: 100%;
+  height: var(--shorts-bar-top);
+  background: #09090b;
+}
+
+.shorts-cat__bar--stuck::after {
+  top: 100%;
+  height: 20px;
+  background: linear-gradient(to bottom, #09090b, rgba(9, 9, 11, 0));
+}
+
+@media (max-width: 767px) {
+  .shorts-cat__bar {
+    --shorts-bar-top: 56px;
+    margin: 0 -16px;
+    padding: 6px 16px 10px;
+  }
+}
+
+.tabs.shorts-cat__nav {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs.shorts-cat__nav::-webkit-scrollbar {
+  display: none;
+}
+
+.shorts-cat__nav .tabs__tab {
+  flex-shrink: 0;
+}
+
+.shorts-cat__nav .tabs__tab:not(.tabs__tab--active) {
+  background: var(--white-15);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--neutral-dark-100);
+}
+
+.shorts-cat__sec {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.shorts-cat__hd {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* "CREATOR" / "MARKETER" — the YCA tab a category came from, as a kicker. */
+.shorts-cat__group {
+  color: var(--color-accent-purple);
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.shorts-cat__name {
+  margin: 0;
+  font-size: var(--font-title-m);
+  font-weight: var(--font-weight-bold);
+  line-height: 28px;
+}
+
+.shorts-cat__desc {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-size: var(--font-body-m);
+  line-height: 20px;
+}
+
+.shorts-cat__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px 20px;
+}
+
+@media (max-width: 767px) {
+  .shorts-cat__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 10px;
+  }
+}
+
+/* A grid tile fills its cell (Home's rail tiles set their own width). */
+.shorts-card.shorts-card--grid {
+  width: auto;
+  min-width: 0;
+}
+
+/* Docked composer: appears once the real one has scrolled away and brings it
+   back. Sticky to the bottom of the page column, so it centres on the content,
+   not on the window (the sidebar is beside it). */
+.shorts-dock {
+  position: sticky;
+  bottom: 20px;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  margin-top: -20px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+  pointer-events: none;
+}
+
+.shorts-dock--on {
+  opacity: 1;
+  transform: none;
+}
+
+.shorts-dock--on .shorts-dock__bar {
+  pointer-events: auto;
+}
+
+@media (max-width: 767px) {
+  .shorts-dock {
+    bottom: calc(66px + 12px + env(safe-area-inset-bottom));
+  }
+}
+
+.shorts-dock__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(720px, 100%);
+  height: 52px;
+  padding: 0 7px 0 18px;
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  border-radius: 26px;
+  background: rgba(24, 24, 30, 0.8);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color: var(--neutral-dark-64);
+  font: inherit;
+  font-size: var(--font-body-m);
+  text-align: left;
+  cursor: text;
+  pointer-events: none;
+}
+
+.shorts-dock__icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.shorts-dock__text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shorts-dock__go {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--gradient-mv);
+  color: #fff;
+}
+
+.shorts-dock__go-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+/* ── Mobile create sheet: the AI Shorts option (2026-10-30) ───────────────
+   Its own badge gradient beside MV's (pink → purple → indigo) and Song's
+   (orange → red → violet): cyan → blue → purple. The NEW pill reuses the
+   Sidebar's `.sidebar__nav-badge`; here it only needs room from the title. */
+.mobile-tabbar-sheet__badge--shorts {
+  background: linear-gradient(135deg, #22d3ee 0%, #4f6bff 50%, #a855f7 100%);
+}
+
+.mobile-tabbar-sheet__new {
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
+/* ── Home composer · Song tab (SongInput, 2026-10-30) ──────────────────────
+   Figma Guideline_YCM 4829:43216 (empty) / 4092:162157 (filled) is drawn at
+   phone scale (11–12px); desktop keeps the composer's own scale (16px prompt,
+   36px Create) and steps the controls up in proportion. The card shell is the
+   shared `.agent-composer__card`. */
+
+/* Tighter than the other tabs on desktop (product owner, 2026-10-30): 8px
+   between rows. The prompt is 3 lines on desktop / tablet (`rows`), 2 on
+   phones, where every tab shares one spec (end of this file). */
+.agent-composer__card--song {
+  gap: 8px;
+}
+
+.agent-song__input {
+  min-height: 0;
+}
+
+.agent-song__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* DP's Tabs as a segmented control: one #212127 pill holding both tabs. */
+.tabs.agent-song__tabs {
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 2px;
+  border-radius: 26px;
+  background: var(--neutral-dark-14);
+}
+
+.agent-song__tabs .tabs__tab {
+  min-width: 64px;
+  padding: 5px 14px;
+  background: transparent;
+  color: var(--white-80);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-medium);
+  line-height: 18px;
+}
+
+.agent-song__tabs .tabs__tab--active {
+  background: var(--color-accent-purple);
+  color: var(--neutral-dark-100);
+}
+
+.agent-song__head .toggle-switch__label {
+  font-size: var(--font-label-m);
+}
+
+/* The controls under the prompt (SongInput): Idea, Song Style (Custom
+   only), then Enhance + Create on the right. Desktop / tablet keep them on
+   one row, Song Style beside Idea (2026-10-30); phones give Song Style its
+   own row above, as in Figma 5543:192609 (media query further down). */
+.agent-composer__bar.agent-song__bar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "idea style cta";
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 8px;
+}
+
+.agent-song__bar .agent-song__idea {
+  grid-area: idea;
+}
+
+.agent-song__bar .agent-song__style {
+  grid-area: style;
+  justify-self: start;
+  max-width: 100%;
+}
+
+.agent-song__bar .agent-song__cta {
+  grid-area: cta;
+}
+
+.agent-song__style {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--neutral-dark-100);
+  font: inherit;
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-song__style-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-song__style-sep {
+  color: var(--neutral-dark-64);
+}
+
+.agent-song__style-icon,
+.agent-song__style-chevron,
+.agent-song__idea-icon,
+.agent-song__enhance-icon {
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+.agent-song__style-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.agent-song__style-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--neutral-dark-64);
+}
+
+/* `EnhanceButton bem="agent-song"`: a white pill with the AI-edit glyph and
+   "Enhance" on desktop / tablet; phones draw the glyph only, as in Figma (the
+   word stays the accessible name) — product owner, 2026-10-30. */
+.agent-song__enhance-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-100);
+  color: var(--neutral-dark-04);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.12px;
+  cursor: pointer;
+}
+
+.agent-song__enhance-btn--busy {
+  background: var(--color-accent-purple);
+  color: var(--neutral-dark-100);
+}
+
+.agent-song__enhance-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.agent-song__enhance-icon--spinning {
+  animation: agent-spin 0.9s linear infinite;
+}
+
+@keyframes agent-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Enhance + Create, right of the bar. */
+.agent-song__cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Idea. Every bar button is 30px on desktop / tablet, 12px semibold with a
+   14px icon (Figma 5559:194908, 2026-10-30). */
+.agent-song__idea {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-24);
+  color: var(--neutral-dark-100);
+  font: inherit;
+  font-size: var(--font-label-s);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.12px;
+  cursor: pointer;
+}
+
+.agent-song__idea-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Create, Song skin: the Song gradient and a credit badge for the cost.
+   30px like Idea and Enhance beside it. */
+.agent-composer__create--song {
+  gap: 8px;
+  height: 30px;
+  padding: 0 5px 0 16px;
+  background: var(--gradient-song);
+  box-shadow: 0 4px 6px rgba(168, 84, 247, 0.4);
+}
+
+.agent-composer__credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px 3px 5px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.15);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-bold);
+}
+
+.agent-composer__credit img {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 767px) {
+  .agent-song__tabs .tabs__tab {
+    min-width: 48px;
+    padding: 3px 10px;
+    font-size: 11px;
+    line-height: 16px;
+  }
+
+  .agent-song__head .toggle-switch__label,
+  .agent-song__idea {
+    font-size: 11px;
+  }
+
+  .agent-song__style {
+    font-size: var(--font-body-s);
+  }
+
+  .agent-song__style-icon,
+  .agent-song__style-chevron,
+  .agent-song__idea-icon,
+  .agent-song__enhance-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .agent-song__enhance-btn {
+    gap: 0;
+    height: 24px;
+    padding: 0 10px;
+    font-size: 0;
+  }
+
+  .agent-song__cta {
+    gap: 4px;
+  }
+
+  .agent-composer__bar.agent-song__bar--style {
+    grid-template-areas:
+      "style style style"
+      "idea . cta";
+  }
+
+  /* Figma 5543:192609 "Create Pill": 12px Semi Bold, 6 / 4px side padding,
+     24px tall like Idea and Enhance; the badge 10px Bold with a 10px coin. */
+  .agent-composer__create--song {
+    gap: 4px;
+    height: 24px;
+    padding: 0 4px 0 8px;
+    border-radius: 20px;
+    font-size: var(--font-body-s);
+    letter-spacing: -0.12px;
+  }
+
+  /* Phones: the prompt drops to 12px (Figma Body/S). */
+  .agent-song__input {
+    font-size: var(--font-body-s);
+  }
+
+  .agent-song__idea {
+    height: 24px;
+    padding: 0 8px;
+    gap: 2px;
+  }
+
+  .agent-composer__credit {
+    gap: 2px;
+    padding: 2px 4px;
+    border-radius: 10px;
+    font-size: 10px;
+    line-height: normal;
+  }
+
+  .agent-composer__credit img {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+/* Song Style sheet (SongStyleSheet) — the Agent sheet shell; ✓ applies. */
+.song-style__done {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-accent-purple);
+  color: #fff;
+  cursor: pointer;
+}
+
+.song-style__done-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+.song-style__body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 8px 20px 28px;
+  overflow-y: auto;
+}
+
+.song-style__group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.song-style__label {
+  margin: 0;
+  color: var(--neutral-dark-64);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.02em;
+}
+
+.song-style__optional {
+  color: var(--neutral-dark-44);
+}
+
+.song-style__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── Phones: one composer spec for every tab (2026-10-30) ──────────────────
+   Figma 4860:71450 (AI Shorts) and 5543:192609 (Song) "Create Input Card":
+   12px prompt on a 2-line box, 8px between rows, 18px corners, and 24px
+   controls — `+` 48×24, Create a 24px pill with 12px text. The Song tab
+   already followed it; Music Video and AI Shorts (incl. /shorts) now do too.
+   Last in the file on purpose: these share specificity with the base rules. */
+@media (max-width: 767px) {
+  .agent-composer__card {
+    gap: 8px;
+    border-radius: 18px;
+  }
+
+  .agent-composer__input {
+    min-height: 0;
+    height: calc(2 * 1.45em);
+    font-size: var(--font-body-s);
+    line-height: 1.45;
+    letter-spacing: -0.12px;
+  }
+
+  /* UGC Review's prompt: 12px on a 24px line, chips scaled to fit it. */
+  .agent-recipe__text {
+    --recipe-lh: 24px;
+    min-height: 0;
+    margin-top: calc((1.45em - var(--recipe-lh)) / 2);
+    font-size: var(--font-body-s);
+    letter-spacing: -0.12px;
+  }
+
+  .agent-recipe__chip,
+  .agent-recipe__tok {
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 6px;
+    font-size: 11px;
+  }
+
+  .agent-recipe__chip-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 2px;
+  }
+
+  .agent-composer__add {
+    width: 48px;
+    height: 24px;
+    padding: 0;
+    border-radius: 14px;
+    background: var(--neutral-dark-24);
+  }
+
+  .agent-composer__add-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .agent-composer__create {
+    justify-content: center;
+    gap: 4px;
+    min-width: 70px;
+    height: 24px;
+    padding: 0 4px 0 8px;
+    border-radius: 20px;
+    font-size: var(--font-body-s);
+    letter-spacing: -0.12px;
+  }
+
+  .agent-composer__create-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* ── Home composer · Music Video tab (MvInput, 2026-10-30) ─────────────────
+   Figma Guideline_YCM 4584:69040 (empty) / 5555:193768 (filled). The Song
+   slot sits left of the prompt; Templates / Idea / Enhance / Create reuse the
+   Song tab's bar (`.agent-song__bar`). Phone sizes are Figma's; desktop and
+   tablet step up to the composer's own scale. */
+.agent-mv__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.agent-mv__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-mv__song {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.agent-mv__song-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  overflow: hidden;
+  border: 1.5px dashed var(--white-15);
+  border-radius: 10px;
+  background: none;
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+.agent-mv__song-slot--on {
+  border: 1px solid var(--white-15);
+  cursor: default;
+}
+
+.agent-mv__song-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--neutral-dark-24);
+  color: var(--neutral-dark-64);
+  cursor: pointer;
+}
+
+.agent-mv__song-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ✕ in the cover's top-right corner (Figma "Button/Circular"). */
+.agent-mv__song-x {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--black-40);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  color: #fff;
+  cursor: pointer;
+}
+
+.agent-mv__song-add,
+.agent-mv__song-glyph,
+.agent-mv__song-x-icon {
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+.agent-mv__song-add,
+.agent-mv__song-glyph {
+  width: 20px;
+  height: 20px;
+}
+
+.agent-mv__song-x-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.agent-mv__song-label {
+  color: var(--white-40);
+  font-size: var(--font-caption-m, 11px);
+  font-weight: var(--font-weight-medium);
+  line-height: 14px;
+}
+
+/* The Song slot's menu (2026-10-30): Import Audio / Choose from Song Library,
+   a small dark dropdown under the slot. */
+.agent-mv__song {
+  position: relative;
+}
+
+.agent-mv__menu {
+  position: absolute;
+  top: calc(64px + 6px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 232px;
+  padding: 6px;
+  border: 1px solid var(--white-15);
+  border-radius: 14px;
+  background: #1d1d23;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  animation: agent-fade-in 140ms ease-out;
+}
+
+.agent-mv__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.agent-mv__menu-item:hover,
+.agent-mv__menu-item:focus-visible {
+  background: var(--white-15);
+}
+
+.agent-mv__menu-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+.agent-mv__file {
+  display: none;
+}
+
+/* Templates: Figma's stacked 3 covers (9px overlap), or the applied one. */
+.agent-mv__thumbs {
+  display: flex;
+  flex-shrink: 0;
+  isolation: isolate;
+}
+
+/* A white ring on each cover, as in Figma, so the stack reads as discs. */
+.agent-mv__thumbs img {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--neutral-dark-100);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.agent-mv__thumbs img + img {
+  margin-left: -9px;
+}
+
+.agent-mv__thumbs img:nth-child(1) {
+  z-index: 3;
+}
+
+.agent-mv__thumbs img:nth-child(2) {
+  z-index: 2;
+}
+
+.agent-mv__templates-label {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .agent-mv__top {
+    gap: 8px;
+  }
+
+  .agent-mv__song {
+    gap: 3px;
+  }
+
+  .agent-mv__song-slot {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+  }
+
+  .agent-mv__menu {
+    top: calc(48px + 6px);
+    min-width: 212px;
+  }
+
+  .agent-mv__menu-item {
+    padding: 9px 10px;
+    font-size: var(--font-body-s);
+  }
+
+  .agent-mv__song-add {
+    width: 16px;
+    height: 16px;
+  }
+
+  .agent-mv__song-x {
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .agent-mv__song-label {
+    font-size: 9px;
+    line-height: 11px;
+    letter-spacing: -0.09px;
+  }
+
+  .agent-mv__thumbs img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .agent-mv__templates-label {
+    max-width: 104px;
+  }
+
+  /* 3 lines beside the 48px slot + label (Figma: 62px), not the 2 the other
+     tabs use. Placed after the shared phone rule, which it overrides. */
+  .agent-composer__input.agent-mv__input {
+    height: calc(3 * 1.45em);
+  }
+
+  .agent-song__bar .agent-composer__create {
+    height: 24px;
   }
 }

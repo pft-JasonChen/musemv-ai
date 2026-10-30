@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
+import { HoverCta } from "@/components/ui/HoverCta";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { GuideHint } from "@/components/agent/GuideHint";
 import { useEdgeFade } from "@/components/agent/useEdgeFade";
@@ -11,7 +12,7 @@ import { TEMPLATE_TABS, type AgentFlowId, type TemplateCard, type TemplateSectio
  * Video Shorts templates — YCA's Creator / Marketer catalogue (handoff §1.3),
  * every rail drawn with the same 4:3 landscape card: the shared `Card`, Video ·
  * 4:3 · community off (Figma 5459:91262; product owner, 2026-10-28). Only the
- * first card of Drama (Pet Diary) and of Luxury Ads (Polished Bag) start a
+ * first card of Drama (Pet Diary) and of Luxury Ads (Handbag Showcase) start a
  * demo; every other card is there as the catalogue and is deliberately inert.
  *
  * One row at a time (product owner, 2026-10-29): a tab per category picks
@@ -34,8 +35,8 @@ export function ShortsTemplates({ onStart }: { onStart: (flow: AgentFlowId) => v
       {/* Same header as Home's other rails ("Trending Music Videos", …), so the
           block reads as a section. These are SKILLS, not templates — each card
           is a skill shown through a sample image / clip (product owner,
-          2026-10-29). No "See all": there is no catalogue page. */}
-      <SectionHeader title="Explore AI Shorts Skills" />
+          2026-10-29). "See all" opens the full catalogue on /shorts. */}
+      <SectionHeader title="Explore AI Shorts Skills" seeAllHref="/shorts" />
       {/* DP's Tabs component (Figma "Bar/Tabs", the History filter): pills,
           the selected one solid purple. `shorts-tpl__cats` only stops it
           wrapping, so eleven categories scroll in one row instead. */}
@@ -95,7 +96,7 @@ function Rail({ row, onStart }: { row: TemplateSection; onStart: (flow: AgentFlo
       <div className="shorts-tpl__row">
         <div ref={ref} className="shorts-tpl__rail edge-fade">
           {row.cards.map((c, k) => (
-            <TemplateTile key={k} card={c} onStart={onStart} />
+            <SkillTile key={k} card={c} onStart={onStart} />
           ))}
         </div>
         {canBack && (
@@ -113,25 +114,35 @@ function Rail({ row, onStart }: { row: TemplateSection; onStart: (flow: AgentFlo
   );
 }
 
-/** Figma Card · Video · 4:3 · community off (5459:91262), via the shared `Card`. */
-function TemplateTile({ card, onStart }: { card: TemplateCard; onStart: (flow: AgentFlowId) => void }) {
+/** Figma Card · Video · 4:3 · community off (5459:91262), via the shared `Card`.
+ *  Shared with the /shorts catalogue grid (`className` sizes it there). */
+export function SkillTile({
+  card,
+  onStart,
+  className,
+}: {
+  card: TemplateCard;
+  onStart: (flow: AgentFlowId) => void;
+  className?: string;
+}) {
   const flow = card.flow;
   return (
     <button
       type="button"
-      className={`shorts-card${flow ? " shorts-card--live" : ""}`}
+      className={`shorts-card${flow ? " shorts-card--live" : ""}${className ? ` ${className}` : ""}`}
       onClick={flow ? () => onStart(flow) : undefined}
       aria-label={card.label}
     >
-      <Card flat43 title={card.label} coverImage={card.poster} coverVideo={card.video} />
-      {/* Hover CTA on every skill card (product owner, 2026-10-29). Drawn, not
-          a nested button: the whole tile is the button, so this is decoration
-          and the tile's label names it. Only cards with a `flow` start one in
-          this prototype; on the rest it is drawn and inert. */}
-      <span className="shorts-card__cta" aria-hidden="true">
-        Use Skill
+      {/* The media box positions the CTA and hint on the card itself. */}
+      <span className="shorts-card__media">
+        <Card flat43 title={card.label} coverImage={card.poster} coverVideo={card.video} />
+        {/* Hover CTA on every skill card (product owner, 2026-10-29). Drawn,
+            not a nested button: the whole tile is the button, so this is
+            decoration and the tile's label names it. Only cards with a `flow`
+            start one in this prototype; on the rest it is drawn and inert. */}
+        <HoverCta label="Use Skill" />
+        {flow && <GuideHint show />}
       </span>
-      {flow && <GuideHint show />}
     </button>
   );
 }

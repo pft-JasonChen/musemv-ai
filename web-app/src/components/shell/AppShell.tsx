@@ -139,9 +139,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
    * sub-routes under it, and a prefix test would also claim a future
    * `/faq-something`.
    */
-  const isMarketing = isHome || path === "/faq";
+  /**
+   * `/shorts` (feature/video-agent-home, 2026-10-29) is a landing page in the
+   * same family as Home: the marketing Navbar (credits, Upgrade) + Footer on
+   * desktop, `MobileHeader` + `MobileTabBar` on phones. It does NOT take
+   * `HomeBackground` — the colourflow stays Home's own identity, one of the
+   * ways the two pages are kept apart.
+   */
+  const isShorts = path === "/shorts";
+  const isMarketing = isHome || isShorts || path === "/faq";
   const isMobileTabBarRoute =
-    isHome || MOBILE_TAB_ROUTES.some((r) => path === r || path.startsWith(`${r}/`));
+    isHome || isShorts || MOBILE_TAB_ROUTES.some((r) => path === r || path.startsWith(`${r}/`));
 
   return (
     <div className="app-layout app-layout--mobile-app">
@@ -149,7 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="app-layout__main">
         {isHome && <HomeBackground />}
         {isMarketing && <Navbar />}
-        {isHome && <MobileHeader />}
+        {(isHome || isShorts) && <MobileHeader />}
         <main className="app-layout__content">{children}</main>
         {isMarketing && <Footer />}
         {isMobileTabBarRoute && <MobileTabBar />}
