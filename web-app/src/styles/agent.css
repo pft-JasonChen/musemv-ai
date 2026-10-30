@@ -574,18 +574,16 @@
 
 /* Song inspiration: square album covers. Narrower cards, so
    the track's centring padding is recomputed from the same width. */
-/* Same HEIGHT as the Music Video strip (product owner, 2026-10-29): a square
-   whose side is the 16:9 MV card's height, i.e. the MV width × 9/16 at every
-   breakpoint on desktop (26.7vw → 15.02vw). Tablets and phones break that on
-   purpose (product owner, 2026-10-30): a fixed 144px square on tablets, 90px
-   with no subtitle on phones — shorter than the MV cards. Padding is
-   the MV card's too, so the two rows line up. */
+/* A fixed square, shorter than the Music Video strip's 16:9 cards (product
+   owner, 2026-10-30): 160px on desktop (it used to match the MV card's height,
+   ~15vw), 144px on tablets, 90px with no subtitle on phones. Padding is the
+   MV card's, so the two rows line up. */
 .hero-banner-v3--square .hero-banner-v3__track {
-  padding-inline: max(0px, calc((100% - min(15.02vw, 267px)) / 2));
+  padding-inline: max(0px, calc((100% - 160px) / 2));
 }
 
 .hero-banner-v3--square .hero-banner-v3__card {
-  width: min(15.02vw, 267px);
+  width: 160px;
   aspect-ratio: 1 / 1;
 }
 
