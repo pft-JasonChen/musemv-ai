@@ -12,7 +12,14 @@ import { GuideHint } from "@/components/agent/GuideHint";
 import { LinkSheet } from "@/components/agent/LinkSheet";
 import { PhotoPicker } from "@/components/agent/PhotoPicker";
 import { useEdgeFade } from "@/components/agent/useEdgeFade";
-import { DEMO_URL, IMG, PICK_CELL, SHORTS_PLACEHOLDER, SHORTS_SKILLS } from "@/lib/agent/content";
+import {
+  AGENT_PROMPT_KEY,
+  DEMO_URL,
+  IMG,
+  PICK_CELL,
+  SHORTS_PLACEHOLDER,
+  SHORTS_SKILLS,
+} from "@/lib/agent/content";
 import { SHORTS_IDEA_PROMPTS } from "@/lib/agent/shortsIdeas";
 import { TOP_PICKS_SONGS } from "@/lib/mv/community";
 import { GENRES, MOODS } from "@/lib/mv/mock";
@@ -166,11 +173,21 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
     setModel(false);
   };
 
-  const canSend = mode === "shorts" ? recipe : true;
+  // AI Shorts sends a UGC Review recipe, or — since 2026-10-30 — a free
+  // prompt, which opens the Agent on it (`fromPrompt` in flows.ts).
+  const canSend = mode === "shorts" ? recipe || text.shorts.trim() !== "" : true;
   const send = () => {
     if (!canSend) return;
     if (mode !== "shorts") return go(current.href!);
-    go(`/agent?flow=ugc&product=${product ? product.type : "none"}`);
+    if (recipe) return go(`/agent?flow=ugc&product=${product ? product.type : "none"}`);
+    requireLogin(() => {
+      try {
+        sessionStorage.setItem(AGENT_PROMPT_KEY, text.shorts.trim());
+      } catch {
+        // Storage blocked: the Agent falls back to its default flow.
+      }
+      router.push(localePath(locale, "/agent?flow=prompt"));
+    });
   };
 
   const openAdd = () =>
@@ -332,13 +349,15 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
                       bem="agent-song"
                     />
                   )}
+                  {/* The arrow alone (Figma 5594:201121, "Create" hidden); the
+                      word stays its accessible name. */}
                   <button
                     type="button"
-                    className={`agent-composer__create${canSend ? " agent-composer__create--on" : ""}`}
+                    className={`agent-composer__create agent-composer__create--icon${canSend ? " agent-composer__create--on" : ""}`}
                     disabled={!canSend}
                     onClick={send}
+                    aria-label="Create"
                   >
-                    Create
                     <DpIcon name="ic_arrow_right" className="agent-composer__create-icon" />
                     <GuideHint show={hint === "send"} />
                   </button>

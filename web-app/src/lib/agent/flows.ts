@@ -21,6 +21,9 @@ export interface UgcLaunch {
   /** What the launcher's recipe carried. The model is never carried: the
    *  Agent always asks for it (YCA passes `MODEL0 = null` from the launcher). */
   product: "url" | "photo" | null;
+  /** A free prompt typed into the AI Shorts composer (2026-10-30) — opens the
+   *  chat instead of a skill; see `fromPrompt`. */
+  prompt?: string;
 }
 
 interface Cfg {
@@ -251,12 +254,16 @@ async function ugc(r: Run, launch: UgcLaunch) {
 
 /* ── 流程 1 · Creator template Pet Diary (F8) ─────────────────────────────── */
 
+/** How the agent opens a skill on a fresh chat. After a free prompt
+ *  (`fromPrompt`) it opens with an acknowledgement instead. */
+const GREETING = "Hi there! 👋 I’m your AI Shorts agent. ";
+
 async function pet(r: Run) {
   const cfg: Cfg = { ratio: "9:16", dur: 15 };
   const PET: Photo = { src: IMG.pet, tag: "@pet" };
   await r.wait(250);
   const hi = await r.text(
-    "Hi there! 👋 I’m your AI Shorts agent. Send me a photo of ",
+    `${GREETING}Send me a photo of `,
     { pick: "your pet" },
     ", and I’ll turn one of their everyday moments into a short film. ✨",
   );
@@ -315,12 +322,12 @@ async function pet(r: Run) {
 
 /* ── 流程 2 · Marketer template Handbag Showcase (YCA: "Polished Bag", F9) ── */
 
-async function bag(r: Run) {
+async function bag(r: Run, opener = GREETING) {
   const cfg: Cfg = { ratio: "9:16", dur: 15 };
   const BAG: Photo = { src: IMG.bag, tag: "@product", fit: true };
   await r.wait(250);
   const hi = await r.text(
-    "Hi there! 👋 I’m your AI Shorts agent. Send me a photo of ",
+    `${opener}Send me a photo of `,
     { pick: "your product" },
     ", and I’ll turn it into a polished showcase video. ✨",
   );
@@ -379,8 +386,46 @@ async function bag(r: Run) {
   await r.generate({ video: media("agent-f9-bag_vdo.mp4"), poster: media("agent-f9-bag_vdo.jpg"), dur: duration(cfg) });
 }
 
+/* ── A free prompt from the AI Shorts composer (product owner, 2026-10-30) ──
+   The demo has no script for arbitrary text, so the Agent takes the prompt
+   as the opening message and asks what KIND of video the user wants — three
+   directions plus a pen row for their own — never which skill to use (the
+   skills stay the Agent's business). Each direction runs the closest script:
+   a product review is UGC Review (`ugc`); a showcase, a brand film or
+   anything written in continues as the product showcase (`bag`).
+   PLACEHOLDER copy. */
+
+async function fromPrompt(r: Run, prompt: string) {
+  await r.wait(250);
+  await r.answer(prompt);
+  await r.think(1600);
+  await r.text("Love that idea! ✨ What kind of video should it be? Here are a few directions to start from.");
+  const [kind] = await r.ask(
+    [
+      {
+        q: "What kind of video do you want to make?",
+        num: true,
+        options: [
+          { title: "Product review", sub: "A creator tries your product on camera" },
+          { title: "Product showcase", sub: "Your product, presented like a polished ad" },
+          { title: "Cinematic brand film", sub: "A film-like brand moment around your product" },
+        ],
+        free: "Describe another kind of video…",
+      },
+    ],
+    true,
+  );
+  // The review script states its own request as the user's line; the others
+  // get the pick echoed, then the showcase script opens on an acknowledgement.
+  if (kind.index === 0) return ugc(r, { product: null });
+  await r.answer(kind.value);
+  await r.think(1200);
+  return bag(r, kind.index === -1 ? "Got it! I’ll start it as a product video. " : "Great choice! ");
+}
+
 export function flowScript(id: AgentFlowId, launch: UgcLaunch): (r: Run) => Promise<void> {
-  if (id === "pet") return pet;
-  if (id === "bag") return bag;
+  if (launch.prompt) return (r) => fromPrompt(r, launch.prompt!);
+  if (id === "pet") return (r) => pet(r);
+  if (id === "bag") return (r) => bag(r);
   return (r) => ugc(r, launch);
 }

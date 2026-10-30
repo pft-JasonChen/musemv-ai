@@ -219,14 +219,16 @@ export function MvInput({
             onEnhanced={(t) => patchCompose({ description: t })}
             bem="agent-song"
           />
+          {/* The arrow alone, as on AI Shorts (product owner, 2026-10-30);
+              "Create" stays its accessible name. */}
           <button
             type="button"
-            className={`agent-composer__create${canCreate ? " agent-composer__create--on" : ""}`}
+            className={`agent-composer__create agent-composer__create--icon${canCreate ? " agent-composer__create--on" : ""}`}
             disabled={!canCreate}
+            aria-label="Create"
             // Sign-in first, as the composer's Create always required (AC-EXP-02).
             onClick={() => requireLogin(() => router.push(localePath(locale, "/mv/room")))}
           >
-            Create
             <DpIcon name="ic_arrow_right" className="agent-composer__create-icon" />
           </button>
         </div>

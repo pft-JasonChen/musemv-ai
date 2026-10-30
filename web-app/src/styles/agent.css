@@ -349,6 +349,21 @@
   opacity: 1;
 }
 
+/* AI Shorts' and Music Video's send: the arrow alone (Figma 5594:201121) —
+   54px wide on desktop / tablet, 48px on phones, the height of the bar's
+   other buttons. Song keeps its labelled Create with the credit cost. */
+.agent-composer__create.agent-composer__create--icon {
+  width: 54px;
+  min-width: 0;
+  padding: 0;
+}
+
+@media (max-width: 767px) {
+  .agent-composer__create.agent-composer__create--icon {
+    width: 48px;
+  }
+}
+
 .agent-composer__create:disabled {
   cursor: default;
 }
@@ -726,6 +741,14 @@
   outline: none;
   caret-color: #c084fc;
   cursor: text;
+}
+
+/* No focus ring while editing (product owner, 2026-10-30). globals.css spares
+   `textarea` / `input` from its site-wide `:focus-visible` outline; this
+   editable `div` is the same kind of field — the caret shows focus — so it
+   gets the same exemption. (0,2,0) beats globals' (0,1,0), which loads later. */
+.agent-recipe__text:focus-visible {
+  outline: none;
 }
 
 .agent-recipe__text .agent-recipe__chip,

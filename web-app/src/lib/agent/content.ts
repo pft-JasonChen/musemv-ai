@@ -43,6 +43,12 @@ export const IMG = {
 
 /* ── Photo pickers (handoff §3.2) ─────────────────────────────────────────── */
 
+/** Session-storage key that carries a typed AI Shorts prompt from the
+ *  composer to `/agent?flow=prompt` (2026-10-30). Storage, not the URL: the
+ *  prompt is free text of any length. Kept after reading, so a reload of the
+ *  chat replays the same prompt. */
+export const AGENT_PROMPT_KEY = "muse_agent_prompt";
+
 export type PickerSheet = "recents" | "product";
 
 /** `rows` × 3 slots of YCA's picker cut; slot (0,0) is YCA's camera tile and

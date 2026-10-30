@@ -5625,6 +5625,40 @@ test("video-agent-home: on phones a survey with its own text field covers the me
   await expect(field).toBeHidden();
 });
 
+test("video-agent-home: a typed AI Shorts prompt sends — the arrow opens the Agent on it, which asks what kind of video", async ({
+  page,
+}) => {
+  // Product owner, 2026-10-30 (Figma 5594:201121): the AI Shorts send is the
+  // arrow alone ("Create" stays its name) and a free prompt can be sent, not
+  // only the UGC Review recipe.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/?nohint");
+  const card = page.locator(".agent-composer__card");
+  const send = card.getByRole("button", { name: "Create", exact: true });
+  await expect(send).toHaveText("");
+  await expect(send).toBeDisabled();
+  await card.locator(".agent-composer__input").fill("My cat chasing snowflakes on the balcony");
+  await send.click();
+  await expect(page).toHaveURL(/\/agent\?flow=prompt/);
+  await expect(page.locator(".agent-msg--user").first()).toHaveText("My cat chasing snowflakes on the balcony");
+  // It asks what kind of video, not which skill: three directions, then a
+  // pen row for the user's own.
+  const pick = page.getByRole("group", { name: "What kind of video do you want to make?" });
+  await expect(pick).toBeVisible({ timeout: 15_000 });
+  await expect(pick.locator(".agent-survey__op b")).toHaveText([
+    "Product review",
+    "Product showcase",
+    "Cinematic brand film",
+  ]);
+  await pick.getByPlaceholder("Describe another kind of video…").fill("A recipe tutorial");
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.locator(".agent-msg--user").last()).toHaveText("A recipe tutorial");
+  await expect(page.locator(".agent-msg--agent").last()).toContainText("Got it! I’ll start it as a product video.", {
+    timeout: 10_000,
+  });
+});
+
 test("video-agent-home: History lists AI Shorts runs in All and in their own tab, and a run reopens its Agent chat", async ({
   page,
 }) => {

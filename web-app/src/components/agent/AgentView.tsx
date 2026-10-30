@@ -5,7 +5,13 @@ import { useCredits } from "@/components/providers/CreditsProvider";
 import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useBackNavigation } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
-import { COST_VIDEO_SHORT, DEMO_END, NEXT_REPLY, type AgentFlowId } from "@/lib/agent/content";
+import {
+  AGENT_PROMPT_KEY,
+  COST_VIDEO_SHORT,
+  DEMO_END,
+  NEXT_REPLY,
+  type AgentFlowId,
+} from "@/lib/agent/content";
 import { AgentEngine } from "@/lib/agent/engine";
 import { flowScript, type UgcLaunch } from "@/lib/agent/flows";
 import { AgentMessage, type MessageActions } from "./AgentMessages";
@@ -89,6 +95,14 @@ export function AgentView() {
     const flow: AgentFlowId = raw === "pet" || raw === "bag" ? raw : "ugc";
     const p = q.get("product");
     const launch: UgcLaunch = { product: p === "url" || p === "photo" ? p : null };
+    // `?flow=prompt`: the composer's typed prompt opens the chat (2026-10-30).
+    if (raw === "prompt") {
+      try {
+        launch.prompt = sessionStorage.getItem(AGENT_PROMPT_KEY)?.trim() || undefined;
+      } catch {
+        // Storage blocked: fall through to UGC Review, the default flow.
+      }
+    }
     void engine.start(flowScript(flow, launch));
     return () => engine.stop();
   }, [engine]);
