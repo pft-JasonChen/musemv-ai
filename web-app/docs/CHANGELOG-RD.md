@@ -23,6 +23,21 @@ required output is an explicit statement that you looked, not paperwork.
 
 ---
 
+## 2026-10-30 — **C7 ADDITIVE (branch `feature/video-agent-home` only)** — `/history?tab=shorts`
+
+**Surface: C7 — one new value for an existing query param; no route added or changed.** `/history`
+gains an "AI Shorts" tab, and `?tab=shorts` opens on it (beside the existing `mv` / `songs`);
+`/shorts`' "View all in History" links there. `src/app/**/page.tsx` is untouched.
+
+No C1–C6/C8 change. The tab lists `RECENT_SHORTS` (`src/lib/agent/content.ts`), the same two
+placeholder Agent runs `/shorts` shows — not `useHistory` rows: `HistorySample` and the C4
+history hook are unchanged, and a run opens `/agent?flow=` rather than a result screen.
+
+- **What RD must do:** nothing yet. Later: a user's AI Shorts runs come from the backend and
+  replace `RECENT_SHORTS` in both places.
+
+---
+
 ## 2026-10-29 — **C7 ADDITIVE (branch `feature/video-agent-home` only)** — new route `/[locale]/shorts`
 
 **Surface: C7 — one route added, none changed.** `src/app/[locale]/shorts/page.tsx` is the AI

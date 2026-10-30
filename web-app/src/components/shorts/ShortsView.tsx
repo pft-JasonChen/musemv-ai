@@ -116,7 +116,7 @@ function RecentShorts({ onOpen }: { onOpen: (flow: AgentFlowId) => void }) {
         <h2 id="shorts-recent-title" className="section-header__title">
           Recent
         </h2>
-        <Link href={localePath(locale, "/history")} className="section-header__see-all">
+        <Link href={localePath(locale, "/history?tab=shorts")} className="section-header__see-all">
           View all in History
           <DpIcon name="ic_chevron-right" className="section-header__see-all-icon" />
         </Link>

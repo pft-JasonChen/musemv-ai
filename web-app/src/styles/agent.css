@@ -76,7 +76,7 @@
   align-items: center;
   gap: 16px;
   width: 100%;
-  max-width: 920px;
+  max-width: 820px; /* product owner, 2026-10-30 (Figma: 920) */
   margin: 0 auto;
   padding-top: 10px;
   box-sizing: border-box;

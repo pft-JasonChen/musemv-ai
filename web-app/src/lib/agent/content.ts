@@ -220,8 +220,9 @@ export const CATEGORY_DESC: Record<string, string> = {
   "Food Review": "Mouth-watering food moments with a host who loves to eat.",
 };
 
-/** PLACEHOLDER history for the /shorts "Recent" row — two finished demo runs.
- *  Muse's real History is its own page; this only points into it. */
+/** PLACEHOLDER history of AI Shorts runs — two finished demo runs. The /shorts
+ *  "Recent" row and History's All / AI Shorts tabs both list them, and both
+ *  reopen the run's Agent conversation (`/agent?flow=`). */
 export const RECENT_SHORTS: { id: string; title: string; when: string; poster: string; flow: AgentFlowId }[] = [
   { id: "r-pet", title: "Pet Diary · First snow", when: "Yesterday", poster: media("Creator_petdiary.jpg"), flow: "pet" },
   { id: "r-bag", title: "Handbag Showcase · Luxury ad", when: "Oct 27", poster: media("product-detail-demo.jpg"), flow: "bag" },

@@ -38,10 +38,19 @@ import {
 } from "@/lib/publishReview";
 import { NewMVsSection } from "@/components/home/NewMVsSection";
 import { TopPicksSection } from "@/components/home/TopPicksSection";
+import { RECENT_SHORTS } from "@/lib/agent/content";
 
-type Filter = "all" | "mv" | "song" | "liked";
+/** AI Shorts runs in History (product owner, 2026-10-30): listed in All and in
+ *  their own tab, and a done run reopens its Agent conversation — the same as
+ *  `/shorts`' "Recent" row. Kept beside `HistorySample` rather than inside it:
+ *  they are placeholder Agent runs (`RECENT_SHORTS`), not MV / Song jobs, and
+ *  have none of their menu actions (publish, edit, download). */
+type ShortsRow = (typeof RECENT_SHORTS)[number];
+
+type Filter = "all" | "shorts" | "mv" | "song" | "liked";
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
+  { id: "shorts", label: "AI Shorts" },
   { id: "mv", label: "Music Videos" },
   { id: "song", label: "Songs" },
   { id: "liked", label: "Liked" },
@@ -57,7 +66,7 @@ const EMPTY_STATE: Record<
     icon: string;
     title: string;
     subtitle: string;
-    cta?: { label: string; kind: "sheet" | "mv" | "song" };
+    cta?: { label: string; kind: "sheet" | "shorts" | "mv" | "song" };
   }
 > = {
   all: {
@@ -65,6 +74,13 @@ const EMPTY_STATE: Record<
     title: "Your creations will appear here",
     subtitle: "Start making AI music or music videos and they'll all show up in one place.",
     cta: { label: "Start Creating", kind: "sheet" },
+  },
+  // PLACEHOLDER copy (2026-10-30) — no Figma for this empty state yet.
+  shorts: {
+    icon: "ic_video_shorts",
+    title: "No AI Shorts yet",
+    subtitle: "Pick a skill, add a photo, and the Agent turns it into a short video.",
+    cta: { label: "Create AI Shorts", kind: "shorts" },
   },
   mv: {
     icon: "ic_video_ai",
@@ -142,6 +158,7 @@ function rowHref(locale: Locale, r: HistorySample): string {
  *  `?tab=`; a URL write on every tab change is a page jump even with
  *  `replace`, so the tab stays component state after that). */
 function initialFilterFromTab(tab: string | null): Filter {
+  if (tab === "shorts") return "shorts";
   if (tab === "mv") return "mv";
   if (tab === "songs") return "song";
   return "all";
@@ -270,9 +287,83 @@ export function HistoryView() {
         // HIST-03: the Liked tab shows only community-liked content, not liked own rows.
         if (filter === "liked") return community && liked(r);
         if (filter === "all") return !community;
+        if (filter === "shorts") return false;
         if (filter === "mv") return !community && (r.kind === "mv" || r.kind === "storyboard");
         return !community && r.kind === "song";
       });
+  const shownShorts: ShortsRow[] =
+    demoEmpty || (filter !== "all" && filter !== "shorts") ? [] : RECENT_SHORTS;
+  // In All, AI Shorts runs sit after this visit's own new jobs ("Just now")
+  // and before the older seeded rows — they are dated yesterday and after.
+  const seedIds = new Set(HISTORY_SAMPLES.map((s) => s.id));
+  const newJobs = shown.filter((r) => !seedIds.has(r.id) && history.some((h) => h.id === r.id));
+  const older = shown.filter((r) => !newJobs.includes(r));
+  const isEmpty = shown.length + shownShorts.length === 0;
+
+  function openShorts(s: ShortsRow) {
+    router.push(localePath(locale, `/agent?flow=${s.flow}`));
+  }
+
+  function renderRow(r: HistorySample) {
+    return (
+      <li key={r.id}>
+        <HistoryCard
+          r={r}
+          liked={liked(r)}
+          onOpen={() => openRow(r)}
+          href={rowHref(locale, r)}
+          cta={
+            // HIST-05: storyboards surface Create outside the ⋯ menu. DP places
+            // it on the cover itself (.history-card__create) rather than as a
+            // row pill; same affordance, same handler.
+            r.kind === "storyboard" && r.status === "done" ? (
+              <span
+                className="history-card__create"
+                onClick={(e) => {
+                  e.preventDefault();
+                  createMv(r);
+                }}
+              >
+                <DpIcon name="ic_video" />
+                Create MV
+              </span>
+            ) : null
+          }
+          menu={
+            r.status === "processing" ? null : (
+              <Menu
+                r={r}
+                liked={liked(r)}
+                published={published(r)}
+                reviewing={reviewing(r)}
+                rejectReason={rejectReason(r)}
+                removal={r.removal}
+                open={openMenu === r.id}
+                setOpen={(v) => setOpenMenu(v ? r.id : null)}
+                onLike={() => toggleLike(r)}
+                onShare={() => {
+                  setOpenMenu(null);
+                  setShare({ title: r.title, url: buildShareUrl(r.id) });
+                }}
+                onDownload={() => doDownload(r)}
+                onDelete={() => {
+                  setOpenMenu(null);
+                  setDel(r);
+                }}
+                onPublish={() => (r.kind === "mv" ? togglePublishMv(r) : togglePublishSong(r))}
+                onEditMv={() => editMv(r)}
+                onCreateMv={() => createMv(r)}
+                onOpenNotice={() => {
+                  setOpenMenu(null);
+                  setNoticeRow(r);
+                }}
+              />
+            )
+          }
+        />
+      </li>
+    );
+  }
 
   function openRow(r: HistorySample) {
     if (r.status !== "done") return;
@@ -425,7 +516,7 @@ export function HistoryView() {
                 after flagging that it carried a product rule rather than being
                 decoration. The underlying retention BEHAVIOR is unchanged; this
                 only removes the on-screen copy stating it. */}
-            {shown.length === 0 ? (
+            {isEmpty ? (
               <div className="history-page__empty">
                 <DpIcon name={EMPTY_STATE[filter].icon} className="history-page__empty-icon" />
                 <div className="history-page__empty-message">
@@ -441,7 +532,14 @@ export function HistoryView() {
                       if (cta.kind === "sheet") setCreateSheetOpen(true);
                       else
                         router.push(
-                          localePath(locale, cta.kind === "mv" ? "/mv/room" : "/song/create"),
+                          localePath(
+                            locale,
+                            cta.kind === "shorts"
+                              ? "/shorts"
+                              : cta.kind === "mv"
+                                ? "/mv/room"
+                                : "/song/create",
+                          ),
                         );
                     }}
                   >
@@ -456,7 +554,10 @@ export function HistoryView() {
                 treatment for the History page below 768px, and the tabs' own
                 artboards are desktop-only (1440px). Reuses Home's existing rails
                 verbatim rather than inventing a third "recommendation" component. */}
-            {shown.length === 0 &&
+            {/* AI Shorts has no recommend rail: Home's skill rail is the
+                closest, and it lives on /shorts, which the CTA opens. */}
+            {isEmpty &&
+              filter !== "shorts" &&
               (filter === "all" || filter === "mv" ? (
                 <div className="history-page__recommend">
                   <NewMVsSection />
@@ -467,68 +568,19 @@ export function HistoryView() {
                 </div>
               ))}
 
-            {shown.length > 0 && (
+            {!isEmpty && (
               <ul className="history-page__grid">
-                {shown.map((r) => (
-                  <li key={r.id}>
-                    <HistoryCard
-                      r={r}
-                      liked={liked(r)}
-                      onOpen={() => openRow(r)}
-                      href={rowHref(locale, r)}
-                      cta={
-                        // HIST-05: storyboards surface Create outside the ⋯ menu. DP places
-                        // it on the cover itself (.history-card__create) rather than as a
-                        // row pill; same affordance, same handler.
-                        r.kind === "storyboard" && r.status === "done" ? (
-                          <span
-                            className="history-card__create"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              createMv(r);
-                            }}
-                          >
-                            <DpIcon name="ic_video" />
-                            Create MV
-                          </span>
-                        ) : null
-                      }
-                      menu={
-                        r.status === "processing" ? null : (
-                          <Menu
-                            r={r}
-                            liked={liked(r)}
-                            published={published(r)}
-                            reviewing={reviewing(r)}
-                            rejectReason={rejectReason(r)}
-                            removal={r.removal}
-                            open={openMenu === r.id}
-                            setOpen={(v) => setOpenMenu(v ? r.id : null)}
-                            onLike={() => toggleLike(r)}
-                            onShare={() => {
-                              setOpenMenu(null);
-                              setShare({ title: r.title, url: buildShareUrl(r.id) });
-                            }}
-                            onDownload={() => doDownload(r)}
-                            onDelete={() => {
-                              setOpenMenu(null);
-                              setDel(r);
-                            }}
-                            onPublish={() =>
-                              r.kind === "mv" ? togglePublishMv(r) : togglePublishSong(r)
-                            }
-                            onEditMv={() => editMv(r)}
-                            onCreateMv={() => createMv(r)}
-                            onOpenNotice={() => {
-                              setOpenMenu(null);
-                              setNoticeRow(r);
-                            }}
-                          />
-                        )
-                      }
+                {newJobs.map(renderRow)}
+                {shownShorts.map((s) => (
+                  <li key={s.id}>
+                    <ShortsCard
+                      s={s}
+                      href={localePath(locale, `/agent?flow=${s.flow}`)}
+                      onOpen={() => openShorts(s)}
                     />
                   </li>
                 ))}
+                {older.map(renderRow)}
               </ul>
             )}
           </>
@@ -750,6 +802,52 @@ function HistoryCard({
           <time>{r.date}</time>
         </div>
         {menu}
+      </div>
+    </article>
+  );
+}
+
+/**
+ * An AI Shorts run in History (2026-10-30): `HistoryCard`'s DP markup with a
+ * finished state, the AI Shorts glyph, and "AI Shorts" where MV / Song rows
+ * show their stats. Opening it replays the run's Agent conversation, as
+ * `/shorts`' "Recent" row does. No ⋯ menu: none of the MV / Song actions
+ * apply to a placeholder Agent run. The cover's `--shorts` modifier has no
+ * rule of its own (DP styles no `__cover--*`); it keeps these rows out of
+ * selectors aimed at MV or Song covers.
+ */
+function ShortsCard({ s, href, onOpen }: { s: ShortsRow; href: string; onOpen: () => void }) {
+  function open(e: React.MouseEvent) {
+    e.preventDefault();
+    onOpen();
+  }
+
+  return (
+    <article className="history-card history-card--done">
+      <a
+        href={href}
+        onClick={open}
+        className="history-card__cover history-card__cover--shorts"
+        aria-label={s.title}
+      >
+        <img src={s.poster} alt="" />
+        <span className="history-card__cover-scrim" aria-hidden="true" />
+        <div className="history-card__status-slot">
+          <DpBadge status="Done" />
+        </div>
+        <span className="history-card__play">
+          <DpIcon name="ic_play" />
+        </span>
+        <DpIcon name="ic_video_shorts" className="history-card__type-icon" />
+      </a>
+      <div className="history-card__info">
+        <div className="history-card__copy">
+          <a href={href} onClick={open}>
+            {s.title}
+          </a>
+          <p>AI Shorts</p>
+          <time>{s.when}</time>
+        </div>
       </div>
     </article>
   );

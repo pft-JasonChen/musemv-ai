@@ -5625,6 +5625,31 @@ test("video-agent-home: on phones a survey with its own text field covers the me
   await expect(field).toBeHidden();
 });
 
+test("video-agent-home: History lists AI Shorts runs in All and in their own tab, and a run reopens its Agent chat", async ({
+  page,
+}) => {
+  // Product owner, 2026-10-30. /shorts' "View all in History" lands on the
+  // AI Shorts tab (`?tab=shorts`); MV / Song tabs do not list the runs.
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+  const shorts = page.locator(".history-card").filter({ has: page.locator(".history-card__cover--shorts") });
+  await expect(shorts).toHaveCount(2);
+  await expect(page.locator(".history-card").first()).toContainText("Pet Diary · First snow");
+
+  await page.getByRole("button", { name: "Music Videos", exact: true }).click();
+  await expect(shorts).toHaveCount(0);
+  await page.getByRole("button", { name: "AI Shorts", exact: true }).click();
+  await expect(page.locator(".history-card")).toHaveCount(2);
+
+  await page.goto("/shorts");
+  await page.getByRole("link", { name: "View all in History" }).click();
+  await expect(page).toHaveURL(/\/history\?tab=shorts/);
+  await expect(page.locator(".history-card")).toHaveCount(2);
+  await page.getByRole("link", { name: "Handbag Showcase · Luxury ad" }).first().click();
+  await expect(page).toHaveURL(/\/agent\?flow=bag/);
+});
+
 test("video-agent-home: the Sidebar's AI Shorts opens /shorts — composer without tabs, Recent, the whole catalogue", async ({
   page,
 }) => {
@@ -5643,7 +5668,10 @@ test("video-agent-home: the Sidebar's AI Shorts opens /shorts — composer witho
   await expect(page.getByRole("heading", { level: 1, name: "AI Shorts Agent" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Music Video" })).toHaveCount(0);
   await expect(page.locator(".shorts-recent__item")).toHaveCount(2);
-  await expect(page.getByRole("link", { name: "View all in History" })).toHaveAttribute("href", "/history");
+  await expect(page.getByRole("link", { name: "View all in History" })).toHaveAttribute(
+    "href",
+    "/history?tab=shorts",
+  );
   await expect(page.locator(".shorts-cat__sec")).toHaveCount(11);
 
   const nav = page.getByRole("navigation", { name: "Skill categories" });
