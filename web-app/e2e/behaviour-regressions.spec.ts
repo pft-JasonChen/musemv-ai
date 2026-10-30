@@ -5574,6 +5574,57 @@ test("video-agent-home: UGC Review → Product URL → Create opens the Agent on
   await expect(next).toBeEnabled();
 });
 
+test("video-agent-home: the Agent's message box — a typed message gets a canned reply, and the script carries on", async ({
+  page,
+}) => {
+  // Product owner, 2026-10-30: typing is live. Send waits for the script to be
+  // listening (here: the first survey card); the reply points back at it.
+  await page.addInitScript(() => localStorage.setItem("muse_auth", "1"));
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/agent?flow=ugc&product=url");
+  await expect(page.getByRole("group", { name: "Which aspect ratio?" })).toBeVisible({ timeout: 15_000 });
+
+  const field = page.getByRole("textbox", { name: "Message" });
+  const send = page.getByRole("button", { name: "Send" });
+  await expect(send).toBeDisabled();
+  await field.fill("Can you make it more playful?");
+  await send.click();
+  await expect(field).toHaveValue("");
+  await expect(page.locator(".agent-msg--user").last()).toHaveText("Can you make it more playful?");
+  await expect(page.locator(".agent-msg--agent").last()).toContainText("pick an option in the card below", {
+    timeout: 10_000,
+  });
+  await expect(page.getByRole("group", { name: "Which aspect ratio?" })).toBeVisible();
+});
+
+test("video-agent-home: on phones a survey with its own text field covers the message box", async ({ page }) => {
+  // Product owner, 2026-10-30: one text field on screen at a time.
+  await page.addInitScript(() => localStorage.setItem("muse_auth", "1"));
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/agent?flow=ugc&product=url");
+  const field = page.getByRole("textbox", { name: "Message" });
+  const next = page.getByRole("button", { name: "Next" });
+
+  // Fixed choices only: the message box stays.
+  for (const q of ["Which aspect ratio?", "How long should it be?", "Which resolution?"]) {
+    const card = page.getByRole("group", { name: q });
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    await expect(field).toBeVisible();
+    await card.locator(".agent-survey__op").first().click();
+    await next.click();
+  }
+  const model = page.getByRole("group", { name: "How should we add your model?" });
+  await expect(model).toBeVisible({ timeout: 15_000 });
+  await model.getByRole("button", { name: /Generate one with AI/ }).click();
+  await next.click();
+
+  // "Something else…" — the card's own field is the only one on screen.
+  const style = page.getByRole("group", { name: "Which video style?" });
+  await expect(style).toBeVisible({ timeout: 20_000 });
+  await expect(style.getByPlaceholder("Something else…")).toBeVisible();
+  await expect(field).toBeHidden();
+});
+
 test("video-agent-home: the Sidebar's AI Shorts opens /shorts — composer without tabs, Recent, the whole catalogue", async ({
   page,
 }) => {

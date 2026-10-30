@@ -72,8 +72,12 @@ const CASES = [
     width: 375,
   },
   {
+    // `/shorts`, not `/`: on phones Home's header drops its blur on purpose
+    // so the colourflow video shows through (Figma 5582:199131, 2026-10-30,
+    // `agent.css`). `/shorts` mounts the same header with MobileHeader.css's
+    // blur intact, which is what this case guards.
     stylesheet: "MobileHeader.css",
-    route: "/",
+    route: "/shorts",
     selector: ".mobile-header",
     width: 375,
   },

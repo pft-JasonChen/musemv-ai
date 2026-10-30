@@ -196,7 +196,10 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
           </div>
         ) : (
           <h1 className="tool-selector-v3__heading agent-composer__heading">
-            What would you like to create today?
+            {/* Phones get the shorter line, which fits on one line at 320px
+                (product owner, 2026-10-30); CSS shows one or the other. */}
+            <span className="agent-composer__heading-full">What would you like to create today?</span>
+            <span className="agent-composer__heading-short">What will you create today?</span>
           </h1>
         )}
 

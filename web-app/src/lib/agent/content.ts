@@ -45,15 +45,13 @@ export const IMG = {
 
 export type PickerSheet = "recents" | "product";
 
-export const PICKER: Record<
-  PickerSheet,
-  { title: string; album: number; rows: number; cell: (r: number, c: number) => string }
-> = {
-  recents: { title: "Recents", album: 0, rows: 5, cell: (r, c) => media(`pk/r${r}${c}.jpg`) },
-  product: { title: "Sample Photos", album: 1, rows: 4, cell: (r, c) => media(`pk/p${r}${c}.jpg`) },
-};
-
-export const PICKER_ALBUMS = ["Recents", "Sample Photos", "Favorite", "Selfie"];
+/** `rows` × 3 slots of YCA's picker cut; slot (0,0) is YCA's camera tile and
+ *  has no photo, so the photos start at (0,1). */
+export const PICKER: Record<PickerSheet, { rows: number; cell: (r: number, c: number) => string }> =
+  {
+    recents: { rows: 5, cell: (r, c) => media(`pk/r${r}${c}.jpg`) },
+    product: { rows: 4, cell: (r, c) => media(`pk/p${r}${c}.jpg`) },
+  };
 
 /** Hinted cell per demo (row, col). From the launcher every cell returns the
  *  flow's fixed photo; the hint just points at the one that matches it. */
@@ -186,6 +184,21 @@ export const TEMPLATE_TABS: { id: "creator" | "marketer"; label: string; rows: T
     ],
   },
 ];
+
+/** Home's first skill tab, "Hot" (product owner, 2026-10-30): recommended
+ *  skills from both groups. PLACEHOLDER picks, not data — the two demo skills
+ *  lead (and both start their demo here), then one popular skill per kind. */
+export const HOT_SKILLS: TemplateSection = {
+  title: "Hot",
+  cards: x2([
+    "pet-diary",
+    "product-detail-demo",
+    "ugc-hand-gesture",
+    "ballet",
+    "skin-renewal-effect",
+    "beauty-natalie",
+  ]).map((s, i) => card(s, i < 2)),
+};
 
 /* ── /shorts catalogue copy ───────────────────────────────────────────────────
    PLACEHOLDER (product owner, 2026-10-29: "you write it for now, we replace it

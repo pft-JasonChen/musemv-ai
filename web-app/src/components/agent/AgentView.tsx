@@ -67,6 +67,15 @@ const ease = cubicBezier(0.4, 0, 0.2, 1);
 export function AgentView() {
   const [engine] = useState(() => new AgentEngine());
   const s = useSyncExternalStore(engine.subscribe, engine.getSnapshot, engine.getServerSnapshot);
+  /** The typed message (`engine.chat`, 2026-10-30). Kept while Send is waiting
+   *  for the script to listen, so nothing typed is lost. */
+  const [draft, setDraft] = useState("");
+  const canSend = draft.trim() !== "" && s.listening && !s.chatting && !s.busy;
+  const send = () => {
+    if (!canSend) return;
+    void engine.chat(draft);
+    setDraft("");
+  };
   const { credits, addCredits } = useCredits();
   const { openBuyCredits } = useSubscribe();
   const goBack = useBackNavigation("/");
@@ -275,27 +284,45 @@ export function AgentView() {
 
       <div className="agent-page__dock" ref={dockRef}>
         {s.survey && <AgentSurvey key={s.survey.key} qs={s.survey.qs} onSubmit={engine.submitSurvey} />}
+        {/* Two rows, like Home's composer card (2026-10-30): the field on top,
+            `+` and Send under it. */}
         <div className="agent-input">
-          <button
-            type="button"
-            className="agent-input__photo"
-            aria-label="Add photo"
-            disabled={!s.awaiting || !!s.picker}
-            onClick={engine.openPicker}
-          >
-            <DpIcon name="ic_media" className="agent-input__photo-icon" />
-            <GuideHint show={s.hint === "photo"} />
-          </button>
-          {/* Typing is not part of the demo (handoff §2): the field is drawn, not live. */}
+          {/* Typing is live (product owner, 2026-10-30, past handoff §2): a sent
+              message gets one canned reply — see `engine.chat`. */}
           <input
             className="agent-input__field"
             placeholder="Type your message here ..."
             aria-label="Message"
-            disabled
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                send();
+              }
+            }}
           />
-          <button type="button" className="agent-send" aria-label="Send" disabled>
-            <DpIcon name="ic_arrow_up" className="agent-send__icon" />
-          </button>
+          <div className="agent-input__bar">
+            <button
+              type="button"
+              className="agent-input__photo"
+              aria-label="Add photo"
+              disabled={!s.awaiting || !!s.picker}
+              onClick={engine.openPicker}
+            >
+              <DpIcon name="ic_add" className="agent-input__photo-icon" />
+              <GuideHint show={s.hint === "photo"} />
+            </button>
+            <button
+              type="button"
+              className={`agent-send${canSend ? " agent-send--on" : ""}`}
+              aria-label="Send"
+              disabled={!canSend}
+              onClick={send}
+            >
+              <DpIcon name="ic_arrow_right" className="agent-send__icon" />
+            </button>
+          </div>
           {/* Sits just above the composer, centred on it (2026-10-29). */}
           {s.toast && (
             <div className="agent-page__toast" role="status">

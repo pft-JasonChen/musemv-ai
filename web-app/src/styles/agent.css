@@ -82,33 +82,74 @@
   box-sizing: border-box;
 }
 
-/* Phones open straight on the composer (Figma draft) — the heading is kept
-   for the document outline but not drawn. */
+/* Home's heading has a shorter phone wording (AgentComposer); only one of
+   the two is ever displayed, so the h1's accessible name is that one. */
+.agent-composer__heading-short {
+  display: none;
+}
+
+/* ── Phone Home: the colourflow video and the header over it ───────────────
+   Figma 5582:199130 (product owner, 2026-10-30): Home plays the same looping
+   background on phones as on desktop, behind the header and the composer,
+   fading to the page colour about 40% down the screen. AppLayout.css hides
+   it below 768px and MobileHeader.css draws an opaque, blurred header (both
+   gated verbatim, hence here). Only Home renders the video
+   (`HomeBackground`), so these rules reach nowhere else. */
 @media (max-width: 767px) {
-  .agent-composer {
-    padding-top: 4px;
-    gap: 12px;
-  }
-  .agent-composer__heading {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
+  .app-layout.app-layout--mobile-app .app-layout__background {
+    display: block;
+    height: 40vh;
   }
 
-  /* /shorts keeps its title on phones: "AI Shorts Agent" is what tells the
-     page apart from Home, whose composer opens bare. */
-  .agent-composer--shorts .agent-composer__heading {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip: auto;
-    white-space: normal;
-    font-size: var(--font-title-l);
-    line-height: 32px;
+  .app-layout.app-layout--mobile-app .app-layout__background-scrim {
+    display: block;
+    background:
+      linear-gradient(to bottom, rgba(9, 9, 11, 0) 22vh, var(--color-bg-primary) 40vh, var(--color-bg-primary) 100%),
+      rgba(0, 0, 0, 0.7);
+  }
+
+  /* Header - Sticky: 8px top and bottom (44px tall), a 66% → clear fade and
+     no blur, so the video shows through it. */
+  .mobile-header {
+    padding: 8px 16px;
+  }
+
+  .app-layout__main:has(> .app-layout__background) .mobile-header {
+    background: linear-gradient(to bottom, rgba(9, 9, 11, 0.66), rgba(9, 9, 11, 0));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Phones draw the heading too (product owner, 2026-10-30; the Figma draft
+   opened bare on the composer) — Home's "What would you like to create
+   today?" and /shorts' "AI Shorts Agent", at the phone title size. */
+@media (max-width: 767px) {
+  /* Figma 5582:199134 "Create Panel": 10px between heading, tabs, card and
+     chips. */
+  .agent-composer {
+    padding-top: 4px;
+    gap: 10px;
+  }
+  .agent-composer__heading {
+    font-size: 19px;
+    line-height: 26px;
+  }
+  .agent-composer__heading-full {
+    display: none;
+  }
+
+  .agent-composer__heading-short {
+    display: inline;
+  }
+
+  /* Home's heading: Title/S, 17px Bold, centred (Figma 5582:199681). */
+  .agent-composer:not(.agent-composer--shorts) .agent-composer__heading {
+    max-width: none;
+    font-size: 17px;
+    font-weight: var(--font-weight-bold);
+    line-height: 22px;
+    letter-spacing: 0;
   }
 }
 
@@ -174,16 +215,23 @@
      column, as wide as the input card below, split in three equal tabs. `1fr`
      keeps its content minimum, so at 320px, too narrow for three equal tabs,
      "Music Video" keeps its one line and the other two share the rest. */
+  /* Figma 5582:200917 "Bar/Segment Control": centred, equal tabs at least
+     80px wide (they grow together if a label needs more), 2px inside and 4px
+     apart, 27px tall with 11px labels and no icons. */
   .agent-composer__modes {
-    align-self: stretch;
-    grid-auto-columns: 1fr;
-    gap: 2px;
-    padding: 3px;
+    align-self: center;
+    grid-auto-columns: minmax(80px, 1fr);
+    gap: 4px;
+    padding: 2px;
   }
   .agent-composer__mode {
-    height: 30px;
-    padding: 0 2px;
-    gap: 4px;
+    height: 27px;
+    padding: 0 4px;
+    font-size: 11px;
+    letter-spacing: -0.11px;
+  }
+  .agent-composer__mode-icon {
+    display: none;
   }
 }
 
@@ -243,6 +291,13 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
+}
+
+/* 4px on phones (Figma 5582:199168). */
+@media (max-width: 767px) {
+  .agent-composer__tools {
+    gap: 4px;
+  }
 }
 
 .agent-composer__add {
@@ -339,15 +394,31 @@
 }
 
 @media (max-width: 767px) {
+  /* Figma 5582:199196 "Quick Actions": right under the card (the panel's
+     10px gap), 28px chips with 11px Medium labels. */
   .agent-composer__skills {
     margin: 0 -16px;
-    padding: 2px 16px 10px;
+    padding: 0 16px;
     width: calc(100% + 32px);
   }
+
+  /* Phone Home's section rhythm (Figma 5582:199130): 16px from the chips to
+     the skills and from the skills to Trending MV, 12px below that — not
+     HomePage.css's 24px (gated verbatim, hence here). */
+  .home-page {
+    gap: 16px;
+  }
+
+  .home-page > .top-picks,
+  .home-page > .new-songs {
+    margin-top: -4px;
+  }
   .agent-composer__skill {
-    height: 32px;
-    padding: 0 12px;
-    font-size: var(--font-label-m);
+    height: 28px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: -0.11px;
   }
 }
 
@@ -724,11 +795,24 @@
 
 /* ── Video Shorts templates ────────────────────────────────────────────── */
 
+/* Title → categories → cards, 24px apart (Figma 5559:195043, 2026-10-30). */
 .shorts-tpl {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+}
+
+/* Tablets: 16px from every Home section title to its content (product
+   owner, 2026-10-30) — between the phone's 12 and the desktop's 24. The
+   DP sections' 24px is gated verbatim, hence here. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .shorts-tpl,
+  .home-page > .new-mvs,
+  .home-page > .top-picks,
+  .home-page > .new-songs {
+    gap: 16px;
+  }
 }
 
 /* Template categories use DP's `.tabs` / `.tabs__tab` (Tabs.css, verbatim)
@@ -749,19 +833,31 @@
 }
 
 /* Unselected categories here are frosted glass — translucent white over a
-   blur — instead of Tabs.css's flat dark fill (product owner, 2026-10-29).
+   blur — instead of Tabs.css's flat dark fill (product owner, 2026-10-29),
+   with Tabs.css's own white-60 label (Figma 5559:195043, 2026-10-30).
    Scoped to this row; History's tabs keep the component default. */
 .shorts-tpl__cats .tabs__tab:not(.tabs__tab--active) {
   background: var(--white-15);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  color: var(--neutral-dark-100);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--white-60);
 }
 
 @media (max-width: 767px) {
   .shorts-tpl__cats {
     margin: 0 -16px;
     padding: 0 16px;
+  }
+
+  /* Figma 5582:199277 (phone Home): the categories 4px under the title (12px
+     to the cards), unselected labels full white. The title keeps DP's phone
+     size, the same as Trending MV's (product owner, 2026-10-30). */
+  .shorts-tpl .section-header + .shorts-tpl__cats {
+    margin-top: -8px;
+  }
+
+  .shorts-tpl__cats .tabs__tab:not(.tabs__tab--active) {
+    color: var(--neutral-dark-100);
   }
 }
 
@@ -873,6 +969,8 @@
    Width is a share of the rail so a row shows ~4.5 cards on desktop (the half
    card says "scroll me"), fewer as the page narrows. The widths predate the
    20px gap and are kept as they were on purpose (product owner, 2026-10-29). */
+/* 4½ cards a row, deliberately NOT Figma 5559:195043's four 255×191 cards:
+   the product owner kept this size twice (2026-10-30). */
 .shorts-card {
   position: relative;
   flex-shrink: 0;
@@ -980,13 +1078,14 @@
   }
 }
 
-/* Phones: two whole cards plus a sliver of the third (product owner,
-   2026-10-28). At that size the card takes the same compact treatment Home's
-   phone MV rail gives the shared Card (`.app-layout--mobile-app .new-mvs
-   .card--flat` in NewMVsSection.css: 8px padding, 12px radius, 13px title). */
+/* Phones: two whole cards across the column, the third peeking in from the
+   edge (Figma 5582:199279: 139×104 at 320px, 10px apart). At that size the
+   card takes the same compact treatment Home's phone MV rail gives the shared
+   Card (`.app-layout--mobile-app .new-mvs .card--flat` in NewMVsSection.css:
+   8px padding, 12px radius, 13px title). */
 @media (max-width: 767px) {
   .shorts-card {
-    width: calc((100% - 2 * 12px) / 2.25);
+    width: calc((100% - 10px) / 2);
     min-width: 0;
     border-radius: 12px;
   }
@@ -1108,29 +1207,6 @@
   width: 32px;
 }
 
-.agent-picker__albums {
-  display: flex;
-  gap: 8px;
-  padding: 0 14px 12px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.agent-picker__album {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--neutral-dark-64);
-  font-size: var(--font-label-m);
-}
-
-.agent-picker__album--on {
-  background: rgba(168, 85, 247, 0.22);
-  color: #fff;
-  font-weight: var(--font-weight-semibold);
-}
-
 .agent-picker__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1151,13 +1227,7 @@
   cursor: pointer;
 }
 
-.agent-picker__cell img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
+/* Phones only (product owner, 2026-10-30). */
 .agent-picker__cam {
   display: flex;
   align-items: center;
@@ -1171,6 +1241,19 @@
   background-color: currentColor;
   mask-size: contain;
   mask-repeat: no-repeat;
+}
+
+@media (min-width: 768px) {
+  .agent-picker__cam {
+    display: none;
+  }
+}
+
+.agent-picker__cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .agent-link {
@@ -1308,6 +1391,15 @@
 
 .agent-page__dock > * {
   pointer-events: auto;
+}
+
+/* Phones: a survey question with its own text field ("Something else…")
+   covers the chat input, so only one field is on screen and typing stays in
+   the card (product owner, 2026-10-30). Desktop keeps both. */
+@media (max-width: 767px) {
+  .agent-page__dock:has(.agent-survey__own) .agent-input {
+    display: none;
+  }
 }
 
 /* Anchored to the composer (`.agent-input`, its positioned parent): 12px above
@@ -1948,16 +2040,20 @@
 
 /* Input bar */
 
+/* After Home's composer card (product owner, 2026-10-30): its 20px corners
+   and two rows — the field on top, then `+` and Send (its gradient Create
+   pill), 30px tall. Not its purple border and glow: here the border is the
+   survey card's quiet white-15. The fill stays a little see-through and
+   frosted: it sits over the conversation. */
 .agent-input {
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  padding: 6px;
-  border-radius: 24px;
+  padding: 16px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--white-15);
-  /* Over the conversation now, so it needs its own frosted fill to stay legible. */
-  background: rgba(24, 24, 30, 0.72);
+  background: rgba(21, 21, 25, 0.88);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
 }
@@ -1968,13 +2064,13 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 54px; /* same as Send */
+  height: 30px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-dark-24);
+  color: var(--neutral-dark-100);
   cursor: pointer;
 }
 
@@ -1991,18 +2087,35 @@
   mask-repeat: no-repeat;
 }
 
+.agent-input__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Typing is live: the card's border brightens instead of the field's own
+   focus ring, as on Home. */
+.agent-input:focus-within {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .agent-input__field {
-  flex: 1;
+  width: 100%;
   min-width: 0;
+  height: 20px;
+  padding: 0;
   border: 0;
+  outline: none;
   background: transparent;
   color: #fff;
   font-family: var(--font-family-primary);
   font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.14px;
 }
 
 .agent-input__field::placeholder {
-  color: var(--neutral-dark-54);
+  color: var(--white-40);
 }
 
 .agent-send {
@@ -2011,18 +2124,19 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 54px; /* same as `+` */
+  height: 30px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--neutral-dark-44);
+  border-radius: var(--radius-pill);
+  background: var(--gradient-mv);
+  box-shadow: 0 4px 6px rgba(168, 84, 247, 0.4);
+  color: #fff;
+  opacity: 0.5;
 }
 
 .agent-send--on {
-  background: var(--gradient-mv);
-  color: #fff;
+  opacity: 1;
   cursor: pointer;
 }
 
@@ -2032,6 +2146,21 @@
   background-color: currentColor;
   mask-size: contain;
   mask-repeat: no-repeat;
+}
+
+/* Phones: Home's 18px corners, but 28px controls and the 14px text kept —
+   at Home's 24px / 12px a one-line chat input read too small (2026-10-30). */
+@media (max-width: 767px) {
+  .agent-input {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .agent-input__photo,
+  .agent-send {
+    width: 48px;
+    height: 28px;
+  }
 }
 
 /* Survey (handoff §3.4) */
@@ -2415,6 +2544,15 @@
   gap: 16px;
 }
 
+/* Phones: 12px from a section title to what it heads, as DP's own Home
+   sections do there (Trending MV, …) — product owner, 2026-10-30. */
+@media (max-width: 767px) {
+  .shorts-recent,
+  .shorts-tpl {
+    gap: 12px;
+  }
+}
+
 .shorts-recent__list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -2489,6 +2627,9 @@
   position: sticky;
   top: var(--shorts-bar-top);
   z-index: 15;
+  /* The section's 16px gap plus this top padding puts the chips 24px under
+     the title, as on Home (Figma 5559:195043, 2026-10-30); the padding also
+     clears the navbar once the bar is stuck. */
   margin: 0 -32px;
   padding: 8px 32px 12px;
   background: #09090b;
@@ -2518,7 +2659,8 @@
 @media (max-width: 767px) {
   .shorts-cat__bar {
     --shorts-bar-top: 56px;
-    margin: 0 -16px;
+    /* 16px gap − 10 + 6px padding: chips 12px under the title. */
+    margin: -10px -16px 0;
     padding: 6px 16px 10px;
   }
 }
@@ -2539,9 +2681,9 @@
 
 .shorts-cat__nav .tabs__tab:not(.tabs__tab--active) {
   background: var(--white-15);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  color: var(--neutral-dark-100);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--white-60);
 }
 
 .shorts-cat__sec {
@@ -2640,12 +2782,14 @@
   width: min(720px, 100%);
   height: 52px;
   padding: 0 7px 0 18px;
-  border: 1px solid rgba(168, 85, 247, 0.5);
+  /* The composer card's stroke and glow (`.agent-composer__card`), so the
+     docked bar reads as the same input (product owner, 2026-10-30). */
+  border: 1px solid var(--color-accent-purple);
   border-radius: 26px;
   background: rgba(24, 24, 30, 0.8);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 10px 20px rgba(168, 84, 247, 0.35);
   color: var(--neutral-dark-64);
   font: inherit;
   font-size: var(--font-body-m);
@@ -3083,11 +3227,13 @@
     border-radius: 18px;
   }
 
+  /* Three 15px lines by default (product owner, 2026-10-30; Figma
+     5582:199141 drew two). */
   .agent-composer__input {
     min-height: 0;
-    height: calc(2 * 1.45em);
+    height: calc(3 * 1.25em);
     font-size: var(--font-body-s);
-    line-height: 1.45;
+    line-height: 1.25;
     letter-spacing: -0.12px;
   }
 
@@ -3095,7 +3241,7 @@
   .agent-recipe__text {
     --recipe-lh: 24px;
     min-height: 0;
-    margin-top: calc((1.45em - var(--recipe-lh)) / 2);
+    margin-top: calc((1.25em - var(--recipe-lh)) / 2);
     font-size: var(--font-body-s);
     letter-spacing: -0.12px;
   }
@@ -3411,6 +3557,7 @@
      tabs use. Placed after the shared phone rule, which it overrides. */
   .agent-composer__input.agent-mv__input {
     height: calc(3 * 1.45em);
+    line-height: 1.45;
   }
 
   .agent-song__bar .agent-composer__create {

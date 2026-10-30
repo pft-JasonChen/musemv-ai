@@ -6,7 +6,13 @@ import { HoverCta } from "@/components/ui/HoverCta";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { GuideHint } from "@/components/agent/GuideHint";
 import { useEdgeFade } from "@/components/agent/useEdgeFade";
-import { TEMPLATE_TABS, type AgentFlowId, type TemplateCard, type TemplateSection } from "@/lib/agent/content";
+import {
+  HOT_SKILLS,
+  TEMPLATE_TABS,
+  type AgentFlowId,
+  type TemplateCard,
+  type TemplateSection,
+} from "@/lib/agent/content";
 
 /**
  * Video Shorts templates — YCA's Creator / Marketer catalogue (handoff §1.3),
@@ -17,13 +23,14 @@ import { TEMPLATE_TABS, type AgentFlowId, type TemplateCard, type TemplateSectio
  *
  * One row at a time (product owner, 2026-10-29): a tab per category picks
  * which rail shows, so the block is one card tall instead of eleven rails.
- * The chips replaced the Creator / Marketer tab bar — Creator's three
- * categories come first, then Marketer's eight, in one scrollable row.
+ * The chips replaced the Creator / Marketer tab bar — "Hot" (recommended
+ * picks, 2026-10-30) first, then Creator's three categories and Marketer's
+ * eight, in one scrollable row.
  *
  * Posters paint at once; a card's muted loop only plays while it is on screen
  * (`Card`'s `coverVideo`), so the page is not decoding dozens of clips at once.
  */
-const CATEGORIES: TemplateSection[] = TEMPLATE_TABS.flatMap((t) => t.rows);
+const CATEGORIES: TemplateSection[] = [HOT_SKILLS, ...TEMPLATE_TABS.flatMap((t) => t.rows)];
 
 export function ShortsTemplates({ onStart }: { onStart: (flow: AgentFlowId) => void }) {
   const [active, setActive] = useState(0);

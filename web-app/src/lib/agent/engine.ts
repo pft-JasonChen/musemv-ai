@@ -98,6 +98,11 @@ export interface AgentSnapshot {
   exploreUsed: boolean;
   /** A generation (or regeneration) is in progress. */
   busy: boolean;
+  /** The script is waiting on the user (survey, photo, Generate) or has ended —
+   *  the only moments a typed message may go in without splitting a reply. */
+  listening: boolean;
+  /** A typed message and its reply are in progress (`chat`). */
+  chatting: boolean;
 }
 
 export const STOP = Symbol("agent-stop");
@@ -112,6 +117,17 @@ const EMPTY: AgentSnapshot = {
   toast: null,
   exploreUsed: false,
   busy: false,
+  listening: false,
+  chatting: false,
+};
+
+/** The canned answer to a typed message (2026-10-30): the demo cannot read
+ *  free text, so it says so and points at what moves the chat on right now. */
+const CHAT_REPLY = {
+  survey: "Thanks! I can't act on typed messages in this demo yet — please pick an option in the card below to continue.",
+  photo: "Thanks! I can't act on typed messages in this demo yet — tap + below to add the photo and we'll keep going.",
+  generate: "Thanks! I can't act on typed messages in this demo yet — tap Generate when you're ready.",
+  done: "Thanks! I can't act on typed messages in this demo yet — try another skill from AI Shorts to make a new video.",
 };
 
 /** Fixed timings, handoff §2.3. */
@@ -141,6 +157,15 @@ export class AgentEngine {
   private onGenerate: (() => void) | null = null;
   /** What `generate` re-runs when the result's Regenerate is tapped. */
   private lastResult: { video: string; poster: string; dur: string } | null = null;
+  /** Settles when the typed message in progress has its reply. */
+  private chatDone: Promise<void> | null = null;
+
+  /** Run `fn` now, or once the typed message in progress has its reply — so a
+   *  survey answer, photo or Generate tapped meanwhile cannot split it. */
+  private afterChat(fn: () => void) {
+    if (this.chatDone) void this.chatDone.then(fn);
+    else fn();
+  }
 
   subscribe = (fn: () => void) => {
     this.listeners.add(fn);
@@ -169,10 +194,12 @@ export class AgentEngine {
     this.reveals.clear();
     this.onSurvey = this.onPhoto = this.onGenerate = null;
     this.lastResult = null;
+    this.chatDone = null;
     this.state = EMPTY;
     this.set({});
     try {
       await script(new Run(this, token));
+      if (token === this.run) this.set({ listening: true });
     } catch (e) {
       if (e !== STOP) throw e;
     }
@@ -254,9 +281,10 @@ export class AgentEngine {
     const review = last && last.role === "agent" && REVIEWED.has(last.body.kind) ? last.id : null;
     const answers = await new Promise<SurveyAnswer[]>((resolve) => {
       this.onSurvey = resolve;
-      this.set({ survey: { key: ++this.surveyKey, qs } });
+      this.set({ survey: { key: ++this.surveyKey, qs }, listening: true });
     });
     this.alive(token);
+    this.set({ listening: false });
     if (review !== null) this.setFb(review);
     if (raw) return answers;
     await this.wait(T.surveyEcho, token);
@@ -268,16 +296,22 @@ export class AgentEngine {
     const done = this.onSurvey;
     this.onSurvey = null;
     this.set({ survey: null });
-    done?.(answers);
+    this.afterChat(() => done?.(answers));
   };
 
   /** Wait for a photo. `msgId` is the reply whose underlined words also open the picker. */
   async waitPhoto(sheet: PickerSheet, cell: readonly [number, number], msgId: number | null, token: number, open = false) {
     await new Promise<void>((resolve) => {
       this.onPhoto = resolve;
-      this.set({ awaiting: { sheet, cell, msgId }, hint: open ? null : "photo", picker: open ? sheet : null });
+      this.set({
+        awaiting: { sheet, cell, msgId },
+        hint: open ? null : "photo",
+        picker: open ? sheet : null,
+        listening: true,
+      });
     });
     this.alive(token);
+    this.set({ listening: false });
   }
 
   openPicker = () => {
@@ -291,22 +325,23 @@ export class AgentEngine {
     const done = this.onPhoto;
     this.onPhoto = null;
     this.set({ picker: null, awaiting: null, hint: null });
-    done?.();
+    this.afterChat(() => done?.());
   };
 
   async waitGenerate(token: number) {
     await new Promise<void>((resolve) => {
       this.onGenerate = resolve;
-      this.set({ hint: "generate" });
+      this.set({ hint: "generate", listening: true });
     });
     this.alive(token);
+    this.set({ listening: false });
   }
   /** The UI has already settled the credits (Muse's GL-01 gate) before calling this. */
   tapGenerate = () => {
     const done = this.onGenerate;
     this.onGenerate = null;
     this.set({ hint: null });
-    done?.();
+    this.afterChat(() => done?.());
   };
 
   pressReady(id: number, buttons: "pressed" | "fading" | "removed") {
@@ -334,7 +369,7 @@ export class AgentEngine {
   /** Result-bar Regenerate. Credits are settled by the caller first. */
   regenerate = async () => {
     const token = this.run;
-    if (!this.lastResult || this.state.busy || this.state.survey) return;
+    if (!this.lastResult || this.state.busy || this.state.survey || this.state.chatting) return;
     this.set({ busy: true, hint: null });
     try {
       await this.wait(200, token);
@@ -348,7 +383,7 @@ export class AgentEngine {
   /** Keep exploring (handoff §3.5): one tap per chat, one reply, then the demo ends. */
   explore = async (text: string, reply: string, endToast: string) => {
     const token = this.run;
-    if (this.state.exploreUsed || this.state.busy) return;
+    if (this.state.exploreUsed || this.state.busy || this.state.chatting) return;
     this.set({ exploreUsed: true, hint: null });
     try {
       await this.user({ kind: "answers", pairs: [["", text]] }, token);
@@ -357,6 +392,40 @@ export class AgentEngine {
       this.set({ toast: endToast, hint: "back" });
     } catch (e) {
       if (e !== STOP) throw e;
+    }
+  };
+
+  /**
+   * A typed message (product owner, 2026-10-30): it goes in as the user's
+   * bubble and gets one canned reply — the demo is scripted and cannot act on
+   * free text. Only while the script is `listening`, one at a time; a survey
+   * answer, photo or Generate tapped meanwhile waits for the reply
+   * (`afterChat`), so the script's next message never splits it.
+   */
+  chat = async (text: string) => {
+    const token = this.run;
+    const t = text.trim();
+    if (!t || !this.state.listening || this.state.chatting || this.state.busy) return;
+    const reply = this.state.survey
+      ? CHAT_REPLY.survey
+      : this.state.awaiting
+        ? CHAT_REPLY.photo
+        : this.onGenerate
+          ? CHAT_REPLY.generate
+          : CHAT_REPLY.done;
+    let release = () => {};
+    this.chatDone = new Promise<void>((r) => (release = r));
+    this.set({ chatting: true });
+    try {
+      await this.user({ kind: "answers", pairs: [["", t]] }, token);
+      await this.think(1200, token);
+      await this.say({ kind: "text", text: [reply] }, token);
+    } catch (e) {
+      if (e !== STOP) throw e;
+    } finally {
+      this.chatDone = null;
+      if (token === this.run) this.set({ chatting: false });
+      release();
     }
   };
 }

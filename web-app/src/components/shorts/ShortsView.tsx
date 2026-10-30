@@ -98,7 +98,7 @@ export function ShortsView() {
           <DpIcon name="ic_video_shorts" className="shorts-dock__icon" />
           <span className="shorts-dock__text">{SHORTS_PLACEHOLDER}</span>
           <span className="shorts-dock__go" aria-hidden="true">
-            <DpIcon name="ic_arrow_up" className="shorts-dock__go-icon" />
+            <DpIcon name="ic_arrow_right" className="shorts-dock__go-icon" />
           </span>
         </button>
       </div>
