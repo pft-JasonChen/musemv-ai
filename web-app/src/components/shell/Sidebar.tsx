@@ -49,9 +49,10 @@ const HIDDEN: ReadonlySet<NavKey> = new Set<NavKey>(["story", "blog"]);
 
 const NAV: NavItem[] = [
   { key: "home", href: "/", labelKey: "nav.home", icon: "ic_compass_OL" },
+  { key: "mv", href: "/mv/room", labelKey: "nav.createMv", icon: "ic_video_ai" },
   // feature/video-agent-home (2026-10-29): the AI Shorts landing, and the
-  // `/agent` chat it starts, which has no nav item of its own. First of the
-  // three creators (product owner, 2026-10-30).
+  // `/agent` chat it starts, which has no nav item of its own. Below AI
+  // Music Video (product owner, 2026-11-01; it was first from 2026-10-30).
   {
     key: "shorts",
     href: "/shorts",
@@ -60,7 +61,6 @@ const NAV: NavItem[] = [
     also: ["/agent"],
     badge: "NEW",
   },
-  { key: "mv", href: "/mv/room", labelKey: "nav.createMv", icon: "ic_video_ai" },
   { key: "song", href: "/song/create", labelKey: "nav.createSong", icon: "ic_song_ai" },
   { key: "story", href: "#", labelKey: "nav.storybook", icon: "ic_story_ai" },
   { key: "history", href: "/history", labelKey: "nav.history", icon: "ic_history_OL" },
