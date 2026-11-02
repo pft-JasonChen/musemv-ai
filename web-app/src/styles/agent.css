@@ -482,15 +482,18 @@
    size (HeroBannerSectionV3.css is verbatim DP, so the compact treatment is a
    scoped modifier here). Width and the track's centring padding must change
    together — that file's own note says the two must match. */
+/* Desktop: a fixed 200px-tall 16:9 card, ~356×200 (product owner,
+   2026-11-02; it was ~26.7vw, up to 475px, then 320×180), so more of them fit
+   — and play — at once. */
 .hero-banner-v3--compact .hero-banner-v3__track {
   gap: 16px;
-  padding-inline: max(0px, calc((100% - min(26.7vw, 475px)) / 2));
+  padding-inline: max(0px, calc((100% - 200px * 16 / 9) / 2));
 }
 
 /* 12px padding like the cards below (`.card--flat`); 8px on phones, as
    theirs is (product owner, 2026-10-30). */
 .hero-banner-v3--compact .hero-banner-v3__card {
-  width: min(26.7vw, 475px);
+  width: calc(200px * 16 / 9);
   aspect-ratio: 16 / 9;
   padding: 12px;
   border-radius: var(--radius-xl);
@@ -531,8 +534,12 @@
   line-height: 24px;
 }
 
+/* A line height that fits the 12px text (HeroBannerSectionV3.css's is 24px,
+   for its 16px subtitle), so the title and subtitle sit only the text block's
+   2px gap apart (product owner, 2026-11-02). */
 .hero-banner-v3--compact .hero-banner-v3__subtitle {
   font-size: var(--font-body-s);
+  line-height: 16px;
 }
 
 /* Tablet and phone strips are smaller than they were (product owner,
@@ -569,6 +576,7 @@
   }
   .hero-banner-v3--compact .hero-banner-v3__subtitle {
     font-size: 11px;
+    line-height: 14px;
   }
 }
 
@@ -620,6 +628,244 @@
   }
   .hero-banner-v3--square .hero-banner-v3__subtitle {
     display: none;
+  }
+}
+
+/* Song covers' ▶ (2026-11-02), in the card's padding corner (12px; 8px on
+   phones) and in Top Picks' play-button look (Card.css `.card__play`):
+   translucent black, a light blur, a white icon — the same as the MV cards'
+   hover ▶. */
+.hero-banner-v3--compact .hero-banner-v3__play {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--black-40);
+  -webkit-backdrop-filter: blur(2.667px);
+  backdrop-filter: blur(2.667px);
+  color: var(--neutral-dark-100);
+  cursor: pointer;
+}
+
+/* Revealed on hover like the "Use Style" pill (product owner, 2026-11-02);
+   touch screens have no hover, so there it stays shown. */
+@media (hover: hover) {
+  .hero-banner-v3--compact .hero-banner-v3__play {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .hero-banner-v3__card:hover .hero-banner-v3__play,
+  .hero-banner-v3__card:has(:focus-visible) .hero-banner-v3__play,
+  .hero-banner-v3__card--playing .hero-banner-v3__play {
+    opacity: 1;
+  }
+}
+
+/* Press: the WHOLE card scales down, like the AI Shorts skill cards (product
+   owner, 2026-11-02) — not just the media button inside it, which globals.css
+   would scale on its own. The controls inside don't scale a second time. */
+.hero-banner-v3--compact .hero-banner-v3__card {
+  transition:
+    border-color 240ms ease,
+    transform 0.12s ease;
+}
+
+.hero-banner-v3--compact .hero-banner-v3__card:active {
+  transform: scale(0.97);
+}
+
+.hero-banner-v3--compact .hero-banner-v3__card button.hero-banner-v3__media-link:active,
+.hero-banner-v3--compact .hero-banner-v3__card button.hero-banner-v3__play:active,
+.hero-banner-v3__card .hover-cta-group button.hover-cta-play:active {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-banner-v3--compact .hero-banner-v3__card:active {
+    transform: none;
+  }
+}
+
+.hero-banner-v3__play-icon {
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+@media (max-width: 767px) {
+  .hero-banner-v3--compact .hero-banner-v3__play {
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+  }
+  .hero-banner-v3__play-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ── Music Video style preview (StylePreviewDialog, 2026-11-02) ────────────
+   DpDialog's four boxes, the same shell and look as History's create sheet:
+   a centred card on desktop / tablet, a bottom sheet on phones. */
+.style-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.style-preview-overlay--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.style-preview-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.style-preview {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 720px;
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-3xl, 26px);
+  background: var(--neutral-dark-09);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  transform: scale(0.96);
+  transition: transform 0.3s ease;
+}
+
+.style-preview-overlay--visible .style-preview {
+  transform: scale(1);
+}
+
+.style-preview__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.style-preview__header-spacer {
+  display: none;
+}
+
+.style-preview__title {
+  flex: 1;
+  margin: 0;
+  color: var(--neutral-dark-100);
+  font-family: var(--font-family-primary);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 24px;
+  letter-spacing: -0.2px;
+}
+
+.style-preview__close {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0.6px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: var(--white-15);
+  cursor: pointer;
+}
+
+.style-preview__close-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.style-preview__handle {
+  display: none;
+}
+
+.style-preview__video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-lg);
+  background: #000;
+  object-fit: cover;
+}
+
+/* "Use this Style", centred (product owner, 2026-11-02) at Button.css's own
+   230px minimum for a large primary; full width on phones (below). */
+.style-preview__actions {
+  display: grid;
+  grid-template-columns: 230px;
+  justify-content: center;
+}
+
+.style-preview__actions > * {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .style-preview-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .style-preview {
+    max-width: 100%;
+    padding: 12px 16px max(env(safe-area-inset-bottom), 20px);
+    border-radius: 26px 26px 0 0;
+    transform: translateY(100%);
+  }
+
+  .style-preview-overlay--visible .style-preview {
+    transform: translateY(0);
+  }
+
+  .style-preview__handle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto;
+    border-radius: 2px;
+    background: var(--white-15);
+  }
+
+  /* The handle sits above the title row. */
+  .style-preview__handle {
+    order: -1;
+  }
+
+  .style-preview__actions {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1062,10 +1308,13 @@
     transform: translate(-50%, -50%);
   }
 
+  /* Keyboard focus reveals it, a mouse click does not (`:focus-visible`, not
+     `:focus-within`): a clicked ▶ keeps focus, and the CTA would otherwise
+     stay up after the pointer leaves (product owner, 2026-11-02). */
   .shorts-card:hover .hover-cta,
   .shorts-card:focus-visible .hover-cta,
   .hero-banner-v3__card:hover .hover-cta,
-  .hero-banner-v3__card:focus-within .hover-cta {
+  .hero-banner-v3__card:has(:focus-visible) .hover-cta {
     opacity: 1;
     transform: translate(-50%, -50%);
   }
@@ -1079,6 +1328,88 @@
 
 @media (hover: hover) and (prefers-reduced-motion: reduce) {
   .hover-cta {
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* The Music Video inspiration cards pair the CTA with a ▶ that previews the
+   card (2026-11-02): the GROUP takes the centring and the reveal, and the
+   pill inside it sits in the row like any flex item. Hidden on touch screens
+   and on phones, like the pill alone. */
+.hover-cta-group {
+  display: none;
+}
+
+@media (hover: hover) {
+  .hover-cta-group {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 4px));
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .hero-banner-v3__card:hover .hover-cta-group,
+  .hero-banner-v3__card:has(:focus-visible) .hover-cta-group {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+
+  /* (0,3,0)+, later in the file: beats the card reveal's
+     `.hero-banner-v3__card:hover .hover-cta` centring transform. */
+  .hero-banner-v3__card .hover-cta-group .hover-cta,
+  .hero-banner-v3__card .hover-cta-group button.hover-cta:not(:disabled):active {
+    position: static;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Round, the pill's height (8 + 20 + 8), in Top Picks' play-button look
+     (Card.css `.card__play`): translucent black, a light blur, white icon
+     (product owner, 2026-11-02). */
+  .hover-cta-play {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--black-40);
+    -webkit-backdrop-filter: blur(2.667px);
+    backdrop-filter: blur(2.667px);
+    color: var(--neutral-dark-100);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .hover-cta-play__icon {
+    width: 20px;
+    height: 20px;
+    background-color: currentColor;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+  }
+}
+
+@media (max-width: 767px) {
+  .hover-cta-group {
+    display: none;
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .hover-cta-group {
     transform: translate(-50%, -50%);
   }
 }

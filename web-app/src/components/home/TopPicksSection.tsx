@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { useEdgeFade } from "@/components/agent/useEdgeFade";
 import { SongPlayBar } from "@/components/song/SongPlayBar";
+import { onSongPreviewRequest, publishSongPlaying } from "@/lib/songPreviewBus";
 
 /**
  * ── MIGRATED FROM THE DESIGNER PROTOTYPE (landing page, the 17th route) ─────
@@ -195,6 +196,19 @@ export function TopPicksSection({
     onPreviewOpen?.();
     setPreviewId(songId);
   }
+
+  // The composer's Song inspiration covers play their song here, in this
+  // section's bar (`songPreviewBus`, 2026-11-02) — the same catalogue, so
+  // the same handler as this row's own ▶. Re-subscribed every render so the
+  // handler always sees the current preview state.
+  useEffect(() => onSongPreviewRequest((id) => handlePlayClick(id)));
+
+  // …and tell them which one is playing, so that cover shows ⏸.
+  const playingId = playing && previewId ? previewId : null;
+  useEffect(() => {
+    publishSongPlaying(playingId);
+    return () => publishSongPlaying(null);
+  }, [playingId]);
 
   function stepPreview(delta: 1 | -1) {
     const index = TOP_PICKS_SONGS.findIndex((s) => s.id === previewId);

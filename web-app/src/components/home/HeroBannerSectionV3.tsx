@@ -9,6 +9,7 @@ import { useLocale } from "@/components/providers/LocaleProvider";
 import { localePath } from "@/lib/i18n/config";
 import { IconButton } from "@/components/ui/IconButton";
 import { HoverCta } from "@/components/ui/HoverCta";
+import { DpIcon } from "@/components/ui/DpIcon";
 import { HERO_ITEMS, type HeroItem } from "./heroItems";
 
 /**
@@ -33,6 +34,12 @@ import { HERO_ITEMS, type HeroItem } from "./heroItems";
  * DP swaps the active card's poster `<img>` for a `<video>`; the rest stay
  * still images. Kept exactly — eight simultaneous autoplaying mp4s is not a
  * detail to "simplify" on a page whose first paint matters.
+ *
+ * EXCEPT the composer's compact Music Video strip (product owner,
+ * 2026-11-02): there every card that is WHOLLY inside the track plays, muted
+ * — three or so on desktop, measured once scrolling settles. Cards cut by the
+ * edges stay posters, so it is never all eight. The sound toggle stays on the
+ * centred card and only ever unmutes that one.
  *
  * ── WA ADDS `requireLogin` (AC-EXP-02 / GL-02) ─────────────────────────────
  *
@@ -86,6 +93,9 @@ export function HeroBannerSectionV3({
   autoAdvance = !compact,
   ctaLabel = "Create MV",
   onCta,
+  onPreview,
+  onPlay,
+  playingId = null,
 }: {
   /** Defaults to DP's hero catalog. Read once — the loop maths below close
    *  over it from the mount effect, so a caller must not swap it in place. */
@@ -105,13 +115,24 @@ export function HeroBannerSectionV3({
   /** Replaces the default "go to /mv/room" with a caller action — the
    *  composer uses it to load the card's style into the prompt instead. */
   onCta?: (item: HeroCard) => void;
+  /** With `onCta`: a click on the card body previews it here instead of
+   *  applying it — only the CTA applies (the composer's Music Video strip,
+   *  2026-11-02: watch and hear it first). */
+  onPreview?: (item: HeroCard) => void;
+  /** Square cards: a ▶ on the cover that plays the song (2026-11-02). */
+  onPlay?: (item: HeroCard) => void;
+  /** With `onPlay`: the card whose song is playing shows ⏸, kept visible
+   *  without hover (2026-11-02). */
+  playingId?: string | null;
 } = {}) {
   const REAL = items.length;
   // K clones on each side: domIndex 0..K-1 = clones of the last K real cards,
   // K..K+REAL-1 = real cards, then clones of the first K. DP uses K = 1; the
   // square Song strip shows ~6 narrow cards, so the centred card needs more
   // neighbours on its left than one clone, or the strip starts half empty.
-  const K = square ? 4 : 1;
+  // The compact Music Video strip too, since its cards went to a fixed 320px
+  // (2026-11-02): on a wide screen one clone left the strip's left end empty.
+  const K = square || compact ? 4 : 1;
   const PADDED_ITEMS = [...items.slice(-K), ...items, ...items.slice(0, K)];
   const router = useRouter();
   const { locale } = useLocale();
@@ -134,11 +155,33 @@ export function HeroBannerSectionV3({
   // only, so `muted` alone (still the declarative `<video muted>` prop, no
   // ref needed) is the whole story.
   const [muted, setMuted] = useState(true);
+  // The compact Music Video strip plays every wholly visible card (see the
+  // header); `visible` holds their DOM indices, measured on settle.
+  const playVisible = compact && !square;
+  const [visible, setVisible] = useState<Set<number>>(() => new Set());
+  // The compact strips are always silent and have no sound button (product
+  // owner, 2026-11-02): an MV is heard in its preview dialog. Only the home
+  // hero's centred card can be unmuted.
+  const isMuted = (isActive: boolean) => (compact || !isActive ? true : muted);
 
-  function media(item: HeroCard, isActive: boolean) {
+  function measureVisible() {
+    const track = trackRef.current;
+    if (!playVisible || !track) return;
+    const box = track.getBoundingClientRect();
+    const next = new Set<number>();
+    Array.from(track.children).forEach((card, i) => {
+      const r = card.getBoundingClientRect();
+      if (r.left >= box.left - 1 && r.right <= box.right + 1) next.add(i);
+    });
+    setVisible((prev) =>
+      prev.size === next.size && [...next].every((i) => prev.has(i)) ? prev : next,
+    );
+  }
+
+  function media(item: HeroCard, plays: boolean, silent: boolean) {
     return (
       <>
-        {isActive && item.video ? (
+        {plays && item.video ? (
           <video
             className="hero-banner-v3__bg"
             src={item.video}
@@ -154,7 +197,8 @@ export function HeroBannerSectionV3({
             poster={item.thumbnail}
             autoPlay
             loop
-            muted={muted}
+            // One card at most is ever unmuted; the rest play silent.
+            muted={silent}
             playsInline
           />
         ) : (
@@ -208,6 +252,7 @@ export function HeroBannerSectionV3({
     // A manual scroll must move the "playing" card too — without the
     // auto-advance there is no later scrollToIndex() to do it.
     setActiveDomIndex(nearest);
+    measureVisible();
     // Landed on a clone — pixel-identical to its real equivalent, so jumping
     // to it with no transition is invisible.
     if (nearest >= REAL + K) scrollToIndex(nearest - REAL, false);
@@ -220,10 +265,12 @@ export function HeroBannerSectionV3({
   useEffect(() => {
     stepRef.current = measureStep();
     scrollToIndex(K, false);
+    measureVisible();
     startAuto();
     function handleResize() {
       stepRef.current = measureStep();
       scrollToIndex(domIndexRef.current, false);
+      measureVisible();
     }
     function handleVisibility() {
       if (document.hidden) window.clearInterval(timerRef.current);
@@ -262,9 +309,16 @@ export function HeroBannerSectionV3({
       <div className="hero-banner-v3__track" ref={trackRef} onScroll={handleScroll}>
         {PADDED_ITEMS.map((item, domIndex) => {
           const isActive = domIndex === activeDomIndex;
+          const plays = isActive || (playVisible && visible.has(domIndex));
+          const silent = isMuted(isActive);
           const detailHref = localePath(locale, hrefFor(item));
+          const songPlaying = onPlay !== undefined && item.id === playingId;
+          const songName = item.subtitle.split("|").pop()?.trim() ?? item.title;
           return (
-            <div className="hero-banner-v3__card" key={`${domIndex}-${item.title}`}>
+            <div
+              className={`hero-banner-v3__card${songPlaying ? " hero-banner-v3__card--playing" : ""}`}
+              key={`${domIndex}-${item.title}`}
+            >
               {/* With `onCta` (the composer's inspiration strip) the WHOLE card
                   applies the style, same as its CTA (product owner, 2026-10-29),
                   so the media is a button rather than a link to /watch. The
@@ -273,10 +327,10 @@ export function HeroBannerSectionV3({
                 <button
                   type="button"
                   className="hero-banner-v3__media-link"
-                  aria-label={item.title}
-                  onClick={() => onCta(item)}
+                  aria-label={onPreview ? `Preview ${item.title}` : item.title}
+                  onClick={() => (onPreview ? onPreview(item) : onCta(item))}
                 >
-                  {media(item, isActive)}
+                  {media(item, plays, silent)}
                 </button>
               ) : (
                 <Link
@@ -284,10 +338,10 @@ export function HeroBannerSectionV3({
                   className="hero-banner-v3__media-link"
                   aria-label={item.title}
                 >
-                  {media(item, isActive)}
+                  {media(item, plays, silent)}
                 </Link>
               )}
-              {isActive && item.video && (
+              {!compact && isActive && item.video && (
                 // Figma node 1875:34094 (2311:63472) — glass circular button,
                 // top-right of the card. No DP-native class for this control
                 // exists (it's new UI, not a ported one), so position is set
@@ -296,7 +350,8 @@ export function HeroBannerSectionV3({
                 // its existing "small/tertiary" preset, which already matches
                 // the Figma spec pixel-for-pixel (28px, 16px icon, white-15
                 // glass). Plain mute/unmute toggle only (product owner,
-                // 2026-09-16) — no volume-slider popup here.
+                // 2026-09-16) — no volume-slider popup here. The home hero
+                // only: the compact strips have none (2026-11-02).
                 <div
                   className="hero-banner-v3__volume"
                   style={{ position: "absolute", top: 16, right: 16, zIndex: 2 }}
@@ -310,6 +365,21 @@ export function HeroBannerSectionV3({
                   />
                 </div>
               )}
+              {onPlay && (
+                // Song covers: play / pause the song (2026-11-02), top-right,
+                // in the Top Picks play-button look (agent.css).
+                <button
+                  type="button"
+                  className="hero-banner-v3__play"
+                  aria-label={`${songPlaying ? "Pause" : "Play"} ${songName}`}
+                  onClick={() => onPlay(item)}
+                >
+                  <DpIcon
+                    name={songPlaying ? "ic_pause" : "ic_play"}
+                    className="hero-banner-v3__play-icon"
+                  />
+                </button>
+              )}
               <div className="hero-banner-v3__bottom">
                 {onCta ? (
                   <div className="hero-banner-v3__text">
@@ -322,7 +392,21 @@ export function HeroBannerSectionV3({
                     <p className="hero-banner-v3__subtitle">{item.subtitle}</p>
                   </Link>
                 )}
-                {onCta ? (
+                {onCta && onPreview ? (
+                  // Music Video strip (2026-11-02): ▶ beside the CTA opens
+                  // the preview — the pair centres on the card as one.
+                  <div className="hover-cta-group">
+                    <HoverCta label={ctaLabel} onClick={() => onCta(item)} />
+                    <button
+                      type="button"
+                      className="hover-cta-play"
+                      aria-label={`Play ${item.title}`}
+                      onClick={() => onPreview(item)}
+                    >
+                      <DpIcon name="ic_play" className="hover-cta-play__icon" />
+                    </button>
+                  </div>
+                ) : onCta ? (
                   // Home's inspiration strip: the shared centred hover CTA,
                   // the same component as the skill cards' "Use Skill".
                   <HoverCta label={ctaLabel} onClick={() => onCta(item)} />

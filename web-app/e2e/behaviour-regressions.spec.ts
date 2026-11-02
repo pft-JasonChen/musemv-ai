@@ -5625,6 +5625,29 @@ test("video-agent-home: on phones a survey with its own text field covers the me
   await expect(field).toBeHidden();
 });
 
+test("video-agent-home: a Song inspiration cover's ▶ plays the song in Home's preview bar without applying it", async ({
+  page,
+}) => {
+  // Product owner, 2026-11-02: hear it before choosing. Top Picks owns the bar
+  // (`songPreviewBus`); the prompt is left alone.
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Song" }).click();
+  const play = page.locator(".hero-banner-v3--square button.hero-banner-v3__play").nth(5);
+  const label = (await play.getAttribute("aria-label"))!;
+  const song = label.replace(/^Play “|”$/g, "");
+  await play.click();
+  await expect(page.locator(".song-bar")).toContainText(song);
+  await expect(page.locator(".agent-song__input")).toHaveValue("");
+  // While it plays the ▶ is a ⏸, and once the pointer leaves only that stays
+  // up — the click's focus must not hold "Use Style" open.
+  await expect(play).toHaveAttribute("aria-label", `Pause “${song}”`);
+  await page.mouse.move(0, 0);
+  const card = play.locator("xpath=..");
+  await expect(card.locator(".hover-cta")).toHaveCSS("opacity", "0");
+  await expect(play).toHaveCSS("opacity", "1");
+});
+
 test("video-agent-home: a typed AI Shorts prompt sends — the arrow opens the Agent on it, which asks what kind of video", async ({
   page,
 }) => {
@@ -5720,24 +5743,36 @@ test("video-agent-home: the Sidebar's AI Shorts opens /shorts — composer witho
   ).toHaveAttribute("aria-current", "page");
 });
 
-test("video-agent-home: a click anywhere on an inspiration card applies its style, and phones show no CTA", async ({
+test("video-agent-home: a click anywhere on an MV inspiration card previews it, Use this Style applies it, and phones show no CTA", async ({
   page,
 }) => {
-  // Product owner, 2026-10-29: the whole card is the target, same as its
-  // "Use" CTA, and it stays on Home. On phones the CTA is gone entirely.
+  // Product owner, 2026-11-02 (it applied straight away from 2026-10-29): the
+  // card body opens a preview with sound; only "Use this Style" there, or the
+  // hover CTA, applies it — and it stays on Home. Phones have no hover CTA.
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/");
   await page.getByRole("tab", { name: "Music Video" }).click();
   const strip = page.locator(".hero-banner-v3--compact");
+  // The strip plays silent and has no sound button; sound is the dialog's.
+  await expect(strip.locator(".hero-banner-v3__card")).not.toHaveCount(0);
+  await expect(strip.locator(".hero-banner-v3__volume")).toHaveCount(0);
   // The title sits over the card's media button and lets the click through
   // (pointer-events: none), so click its POSITION — locator.click() would
   // refuse, because the media button is what is actually under the pointer.
-  const title = strip.locator(".hero-banner-v3__title").nth(2);
+  const title = strip.locator(".hero-banner-v3__title").nth(5);
   await title.scrollIntoViewIfNeeded();
+  const name = (await title.textContent())!;
   const box = (await title.boundingBox())!;
   await page.mouse.click(box.x + 10, box.y + box.height / 2);
+  const preview = page.getByRole("dialog", { name: `${name} preview` });
+  await expect(preview).toBeVisible();
+  await expect(preview.locator("video")).toHaveCount(1);
+  await expect(page.locator(".agent-composer__input")).toHaveValue("");
+  await preview.getByRole("button", { name: "Use this Style" }).click();
+  await expect(preview).toBeHidden();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator(".agent-composer__input")).toHaveValue(/music video inspired by “.+”\.$/);
+  await expect(page.locator(".agent-mv__templates-label")).toHaveText(name);
 
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/");

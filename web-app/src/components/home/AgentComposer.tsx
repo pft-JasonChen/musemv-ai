@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -32,6 +32,13 @@ import { RecipeEditor } from "./RecipeEditor";
 import { MvInput, type MvPick } from "./MvInput";
 import { SongInput } from "./SongInput";
 import { ShortsTemplates } from "./ShortsTemplates";
+import { StylePreviewDialog } from "./StylePreviewDialog";
+import {
+  getSongPlaying,
+  getSongPlayingServer,
+  requestSongPreview,
+  subscribeSongPlaying,
+} from "@/lib/songPreviewBus";
 
 /**
  * Home's Agent composer (feature/video-agent-home) — replaces the two tool
@@ -77,6 +84,19 @@ import { ShortsTemplates } from "./ShortsTemplates";
  */
 
 type Mode = "mv" | "song" | "shorts";
+
+/**
+ * The Home composer tab last picked, for the lifetime of the document
+ * (product owner, 2026-11-02): open a card, "See all" or a create screen and
+ * come back, and Home is on the tab you left — not reset to AI Shorts.
+ * Module scope, like History's `rememberedFilter`: it survives client-side
+ * navigation and resets on a real page load, which also keeps the first
+ * render identical to the server's ("shorts").
+ */
+let rememberedMode: Mode | null = null;
+const rememberMode = (m: Mode) => {
+  rememberedMode = m;
+};
 type Product = { type: "photo" } | { type: "url"; url: string } | null;
 
 const MODES: { id: Mode; label: string; icon: string; placeholder: string; href?: string }[] = [
@@ -103,11 +123,27 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
   const router = useRouter();
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
-  const [mode, setMode] = useState<Mode>("shorts");
+  // Home resumes the tab the user left it on (see `rememberedMode`); /shorts
+  // only ever does AI Shorts.
+  const [mode, setModeState] = useState<Mode>(() =>
+    solo ? "shorts" : (rememberedMode ?? "shorts"),
+  );
+  const setMode = (m: Mode) => {
+    if (!solo) rememberMode(m);
+    setModeState(m);
+  };
   const { songCompose, patchSongCompose } = useSongFlow();
   const { compose, patchCompose } = useMvFlow();
   /** What the MV tab's Templates button shows: a template or a hero style. */
   const [mvPick, setMvPick] = useState<MvPick | null>(null);
+  /** The Music Video inspiration card being previewed (`StylePreviewDialog`). */
+  const [preview, setPreview] = useState<HeroCard | null>(null);
+  // The song Home's preview bar is playing, so its cover shows ⏸.
+  const songPlaying = useSyncExternalStore(
+    subscribeSongPlaying,
+    getSongPlaying,
+    getSongPlayingServer,
+  );
   const [text, setText] = useState<Record<Mode, string>>({ mv: "", song: "", shorts: "" });
   const [recipe, setRecipe] = useState(false);
   const [product, setProduct] = useState<Product>(null);
@@ -215,7 +251,9 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
           <h1 className="tool-selector-v3__heading agent-composer__heading">
             {/* Phones get the shorter line, which fits on one line at 320px
                 (product owner, 2026-10-30); CSS shows one or the other. */}
-            <span className="agent-composer__heading-full">What would you like to create today?</span>
+            <span className="agent-composer__heading-full">
+              What would you like to create today?
+            </span>
             <span className="agent-composer__heading-short">What will you create today?</span>
           </h1>
         )}
@@ -425,6 +463,22 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
           // actually starts a job; this one only loads the style into the prompt.
           ctaLabel="Use Style"
           onCta={applyStyle}
+          // Watch / hear before choosing (product owner, 2026-11-02): an MV
+          // card opens a preview with sound, a Song cover's ▶ plays the song
+          // in Home's preview bar (Top Picks owns it, `songPreviewBus`).
+          onPreview={mode === "mv" ? setPreview : undefined}
+          onPlay={mode === "song" ? (c) => requestSongPreview(c.id) : undefined}
+          playingId={songPlaying}
+        />
+      )}
+      {!solo && (
+        <StylePreviewDialog
+          card={preview}
+          onClose={() => setPreview(null)}
+          onUse={(c) => {
+            setPreview(null);
+            applyStyle(c);
+          }}
         />
       )}
       {!solo && mode === "shorts" && (
