@@ -916,6 +916,12 @@ test("S13 mobile IA: the + tab opens the create sheet with all three creators", 
   const shorts = sheet.getByRole("link", { name: /AI Shorts/ });
   await expect(shorts).toHaveAttribute("href", "/shorts");
   await expect(shorts.getByText("NEW")).toBeVisible();
+  // Second, after AI Music Video, as in the Sidebar (product owner, 2026-11-02).
+  await expect(sheet.locator(".mobile-tabbar-sheet__option-title")).toHaveText([
+    "AI Music Video",
+    "AI ShortsNEW",
+    "AI Song",
+  ]);
   await shorts.click();
   await expect(page).toHaveURL(/\/shorts$/);
 });

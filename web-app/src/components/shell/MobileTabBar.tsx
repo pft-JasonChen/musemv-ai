@@ -134,10 +134,36 @@ export function MobileTabBar() {
           <div className="mobile-tabbar-sheet__handle" aria-hidden="true" />
           <p className="mobile-tabbar-sheet__title">What would you like to create?</p>
 
-          {/* First of the three (product owner, 2026-10-30). Opens the AI Shorts
-              landing, not the chat: there the user picks a
-              skill or types an idea. The NEW pill is the Sidebar's own
-              `.sidebar__nav-badge`, so both say "new" the same way. */}
+          <Link
+            href={localePath(locale, "/mv/room")}
+            onClick={(e) => go(e, "/mv/room")}
+            className="mobile-tabbar-sheet__option"
+          >
+            <span className="mobile-tabbar-sheet__badge mobile-tabbar-sheet__badge--mv">
+              <span
+                className="mobile-tabbar-sheet__badge-icon"
+                style={mask("ic_video_ai")}
+                aria-hidden="true"
+              />
+            </span>
+            <span className="mobile-tabbar-sheet__option-info">
+              <span className="mobile-tabbar-sheet__option-title">{t("nav.createMv")}</span>
+              <span className="mobile-tabbar-sheet__option-subtitle">
+                Selfie + music → cinematic MV
+              </span>
+            </span>
+            <span
+              className="mobile-tabbar-sheet__chevron"
+              style={mask("ic_chevron-right")}
+              aria-hidden="true"
+            />
+          </Link>
+
+          {/* Second, after AI Music Video (product owner, 2026-11-02; it was
+              first), matching the Sidebar. Opens the AI Shorts landing, not
+              the chat: there the user picks a skill or types an idea. The NEW
+              pill is the Sidebar's own `.sidebar__nav-badge`, so both say
+              "new" the same way. */}
           <Link
             href={localePath(locale, "/shorts")}
             onClick={(e) => go(e, "/shorts")}
@@ -157,31 +183,6 @@ export function MobileTabBar() {
               </span>
               <span className="mobile-tabbar-sheet__option-subtitle">
                 Pick a skill + photo → short video
-              </span>
-            </span>
-            <span
-              className="mobile-tabbar-sheet__chevron"
-              style={mask("ic_chevron-right")}
-              aria-hidden="true"
-            />
-          </Link>
-
-          <Link
-            href={localePath(locale, "/mv/room")}
-            onClick={(e) => go(e, "/mv/room")}
-            className="mobile-tabbar-sheet__option"
-          >
-            <span className="mobile-tabbar-sheet__badge mobile-tabbar-sheet__badge--mv">
-              <span
-                className="mobile-tabbar-sheet__badge-icon"
-                style={mask("ic_video_ai")}
-                aria-hidden="true"
-              />
-            </span>
-            <span className="mobile-tabbar-sheet__option-info">
-              <span className="mobile-tabbar-sheet__option-title">{t("nav.createMv")}</span>
-              <span className="mobile-tabbar-sheet__option-subtitle">
-                Selfie + music → cinematic MV
               </span>
             </span>
             <span
