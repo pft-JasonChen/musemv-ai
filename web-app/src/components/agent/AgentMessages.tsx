@@ -43,7 +43,7 @@ export function AgentMessage({ msg, a }: { msg: Msg; a: MessageActions }) {
   if (msg.role === "think" && msg.gen === "image") {
     return (
       <div className={`agent-msg agent-msg--think${msg.gone ? " agent-msg--gone" : ""}`}>
-        <AgentHead />
+        <AgentHead busy />
         <div className="agent-proc__card" role="status">
           <GenDots />
           <span>Generating storyboard…</span>
@@ -54,7 +54,7 @@ export function AgentMessage({ msg, a }: { msg: Msg; a: MessageActions }) {
   if (msg.role === "think") {
     return (
       <div className={`agent-msg agent-msg--think${msg.gone ? " agent-msg--gone" : ""}`}>
-        <AgentHead />
+        <AgentHead busy />
         <p className="agent-think">
           Thinking &amp; analyzing
           <span className="agent-think__dots" aria-hidden="true">
@@ -71,11 +71,13 @@ export function AgentMessage({ msg, a }: { msg: Msg; a: MessageActions }) {
   return <AgentReply msg={msg} a={a} />;
 }
 
-function AgentHead() {
+/** `busy`: the star spins while the agent is thinking or generating
+ *  (product owner, 2026-11-02). */
+function AgentHead({ busy = false }: { busy?: boolean }) {
   return (
     <div className="agent-msg__hd">
-      <span className="agent-avatar" aria-hidden="true">
-        <DpIcon name="ic_sparkles" className="agent-avatar__icon" />
+      <span className={`agent-avatar${busy ? " agent-avatar--busy" : ""}`} aria-hidden="true">
+        <DpIcon name="ic_star" className="agent-avatar__icon" />
       </span>
       <span>AI Agent</span>
     </div>
@@ -109,7 +111,8 @@ function AgentReply({ msg, a }: { msg: Extract<Msg, { role: "agent" }>; a: Messa
       className={`agent-msg agent-msg--agent${msg.gone ? " agent-msg--gone" : ""}`}
       data-msg={msg.id}
     >
-      <AgentHead />
+      {/* The video-processing card is still working, so its star spins too. */}
+      <AgentHead busy={msg.body.kind === "proc"} />
       <div className="agent-msg__body">
         <ReplyBody msg={msg} a={a} />
       </div>

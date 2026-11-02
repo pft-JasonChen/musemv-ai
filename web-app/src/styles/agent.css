@@ -1858,6 +1858,26 @@
   mask-repeat: no-repeat;
 }
 
+/* Thinking / generating (product owner, 2026-11-02): the star turns once in
+   1s, ease-in-out, then rests 0.3s — one 1.3s loop, so the turn is the first
+   10/13 and the rest is a hold. */
+@media (prefers-reduced-motion: no-preference) {
+  .agent-avatar--busy .agent-avatar__icon {
+    animation: agent-avatar-spin 1.3s infinite;
+  }
+}
+
+@keyframes agent-avatar-spin {
+  0% {
+    transform: rotate(0deg);
+    animation-timing-function: ease-in-out;
+  }
+  76.923%,
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .agent-msg__body {
   display: flex;
   flex-direction: column;
