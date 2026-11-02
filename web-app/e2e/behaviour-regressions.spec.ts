@@ -4043,6 +4043,42 @@ test("video-agent-home: Use loads the hero card into the Music Video prompt", as
   await expect(prompt).toHaveValue("My own idea");
 });
 
+test("video-agent-home: an applied style's ✕ removes it, and the prompt only if the user left it as written", async ({
+  page,
+}) => {
+  // Product owner, 2026-11-02: once applied, the › is a ✕ beside the chip (the
+  // chip still reopens the picker). It clears the style and the starter it
+  // wrote — never text the user changed — and hands focus back to the chip.
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Music Video" }).click();
+  const prompt = page.locator(".agent-composer__input");
+  const label = page.locator(".agent-mv__templates-label");
+  const useStyle = () => page.getByRole("button", { name: "Use Style", exact: true }).nth(1).click();
+
+  await useStyle();
+  await page.getByRole("button", { name: /^Remove / }).click();
+  await expect(label).toHaveText("Templates");
+  await expect(prompt).toHaveValue("");
+  await expect(page.locator(".agent-mv__templates")).toBeFocused();
+
+  await useStyle();
+  // Applying focuses the prompt with the caret at the end (next frame).
+  await expect(prompt).toBeFocused();
+  await prompt.press("End");
+  await prompt.pressSequentially(" With rain.");
+  await page.getByRole("button", { name: /^Remove / }).click();
+  await expect(label).toHaveText("Templates");
+  await expect(prompt).toHaveValue(/ With rain\.$/);
+
+  await prompt.fill("");
+  await page.getByRole("tab", { name: "Song" }).click();
+  await useStyle();
+  await page.getByRole("button", { name: "Remove song style" }).click();
+  await expect(page.locator(".agent-song__style-label")).toHaveText("Song Style");
+  await expect(page.locator(".agent-song__input")).toHaveValue("");
+});
+
 test("video-agent-home: the Song tab has its own inspiration strip, and each tab keeps its own style", async ({
   page,
 }) => {

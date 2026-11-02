@@ -51,6 +51,17 @@
   }
 }
 
+/* Smaller on phones (product owner, 2026-11-02); the recipe chip's hint
+   matches it below, after its own rule. */
+@media (max-width: 767px) {
+  .agent-hint {
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+  }
+}
+
 /* ── Edge fade for horizontal scrollers (useEdgeFade) ───────────────────── */
 
 .edge-fade[data-fade="l"] {
@@ -1016,6 +1027,15 @@
   pointer-events: none;
   opacity: 0;
   animation: agent-hint-in 200ms ease-out 600ms forwards, agent-hint-pulse 1.4s ease-in-out 800ms infinite;
+}
+
+@media (max-width: 767px) {
+  .agent-recipe__chip[data-hint]::after {
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+  }
 }
 
 .agent-recipe__chip-icon {
@@ -3270,10 +3290,47 @@
   grid-area: idea;
 }
 
-.agent-song__bar .agent-song__style {
+/* The style button and, once something is picked, its ✕ (2026-11-02). */
+.agent-song__bar .agent-song__style-group {
   grid-area: style;
   justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
   max-width: 100%;
+}
+
+.agent-song__style-x {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--neutral-dark-64);
+  cursor: pointer;
+}
+
+.agent-song__style-x:hover {
+  background: var(--white-15);
+  color: var(--neutral-dark-100);
+}
+
+.agent-song__style-x-icon {
+  width: 14px;
+  height: 14px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
 }
 
 .agent-song__bar .agent-song__cta {

@@ -24,6 +24,9 @@ import { DESCRIPTION_MAX, type Song } from "@/lib/mv/types";
 export interface MvPick {
   cover: string;
   name: string;
+  /** The prompt it wrote, if it wrote one — ✕ clears the prompt only while it
+   *  still reads exactly this (the user's own edits are kept). */
+  prompt?: string;
 }
 
 /**
@@ -66,6 +69,7 @@ export function MvInput({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const templatesRef = useRef<HTMLButtonElement>(null);
   const { toast, show: showToast, hold: toastHold } = useToastTimer(2600);
 
   // The menu closes on an outside press or Esc, like any dropdown.
@@ -196,22 +200,44 @@ export function MvInput({
           <DpIcon name="ic_lightbulb" className="agent-song__idea-icon" />
           Idea
         </button>
-        <button
-          type="button"
-          className="agent-song__style agent-mv__templates"
-          aria-haspopup="dialog"
-          onClick={() => setTemplatesOpen(true)}
-        >
-          <span className="agent-mv__thumbs" aria-hidden="true">
-            {pick ? (
-              <img src={pick.cover} alt="" />
-            ) : (
-              TEMPLATES.slice(0, 3).map((t) => <img key={t.id} src={t.cover} alt="" />)
-            )}
-          </span>
-          <span className="agent-mv__templates-label">{pick ? pick.name : "Templates"}</span>
-          <DpIcon name="ic_chevron-right" className="agent-song__style-chevron" />
-        </button>
+        {/* Once applied, the › becomes a ✕ that removes it (product owner,
+            2026-11-02) — a sibling button, not nested; the cover and name
+            still reopen the picker. */}
+        <div className="agent-song__style-group">
+          <button
+            ref={templatesRef}
+            type="button"
+            className="agent-song__style agent-mv__templates"
+            aria-haspopup="dialog"
+            onClick={() => setTemplatesOpen(true)}
+          >
+            <span className="agent-mv__thumbs" aria-hidden="true">
+              {pick ? (
+                <img src={pick.cover} alt="" />
+              ) : (
+                TEMPLATES.slice(0, 3).map((t) => <img key={t.id} src={t.cover} alt="" />)
+              )}
+            </span>
+            <span className="agent-mv__templates-label">{pick ? pick.name : "Templates"}</span>
+            {!pick && <DpIcon name="ic_chevron-right" className="agent-song__style-chevron" />}
+          </button>
+          {pick && (
+            <button
+              type="button"
+              className="agent-song__style-x"
+              aria-label={`Remove ${pick.name}`}
+              onClick={() => {
+                if (pick.prompt !== undefined && text === pick.prompt) {
+                  patchCompose({ description: "" });
+                }
+                onPick(null);
+                templatesRef.current?.focus();
+              }}
+            >
+              <DpIcon name="ic_close" className="agent-song__style-x-icon" />
+            </button>
+          )}
+        </div>
         <div className="agent-song__cta">
           <EnhanceButton
             value={text}
@@ -261,7 +287,7 @@ export function MvInput({
         onClose={() => setTemplatesOpen(false)}
         onApply={(t) => {
           patchCompose({ description: t.prompt });
-          onPick({ cover: t.cover, name: t.name });
+          onPick({ cover: t.cover, name: t.name, prompt: t.prompt });
           setTemplatesOpen(false);
         }}
       />

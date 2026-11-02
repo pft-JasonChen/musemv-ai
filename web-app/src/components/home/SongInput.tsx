@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useState, type RefObject } from "react";
+import { useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCredits } from "@/components/providers/CreditsProvider";
@@ -41,7 +41,16 @@ const DIRECTIONS: EnhanceDirection[] = [
  * State is `SongFlowProvider`'s `songCompose` — the one `/song/create` and the
  * generating screen read — so nothing is copied between the two screens.
  */
-export function SongInput({ inputRef }: { inputRef: RefObject<HTMLTextAreaElement | null> }) {
+export function SongInput({
+  inputRef,
+  starter,
+  onStyleClear,
+}: {
+  inputRef: RefObject<HTMLTextAreaElement | null>;
+  /** The prompt a Song inspiration card wrote, if any — cleared with the style. */
+  starter?: string | null;
+  onStyleClear?: () => void;
+}) {
   const router = useRouter();
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
@@ -49,6 +58,7 @@ export function SongInput({ inputRef }: { inputRef: RefObject<HTMLTextAreaElemen
   const { openBuyCredits } = useSubscribe();
   const { songCompose: s, patchSongCompose: patch, resetForNewSong } = useSongFlow();
   const [styleOpen, setStyleOpen] = useState(false);
+  const styleRef = useRef<HTMLButtonElement>(null);
 
   const custom = s.mode === "custom";
   const field = custom ? "lyrics" : "describe";
@@ -118,25 +128,56 @@ export function SongInput({ inputRef }: { inputRef: RefObject<HTMLTextAreaElemen
         className={`agent-composer__bar agent-song__bar${custom ? " agent-song__bar--style" : ""}`}
       >
         {custom && (
-          <button
-            type="button"
-            className="agent-song__style"
-            aria-haspopup="dialog"
-            onClick={() => setStyleOpen(true)}
-          >
-            <DpIcon name="ic_song" className="agent-song__style-icon" />
-            <span className="agent-song__style-label">
-              {picks.length === 0
-                ? "Song Style"
-                : picks.map((p, i) => (
-                    <span key={p}>
-                      {i > 0 && <span className="agent-song__style-sep"> / </span>}
-                      {p}
-                    </span>
-                  ))}
-            </span>
-            <DpIcon name="ic_chevron-right" className="agent-song__style-chevron" />
-          </button>
+          // Once picked, the › becomes a ✕ that clears the style (product
+          // owner, 2026-11-02), as on the MV tab's Templates.
+          <div className="agent-song__style-group">
+            <button
+              ref={styleRef}
+              type="button"
+              className="agent-song__style"
+              aria-haspopup="dialog"
+              onClick={() => setStyleOpen(true)}
+            >
+              <DpIcon name="ic_song" className="agent-song__style-icon" />
+              <span className="agent-song__style-label">
+                {picks.length === 0
+                  ? "Song Style"
+                  : picks.map((p, i) => (
+                      <span key={p}>
+                        {i > 0 && <span className="agent-song__style-sep"> / </span>}
+                        {p}
+                      </span>
+                    ))}
+              </span>
+              {picks.length === 0 && (
+                <DpIcon name="ic_chevron-right" className="agent-song__style-chevron" />
+              )}
+            </button>
+            {picks.length > 0 && (
+              <button
+                type="button"
+                className="agent-song__style-x"
+                aria-label="Remove song style"
+                onClick={() => {
+                  // A box still holding the inspiration card's starter goes
+                  // too; anything the user wrote stays.
+                  const clear = (f: "describe" | "lyrics") =>
+                    starter && s[f] === starter ? { [f]: "" } : {};
+                  patch({
+                    genre: "",
+                    mood: "",
+                    vocal: null,
+                    ...clear("describe"),
+                    ...clear("lyrics"),
+                  });
+                  onStyleClear?.();
+                  styleRef.current?.focus();
+                }}
+              >
+                <DpIcon name="ic_close" className="agent-song__style-x-icon" />
+              </button>
+            )}
+          </div>
         )}
         <button
           type="button"

@@ -188,8 +188,13 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
     } else {
       // The MV tab's prompt is `compose.description` (MvInput, 2026-10-30) —
       // the one `/mv/room` reads; the card shows on its Templates button.
-      if (!keep(compose.description)) patchCompose({ description: item.starter });
-      setMvPick({ cover: item.thumbnail, name: item.title });
+      const kept = keep(compose.description);
+      if (!kept) patchCompose({ description: item.starter });
+      setMvPick({
+        cover: item.thumbnail,
+        name: item.title,
+        prompt: kept ? undefined : item.starter,
+      });
     }
     setStyles((st) => ({ ...st, [m]: item }));
     cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -286,9 +291,20 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
           ref={cardRef}
         >
           {mode === "song" ? (
-            <SongInput inputRef={inputRef} />
+            <SongInput
+              inputRef={inputRef}
+              starter={styles.song?.starter}
+              onStyleClear={() => setStyles((st) => ({ ...st, song: null }))}
+            />
           ) : mode === "mv" ? (
-            <MvInput inputRef={inputRef} pick={mvPick} onPick={setMvPick} />
+            <MvInput
+              inputRef={inputRef}
+              pick={mvPick}
+              onPick={(p) => {
+                setMvPick(p);
+                if (!p) setStyles((st) => ({ ...st, mv: null }));
+              }}
+            />
           ) : (
             <>
               {inRecipe ? (
