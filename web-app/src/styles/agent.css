@@ -227,12 +227,14 @@
      keeps its content minimum, so at 320px, too narrow for three equal tabs,
      "Music Video" keeps its one line and the other two share the rest. */
   /* Figma 5582:200917 "Bar/Segment Control": centred, equal tabs at least
-     80px wide (they grow together if a label needs more), 2px inside and 4px
-     apart, 27px tall with 11px labels and no icons. */
+     80px wide (they grow together if a label needs more), 2px inside,
+     27px tall with 11px labels and no icons. No gap between tabs (product
+     owner, 2026-11-02): the tabs take Figma's 4px gaps instead, so the bar
+     keeps its width and each tab is ~83px. */
   .agent-composer__modes {
     align-self: center;
-    grid-auto-columns: minmax(80px, 1fr);
-    gap: 4px;
+    grid-auto-columns: minmax(83px, 1fr);
+    gap: 0;
     padding: 2px;
   }
   .agent-composer__mode {
