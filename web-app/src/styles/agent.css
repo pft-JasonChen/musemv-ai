@@ -175,7 +175,7 @@
   padding: 4px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--white-15);
-  background: rgba(9, 9, 11, 0.4);
+  background: var(--black-40);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   max-width: 100%;
@@ -400,7 +400,7 @@
   padding: 0 16px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--white-15);
-  background: rgba(9, 9, 11, 0.4);
+  background: var(--black-40);
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
   color: var(--neutral-dark-100);
@@ -892,87 +892,27 @@
 
 .agent-recipe__slots {
   display: flex;
+  align-items: flex-start;
   gap: 8px;
   flex-shrink: 0;
 }
 
-/* Phones: the slots sit above the wording so the sentence keeps the full width. */
+/* Phones: the slots stay LEFT of the wording, as on desktop (Figma "Agent
+   Input" UGC Recipe Filled, product owner 2026-11-02); 8px apart, like the
+   Music Video tab's song slot and prompt. The slots themselves are the MV
+   song slot's skin (`PhotoSlot` in AgentComposer). */
 @media (max-width: 767px) {
   .agent-recipe {
-    flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    min-height: 0;
   }
 }
 
-.agent-recipe__slot {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.agent-recipe__ph {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  padding: 0;
-  overflow: hidden;
-  border-radius: 12px;
-  border: 1px dashed rgba(168, 85, 247, 0.7);
-  background: rgba(168, 85, 247, 0.08);
-  cursor: pointer;
-}
-
-.agent-recipe__ph img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.agent-recipe__ph--fit img {
+/* The product shot is a cut-out: shown whole, on white. Two classes, so it
+   beats `.agent-mv__song-art img` (cover), which comes later in this file. */
+.agent-mv__song-art.agent-recipe__art--fit img {
   object-fit: contain;
   background: #fff;
-}
-
-.agent-recipe__plus {
-  width: 20px;
-  height: 20px;
-  background-color: var(--color-accent-purple);
-  mask-size: contain;
-  mask-repeat: no-repeat;
-}
-
-.agent-recipe__lb {
-  color: var(--neutral-dark-64);
-  font-size: 11px;
-}
-
-.agent-recipe__x {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: #3a3a44;
-  color: #fff;
-  cursor: pointer;
-}
-
-.agent-recipe__x-icon {
-  width: 12px;
-  height: 12px;
-  background-color: currentColor;
-  mask-size: contain;
-  mask-repeat: no-repeat;
 }
 
 /* Same type as the plain prompt (`.agent-composer__input`: 14px / 20px), so
@@ -1050,9 +990,30 @@
   mask-position: center;
 }
 
+/* AI Shorts: attached photos LEFT of the prompt, laid out like the Music Video
+   tab's song slot + prompt (`.agent-mv__top`; Figma "Agent Input" Photo
+   Attached, 2026-11-02). The photos keep their size, the prompt takes the rest. */
+.agent-composer__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.agent-composer__top .agent-composer__input {
+  flex: 1;
+  min-width: 0;
+}
+
 .agent-composer__attach {
   display: flex;
+  flex-shrink: 0;
   gap: 8px;
+}
+
+@media (max-width: 767px) {
+  .agent-composer__top {
+    gap: 8px;
+  }
 }
 
 .agent-recipe__chip,
@@ -1070,15 +1031,17 @@
   cursor: pointer;
 }
 
+/* Border and token fill are the library's brand purple (Figma "Agent
+   Input/Recipe Chip": brand/purple/80, brand/purple/40, 2026-11-02). */
 .agent-recipe__chip {
-  border: 1px dashed rgba(168, 85, 247, 0.7);
+  border: 1px dashed var(--pf-purple-80);
   background: rgba(168, 85, 247, 0.1);
   color: #d8b4fe;
 }
 
 .agent-recipe__tok {
   border: 0;
-  background: rgba(168, 85, 247, 0.3);
+  background: var(--pf-purple-40);
   color: #fff;
 }
 
@@ -3499,7 +3462,7 @@
   gap: 3px;
   padding: 3px 8px 3px 5px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--white-15);
   font-size: var(--font-label-m);
   font-weight: var(--font-weight-bold);
 }

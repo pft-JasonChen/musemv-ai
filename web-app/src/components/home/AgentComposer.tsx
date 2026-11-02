@@ -315,18 +315,20 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
                   {(model || product) && (
                     <div className="agent-recipe__slots">
                       {model && (
-                        <Slot
+                        <PhotoSlot
                           label="Model"
                           src={IMG.picked}
+                          showLabel
                           onPick={() => setPicker("model")}
                           onClear={() => setModel(false)}
                         />
                       )}
                       {product && (
-                        <Slot
+                        <PhotoSlot
                           label="Product"
                           src={IMG.product}
                           fit
+                          showLabel
                           onPick={() => setPicker("product")}
                           onClear={() => setProduct(null)}
                         />
@@ -343,17 +345,20 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
                   />
                 </div>
               ) : (
-                <>
+                // Attached photos sit LEFT of the prompt, as the Music Video
+                // tab's song slot does (Figma "Agent Input" Photo Attached,
+                // product owner 2026-11-02). The row is always rendered so the
+                // textarea is not remounted when the first photo arrives.
+                <div className="agent-composer__top">
                   {attached[mode] > 0 && (
                     <div className="agent-composer__attach">
                       {Array.from({ length: attached[mode] }, (_, i) => (
-                        <Slot
+                        <PhotoSlot
                           key={i}
                           label={`Photo ${i + 1}`}
                           src={IMG.picked}
                           onPick={() => setPicker("attach")}
                           onClear={() => setAttached({ ...attached, [mode]: attached[mode] - 1 })}
-                          hideLabel
                         />
                       ))}
                     </div>
@@ -368,7 +373,7 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
                     onChange={(e) => setText({ ...text, [mode]: e.target.value })}
                     rows={3}
                   />
-                </>
+                </div>
               )}
 
               <div className="agent-composer__bar">
@@ -558,41 +563,50 @@ const INSPIRATION: Record<InspoMode, Inspiration[]> = {
   }),
 };
 
-function Slot({
+/** A picked photo: a plain AI Shorts attachment, or a recipe's Model /
+ *  Product. Same skin as the Music Video tab's picked song (Figma
+ *  "Agent Input/Media Slot" Photo = Song, 2026-11-02), so it reuses those
+ *  classes rather than copying them. Recipe slots show their name under the
+ *  photo; attachments don't. */
+function PhotoSlot({
   label,
   src,
   fit,
-  hideLabel,
+  showLabel,
   onPick,
   onClear,
 }: {
   label: string;
-  src: string | null;
+  src: string;
   fit?: boolean;
-  hideLabel?: boolean;
+  showLabel?: boolean;
   onPick: () => void;
   onClear: () => void;
 }) {
   return (
-    <div className="agent-recipe__slot">
-      <button
-        type="button"
-        className={`agent-recipe__ph${fit ? " agent-recipe__ph--fit" : ""}`}
-        aria-label={label}
-        onClick={onPick}
-      >
-        {src ? <img src={src} alt="" /> : <DpIcon name="ic_add" className="agent-recipe__plus" />}
-      </button>
-      {!hideLabel && <span className="agent-recipe__lb">{label}</span>}
-      {src && (
+    <div className="agent-mv__song">
+      <div className="agent-mv__song-slot agent-mv__song-slot--on">
         <button
           type="button"
-          className="agent-recipe__x"
+          className={`agent-mv__song-art${fit ? " agent-recipe__art--fit" : ""}`}
+          aria-label={label}
+          onClick={onPick}
+        >
+          <img src={src} alt="" />
+        </button>
+        <button
+          type="button"
+          className="agent-mv__song-x"
           aria-label={`Remove ${label}`}
           onClick={onClear}
         >
-          <DpIcon name="ic_close" className="agent-recipe__x-icon" />
+          <DpIcon name="ic_close" className="agent-mv__song-x-icon" />
         </button>
+      </div>
+      {showLabel && (
+        <span className="agent-mv__song-label" aria-hidden="true">
+          {label}
+        </span>
       )}
     </div>
   );
