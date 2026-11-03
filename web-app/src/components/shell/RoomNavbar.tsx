@@ -100,6 +100,7 @@ export function RoomNavbar({
               goBack();
             }}
             className="room-navbar__mobile-back"
+            data-gtm="mobile-menu-back"
             aria-label="Back"
           >
             <DpIcon name="ic_arrow_left" className="room-navbar__mobile-back-icon" />
@@ -112,6 +113,7 @@ export function RoomNavbar({
               <button
                 type="button"
                 className="mobile-header__subscribe"
+                data-gtm="mobile-menu-upgrade"
                 onClick={() => openSubscribe()}
                 aria-label={t("profile.upgrade")}
               >
@@ -125,6 +127,7 @@ export function RoomNavbar({
             <Link
               href={localePath(locale, "/profile")}
               className="mobile-header__account"
+              data-gtm="mobile-menu-account"
               aria-label={t("nav.account")}
             >
               <span
@@ -145,6 +148,7 @@ export function RoomNavbar({
             <button
               type="button"
               className="credit-balance"
+              data-gtm="header-credits"
               aria-label={t("profile.credits")}
               onClick={() => openBuyCredits()}
             >
@@ -175,6 +179,7 @@ export function RoomNavbar({
               <button
                 type="button"
                 className="upgrade-button"
+                data-gtm="header-upgrade"
                 onClick={() => openSubscribe()}
               >
                 <span
@@ -193,6 +198,7 @@ export function RoomNavbar({
           <button
             type="button"
             className="button button--medium button--tertiary room-navbar__login"
+            data-gtm="header-login"
             onClick={() => openSignIn()}
           >
             <span className="button__label">Login</span>
@@ -226,6 +232,8 @@ export function Tabs<T extends string>({
           type="button"
           className={`tabs__tab${tab.id === active ? " tabs__tab--active" : ""}`}
           aria-pressed={tab.id === active}
+          data-gtm="header-tab"
+          data-gtm-item={tab.id}
           onClick={() => onChange(tab.id)}
         >
           {tab.label}

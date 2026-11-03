@@ -705,6 +705,7 @@ export function MvRoom() {
               type="button"
               className={`mv-create__cta${ready ? " mv-create__cta--active" : ""}`}
               disabled={!ready}
+              data-gtm="tool-mv-generate"
               // `/mv/room` itself has no `AuthGuard` (2026-08-07, designer
               // request) so "Start for Free" can land a guest here to
               // compose — but generating still costs credits, so the gate

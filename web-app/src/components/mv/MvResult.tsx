@@ -455,6 +455,7 @@ function MvResultBody() {
                 <button
                   type="button"
                   className="mv-result__action"
+                  data-gtm="tool-mv-recreate"
                   onClick={() => router.push(localePath(locale, "/mv/room"))}
                 >
                   <img src="/assets/icons/ui/ic_video_ai.svg" alt="" />
