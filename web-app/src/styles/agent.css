@@ -1095,21 +1095,13 @@
   color: var(--white-60);
 }
 
+/* Phones: no category chips, just the one row under the title — Hot, the
+   default, which holds both live demos (CEO feedback via product owner,
+   2026-11-10: Home's first screen read as too much AI Shorts). "See all"
+   still opens every category on /shorts. */
 @media (max-width: 767px) {
   .shorts-tpl__cats {
-    margin: 0 -16px;
-    padding: 0 16px;
-  }
-
-  /* Figma 5582:199277 (phone Home): the categories 4px under the title (12px
-     to the cards), unselected labels full white. The title keeps DP's phone
-     size, the same as Trending MV's (product owner, 2026-10-30). */
-  .shorts-tpl .section-header + .shorts-tpl__cats {
-    margin-top: -8px;
-  }
-
-  .shorts-tpl__cats .tabs__tab:not(.tabs__tab--active) {
-    color: var(--neutral-dark-100);
+    display: none;
   }
 }
 
@@ -3050,6 +3042,37 @@
   padding-top: 16px;
 }
 
+/* Phones: the first category's top padding (meant to part it from the one
+   above) only widened the gap under the chips to 42px; without it the kicker
+   sits 26px under them (product owner, 2026-11-10). */
+@media (max-width: 767px) {
+  .shorts-cat__bar + .shorts-cat__sec {
+    padding-top: 0;
+  }
+}
+
+/* Tablet and desktop: Home's "Explore AI Shorts Skills" rhythm — the chips
+   as far under the title as the first category sits under the chips: 24px
+   on desktop, 16px on tablets (product owner, 2026-11-10). Unadjusted it was
+   the bar's 12px bottom padding + the section's 16px gap + the category's
+   own 16px top padding = 44px. */
+@media (min-width: 768px) {
+  .shorts-cat__bar + .shorts-cat__sec {
+    margin-top: -4px;
+    padding-top: 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .shorts-cat__bar {
+    margin-top: -8px;
+  }
+
+  .shorts-cat__bar + .shorts-cat__sec {
+    margin-top: -12px;
+  }
+}
+
 .shorts-cat__hd {
   display: flex;
   flex-direction: column;
@@ -3071,6 +3094,18 @@
   font-size: var(--font-title-m);
   font-weight: var(--font-weight-bold);
   line-height: 28px;
+}
+
+/* Phones: /shorts' two section titles ("Recent", "All Skills") come down to
+   the category titles' size (Drama, Dance …) — 20 / 28 instead of DP's
+   24 / 32 (product owner, 2026-11-10). Scoped to this page; Home's section
+   titles keep DP's size. */
+@media (max-width: 767px) {
+  .shorts-recent .section-header__title,
+  .shorts-cat > .section-header .section-header__title {
+    font-size: var(--font-title-m);
+    line-height: 28px;
+  }
 }
 
 .shorts-cat__desc {

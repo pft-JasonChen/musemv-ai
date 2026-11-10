@@ -25,7 +25,8 @@ import {
  * which rail shows, so the block is one card tall instead of eleven rails.
  * The chips replaced the Creator / Marketer tab bar — "Hot" (recommended
  * picks, 2026-10-30) first, then Creator's three categories and Marketer's
- * eight, in one scrollable row.
+ * eight, in one scrollable row. Phones hide the chips and show Hot only
+ * (2026-11-10, agent.css) — a lighter AI Shorts block on Home's first screen.
  *
  * Posters paint at once; a card's muted loop only plays while it is on screen
  * (`Card`'s `coverVideo`), so the page is not decoding dozens of clips at once.
