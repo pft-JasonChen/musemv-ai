@@ -20,8 +20,10 @@ cfg={
  'overview':[['Scope','MV and Song players, community Song Result, public Share, History and owner Result'],['Audience','Web RD and QA'],['Source','Content Report PRD v1.1 plus product-owner decisions of 28&ndash;29 October 2026'],['Capture','Live production app: desktop 1440 &times; 1000; phone supplement 390 &times; 844']],
  'paths':[
  {'num':1,'name':'Choose a reason and submit','desc':'Signed-in users report other people\'s and official content. A visitor who presses Report is asked to sign in first, and the report continues once they have.','entry':'Report flag or public Share menu','outcome':'Success remains until dismissed','steps':[
- step(1,'01_reasons','Presses Report on a music video.','The report dialog opens with six built-in reasons and Something else.',[
- 'Reporting requires sign-in: a visitor sees the sign-in dialog first, and the report dialog opens after signing in. Dismissing sign-in does nothing.','The title is Report Music Video for an MV and Report Song for a song.','Submit Report is always visible and disabled until the input is valid.','The six built-in reasons appear in the order shown.'],['Report Music Video','Something else','Submit Report'])|{'since':'v2'},
+ step(0,'00_sign_in','A visitor presses Report on a music video.','The sign-in dialog opens instead of the report dialog.',[
+ 'Reporting requires sign-in; the Report entry stays visible to visitors.','Signing in continues straight into the report dialog (or the own-content toast) with no second press.','Dismissing the sign-in dialog does nothing.','The dialog shows the sign-up gift pill: New users get 10 free credits.'],['Sign in to YouCam Muse','10 free credits','Continue with Apple'])|{'since':'v2'},
+ step(1,'01_reasons','Signs in, or presses Report while already signed in.','The report dialog opens with six built-in reasons and Something else.',[
+ 'The title is Report Music Video for an MV and Report Song for a song.','Submit Report is always visible and disabled until the input is valid.','The six built-in reasons appear in the order shown.'],['Report Music Video','Something else','Submit Report']),
  step(2,'02_selected','Selects one built-in reason.','The selection changes and Submit Report becomes enabled.',['Only one built-in reason can be selected.']),
  step(3,'03_details','Selects Something else and enters Details.','A separate Details page shows the draft and character counter.',['Details accepts at most 1000 characters.','Whitespace-only input cannot be submitted.','Back and re-entry retain the draft; Clear empties it; closing the dialog resets it.'],['Details']),
  step(4,'04_success','Presses Submit Report.','The success confirmation replaces the form.',['Disable submission while it is in progress.','Only successful submissions count and mark the content as reported.','Do not automatically close the success state after three seconds.','Done dismisses it; existing Close, Escape and backdrop dismissal remain available.','A successful report never removes or hides the content.'],['Thank you for keeping Muse safe','Done'])]},
@@ -59,13 +61,13 @@ cfg={
  ('D-08','QA demonstration?','Use the existing QA panel; new failure and reviewer state is session-only and resets on refresh.'),
  ],
  'open_questions':[('Q-01','RD report and moderation integration','Provide endpoint, reason IDs, identity/session, idempotency, reviewer state and authorization contract. Product behavior is settled.','RD')],
- 'changelog':[('v2','2026-11-11','Reporting now requires sign-in: a guest\'s Report opens the sign-in dialog and continues to the report dialog after sign-in (P1-S1, P4-S1, D-03, AC-RPT-01). Screenshots are unchanged and still show the signed-in dialog; no capture of the sign-in prompt yet.'),('v1','2026-10-29','Approved reporting and removal behavior with live desktop captures and a phone supplement.')],
+ 'changelog':[('v2','2026-11-11','Reporting now requires sign-in: a guest\'s Report opens the sign-in dialog and continues to the report dialog after sign-in (P1-S1, P4-S1, D-03, AC-RPT-01). New P1-S0 captures the sign-in prompt with the sign-up gift pill; all screenshots re-captured signed in.'),('v1','2026-10-29','Approved reporting and removal behavior with live desktop captures and a phone supplement.')],
  'svg_path':str(HERE/'user-flowchart.svg'),'screenshots_dir':str(HERE/'specs/screenshots'),'out_dir':str(HERE/'specs'),
  'prototype_src':[str(ROOT/'src/components/ui/ReportDialog.tsx'),str(ROOT/'src/lib/report.ts'),str(ROOT/'src/components/history/ContentNotice.tsx'),str(ROOT/'src/components/history/HistoryView.tsx')],
  'comments_enabled':False,
 }
 cfg['criteria'] = [
- ('AC-RPT-01','A guest\'s Report asks for sign-in first; a signed-in user\'s Report opens the correct media title.',['P1-S1','P6-S1']),
+ ('AC-RPT-01','A guest\'s Report asks for sign-in first; a signed-in user\'s Report opens the correct media title.',['P1-S0','P1-S1','P6-S1']),
  ('AC-RPT-02','Six ordered reasons and Something else follow selection, Details validation and draft-retention rules.',['P1-S1','P1-S2','P1-S3','P6-S2']),
  ('AC-RPT-03','Submit stays visible, disabled until valid and while sending.',['P1-S1','P1-S2','P3-S1']),
  ('AC-RPT-04','Success has Done and never closes automatically after three seconds.',['P1-S4','P6-S3']),

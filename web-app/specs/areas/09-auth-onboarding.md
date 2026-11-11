@@ -22,7 +22,7 @@ Terms/Privacy/Delete-account destinations (area 06 Settings).
 **Key divergences from App F01/F22:** **no email/password** option — only Continue with Apple /
 Google ⚠️; **no OAuth** — a 1.8s fake success 🔒; **no Splash & Onboarding carousel** (F01) at all ⚠️
 (→ `TBD-GL-03`). **GL-02 landed 2026-07-23:** gating is now **action-level** (Create MV / Create Song /
-Like / publish call `requireLogin` at the action), synced to App F22 — `AuthGuard` on the **four** gated route entries is kept as a backstop.
+Like / publish / **Report** call `requireLogin` at the action; Report added 2026-11-11, area 14), synced to App F22 — `AuthGuard` on the **four** gated route entries is kept as a backstop.
 **⚠️ Neither create route is one of them** — `/mv/room` and `/song/create` are open to guests; see §3.
 
 ---
@@ -94,6 +94,7 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 ### AUTH-P1 — Sign in from the header (no queued action)
 
 - **AUTH-P1-S1** Logged-out user clicks **Login** (each route's own navbar) → `openSignIn()` opens the modal. _(Corrected 2026-08-27: was "Sign In (top bar)" — see area 01's correction; the control text is "Login" and there is no single top bar.)_
+- **AUTH-P1-S1a** The modal shows, under the subtitle, a gift pill: 🎁 **"New users get {credits} free credits"** — `{credits}` is `DEFAULT_CREDITS` (10), the same value as the CR-P4 sign-up gift toast (area 07). It is shown to every visitor, not only first-time ones, because the modal cannot know yet whether the sign-in is a new account. _(Added 2026-11-11.)_
 - **AUTH-P1-S2** Pick Apple/Google → 1.8s success animation → `authStore.set(true)`; header swaps to logged-in chrome. No navigation.
 
 ### AUTH-P2 — Gated route entry (queued action)
@@ -104,6 +105,8 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 ### AUTH-P3 — Gated create entry (queued push)
 
 - **AUTH-P3-S1** Logged-out user clicks a gated **sidebar** item, or a **Home hero "Create MV"/"Create Song" CTA**, or a **Home song-card "create"** (`HomeView`, area 04) → `requireLogin(() => push(target))`. Sign in → navigates to target (song-card create also pre-fills the song compose); dismiss → stays on the current page.
+
+- **AUTH-P3-S2** Logged-out user presses **Report** on an MV or song (player, Share menu) → `requireLogin(openReport)`. Sign in → the report dialog opens (or the own-content toast if it turns out to be theirs); dismiss → nothing. The Report entry itself stays visible to guests. _(Added 2026-11-11 — area 14 AC-RPT-01.)_
 
 ### AUTH-P4 — Sign out
 
@@ -132,6 +135,7 @@ Screens to capture later: `SignInModal` (idle + success states) over a gated rou
 - **AC-AUTH-05** — WHEN the user signs out, THE SYSTEM SHALL clear the logged-in flag and reset subscription and profile to guest defaults.
 - **AC-AUTH-06** — WHEN the logged-in flag is set/cleared, THE SYSTEM SHALL persist only that flag across reload (subscription/profile are not persisted). _(Locks in current behaviour pending `TBD-GL-04`.)_
 - **AC-AUTH-07** — THE SYSTEM SHALL render `SignInModal` correctly at 390/768/1024/1440px. _(visual)_
+- **AC-AUTH-09** — WHEN the sign-in modal is shown, THE SYSTEM SHALL show the sign-up gift pill "New users get {credits} free credits" with `{credits}` from the same source as the CR-P4 gift (never hardcoded in the string). _(new 2026-11-11)_
 
 ---
 

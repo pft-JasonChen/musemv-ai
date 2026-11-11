@@ -18,6 +18,7 @@ const BASE = process.env.REPORT_BASE_URL || "http://localhost:3201";
     const shot = async (name) => {
       await page.waitForTimeout(350);
       const targets = {
+        "00_sign_in": page.getByRole("button", { name: "Continue with Apple", exact: true }),
         "01_reasons": page.getByRole("radio").first(),
         "02_selected": page.getByRole("button", { name: "Submit Report", exact: true }),
         "03_details": page.getByRole("button", { name: "Submit Report", exact: true }),
@@ -90,7 +91,20 @@ const BASE = process.env.REPORT_BASE_URL || "http://localhost:3201";
       const r = await page.request.get(href);
       if (!r.ok() || (await r.body()).length < 100) throw new Error("Missing stylesheet " + href);
     }
-    await open();
+    // Reporting requires sign-in (2026-11-11): a visitor's Report opens the sign-in dialog,
+    // and the report dialog follows once they sign in. Mark the sign-up gift as already seen
+    // so its toast does not land in later captures.
+    await page.evaluate(() => localStorage.setItem("muse_signup_gift_seen", "1"));
+    await report().click();
+    await expect(page.getByRole("dialog", { name: "Sign in to YouCam Muse" })).toBeVisible();
+    await expect(page.getByText("10 free credits", { exact: true })).toBeVisible();
+    await page.waitForTimeout(350);
+    await shot("00_sign_in");
+    await page.getByRole("button", { name: "Continue with Apple", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: /Report Music Video/ })).toBeVisible({
+      timeout: 6000,
+    });
+    await page.waitForTimeout(350);
     await expect(submit()).toBeDisabled();
     await expect(page.getByRole("radio")).toHaveCount(6);
     await shot("01_reasons");
@@ -176,8 +190,7 @@ const BASE = process.env.REPORT_BASE_URL || "http://localhost:3201";
     await expect(page.getByText("This link isn't available", { exact: true })).toBeVisible();
     await expect(page.locator("video,audio")).toHaveCount(0);
     await shot("08_share_removed");
-    // Authenticated owner: no report, removal stays privately playable, History notice.
-    await page.evaluate(() => localStorage.setItem("muse_auth", "1"));
+    // Authenticated owner (signed in since P1): no report, removal stays privately playable, History notice.
     await page.goto(BASE + "/song/result?id=sp-neon-static&demo=1");
     await expect(page.locator(".song-result")).toBeVisible();
     await expect(report()).toHaveCount(0);
@@ -230,10 +243,10 @@ const BASE = process.env.REPORT_BASE_URL || "http://localhost:3201";
       path.join(__dirname, "verification.json"),
       JSON.stringify(
         {
-          date: "2026-10-29",
+          date: "2026-11-11",
           viewports: [1440, 390],
           checks: [
-            "guest-report",
+            "guest-report-requires-sign-in",
             "six-reasons",
             "disabled-submit",
             "details-validation-and-retention",

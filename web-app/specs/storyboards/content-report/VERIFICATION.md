@@ -1,5 +1,16 @@
 # Content Report verification
 
+## v2 — 2026-11-11: reporting requires sign-in
+
+Verified against the local production build on macOS.
+
+- `capture_screenshots.mjs`: passed; now 16 screenshots. New `00_sign_in` asserts a visitor's Report opens the sign-in dialog (with the "10 free credits" gift pill) and that signing in continues straight into the report dialog. Every later step therefore runs signed in, and all 15 earlier images were re-captured (the navbar now shows the credit pill instead of Login). The sign-up gift is marked seen first so its toast stays out of the captures.
+- `ReportDialog.test.tsx`: a guest press calls `requireLogin` and opens no dialog; the remaining cases run signed in. 189 unit tests pass.
+- `dialog-visual.spec.ts` `@visual dialog sign-in` (6 widths, `-darwin`): re-recorded for the gift pill; the 320px no-scroll check still passes.
+- `verify_access.mjs` is not affected (it already runs signed in and only checks the entry is visible).
+
+## v1 — 2026-10-29
+
 Verified 2026-10-29 against the local production build on macOS.
 
 - `npm run typecheck`, `npm run lint`, `npm run test:run`, `npm run build`: passed. 174 unit tests. Lint retains one pre-existing unused `dirname` warning in `scripts/computed-style-diff.mjs`.

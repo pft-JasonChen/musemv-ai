@@ -278,6 +278,7 @@ Screens to capture later: SubscribeModal, BuyCreditsModal, `/profile/credits`.
 
 ### CR-P4 — Sign-up gift toast _(added 2026-10-01)_
 
+- **CR-P4-S0** _(added 2026-11-11)_ Before sign-up, the sign-in modal advertises the gift with a pill: **"New users get {credits} free credits"** (area 09 AUTH-P1-S1a / AC-AUTH-09). Same `{credits}` source as the toast below, so the promise and the grant cannot disagree.
 - **CR-P4-S1** A new account finishes sign-up. RD queries the backend for the sign-up gift; the answer may not be ready immediately, so the toast appears **~3 s after sign-up** (provisional delay, RD-owned).
 - **CR-P4-S2** **System:** a non-blocking toast (no dialog, no CTA, does not intercept clicks), visible ~4 s: **"🎉 Welcome! {credits} free credits have been added to your account."** `{credits}` comes from the backend (today `DEFAULT_CREDITS` = 10) and is never hardcoded in the string. The header credit pill reflects the new balance.
 - **CR-P4-S3** Shown **once per account** — a later sign-in does not show it again.

@@ -87,7 +87,10 @@ class NextCapture(Capture):
             executable_path=chromium_path(),
             args=["--no-sandbox", "--disable-dev-shm-usage"])
         ctx = await self._browser.new_context(
-            viewport=self.viewport, device_scale_factor=1)
+            viewport=self.viewport, device_scale_factor=1,
+            # Pin English: the middleware honours Accept-Language, so a zh-TW machine
+            # would otherwise be redirected to /cht and every `**/` wait times out.
+            locale="en-US")
         # P3 photographs a RETURNING account ("Welcome back"). Without this, the
         # first modal sign-in in a fresh context counts as a new sign-up
         # (`src/lib/signupGift.ts`) and reads "Welcome" + fires the gift toast,

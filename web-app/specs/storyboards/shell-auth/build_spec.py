@@ -104,8 +104,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Shell & Auth',
     'breadcrumb': 'YouCam Muse Web &rarr; Shell &amp; Auth',
-    'author': 'Jason Chen', 'date': '2026-10-01', 'status': 'Draft',
-    'version': 'v3',
+    'author': 'Jason Chen', 'date': '2026-11-11', 'status': 'Draft',
+    'version': 'v4',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -264,6 +264,7 @@ cfg = {
                         'Login control text: &ldquo;Login&rdquo;',
                         'Modal title: &ldquo;Sign in to YouCam Muse&rdquo;',
                         'Subtitle: &ldquo;Save your creations, sync across devices, and unlock your full creative history.&rdquo;',
+                        'Gift pill under the subtitle: &ldquo;New users get 10 free credits&rdquo; (10 = DEFAULT_CREDITS, same source as the S5 sign-up gift toast)',
                         'Buttons: &ldquo;Continue with Apple&rdquo;, &ldquo;Continue with Google&rdquo;',
                         'Footer: links to &ldquo;Terms of Service&rdquo; and &ldquo;Privacy Policy&rdquo;',
                     ],
@@ -535,6 +536,7 @@ cfg = {
         ('AC-AUTH-04', 'Modal dismissal is blocked while the success animation plays.', [], 'A screenshot cannot show a blocked click &mdash; interaction-only, not this storyboard&rsquo;s shape.'),
         ('AC-AUTH-05', 'Sign out clears the logged-in flag and resets subscription/profile to guest defaults.', ['P6-S1', 'P6-S2']),
         ('AC-AUTH-06', 'Only the logged-in flag persists across reload.', ['P6-S3', 'P6-S4']),
+        ('AC-AUTH-09', 'The sign-in modal shows the sign-up gift pill &ldquo;New users get 10 free credits&rdquo;, from the same source as the gift toast.', ['P3-S1']),
         ('AC-AUTH-07', 'SignInModal renders correctly across widths.', ['P2-S1', 'P2-S4'], 'Two of the four named widths (1403 desktop, 375 phone); the full sweep is e2e/visual-baseline.spec.ts&rsquo;s job.'),
     ],
 
@@ -565,6 +567,10 @@ cfg = {
     ],
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v4', '2026-11-11',
+         '<b>The sign-in modal gained a sign-up gift pill</b> (&ldquo;New users get 10 free credits&rdquo;) under its subtitle '
+         '(P3-S1 exact copy, AC-AUTH-09). Every screenshot that shows the modal was re-captured. Report now also asks a '
+         'guest to sign in &mdash; that flow is the first step of S11 (Content Report). See <code>specs/CHANGELOG-SPEC.md</code>.'),
         ('v3', '2026-10-01',
          '<b>P3-S2 &mdash; the success line now depends on whether the account is new.</b> A new sign-up reads '
          '&ldquo;Welcome, {name}&rdquo; and gets the sign-up gift toast; the &ldquo;Welcome back&rdquo; shown here '

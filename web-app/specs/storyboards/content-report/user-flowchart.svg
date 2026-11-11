@@ -10,7 +10,7 @@
 <text x="40" y="75" font-size="15" font-weight="700" fill="#0c1c22">P1 Report</text>
 <rect x="40" y="120" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
 <text x="205" y="140" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Report entry</text>
-<text x="205" y="158" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S1 &#183; guest signs in first</text>
+<text x="205" y="158" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S0 sign in &#183; P1-S1</text>
 <rect x="440" y="120" width="330" height="50" rx="8" fill="#ffffff" stroke="#cfd8de" stroke-width="1.5"/>
 <text x="605" y="140" font-size="14" font-weight="700" fill="#0c1c22" text-anchor="middle">Reason or Details</text>
 <text x="605" y="158" font-size="12" fill="#5a6b78" text-anchor="middle">P1-S2 / P1-S3</text>

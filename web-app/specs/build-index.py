@@ -88,7 +88,7 @@ STORYBOARDS = [
      "/history", "7 paths / 27 shots"),
     ("S5", "credits-iap", "Credits &amp; IAP", "v3 · 2026-10-08",
      "SubscribeModal · BuyCreditsModal · /profile/credits · sign-up gift", "7 paths / 23 shots"),
-    ("S6", "shell-auth", "App Shell &amp; Auth", "v3 · 2026-10-01",
+    ("S6", "shell-auth", "App Shell &amp; Auth", "v4 · 2026-11-11",
      "sidebar / tab bar · route navbars · SignInModal · marketing footer", "8 paths / 27 shots"),
     ("S7", "profile-account", "Profile, Account &amp; Settings", "v2 · 2026-09-02",
      "/profile · /settings · edit profile · Send Feedback", "6 paths / 23 shots"),
@@ -97,7 +97,7 @@ STORYBOARDS = [
     ("S9", "share", "Share", "v2 · 2026-10-08",
      "/share · ShareDialog", "5 paths / 15 shots"),
     ("S11", "content-report", "Content Report", "v2 · 2026-11-11",
-     "MV / Song / Share report · History / Result removal notice", "6 paths / 15 shots"),
+     "MV / Song / Share report · History / Result removal notice", "6 paths / 16 shots"),
 ]
 # S10 (credit-consumption) has no spec.html — the product owner ruled it ships
 # AS `areas/11-credit-consumption.md` itself (PLAN.md D13). It gets a row here

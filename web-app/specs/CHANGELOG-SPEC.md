@@ -4,9 +4,12 @@
 > **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
 > get from "what changed?" to the exact file without diffing.
 
-## 2026-11-11 — Reporting requires sign-in
+## 2026-11-11 — Reporting requires sign-in; sign-in modal advertises the sign-up gift
 
-RPT-P1-S0 (new) / AC-RPT-01 / RPT-P4 checklist / S11 v2 P1-S1, P4-S1, D-03: a guest's Report opens the sign-in dialog; signing in continues straight into the report dialog (or the own-content toast), dismissing it does nothing. The Report entry stays visible to guests. Implemented in `useReportContent` (`ReportDialog.tsx`) via `requireLogin`; covered by the `ReportDialog.test.tsx` guest case. S11 screenshots are unchanged (they show the signed-in dialog) and `capture_screenshots.mjs` still drives the report flow as a guest, so it needs a sign-in step before its next capture run. Copy-only companion: the sign-in dialog now says "New users get 10 free credits when signing up." (`SignInModal.tsx`, `DEFAULT_CREDITS`).
+- **Report needs an account.** RPT-P1-S0 (new) / AC-RPT-01 / RPT-P4 checklist / area 09 AUTH-P3-S2: a guest's Report opens the sign-in dialog; signing in continues straight into the report dialog (or the own-content toast), dismissing it does nothing. The Report entry stays visible to guests. Code: `useReportContent` in `ReportDialog.tsx` via `requireLogin`. Test: `ReportDialog.test.tsx` guest case. Storyboard: **S11 v2** — new P1-S0 shot `00_sign_in`, all 16 shots re-captured signed in (`capture_screenshots.mjs` now signs in at the first Report).
+- **Gift pill in the sign-in modal.** AUTH-P1-S1a / AC-AUTH-09 / CR-P4-S0: "New users get {credits} free credits" with `{credits}` = `DEFAULT_CREDITS` (10), the same source as the CR-P4 toast. Code: `SignInModal.tsx`. Test: `dialog-visual.spec.ts` `@visual dialog sign-in` re-recorded (`-darwin`, 6 widths). Storyboard: **S6 v4** — P3-S1 exact copy, every shot re-captured (capture context pinned to `en-US`; a zh-TW machine was being redirected to `/cht`).
+- **Not re-captured:** S1 Song creation, S2 MV creation, S5 Credits & IAP, S7 Profile, S8 Explore also photograph the sign-in modal in a few steps; those images predate the pill. No wording in them changes.
+- Contract (`CHANGELOG-RD.md`): unchanged — UI and copy only.
 
 ## 2026-10-29 — MV effect samples play when visible
 

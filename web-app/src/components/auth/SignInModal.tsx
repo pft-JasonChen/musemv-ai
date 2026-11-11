@@ -177,7 +177,9 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
                   />
                   <span>
                     New users get{" "}
-                    <strong style={{ fontWeight: 700 }}>{DEFAULT_CREDITS} free credits</strong>
+                    <strong style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                      {DEFAULT_CREDITS} free credits
+                    </strong>
                   </span>
                 </p>
               </div>

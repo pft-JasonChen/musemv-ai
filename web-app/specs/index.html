@@ -278,7 +278,7 @@
         <td class="c-area">S6</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/shell-auth/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">App Shell &amp; Auth</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/shell-auth/specs/spec.html</div></td>
         <td class="c-dev">sidebar / tab bar · route navbars · SignInModal · marketing footer</td>
-        <td><span class="badge st-ok">v3 · 2026-10-01</span></td>
+        <td><span class="badge st-ok">v4 · 2026-11-11</span></td>
         <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>
       <tr>
@@ -1008,6 +1008,8 @@ no mail capability at all; this is a backend contract only, and its links to <co
 <strong>spec IDs</strong> that moved, the <strong>code</strong> that implements it, and the <strong>test</strong> that holds it — so you can<br>
 get from "what changed?" to the exact file without diffing.</p>
 </blockquote>
+<h2 id="2026-11-11-reporting-requires-sign-in">2026-11-11 — Reporting requires sign-in</h2>
+<p>RPT-P1-S0 (new) / AC-RPT-01 / RPT-P4 checklist / S11 v2 P1-S1, P4-S1, D-03: a guest's Report opens the sign-in dialog; signing in continues straight into the report dialog (or the own-content toast), dismissing it does nothing. The Report entry stays visible to guests. Implemented in <code>useReportContent</code> (<code>ReportDialog.tsx</code>) via <code>requireLogin</code>; covered by the <code>ReportDialog.test.tsx</code> guest case. S11 screenshots are unchanged (they show the signed-in dialog) and <code>capture_screenshots.mjs</code> still drives the report flow as a guest, so it needs a sign-in step before its next capture run. Copy-only companion: the sign-in dialog now says "New users get 10 free credits when signing up." (<code>SignInModal.tsx</code>, <code>DEFAULT_CREDITS</code>).</p>
 <h2 id="2026-10-29-mv-effect-samples-play-when-visible">2026-10-29 — MV effect samples play when visible</h2>
 <p>MV-P5-EFX / AC-MV-26 / S3 v9 D-13: current-tab samples loop at 50% image visibility, independently of selection. Scroll-out, tab change, close and page background stop motion and restore covers. Motion does not dirty the draft. Implemented in EffectSample / EditTitleSubtitleDialog; covered by visibility/lifecycle unit tests and scoped desktop/phone E2E scrolling assertions.</p>
 <h2 id="2026-10-29-mv-effects-card-layout-and-subtitle-review-fixtures">2026-10-29 — MV effects card layout and Subtitle review fixtures</h2>
@@ -6292,6 +6294,7 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 </ul>
 <h3 id="cr-p4-sign-up-gift-toast-added-2026-10-01">CR-P4 — Sign-up gift toast <em>(added 2026-10-01)</em></h3>
 <ul>
+<li><strong>CR-P4-S0</strong> <em>(added 2026-11-11)</em> Before sign-up, the sign-in modal advertises the gift with a pill: <strong>"New users get {credits} free credits"</strong> (area 09 AUTH-P1-S1a / AC-AUTH-09). Same <code>{credits}</code> source as the toast below, so the promise and the grant cannot disagree.</li>
 <li><strong>CR-P4-S1</strong> A new account finishes sign-up. RD queries the backend for the sign-up gift; the answer may not be ready immediately, so the toast appears <strong>~3 s after sign-up</strong> (provisional delay, RD-owned).</li>
 <li><strong>CR-P4-S2</strong> <strong>System:</strong> a non-blocking toast (no dialog, no CTA, does not intercept clicks), visible ~4 s: <strong>"🎉 Welcome! {credits} free credits have been added to your account."</strong> <code>{credits}</code> comes from the backend (today <code>DEFAULT_CREDITS</code> = 10) and is never hardcoded in the string. The header credit pill reflects the new balance.</li>
 <li><strong>CR-P4-S3</strong> Shown <strong>once per account</strong> — a later sign-in does not show it again.</li>
@@ -6498,7 +6501,7 @@ Terms/Privacy/Delete-account destinations (area 06 Settings).</p>
 <p><strong>Key divergences from App F01/F22:</strong> <strong>no email/password</strong> option — only Continue with Apple /<br>
 Google ⚠️; <strong>no OAuth</strong> — a 1.8s fake success 🔒; <strong>no Splash &amp; Onboarding carousel</strong> (F01) at all ⚠️<br>
 (→ <code>TBD-GL-03</code>). <strong>GL-02 landed 2026-07-23:</strong> gating is now <strong>action-level</strong> (Create MV / Create Song /<br>
-Like / publish call <code>requireLogin</code> at the action), synced to App F22 — <code>AuthGuard</code> on the <strong>four</strong> gated route entries is kept as a backstop.<br>
+Like / publish / <strong>Report</strong> call <code>requireLogin</code> at the action; Report added 2026-11-11, area 14), synced to App F22 — <code>AuthGuard</code> on the <strong>four</strong> gated route entries is kept as a backstop.<br>
 <strong>⚠️ Neither create route is one of them</strong> — <code>/mv/room</code> and <code>/song/create</code> are open to guests; see §3.</p>
 <hr>
 <h2 id="2-route-component-state-api-map-rd">2. Route / component / state / API map (RD)</h2>
@@ -6593,6 +6596,7 @@ rationale). <code>/settings</code> was added by PROF-03 (2026-07-23) and <code>/
 <h3 id="auth-p1-sign-in-from-the-header-no-queued-action">AUTH-P1 — Sign in from the header (no queued action)</h3>
 <ul>
 <li><strong>AUTH-P1-S1</strong> Logged-out user clicks <strong>Login</strong> (each route's own navbar) → <code>openSignIn()</code> opens the modal. <em>(Corrected 2026-08-27: was "Sign In (top bar)" — see area 01's correction; the control text is "Login" and there is no single top bar.)</em></li>
+<li><strong>AUTH-P1-S1a</strong> The modal shows, under the subtitle, a gift pill: 🎁 <strong>"New users get {credits} free credits"</strong> — <code>{credits}</code> is <code>DEFAULT_CREDITS</code> (10), the same value as the CR-P4 sign-up gift toast (area 07). It is shown to every visitor, not only first-time ones, because the modal cannot know yet whether the sign-in is a new account. <em>(Added 2026-11-11.)</em></li>
 <li><strong>AUTH-P1-S2</strong> Pick Apple/Google → 1.8s success animation → <code>authStore.set(true)</code>; header swaps to logged-in chrome. No navigation.</li>
 </ul>
 <h3 id="auth-p2-gated-route-entry-queued-action">AUTH-P2 — Gated route entry (queued action)</h3>
@@ -6602,7 +6606,12 @@ rationale). <code>/settings</code> was added by PROF-03 (2026-07-23) and <code>/
 </ul>
 <h3 id="auth-p3-gated-create-entry-queued-push">AUTH-P3 — Gated create entry (queued push)</h3>
 <ul>
-<li><strong>AUTH-P3-S1</strong> Logged-out user clicks a gated <strong>sidebar</strong> item, or a <strong>Home hero "Create MV"/"Create Song" CTA</strong>, or a <strong>Home song-card "create"</strong> (<code>HomeView</code>, area 04) → <code>requireLogin(() =&gt; push(target))</code>. Sign in → navigates to target (song-card create also pre-fills the song compose); dismiss → stays on the current page.</li>
+<li>
+<p><strong>AUTH-P3-S1</strong> Logged-out user clicks a gated <strong>sidebar</strong> item, or a <strong>Home hero "Create MV"/"Create Song" CTA</strong>, or a <strong>Home song-card "create"</strong> (<code>HomeView</code>, area 04) → <code>requireLogin(() =&gt; push(target))</code>. Sign in → navigates to target (song-card create also pre-fills the song compose); dismiss → stays on the current page.</p>
+</li>
+<li>
+<p><strong>AUTH-P3-S2</strong> Logged-out user presses <strong>Report</strong> on an MV or song (player, Share menu) → <code>requireLogin(openReport)</code>. Sign in → the report dialog opens (or the own-content toast if it turns out to be theirs); dismiss → nothing. The Report entry itself stays visible to guests. <em>(Added 2026-11-11 — area 14 AC-RPT-01.)</em></p>
+</li>
 </ul>
 <h3 id="auth-p4-sign-out">AUTH-P4 — Sign out</h3>
 <ul>
@@ -6652,6 +6661,7 @@ rationale). <code>/settings</code> was added by PROF-03 (2026-07-23) and <code>/
 <li><strong>AC-AUTH-05</strong> — WHEN the user signs out, THE SYSTEM SHALL clear the logged-in flag and reset subscription and profile to guest defaults.</li>
 <li><strong>AC-AUTH-06</strong> — WHEN the logged-in flag is set/cleared, THE SYSTEM SHALL persist only that flag across reload (subscription/profile are not persisted). <em>(Locks in current behaviour pending <code>TBD-GL-04</code>.)</em></li>
 <li><strong>AC-AUTH-07</strong> — THE SYSTEM SHALL render <code>SignInModal</code> correctly at 390/768/1024/1440px. <em>(visual)</em></li>
+<li><strong>AC-AUTH-09</strong> — WHEN the sign-in modal is shown, THE SYSTEM SHALL show the sign-up gift pill "New users get {credits} free credits" with <code>{credits}</code> from the same source as the CR-P4 gift (never hardcoded in the string). <em>(new 2026-11-11)</em></li>
 </ul>
 <hr>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
