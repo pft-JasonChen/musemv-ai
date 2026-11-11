@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useReportContent, ALREADY_REPORTED, REPORT_FAILED, REPORT_LIMIT } from "./ReportDialog";
 import { moderationStore } from "@/lib/contentModeration";
 import { reportCount, resetReports, type ReportKind } from "@/lib/report";
-const auth = vi.hoisted(() => ({ loggedIn: false }));
+const auth = vi.hoisted(() => ({
+  loggedIn: true,
+  requireLogin: vi.fn<(onSuccess?: () => void) => void>(),
+}));
 vi.mock("@/components/providers/AuthProvider", () => ({ useAuth: () => auth }));
 vi.mock("@/components/providers/HistoryProvider", () => ({ useHistory: () => ({ history: [] }) }));
 vi.mock("@/lib/ssr", () => ({ PHONE_QUERY: "(max-width: 767px)", useMediaQuery: () => false }));
@@ -24,13 +27,14 @@ async function send() {
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 }
 beforeEach(() => {
-  auth.loggedIn = false;
+  auth.loggedIn = true;
+  auth.requireLogin.mockReset();
   resetReports();
   moderationStore.reset();
 });
 afterEach(cleanup);
 describe("report decisions", () => {
-  it("allows guests and counts five mixed-kind successes; duplicate takes priority over the cap", async () => {
+  it("counts five mixed-kind successes; duplicate takes priority over the cap", async () => {
     render(
       <>
         {["a", "b", "c", "d", "e", "f"].map((id, i) => (
@@ -70,7 +74,15 @@ describe("report decisions", () => {
     await screen.findByRole("button", { name: "Done" });
     expect(reportCount()).toBe(1);
   });
-  it("hides self-report after sign-in while allowing the same public content to guests", () => {
+  it("asks a guest to sign in instead of opening the report dialog", () => {
+    auth.loggedIn = false;
+    render(<Entry id="a" />);
+    fireEvent.click(screen.getByRole("button", { name: "Open a" }));
+    expect(auth.requireLogin).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+  it("hides self-report after sign-in while showing the same public content's flag to guests", () => {
+    auth.loggedIn = false;
     const view = render(<Entry id="sp-neon-static" kind="song" />);
     expect(screen.getByRole("button", { name: "Open sp-neon-static" })).toBeInTheDocument();
     auth.loggedIn = true;

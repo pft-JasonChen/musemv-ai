@@ -4,6 +4,10 @@
 > **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
 > get from "what changed?" to the exact file without diffing.
 
+## 2026-11-11 — Reporting requires sign-in
+
+RPT-P1-S0 (new) / AC-RPT-01 / RPT-P4 checklist / S11 v2 P1-S1, P4-S1, D-03: a guest's Report opens the sign-in dialog; signing in continues straight into the report dialog (or the own-content toast), dismissing it does nothing. The Report entry stays visible to guests. Implemented in `useReportContent` (`ReportDialog.tsx`) via `requireLogin`; covered by the `ReportDialog.test.tsx` guest case. S11 screenshots are unchanged (they show the signed-in dialog) and `capture_screenshots.mjs` still drives the report flow as a guest, so it needs a sign-in step before its next capture run. Copy-only companion: the sign-in dialog now says "New users get 10 free credits when signing up." (`SignInModal.tsx`, `DEFAULT_CREDITS`).
+
 ## 2026-10-29 — MV effect samples play when visible
 
 MV-P5-EFX / AC-MV-26 / S3 v9 D-13: current-tab samples loop at 50% image visibility, independently of selection. Scroll-out, tab change, close and page background stop motion and restore covers. Motion does not dirty the draft. Implemented in EffectSample / EditTitleSubtitleDialog; covered by visibility/lifecycle unit tests and scoped desktop/phone E2E scrolling assertions.

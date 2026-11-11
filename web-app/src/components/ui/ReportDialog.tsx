@@ -282,7 +282,7 @@ function ReportDialogBody({
  */
 export function useReportContent(kind: ReportKind, contentId: string) {
   const [open, setOpen] = useState(false);
-  const { loggedIn } = useAuth();
+  const { loggedIn, requireLogin } = useAuth();
   const { history } = useHistory();
   useModeration();
   const canReport =
@@ -313,11 +313,20 @@ export function useReportContent(kind: ReportKind, contentId: string) {
     if (reportCount() >= REPORT_SESSION_MAX) return REPORT_LIMIT;
     return null;
   }
-  function openReport() {
-    if (!canReport) return;
+  function proceed() {
     const error = blocked();
     if (error) show(error);
     else setOpen(true);
+  }
+  // Reporting requires an account: a guest's press opens the sign-in dialog
+  // and the report continues once they are signed in (dismissing it does nothing).
+  function openReport() {
+    if (!canReport) return;
+    if (!loggedIn) {
+      requireLogin(proceed);
+      return;
+    }
+    proceed();
   }
   const reportNode = (
     <>

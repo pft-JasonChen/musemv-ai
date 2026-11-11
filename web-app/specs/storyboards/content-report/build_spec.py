@@ -15,13 +15,13 @@ def step(n,shot,user,system,limits,exact=()):
 
 cfg={
  'feature_name':'Content Report', 'breadcrumb':'YouCam Muse Web &rarr; Content Report',
- 'version':'v1','date':'2026-10-29','actor_label':'WEB UI','author':'YouCam Muse','guideline':'',
+ 'version':'v2','date':'2026-11-11','actor_label':'WEB UI','author':'YouCam Muse','guideline':'',
  'description':'Report a song or music video with a built-in reason or an explanation. Reviewers can remove public access while the creator keeps private playback.',
  'overview':[['Scope','MV and Song players, community Song Result, public Share, History and owner Result'],['Audience','Web RD and QA'],['Source','Content Report PRD v1.1 plus product-owner decisions of 28&ndash;29 October 2026'],['Capture','Live production app: desktop 1440 &times; 1000; phone supplement 390 &times; 844']],
  'paths':[
- {'num':1,'name':'Choose a reason and submit','desc':'Visitors and signed-in users follow the same flow for other people\'s and official content.','entry':'Report flag or public Share menu','outcome':'Success remains until dismissed','steps':[
+ {'num':1,'name':'Choose a reason and submit','desc':'Signed-in users report other people\'s and official content. A visitor who presses Report is asked to sign in first, and the report continues once they have.','entry':'Report flag or public Share menu','outcome':'Success remains until dismissed','steps':[
  step(1,'01_reasons','Presses Report on a music video.','The report dialog opens with six built-in reasons and Something else.',[
- 'No sign-in is required.','The title is Report Music Video for an MV and Report Song for a song.','Submit Report is always visible and disabled until the input is valid.','The six built-in reasons appear in the order shown.'],['Report Music Video','Something else','Submit Report']),
+ 'Reporting requires sign-in: a visitor sees the sign-in dialog first, and the report dialog opens after signing in. Dismissing sign-in does nothing.','The title is Report Music Video for an MV and Report Song for a song.','Submit Report is always visible and disabled until the input is valid.','The six built-in reasons appear in the order shown.'],['Report Music Video','Something else','Submit Report'])|{'since':'v2'},
  step(2,'02_selected','Selects one built-in reason.','The selection changes and Submit Report becomes enabled.',['Only one built-in reason can be selected.']),
  step(3,'03_details','Selects Something else and enters Details.','A separate Details page shows the draft and character counter.',['Details accepts at most 1000 characters.','Whitespace-only input cannot be submitted.','Back and re-entry retain the draft; Clear empties it; closing the dialog resets it.'],['Details']),
  step(4,'04_success','Presses Submit Report.','The success confirmation replaces the form.',['Disable submission while it is in progress.','Only successful submissions count and mark the content as reported.','Do not automatically close the success state after three seconds.','Done dismisses it; existing Close, Escape and backdrop dismissal remain available.','A successful report never removes or hides the content.'],['Thank you for keeping Muse safe','Done'])]},
@@ -32,7 +32,7 @@ cfg={
  step(1,'07_failure','Submits while the submission service fails.','The error appears and the reason or Details remains editable.',['Do not count a failure or mark the item as reported.','Keep the report open and retain its input.','Submitting disables repeated clicks.'],['Couldn’t submit your report. Please try again.']),
  step(2,'04_success','Presses Submit Report again after the failure is resolved.','The retry enters success and counts once.',['The user retries explicitly; no automatic retry or automatic removal.'])]},
  {'num':4,'name':'Own content is not reportable','desc':'Official content remains reportable; ownership is based on the signed-in account.','entry':'Signed-in creator opens their own content','outcome':'No Report entry','steps':[
- step(1,'09_own_result','Opens their own song result while signed in.','The Report entry is absent.',['Reject attempted self-report submissions as well as hiding the entry.','Visitors can report public content; after sign-in evaluate ownership against the account.','The reported creator is not shown the reporter\'s identity.','Reporter identification or logging is defined by RD, separately from this anonymity promise.'])]},
+ step(1,'09_own_result','Opens their own song result while signed in.','The Report entry is absent.',['Reject attempted self-report submissions as well as hiding the entry.','Visitors see the Report entry on public content but must sign in first; ownership is then evaluated against the account.','The reported creator is not shown the reporter\'s identity.','Reporter identification or logging is defined by RD, separately from this anonymity promise.'])]},
  {'num':5,'name':'Reviewer removal and private access','desc':'Reviewer decisions change public visibility, not creator ownership.','entry':'Reviewer removes a reported item','outcome':'Public access unavailable; owner retains private playback','steps':[
  step(1,'08_share_removed','Opens a public Share link after reviewer removal.','The unavailable state replaces the media.',['Remove the item from Home, Explore and public creator profiles.','Public Share and player links are unavailable even to the signed-in owner.','Do not mount playable audio or video in unavailable views.'],["This link isn't available"]),
  step(2,'10_private_removed','The signed-in creator opens their own Result after removal.','Private playback and the removal notice remain available.',['Only the signed-in creator can use this private access.','Normal and permanent removal have the same access rules.','Signing out revokes private playback.']),
@@ -51,7 +51,7 @@ cfg={
  'decisions':[
  ('D-01','Six reasons only?','Keep six built-in reasons plus Something else; always show disabled Submit until valid.'),
  ('D-02','Success dismissal?','Done manually dismisses; no three-second automatic dismissal.'),
- ('D-03','Authentication and ownership?','Guests may report; hide and block self-report after sign-in; official content remains reportable.'),
+ ('D-03','Authentication and ownership?','Reporting requires sign-in (changed 2026-11-11): a guest\'s Report opens sign-in and continues after it. Hide and block self-report; official content remains reportable.'),
  ('D-04','Anti-abuse session?','Two controls only: duplicate priority and five mixed-kind successes per document lifetime; refresh resets.'),
  ('D-05','Toast duration?','Three seconds with hover and focus hold, restarting after leave.'),
  ('D-06','Failure?','Keep input, show the approved error, allow retry and do not count failure.'),
@@ -59,13 +59,13 @@ cfg={
  ('D-08','QA demonstration?','Use the existing QA panel; new failure and reviewer state is session-only and resets on refresh.'),
  ],
  'open_questions':[('Q-01','RD report and moderation integration','Provide endpoint, reason IDs, identity/session, idempotency, reviewer state and authorization contract. Product behavior is settled.','RD')],
- 'changelog':[('v1','2026-10-29','Approved reporting and removal behavior with live desktop captures and a phone supplement.')],
+ 'changelog':[('v2','2026-11-11','Reporting now requires sign-in: a guest\'s Report opens the sign-in dialog and continues to the report dialog after sign-in (P1-S1, P4-S1, D-03, AC-RPT-01). Screenshots are unchanged and still show the signed-in dialog; no capture of the sign-in prompt yet.'),('v1','2026-10-29','Approved reporting and removal behavior with live desktop captures and a phone supplement.')],
  'svg_path':str(HERE/'user-flowchart.svg'),'screenshots_dir':str(HERE/'specs/screenshots'),'out_dir':str(HERE/'specs'),
  'prototype_src':[str(ROOT/'src/components/ui/ReportDialog.tsx'),str(ROOT/'src/lib/report.ts'),str(ROOT/'src/components/history/ContentNotice.tsx'),str(ROOT/'src/components/history/HistoryView.tsx')],
  'comments_enabled':False,
 }
 cfg['criteria'] = [
- ('AC-RPT-01','Guest reporting opens the correct media title without requiring sign-in.',['P1-S1','P6-S1']),
+ ('AC-RPT-01','A guest\'s Report asks for sign-in first; a signed-in user\'s Report opens the correct media title.',['P1-S1','P6-S1']),
  ('AC-RPT-02','Six ordered reasons and Something else follow selection, Details validation and draft-retention rules.',['P1-S1','P1-S2','P1-S3','P6-S2']),
  ('AC-RPT-03','Submit stays visible, disabled until valid and while sending.',['P1-S1','P1-S2','P3-S1']),
  ('AC-RPT-04','Success has Done and never closes automatically after three seconds.',['P1-S4','P6-S3']),

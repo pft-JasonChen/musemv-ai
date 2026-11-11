@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialogTransition";
-import { MOCK_USER } from "@/lib/user";
+import { DEFAULT_CREDITS, MOCK_USER } from "@/lib/user";
 import { isNewSignup } from "@/lib/signupGift";
 import { TERMS_URL, PRIVACY_URL } from "@/lib/legal";
 
@@ -79,14 +79,27 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
     <div
       className={`login-modal-overlay${provider ? "" : " login-modal-overlay--sign-in"}${visible ? " login-modal-overlay--visible" : ""}`}
     >
-      <div className="login-modal-backdrop" onClick={provider ? undefined : onClose} aria-hidden="true" />
+      <div
+        className="login-modal-backdrop"
+        onClick={provider ? undefined : onClose}
+        aria-hidden="true"
+      />
       {provider ? (
-        <div className="login-modal login-modal--success" role="dialog" aria-modal="true" aria-label="Signed in successfully">
+        <div
+          className="login-modal login-modal--success"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Signed in successfully"
+        >
           <div className="login-modal__handle" aria-hidden="true" />
 
           <div className="login-modal__success-circle">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/icons/ui/ic_check.svg" alt="" className="login-modal__success-check" />
+            <img
+              src="/assets/icons/ui/ic_check.svg"
+              alt=""
+              className="login-modal__success-check"
+            />
           </div>
 
           <div className="login-modal__message">
@@ -106,7 +119,12 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
           </div>
         </div>
       ) : (
-        <div className="login-modal login-modal--sign-in" role="dialog" aria-modal="true" aria-label="Sign in to YouCam Muse">
+        <div
+          className="login-modal login-modal--sign-in"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Sign in to YouCam Muse"
+        >
           <div className="login-modal__handle" aria-hidden="true" />
 
           <div className="login-modal__content">
@@ -121,6 +139,47 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
                   <br />
                   and unlock your full creative history.
                 </p>
+                {/* Sign-up gift pill — WA addition, not in DP's LoginModal. Inline styles
+                    because `designer/LoginModal.css` is gated verbatim. The card is always
+                    dark (`--neutral-dark-14`), so white text on the 20% purple tint is
+                    well above AA; the gift glyph is decorative. */}
+                <p
+                  style={{
+                    alignSelf: "center",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    margin: "8px 0 0",
+                    padding: "5px 12px",
+                    borderRadius: 999,
+                    background: "rgba(145, 50, 255, 0.2)",
+                    border: "1px solid var(--pf-purple-60)",
+                    color: "var(--neutral-dark-100)",
+                    fontFamily: "var(--font-family-primary)",
+                    fontSize: 12,
+                    fontWeight: "var(--font-weight-medium)",
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 16,
+                      height: 16,
+                      flexShrink: 0,
+                      background: "#c084fc",
+                      maskImage: 'url("/assets/icons/ui/ic_gift.svg")',
+                      WebkitMaskImage: 'url("/assets/icons/ui/ic_gift.svg")',
+                      maskSize: "contain",
+                      WebkitMaskSize: "contain",
+                      maskRepeat: "no-repeat",
+                      WebkitMaskRepeat: "no-repeat",
+                    }}
+                  />
+                  <span>
+                    New users get{" "}
+                    <strong style={{ fontWeight: 700 }}>{DEFAULT_CREDITS} free credits</strong>
+                  </span>
+                </p>
               </div>
             </div>
 
@@ -128,12 +187,24 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
               <div className="login-modal__buttons">
                 <button type="button" className="login-modal__social" onClick={() => pick("Apple")}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/assets/icons/ui/ic_apple_logo.svg" alt="" className="login-modal__social-icon" />
+                  <img
+                    src="/assets/icons/ui/ic_apple_logo.svg"
+                    alt=""
+                    className="login-modal__social-icon"
+                  />
                   Continue with Apple
                 </button>
-                <button type="button" className="login-modal__social" onClick={() => pick("Google")}>
+                <button
+                  type="button"
+                  className="login-modal__social"
+                  onClick={() => pick("Google")}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/assets/icons/ui/ic_google_logo.svg" alt="" className="login-modal__social-icon" />
+                  <img
+                    src="/assets/icons/ui/ic_google_logo.svg"
+                    alt=""
+                    className="login-modal__social-icon"
+                  />
                   Continue with Google
                 </button>
               </div>
@@ -142,11 +213,21 @@ export function SignInModal({ open, onClose, onSignedIn }: Props) {
                 {/* AUTH-03: wire to the same legal links as Settings (PROF-06) — DP's
                     footer line is plain text with nowhere to link to. */}
                 By continuing, you agree to our{" "}
-                <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline" }}>
+                <a
+                  href={TERMS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", textDecoration: "underline" }}
+                >
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline" }}>
+                <a
+                  href={PRIVACY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", textDecoration: "underline" }}
+                >
                   Privacy Policy
                 </a>
                 .

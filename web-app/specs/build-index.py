@@ -59,7 +59,7 @@ ROWS = [
      "MSR Credit Consume Form (credit_consume 1.0); main-action + subActions payload per scenario; cloud-config action map.",
      "Which action/subActions each generation sends, charge-on-start + refund-on-fail, reserved actions. 2 TBD."),
     ("14", "areas/14-content-report.md", "Content Report Mechanism", "validated",
-     "Approved guest reports, self-report protection, five-success cap, retry and session moderation; Word v1.2 and S11.",
+     "Sign-in-required reports, self-report protection, five-success cap, retry and session moderation; Word v1.2 and S11.",
      "Six reasons plus Something else, Done-only success, cap/duplicate, retry, owner private playback; 15 AC, RD integration pending."),
     ("OQ", "OPEN-QUESTIONS.md", "Open Questions", "reference",
      "Cross-area items still needing a PM/designer/RD decision — resolved items live in each area spec instead.",
@@ -96,7 +96,7 @@ STORYBOARDS = [
      "/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator", "7 paths / 38 shots"),
     ("S9", "share", "Share", "v2 · 2026-10-08",
      "/share · ShareDialog", "5 paths / 15 shots"),
-    ("S11", "content-report", "Content Report", "v1 · 2026-10-29",
+    ("S11", "content-report", "Content Report", "v2 · 2026-11-11",
      "MV / Song / Share report · History / Result removal notice", "6 paths / 15 shots"),
 ]
 # S10 (credit-consumption) has no spec.html — the product owner ruled it ships

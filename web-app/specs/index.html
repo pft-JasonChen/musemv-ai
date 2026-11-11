@@ -306,7 +306,7 @@
         <td class="c-area">S11</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/content-report/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Content Report</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/content-report/specs/spec.html</div></td>
         <td class="c-dev">MV / Song / Share report · History / Result removal notice</td>
-        <td><span class="badge st-ok">v1 · 2026-10-29</span></td>
+        <td><span class="badge st-ok">v2 · 2026-11-11</span></td>
         <td class="c-cl"><a class="sb-link" href="storyboards/content-report/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
       </tr>
       <tr>
@@ -416,7 +416,7 @@
         <td class="c-area">14</td>
         <td class="c-feat"><span class="feat-name">Content Report Mechanism</span><span class="feat-open">Open spec →</span><div class="c-file">areas/14-content-report.md</div></td>
         <td><span class="badge st-ok">validated</span></td>
-        <td class="c-dev">Approved guest reports, self-report protection, five-success cap, retry and session moderation; Word v1.2 and S11.</td>
+        <td class="c-dev">Sign-in-required reports, self-report protection, five-success cap, retry and session moderation; Word v1.2 and S11.</td>
       </tr>
       <tr data-doc="OQ" tabindex="0" role="button" aria-label="Open Open Questions spec">
         <td class="c-area">OQ</td>
@@ -7659,8 +7659,8 @@ ai_song_custom_vocal_refine                                          ← 移除
 Related: <a href="../storyboards/content-report/specs/spec.html">S11 Content Report storyboard</a>、<a href="../../docs/requirements/YCM-content-report-v1.2-web.docx">Word 修訂版</a>。</p>
 </blockquote>
 <h2 id="1-overview-scope">1. Overview &amp; scope</h2>
-<p>訪客與登入使用者都能檢舉 MV / Song；不要求登入。匿名代表<strong>不向被檢舉創作者揭露檢舉者身分</strong>，不代表後端不記錄識別資訊。後者由 RD 定義。<br>
-登入使用者不能檢舉自己的作品：隱藏 Report 並阻擋送出；訪客則可檢舉公開作品，登入後才依帳號判定是否本人。官方作品可檢舉。<br>
+<p>只有登入使用者能檢舉 MV / Song；訪客點 Report 會先開登入 dialog，登入成功後直接開檢舉 UI，關閉登入 dialog 則不檢舉（2026-11-11 規則變更）。匿名代表<strong>不向被檢舉創作者揭露檢舉者身分</strong>，不代表後端不記錄識別資訊。後者由 RD 定義。<br>
+登入使用者不能檢舉自己的作品：隱藏 Report 並阻擋送出。訪客仍看得到公開作品的 Report 入口，按下後要求登入，登入後依帳號判定是否本人（本人作品顯示「This content cannot be reported.」）。官方作品可檢舉。<br>
 成功檢舉<strong>不會立即隱藏或下架</strong>內容；審核確認後才移除公開存取，創作者保有私人播放。<br>
 不包含帳號檢舉／封鎖、申訴、重新送審、審核後台 UI 或 Profile Send Feedback 的 Community Report 分類。</p>
 <h2 id="2-route-component-state-api-maprd">2. Route / component / state / API map（RD）</h2>
@@ -7809,8 +7809,13 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 </thead>
 <tbody>
 <tr>
+<td>RPT-P1-S0</td>
+<td>訪客點 Report</td>
+<td>開登入 dialog；登入成功後接續 S1，關閉則不動作</td>
+</tr>
+<tr>
 <td>RPT-P1-S1</td>
-<td>訪客／登入者點他人或官方作品 Report</td>
+<td>登入者點他人或官方作品 Report</td>
 <td>duplicate → cap 檢查後開正確標題</td>
 </tr>
 <tr>
@@ -7904,7 +7909,7 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 </table>
 <h2 id="6-acceptance-criteriaears">6. Acceptance criteria（EARS）</h2>
 <ul>
-<li><strong>AC-RPT-01</strong> — WHEN 訪客或登入者點非本人作品 Report，THE SYSTEM SHALL 在未受防濫用阻擋時開對應標題的檢舉 UI，不要求登入。</li>
+<li><strong>AC-RPT-01</strong> — WHEN 訪客點 Report，THE SYSTEM SHALL 先開登入 dialog，登入成功後接續檢舉流程；WHEN 登入者點非本人作品 Report，THE SYSTEM SHALL 在未受防濫用阻擋時開對應標題的檢舉 UI。</li>
 <li><strong>AC-RPT-02</strong> — THE SYSTEM SHALL 依 §3.1 顯示六分類＋Something else，並執行單選、1000 字上限、trim 非空及返回保留規則。</li>
 <li><strong>AC-RPT-03</strong> — THE SYSTEM SHALL 一直顯示 Submit；未選有效原因／說明或正在送出時 SHALL disabled。</li>
 <li><strong>AC-RPT-04</strong> — WHEN 成功，THE SYSTEM SHALL 顯示 §3.2 確認與 Done，SHALL NOT 在 3 秒自動關閉。</li>
@@ -7923,10 +7928,10 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
 <p>2026-10-29：174 項單元測試、定向 browser report／access 檢查及 15 張 390／1440 截圖已通過。逐項證據與測試範圍見 <a href="../storyboards/content-report/VERIFICATION.md">S11 verification</a>；下表保留為完整回歸清單，不代表 Linux visual／全套 axe 已在本次執行。</p>
 <ul>
-<li>[ ] RPT-P1：免登入、雙標題、六分類＋其他、disabled、成功超過 3 秒仍開啟、Done。</li>
+<li>[ ] RPT-P1：訪客先登入再接續、雙標題、六分類＋其他、disabled、成功超過 3 秒仍開啟、Done。</li>
 <li>[ ] RPT-P2：跨 MV／Song 五次、duplicate 優先、第六次 cap、hover／focus hold、reload 重設。</li>
 <li>[ ] RPT-P3：連點不重複提交、失敗輸入保留、不計次、關 QA 後重試成功。</li>
-<li>[ ] RPT-P4：登入自己無入口；訪客與他人／官方可檢舉。</li>
+<li>[ ] RPT-P4：登入自己無入口；他人／官方可檢舉；訪客按 Report 要求登入。</li>
 <li>[ ] RPT-P5：同作品跨公開列表／profile／player／share 同步；只有本人登入可私人播放；登出即阻擋。</li>
 <li>[ ] History 通知、無 Publish、一般／永久下架與六原因說明、Got It。</li>
 <li>[ ] 390 / 1440 視覺檢查；其餘六階寬度與既有全站行為交給專案 gate，不宣告本次已重錄 Linux baseline。</li>

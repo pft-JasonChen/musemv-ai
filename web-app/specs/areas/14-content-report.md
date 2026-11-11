@@ -8,8 +8,8 @@
 
 ## 1. Overview & scope
 
-訪客與登入使用者都能檢舉 MV / Song；不要求登入。匿名代表**不向被檢舉創作者揭露檢舉者身分**，不代表後端不記錄識別資訊。後者由 RD 定義。
-登入使用者不能檢舉自己的作品：隱藏 Report 並阻擋送出；訪客則可檢舉公開作品，登入後才依帳號判定是否本人。官方作品可檢舉。
+只有登入使用者能檢舉 MV / Song；訪客點 Report 會先開登入 dialog，登入成功後直接開檢舉 UI，關閉登入 dialog 則不檢舉（2026-11-11 規則變更）。匿名代表**不向被檢舉創作者揭露檢舉者身分**，不代表後端不記錄識別資訊。後者由 RD 定義。
+登入使用者不能檢舉自己的作品：隱藏 Report 並阻擋送出。訪客仍看得到公開作品的 Report 入口，按下後要求登入，登入後依帳號判定是否本人（本人作品顯示「This content cannot be reported.」）。官方作品可檢舉。
 成功檢舉**不會立即隱藏或下架**內容；審核確認後才移除公開存取，創作者保有私人播放。
 不包含帳號檢舉／封鎖、申訴、重新送審、審核後台 UI 或 Profile Send Feedback 的 Community Report 分類。
 
@@ -94,7 +94,8 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 
 | Step | 操作 | 回應 |
 | --- | --- | --- |
-| RPT-P1-S1 | 訪客／登入者點他人或官方作品 Report | duplicate → cap 檢查後開正確標題 |
+| RPT-P1-S0 | 訪客點 Report | 開登入 dialog；登入成功後接續 S1，關閉則不動作 |
+| RPT-P1-S1 | 登入者點他人或官方作品 Report | duplicate → cap 檢查後開正確標題 |
 | RPT-P1-S2 | 選一原因，或 Something else 填 Details | 有效輸入才啟用 Submit |
 | RPT-P1-S3 | Submit | 送出中停用；成功進確認，Done 手動關閉 |
 | RPT-P2-S1 | 已成功檢舉同作品再點 Report | duplicate toast，不開 sheet |
@@ -118,7 +119,7 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 
 ## 6. Acceptance criteria（EARS）
 
-- **AC-RPT-01** — WHEN 訪客或登入者點非本人作品 Report，THE SYSTEM SHALL 在未受防濫用阻擋時開對應標題的檢舉 UI，不要求登入。
+- **AC-RPT-01** — WHEN 訪客點 Report，THE SYSTEM SHALL 先開登入 dialog，登入成功後接續檢舉流程；WHEN 登入者點非本人作品 Report，THE SYSTEM SHALL 在未受防濫用阻擋時開對應標題的檢舉 UI。
 - **AC-RPT-02** — THE SYSTEM SHALL 依 §3.1 顯示六分類＋Something else，並執行單選、1000 字上限、trim 非空及返回保留規則。
 - **AC-RPT-03** — THE SYSTEM SHALL 一直顯示 Submit；未選有效原因／說明或正在送出時 SHALL disabled。
 - **AC-RPT-04** — WHEN 成功，THE SYSTEM SHALL 顯示 §3.2 確認與 Done，SHALL NOT 在 3 秒自動關閉。
@@ -138,10 +139,10 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 
 2026-10-29：174 項單元測試、定向 browser report／access 檢查及 15 張 390／1440 截圖已通過。逐項證據與測試範圍見 [S11 verification](../storyboards/content-report/VERIFICATION.md)；下表保留為完整回歸清單，不代表 Linux visual／全套 axe 已在本次執行。
 
-- [ ] RPT-P1：免登入、雙標題、六分類＋其他、disabled、成功超過 3 秒仍開啟、Done。
+- [ ] RPT-P1：訪客先登入再接續、雙標題、六分類＋其他、disabled、成功超過 3 秒仍開啟、Done。
 - [ ] RPT-P2：跨 MV／Song 五次、duplicate 優先、第六次 cap、hover／focus hold、reload 重設。
 - [ ] RPT-P3：連點不重複提交、失敗輸入保留、不計次、關 QA 後重試成功。
-- [ ] RPT-P4：登入自己無入口；訪客與他人／官方可檢舉。
+- [ ] RPT-P4：登入自己無入口；他人／官方可檢舉；訪客按 Report 要求登入。
 - [ ] RPT-P5：同作品跨公開列表／profile／player／share 同步；只有本人登入可私人播放；登出即阻擋。
 - [ ] History 通知、無 Publish、一般／永久下架與六原因說明、Got It。
 - [ ] 390 / 1440 視覺檢查；其餘六階寬度與既有全站行為交給專案 gate，不宣告本次已重錄 Linux baseline。
