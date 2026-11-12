@@ -5,12 +5,12 @@
 - Retrieved at: 2026-11-12T15:30:09+08:00
 - Repository: origin/main `ed8bfc4` (fast-forwarded from `ef111e4`; 10 commits).
 - Query: ProductID 315 (YouCam Muse Web), BugBelong PM, statuses NewCreated + Assigned (`search --ycm-web --pm-open`). 7 results; all Handler JASON_CHEN. Assignee JASON_CHEN for 6; SMITH_LEE for YMW261014P0001.
-- Scope: user approved fixing the first four items from the discussion (YMW261021P0002, YMW261109P0002, YMW261103P0001, YMW261103P0002), explicitly choosing exit-fullscreen-before-report. Subsequently Jason approved the Newly Released MV definition for RD handoff (no implementation requested), and approved implementing the subscription-expiry prototype/spec (YMW261022P0001). Jason also approved keeping the crown as subscription entry and separating subscription/credit tracking by actual flow; spec and seven-ticket completeness audit are authorized. No commit, push, deployment, or ePF mutations performed.
+- Scope: user approved fixing the first four items from the discussion (YMW261021P0002, YMW261109P0002, YMW261103P0001, YMW261103P0002), explicitly choosing exit-fullscreen-before-report. Subsequently Jason approved the Newly Released MV definition for RD handoff (no implementation requested), and approved implementing the subscription-expiry prototype/spec (YMW261022P0001). Jason also approved keeping the crown as subscription entry and separating subscription/credit tracking by actual flow; spec and seven-ticket completeness audit are authorized. User subsequently authorized commit, merge and push to main. Prototype release a39d839 deployed and verified; no ePF mutations performed.
 - Evidence: full reports, deduplicated comments, status logs, and all 9 attachments read. Attachments remain in temporary scratch space, not this repository.
-- Verification: typecheck PASS; lint exit 0 (one pre-existing unused `dirname` warning in scripts/computed-style-diff.mjs); all 209 Vitest tests PASS (26 files); production build PASS (network-enabled retry needed for existing Google Inter font). Guard greps, designer CSS check (46 verbatim files), and diff whitespace check PASS.
+- Verification: typecheck PASS; lint exit 0 (one pre-existing unused `dirname` warning in scripts/computed-style-diff.mjs); all 213 Vitest tests PASS (27 files); production build PASS (network-enabled retry needed for existing Google Inter font). Guard greps, designer CSS check (46 verbatim files), and diff whitespace check PASS.
 - Browser verification: all 6 cases in e2e/pm-jason-fixes.spec.ts PASS, run in three narrowly scoped pairs: `--grep 'monthly copy'` (8.3s), `--grep 'both effect strips'` (10.1s), `--grep 'fullscreen exits'` (final settled run 8.4s). CSS asset responses checked before measurements. Chromium screenshots inspected at 390/1440 for /profile Monthly dialog, /song/create language notice, /mv/edit Title/Subtitle strips; /watch signed-in and guest-to-sign-in-to-report at 1440.
 - Mutation verification: disabling fullscreen waiting, mouse scroll movement, and language-reason mapping made 8 targeted tests fail; restoring the implementation made all 8 pass. No mutation remains.
-- Verification limits: this is the local backend-less prototype, not RD testing/production; actual engine error transport/detection and native iOS fullscreen not tested. No full e2e or @visual snapshot run; canonical Linux baselines and storyboard images not regenerated. Monthly dialog copy changed; ordinary default Weekly subscribe baseline does not show it. Port 3100 left free; no build/test process left running.
+- Verification limits: this is the published backend-less prototype, separate from the RD app; actual engine error transport/detection and native iOS fullscreen not tested. No full e2e or @visual snapshot run; canonical Linux baselines not regenerated. Affected storyboard text and Monthly screenshot were updated later in the run. Monthly dialog copy changed; ordinary default Weekly subscribe baseline does not show it. Port 3100 left free; no build/test process left running.
 
 ---
 
@@ -24,7 +24,7 @@
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261110P0003
 - Retrieved at: 2026-11-12T15:30:09+08:00
 - Triage: Clear to fix
-- Local status: Investigating
+- Local status: Committed
 - Decision needed: Resolved by Jason on 2026-11-12: Newly Released MV includes all users’ public, display-eligible MVs, ordered by publication time descending. RD must confirm existing visibility eligibility rules and API implementation; no prototype implementation requested in this follow-up.
 - Related code/spec: src/components/community/MvExplore.tsx; src/components/community/MvGridSections.tsx; src/lib/mv/community.ts; specs/areas/04-explore-community.md
 
@@ -68,12 +68,13 @@ RD Ruby 11/11 留言指出目前 Newly Released 對應 officialMvs，API 僅有 
 ### Resolution and verification
 
 - Root cause: 程式／附件證據及限制見上；未宣稱已重現 RD 環境。
-- Resolution: Product scope approved; handoff draft below. Awaiting RD implementation; not fixed in prototype or deployed.
+- Resolution: Product scope approved; handoff draft below. Spec committed/pushed; real RD feed remains pending. Existing static prototype retained.
 - Verified: ePF metadata / report / comments / attachments / status logs read; relevant current source inspected.
 - Not verified: local browser behavior, RD build, production, automated checks.
 
 ### Reply comment (paste into eBug)
 
+Spec 已更新並推送：Newly Released MV 應顯示所有使用者已公開、可展示的作品，依發布時間由新到舊排序，Trending 維持不變。請 RD 提供對應清單並替換目前 officialMvs 對應，確認發布時間欄位及展示資格；prototype 仍為靜態範例，這張尚待 RD 完成真實 feed 串接。
 
 ### RD handoff draft — approved product definition (2026-11-12)
 
@@ -97,7 +98,7 @@ This is a handoff proposal, not a claim that a fix has shipped. No ePF comment p
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261109P0002
 - Retrieved at: 2026-11-12T15:30:09+08:00
 - Triage: Clear to fix
-- Local status: Verified
+- Local status: Shipped
 - Decision needed: Resolved by user on 2026-11-12; first four approved, fullscreen report exits first.
 - Related code/spec: src/components/community/CommunityMvPlayer.tsx; src/components/ui/ReportDialog.tsx; src/lib/fullscreen.ts; src/components/share/ShareLinkView.tsx; specs/areas/14-content-report.md
 
@@ -131,12 +132,12 @@ This is a handoff proposal, not a claim that a fix has shipped. No ePF comment p
 
 - Root cause: Evidence and diagnosis above; browser/units establish the prototype behavior. No claim of a live RD build fix.
 - Resolution: Shared useReportContent now awaits exitFullscreen before report/sign-in/duplicate/limit flow, deduplicates presses while exiting, catches exit failures and portals guidance into the fullscreen player. Every useReportContent caller benefits, including CommunityMvPlayer and ShareLinkView; no duplicate report-entry implementation found. ReportDialog unit tests cover pending exit, guest continuation, exit failure/retry; real Home → /watch fullscreen → report and guest → Google mock sign-in → report pass. Area 14 and CHANGELOG-SPEC updated.
-- Verified: Shared Definition of Done, scoped browser checks and mutation tests listed at the top. Local prototype only.
-- Not verified: RD testing/production; full e2e; canonical Linux visual snapshots. No commit/push/deployment.
+- Verified: Shared Definition of Done, scoped browser checks and mutation tests listed at the top. Published prototype verified at https://musemv-ai.vercel.app; RD app remains separate.
+- Not verified: RD testing/production; full e2e; canonical Linux visual snapshots. Prototype commit a39d839 is deployed and verified; no claim of an RD application release.
 
 ### Reply comment (paste into eBug)
 
-本機 prototype 現在於全螢幕點檢舉後，先退出全螢幕再顯示檢舉視窗；訪客則先登入，成功後接續檢舉。已驗證兩條流程，尚未 commit 或部署，RD 測試站及正式站尚未更新。
+Prototype 已上線並驗證：全螢幕點檢舉會先退出全螢幕再開檢舉視窗，訪客則先登入並於成功後接續檢舉；不會自動回到全螢幕。請 RD 依此行為同步實作。
 
 ---
 
@@ -150,7 +151,7 @@ This is a handoff proposal, not a claim that a fix has shipped. No ePF comment p
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261103P0002
 - Retrieved at: 2026-11-12T15:30:09+08:00
 - Triage: Clear to fix
-- Local status: Verified
+- Local status: Shipped
 - Decision needed: Resolved by user on 2026-11-12; first four approved, fullscreen report exits first.
 - Related code/spec: src/components/mv/EditTitleSubtitleDialog.tsx; src/styles/designer-overrides.css (.effects-dialog__strip); specs/areas/02-mv-creation.md
 
@@ -186,12 +187,12 @@ This is a handoff proposal, not a claim that a fix has shipped. No ePF comment p
 
 - Root cause: Evidence and diagnosis above; browser/units establish the prototype behavior. No claim of a live RD build fix.
 - Resolution: One shared strip implementation handles both tabs: left mouse drag starts after 6px, captures pointer and changes scrollLeft; post-drag pointer click is suppressed, keyboard clicks remain active. Touch/trackpad are left native. Cancel/lost capture clear drag state; drag styling stays in designer-overrides.css (gated designer CSS untouched). Both-tab units and real pointer dragging at 390/1440 pass, followed by ordinary click/keyboard selection. Area 02 EFX-1 and CHANGELOG-SPEC updated.
-- Verified: Shared Definition of Done, scoped browser checks and mutation tests listed at the top. Local prototype only.
-- Not verified: RD testing/production; full e2e; canonical Linux visual snapshots. No commit/push/deployment.
+- Verified: Shared Definition of Done, scoped browser checks and mutation tests listed at the top. Published prototype verified at https://musemv-ai.vercel.app; RD app remains separate.
+- Not verified: RD testing/production; full e2e; canonical Linux visual snapshots. Prototype commit a39d839 is deployed and verified; no claim of an RD application release.
 
 ### Reply comment (paste into eBug)
 
-本機 prototype 的 Title／Subtitle 效果縮圖列已支援滑鼠水平拖曳，拖動不會誤選效果，原有點選與鍵盤操作維持可用。已檢查 390／1440px，尚未 commit 或部署，RD 測試站及正式站尚未更新。
+Prototype 已上線並驗證：Title／Subtitle 效果縮圖列皆可用滑鼠水平拖曳，拖動不會誤選效果，點選與鍵盤操作維持可用。已檢查 390／1440px，請 RD 同步此行為。
 
 ---
 
@@ -205,7 +206,7 @@ This is a handoff proposal, not a claim that a fix has shipped. No ePF comment p
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261103P0001
 - Retrieved at: 2026-11-12T15:30:09+08:00
 - Triage: Clear to fix
-- Local status: Verified
+- Local status: Shipped
 - Decision needed: Resolved by user on 2026-11-12; first four approved, fullscreen report exits first.
 - Related code/spec: src/components/ui/EnhanceButton.tsx; src/components/song/SongCompose.tsx; src/lib/mv/songLanguage.ts; specs/areas/03-song-creation.md AC-SONG-22
 
@@ -240,12 +241,12 @@ This is a handoff proposal, not a claim that a fix has shipped. No ePF comment p
 
 - Root cause: Evidence and diagnosis above; browser/units establish the prototype behavior. No claim of a live RD build fix.
 - Resolution: EnhanceButton catches rejections and supplies an optional per-caller error callback (generic fallback for other contexts). Both SongCompose instances (Simple describe and Custom lyrics with song/lyrics directions) map only the explicit `unsupported song language` reason in errorMessage or adapter Error.message to the existing supported-language toast/list. Generic invalid_parameter remains generic. API signature unchanged; RD must preserve the reason in its rejection. Input remains intact, busy clears, no credits charged; existing demo flag extends to Enhance after the API response without mutating input. 6 SongCompose integration unit cases, 7 classifier cases and 2 EnhanceButton tests pass. Browser demo verified 390/1440. Area 03 and CHANGELOG-SPEC updated.
-- Verified: Shared Definition of Done, scoped browser checks and mutation tests listed at the top. Local prototype only.
-- Not verified: RD testing/production; full e2e; canonical Linux visual snapshots. No commit/push/deployment.
+- Verified: Shared Definition of Done, scoped browser checks and mutation tests listed at the top. Published prototype verified at https://musemv-ai.vercel.app; RD app remains separate.
+- Not verified: RD testing/production; full e2e; canonical Linux visual snapshots. Prototype commit a39d839 is deployed and verified; no claim of an RD application release.
 
 ### Reply comment (paste into eBug)
 
-本機 prototype 的 Enhance 收到明確「不支援歌曲語言」原因時，會顯示不支援語言提示與支援列表，保留輸入並可重試；其他錯誤維持一般失敗提示。已用錯誤模擬及 demo 狀態驗證，RD 仍須保留引擎的語言錯誤原因供畫面判別；尚未 commit 或部署。
+Prototype 已上線並驗證：Enhance 遇到明確的不支援語言錯誤時顯示提示與支援列表，保留輸入並可重試，其他錯誤維持一般失敗提示。線上 prototype 透過 Demo 模擬此狀態；RD 仍須保留引擎的語言錯誤原因並完成實際串接。
 
 ---
 
@@ -259,7 +260,7 @@ This is a handoff proposal, not a claim that a fix has shipped. No ePF comment p
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261022P0001
 - Retrieved at: 2026-11-12T15:30:09+08:00
 - Triage: Clear to fix
-- Local status: Verified
+- Local status: Shipped
 - Decision needed: Resolved by Jason on 2026-11-12: add a negative unused-remainder expiry row in All only, exclude Spend and Earn; update prototype/spec and prepare RD handoff.
 - Related code/spec: src/components/credits/CreditsView.tsx; src/lib/user.ts (CreditTxn / CREDIT_TRANSACTIONS); src/components/providers/CreditsProvider.tsx (read only); src/lib/demoStore.ts; src/components/credits/CreditsView.test.tsx; e2e/pm-jason-fixes.spec.ts; specs/areas/07-credits-iap.md AC-CR-14; specs/storyboards/credits-iap/build_spec.py (S5 v4)
 
@@ -299,16 +300,16 @@ The prototype had only a static Welcome bonus row and classified Spend by negati
 ### Resolution and verification
 
 - Root cause: missing expiry presentation fixture/type; sign-only filtering would conflate expiry with usage. Production expiry posting is outside this backend-less repo.
-- Local status: Verified prototype/spec; no commit or deployment.
+- Release status: Prototype/spec shipped as a39d839; production-prototype verification passed.
 - Definition of Done: typecheck PASS, lint exit 0 (pre-existing computed-style-diff.mjs unused dirname warning), all 213 tests PASS (27 files), fresh production build PASS.
 - Regression: four CreditsView unit cases pass; restoring sign-only Spend filtering makes the All-only test fail, restoring type-based filtering makes it pass.
 - Browser: two scoped `subscription expiry history` cases PASS (final run 4.3s); real Demo-panel enable/disable, All/Spend/Earn behavior, default restoration, expiry date/amount and painted icon checked at 390/1440. CSS assets returned 200. All/Spend screenshots inspected after transitions.
 - Spec: flowchart geometry and spec validation PASS (0 warnings); S5 v4 regenerated, opened in Chromium and P5 screenshot inspected; image references load. Consolidated index regenerated.
 - Not verified: real backend expiry/balance posting, RD testing/production, full e2e and canonical Linux visual snapshots. Default /profile/credits baseline is unchanged because the new fixture is opt-in; no snapshot baselines re-recorded. No server/build/test left running.
 
-### Reply comment (paste into eBug / RD handoff)
+### Reply comment (paste into eBug)
 
-PM 確認：訂閱 credits 實際到期時，請新增「Subscription Credits Expired」負數明細，顯示到期日期與該批次尚未使用的到期數量，只顯示於 All，不列入 Spend／Earn，並保留原始發放紀錄（例如發放 +1,000、使用 -300、到期 -700）。取消訂閱當下不直接扣除；請由後端處理到期扣款及明細的一致性與去重，不影響其他仍有效的 credits。Prototype 與 spec 已完成本機更新與驗證，尚未部署；RD 仍需實作實際到期帳務，正式站尚未變更。
+Prototype 與 spec 已更新並上線驗證：新增 Subscription Credits Expired 負數明細，顯示實際到期的未使用餘額與日期，僅放 All、不放 Spend／Earn，原始發放紀錄保留。取消訂閱當下不扣除，請 RD 實作到期帳務與明細的一致性及去重；prototype 的到期範例由 Demo 開關展示，尚無真實到期引擎。
 
 ---
 
@@ -322,7 +323,7 @@ PM 確認：訂閱 credits 實際到期時，請新增「Subscription Credits Ex
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261021P0002
 - Retrieved at: 2026-11-12T15:30:09+08:00
 - Triage: Clear to fix
-- Local status: Verified
+- Local status: Shipped
 - Decision needed: Resolved by user on 2026-11-12; first four approved, fullscreen report exits first.
 - Related code/spec: src/lib/user.ts (SUBSCRIPTION_PLANS.monthly_pro); src/components/credits/SubscribeModal.tsx; specs/areas/07-credits-iap.md
 
@@ -357,12 +358,12 @@ PM 確認：訂閱 credits 實際到期時，請新增「Subscription Credits Ex
 
 - Root cause: Evidence and diagnosis above; browser/units establish the prototype behavior. No claim of a live RD build fix.
 - Resolution: Changed only SUBSCRIPTION_PLANS.monthly_pro.description from 5x to 2x. Weekly remains 5x; Yearly unchanged. Browser confirms Monthly/Weekly switching at 1440 and correct DOM data at 390 (phone design intentionally omits description text). Area 07 and CHANGELOG-SPEC updated.
-- Verified: Shared Definition of Done, scoped browser checks and mutation tests listed at the top. Local prototype only.
-- Not verified: RD testing/production; full e2e; canonical Linux visual snapshots. No commit/push/deployment.
+- Verified: Shared Definition of Done, scoped browser checks and mutation tests listed at the top. Published prototype verified at https://musemv-ai.vercel.app; RD app remains separate.
+- Not verified: RD testing/production; full e2e; canonical Linux visual snapshots. Prototype commit a39d839 is deployed and verified; no claim of an RD application release.
 
 ### Reply comment (paste into eBug)
 
-月費 Pro 的說明已在本機 prototype 改為「2x the credits」，週費的 5x 維持不變；已檢查月／週方案切換與桌機、手機版。尚未 commit 或部署，RD 測試站及正式站尚未更新。
+Prototype 已上線並驗證：Monthly Pro 已改為「2x the credits」，Weekly 維持 5x；請 RD 同步對應文案。
 
 ---
 
@@ -376,7 +377,7 @@ PM 確認：訂閱 credits 實際到期時，請新增「Subscription Credits Ex
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261014P0001
 - Retrieved at: 2026-11-12T15:30:09+08:00
 - Triage: Clear to fix
-- Local status: Verified
+- Local status: Committed
 - Decision needed: Product decision resolved on 2026-11-12: crown remains subscription; track subscription and credit-pack flows separately. RD must supply actual subscription event names/schema and verify Countly delivery.
 - Related code/spec: src/components/shell/MobileHeader.tsx; src/components/shell/RoomNavbar.tsx; src/components/providers/SubscribeProvider.tsx; specs/areas/01-app-shell.md; specs/areas/07-credits-iap.md
 
@@ -424,11 +425,11 @@ pls check.
 - Resolution: area 07 §3.1/AC-CR-15 defines event-family/source mapping; area 01 documents both phone crown copies. `launcher_premium_icon` remains a subscription source; credit page/result events require an actual credit-pack flow. Exact existing subscription event names/schema remain RD follow-up (`TBD-CR-12`).
 - Prototype: no product code change needed. MobileHeader and RoomNavbar already openSubscribe and hide the crown when subscribed. BuyCreditsModal already gates packs to subscribers. No analytics SDK, fake transport or extra purchase entry added.
 - Verified: two scoped browser cases (Home and History, 390px) PASS in 8.7s: crown opens Upgrade Your Plan, not Buy Credits; subscribe hides crown; client-side navigation to the actual Buy More entry opens Buy Credits. CSS assets checked. Six affected storyboard sources/flowcharts regenerated with zero validation warnings; Monthly screenshot refreshed.
-- Not verified: actual Countly event delivery, subscription event names/schema, RD testing/production. No deployment, commit or ePF change. No full e2e/visual baseline run.
+- Not verified: actual Countly event delivery, subscription event names/schema, RD testing/production. Prototype deployment verified as a39d839; no ePF change. No full e2e/visual baseline run.
 
-### Reply comment (paste into eBug / RD handoff)
+### Reply comment (paste into eBug)
 
-PM 確認：手機 Home／History 皇冠維持開啟訂閱方案，訂閱流程請記錄 source=launcher_premium_icon，實際訂閱事件名稱及參數請 RD 對照現有 Countly 定義確認。YCM_Credit_Purchase_Page／YCM_Credit_Popup_Page 僅用於真正的購買 credits 流程，請移除目前購點事件規格中不可到達的 launcher_premium_icon 來源預期；不要為了產生事件改變皇冠入口或補送購點事件。Spec 與入口行為已完成本機確認、尚未部署；prototype 沒有 Countly SDK，請 RD 確認訂閱事件是否已正確上報，若已上報則修正 tracking spec／QA 預期，若漏報再補訂閱埋點。
+Spec 已更新並推送，線上 prototype 已驗證入口行為維持不變：Home／History 皇冠開啟訂閱方案，launcher_premium_icon 應記錄於實際訂閱流程。YCM_Credit_Purchase_Page／YCM_Credit_Popup_Page 僅記錄實際購點流程，請 RD 對齊來源規格並確認訂閱事件名稱及是否漏報；prototype 沒有 Countly SDK，實際事件上報仍待 RD 驗證。
 
 ---
 
@@ -447,4 +448,14 @@ PM 確認：手機 Home／History 皇冠維持開啟訂閱方案，訂閱流程�
 - All seven now have an approved product decision, an area-spec update, and synchronized relevant storyboard text. Five required prototype changes; two preserve existing UI and specify real-service requirements for RD. This does not mean all seven are fixed in the RD application.
 - Latest full local checks: typecheck/lint/213 unit tests/build passed during this sequence. Scoped browser checks total ten cases across the five local fixes and two crown entry paths; full e2e and canonical visual snapshots are not claimed.
 - Storyboard versions: S1 v6, S3 v10, S5 v5, S6 v5, S8 v5, S11 v3. Existing step IDs preserved. Flowchart geometry/spec validation passed; generated linked/bundled HTML and specs/index.html synchronized. Only S5's old Monthly 5x screenshot required a content correction and was recaptured; no blanket screenshot re-recording.
-- No commit, push, deployment or external ePF comment/status change. Original unrelated ../.claude/launch.json preserved. Servers/builds/tests must be stopped before handoff.
+- Release a39d839 was committed on codex/pm-jason-ebug-fixes-20261112, fast-forward merged and pushed to main, then deployed and verified. No external ePF comment/status change. Original unrelated ../.claude/launch.json preserved; no local build/test/server remains running.
+
+## Release verification — 2026-11-12T17:43:31+08:00
+
+- Feature commit: `a39d83906e2ce61a6aa16918f6caf3657b42f2aa`, fast-forward merged from `codex/pm-jason-ebug-fixes-20261112` into `main` and pushed to `origin/main` by explicit user instruction.
+- Vercel project: musemv-ai. Production deployment: `dpl_26xovpiKMPowzskZUaXDx1HrJhQL`, READY, matching feature SHA. Verified production alias `https://musemv-ai.vercel.app` points to that deployment.
+- Production-only Playwright config uses the actual alias and no local webServer. All **10** scoped browser cases passed, in five bounded pairs: Monthly/Enhance (12.4s), both effect strips (11.2s), fullscreen/sign-in/report (11.4s), expiry history (4.6s), Home/History crown vs credit packs (6.9s). Linked production CSS assets returned 200 with nonempty bodies.
+- Runtime changes are live on the **prototype**. Real all-user publication feed, engine error transport, expiry accounting and Countly tracking belong to the separate RD implementation and remain unverified there.
+- Five implementation tickets marked Shipped refer to the published prototype only. Newly Released and Countly are spec handoffs / existing-UI verification, marked Committed rather than claiming an RD bug fix.
+- Paste-ready comments in each ticket section above now reflect this verified release. No comments were posted to ePF.
+- This release note and comments are recorded in a follow-up documentation commit; application code is unchanged from the verified feature commit.
