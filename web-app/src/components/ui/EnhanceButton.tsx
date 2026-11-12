@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import type { EnhanceKind } from "@/lib/api/contract";
 import { DpDialog } from "@/components/ui/DpDialog";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { useToastTimer } from "@/components/ui/useToastTimer";
 
 export interface EnhanceDirection {
   kind: EnhanceKind;
@@ -33,6 +34,8 @@ interface Props {
   kind: EnhanceKind;
   /** Called with the enhanced text to write back into the field. */
   onEnhanced: (text: string) => void;
+  /** Song compose supplies its language-specific error presentation. */
+  onError?: (error: unknown) => void;
   /** If provided, clicking first opens a small "what to enhance?" menu. */
   directions?: EnhanceDirection[];
   className?: string;
@@ -56,8 +59,17 @@ interface Props {
  * given it first opens a menu (used by the custom-lyrics box: Refine Idea vs
  * Refine Lyrics), matching the mobile prototype.
  */
-export function EnhanceButton({ value, kind, onEnhanced, directions, className, bem }: Props) {
+export function EnhanceButton({
+  value,
+  kind,
+  onEnhanced,
+  onError,
+  directions,
+  className,
+  bem,
+}: Props) {
   const [busy, setBusy] = useState(false);
+  const { toast, show, hold } = useToastTimer(4000);
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -83,6 +95,9 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
     setBusy(true);
     try {
       onEnhanced(await api.enhancePrompt({ text: value, kind: k }));
+    } catch (error) {
+      if (onError) onError(error);
+      else show("Couldn’t enhance your text. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -94,12 +109,19 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
     else void run(kind);
   }
 
+  const errorToast = toast ? (
+    <div role="alert" className="popup-toast popup-toast--error" {...hold}>
+      {toast}
+    </div>
+  ) : null;
+
   if (bem) {
     // DP's shape: one button, a mask icon that spins while working, and the
     // word "Enhance". `ic_refresh` while busy is DP's own choice of spinner.
     const url = `url("/assets/icons/ui/${busy ? "ic_refresh" : "ic_edit_ai"}.svg")`;
     return (
       <>
+        {errorToast}
         <button
           type="button"
           className={`${bem}__enhance-btn${busy ? ` ${bem}__enhance-btn--busy` : ""}`}
@@ -140,7 +162,11 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
                 onClick={() => setMenuOpen(false)}
                 aria-label="Close"
               >
-                <img src="/assets/icons/ui/ic_close.svg" alt="" className="enhance-dialog__close-icon" />
+                <img
+                  src="/assets/icons/ui/ic_close.svg"
+                  alt=""
+                  className="enhance-dialog__close-icon"
+                />
               </button>
             </div>
             <div className="enhance-dialog__options">
@@ -153,7 +179,9 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
                     className="enhance-dialog__option"
                     onClick={() => void run(d.kind)}
                   >
-                    <span className={`enhance-dialog__option-icon enhance-dialog__option-icon--${visual.modifier}`}>
+                    <span
+                      className={`enhance-dialog__option-icon enhance-dialog__option-icon--${visual.modifier}`}
+                    >
                       <DpIcon name={visual.icon} className="enhance-dialog__option-icon-glyph" />
                     </span>
                     <span className="enhance-dialog__option-info">
@@ -172,6 +200,7 @@ export function EnhanceButton({ value, kind, onEnhanced, directions, className, 
 
   return (
     <div ref={wrapRef} className="relative">
+      {errorToast}
       <button
         type="button"
         onClick={onClick}

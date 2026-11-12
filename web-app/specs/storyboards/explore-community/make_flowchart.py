@@ -35,8 +35,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v4'
-DATE = '2026-09-17'
+VERSION = 'v5'
+DATE = '2026-11-12'
 W, H = 1280, 2920
 MARGIN = 40
 

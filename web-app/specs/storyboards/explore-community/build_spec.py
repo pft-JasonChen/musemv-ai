@@ -63,8 +63,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Explore &amp; Community',
     'breadcrumb': 'YouCam Muse Web &rarr; Explore &amp; Community',
-    'author': 'Jason Chen', 'date': '2026-09-17', 'status': 'Draft',
-    'version': 'v4',
+    'author': 'Jason Chen', 'date': '2026-11-12', 'status': 'Draft',
+    'version': 'v5',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -1061,6 +1061,12 @@ cfg = {
     # ── comments (disabled — no Firebase backend in this repo) ────────────────
     'comments_enabled': False,
 }
+
+
+# PM-approved 2026-11-12 behavior; screenshots retain their existing state coverage.
+next(step for path in cfg['paths'] if path['num'] == 2 for step in path['steps'] if step['num'] == 1)['limits'].append('Newly Released Music Videos includes all users public, display-eligible MVs in descending publication-time order, not official works only. Keep Trending unchanged. Private, unpublished, deleted and otherwise ineligible works are excluded. PM approved 2026-11-12, YMW261110P0003; RD owns the real feed and publication timestamp.')
+cfg['changelog'].insert(0, ('v5', '2026-11-12', 'YMW261110P0003 / AC-EXP-15: Newly Released includes all users public, display-eligible MVs in descending publication-time order. Existing static multi-author catalog is illustrative; RD must replace the official-only mapping with the correct feed. Trending unchanged.'))
+cfg['prototype_deltas'].append(('Newly Released publication feed', 'The static catalog already contains multiple non-official authors in descending sample-date order; in-session publishing does not change it.', 'Provide the all-user public/display-eligible feed in descending publication-time order, with stable pagination; replace the officialMvs mapping and verify refresh after publish (AC-EXP-15).'))
 
 if __name__ == '__main__':
     spec_builder.write_specs(cfg)

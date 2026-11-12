@@ -33,7 +33,70 @@ beforeEach(() => {
   moderationStore.reset();
 });
 afterEach(cleanup);
+afterEach(() => {
+  Reflect.deleteProperty(document, "fullscreenElement");
+  Reflect.deleteProperty(document, "exitFullscreen");
+});
 describe("report decisions", () => {
+  it.each([true, false])(
+    "waits for fullscreen exit before report or sign-in (logged in: %s)",
+    async (loggedIn) => {
+      auth.loggedIn = loggedIn;
+      let finishExit!: () => void;
+      const exiting = new Promise<void>((resolve) => {
+        finishExit = resolve;
+      });
+      const exitFullscreen = vi.fn(() => exiting);
+      Object.defineProperty(document, "fullscreenElement", {
+        configurable: true,
+        value: document.body,
+      });
+      Object.defineProperty(document, "exitFullscreen", {
+        configurable: true,
+        value: exitFullscreen,
+      });
+      render(<Entry id="fullscreen-mv" />);
+      const entry = screen.getByRole("button", { name: "Open fullscreen-mv" });
+      fireEvent.click(entry);
+      fireEvent.click(entry);
+      expect(exitFullscreen).toHaveBeenCalledTimes(1);
+      expect(auth.requireLogin).not.toHaveBeenCalled();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      await act(async () => {
+        finishExit();
+        await exiting;
+      });
+      if (loggedIn)
+        expect(screen.getByRole("dialog", { name: "Report Music Video" })).toBeInTheDocument();
+      else {
+        expect(auth.requireLogin).toHaveBeenCalledTimes(1);
+        act(() => auth.requireLogin.mock.calls[0][0]?.());
+        expect(screen.getByRole("dialog", { name: "Report Music Video" })).toBeInTheDocument();
+      }
+    },
+  );
+  it("shows exit failure guidance inside the fullscreen player and allows retry", async () => {
+    const player = document.createElement("div");
+    document.body.append(player);
+    const exitFullscreen = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Denied"))
+      .mockResolvedValueOnce(undefined);
+    Object.defineProperty(document, "fullscreenElement", { configurable: true, value: player });
+    Object.defineProperty(document, "exitFullscreen", {
+      configurable: true,
+      value: exitFullscreen,
+    });
+    render(<Entry id="fullscreen-mv" />);
+    fireEvent.click(screen.getByRole("button", { name: "Open fullscreen-mv" }));
+    await waitFor(() =>
+      expect(player).toHaveTextContent("Please exit fullscreen and try reporting again."),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open fullscreen-mv" }));
+    await screen.findByRole("dialog", { name: "Report Music Video" });
+    player.remove();
+  });
   it("counts five mixed-kind successes; duplicate takes priority over the cap", async () => {
     render(
       <>

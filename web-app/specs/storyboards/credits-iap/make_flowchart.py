@@ -39,8 +39,8 @@ WEB_APP = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../web-app
 sys.path.insert(0, os.path.join(WEB_APP, 'skills', 'yco-spec'))
 from flowchart_lib import Flow  # noqa: E402
 
-VERSION = 'v3'
-DATE = '2026-10-08'
+VERSION = 'v5'
+DATE = '2026-11-12'
 MARGIN = 40
 # Narrow enough that the 130px 'pick a card’s Subscribe' label fits in the
 # GAP between two columns instead of resting on both boxes: a label that
@@ -112,7 +112,7 @@ f.section(1150, 'Part 5 — /profile/credits  ·  P5')
 f.note(MARGIN, 1170, 'Reached two ways: the shell’s Credits tile (Part 1), or Buy More on the '
                      'Part 3 toast.')
 
-detail = f.node(COL_A, 1200, '/profile/credits', 'Balance + All/Spend/Earn + 1-row seed ledger · P5-S1 (AC-CR-03)',
+detail = f.node(COL_A, 1200, '/profile/credits', 'Balance + typed history filters · P5-S1..S3 (AC-CR-03, AC-CR-14)',
                 w=NW)
 cta = f.decision(600, 1300, 'Purchase CTA label?')
 f.edge(detail, cta, side=('bottom', 'left'))

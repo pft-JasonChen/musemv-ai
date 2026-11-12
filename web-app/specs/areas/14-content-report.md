@@ -119,6 +119,8 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 
 ## 6. Acceptance criteria（EARS）
 
+**YMW261109P0002 (approved 2026-11-12):** From a DOM-fullscreen player, Report first awaits fullscreen exit, then opens sign-in/report or the applicable duplicate/limit notice. It does not automatically re-enter fullscreen afterward. If exit fails, show "Please exit fullscreen and try reporting again." inside the fullscreen player and allow retry; do not open an obscured dialog. Native iOS video fullscreen has OS controls, so the custom Report entry is reached after leaving that player.
+
 - **AC-RPT-01** — WHEN 訪客點 Report，THE SYSTEM SHALL 先開登入 dialog，登入成功後接續檢舉流程；WHEN 登入者點非本人作品 Report，THE SYSTEM SHALL 在未受防濫用阻擋時開對應標題的檢舉 UI。
 - **AC-RPT-02** — THE SYSTEM SHALL 依 §3.1 顯示六分類＋Something else，並執行單選、1000 字上限、trim 非空及返回保留規則。
 - **AC-RPT-03** — THE SYSTEM SHALL 一直顯示 Submit；未選有效原因／說明或正在送出時 SHALL disabled。

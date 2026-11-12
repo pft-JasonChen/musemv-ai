@@ -15,7 +15,7 @@ def step(n,shot,user,system,limits,exact=()):
 
 cfg={
  'feature_name':'Content Report', 'breadcrumb':'YouCam Muse Web &rarr; Content Report',
- 'version':'v2','date':'2026-11-11','actor_label':'WEB UI','author':'YouCam Muse','guideline':'',
+ 'version':'v3','date':'2026-11-12','actor_label':'WEB UI','author':'YouCam Muse','guideline':'',
  'description':'Report a song or music video with a built-in reason or an explanation. Reviewers can remove public access while the creator keeps private playback.',
  'overview':[['Scope','MV and Song players, community Song Result, public Share, History and owner Result'],['Audience','Web RD and QA'],['Source','Content Report PRD v1.1 plus product-owner decisions of 28&ndash;29 October 2026'],['Capture','Live production app: desktop 1440 &times; 1000; phone supplement 390 &times; 844']],
  'paths':[
@@ -83,6 +83,12 @@ cfg['criteria'] = [
  ('AC-RPT-14','Failure retains the draft, counts nothing and allows explicit retry.',['P3-S1','P3-S2']),
  ('AC-RPT-15','QA failure and reviewer state are session-only, resettable and do not mutate fixed content.',['P3-S1','P5-S1','P5-S2']),
 ]
+
+# PM-approved 2026-11-12 behavior; screenshots retain their existing state coverage.
+next(step for path in cfg['paths'] if path['num'] == 1 for step in path['steps'] if step['num'] == 0)['limits'].append('If the MV player is in DOM fullscreen, first wait for fullscreen exit, then show sign-in and continue reporting after success. Do not automatically re-enter fullscreen. PM approved 2026-11-12, YMW261109P0002.')
+next(step for path in cfg['paths'] if path['num'] == 1 for step in path['steps'] if step['num'] == 1)['limits'].append('From DOM fullscreen, wait for exit before showing report or duplicate/limit feedback. If exit fails, keep the dialog closed, show guidance inside the player and allow retry. Native iOS video controls must be left before reaching the custom Report entry (YMW261109P0002).')
+cfg['changelog'].insert(0, ('v3', '2026-11-12', 'YMW261109P0002: leave DOM fullscreen before sign-in, report or duplicate/limit feedback. Exit failure shows retry guidance inside the player. No automatic return to fullscreen; existing captures remain normal-screen dialog states.'))
+
 if __name__=='__main__':
  spec_builder.write_specs(cfg)
  # Normalize optional empty template sections without changing the shared builder.

@@ -83,6 +83,16 @@
       ],
       "type": "info",
       "label": "Monthly tab"
+    },
+    {
+      "box": [
+        52.2,
+        38.2,
+        17.0,
+        2.4
+      ],
+      "type": "info",
+      "label": "2x Monthly Pro credits"
     }
   ],
   "04_subscribe_yearly.png": [

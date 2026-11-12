@@ -161,6 +161,8 @@ Keep the designer's Edit Effects entry between Cover and MV TITLE, desktop cente
 | Title (8) | 置中靜態; 作者接標題; 快速淡入; 柔和淡入; 快切彈入; 右側靜態; 經典KTV標題; 下沉襯線變色 |
 | Subtitle (17) | 置中靜態; 向上捲動; 靠左淡入; 楷體淡入; 右側直排; 書法淡入; 手寫交替; 灰字展開; 揭示模糊; 經典KTV大字; 點綴雙行淡入; 漸層暈染淡入; 場景黑底標籤; 簡約淡入; 雙行襯線淡入; 寬距簡約淡入; 筆刷揭示 |
 
+**YMW261103P0002 (approved 2026-11-12):** Both Title and Subtitle thumbnail strips support horizontal mouse dragging when overflowing. Movement under 6px remains a click; a completed drag must not select/replay an effect or dirty the draft. Touch and trackpad retain native scrolling; keyboard navigation and ordinary clicks remain available.
+
 #### EFX-2 — Content and display rules
 
 Title and Author each allow 60 UTF-16 units (AC-MV-03b). Empty or whitespace-only text is omitted without placeholder text, switch changes, or blocking Save/Merge. Long text remains complete: engine controls shrinking/wrapping, with no truncation or ellipsis. Title/Author appear only in the opening, using the selected engine effect's timing; omit hidden/blank items without shifting the remaining items earlier. All 25 effects support both existing ratios (16:9 and 9:16); engine owns layout per ratio. Existing versions restore their settings; missing effect settings use engine defaults.

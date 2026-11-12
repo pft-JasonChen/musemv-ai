@@ -6298,6 +6298,13 @@ button:disabled {
   overflow-x: auto;
   margin: 0 -32px 16px;
   scrollbar-width: none;
+  user-select: none;
+}
+
+/* YMW261103P0002: mouse dragging scrolls; touch keeps native panning. */
+.effects-dialog__strip[data-dragging="true"],
+.effects-dialog__strip[data-dragging="true"] .effects-dialog__thumb {
+  cursor: grabbing;
 }
 
 .effects-dialog__strip::-webkit-scrollbar {

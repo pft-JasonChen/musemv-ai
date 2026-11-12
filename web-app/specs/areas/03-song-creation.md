@@ -183,6 +183,8 @@ Calm, Dark` — only the selection semantics were respecified, not the option li
   never in the approved model — SONG-04, spec area 11 §5.5), a supported-languages info
   popover (Custom). The inline **`CreditPill` shows the live balance** (SONG-05).
 
+**YMW261103P0001 (approved 2026-11-12):** Extend the existing unsupported-language toast and Supported Languages tooltip to **Enhance**, in Simple and both Custom directions (including Instrumental). A rejection carrying the explicit engine reason `unsupported song language` in `errorMessage` or an adapter Error message shows the existing "This language isn’t supported yet. See supported languages ( i )" toast. Generic `invalid_parameter` without that reason, and other failures, show "Couldn’t enhance your text. Please try again." Preserve the input, clear loading, permit retry and charge nothing. RD owns detection and must preserve the specific reason when rejecting `enhancePrompt`; no front-end language guessing or wire-contract change. The existing `songLangUnsupported` demo flag also demonstrates Enhance after the mock API response, without replacing the input.
+
 ### Enhance asks first only when there is something to ask about (`AC-SONG-14`)
 
 `Enhance` is one pill with two behaviours, and **Instrumental is what selects between them**:

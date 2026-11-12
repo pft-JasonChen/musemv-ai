@@ -84,8 +84,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Music Video Edit',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video Edit',
-    'author': 'Jason Chen', 'date': '2026-10-29', 'status': 'Draft',
-    'version': 'v9',
+    'author': 'Jason Chen', 'date': '2026-11-12', 'status': 'Draft',
+    'version': 'v10',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -734,6 +734,11 @@ cfg['decisions'].append(('D-13', 'Which effect samples play?',
 cfg['changelog'].insert(0, ('v9', '2026-10-29',
     'Replaced selected-only sample motion with 50%-visible current-tab playback. Offscreen, inactive and background samples show covers. '
     'Selection, Save, failure fallback and the plain-video canvas retain their existing behavior.'))
+
+
+# PM-approved 2026-11-12 behavior; screenshots retain their existing state coverage.
+next(step for path in cfg['paths'] if path['num'] == 6 for step in path['steps'] if step['num'] == 1)['limits'].append('Both Title and Subtitle thumbnail strips support horizontal mouse dragging when overflowing. Movement below 6px remains a click; dragging must not select/replay an effect or dirty the draft. Retain native touch/trackpad scrolling and keyboard navigation. PM approved 2026-11-12, YMW261103P0002.')
+cfg['changelog'].insert(0, ('v10', '2026-11-12', 'YMW261103P0002: both Title and Subtitle thumbnail strips support mouse drag-to-scroll without selecting an effect. Native touch/trackpad and keyboard remain available. The existing settings/Save/Merge lifecycle is unchanged.'))
 
 if __name__ == '__main__':
     spec_builder.write_specs(cfg)

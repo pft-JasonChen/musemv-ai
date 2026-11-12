@@ -75,24 +75,24 @@ ROWS = [
 # Storyboards whose build_spec.py defines a 'changelog' key — only those emit a
 # `#changelog` anchor (spec_builder._changelog_html), so only those get a Change
 # Log link in the table below. Add a slug here when you add that section.
-CHANGELOG_SLUGS = {"content-report", "mv-creation", "history", "mv-edit", "explore-community", "song-creation"}
+CHANGELOG_SLUGS = {"content-report", "mv-creation", "v3 · 2026-11-12", "mv-edit", "explore-community", "song-creation"}
 
 STORYBOARDS = [
-    ("S1", "song-creation", "AI Song Creation", "v5 · 2026-10-24",
+    ("S1", "song-creation", "AI Song Creation", "v6 · 2026-11-12",
      "/song/create · /song/creating · /song/result", "8 paths / 34 shots"),
     ("S2", "mv-creation", "AI Music Video Creation", "v7 · 2026-09-23",
      "/mv/room + 6 sheets · /mv/thinking · /mv/storyboard · /mv/creating · /mv/result", "8 paths / 43 shots"),
-    ("S3", "mv-edit", "MV Edit", "v9 · 2026-10-29",
+    ("S3", "mv-edit", "MV Edit", "v10 · 2026-11-12",
      "/mv/edit", "6 paths / 26 shots; video canvas and effect cards"),
     ("S4", "history", "History (My Creations)", "v3 · 2026-09-10",
      "/history", "7 paths / 27 shots"),
-    ("S5", "credits-iap", "Credits &amp; IAP", "v3 · 2026-10-08",
+    ("S5", "credits-iap", "Credits &amp; IAP", "v5 · 2026-11-12",
      "SubscribeModal · BuyCreditsModal · /profile/credits · sign-up gift", "7 paths / 23 shots"),
-    ("S6", "shell-auth", "App Shell &amp; Auth", "v4 · 2026-11-11",
+    ("S6", "shell-auth", "App Shell &amp; Auth", "v5 · 2026-11-12",
      "sidebar / tab bar · route navbars · SignInModal · marketing footer", "8 paths / 27 shots"),
     ("S7", "profile-account", "Profile, Account &amp; Settings", "v2 · 2026-09-02",
      "/profile · /settings · edit profile · Send Feedback", "6 paths / 23 shots"),
-    ("S8", "explore-community", "Explore &amp; Community", "v2 · 2026-09-09",
+    ("S8", "explore-community", "Explore &amp; Community", "v5 · 2026-11-12",
      "/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator", "7 paths / 38 shots"),
     ("S9", "share", "Share", "v2 · 2026-10-08",
      "/share · ShareDialog", "5 paths / 15 shots"),

@@ -75,6 +75,46 @@ async function setup(
 }
 
 describe("MV effects draft boundaries", () => {
+  it.each(["Title", "Subtitle"])(
+    "drags the %s strip without selecting an effect, then permits clicks and keyboard selection",
+    async (tab) => {
+      await setup();
+      fireEvent.click(screen.getByRole("tab", { name: tab }));
+      const strip = screen.getByRole("radiogroup");
+      const card = screen.getAllByRole("radio")[1];
+      Object.defineProperties(strip, {
+        scrollWidth: { configurable: true, value: 1600 },
+        clientWidth: { configurable: true, value: 700 },
+        setPointerCapture: { configurable: true, value: vi.fn() },
+        hasPointerCapture: { configurable: true, value: () => true },
+        releasePointerCapture: { configurable: true, value: vi.fn() },
+      });
+      function pointer(type: string, x: number) {
+        const event = new MouseEvent(type, { bubbles: true, button: 0, clientX: x });
+        Object.defineProperties(event, {
+          pointerType: { value: "mouse" },
+          pointerId: { value: 1 },
+        });
+        fireEvent(card, event);
+      }
+      pointer("pointerdown", 300);
+      pointer("pointermove", 297);
+      expect(strip.scrollLeft).toBe(0);
+      pointer("pointermove", 150);
+      expect(strip.scrollLeft).toBe(150);
+      pointer("pointerup", 150);
+      fireEvent.click(card, { detail: 1 });
+      expect(card).toHaveAttribute("aria-checked", "false");
+      expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+      // Programmatic/keyboard clicks still work immediately after a drag.
+      fireEvent.keyDown(screen.getAllByRole("radio")[0], { key: "ArrowRight" });
+      expect(card).toHaveAttribute("aria-checked", "true");
+      pointer("pointerdown", 150);
+      pointer("pointerup", 150);
+      fireEvent.click(screen.getAllByRole("radio")[2], { detail: 1 });
+      expect(screen.getAllByRole("radio")[2]).toHaveAttribute("aria-checked", "true");
+    },
+  );
   it("shows the current selection and video without text overlays or a default action", async () => {
     await setup();
     expect(screen.getByTestId("canvas-video")).toHaveAttribute("src", "/test-mv.mp4");

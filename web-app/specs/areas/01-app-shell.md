@@ -267,6 +267,8 @@ Screens to capture later: shell at 390px (bottom bar) and 1440px (sidebar); acco
   > Out is `Settings`-only (`SettingsView.tsx`), clearing the session and resetting
   > subscription/profile in-memory exactly as described, then routing Home.
 
+**Phone launcher crown — approved 2026-11-12, YMW261014P0001:** Home and History show the crown only while not subscribed. It opens Upgrade Your Plan directly, never Buy Credits. Treat `launcher_premium_icon` as the subscription-flow source; do not emit credit-pack purchase page/result events solely for this action. Area 07 §3.1 / AC-CR-15 owns the event-family mapping; RD must confirm the existing subscription event names and real Countly delivery. The prototype already follows this UI behavior and contains no analytics SDK.
+
 ### SHELL-P5 — Bare page
 
 - **SHELL-P5-S1** Navigating to `/share…` renders the page **without** sidebar/top bar (standalone).

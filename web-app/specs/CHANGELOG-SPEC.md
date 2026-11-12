@@ -4,6 +4,24 @@
 > **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
 > get from "what changed?" to the exact file without diffing.
 
+## 2026-11-12 — Launcher tracking decision and seven-ticket audit
+
+- **YMW261014P0001 / AC-CR-15, area 07 §3.1; area 01 phone crown:** phone Home/History crowns retain subscription behavior; subscription events carry `launcher_premium_icon`. Credit page/result events describe actual credit-pack flows only; remove the unreachable launcher source from credit-event expectations. Exact existing subscription event names/schema and Countly delivery require RD confirmation. Prototype UI already matches; no SDK/network behavior added. Two scoped phone browser cases verify crown → subscription, crown hidden after subscribe, actual credit entry → Buy Credits.
+- **YMW261110P0003 / new AC-EXP-15, area 04:** all-user public/display-eligible MV feed ordered by publication time descending; replace RD's officialMvs mapping with an appropriate feed/category. Trending unchanged. Existing static prototype demonstrates multiple authors in sample-date order only; true publish→feed refresh and pagination remain RD work.
+- **Audit:** all seven tickets have a recorded decision and an authoritative area-spec update. Five have local prototype changes and verified behavior; these two preserve existing UI and document RD work. No deployment or real telemetry/backend verification is claimed. Detailed evidence and remaining limitations are in docs/BUGS-TO-FIX-2026-11-12.md. Affected storyboard text synchronized: S1 v6, S3 v10, S5 v5, S6 v5, S8 v5, S11 v3. S5 Monthly screenshot recaptured with 2x copy and measured focus boxes; other existing screenshots retain their original state coverage. Newly specified error/drag/fullscreen/expiry states are verified by scoped browser checks, not claimed to be shown in every old storyboard capture. Area specs remain authoritative.
+
+## 2026-11-12 — Subscription expiry history (YMW261022P0001)
+
+CR-P3-S2/S3 and new AC-CR-14: actual subscription-credit expiry creates a negative **Subscription Credits Expired** row for the unused remainder, displayed in **All only**, never Spend/Earn. Keep the grant; cancellation alone does not expire credits; RD must make deduction/posting consistent and idempotent per batch. Prototype: `CreditTxn.kind` (local presentation data, not a wire-contract change), type-based filters in `CreditsView`, and reversible `creditsExpiryHistory` Demo-panel fixture (+1,000/-300/-700 plus original Welcome +10). `creditsEmpty` overrides it. Tests: `CreditsView.test.tsx` and two 390/1440 browser cases in `pm-jason-fixes.spec.ts`. S5 v4 text updated; existing default-state screenshots retained, new expiry demo captured separately during verification. C1–C8 unchanged; no real expiry engine/API added.
+
+## 2026-11-12 — Four PM Jason eBug fixes (local prototype)
+
+- **YMW261021P0002 / area 07:** Monthly Pro subtitle corrected to 2x; Weekly stays 5x. `lib/user.ts`; `e2e/pm-jason-fixes.spec.ts` verifies the cadence switch.
+- **YMW261109P0002 / AC-RPT-01:** Report exits fullscreen before sign-in/report/notices; exit failure stays visible in the player and permits retry. `useReportContent` in `ReportDialog.tsx`; unit tests and signed-in/guest browser cases.
+- **YMW261103P0001 / SONG-E5, AC-SONG-22 extension:** Enhance uses the existing unsupported-language toast/list for explicit engine language errors; generic errors remain generic. Draft/loading/retry preserved; demo flag extended to Enhance. `EnhanceButton`, `SongCompose`, `lib/mv/songLanguage`; error/compose unit tests and browser demo cases.
+- **YMW261103P0002 / MV-P5-EFX EFX-1:** Both effect strips support mouse dragging without selecting an effect; native touch/trackpad and keyboard retained. `EditTitleSubtitleDialog`; both-tab unit/browser tests.
+- C1–C8 unchanged. Existing S1/S3/S5/S11 storyboard captures have not been regenerated in this run; S5's desktop Monthly subtitle capture is stale if it contains the old 5x copy. No visual baselines re-recorded.
+
 ## 2026-11-11 — Reporting requires sign-in; sign-in modal advertises the sign-up gift
 
 - **Report needs an account.** RPT-P1-S0 (new) / AC-RPT-01 / RPT-P4 checklist / area 09 AUTH-P3-S2: a guest's Report opens the sign-in dialog; signing in continues straight into the report dialog (or the own-content toast), dismissing it does nothing. The Report entry stays visible to guests. Code: `useReportContent` in `ReportDialog.tsx` via `requireLogin`. Test: `ReportDialog.test.tsx` guest case. Storyboard: **S11 v2** — new P1-S0 shot `00_sign_in`, all 16 shots re-captured signed in (`capture_screenshots.mjs` now signs in at the first Report).

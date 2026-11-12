@@ -119,8 +119,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Song Creation',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Song',
-    'author': 'Jason Chen', 'date': '2026-10-24', 'status': 'Draft',
-    'version': 'v5',
+    'author': 'Jason Chen', 'date': '2026-11-12', 'status': 'Draft',
+    'version': 'v6',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -950,6 +950,13 @@ cfg = {
     # ── comments (disabled — no Firebase backend in this repo) ────────────────
     'comments_enabled': False,
 }
+
+
+# PM-approved 2026-11-12 behavior; screenshots retain their existing state coverage.
+next(step for path in cfg['paths'] if path['num'] == 1 for step in path['steps'] if step['num'] == 3)['limits'].append('If Enhance reports an unsupported song language, show the existing unsupported-language notice with the supported-language list, keep the original input, clear loading and allow retry. Other failures show the general Enhance failure message. PM approved 2026-11-12, YMW261103P0001; RD owns detection.')
+next(step for path in cfg['paths'] if path['num'] == 2 for step in path['steps'] if step['num'] == 6)['limits'].append('Enhance language errors preserve input and allow retry; the supported-language notice also applies under Instrumental (YMW261103P0001).')
+next(step for path in cfg['paths'] if path['num'] == 2 for step in path['steps'] if step['num'] == 8)['limits'].append('Both Refine Idea and Refine Lyrics use the supported-language notice only for explicit unsupported-language errors; generic failures remain generic (YMW261103P0001).')
+cfg['changelog'].insert(0, ('v6', '2026-11-12', 'YMW261103P0001: Enhance now presents explicit unsupported-language errors with the existing supported-language list, preserving input and retry. Generic errors stay generic; Simple, Custom directions and Instrumental are covered. Existing screenshots show successful enhancement; error state is verified separately.'))
 
 if __name__ == '__main__':
     spec_builder.write_specs(cfg)

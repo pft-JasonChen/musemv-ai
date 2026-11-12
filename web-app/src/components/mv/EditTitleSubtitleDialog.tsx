@@ -143,6 +143,10 @@ function DialogBody({
   // and on every pick. Measured against the strip's own box and scrolled by hand:
   // `scrollIntoView` would also move the page behind the dialog.
   const stripRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ pointerId: number; x: number; scrollLeft: number; moved: boolean } | null>(
+    null,
+  );
+  const suppressDragClick = useRef(false);
   useEffect(() => {
     const strip = stripRef.current;
     const picked = strip?.querySelector<HTMLElement>('[aria-checked="true"]');
@@ -245,6 +249,58 @@ function DialogBody({
           ref={stripRef}
           className={`effects-dialog__strip${tabOn ? "" : " effects-dialog__strip--off"}`}
           role="radiogroup"
+          onDragStart={(event) => event.preventDefault()}
+          onPointerDown={(event) => {
+            suppressDragClick.current = false;
+            const strip = event.currentTarget;
+            if (
+              event.pointerType !== "mouse" ||
+              event.button !== 0 ||
+              strip.scrollWidth <= strip.clientWidth
+            )
+              return;
+            drag.current = {
+              pointerId: event.pointerId,
+              x: event.clientX,
+              scrollLeft: strip.scrollLeft,
+              moved: false,
+            };
+          }}
+          onPointerMove={(event) => {
+            const gesture = drag.current;
+            if (!gesture || gesture.pointerId !== event.pointerId) return;
+            const distance = event.clientX - gesture.x;
+            if (!gesture.moved && Math.abs(distance) < 6) return;
+            const strip = event.currentTarget;
+            if (!gesture.moved) {
+              gesture.moved = true;
+              suppressDragClick.current = true;
+              strip.setPointerCapture(event.pointerId);
+              strip.dataset.dragging = "true";
+            }
+            strip.scrollLeft = gesture.scrollLeft - distance;
+          }}
+          onPointerUp={(event) => {
+            if (drag.current?.pointerId !== event.pointerId) return;
+            drag.current = null;
+            delete event.currentTarget.dataset.dragging;
+            if (event.currentTarget.hasPointerCapture(event.pointerId))
+              event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={(event) => {
+            drag.current = null;
+            delete event.currentTarget.dataset.dragging;
+          }}
+          onLostPointerCapture={(event) => {
+            drag.current = null;
+            delete event.currentTarget.dataset.dragging;
+          }}
+          onClickCapture={(event) => {
+            if (suppressDragClick.current && event.detail !== 0) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          }}
           onKeyDown={(event) => {
             if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
             const buttons = Array.from(

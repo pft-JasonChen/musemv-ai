@@ -4,7 +4,7 @@ import sys
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE.parents[2]/'skills/yco-spec'))
 from flowchart_lib import Flow
-f=Flow('Content Report','Approved Web behavior',version='v2',date='2026-11-11',width=1280,height=1590)
+f=Flow('Content Report','Approved Web behavior',version='v3',date='2026-11-12',width=1280,height=1590)
 rows=[
  ('P1 Report', [('Report entry','P1-S0 sign in · P1-S1'),('Reason or Details','P1-S2 / P1-S3'),('Success and Done','P1-S4')]),
  ('P2 Guard feedback',[('Already reported','P2-S1'),('Five successes reached','P2-S2')]),

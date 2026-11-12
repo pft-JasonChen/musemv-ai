@@ -11,7 +11,7 @@ import { DetailNavbar } from "@/components/shell/DetailNavbar";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { Tabs } from "@/components/shell/RoomNavbar";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
-import { CREDIT_TRANSACTIONS } from "@/lib/user";
+import { CREDIT_TRANSACTIONS, CREDIT_EXPIRY_TRANSACTIONS } from "@/lib/user";
 import { useDemoFlag } from "@/components/demo/useDemo";
 
 /**
@@ -36,7 +36,8 @@ import { useDemoFlag } from "@/components/demo/useDemo";
  * ── WHAT DP ADDED THAT WA DID NOT HAVE ──────────────────────────────────────
  *
  * The All / Spend / Earn filter, and a per-row icon — both ported from DP,
- * same as the modal version. The filter derives from the sign of `amount`.
+ * same as the modal version. Filters use transaction kinds: expiry is All-only,
+ * while generation refunds remain in Spend (PM decisions 2026-10-08/11-12).
  */
 type CreditTab = "all" | "spend" | "earn";
 const CREDIT_TABS = [
@@ -57,13 +58,15 @@ export function CreditsView() {
   // renders, per `demoStore.ts` — applied after the tab filter, not by
   // emptying `CREDIT_TRANSACTIONS` itself, so the flag can reproduce any of
   // the 3 tabs' empty states (a real account can have entries in one tab and
-  // none in another, since the filter is derived from `amount`'s sign).
+  // none in another). Demo history never changes providers or real seed data.
   const demoEmpty = useDemoFlag("creditsEmpty");
+  const demoExpiry = useDemoFlag("creditsExpiryHistory");
+  const transactions = demoExpiry ? CREDIT_EXPIRY_TRANSACTIONS : CREDIT_TRANSACTIONS;
   const entries = demoEmpty
     ? []
-    : CREDIT_TRANSACTIONS.filter((t) => {
-        if (tab === "spend") return t.amount < 0;
-        if (tab === "earn") return t.amount > 0;
+    : transactions.filter((t) => {
+        if (tab === "spend") return t.kind === "spend" || t.kind === "refund";
+        if (tab === "earn") return t.kind === "earn";
         return true;
       });
 

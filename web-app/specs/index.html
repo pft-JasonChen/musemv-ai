@@ -243,7 +243,7 @@
         <td class="c-area">S1</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/song-creation/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">AI Song Creation</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/song-creation/specs/spec.html</div></td>
         <td class="c-dev">/song/create · /song/creating · /song/result</td>
-        <td><span class="badge st-ok">v5 · 2026-10-24</span></td>
+        <td><span class="badge st-ok">v6 · 2026-11-12</span></td>
         <td class="c-cl"><a class="sb-link" href="storyboards/song-creation/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
       </tr>
       <tr>
@@ -257,7 +257,7 @@
         <td class="c-area">S3</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">MV Edit</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/mv-edit/specs/spec.html</div></td>
         <td class="c-dev">/mv/edit</td>
-        <td><span class="badge st-ok">v9 · 2026-10-29</span></td>
+        <td><span class="badge st-ok">v10 · 2026-11-12</span></td>
         <td class="c-cl"><a class="sb-link" href="storyboards/mv-edit/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
       </tr>
       <tr>
@@ -265,20 +265,20 @@
         <td class="c-feat"><a class="sb-link" href="storyboards/history/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">History (My Creations)</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/history/specs/spec.html</div></td>
         <td class="c-dev">/history</td>
         <td><span class="badge st-ok">v3 · 2026-09-10</span></td>
-        <td class="c-cl"><a class="sb-link" href="storyboards/history/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
+        <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>
       <tr>
         <td class="c-area">S5</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/credits-iap/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Credits &amp; IAP</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/credits-iap/specs/spec.html</div></td>
         <td class="c-dev">SubscribeModal · BuyCreditsModal · /profile/credits · sign-up gift</td>
-        <td><span class="badge st-ok">v3 · 2026-10-08</span></td>
+        <td><span class="badge st-ok">v5 · 2026-11-12</span></td>
         <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>
       <tr>
         <td class="c-area">S6</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/shell-auth/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">App Shell &amp; Auth</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/shell-auth/specs/spec.html</div></td>
         <td class="c-dev">sidebar / tab bar · route navbars · SignInModal · marketing footer</td>
-        <td><span class="badge st-ok">v4 · 2026-11-11</span></td>
+        <td><span class="badge st-ok">v5 · 2026-11-12</span></td>
         <td class="c-cl"><span class="c-none">&mdash;</span></td>
       </tr>
       <tr>
@@ -292,7 +292,7 @@
         <td class="c-area">S8</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/explore-community/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Explore &amp; Community</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/explore-community/specs/spec.html</div></td>
         <td class="c-dev">/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator</td>
-        <td><span class="badge st-ok">v2 · 2026-09-09</span></td>
+        <td><span class="badge st-ok">v5 · 2026-11-12</span></td>
         <td class="c-cl"><a class="sb-link" href="storyboards/explore-community/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
       </tr>
       <tr>
@@ -1008,8 +1008,29 @@ no mail capability at all; this is a backend contract only, and its links to <co
 <strong>spec IDs</strong> that moved, the <strong>code</strong> that implements it, and the <strong>test</strong> that holds it — so you can<br>
 get from "what changed?" to the exact file without diffing.</p>
 </blockquote>
-<h2 id="2026-11-11-reporting-requires-sign-in">2026-11-11 — Reporting requires sign-in</h2>
-<p>RPT-P1-S0 (new) / AC-RPT-01 / RPT-P4 checklist / S11 v2 P1-S1, P4-S1, D-03: a guest's Report opens the sign-in dialog; signing in continues straight into the report dialog (or the own-content toast), dismissing it does nothing. The Report entry stays visible to guests. Implemented in <code>useReportContent</code> (<code>ReportDialog.tsx</code>) via <code>requireLogin</code>; covered by the <code>ReportDialog.test.tsx</code> guest case. S11 screenshots are unchanged (they show the signed-in dialog) and <code>capture_screenshots.mjs</code> still drives the report flow as a guest, so it needs a sign-in step before its next capture run. Copy-only companion: the sign-in dialog now says "New users get 10 free credits when signing up." (<code>SignInModal.tsx</code>, <code>DEFAULT_CREDITS</code>).</p>
+<h2 id="2026-11-12-launcher-tracking-decision-and-seven-ticket-audit">2026-11-12 — Launcher tracking decision and seven-ticket audit</h2>
+<ul>
+<li><strong>YMW261014P0001 / AC-CR-15, area 07 §3.1; area 01 phone crown:</strong> phone Home/History crowns retain subscription behavior; subscription events carry <code>launcher_premium_icon</code>. Credit page/result events describe actual credit-pack flows only; remove the unreachable launcher source from credit-event expectations. Exact existing subscription event names/schema and Countly delivery require RD confirmation. Prototype UI already matches; no SDK/network behavior added. Two scoped phone browser cases verify crown → subscription, crown hidden after subscribe, actual credit entry → Buy Credits.</li>
+<li><strong>YMW261110P0003 / new AC-EXP-15, area 04:</strong> all-user public/display-eligible MV feed ordered by publication time descending; replace RD's officialMvs mapping with an appropriate feed/category. Trending unchanged. Existing static prototype demonstrates multiple authors in sample-date order only; true publish→feed refresh and pagination remain RD work.</li>
+<li><strong>Audit:</strong> all seven tickets have a recorded decision and an authoritative area-spec update. Five have local prototype changes and verified behavior; these two preserve existing UI and document RD work. No deployment or real telemetry/backend verification is claimed. Detailed evidence and remaining limitations are in docs/BUGS-TO-FIX-2026-11-12.md. Affected storyboard text synchronized: S1 v6, S3 v10, S5 v5, S6 v5, S8 v5, S11 v3. S5 Monthly screenshot recaptured with 2x copy and measured focus boxes; other existing screenshots retain their original state coverage. Newly specified error/drag/fullscreen/expiry states are verified by scoped browser checks, not claimed to be shown in every old storyboard capture. Area specs remain authoritative.</li>
+</ul>
+<h2 id="2026-11-12-subscription-expiry-history-ymw261022p0001">2026-11-12 — Subscription expiry history (YMW261022P0001)</h2>
+<p>CR-P3-S2/S3 and new AC-CR-14: actual subscription-credit expiry creates a negative <strong>Subscription Credits Expired</strong> row for the unused remainder, displayed in <strong>All only</strong>, never Spend/Earn. Keep the grant; cancellation alone does not expire credits; RD must make deduction/posting consistent and idempotent per batch. Prototype: <code>CreditTxn.kind</code> (local presentation data, not a wire-contract change), type-based filters in <code>CreditsView</code>, and reversible <code>creditsExpiryHistory</code> Demo-panel fixture (+1,000/-300/-700 plus original Welcome +10). <code>creditsEmpty</code> overrides it. Tests: <code>CreditsView.test.tsx</code> and two 390/1440 browser cases in <code>pm-jason-fixes.spec.ts</code>. S5 v4 text updated; existing default-state screenshots retained, new expiry demo captured separately during verification. C1–C8 unchanged; no real expiry engine/API added.</p>
+<h2 id="2026-11-12-four-pm-jason-ebug-fixes-local-prototype">2026-11-12 — Four PM Jason eBug fixes (local prototype)</h2>
+<ul>
+<li><strong>YMW261021P0002 / area 07:</strong> Monthly Pro subtitle corrected to 2x; Weekly stays 5x. <code>lib/user.ts</code>; <code>e2e/pm-jason-fixes.spec.ts</code> verifies the cadence switch.</li>
+<li><strong>YMW261109P0002 / AC-RPT-01:</strong> Report exits fullscreen before sign-in/report/notices; exit failure stays visible in the player and permits retry. <code>useReportContent</code> in <code>ReportDialog.tsx</code>; unit tests and signed-in/guest browser cases.</li>
+<li><strong>YMW261103P0001 / SONG-E5, AC-SONG-22 extension:</strong> Enhance uses the existing unsupported-language toast/list for explicit engine language errors; generic errors remain generic. Draft/loading/retry preserved; demo flag extended to Enhance. <code>EnhanceButton</code>, <code>SongCompose</code>, <code>lib/mv/songLanguage</code>; error/compose unit tests and browser demo cases.</li>
+<li><strong>YMW261103P0002 / MV-P5-EFX EFX-1:</strong> Both effect strips support mouse dragging without selecting an effect; native touch/trackpad and keyboard retained. <code>EditTitleSubtitleDialog</code>; both-tab unit/browser tests.</li>
+<li>C1–C8 unchanged. Existing S1/S3/S5/S11 storyboard captures have not been regenerated in this run; S5's desktop Monthly subtitle capture is stale if it contains the old 5x copy. No visual baselines re-recorded.</li>
+</ul>
+<h2 id="2026-11-11-reporting-requires-sign-in-sign-in-modal-advertises-the-sign-up-gift">2026-11-11 — Reporting requires sign-in; sign-in modal advertises the sign-up gift</h2>
+<ul>
+<li><strong>Report needs an account.</strong> RPT-P1-S0 (new) / AC-RPT-01 / RPT-P4 checklist / area 09 AUTH-P3-S2: a guest's Report opens the sign-in dialog; signing in continues straight into the report dialog (or the own-content toast), dismissing it does nothing. The Report entry stays visible to guests. Code: <code>useReportContent</code> in <code>ReportDialog.tsx</code> via <code>requireLogin</code>. Test: <code>ReportDialog.test.tsx</code> guest case. Storyboard: <strong>S11 v2</strong> — new P1-S0 shot <code>00_sign_in</code>, all 16 shots re-captured signed in (<code>capture_screenshots.mjs</code> now signs in at the first Report).</li>
+<li><strong>Gift pill in the sign-in modal.</strong> AUTH-P1-S1a / AC-AUTH-09 / CR-P4-S0: "New users get {credits} free credits" with <code>{credits}</code> = <code>DEFAULT_CREDITS</code> (10), the same source as the CR-P4 toast. Code: <code>SignInModal.tsx</code>. Test: <code>dialog-visual.spec.ts</code> <code>@visual dialog sign-in</code> re-recorded (<code>-darwin</code>, 6 widths). Storyboard: <strong>S6 v4</strong> — P3-S1 exact copy, every shot re-captured (capture context pinned to <code>en-US</code>; a zh-TW machine was being redirected to <code>/cht</code>).</li>
+<li><strong>Not re-captured:</strong> S1 Song creation, S2 MV creation, S5 Credits &amp; IAP, S7 Profile, S8 Explore also photograph the sign-in modal in a few steps; those images predate the pill. No wording in them changes.</li>
+<li>Contract (<code>CHANGELOG-RD.md</code>): unchanged — UI and copy only.</li>
+</ul>
 <h2 id="2026-10-29-mv-effect-samples-play-when-visible">2026-10-29 — MV effect samples play when visible</h2>
 <p>MV-P5-EFX / AC-MV-26 / S3 v9 D-13: current-tab samples loop at 50% image visibility, independently of selection. Scroll-out, tab change, close and page background stop motion and restore covers. Motion does not dirty the draft. Implemented in EffectSample / EditTitleSubtitleDialog; covered by visibility/lifecycle unit tests and scoped desktop/phone E2E scrolling assertions.</p>
 <h2 id="2026-10-29-mv-effects-card-layout-and-subtitle-review-fixtures">2026-10-29 — MV effects card layout and Subtitle review fixtures</h2>
@@ -3084,6 +3105,7 @@ subscription/profile in-memory exactly as described, then routing Home.</p>
 </blockquote>
 </li>
 </ul>
+<p><strong>Phone launcher crown — approved 2026-11-12, YMW261014P0001:</strong> Home and History show the crown only while not subscribed. It opens Upgrade Your Plan directly, never Buy Credits. Treat <code>launcher_premium_icon</code> as the subscription-flow source; do not emit credit-pack purchase page/result events solely for this action. Area 07 §3.1 / AC-CR-15 owns the event-family mapping; RD must confirm the existing subscription event names and real Countly delivery. The prototype already follows this UI behavior and contains no analytics SDK.</p>
 <h3 id="shell-p5-bare-page">SHELL-P5 — Bare page</h3>
 <ul>
 <li><strong>SHELL-P5-S1</strong> Navigating to <code>/share…</code> renders the page <strong>without</strong> sidebar/top bar (standalone).</li>
@@ -3491,6 +3513,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 </tr>
 </tbody>
 </table>
+<p><strong>YMW261103P0002 (approved 2026-11-12):</strong> Both Title and Subtitle thumbnail strips support horizontal mouse dragging when overflowing. Movement under 6px remains a click; a completed drag must not select/replay an effect or dirty the draft. Touch and trackpad retain native scrolling; keyboard navigation and ordinary clicks remain available.</p>
 <h4 id="efx-2-content-and-display-rules">EFX-2 — Content and display rules</h4>
 <p>Title and Author each allow 60 UTF-16 units (AC-MV-03b). Empty or whitespace-only text is omitted without placeholder text, switch changes, or blocking Save/Merge. Long text remains complete: engine controls shrinking/wrapping, with no truncation or ellipsis. Title/Author appear only in the opening, using the selected engine effect's timing; omit hidden/blank items without shifting the remaining items earlier. All 25 effects support both existing ratios (16:9 and 9:16); engine owns layout per ratio. Existing versions restore their settings; missing effect settings use engine defaults.</p>
 <p>Title Off disables Title Effect choices and offers a turn-on notice, even when Author is On. Subtitle Off behaves equivalently. Turning either on inside the dialog updates its draft only until Save. This intentionally differs from POC, whose Title choices remain available with Title Off. If synchronized lyrics are unavailable, disable the outer subtitle switch and the dialog's subtitle choices/turn-on control, explain the reason in both places, and keep the Subtitle tab accessible. Never substitute sample lyrics for missing actual content.</p>
@@ -3926,6 +3949,7 @@ carried, with <code>Rap</code> as a separate, additional chip — not a new "Hip
   never in the approved model — SONG-04, spec area 11 §5.5), a supported-languages info<br>
   popover (Custom). The inline <strong><code>CreditPill</code> shows the live balance</strong> (SONG-05).</li>
 </ul>
+<p><strong>YMW261103P0001 (approved 2026-11-12):</strong> Extend the existing unsupported-language toast and Supported Languages tooltip to <strong>Enhance</strong>, in Simple and both Custom directions (including Instrumental). A rejection carrying the explicit engine reason <code>unsupported song language</code> in <code>errorMessage</code> or an adapter Error message shows the existing "This language isn’t supported yet. See supported languages ( i )" toast. Generic <code>invalid_parameter</code> without that reason, and other failures, show "Couldn’t enhance your text. Please try again." Preserve the input, clear loading, permit retry and charge nothing. RD owns detection and must preserve the specific reason when rejecting <code>enhancePrompt</code>; no front-end language guessing or wire-contract change. The existing <code>songLangUnsupported</code> demo flag also demonstrates Enhance after the mock API response, without replacing the input.</p>
 <h3 id="enhance-asks-first-only-when-there-is-something-to-ask-about-ac-song-14">Enhance asks first only when there is something to ask about (<code>AC-SONG-14</code>)</h3>
 <p><code>Enhance</code> is one pill with two behaviours, and <strong>Instrumental is what selects between them</strong>:</p>
 <table>
@@ -4375,6 +4399,11 @@ naming explicitly so QA doesn't file this pairing as a duplicate-content bug eit
 <li>📄 <strong>Publish→feed locale contract (backend; spec-only).</strong> When a creation is published (area 02/05) it carries a <strong>language/locale code</strong>. The backend returns each feed <strong>already ranked locale-primary</strong> (viewer's locale first, then engagement signals per the Curation PRD). The <strong>frontend just requests and displays</strong> the server-sorted data — no client-side ranking; "we only ask, the backend sorts." The <strong>code format (2-char ISO <code>en</code> vs 3-char product <code>enu</code>, etc.) is RD-TBD</strong> → <code>TBD-EXP-10</code> (relates to i18n <code>TBD-GL-06</code>). No prototype change now (mock feed stays seed).</li>
 </ul>
 <h3 id="32-explore-pages">3.2 Explore pages</h3>
+<h3 id="newly-released-mv-feed-definition-approved-2026-11-12-ymw261110p0003">Newly Released MV feed definition (approved 2026-11-12, YMW261110P0003)</h3>
+<p><strong>Production requirement:</strong> Newly Released Music Videos includes public, display-eligible MVs from <strong>all users</strong>, including ordinary users and official creators. Sort by <strong>publication time descending</strong>, not creation, generation or last-edit time. Apply the existing public-display eligibility rules to exclude private, unpublished, deleted or otherwise ineligible content. Trending Music Videos behavior is unchanged.</p>
+<p>Ruby's 2026-11-11 eBug comment confirms that the RD implementation maps this title to <code>officialMvs</code>, with only <code>trendingMvs</code>/<code>officialMvs</code> available; that is not the product definition. RD must provide the proper newest-publication feed/category and update its frontend mapping; the API/category name is not dictated here. RD must confirm the publication-time field and eligibility rules, and keep ordering/pagination stable when timestamps tie. Republication timestamp semantics remain to be clarified if the existing system has no rule.</p>
+<p><strong>Prototype vs production:</strong> <code>NEW_MVS</code> is an existing static fixture with multiple non-official creators and dates already ordered newest first; both <code>/explore/mvs</code> and <code>/watch</code> use the shared <code>MvGridSections</code>, which filters publicly removed entries. This demonstrates the catalog layout only: those sample dates are not a newly added wire-level publication timestamp, and a new in-session publish does not feed into the static fixture. No backend/API or cross-user publication feed is implemented in this prototype; no mock is presented as a shipped RD fix. This definition does not change existing responsive visibility/layout decisions.</p>
+<p><strong>Acceptance:</strong> publish an eligible public MV from a non-official account, refresh the production feed and see it ahead of older publications. Official MVs remain eligible under the same rules. A newly generated private draft does not enter the feed; private/unpublished/deleted/ineligible content is excluded. Trending remains unchanged. Real feed membership, publication sorting and refresh must be verified in the RD app.</p>
 <ul>
 <li><strong><code>/explore/mvs</code></strong> (<code>MvExplore</code>): <strong>two sections</strong> (Top Picks ← <code>TRENDING_MVS</code>, Newly Released ← <code>NEW_MVS</code>), each a <strong>justified-row gallery</strong> at ≥1024px and a wrapping grid below; card → <strong>navigates to <code>/watch?id=</code></strong> (2026-08-06 — it used to open <code>CommunityMvDialog</code> in place; DP's grid links at <code>/mv-detail?id=</code>, which is this app's <code>/watch</code>, so the dialog was a second rendering of a screen that already existed); Back → <code>DetailNavbar</code>'s <code>router.back()</code> with a fallback to <code>/</code>. Every card's creator avatar is <code>DEFAULT_CREATOR.avatar</code> ⚠️.<blockquote>
 <p><strong>Corrected 2026-08-05.</strong> Was described as a "responsive grid (2/3/4 cols) of <code>[...TRENDING_MVS, ...NEW_MVS]</code>" with "Back → <code>/</code>". Slice <strong>3a</strong> replaced that with the designer's justified gallery and two real sections and did not update this line; caught while fixing the equivalent drift for <code>/explore/songs</code>.<br>
@@ -4861,13 +4890,18 @@ every row in <code>NEW_MVS</code>/<code>TRENDING_MVS</code>/<code>CREATOR_MVS</c
   mark that song's row in the list (<code>.top-song--selected</code>), and SHALL NOT begin playback or open<br>
 <code>SongPlayBar</code> until the visitor starts it. Marking SHALL NOT use the playing state, which also<br>
   changes the album-art glyph. See §3.4.</li>
-<li><strong>AC-EXP-12</strong> — <em>(added 2026-09-01)</em> WHEN <code>/creator</code> loads with the <code>profileEmpty</code> demo flag on,<br>
+<li>
+<p><strong>AC-EXP-12</strong> — <em>(added 2026-09-01)</em> WHEN <code>/creator</code> loads with the <code>profileEmpty</code> demo flag on,<br>
   THE SYSTEM SHALL render the active tab's list as empty with the icon + "No works released yet"<br>
   block; WHEN also <code>self=1</code>, THE SYSTEM SHALL additionally show the subtitle and a tab-specific<br>
-  Create CTA. See §3.5, EXP-E6.</li>
+  Create CTA. See §3.5, EXP-E6.</p>
+</li>
+<li>
+<p><strong>AC-EXP-15</strong> — WHEN Newly Released Music Videos is requested, THE SYSTEM SHALL return public, display-eligible MVs from all users in descending publication-time order, excluding ineligible/private/unpublished/deleted works. Newly published eligible works SHALL enter the refreshed feed regardless of official status, while Trending behavior remains unchanged. RD owns the real feed/category, timestamp semantics and stable pagination; the prototype uses the existing static multi-author fixture only. <em>(Approved 2026-11-12, YMW261110P0003.)</em></p>
+</li>
 </ul>
 <blockquote>
-<p>No AC asserts ranking, moderation, refresh, or publish→feed — none exist (§8). (Real <code>&lt;audio&gt;</code><br>
+<p>Production feed membership/order/refresh is now specified by AC-EXP-15, but remains unimplemented in this static prototype (§8). Ranking/moderation engines are still not implemented. (Real <code>&lt;audio&gt;</code><br>
 playback IS asserted, by <code>AC-EXP-05</code> above — corrected 2026-09-01, this line previously listed<br>
 "real audio" alongside the others as unimplemented, which stopped being true on 2026-08-05.)</p>
 </blockquote>
@@ -4921,7 +4955,7 @@ playback IS asserted, by <code>AC-EXP-05</code> above — corrected 2026-09-01, 
 </tr>
 <tr>
 <td><strong>TBD-EXP-07</strong></td>
-<td>📄 <strong>Spec-only (Curation PRD)</strong> — how user creations enter these rails (ties <code>TBD-MV-06</code>), plus the AI+human moderation pipeline and admin pin/unpin. Entirely unbuilt.</td>
+<td>📄 <strong>Spec-only (Curation PRD)</strong> — Newly Released membership/order is now defined by AC-EXP-15 (2026-11-12, YMW261110P0003), but the real publication feed is still RD work (ties <code>TBD-MV-06</code>); plus the AI+human moderation pipeline and admin pin/unpin. Entirely unbuilt.</td>
 </tr>
 <tr>
 <td><strong>TBD-EXP-08</strong></td>
@@ -6074,6 +6108,7 @@ been removed from this bullet rather than carried forward as a claim the code do
 </tr>
 </tbody>
 </table>
+<p><strong>YMW261021P0002 (2026-11-12):</strong> Monthly Pro's subtitle reads <strong>"2x the credits, create more freely."</strong> (2,000 vs 1,000). Weekly Pro retains <strong>5x</strong> (1,000 vs 200). Yearly copy is unchanged.</p>
 <p><code>DEFAULT_PLAN_ID = "weekly_pro"</code> is the Business Model's stated default; it stays exported but,<br>
   as before 3f, does not drive <code>SubscribeModal</code> directly (§3). The header credit count + expiry<br>
   cadence track whichever plan was actually subscribed to.</p>
@@ -6193,7 +6228,7 @@ No backend.</p>
 <p><code>CreditsView</code> renders DP's Credits Detail (Figma 636:11875) using <code>styles/designer/CreditsPage.css</code><br>
 verbatim, with <code>shell/DetailNavbar</code> for the back+title bar and <code>RoomNavbar</code>'s shared <code>Tabs</code> for the<br>
 filter. The <strong>All / Spend / Earn</strong> filter and the per-row type icon are DP additions WA did not have<br>
-before the migration; the filter derives from the sign of <code>amount</code>.</p>
+before the migration. Filters use an explicit transaction kind, not amount sign: Earn includes grants/purchases, Spend includes creation usage and failed-generation refunds, and subscription expiry appears only in All (YMW261022P0001, approved 2026-11-12).</p>
 <hr>
 <h2 id="3-state-model-rules">3. State model &amp; rules</h2>
 <ul>
@@ -6255,9 +6290,9 @@ subscriber; a free user with the flag on never sees it.</p>
 </blockquote>
 </li>
 <li><strong><code>CreditsView</code></strong> (<code>CreditsView.tsx</code>, route <code>/profile/credits</code>): back+title bar, balance card, an<br>
-<strong>All / Spend / Earn</strong> filter, and the ledger rendered from the static 7-entry<br>
+<strong>All / Spend / Earn</strong> filter, and the ledger rendered from the static one-entry<br>
 <code>CREDIT_TRANSACTIONS</code> seed (<code>lib/user.ts</code>) — 🔒 <strong>not live</strong>; it does not reflect <code>addCredits</code><br>
-  calls. Its CTA is now an <strong>unconditional "Buy More"</strong> opening <code>BuyCreditsModal</code>.<blockquote>
+  calls. Its CTA is <strong>Buy More</strong> for subscribers and <strong>Get Muse Pro</strong> for free users, opening <code>BuyCreditsModal</code>.<blockquote>
 <p>✅ <strong>Restored 2026-08-12.</strong> The CTA is CR-06-branched again: <strong>"Buy More"</strong> for a subscriber,<br>
 <strong>"Get Muse Pro"</strong> for a free user, both opening <code>BuyCreditsModal</code> (which itself renders<br>
 <code>SubscribeModal</code> for a non-subscriber, so label and destination cannot drift apart).<br>
@@ -6269,9 +6304,47 @@ your credit history here."</strong> — with no CTA of its own (the balance card
 button above already covers "go buy/subscribe"); the copy does not name which tab is empty.</p>
 </blockquote>
 </li>
+<li><strong>Expiry review (<code>creditsExpiryHistory</code>):</strong> opt-in static history, see CR-P3-S3. Rendering does not mutate <code>CREDIT_TRANSACTIONS</code> or <code>CreditsProvider</code>; <code>creditsEmpty</code> still takes precedence.</li>
 <li>🔒 All credit state and the ledger are in-memory/static; nothing persists across reload; no store integration.</li>
 </ul>
 <hr>
+<h3 id="31-subscription-vs-credit-purchase-tracking-approved-2026-11-12-ymw261014p0001">3.1 Subscription vs credit-purchase tracking (approved 2026-11-12, YMW261014P0001)</h3>
+<p><strong>Product decision:</strong> the phone launcher crown keeps opening <strong>Upgrade Your Plan</strong>, not Buy Credits. This applies to Home (<code>MobileHeader</code>) and History (<code>RoomNavbar</code>'s phone actions); it is shown only while not subscribed. Credit packs remain subscriber-only (CR-06). No product entry point changes for analytics.</p>
+<table>
+<thead>
+<tr>
+<th>Actual user flow</th>
+<th>Expected event family</th>
+<th>Source / QA expectation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phone launcher crown opens Upgrade Your Plan</td>
+<td>Existing <strong>subscription</strong> page event; exact Countly event name/schema to be confirmed by RD</td>
+<td><code>source=launcher_premium_icon</code>. Record the subscription flow that actually occurred.</td>
+</tr>
+<tr>
+<td>Selecting/subscribing to a plan from that dialog</td>
+<td>Corresponding <strong>subscription</strong> actions/results, using the existing subscription tracking definition</td>
+<td>Do not report this as a credit-pack purchase, even though subscribing grants credits. RD must confirm the subscription event mapping.</td>
+</tr>
+<tr>
+<td>An eligible subscriber actually opens Buy Credits / selects a credit pack</td>
+<td><code>YCM_Credit_Purchase_Page</code>, using the existing <code>pageview</code> / <code>click_item</code> definition</td>
+<td>Record the actual credit-purchase entry source; <code>launcher_premium_icon</code> is not a reachable source in the currently approved UI.</td>
+</tr>
+<tr>
+<td>The credit-pack purchase flow actually ends</td>
+<td><code>YCM_Credit_Popup_Page</code>, using the existing purchase-result definition</td>
+<td>This is the credit-purchase result event, not a generic dialog-open event; do not emit it merely for opening/dismissing Upgrade Your Plan.</td>
+</tr>
+</tbody>
+</table>
+<p>The eBug's 2026-10-28 attachment lists <code>launcher_premium_icon</code> under the two credit event definitions, but no approved path connects the crown to credit-pack purchase. Remove this source from those credit-event expectations for the current UI; keep it on the subscription flow. Other credit sources and existing purchase-result fields are unchanged. Do not emit a synthetic credit event to satisfy a source list.</p>
+<p><strong>RD follow-up:</strong> confirm the real subscription event names and parameter schema, check whether crown-origin subscription events already send <code>launcher_premium_icon</code>, add any missing subscription tracking, and align the Countly tracking sheet with this mapping. If the subscription events already report correctly, this ticket is a tracking-spec / QA-expectation correction; this repo does not establish whether production reporting is missing.</p>
+<p><strong>QA:</strong> test phone Home and History crown separately: opening it shows Upgrade Your Plan and records its subscription source, with no <code>YCM_Credit_Purchase_Page</code> / <code>YCM_Credit_Popup_Page</code> emitted solely by that action. Dismissing or subscribing is still a subscription flow. After subscribing, the crown disappears; entering Buy Credits through an actual purchase entry then uses the credit-event family and that entry's source. Inspect real events in the RD app/Countly environment, not just the dialog UI.</p>
+<p><strong>Prototype limit:</strong> no Countly SDK or analytics transport exists in this backend-less prototype. UI routing already matches the decision and is covered by browser tests; no tracking SDK, fake analytics network call, or new purchase entry is added. Actual telemetry is an RD verification item, not a prototype pass.</p>
 <h2 id="4-journeys">4. Journeys</h2>
 <p>Screens to capture later: SubscribeModal, BuyCreditsModal, <code>/profile/credits</code>.</p>
 <h3 id="cr-p1-buy-credits-subscriber-only">CR-P1 — Buy credits (subscriber-only)</h3>
@@ -6289,7 +6362,11 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 <h3 id="cr-p3-credits-detail">CR-P3 — Credits detail</h3>
 <ul>
 <li><strong>CR-P3-S1</strong> Navigate to <code>/profile/credits</code> (profile Credits tile / Muse Pro <strong>Manage</strong> — both <code>router.push</code>, no longer a modal). <strong>System:</strong> balance + All/Spend/Earn filter + static ledger + <strong>Buy More</strong> → <code>BuyCreditsModal</code>.</li>
-<li><strong>CR-P3-S2</strong> Pick <strong>Spend</strong> or <strong>Earn</strong> → the ledger filters to negative / positive entries; <strong>All</strong> restores the full ledger. <strong>YMW261002P0006 (product owner, 2026-10-08):</strong> the credits returned for a FAILED generation are listed under <strong>Spend</strong> (beside the charge they reverse), never under Earn — so the filter is not purely the sign of the amount, and the live ledger (<code>TBD-CR-04</code>) must carry an explicit type per row. <strong>YMW260930P0009 (2026-10-08):</strong> the live ledger loads <strong>25 entries per page</strong> and fetches the next page when the list is scrolled to the bottom; the oldest entry is never pushed out. The prototype's seed is one row, so neither rule is observable here. <em>(The seed is now ONE entry — <code>Welcome bonus +10</code>, a brand-new free account — so Spend shows the empty state. Corrected 2026-10-01, product owner: the old 7-entry seed carried a +500 welcome bonus, a +300 pack purchase a free user cannot make (CR-06), and a daily sign-in bonus the product does not have.)</em></li>
+<li><strong>CR-P3-S2</strong> Pick <strong>Spend</strong> or <strong>Earn</strong> → filter by explicit transaction type; <strong>All</strong> restores the full ledger. Spend includes creation usage and failed-generation refunds (even though refunds are positive; YMW261002P0006, 2026-10-08). Earn includes grants and credit purchases. Subscription expiry is <strong>All-only</strong>, excluded from both Spend and Earn (YMW261022P0001, 2026-11-12). The live ledger (<code>TBD-CR-04</code>) needs an explicit type; never classify solely by amount sign. Live paging remains <strong>25 entries per page</strong>, loading more on bottom scroll without dropping old entries (YMW260930P0009). Default prototype seed remains one Welcome bonus row; <code>creditsExpiryHistory</code> demonstrates the expiry case below without a live ledger.</li>
+<li><strong>CR-P3-S3 — Subscription expiry (approved 2026-11-12, YMW261022P0001):</strong> At actual subscription-credit expiry, keep the original grant and append <strong>Subscription Credits Expired</strong>, with expiry date and a negative amount equal to the <strong>unused remainder of that expiring grant/batch</strong>. Example: +1,000 granted, -300 used, -700 expired. Do not subtract the already-used 300 or other valid credits. Cancellation alone does not trigger this row or immediate deduction. Balance deduction and ledger posting must be consistent and idempotent per expiry batch (including renewal/cancelled-subscription expiry); no duplicate row on reload/retry. Production RD owns expiry calculation and posting; the prototype only demonstrates the resulting history.</li>
+</ul>
+<p><strong>Prototype review:</strong> sign in, open <code>/profile/credits?demo=1</code>, enable <strong>Credits — expired subscription history</strong>, then collapse the panel. All shows a four-row example in date-descending order: expiry -700 (2026-11-12), creation usage -300 (2026-11-01), subscription grant +1,000 (2026-10-12), and the original Welcome bonus +10. The example sums to the default balance of 10; it does not change provider state or simulate a real clock. Spend shows only usage -300; Earn shows the grant and Welcome bonus; switching the flag off restores the default one-row seed. <code>creditsEmpty</code> overrides this demo in every tab. No new filter tab or visual design is introduced.</p>
+<ul>
 <li><strong>CR-P3-S3</strong> Back → <code>/profile</code>. The route is deep-linkable and survives browser back/forward — the reason it stopped being a modal.</li>
 </ul>
 <h3 id="cr-p4-sign-up-gift-toast-added-2026-10-01">CR-P4 — Sign-up gift toast <em>(added 2026-10-01)</em></h3>
@@ -6387,11 +6464,21 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 <blockquote>
 <p>Charging is now real within the in-memory economy (GL-01); persistence, a live ledger, real IAP, and real reset/expiry remain backend-deferred (§8).</p>
 </blockquote>
+<ul>
+<li>
+<p><strong>AC-CR-14</strong> — WHEN unused subscription credits actually expire, THE SYSTEM SHALL deduct only that batch’s unused remainder and show one matching negative <strong>Subscription Credits Expired</strong> entry with the expiry date, while retaining the original grant. It SHALL appear in All only, never Spend or Earn. Cancelling a subscription SHALL NOT itself deduct unexpired credits. Expiry deduction/posting SHALL be idempotent and consistent with the balance; other valid credits SHALL remain unchanged. Prototype acceptance uses the <code>creditsExpiryHistory</code> demo (CR-P3-S3); real expiry/accounting is RD-owned (<code>TBD-CR-04</code>). <em>(Approved 2026-11-12, YMW261022P0001.)</em></p>
+</li>
+<li>
+<p><strong>AC-CR-15</strong> — WHEN the phone launcher crown opens Upgrade Your Plan, THE SYSTEM SHALL keep it in the subscription flow and associate its subscription tracking with <code>source=launcher_premium_icon</code>. It SHALL NOT emit credit-pack purchase page/result events solely because the crown was pressed or the subscription dialog was shown/dismissed. Credit purchase events SHALL describe actual credit-pack flows using their real entry source; subscription grants are not credit-pack purchases. Exact subscription event names/schema and live telemetry verification remain RD-owned (§3.1). <em>(Approved 2026-11-12, YMW261014P0001.)</em></p>
+</li>
+</ul>
 <hr>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
 <ul>
 <li>[ ] <strong>CR-P1</strong>: non-subscriber sees <strong>Subscribe</strong> everywhere, never Buy Credits (AC-08); subscriber sees 6 packs at the <strong>2026-09-01 Web Final prices</strong> (300 $14.89 · 600 $29.59 · 1,000 $39.59 POPULAR · 2,000 $65.49 BEST VALUE, preselected · 5,000 $140.49 · 8,000 $224.49) + the discount sample (struck price + N% OFF, AC-10); Buy adds pack credits + toast; balance updates (AC-01).</li>
 <li>[ ] <strong>CR-P2</strong>: a <strong>Weekly/Monthly/Yearly</strong> duration Tab Bar (default Weekly) above that duration's Basic + Pro cards (six plans total; Pro <code>--featured</code>); <strong>no preselection on desktop</strong>, <code>selectedTier</code> (default Pro, persists across a duration switch) driving the shared CTA below 1024px; each card's credits/cadence/price come from <code>SUBSCRIPTION_PLANS</code> and every non-Weekly plan reads its own period ("/ month", "/ year"), not "/ week" (AC-09); a Subscribe action → subscriber + credits + PRO badge (AC-02).</li>
+<li>[ ] <strong>AC-CR-15 / Countly</strong>: phone Home and History crown both open subscription, with subscription source launcher_premium_icon; no credit event solely for crown/plan actions. Subscribed users use actual credit entry → credit-event family. Verify actual names/parameters in RD Countly; prototype proves UI only.</li>
+<li>[ ] <strong>CR-P3-S3 / AC-14</strong>: enable expiry demo; All shows -700 with expiry date and original +1,000 grant; Spend shows usage -300 only; Earn shows grant/bonus only. Toggle off restores default, <code>creditsEmpty</code> overrides all tabs. RD: cancellation does not deduct immediately; actual expiry removes unused remainder once and preserves other valid credits.</li>
 <li>[ ] <strong>CR-P3</strong>: detail shows balance + the 1-entry ledger (<code>Welcome bonus +10</code>) + a purchase CTA that reads <strong>Buy More</strong> for a subscriber and <strong>Get Muse Pro</strong> for a free user (AC-03).</li>
 <li>[ ] <strong>CR-E1</strong>: reload resets balance/subscription. <strong>CR-E2</strong>: ledger static. <strong>CR-E3</strong>: already-Pro state shown. <strong>CR-E5</strong>: non-subscriber Buy Credits → <code>SubscribeModal</code> directly (no gate screen).</li>
 <li>[ ] <strong>AC-04/05</strong>: SubscribeModal's footer shows <strong>Terms of Use / Privacy Policy</strong> only (no "demo only" disclaimer, no Restore Purchases — removed 2026-09-01), BuyCredits the expiry/refund copy, CreditsDetail none; dialogs clean at <strong>six</strong> widths <em>(visual)</em>.</li>
@@ -6415,7 +6502,7 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 </tr>
 <tr>
 <td><strong>TBD-CR-04</strong></td>
-<td>🔧 <strong>Backend (RD)</strong> — live credit ledger. <code>/profile/credits</code> shows a static seed, not real transactions. Needs (2026-10-08): a per-row type so a failed-generation refund lands in Spend (YMW261002P0006), and paging at 25 per page with load-more on scroll (YMW260930P0009) — CR-P3-S2.</td>
+<td>🔧 <strong>Backend (RD)</strong> — live credit ledger. <code>/profile/credits</code> shows a static seed, not real transactions. Needs (2026-11-12): idempotent per-batch subscription expiry posting with a matching balance deduction, unused-remainder amount/date and All-only filtering (YMW261022P0001 / AC-CR-14); plus (2026-10-08) a per-row type so a failed-generation refund lands in Spend (YMW261002P0006), and paging at 25 per page with load-more on scroll (YMW260930P0009) — CR-P3-S2.</td>
 </tr>
 <tr>
 <td>~~<strong>TBD-CR-06a</strong>~~</td>
@@ -6443,6 +6530,7 @@ button above already covers "go buy/subscribe"); the copy does not name which ta
 </tr>
 </tbody>
 </table>
+<p><strong>TBD-CR-12 — RD tracking mapping:</strong> supply the existing subscription event names/schema and verify crown-origin <code>launcher_premium_icon</code> against Countly. The product flow and the exclusion from credit-event sources are approved (AC-CR-15); naming and live-event delivery are unverified, not a pending product decision.</p>
 <p>See also global: <code>TBD-GL-01</code> (credit charging/spending), <code>TBD-GL-04</code> (persistence).</p>
 <hr>
 <h2 id="9-flow-diagram">9. Flow diagram</h2>
@@ -7918,6 +8006,7 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 </tbody>
 </table>
 <h2 id="6-acceptance-criteriaears">6. Acceptance criteria（EARS）</h2>
+<p><strong>YMW261109P0002 (approved 2026-11-12):</strong> From a DOM-fullscreen player, Report first awaits fullscreen exit, then opens sign-in/report or the applicable duplicate/limit notice. It does not automatically re-enter fullscreen afterward. If exit fails, show "Please exit fullscreen and try reporting again." inside the fullscreen player and allow retry; do not open an obscured dialog. Native iOS video fullscreen has OS controls, so the custom Report entry is reached after leaving that player.</p>
 <ul>
 <li><strong>AC-RPT-01</strong> — WHEN 訪客點 Report，THE SYSTEM SHALL 先開登入 dialog，登入成功後接續檢舉流程；WHEN 登入者點非本人作品 Report，THE SYSTEM SHALL 在未受防濫用阻擋時開對應標題的檢舉 UI。</li>
 <li><strong>AC-RPT-02</strong> — THE SYSTEM SHALL 依 §3.1 顯示六分類＋Something else，並執行單選、1000 字上限、trim 非空及返回保留規則。</li>

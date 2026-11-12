@@ -104,8 +104,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Shell & Auth',
     'breadcrumb': 'YouCam Muse Web &rarr; Shell &amp; Auth',
-    'author': 'Jason Chen', 'date': '2026-11-11', 'status': 'Draft',
-    'version': 'v4',
+    'author': 'Jason Chen', 'date': '2026-11-12', 'status': 'Draft',
+    'version': 'v5',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -645,6 +645,11 @@ cfg = {
     # ── comments (disabled — no Firebase backend in this repo) ────────────────
     'comments_enabled': False,
 }
+
+
+# PM-approved 2026-11-12 behavior; screenshots retain their existing state coverage.
+next(step for path in cfg['paths'] if path['num'] == 1 for step in path['steps'] if step['num'] == 5)['limits'].append('The phone crown opens Upgrade Your Plan, never Buy Credits. Subscription tracking carries launcher_premium_icon; do not emit credit-pack page/result events solely for this action. Exact subscription event names and live delivery are RD-owned (area 07 AC-CR-15, PM approved 2026-11-12).')
+cfg['changelog'].insert(0, ('v5', '2026-11-12', 'YMW261014P0001: phone Home and History crowns remain subscription entry points; launcher_premium_icon belongs to subscription tracking, not credit-pack events. UI unchanged; actual Countly names and delivery require RD confirmation.'))
 
 if __name__ == '__main__':
     spec_builder.write_specs(cfg)

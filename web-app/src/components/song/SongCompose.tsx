@@ -23,7 +23,11 @@ import { localePath } from "@/lib/i18n/config";
 import { GENRES, MOODS, VOCALS } from "@/lib/mv/mock";
 import { SONG_IDEA_PROMPTS, LYRIC_PRESETS, pickIdea } from "@/lib/mv/songIdeas";
 import { TOP_PICKS_SONGS } from "@/lib/mv/community";
-import { SUPPORTED_SONG_LANGUAGES, UNSUPPORTED_LANGUAGE_MESSAGE } from "@/lib/mv/songLanguage";
+import {
+  SUPPORTED_SONG_LANGUAGES,
+  UNSUPPORTED_LANGUAGE_MESSAGE,
+  isUnsupportedSongLanguage,
+} from "@/lib/mv/songLanguage";
 import {
   DESCRIPTION_MAX,
   SONG_TITLE_MAX,
@@ -135,10 +139,39 @@ export function SongCompose() {
     toast: langError,
     show: showLangError,
     hold: langErrorHold,
+    dismiss: dismissLangError,
   } = useToastTimer<number>(4000);
+  const {
+    toast: enhanceError,
+    show: showEnhanceError,
+    hold: enhanceErrorHold,
+    dismiss: dismissEnhanceError,
+  } = useToastTimer<string>(4000);
   const demoLangUnsupported = useDemoFlag("songLangUnsupported");
   const [langErrorPosition, setLangErrorPosition] = useState<ToastPosition | undefined>();
   const ready = isSongReady(s);
+
+  function handleEnhanceError(error: unknown) {
+    setLangErrorPosition(positionAboveCta());
+    if (demoLangUnsupported || isUnsupportedSongLanguage(error)) {
+      dismissEnhanceError();
+      showLangError((langError ?? 0) + 1);
+    } else {
+      dismissLangError();
+      showEnhanceError("Couldn’t enhance your text. Please try again.");
+    }
+  }
+
+  function applyEnhancement(text: string, field: "describe" | "lyrics") {
+    // Demo-only presentation, after the normal API round-trip; never inspect input.
+    if (demoLangUnsupported) {
+      handleEnhanceError(new Error("unsupported song language"));
+      return;
+    }
+    dismissLangError();
+    dismissEnhanceError();
+    patch({ [field]: text });
+  }
 
   /**
    * Instrumental toggle — BOTH modes route through this, not through a bare
@@ -285,7 +318,8 @@ export function SongCompose() {
                     <EnhanceButton
                       value={s.describe}
                       kind="song"
-                      onEnhanced={(t) => patch({ describe: t })}
+                      onEnhanced={(t) => applyEnhancement(t, "describe")}
+                      onError={handleEnhanceError}
                       bem="song-create"
                     />
                     <span className="song-create__char-count">
@@ -379,7 +413,8 @@ export function SongCompose() {
                     <EnhanceButton
                       value={s.lyrics}
                       kind="song"
-                      onEnhanced={(t) => patch({ lyrics: t })}
+                      onEnhanced={(t) => applyEnhancement(t, "lyrics")}
+                      onError={handleEnhanceError}
                       bem="song-create"
                       directions={
                         s.instrumental
@@ -618,6 +653,17 @@ export function SongCompose() {
       </div>
 
       <BuyCreditsModal open={buyOpen} onClose={() => setBuyOpen(false)} />
+
+      {enhanceError && (
+        <div
+          role="alert"
+          {...enhanceErrorHold}
+          className="popup-toast popup-toast--error"
+          style={langErrorPosition}
+        >
+          {enhanceError}
+        </div>
+      )}
 
       {langError && (
         <div

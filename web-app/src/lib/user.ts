@@ -254,7 +254,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     per: "month",
     sku: "subscribe_1_month_pro_no_trial_ycm",
     badge: "BEST VALUE",
-    description: "5x the credits, create more freely.",
+    description: "2x the credits, create more freely.",
   },
   {
     id: "yearly_basic",
@@ -328,9 +328,11 @@ export const YEARLY_EXTRA_FEATURES: ProFeature[] = [
 
 export interface CreditTxn {
   id: number;
+  /** Expiry appears only in All; generation refunds belong to Spend. */
+  kind: "earn" | "spend" | "refund" | "expiry";
   label: string;
   date: string;
-  /** Positive = credits added, negative = credits spent. */
+  /** Positive = credits added, negative = credits consumed or expired. */
   amount: number;
   /**
    * Icon filename for the ledger row (slice 3f). DP draws a per-kind icon and
@@ -349,5 +351,43 @@ export interface CreditTxn {
  * bonus (the product has no such feature).
  */
 export const CREDIT_TRANSACTIONS: CreditTxn[] = [
-  { id: 1, label: "Welcome bonus", date: "2026-07-01", amount: DEFAULT_CREDITS, icon: "ic_gift" },
+  {
+    id: 1,
+    kind: "earn",
+    label: "Welcome bonus",
+    date: "2026-07-01",
+    amount: DEFAULT_CREDITS,
+    icon: "ic_gift",
+  },
+];
+
+/** Demo history only: 1,000 granted - 300 consumed - 700 expired = 0.
+ * The original welcome balance is retained. No expiry engine or provider mutation.
+ */
+export const CREDIT_EXPIRY_TRANSACTIONS: CreditTxn[] = [
+  {
+    id: 4,
+    kind: "expiry",
+    label: "Subscription Credits Expired",
+    date: "2026-11-12",
+    amount: -700,
+    icon: "ic_clock",
+  },
+  {
+    id: 3,
+    kind: "spend",
+    label: "MV - Create Video",
+    date: "2026-11-01",
+    amount: -300,
+    icon: "ic_video",
+  },
+  {
+    id: 2,
+    kind: "earn",
+    label: "Subscription Credits",
+    date: "2026-10-12",
+    amount: 1000,
+    icon: "ic_credit",
+  },
+  ...CREDIT_TRANSACTIONS,
 ];

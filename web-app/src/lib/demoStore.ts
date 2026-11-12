@@ -72,6 +72,12 @@ export const DEMO_FLAGS = [
     status: "live" as FlagStatus,
   },
   {
+    key: "creditsExpiryHistory",
+    label: "Credits — expired subscription history",
+    hint: "/profile/credits — shows +1,000 granted, -300 spent and -700 expired; expiry appears only in All. Credits empty takes precedence.",
+    status: "live" as FlagStatus,
+  },
+  {
     key: "profileEmpty",
     label: "Community profile — no MVs / Songs",
     hint: "/creator (own + others) and /profile's two tabs",
@@ -122,7 +128,7 @@ export const DEMO_FLAGS = [
   {
     key: "songLangUnsupported",
     label: "AI Song — unsupported language",
-    hint: "/song/create — Create Song shows the language error whatever is typed (RD owns the real detection)",
+    hint: "/song/create — Create Song and Enhance show the language error whatever is typed (RD owns the real detection)",
     status: "live" as FlagStatus,
   },
 ] as const satisfies readonly {

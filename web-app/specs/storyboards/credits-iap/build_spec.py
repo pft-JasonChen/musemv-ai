@@ -57,8 +57,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'Credits &amp; IAP',
     'breadcrumb': 'YouCam Muse Web &rarr; Credits &amp; IAP',
-    'author': 'Jason Chen', 'date': '2026-10-08', 'status': 'Draft',
-    'version': 'v3',
+    'author': 'Jason Chen', 'date': '2026-11-12', 'status': 'Draft',
+    'version': 'v5',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -318,9 +318,11 @@ cfg = {
                     'limits': [
                         ('This is a ROUTE, not a modal.',
                          'It is deep-linkable and survives browser back/forward &mdash; the reason it stopped being a modal on 2026-08-11.'),
+                        ('Subscription expiry appears as a negative unused-remainder entry in All only, never Spend or Earn.',
+                         'PM approved 2026-11-12, YMW261022P0001 / AC-CR-14. Preserve the original grant; cancellation alone does not deduct unexpired credits.'),
                         ('The ledger is a fixed seed and does NOT reflect purchases made in this session.',
                          'AC-CR-03 &mdash; the balance card is live, the rows below it are not. See Prototype vs production.'),
-                        ('The seed is a brand-new free account: ONE row, &ldquo;Welcome bonus +10&rdquo;.',
+                        ('The default seed is a brand-new free account: ONE row, &ldquo;Welcome bonus +10&rdquo;.',
                          'The sign-up grant (P7). Product owner, 2026-10-01: the old seven-row seed carried a +500 welcome bonus, a +300 pack purchase a free user cannot make (CR-06), and a daily sign-in bonus the product does not have.'),
                     ],
                     'since': 'v2',
@@ -331,8 +333,8 @@ cfg = {
                     'system': 'The ledger filters to debits only &mdash; the new-account seed has none, so Spend shows the empty state.',
                     'since': 'v2',
                     'limits': [
-                        ('The filter derives from the SIGN of each entry&rsquo;s amount.',
-                         'There is no stored category &mdash; Spend is the negative rows, Earn the positive ones.'),
+                        ('The filter uses the explicit transaction type, not the amount sign.',
+                         'Spend includes usage and failed-generation refunds; Earn includes grants/purchases. Subscription expiry is All-only (YMW261022P0001 / AC-CR-14, 2026-11-12).'),
                     ],
                 },
                 {
@@ -562,6 +564,7 @@ cfg = {
         ('AC-CR-01', 'WHEN a credit pack is purchased, THE SYSTEM SHALL add the pack&rsquo;s credits to the balance, toast, and close &mdash; with no real payment step.', ['P3-S3']),
         ('AC-CR-02', 'WHEN a plan is subscribed, THE SYSTEM SHALL set the account to subscriber, add the plan&rsquo;s credits, and reflect PRO status in the shell/profile.', ['P1-S5', 'P1-S6']),
         ('AC-CR-03', 'WHEN a signed-in user opens /profile/credits, THE SYSTEM SHALL show the current balance, the All/Spend/Earn filter, the static transaction ledger, and a purchase CTA.', ['P5-S1', 'P5-S2', 'P5-S3']),
+        ('AC-CR-14', 'WHEN subscription credits actually expire, THE SYSTEM SHALL show one negative unused-remainder entry with the expiry date in All only, preserve the original grant and other valid credits, and keep the balance deduction consistent and idempotent. Cancellation alone does not deduct unexpired credits.', ['P5-S1', 'P5-S2', 'P5-S3']),
         ('AC-CR-04', 'THE SYSTEM SHALL show the per-surface footer copy: real Terms of Use / Privacy Policy links on the plan dialog, the 2-year validity and non-refundable copy on Buy Credits, and none on Credits detail.', ['P1-S2', 'P3-S1', 'P5-S1']),
         ('AC-CR-05', 'THE SYSTEM SHALL render the three dialogs at 320/375/768/1024/1440/1920px with no overflow.', [], 'Visual-only; the six-tier sweep is e2e/visual-baseline.spec.ts&rsquo;s job. This spec&rsquo;s D8 scope captures 1403&times;697 desktop only &mdash; the one BEHAVIOURAL difference by width is recorded in Prototype vs production instead.'),
         ('AC-CR-06', 'WHILE already subscribed, WHEN the plan dialog is shown, THE SYSTEM SHALL show the already-on-Muse-Pro state (no plan cards) with a Done action.', ['P2-S1']),
@@ -586,8 +589,8 @@ cfg = {
         ),
         (
             'The ledger is a fixed seed',
-            'The rows on /profile/credits are a static list that never reflects a purchase or a spend made in the session &mdash; only the balance card above them is live.',
-            'Production needs a real transaction ledger endpoint.',
+            'The rows on /profile/credits are static and do not track session purchases/spends. Default: Welcome +10. For expiry review, open /profile/credits?demo=1 and enable Credits &mdash; expired subscription history: +1,000 grant, -300 usage, -700 expiry, plus Welcome +10. Disable to restore the default; Credits empty overrides it. Existing P5 screenshots show the default account, not the expiry demo.',
+            'Production needs real transaction types, actual per-batch unused-remainder expiry, and idempotent balance deduction/ledger posting. Expiry rows appear only in All; creation refunds remain in Spend.',
         ),
         (
             'A sign-in stands in for a sign-up',
@@ -623,6 +626,7 @@ cfg = {
     ],
 
     'changelog': [   # newest first — (version, date, what changed)
+        ('v4', '2026-11-12', 'YMW261022P0001 / AC-CR-14: subscription expiry is a negative unused-remainder row in All only; explicit types preserve Spend refunds. P5 documents the reversible expiry demo. Default-state screenshots are retained; no real expiry engine or deployment is claimed.'),
         ('v3', '2026-10-08',
          '<b>P1 &mdash; the Muse Pro benefit list is two rows shorter.</b> &ldquo;MV without Watermark&rdquo; and '
          '&ldquo;Enable Download MV &amp; Song&rdquo; were removed: Download and the watermark switch stay open to '
@@ -721,6 +725,12 @@ cfg = {
     # ── comments (disabled — no Firebase backend in this repo) ────────────────
     'comments_enabled': False,
 }
+
+
+# PM-approved 2026-11-12 behavior; screenshots retain their existing state coverage.
+next(step for path in cfg['paths'] if path['num'] == 1 for step in path['steps'] if step['num'] == 3)['limits'].append('Monthly Pro provides twice the Monthly Basic credits and reads 2x the credits, create more freely. Weekly Pro keeps 5x; Yearly copy is unchanged (YMW261021P0002, PM approved 2026-11-12).')
+cfg['changelog'].insert(0, ('v5', '2026-11-12', 'YMW261014P0001 / AC-CR-15: subscription and credit-pack event families follow actual user flows. The crown retains subscription behavior; remove launcher_premium_icon from current credit-event source expectations. Exact subscription event names and Countly delivery remain RD work. Monthly Pro copy is 2x (YMW261021P0002); its screenshot was recaptured at the original 1403x697 viewport and the tab/subtitle focus boxes were remeasured.'))
+cfg['prototype_deltas'].append(('Analytics transport', 'The crown already opens subscription, but no Countly SDK or analytics transport exists here.', 'Confirm the existing subscription event names/schema and send launcher_premium_icon on that flow; credit page/result events only describe actual credit-pack flows (AC-CR-15).'))
 
 if __name__ == '__main__':
     spec_builder.write_specs(cfg)

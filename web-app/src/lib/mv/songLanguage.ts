@@ -14,3 +14,18 @@ export const SUPPORTED_SONG_LANGUAGES =
   "English, Japanese, German, Portuguese, Italian, French, Spanish, Turkish, Chinese, Korean, and Hindi";
 
 export const UNSUPPORTED_LANGUAGE_MESSAGE = "This language isn’t supported yet.";
+
+/** Match the language-specific reason, never the generic `invalid_parameter` code.
+ * RD's adapter can preserve the reported engine `errorMessage` on its rejection.
+ * No input inspection: language detection remains RD's responsibility.
+ */
+export function isUnsupportedSongLanguage(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const message =
+    "errorMessage" in error && typeof error.errorMessage === "string"
+      ? error.errorMessage
+      : error instanceof Error
+        ? error.message
+        : "";
+  return /\bunsupported song language\b/i.test(message);
+}

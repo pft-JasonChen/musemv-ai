@@ -282,6 +282,7 @@ function ReportDialogBody({
  */
 export function useReportContent(kind: ReportKind, contentId: string) {
   const [open, setOpen] = useState(false);
+  const exitingFullscreen = useRef(false);
   const { loggedIn, requireLogin } = useAuth();
   const { history } = useHistory();
   useModeration();
@@ -320,13 +321,31 @@ export function useReportContent(kind: ReportKind, contentId: string) {
   }
   // Reporting requires an account: a guest's press opens the sign-in dialog
   // and the report continues once they are signed in (dismissing it does nothing).
-  function openReport() {
-    if (!canReport) return;
+  function continueReport() {
     if (!loggedIn) {
       requireLogin(proceed);
       return;
     }
     proceed();
+  }
+  function openReport() {
+    if (!canReport || exitingFullscreen.current) return;
+    // YMW261109P0002: body portals cannot cover a fullscreen player's top layer.
+    // Exit BEFORE either sign-in, the report dialog, or a duplicate/cap toast.
+    if (!document.fullscreenElement) {
+      continueReport();
+      return;
+    }
+    exitingFullscreen.current = true;
+    void document
+      .exitFullscreen()
+      .then(continueReport)
+      .catch(() => {
+        show("Please exit fullscreen and try reporting again.");
+      })
+      .finally(() => {
+        exitingFullscreen.current = false;
+      });
   }
   const reportNode = (
     <>
@@ -346,16 +365,19 @@ export function useReportContent(kind: ReportKind, contentId: string) {
           markReported(kind, contentId);
         }}
       />
-      {message && (
-        <div
-          tabIndex={0}
-          role="status"
-          {...hold}
-          className={`popup-toast${message === REPORT_LIMIT ? " popup-toast--warning" : " popup-toast--report-neutral"}`}
-        >
-          {message}
-        </div>
-      )}
+      {message &&
+        createPortal(
+          <div
+            tabIndex={0}
+            role="status"
+            {...hold}
+            className={`popup-toast${message === REPORT_LIMIT ? " popup-toast--warning" : " popup-toast--report-neutral"}`}
+          >
+            {message}
+          </div>,
+          // Also keep exit-failure guidance visible inside the fullscreen player.
+          document.fullscreenElement ?? document.body,
+        )}
     </>
   );
   return { openReport, reportNode, canReport };
