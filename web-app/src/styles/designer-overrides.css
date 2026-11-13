@@ -6222,20 +6222,54 @@ button:disabled {
 
 /* Desktop / tablet dialog: Figma's preview is 700x393 (the 218x393 video centred in
    it). It holds that size while the screen is tall enough and scales down with the
-   viewport height once it is not — 348px is everything else in the dialog (padding,
-   header, switch, looks, Save) plus the overlay's own margin — so the whole popup
-   keeps fitting without scrolling. Never narrower than 280px. */
+   viewport height once it is not — 384px reserves everything else in the dialog (padding,
+   header, stable status area, looks, Save) plus the overlay's own margin — so the whole popup
+   keeps fitting without scrolling. Never narrower than 160px; short viewports scroll the content area. */
 .effects-dialog:not(.report-dialog--sheet) .mv-edit-mobile-scene__preview {
   flex-shrink: 0;
   align-self: center;
-  width: min(100%, max(280px, calc((100dvh - 348px) * 700 / 393)));
+  width: min(100%, max(160px, calc((100dvh - 384px) * 700 / 393)));
   aspect-ratio: 700 / 393;
 }
 
-/* The "Title is off" notice row adds 36px to the dialog. */
-.effects-dialog:not(.report-dialog--sheet):has(.effects-dialog__notice)
-  .mv-edit-mobile-scene__preview {
-  width: min(100%, max(280px, calc((100dvh - 384px) * 700 / 393)));
+/* One layout budget for every tab/data/Off state; notices never resize video. */
+.effects-dialog__content {
+  margin: 0 -32px;
+  padding: 0 32px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 0 1 auto;
+}
+
+.effects-dialog .report-dialog__header,
+.effects-dialog__actions {
+  flex-shrink: 0;
+}
+
+.effects-dialog__tab:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+.effects-dialog__status {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  flex-shrink: 0;
+  color: var(--neutral-dark-64);
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.effects-dialog__reason {
+  margin: 0;
 }
 
 .mv-edit-mobile-scene__stage {
@@ -6516,11 +6550,12 @@ button:disabled {
 }
 
 .effects-dialog__notice {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   color: var(--neutral-dark-100);
   font-family: var(--font-family-primary);
   font-size: 13px;
@@ -6535,6 +6570,8 @@ button:disabled {
 .effects-dialog__strip--off {
   opacity: 0.4;
   pointer-events: none;
+  overflow-x: hidden;
+  touch-action: pan-y;
 }
 
 .effects-dialog__thumb:disabled {
@@ -6605,4 +6642,21 @@ button:disabled {
 .mv-edit__toggle-row--subtitle .toggle-switch__track:disabled {
   opacity: var(--opacity-disabled);
   cursor: not-allowed;
+}
+
+.effects-dialog.report-dialog--sheet .effects-dialog__content {
+  margin: 0 -20px;
+  padding: 0 20px;
+  gap: 10px;
+}
+.effects-dialog__strip {
+  flex-shrink: 0;
+}
+
+.effects-dialog.report-dialog--sheet .effects-dialog__status {
+  flex-direction: column;
+  height: 48px;
+  gap: 0;
+  font-size: 12px;
+  line-height: 16px;
 }

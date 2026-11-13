@@ -198,5 +198,53 @@
       "type": "action",
       "label": "Delete"
     }
+  ],
+  "27_subtitle_no_lyrics.png": [
+    {
+      "box": [
+        25.7,
+        65.9,
+        48.6,
+        3.4
+      ],
+      "type": "info",
+      "label": "Subtitle data unavailable"
+    }
+  ],
+  "28_subtitle_untimed.png": [
+    {
+      "box": [
+        25.7,
+        65.9,
+        48.6,
+        3.4
+      ],
+      "type": "info",
+      "label": "Subtitle data unavailable"
+    }
+  ],
+  "29_subtitle_off.png": [
+    {
+      "box": [
+        25.7,
+        65.9,
+        48.6,
+        3.4
+      ],
+      "type": "info",
+      "label": "Usable subtitles switched off"
+    }
+  ],
+  "30_subtitle_available.png": [
+    {
+      "box": [
+        25.7,
+        65.9,
+        48.6,
+        3.4
+      ],
+      "type": "info",
+      "label": "Subtitle effect instruction"
+    }
   ]
 }

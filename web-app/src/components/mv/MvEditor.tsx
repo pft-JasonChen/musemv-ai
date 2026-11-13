@@ -41,7 +41,8 @@ import {
   MV_TITLE_MAX,
   type Scene,
 } from "@/lib/mv/types";
-import { synchronizedMvLyrics } from "@/lib/mv/synchronizedMvLyrics";
+import { subtitleDataState, SUBTITLE_UNAVAILABLE_MESSAGES } from "@/lib/mv/synchronizedMvLyrics";
+import { useDemoState } from "@/components/demo/useDemo";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
 
 function formatTime(seconds: number): string {
@@ -134,6 +135,7 @@ const clipCover = (i: number) => `/assets/videos/storyboard-clips/clip_${(i % 19
 export function MvEditor() {
   const router = useRouter();
   const { locale } = useLocale();
+  const { mvSubtitleData } = useDemoState();
   // Named `removeCreation` here because `remove` alone reads, at the call site
   // in `deleteProject`, like it removes the scene being edited.
   const { remove: removeCreation } = useHistory();
@@ -234,8 +236,9 @@ export function MvEditor() {
   const settings = compose.settings;
   // Only actual timestamped lyric data qualifies; never spread plain lyrics
   // across a track to manufacture synchronization for the effects editor.
-  const timedLines = synchronizedMvLyrics(compose.song);
-  const subtitlesAvailable = timedLines.length > 0;
+  const actualSubtitleState = subtitleDataState(compose.song);
+  const subtitleState = mvSubtitleData === "original" ? actualSubtitleState : mvSubtitleData;
+  const subtitlesAvailable = subtitleState === "available";
   function patchSettings(p: Partial<typeof settings>) {
     setCompose((c) => ({ ...c, settings: { ...c.settings, ...p } }));
   }
@@ -822,18 +825,19 @@ export function MvEditor() {
               <p className="mv-edit__toggle-title">Show Subtitle</p>
               <p className="mv-edit__toggle-state">
                 {!subtitlesAvailable
-                  ? "Synchronized lyrics are not available for this song."
+                  ? SUBTITLE_UNAVAILABLE_MESSAGES[subtitleState]
                   : settings.showSubtitle
                     ? "On"
                     : "Off"}
               </p>
             </div>
-            <ToggleSwitch
-              checked={settings.showSubtitle && subtitlesAvailable}
-              disabled={!subtitlesAvailable}
-              ariaLabel="Show Subtitle"
-              onChange={(showSubtitle) => patchSettings({ showSubtitle })}
-            />
+            {subtitlesAvailable && (
+              <ToggleSwitch
+                checked={settings.showSubtitle && subtitlesAvailable}
+                ariaLabel="Show Subtitle"
+                onChange={(showSubtitle) => patchSettings({ showSubtitle })}
+              />
+            )}
           </div>
 
           <div className="mv-edit__toggle-row mv-edit__toggle-row--watermark">
@@ -993,7 +997,7 @@ export function MvEditor() {
         selection={textEffects}
         titleOn={settings.title.on}
         subtitleOn={settings.showSubtitle}
-        subtitlesAvailable={subtitlesAvailable}
+        subtitleState={subtitleState}
       />
 
       <ImageLightbox

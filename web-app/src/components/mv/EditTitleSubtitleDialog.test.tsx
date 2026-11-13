@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { EditTitleSubtitleDialog } from "./EditTitleSubtitleDialog";
 import { TITLE_EFFECTS, SUBTITLE_STYLES } from "@/lib/mv/textEffects";
+import { SUBTITLE_UNAVAILABLE_MESSAGES } from "@/lib/mv/synchronizedMvLyrics";
 
 vi.mock("@/components/ui/useDialogTransition", () => ({
   useDialogTransition: (open: boolean) => ({ mounted: open, visible: open }),
@@ -75,6 +76,58 @@ async function setup(
 }
 
 describe("MV effects draft boundaries", () => {
+  it("restores the current subtitle choice after unavailable states without dirtying settings", async () => {
+    const { props, rerender } = await setup({
+      selection: { titleEffect: TITLE_EFFECTS[0].id, subtitleStyle: SUBTITLE_STYLES[3].id },
+    });
+    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+    expect(screen.getByRole("radio", { name: SUBTITLE_STYLES[3].label })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    for (const subtitleState of ["no-lyrics", "untimed"] as const) {
+      rerender(<EditTitleSubtitleDialog {...props} subtitleState={subtitleState} />);
+      expect(screen.getByRole("tab", { name: "Subtitle" })).toBeDisabled();
+      expect(screen.getByRole("tab", { name: "Title" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getAllByRole("radio")).toHaveLength(TITLE_EFFECTS.length);
+      expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    }
+    rerender(<EditTitleSubtitleDialog {...props} subtitleState="available" />);
+    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+    expect(screen.getByRole("radio", { name: SUBTITLE_STYLES[3].label })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+  it("still saves Title edits when subtitles have no lyrics", async () => {
+    const { props, onSave } = await setup({ subtitleState: "no-lyrics" });
+    fireEvent.click(screen.getByRole("radio", { name: TITLE_EFFECTS[1].label }));
+    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({
+      ...props.selection,
+      titleEffect: TITLE_EFFECTS[1].id,
+      titleOn: props.titleOn,
+      subtitleOn: props.subtitleOn,
+    });
+  });
+  it("keeps a usable but disabled subtitle switch operable without allowing selection", async () => {
+    await setup({ subtitleOn: false });
+    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+    expect(screen.getByText("Subtitles are off")).toBeVisible();
+    expect(screen.getByRole("radiogroup")).toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.getAllByRole("radio").every((radio) => (radio as HTMLButtonElement).disabled),
+    ).toBe(true);
+    fireEvent.click(screen.getByRole("switch", { name: "Turn subtitles on" }));
+    expect(screen.getByRole("radiogroup")).toHaveAttribute("aria-disabled", "false");
+    expect(
+      screen.getAllByRole("radio").every((radio) => !(radio as HTMLButtonElement).disabled),
+    ).toBe(true);
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+  });
   it.each(["Title", "Subtitle"])(
     "drags the %s strip without selecting an effect, then permits clicks and keyboard selection",
     async (tab) => {
@@ -139,16 +192,22 @@ describe("MV effects draft boundaries", () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ titleOn: true }));
   });
 
-  it("disables activation and sample subtitles when synchronized lyrics are absent", async () => {
-    await setup({ subtitlesAvailable: false });
-    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
-    expect(screen.getByText("Synchronized lyrics are not available for this song.")).toBeVisible();
-    expect(screen.getByRole("switch", { name: "Turn subtitles on" })).toBeDisabled();
-    expect(screen.getAllByRole("radio").every((r) => (r as HTMLButtonElement).disabled)).toBe(true);
-    expect(document.querySelector(".fx-sub")).toBeNull();
-    // Eligibility does not silently change the saved switch or create a dirty draft.
-    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
-  });
+  it.each(["no-lyrics", "untimed"] as const)(
+    "disables Subtitle with the %s explanation and keeps Title usable",
+    async (subtitleState) => {
+      await setup({ subtitleState });
+      fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+      expect(screen.getByText(SUBTITLE_UNAVAILABLE_MESSAGES[subtitleState])).toBeVisible();
+      expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+      expect(screen.getByRole("radio", { name: TITLE_EFFECTS[0].label })).toBeEnabled();
+      expect(screen.getByRole("tab", { name: "Subtitle" })).toBeDisabled();
+      expect(screen.getByRole("tab", { name: "Title" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getAllByRole("radio")).toHaveLength(TITLE_EFFECTS.length);
+      expect(document.querySelector(".fx-sub")).toBeNull();
+      // Eligibility does not silently change the saved switch or create a dirty draft.
+      expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    },
+  );
 
   it("retains tab drafts and disables Save when every choice is reverted", async () => {
     await setup();

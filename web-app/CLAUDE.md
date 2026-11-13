@@ -549,3 +549,5 @@ a detail screen:**
   measured afterwards, and they made it "phones reach 3 of 14". **Count the thing before asking
   about it; a decision taken on a qualitative framing is not the decision they would have made on
   the number.**
+
+- 2026-11-13: Edit MV reserved an empty 64px status area and offered only original/unavailable Demo states. User review exposed the blank gap and inability to test Subtitle on lyric-less originals. Use compact meaningful status content and an explicit presentation-only usable-data override; inspect complete CSS diffs to catch unrelated selector changes.

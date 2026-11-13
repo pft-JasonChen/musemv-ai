@@ -4,6 +4,20 @@
 > **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
 > get from "what changed?" to the exact file without diffing.
 
+## 2026-11-13 — Explicit usable-subtitle Demo state and compact status row
+
+Added **Timed lyrics available** as a presentation-only QA override; **Use original data (may have no lyrics)** retains real eligibility and can legitimately disable Subtitle. No synthetic timing, song edits or saved-choice changes. Normal dialogs now show **Choose a title effect** / **Choose a subtitle effect** in a compact status row (32px desktop / 48px phone), replacing the unexplained 64px spacer while retaining stable geometry. Area 02 EFX-2 and S3 v13 D-16 updated; P6-S8/S9/S10 recaptured and normal Subtitle state added at P6-S11. Validation: typecheck, lint, 219 unit tests, production build and two 390/1440 browser cases passed; browser checks cover geometry, reversible overrides and accessible actions on short viewports. Canonical Linux snapshot baselines and the full e2e suite were not run manually.
+
+## 2026-11-13 — Disable unavailable Subtitle tabs and stabilize the effects dialog
+
+Product owner supersedes the selectable unavailable Subtitle empty state: keep the tab visible but disabled, show distinct no-lyrics/timing reasons persistently beneath the tabs, and retain editable Title effects. Hide the outer subtitle activation switch. Live Demo changes return an active Subtitle tab to Title without losing drafts or saved choices. A reserved status area keeps dialog/video/tabs/Save geometry stable; short viewports scroll content while Close/Save stay accessible. Area 02 EFX-2 / AC-MV-25 and S3 v12 D-15 are authoritative; the earlier v11 entry is historical. P6-S8/S9/S10 captures are refreshed; older captures retain historical layout. No API/provider/schema/token changes.
+
+## 2026-11-13 — Edit MV subtitle availability and reversible Demo states
+
+Product owner approved a replacement explanation instead of unavailable effect thumbnails. Area 02 EFX-2 / AC-MV-25 distinguishes no lyrics from nonempty lyrics without usable timing, with matching outer/dialog messages. Both unavailable states hide activation switches and remove the entire effect strip; usable Subtitle Off keeps an operable switch and disabled static, non-scrollable choices. Existing Title editing/Save and video playback stay usable; saved choices/preferences are preserved when availability changes.
+
+Prototype: shared `subtitleDataState` / messages; `MvEditor`, `EditTitleSubtitleDialog`; Demo-panel **MV subtitle data** selector (original/no-lyrics/untimed), presentation only. No provider/API/schema/token changes. Tests: availability, reversible storage and dialog units; two scoped desktop/phone browser cases in `mv-subtitle-availability.spec.ts`. S3 v11 adds P6-S8/S9/S10 for no lyrics, untimed and usable-Off states. Validation: typecheck, lint, 219 unit tests, production build and both scoped browser cases passed. Restored the History changelog link in the spec index while updating S3 metadata. Existing unavailable-state /mv/edit Linux baselines may require review; no canonical snapshot suite or baseline updates are claimed.
+
 ## 2026-11-12 — Launcher tracking decision and seven-ticket audit
 
 - **YMW261014P0001 / AC-CR-15, area 07 §3.1; area 01 phone crown:** phone Home/History crowns retain subscription behavior; subscription events carry `launcher_premium_icon`. Credit page/result events describe actual credit-pack flows only; remove the unreachable launcher source from credit-event expectations. Exact existing subscription event names/schema and Countly delivery require RD confirmation. Prototype UI already matches; no SDK/network behavior added. Two scoped phone browser cases verify crown → subscription, crown hidden after subscribe, actual credit entry → Buy Credits.

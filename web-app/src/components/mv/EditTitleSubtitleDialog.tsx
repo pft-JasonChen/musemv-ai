@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
@@ -8,6 +8,10 @@ import { EffectSample } from "./EffectSample";
 import { MobileScenePreview } from "./MobileScenePreview";
 import { useDialogTransition, useEscapeToClose } from "@/components/ui/useDialogTransition";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/ssr";
+import {
+  SUBTITLE_UNAVAILABLE_MESSAGES,
+  type SubtitleDataState,
+} from "@/lib/mv/synchronizedMvLyrics";
 import {
   SUBTITLE_STYLES,
   TITLE_EFFECTS,
@@ -38,6 +42,8 @@ export interface TextEffectDraft extends TextEffectSelection {
  * outside, the popup says so under the Title / Subtitle switch with a toggle to turn
  * them back on; until that is switched on the looks below are disabled, and once it
  * is, the notice goes away.
+ * Missing lyrics/timing disables the Subtitle tab with a persistent reason
+ * while Title controls remain visible. Saved choices stay intact and Title drafts remain saveable.
  *
  * The draft lives in the body, which unmounts on close, so ✕ (or Escape, or the
  * backdrop) discards it and the next open starts from the saved choice.
@@ -49,7 +55,7 @@ export function EditTitleSubtitleDialog({
   selection,
   titleOn,
   subtitleOn,
-  subtitlesAvailable = true,
+  subtitleState = "available",
   videoSrc,
   poster,
 }: {
@@ -59,7 +65,7 @@ export function EditTitleSubtitleDialog({
   selection: TextEffectSelection;
   titleOn: boolean;
   subtitleOn: boolean;
-  subtitlesAvailable?: boolean;
+  subtitleState?: SubtitleDataState;
   videoSrc: string;
   poster: string;
 }) {
@@ -84,7 +90,7 @@ export function EditTitleSubtitleDialog({
       selection={selection}
       titleOn={titleOn}
       subtitleOn={subtitleOn}
-      subtitlesAvailable={subtitlesAvailable}
+      subtitleState={subtitleState}
       videoSrc={videoSrc}
       poster={poster}
     />,
@@ -100,7 +106,7 @@ function DialogBody({
   selection,
   titleOn,
   subtitleOn,
-  subtitlesAvailable = true,
+  subtitleState = "available",
   videoSrc,
   poster,
 }: {
@@ -111,12 +117,17 @@ function DialogBody({
   selection: TextEffectSelection;
   titleOn: boolean;
   subtitleOn: boolean;
-  subtitlesAvailable?: boolean;
+  subtitleState?: SubtitleDataState;
   videoSrc: string;
   poster: string;
 }) {
   const isPhone = useMediaQuery(PHONE_QUERY);
-  const [tab, setTab] = useState<Tab>("title");
+  const [selectedTab, setTab] = useState<Tab>("title");
+  const subtitleUnavailable = subtitleState !== "available";
+  const tab = subtitleUnavailable ? "title" : selectedTab;
+  // Reset the tab, not the draft, when a live Demo/data change removes eligibility.
+  if (subtitleUnavailable && selectedTab !== "title") setTab("title");
+  const subtitleReasonId = useId();
   const [draft, setDraft] = useState<TextEffectDraft>({ ...selection, titleOn, subtitleOn });
 
   const [pageVisible, setPageVisible] = useState(() => document.visibilityState !== "hidden");
@@ -129,7 +140,7 @@ function DialogBody({
   const [failedSamples, setFailedSamples] = useState<Set<string>>(() => new Set());
   const options = tab === "title" ? TITLE_EFFECTS : SUBTITLE_STYLES;
   const current = tab === "title" ? draft.titleEffect : draft.subtitleStyle;
-  const tabOn = tab === "title" ? draft.titleOn : draft.subtitleOn && subtitlesAvailable;
+  const tabOn = tab === "title" ? draft.titleOn : draft.subtitleOn;
 
   const dirty =
     draft.titleEffect !== selection.titleEffect ||
@@ -150,7 +161,7 @@ function DialogBody({
   useEffect(() => {
     const strip = stripRef.current;
     const picked = strip?.querySelector<HTMLElement>('[aria-checked="true"]');
-    if (!strip || !picked) return;
+    if (!strip || !picked || !tabOn) return;
     // Leave the same gap the row keeps at its ends (the dialog's side padding: 32px
     // on desktop, 20px on the phone sheet), so a look picked at either edge sits
     // where it would at rest instead of against the dialog's border.
@@ -163,7 +174,7 @@ function DialogBody({
     } else if (rect.right + margin > box.right) {
       strip.scrollBy({ left: rect.right + margin - box.right, behavior: "smooth" });
     }
-  }, [tab, current]);
+  }, [tab, current, tabOn]);
 
   const closeButton = (
     <button
@@ -206,159 +217,174 @@ function DialogBody({
           )}
         </div>
 
-        {open && <MobileScenePreview src={videoSrc} poster={poster} />}
+        <div className="effects-dialog__content">
+          {open && <MobileScenePreview src={videoSrc} poster={poster} />}
 
-        <div className="effects-dialog__tabs" role="tablist" aria-label="Edit">
-          {(["title", "subtitle"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={tab === t}
-              className={`effects-dialog__tab${tab === t ? " effects-dialog__tab--active" : ""}`}
-              onClick={() => setTab(t)}
-            >
-              {t === "title" ? "Title" : "Subtitle"}
-            </button>
-          ))}
-        </div>
-
-        {!tabOn && (
-          <div className="effects-dialog__notice">
-            <span>
-              {tab === "subtitle" && !subtitlesAvailable
-                ? "Synchronized lyrics are not available for this song."
-                : tab === "title"
-                  ? "Title is off"
-                  : "Subtitles are off"}
-            </span>
-            <ToggleSwitch
-              checked={false}
-              disabled={tab === "subtitle" && !subtitlesAvailable}
-              ariaLabel={tab === "title" ? "Turn title on" : "Turn subtitles on"}
-              onChange={() => {
-                setDraft((d) =>
-                  tab === "title" ? { ...d, titleOn: true } : { ...d, subtitleOn: true },
-                );
-              }}
-            />
+          <div className="effects-dialog__tabs" role="tablist" aria-label="Edit">
+            {(["title", "subtitle"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={tab === t}
+                disabled={t === "subtitle" && subtitleUnavailable}
+                aria-describedby={
+                  t === "subtitle" && subtitleUnavailable ? subtitleReasonId : undefined
+                }
+                className={`effects-dialog__tab${tab === t ? " effects-dialog__tab--active" : ""}`}
+                onClick={() => setTab(t)}
+              >
+                {t === "title" ? "Title" : "Subtitle"}
+              </button>
+            ))}
           </div>
-        )}
 
-        <div
-          ref={stripRef}
-          className={`effects-dialog__strip${tabOn ? "" : " effects-dialog__strip--off"}`}
-          role="radiogroup"
-          onDragStart={(event) => event.preventDefault()}
-          onPointerDown={(event) => {
-            suppressDragClick.current = false;
-            const strip = event.currentTarget;
-            if (
-              event.pointerType !== "mouse" ||
-              event.button !== 0 ||
-              strip.scrollWidth <= strip.clientWidth
-            )
-              return;
-            drag.current = {
-              pointerId: event.pointerId,
-              x: event.clientX,
-              scrollLeft: strip.scrollLeft,
-              moved: false,
-            };
-          }}
-          onPointerMove={(event) => {
-            const gesture = drag.current;
-            if (!gesture || gesture.pointerId !== event.pointerId) return;
-            const distance = event.clientX - gesture.x;
-            if (!gesture.moved && Math.abs(distance) < 6) return;
-            const strip = event.currentTarget;
-            if (!gesture.moved) {
-              gesture.moved = true;
-              suppressDragClick.current = true;
-              strip.setPointerCapture(event.pointerId);
-              strip.dataset.dragging = "true";
-            }
-            strip.scrollLeft = gesture.scrollLeft - distance;
-          }}
-          onPointerUp={(event) => {
-            if (drag.current?.pointerId !== event.pointerId) return;
-            drag.current = null;
-            delete event.currentTarget.dataset.dragging;
-            if (event.currentTarget.hasPointerCapture(event.pointerId))
-              event.currentTarget.releasePointerCapture(event.pointerId);
-          }}
-          onPointerCancel={(event) => {
-            drag.current = null;
-            delete event.currentTarget.dataset.dragging;
-          }}
-          onLostPointerCapture={(event) => {
-            drag.current = null;
-            delete event.currentTarget.dataset.dragging;
-          }}
-          onClickCapture={(event) => {
-            if (suppressDragClick.current && event.detail !== 0) {
-              event.preventDefault();
-              event.stopPropagation();
-            }
-          }}
-          onKeyDown={(event) => {
-            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-            const buttons = Array.from(
-              event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"),
-            );
-            if (!buttons.length) return;
-            event.preventDefault();
-            const index = buttons.indexOf(event.target as HTMLButtonElement);
-            const next =
-              event.key === "Home"
-                ? 0
-                : event.key === "End"
-                  ? buttons.length - 1
-                  : (index + (event.key === "ArrowLeft" ? -1 : 1) + buttons.length) %
-                    buttons.length;
-            buttons[next].focus();
-            buttons[next].click();
-          }}
-          aria-label={tab === "title" ? "Title effect" : "Subtitle style"}
-        >
-          <div className="effects-dialog__strip-inner">
-            {options.map((o) => {
-              const selected = o.id === current;
-              return (
-                <button
-                  key={o.sample}
-                  type="button"
-                  role="radio"
-                  tabIndex={selected ? 0 : -1}
-                  aria-checked={selected}
-                  aria-label={o.label}
-                  disabled={!tabOn}
-                  className={`effects-dialog__thumb${selected ? " effects-dialog__thumb--selected" : ""}`}
-                  onClick={() => {
-                    if (selected) {
-                      setReplayKey((k) => k + 1);
-                      return;
-                    }
+          <div className="effects-dialog__status">
+            {subtitleUnavailable && (
+              <p id={subtitleReasonId} className="effects-dialog__reason">
+                {SUBTITLE_UNAVAILABLE_MESSAGES[subtitleState]}
+              </p>
+            )}
+            {!subtitleUnavailable && tabOn && (
+              <p className="effects-dialog__reason">
+                {tab === "title" ? "Choose a title effect" : "Choose a subtitle effect"}
+              </p>
+            )}
+            {!tabOn && (
+              <div className="effects-dialog__notice">
+                <span>{tab === "title" ? "Title is off" : "Subtitles are off"}</span>
+                <ToggleSwitch
+                  checked={false}
+                  ariaLabel={tab === "title" ? "Turn title on" : "Turn subtitles on"}
+                  onChange={() => {
                     setDraft((d) =>
-                      tab === "title"
-                        ? { ...d, titleEffect: o.id as TitleEffectId }
-                        : { ...d, subtitleStyle: o.id as SubtitleStyleId },
+                      tab === "title" ? { ...d, titleOn: true } : { ...d, subtitleOn: true },
                     );
                   }}
-                >
-                  <EffectSample
-                    sample={o.sample}
-                    cover={o.thumb}
-                    selected={selected}
-                    enabled={open && pageVisible}
-                    replayKey={selected ? replayKey : 0}
-                    failed={failedSamples.has(o.sample)}
-                    onError={() => setFailedSamples((previous) => new Set(previous).add(o.sample))}
-                  />
-                  <span className="effects-dialog__sample-label">{o.label}</span>
-                </button>
+                />
+              </div>
+            )}
+          </div>
+
+          <div
+            ref={stripRef}
+            className={`effects-dialog__strip${tabOn ? "" : " effects-dialog__strip--off"}`}
+            role="radiogroup"
+            aria-disabled={!tabOn}
+            onDragStart={(event) => event.preventDefault()}
+            onPointerDown={(event) => {
+              suppressDragClick.current = false;
+              const strip = event.currentTarget;
+              if (
+                !tabOn ||
+                event.pointerType !== "mouse" ||
+                event.button !== 0 ||
+                strip.scrollWidth <= strip.clientWidth
+              )
+                return;
+              drag.current = {
+                pointerId: event.pointerId,
+                x: event.clientX,
+                scrollLeft: strip.scrollLeft,
+                moved: false,
+              };
+            }}
+            onPointerMove={(event) => {
+              const gesture = drag.current;
+              if (!tabOn || !gesture || gesture.pointerId !== event.pointerId) return;
+              const distance = event.clientX - gesture.x;
+              if (!gesture.moved && Math.abs(distance) < 6) return;
+              const strip = event.currentTarget;
+              if (!gesture.moved) {
+                gesture.moved = true;
+                suppressDragClick.current = true;
+                strip.setPointerCapture(event.pointerId);
+                strip.dataset.dragging = "true";
+              }
+              strip.scrollLeft = gesture.scrollLeft - distance;
+            }}
+            onPointerUp={(event) => {
+              if (drag.current?.pointerId !== event.pointerId) return;
+              drag.current = null;
+              delete event.currentTarget.dataset.dragging;
+              if (event.currentTarget.hasPointerCapture(event.pointerId))
+                event.currentTarget.releasePointerCapture(event.pointerId);
+            }}
+            onPointerCancel={(event) => {
+              drag.current = null;
+              delete event.currentTarget.dataset.dragging;
+            }}
+            onLostPointerCapture={(event) => {
+              drag.current = null;
+              delete event.currentTarget.dataset.dragging;
+            }}
+            onClickCapture={(event) => {
+              if (suppressDragClick.current && event.detail !== 0) {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+            }}
+            onKeyDown={(event) => {
+              if (!tabOn || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+              const buttons = Array.from(
+                event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"),
               );
-            })}
+              if (!buttons.length) return;
+              event.preventDefault();
+              const index = buttons.indexOf(event.target as HTMLButtonElement);
+              const next =
+                event.key === "Home"
+                  ? 0
+                  : event.key === "End"
+                    ? buttons.length - 1
+                    : (index + (event.key === "ArrowLeft" ? -1 : 1) + buttons.length) %
+                      buttons.length;
+              buttons[next].focus();
+              buttons[next].click();
+            }}
+            aria-label={tab === "title" ? "Title effect" : "Subtitle style"}
+          >
+            <div className="effects-dialog__strip-inner">
+              {options.map((o) => {
+                const selected = o.id === current;
+                return (
+                  <button
+                    key={o.sample}
+                    type="button"
+                    role="radio"
+                    tabIndex={selected ? 0 : -1}
+                    aria-checked={selected}
+                    aria-label={o.label}
+                    disabled={!tabOn}
+                    className={`effects-dialog__thumb${selected ? " effects-dialog__thumb--selected" : ""}`}
+                    onClick={() => {
+                      if (selected) {
+                        setReplayKey((k) => k + 1);
+                        return;
+                      }
+                      setDraft((d) =>
+                        tab === "title"
+                          ? { ...d, titleEffect: o.id as TitleEffectId }
+                          : { ...d, subtitleStyle: o.id as SubtitleStyleId },
+                      );
+                    }}
+                  >
+                    <EffectSample
+                      sample={o.sample}
+                      cover={o.thumb}
+                      selected={selected}
+                      enabled={open && pageVisible && (tab === "title" || tabOn)}
+                      replayKey={selected ? replayKey : 0}
+                      failed={failedSamples.has(o.sample)}
+                      onError={() =>
+                        setFailedSamples((previous) => new Set(previous).add(o.sample))
+                      }
+                    />
+                    <span className="effects-dialog__sample-label">{o.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

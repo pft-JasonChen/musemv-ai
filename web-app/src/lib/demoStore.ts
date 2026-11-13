@@ -141,6 +141,7 @@ export const DEMO_FLAGS = [
 export type DemoFlagKey = (typeof DEMO_FLAGS)[number]["key"];
 
 export type SubPlatform = "ios" | "android";
+export type MvSubtitleDemoState = "original" | "available" | "no-lyrics" | "untimed";
 
 export interface DemoState {
   /**
@@ -158,6 +159,8 @@ export interface DemoState {
   rejectReason: PublishRejectCode;
   /** Which store the fake app-store subscription came from. */
   subPlatform: SubPlatform;
+  /** Presentation-only override on Edit MV; never rewrites song data or settings. */
+  mvSubtitleData: MvSubtitleDemoState;
 }
 
 function defaults(): DemoState {
@@ -170,6 +173,7 @@ function defaults(): DemoState {
     >,
     rejectReason: "PLATFORM_POLICY",
     subPlatform: "ios",
+    mvSubtitleData: "original",
   };
 }
 
@@ -197,6 +201,12 @@ function parse(raw: string | null): DemoState {
       flags: { ...base.flags, ...(o.flags ?? {}) },
       rejectReason: o.rejectReason ?? base.rejectReason,
       subPlatform: o.subPlatform === "android" ? "android" : "ios",
+      mvSubtitleData:
+        o.mvSubtitleData === "available" ||
+        o.mvSubtitleData === "no-lyrics" ||
+        o.mvSubtitleData === "untimed"
+          ? o.mvSubtitleData
+          : "original",
     };
   } catch {
     return base;

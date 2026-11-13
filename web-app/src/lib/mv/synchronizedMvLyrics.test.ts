@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { synchronizedMvLyrics } from "./synchronizedMvLyrics";
+import { synchronizedMvLyrics, subtitleDataState } from "./synchronizedMvLyrics";
 import type { Song } from "./types";
 const song: Song = {
   id: "import-1",
@@ -9,6 +9,23 @@ const song: Song = {
   art: "",
 };
 describe("MV synchronized lyric eligibility", () => {
+  it("distinguishes missing lyrics, untimed lyrics and usable timing", () => {
+    expect(subtitleDataState(null)).toBe("no-lyrics");
+    expect(subtitleDataState({ ...song, lyrics: "  \n " })).toBe("no-lyrics");
+    expect(subtitleDataState({ ...song, lyrics: "A line without timestamps" })).toBe("untimed");
+    expect(subtitleDataState({ ...song, lyrics: "[00:01]A timed line" })).toBe("available");
+    expect(
+      subtitleDataState({
+        ...song,
+        source: "sample",
+        id: "h-h-cinematic-night",
+        title: "Cinematic Night",
+      }),
+    ).toBe("available");
+    expect(
+      subtitleDataState({ ...song, lyrics: "[00:10]Outside trim", trim: { start: 0, end: 5 } }),
+    ).toBe("untimed");
+  });
   it("never enables timing from ordinary lyrics or a matching title alone", () => {
     expect(synchronizedMvLyrics({ ...song, lyrics: "First line\nSecond line" })).toEqual([]);
     expect(synchronizedMvLyrics({ ...song, title: "Neon Static" })).toEqual([]);

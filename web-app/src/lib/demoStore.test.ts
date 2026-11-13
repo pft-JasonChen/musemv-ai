@@ -34,6 +34,21 @@ describe("demoStore — snapshot identity (useSyncExternalStore contract)", () =
 });
 
 describe("demoStore — defaults and hostile stored values", () => {
+  it("keeps subtitle demo data compatible with older storage and resets it on dismissal", () => {
+    localStorage.setItem("muse_demo", JSON.stringify({ enabled: true, flags: { jobFail: true } }));
+    expect(demoStore.getSnapshot().mvSubtitleData).toBe("original");
+    demoStore.set({ mvSubtitleData: "available" });
+    expect(demoStore.getSnapshot().mvSubtitleData).toBe("available");
+    demoStore.set({ mvSubtitleData: "no-lyrics" });
+    expect(demoStore.getSnapshot().mvSubtitleData).toBe("no-lyrics");
+    demoStore.set({ mvSubtitleData: "untimed" });
+    expect(demoStore.getSnapshot().mvSubtitleData).toBe("untimed");
+    expect(demoStore.getSnapshot().flags.jobFail).toBe(true);
+    demoStore.dismiss();
+    expect(demoStore.getSnapshot().mvSubtitleData).toBe("original");
+    localStorage.setItem("muse_demo", JSON.stringify({ mvSubtitleData: "unexpected" }));
+    expect(demoStore.getSnapshot().mvSubtitleData).toBe("original");
+  });
   it("is disabled by default, so the panel cannot appear without ?demo=1", () => {
     expect(demoStore.getSnapshot().enabled).toBe(false);
   });

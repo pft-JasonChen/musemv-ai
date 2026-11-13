@@ -2,6 +2,19 @@ import type { Song } from "./types";
 import { lyricsLrcForTitle } from "./community";
 import { parseLrc, type TimedLine } from "./lyrics";
 
+export type SubtitleDataState = "available" | "no-lyrics" | "untimed";
+
+export const SUBTITLE_UNAVAILABLE_MESSAGES = {
+  "no-lyrics": "Subtitles unavailable: this song has no lyrics.",
+  untimed: "Subtitles unavailable: timed lyrics are missing.",
+} as const;
+
+/** Timed cues (including approved review fixtures) take precedence over plain text. */
+export function subtitleDataState(song: Song | null): SubtitleDataState {
+  if (synchronizedMvLyrics(song).length > 0) return "available";
+  return song?.lyrics?.trim() ? "untimed" : "no-lyrics";
+}
+
 /** Explicit review fixtures approved by the product owner (2026-10-29).
  * These cues enable Subtitle review on sample MVs; they are not measured engine
  * alignment. Match source, id and title so user uploads never inherit demo cues.

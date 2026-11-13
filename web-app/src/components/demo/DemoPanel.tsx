@@ -15,7 +15,7 @@ import {
 import { HISTORY_SAMPLES } from "@/lib/mv/mock";
 import { useHistory } from "@/components/providers/HistoryProvider";
 import { authStore } from "@/lib/authStore";
-import { demoStore, DEMO_FLAGS, type SubPlatform } from "@/lib/demoStore";
+import { demoStore, DEMO_FLAGS, type SubPlatform, type MvSubtitleDemoState } from "@/lib/demoStore";
 import { PUBLISH_REJECT_CODES, PUBLISH_REJECT_COPY } from "@/lib/publishReview";
 import { useIsMounted } from "@/lib/ssr";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -230,6 +230,27 @@ export function DemoPanel() {
             </select>
           </label>
         )}
+
+        <label className="mt-1 block py-1.5">
+          <span className="mb-1 block font-semibold">MV subtitle data</span>
+          <select
+            value={demo.mvSubtitleData}
+            onChange={(event) =>
+              demoStore.set({ mvSubtitleData: event.target.value as MvSubtitleDemoState })
+            }
+            className="w-full rounded-lg border bg-transparent px-2 py-1"
+            style={{ borderColor: "var(--border-2)", color: "var(--neutral-dark-100)" }}
+          >
+            <option value="original">Use original data (may have no lyrics)</option>
+            <option value="available">Timed lyrics available</option>
+            <option value="no-lyrics">No lyrics</option>
+            <option value="untimed">Lyrics without timing</option>
+          </select>
+          <span className="block" style={{ color: "var(--neutral-dark-64)" }}>
+            /mv/edit — choose Timed lyrics available to test both tabs. UI only; preserves song data
+            and effect choices.
+          </span>
+        </label>
 
         <ReportControls />
 

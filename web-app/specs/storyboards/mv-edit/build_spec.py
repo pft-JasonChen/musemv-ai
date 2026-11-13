@@ -84,8 +84,8 @@ cfg = {
     # ── header ───────────────────────────────────────────────────────────────
     'feature_name': 'AI Music Video Edit',
     'breadcrumb': 'YouCam Muse Web &rarr; AI Music Video Edit',
-    'author': 'Jason Chen', 'date': '2026-11-12', 'status': 'Draft',
-    'version': 'v10',
+    'author': 'Jason Chen', 'date': '2026-11-13', 'status': 'Draft',
+    'version': 'v13',
     'actor_label': 'WEB UI',
     'prototype_url': '',    # no separate hosted prototype — the live dev app IS the subject
     'guideline': '',
@@ -739,6 +739,84 @@ cfg['changelog'].insert(0, ('v9', '2026-10-29',
 # PM-approved 2026-11-12 behavior; screenshots retain their existing state coverage.
 next(step for path in cfg['paths'] if path['num'] == 6 for step in path['steps'] if step['num'] == 1)['limits'].append('Both Title and Subtitle thumbnail strips support horizontal mouse dragging when overflowing. Movement below 6px remains a click; dragging must not select/replay an effect or dirty the draft. Retain native touch/trackpad scrolling and keyboard navigation. PM approved 2026-11-12, YMW261103P0002.')
 cfg['changelog'].insert(0, ('v10', '2026-11-12', 'YMW261103P0002: both Title and Subtitle thumbnail strips support mouse drag-to-scroll without selecting an effect. Native touch/trackpad and keyboard remain available. The existing settings/Save/Merge lifecycle is unchanged.'))
+
+# v11: distinguish missing lyrics from missing timing; unavailable is explanation-only.
+p6['steps'][1]['limits'] = [rule for rule in p6['steps'][1]['limits']
+    if not (isinstance(rule, str) and rule.startswith('Missing synchronized lyrics disable'))]
+p6['steps'][1]['limits'].append('Missing lyrics and missing usable timing have distinct explanations; hide the outer subtitle switch, disable the Subtitle tab with a persistent reason, and retain Title effects. See D-15 and P6-S8..S10.')
+p6['steps'].extend([
+    {'num': 8, 'shot': '27_subtitle_no_lyrics.png',
+     'user': 'Opens Edit Effects for a song with no lyrics.',
+     'system': 'Title remains selected and editable; Subtitle is visible but disabled with a persistent reason below the tabs.',
+     'exact': ['Subtitles unavailable: this song has no lyrics.'],
+     'limits': ['The outer Show Subtitle setting uses the same explanation and has no activation switch.',
+                'No subtitle effect thumbnails or subtitle activation targets remain; Title effects stay available.',
+                'Title editing and video playback remain available; changed Title settings can still be saved.',
+                'Preserve the stored subtitle style and preference without dirtying the draft.'], 'since': 'v11'},
+    {'num': 9, 'shot': '28_subtitle_untimed.png',
+     'user': 'Opens Edit Effects for a song that has lyrics without usable timing.',
+     'system': 'Subtitle is disabled; the timing-specific reason appears beneath the tabs and in the outer setting.',
+     'exact': ['Subtitles unavailable: timed lyrics are missing.'],
+     'limits': ['Apply the same unavailable-control and preservation rules as P6-S8.',
+                'Visible words burned into the existing video do not establish editable lyric timing.'], 'since': 'v11'},
+    {'num': 10, 'shot': '29_subtitle_off.png',
+     'user': 'Opens Subtitle with usable timed lyrics while the subtitle preference is off.',
+     'system': 'An operable turn-on switch remains above disabled static effect thumbnails.',
+     'exact': ['Subtitles are off'],
+     'limits': ['Do not permit effect selection, thumbnail animation or horizontal scrolling until the user turns subtitles on.',
+                'Turning on is a local draft until Save; dismissal discards it.',
+                'On restoration to usable data, retain the previous effect choice and preference.'], 'since': 'v11'},
+])
+for i, criterion in enumerate(cfg['criteria']):
+    if criterion[0] == 'AC-MV-25':
+        cfg['criteria'][i] = (criterion[0],
+            'Distinguish no lyrics from untimed lyrics; both disable Subtitle with a persistent reason, hide the outer subtitle switch and retain Title effects. Keep dialog, video, tabs and Save geometry stable across states. Usable Subtitle Off retains an operable switch with static disabled non-scrollable choices. Preserve settings; Title edits stay saveable.',
+            ['P6-S2', 'P6-S8', 'P6-S9', 'P6-S10', 'P6-S11'], *criterion[3:])
+cfg['states'] = [row for row in cfg['states'] if row[0] != 'Subtitle activation']
+cfg['states'].extend([
+    ('Subtitle data', 'No lyrics', 'Subtitle tab disabled with reason; Title effects remain', 'Title edits and video playback remain available', 'Keep saved subtitle settings'),
+    ('Subtitle data', 'Lyrics without timing', 'Subtitle tab disabled with timing reason; Title effects remain', 'Do not invent timing', 'Keep saved subtitle settings'),
+    ('Subtitle preference', 'Usable timing but Off', 'Operable switch; static disabled choices', 'Turn on before selecting or scrolling', 'Draft until Save'),
+])
+cfg['decisions'].append(('D-14', 'How do missing lyrics, missing timing and Subtitle Off differ?',
+    'Product owner approved 2026-11-13: no lyrics and untimed lyrics use distinct messages shared by outer setting and dialog; replace activation/thumbnail controls with the explanation. Usable Subtitle Off keeps a turn-on switch and static disabled, non-scrollable choices. Preserve saved preferences and Title Save. This amends missing-lyrics behavior in AC-MV-25 and Subtitle sample motion in D-13.'))
+cfg['prototype_deltas'].append(('Subtitle availability review',
+    'The Demo panel offers MV subtitle data: original, timed lyrics available, no lyrics and lyrics without timing. This changes presentation only; restore original data or dismiss the panel to remove the override. The existing video can contain burned-in text; the demo does not rewrite it or actual song data.',
+    'Determine availability from real lyrics and usable timing. Do not infer editable timing from the video image. Apply the four-state interaction rules as amended by D-15.'))
+for row in cfg['overview']:
+    if row[0] == 'v8 review fixtures':
+        row[1] = row[1].replace('Other missing-lyric records remain disabled.', 'Unavailable Subtitle tabs are disabled with persistent reasons (D-15).')
+cfg['changelog'].insert(0, ('v11', '2026-11-13',
+    'Added distinct no-lyrics and untimed-lyrics explanations in place of unavailable controls; usable Subtitle Off retains a switch with static non-scrollable choices. New P6-S8/S9/S10 screenshots. Reversible Demo selector, preserved settings and Title Save; no API/schema changes.'))
+
+# v12 supersedes D-14's selectable unavailable tab after product-owner review.
+for step in p6['steps']:
+    if step['num'] in (8, 9, 10):
+        step['since'] = 'v12'
+        step['limits'].append('Keep dialog, video, tabs and Save geometry unchanged across tab, Off and data states at the same viewport.')
+p6['steps'][7]['limits'].append('If data becomes unavailable on Subtitle, select Title without losing either draft; data restoration re-enables Subtitle without selecting it automatically.')
+cfg['decisions'].append(('D-15', 'Should unavailable Subtitle remain selectable?',
+    'Product owner approved on 2026-11-13: retain Subtitle as a disabled tab and show the reason persistently beneath the tabs, without relying on hover. Keep Title effects visible and editable. Return to Title if eligibility disappears while Subtitle is selected, preserving drafts and saved settings. Keep dialog/video/tabs/Save geometry stable with a reserved status area; short viewports scroll content while retaining Close and Save. This supersedes the selectable empty-state presentation in D-14.'))
+cfg['changelog'].insert(0, ('v12', '2026-11-13',
+    'Disable unavailable Subtitle tabs with persistent reasons and retain Title controls; replace P6-S8/S9/S10 captures. Stabilize dialog/video/tabs/Save positions across states and keep actions accessible on short viewports. Demo data changes preserve drafts. Older P6 captures retain historical layout; no engine/API/schema changes.'))
+
+# v13: usable-data QA override and compact, meaningful status row.
+for step in p6['steps']:
+    if step['num'] in (8, 9, 10):
+        step['since'] = 'v13'
+p6['steps'].append({
+    'num': 11, 'shot': '30_subtitle_available.png', 'since': 'v13',
+    'user': 'Selects Subtitle when usable timed lyrics are available.',
+    'system': 'Shows selectable subtitle effects with a compact instruction row instead of an empty spacer.',
+    'exact': ['Choose a subtitle effect'],
+    'limits': ['Title shows Choose a title effect in the same compact row.',
+               'Use the same row for unavailable-data reasons or turn-on notices.',
+               'Keep video, tabs, effect strip and Save positions stable when switching tabs or data states.'],
+})
+cfg['decisions'].append(('D-16', 'How can QA test Subtitle on an MV with no original lyrics?',
+    'Provide a presentation-only Timed lyrics available Demo option; Use original data may legitimately disable Subtitle. Do not create real lyric timing, change song data or alter saved effects. Replace the 64px empty status reservation with a compact 32px desktop / 48px phone row containing the normal Title/Subtitle instruction, unavailable reason or turn-on notice. Product-owner feedback 2026-11-13; disabled unavailable tabs remain governed by D-15.'))
+cfg['changelog'].insert(0, ('v13', '2026-11-13',
+    'Added the Timed lyrics available Demo UI override and clarified that original data can lack lyrics. Removed unexplained blank spacing with a compact instruction/status row; refreshed unavailable/Off screenshots and added normal Subtitle capture P6-S11. No actual timing/song/schema changes.'))
 
 if __name__ == '__main__':
     spec_builder.write_specs(cfg)

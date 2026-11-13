@@ -407,6 +407,9 @@ House style in one line:
   `const shown = demoEmpty ? [] : rows.filter(…)`. A demo switch that empties a seed constant or
   short-circuits a provider can leave the app in a state the panel can't undo, and it changes what
   the production build does when the flag is off.
+  When demonstrating data eligibility, include an explicit usable-data override as well as unavailable
+  states; original data may itself be unavailable. Keep dialog status space compact and meaningful
+  rather than reserving an unexplained blank area (Edit MV review, 2026-11-13).
 - `DEMO_FLAGS[].status` is `live` or `awaiting-design`, and the panel shows the difference on
   screen. **Flip an entry to `live` in the same change that lands its UI** — otherwise the panel
   advertises a switch that does nothing.
