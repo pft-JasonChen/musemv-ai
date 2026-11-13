@@ -266,7 +266,12 @@ export function StoryboardEditor() {
               overflows; see FloatingCTA.tsx's own header comment. Desktop
               keeps the original adaptive (fits-check) behavior. */}
           <FloatingCTA alignToParent adaptive mobileAlwaysFloat>
-            <button type="button" className="mv-storyboard__cta" onClick={generateMv}>
+            <button
+              type="button"
+              className="mv-storyboard__cta"
+              data-gtm="tool-storyboard-generate"
+              onClick={generateMv}
+            >
               <span>Create MV</span>
               {/* Designer fix, 2026-08-11: this was plain "· 200 Credits" text —
                   MVStoryboardPage.css genuinely has no credit-badge classes of
