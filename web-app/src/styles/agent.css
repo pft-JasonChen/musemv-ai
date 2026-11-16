@@ -2970,16 +2970,23 @@
    bottom edge — so header + bar read as ONE opaque band from the top of the
    window (product owner, 2026-10-29). A short fade under it lets cards slide
    beneath. Unstuck, both extensions are off: the band above would cover the
-   "All Skills" heading, the fade the first section's kicker. */
+   Recent row, the fade the first category's title.
+
+   Since 2026-11-16 the bar holds the section title too, above the chips
+   (whose row now carries the CREATOR / MARKETER group labels), so the
+   group in view stays readable while the catalogue scrolls. Title → chips is
+   Home's "Explore AI Shorts Skills" rhythm: 24px desktop, 16 tablet, 12
+   phone. The negative top margin cancels the top padding (which clears the
+   navbar once stuck), so the title sits where the section starts. */
 .shorts-cat__bar {
   --shorts-bar-top: 80px;
   position: sticky;
   top: var(--shorts-bar-top);
   z-index: 15;
-  /* The section's 16px gap plus this top padding puts the chips 24px under
-     the title, as on Home (Figma 5559:195043, 2026-10-30); the padding also
-     clears the navbar once the bar is stuck. */
-  margin: 0 -32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: -8px -32px 0;
   padding: 8px 32px 12px;
   background: #09090b;
 }
@@ -3005,11 +3012,17 @@
   background: linear-gradient(to bottom, #09090b, rgba(9, 9, 11, 0));
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .shorts-cat__bar {
+    gap: 16px;
+  }
+}
+
 @media (max-width: 767px) {
   .shorts-cat__bar {
     --shorts-bar-top: 56px;
-    /* 16px gap − 10 + 6px padding: chips 12px under the title. */
-    margin: -10px -16px 0;
+    gap: 12px;
+    margin: -6px -16px 0;
     padding: 6px 16px 10px;
   }
 }
@@ -3035,6 +3048,96 @@
   color: var(--white-60);
 }
 
+/* The groups inside the chip row (CEO feedback, 2026-11-16): each group is a
+   cluster — its "CREATOR" / "MARKETER" label above its chips — and a
+   hairline parts the two. A label jumps to its group's first category; the
+   group in view lights purple. */
+.shorts-cat__nav-set {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.shorts-cat__nav-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.shorts-cat__nav-group {
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  /* white-60, as the unselected chips: white-40 is 3.74:1 at 11px (axe). */
+  color: var(--white-60);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  line-height: 16px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 160ms;
+}
+
+.shorts-cat__nav-group:hover {
+  color: var(--white-80);
+}
+
+.shorts-cat__nav-group--on,
+.shorts-cat__nav-group--on:hover {
+  color: var(--color-accent-purple);
+}
+
+/* As tall as a tab and level with the tab row (product owner, 2026-11-16) —
+   Tabs.css's 34px tab, 26px on phones. */
+.shorts-cat__nav-div {
+  flex-shrink: 0;
+  align-self: flex-end;
+  width: 1px;
+  height: 34px;
+  margin: 0 10px;
+  background: var(--white-15);
+}
+
+@media (max-width: 767px) {
+  .shorts-cat__nav-div {
+    height: 26px;
+  }
+}
+
+/* In the content where one group follows another (MARKETER, above Luxury
+   Ads): the group name as a labelled rule — distinct from the 20px category
+   titles under it. The first group has none: the chip row's label is just
+   above it. */
+.shorts-cat__group-hd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  color: var(--color-accent-purple);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  line-height: 18px;
+  text-transform: uppercase;
+}
+
+.shorts-cat__group-hd::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--white-15);
+}
+
+/* A new group starts further from the category above it than categories do
+   from each other (16px). */
+.shorts-cat__sec + .shorts-cat__sec--lead {
+  padding-top: 40px;
+}
+
 .shorts-cat__sec {
   display: flex;
   flex-direction: column;
@@ -3042,34 +3145,25 @@
   padding-top: 16px;
 }
 
-/* Phones: the first category's top padding (meant to part it from the one
-   above) only widened the gap under the chips to 42px; without it the kicker
-   sits 26px under them (product owner, 2026-11-10). */
-@media (max-width: 767px) {
-  .shorts-cat__bar + .shorts-cat__sec {
-    padding-top: 0;
-  }
-}
-
-/* Tablet and desktop: Home's "Explore AI Shorts Skills" rhythm — the chips
-   as far under the title as the first category sits under the chips: 24px
-   on desktop, 16px on tablets (product owner, 2026-11-10). Unadjusted it was
-   the bar's 12px bottom padding + the section's 16px gap + the category's
-   own 16px top padding = 44px. */
-@media (min-width: 768px) {
-  .shorts-cat__bar + .shorts-cat__sec {
-    margin-top: -4px;
-    padding-top: 0;
-  }
+/* The first category sits as far under the chips as the chips sit under the
+   title — 24px desktop, 16 tablet (Home's rhythm, product owner 2026-11-10);
+   phones 26. Unadjusted it was the bar's bottom padding + the section's 16px
+   gap + the category's own 16px top padding (meant to part it from the one
+   above). */
+.shorts-cat__bar + .shorts-cat__sec {
+  margin-top: -4px;
+  padding-top: 0;
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  .shorts-cat__bar {
-    margin-top: -8px;
-  }
-
   .shorts-cat__bar + .shorts-cat__sec {
     margin-top: -12px;
+  }
+}
+
+@media (max-width: 767px) {
+  .shorts-cat__bar + .shorts-cat__sec {
+    margin-top: 0;
   }
 }
 
@@ -3079,16 +3173,6 @@
   gap: 4px;
 }
 
-/* "CREATOR" / "MARKETER" — the YCA tab a category came from, as a kicker. */
-.shorts-cat__group {
-  color: var(--color-accent-purple);
-  font-size: 11px;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.08em;
-  line-height: 16px;
-  text-transform: uppercase;
-}
-
 .shorts-cat__name {
   margin: 0;
   font-size: var(--font-title-m);
@@ -3096,13 +3180,14 @@
   line-height: 28px;
 }
 
-/* Phones: /shorts' two section titles ("Recent", "All Skills") come down to
-   the category titles' size (Drama, Dance …) — 20 / 28 instead of DP's
-   24 / 32 (product owner, 2026-11-10). Scoped to this page; Home's section
-   titles keep DP's size. */
+/* Phones: /shorts' two section titles ("Recent", "Creator / Marketer
+   Skills") come down to the category titles' size (Drama, Dance …) — 20 / 28
+   instead of DP's 24 / 32 (product owner, 2026-11-10). Scoped to this page;
+   Home's section titles keep DP's size. Two classes each, to beat DP's own
+   phone rule for `.section-header__title`. */
 @media (max-width: 767px) {
   .shorts-recent .section-header__title,
-  .shorts-cat > .section-header .section-header__title {
+  .section-header__title.shorts-cat__title {
     font-size: var(--font-title-m);
     line-height: 28px;
   }

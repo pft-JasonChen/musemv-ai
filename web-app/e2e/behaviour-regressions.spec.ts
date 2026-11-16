@@ -5773,11 +5773,23 @@ test("video-agent-home: the Sidebar's AI Shorts opens /shorts — composer witho
   );
   await expect(page.locator(".shorts-cat__sec")).toHaveCount(11);
 
+  // CEO feedback, 2026-11-16: the two groups show in the chip row — a
+  // CREATOR and a MARKETER label, each a jump to its group — and once in the
+  // content as a heading above the group's first category.
   const nav = page.getByRole("navigation", { name: "Skill categories" });
+  // Only MARKETER gets a content heading; CREATOR's would repeat the label
+  // right above it in the chip row.
+  await expect(page.locator(".shorts-cat__group-hd")).toHaveText(["Marketer"]);
+  await expect(nav.locator(".shorts-cat__nav-group--on")).toHaveText("Creator");
+
   await nav.getByRole("button", { name: "Sale Event" }).click();
   await expect(nav.getByRole("button", { name: "Sale Event" })).toHaveAttribute("aria-current", "true");
   await expect(page.getByRole("heading", { name: "Sale Event" })).toBeInViewport();
+  await expect(nav.locator(".shorts-cat__nav-group--on")).toHaveText("Marketer");
 
+  await nav.getByRole("button", { name: "Creator" }).click();
+  await expect(nav.getByRole("button", { name: "Drama" })).toHaveAttribute("aria-current", "true");
+  await expect(page.getByRole("heading", { name: "Drama" })).toBeInViewport();
   await page.getByRole("button", { name: "Pet Diary", exact: true }).click();
   await expect(page).toHaveURL(/\/agent\?flow=pet/);
   await expect(

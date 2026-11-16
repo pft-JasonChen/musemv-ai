@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -32,7 +32,10 @@ import {
  *   into History, which stays its own page;
  * · the WHOLE catalogue as a vertical grid, every category a section with a
  *   one-line description, behind a sticky category bar that follows the
- *   scroll (pollo.ai/agent's pattern, minus its history sidebar);
+ *   scroll (pollo.ai/agent's pattern, minus its history sidebar). Since
+ *   2026-11-16 (CEO feedback) the two groups show in the chip row itself —
+ *   "CREATOR" chips │ "MARKETER" chips, each label a jump to its group —
+ *   and in the content as a heading where Marketer begins;
  * · once the composer scrolls away, a compact bar docks at the bottom and
  *   brings it back.
  *
@@ -41,10 +44,12 @@ import {
  * skill makes. Only Pet Diary and Handbag Showcase start a demo, as on Home.
  */
 
+type Group = (typeof TEMPLATE_TABS)[number]["id"];
+
 type Category = {
   id: string;
   title: string;
-  group: string;
+  group: Group;
   cards: (typeof TEMPLATE_TABS)[number]["rows"][number]["cards"];
 };
 
@@ -54,7 +59,7 @@ const CATEGORIES: Category[] = TEMPLATE_TABS.flatMap((tab) =>
   tab.rows.map((row) => ({
     id: `skills-${row.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
     title: row.title,
-    group: tab.label,
+    group: tab.id,
     cards: row.cards.slice(0, row.cards.length / 2),
   })),
 );
@@ -82,7 +87,9 @@ export function ShortsView() {
     const root = topRef.current;
     if (!root) return;
     root.scrollIntoView({ behavior: "smooth", block: "start" });
-    const field = root.querySelector<HTMLElement>(".agent-composer__input, .agent-recipe [contenteditable]");
+    const field = root.querySelector<HTMLElement>(
+      ".agent-composer__input, .agent-recipe [contenteditable]",
+    );
     window.setTimeout(() => field?.focus({ preventScroll: true }), 450);
   };
 
@@ -123,13 +130,16 @@ function RecentShorts({ onOpen }: { onOpen: (flow: AgentFlowId) => void }) {
       </div>
       <div className="shorts-recent__list">
         {RECENT_SHORTS.map((r) => (
-          <button key={r.id} type="button" className="shorts-recent__item" onClick={() => onOpen(r.flow)}>
+          <button
+            key={r.id}
+            type="button"
+            className="shorts-recent__item"
+            onClick={() => onOpen(r.flow)}
+          >
             <img className="shorts-recent__thumb" src={r.poster} alt="" />
             <span className="shorts-recent__meta">
               <b>{r.title}</b>
-              <span>
-                {r.when} · Ready
-              </span>
+              <span>{r.when} · Ready</span>
             </span>
           </button>
         ))}
@@ -142,6 +152,7 @@ function SkillCatalog({ onStart }: { onStart: (flow: AgentFlowId) => void }) {
   const navRef = useEdgeFade<HTMLDivElement>();
   const barRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(CATEGORIES[0].id);
+  const activeGroup = CATEGORIES.find((c) => c.id === active)!.group;
   /** The category bar is pinned under the header — see `.shorts-cat__bar--stuck`. */
   const [stuck, setStuck] = useState(false);
   // While a chip-click glide is running, the scroll spy stays quiet so the
@@ -155,9 +166,10 @@ function SkillCatalog({ onStart }: { onStart: (flow: AgentFlowId) => void }) {
     const update = () => {
       raf = 0;
       const bar = barRef.current;
-      if (bar) setStuck(bar.getBoundingClientRect().top <= parseFloat(getComputedStyle(bar).top) + 0.5);
+      if (bar)
+        setStuck(bar.getBoundingClientRect().top <= parseFloat(getComputedStyle(bar).top) + 0.5);
       if (jumping.current !== null) return;
-      const line = (navRef.current?.getBoundingClientRect().bottom ?? 0) + 24;
+      const line = (bar?.getBoundingClientRect().bottom ?? 0) + 12;
       let current = CATEGORIES[0].id;
       for (const c of CATEGORIES) {
         const el = document.getElementById(c.id);
@@ -174,7 +186,7 @@ function SkillCatalog({ onStart }: { onStart: (flow: AgentFlowId) => void }) {
       window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [navRef]);
+  }, []);
 
   // Keep the active chip in view inside the horizontally scrolling bar.
   useEffect(() => {
@@ -185,12 +197,16 @@ function SkillCatalog({ onStart }: { onStart: (flow: AgentFlowId) => void }) {
     nav.scrollTo({ left, behavior: "smooth" });
   }, [active, navRef]);
 
+  // Land a section just under the stuck bar (whose title row makes it taller
+  // than the chips alone).
   const jump = (id: string) => {
     const el = document.getElementById(id);
-    const nav = navRef.current;
-    if (!el || !nav) return;
+    const bar = barRef.current;
+    if (!el || !bar) return;
     setActive(id);
-    const top = el.getBoundingClientRect().top + window.scrollY - nav.getBoundingClientRect().height - 88;
+    const cs = getComputedStyle(bar);
+    const under = parseFloat(cs.top) + bar.offsetHeight - parseFloat(cs.paddingBottom);
+    const top = el.getBoundingClientRect().top + window.scrollY - under;
     if (jumping.current !== null) window.clearTimeout(jumping.current);
     jumping.current = window.setTimeout(() => (jumping.current = null), 700);
     window.scrollTo({ top, behavior: "smooth" });
@@ -198,49 +214,81 @@ function SkillCatalog({ onStart }: { onStart: (flow: AgentFlowId) => void }) {
 
   return (
     <section className="shorts-cat" aria-labelledby="shorts-cat-title">
-      <div className="section-header">
-        <h2 id="shorts-cat-title" className="section-header__title">
-          All Skills
-        </h2>
-      </div>
       <div ref={barRef} className={`shorts-cat__bar${stuck ? " shorts-cat__bar--stuck" : ""}`}>
+        <div className="section-header">
+          <h2 id="shorts-cat-title" className="section-header__title shorts-cat__title">
+            All Skills
+          </h2>
+        </div>
         <nav ref={navRef} className="tabs shorts-cat__nav edge-fade" aria-label="Skill categories">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              data-cat={c.id}
-              aria-current={active === c.id ? "true" : undefined}
-              className={`tabs__tab${active === c.id ? " tabs__tab--active" : ""}`}
-              onClick={() => jump(c.id)}
-            >
-              {c.title}
-            </button>
+          {TEMPLATE_TABS.map((t, i) => (
+            <Fragment key={t.id}>
+              {i > 0 && <span className="shorts-cat__nav-div" aria-hidden="true" />}
+              {/* One cluster per group: its label above its chips. */}
+              <div className="shorts-cat__nav-set">
+                <button
+                  type="button"
+                  className={`shorts-cat__nav-group${activeGroup === t.id ? " shorts-cat__nav-group--on" : ""}`}
+                  onClick={() => jump(CATEGORIES.find((c) => c.group === t.id)!.id)}
+                >
+                  {t.label}
+                </button>
+                <div className="shorts-cat__nav-chips">
+                  {CATEGORIES.filter((c) => c.group === t.id).map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      data-cat={c.id}
+                      aria-current={active === c.id ? "true" : undefined}
+                      className={`tabs__tab${active === c.id ? " tabs__tab--active" : ""}`}
+                      onClick={() => jump(c.id)}
+                    >
+                      {c.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Fragment>
           ))}
         </nav>
       </div>
 
-      {CATEGORIES.map((c) => (
-        <section key={c.id} id={c.id} className="shorts-cat__sec" aria-labelledby={`${c.id}-title`}>
-          <div className="shorts-cat__hd">
-            <span className="shorts-cat__group">{c.group}</span>
-            <h3 id={`${c.id}-title`} className="shorts-cat__name">
-              {c.title}
-            </h3>
-            <p className="shorts-cat__desc">{CATEGORY_DESC[c.title]}</p>
-          </div>
-          <div className="shorts-cat__grid">
-            {c.cards.map((card) => (
-              <SkillTile
-                key={card.slug}
-                card={card}
-                onStart={onStart}
-                className="shorts-card--grid"
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+      {CATEGORIES.map((c, i) => {
+        // A group heading only where one group follows another (MARKETER).
+        // The first group's would repeat the CREATOR label just above it in
+        // the chip row (product owner, 2026-11-16).
+        const lead = i > 0 && CATEGORIES[i - 1].group !== c.group;
+        return (
+          <section
+            key={c.id}
+            id={c.id}
+            className={`shorts-cat__sec${lead ? " shorts-cat__sec--lead" : ""}`}
+            aria-labelledby={`${c.id}-title`}
+          >
+            {lead && (
+              <h3 className="shorts-cat__group-hd">
+                {TEMPLATE_TABS.find((t) => t.id === c.group)!.label}
+              </h3>
+            )}
+            <div className="shorts-cat__hd">
+              <h4 id={`${c.id}-title`} className="shorts-cat__name">
+                {c.title}
+              </h4>
+              <p className="shorts-cat__desc">{CATEGORY_DESC[c.title]}</p>
+            </div>
+            <div className="shorts-cat__grid">
+              {c.cards.map((card) => (
+                <SkillTile
+                  key={card.slug}
+                  card={card}
+                  onStart={onStart}
+                  className="shorts-card--grid"
+                />
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </section>
   );
 }
