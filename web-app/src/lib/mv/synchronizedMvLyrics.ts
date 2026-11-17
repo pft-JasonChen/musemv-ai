@@ -16,6 +16,8 @@ export function subtitleDataState(song: Song | null): SubtitleDataState {
 }
 
 /** Explicit review fixtures approved by the product owner (2026-10-29).
+ * First cue moved from 0s to 4s on 2026-11-17 (product owner) so the Subtitle
+ * preview jump (EFX-3a) lands somewhere visibly different from the Title jump.
  * These cues enable Subtitle review on sample MVs; they are not measured engine
  * alignment. Match source, id and title so user uploads never inherit demo cues.
  * History currently prefixes its creation id with "h-" when seeding the song.
@@ -23,11 +25,11 @@ export function subtitleDataState(song: Song | null): SubtitleDataState {
 const SAMPLE_MV_CUES: Record<string, { title: string; lrc: string }> = {
   "h-h-cinematic-night": {
     title: "Cinematic Night",
-    lrc: "[00:00]Under the city lights\n[00:02]We follow stars into the night\n[00:04]Every moment shines so bright\n[00:06]Keep this dream alive",
+    lrc: "[00:04]Under the city lights\n[00:06]We follow stars into the night\n[00:08]Every moment shines so bright\n[00:10]Keep this dream alive",
   },
   "h-h-neon-city-nights": {
     title: "Neon City Nights",
-    lrc: "[00:00]Neon colors fill the sky\n[00:02]Hear the rhythm passing by\n[00:04]Through the streets we come alive\n[00:06]Let the music be our guide",
+    lrc: "[00:04]Neon colors fill the sky\n[00:06]Hear the rhythm passing by\n[00:08]Through the streets we come alive\n[00:10]Let the music be our guide",
   },
 };
 
@@ -49,4 +51,11 @@ export function synchronizedMvLyrics(song: Song | null): TimedLine[] {
   return lines
     .filter((line, i) => line.t < end && (lines[i + 1]?.t ?? Infinity) > start)
     .map((line) => ({ ...line, t: Math.max(0, line.t - start) }));
+}
+
+/** Where the Subtitle preview jumps to (area 02 EFX-3a): the first non-blank cue on
+ * the trimmed MV timeline, or null when there is no real timing. Never estimated.
+ */
+export function firstSubtitleAnchorSec(song: Song | null): number | null {
+  return synchronizedMvLyrics(song).find((line) => line.line.trim())?.t ?? null;
 }

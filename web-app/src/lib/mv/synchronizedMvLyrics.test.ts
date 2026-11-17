@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { synchronizedMvLyrics, subtitleDataState } from "./synchronizedMvLyrics";
+import {
+  firstSubtitleAnchorSec,
+  synchronizedMvLyrics,
+  subtitleDataState,
+} from "./synchronizedMvLyrics";
 import type { Song } from "./types";
 const song: Song = {
   id: "import-1",
@@ -58,5 +62,30 @@ describe("MV synchronized lyric eligibility", () => {
     expect(
       synchronizedMvLyrics({ ...song, id: "h-neon-static", title: "Neon Static" }).length,
     ).toBeGreaterThan(0);
+  });
+  it("anchors Subtitle preview at the first real cue on the trimmed MV timeline", () => {
+    const sample = {
+      ...song,
+      source: "sample" as const,
+      id: "h-h-cinematic-night",
+      title: "Cinematic Night",
+    };
+    expect(firstSubtitleAnchorSec(sample)).toBe(4);
+    expect(
+      firstSubtitleAnchorSec({
+        ...song,
+        lyrics: "[00:10]A\n[00:20]B",
+        trim: { start: 15, end: 40 },
+      }),
+    ).toBe(0);
+    expect(
+      firstSubtitleAnchorSec({
+        ...song,
+        lyrics: "[00:10]A\n[00:20]B",
+        trim: { start: 2, end: 40 },
+      }),
+    ).toBe(8);
+    expect(firstSubtitleAnchorSec({ ...song, lyrics: "Untimed words" })).toBeNull();
+    expect(firstSubtitleAnchorSec(null)).toBeNull();
   });
 });

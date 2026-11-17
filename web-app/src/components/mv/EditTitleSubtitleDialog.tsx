@@ -22,6 +22,9 @@ import {
 
 type Tab = "title" | "subtitle";
 
+/** Title/Author appear only in the opening (EFX-2), so the Title jump is always 0. */
+const TITLE_ANCHOR_SEC = 0;
+
 export type { TextEffectSelection } from "@/lib/mv/textEffects";
 
 /** What Save hands back: the picked looks plus the two switches the popup can flip. */
@@ -56,6 +59,7 @@ export function EditTitleSubtitleDialog({
   titleOn,
   subtitleOn,
   subtitleState = "available",
+  subtitleAnchorSec = null,
   videoSrc,
   poster,
 }: {
@@ -66,6 +70,8 @@ export function EditTitleSubtitleDialog({
   titleOn: boolean;
   subtitleOn: boolean;
   subtitleState?: SubtitleDataState;
+  /** First subtitle cue on the MV timeline, or null without real timing (EFX-3a). */
+  subtitleAnchorSec?: number | null;
   videoSrc: string;
   poster: string;
 }) {
@@ -91,6 +97,7 @@ export function EditTitleSubtitleDialog({
       titleOn={titleOn}
       subtitleOn={subtitleOn}
       subtitleState={subtitleState}
+      subtitleAnchorSec={subtitleAnchorSec}
       videoSrc={videoSrc}
       poster={poster}
     />,
@@ -107,6 +114,7 @@ function DialogBody({
   titleOn,
   subtitleOn,
   subtitleState = "available",
+  subtitleAnchorSec = null,
   videoSrc,
   poster,
 }: {
@@ -118,6 +126,8 @@ function DialogBody({
   titleOn: boolean;
   subtitleOn: boolean;
   subtitleState?: SubtitleDataState;
+  /** First subtitle cue on the MV timeline, or null without real timing (EFX-3a). */
+  subtitleAnchorSec?: number | null;
   videoSrc: string;
   poster: string;
 }) {
@@ -137,6 +147,16 @@ function DialogBody({
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, []);
   const [replayKey, setReplayKey] = useState(0);
+  // EFX-3a preview anchoring. Opening on Title is itself a jump to the opening.
+  // PROTOTYPE LIMIT: the canvas is the selected scene clip, not the whole MV, so
+  // these MV-timeline anchors are applied to a clip only to demonstrate the rules.
+  const [jump, setJump] = useState({ at: TITLE_ANCHOR_SEC, key: 0 });
+  function jumpTo(target: Tab, next: TextEffectDraft = draft) {
+    if (target === "subtitle" && !next.subtitleOn) return;
+    const at = target === "title" ? TITLE_ANCHOR_SEC : subtitleAnchorSec;
+    if (at == null) return;
+    setJump((j) => ({ at, key: j.key + 1 }));
+  }
   const [failedSamples, setFailedSamples] = useState<Set<string>>(() => new Set());
   const options = tab === "title" ? TITLE_EFFECTS : SUBTITLE_STYLES;
   const current = tab === "title" ? draft.titleEffect : draft.subtitleStyle;
@@ -218,7 +238,7 @@ function DialogBody({
         </div>
 
         <div className="effects-dialog__content">
-          {open && <MobileScenePreview src={videoSrc} poster={poster} />}
+          {open && <MobileScenePreview src={videoSrc} poster={poster} jump={jump} />}
 
           <div className="effects-dialog__tabs" role="tablist" aria-label="Edit">
             {(["title", "subtitle"] as const).map((t) => (
@@ -232,7 +252,11 @@ function DialogBody({
                   t === "subtitle" && subtitleUnavailable ? subtitleReasonId : undefined
                 }
                 className={`effects-dialog__tab${tab === t ? " effects-dialog__tab--active" : ""}`}
-                onClick={() => setTab(t)}
+                onClick={() => {
+                  if (t === tab) return;
+                  setTab(t);
+                  jumpTo(t);
+                }}
               >
                 {t === "title" ? "Title" : "Subtitle"}
               </button>
@@ -257,9 +281,12 @@ function DialogBody({
                   checked={false}
                   ariaLabel={tab === "title" ? "Turn title on" : "Turn subtitles on"}
                   onChange={() => {
-                    setDraft((d) =>
-                      tab === "title" ? { ...d, titleOn: true } : { ...d, subtitleOn: true },
-                    );
+                    const next =
+                      tab === "title"
+                        ? { ...draft, titleOn: true }
+                        : { ...draft, subtitleOn: true };
+                    setDraft(next);
+                    jumpTo(tab, next);
                   }}
                 />
               </div>
@@ -358,6 +385,7 @@ function DialogBody({
                     disabled={!tabOn}
                     className={`effects-dialog__thumb${selected ? " effects-dialog__thumb--selected" : ""}`}
                     onClick={() => {
+                      jumpTo(tab);
                       if (selected) {
                         setReplayKey((k) => k + 1);
                         return;

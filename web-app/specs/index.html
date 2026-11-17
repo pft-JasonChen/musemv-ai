@@ -1008,6 +1008,16 @@ no mail capability at all; this is a backend contract only, and its links to <co
 <strong>spec IDs</strong> that moved, the <strong>code</strong> that implements it, and the <strong>test</strong> that holds it — so you can<br>
 get from "what changed?" to the exact file without diffing.</p>
 </blockquote>
+<h2 id="2026-11-17-edit-mv-preview-anchoring-for-title-subtitle-effects">2026-11-17 — Edit MV preview anchoring for Title / Subtitle effects</h2>
+<p>New area 02 <strong>EFX-3a</strong> and <strong>AC-MV-31</strong>, approved by the product owner on 2026-11-17, who also accepted all three proposed defaults: seek on tab switch, seek on in-dialog turn-on, and no pre-roll. Changing a Title effect seeks the whole-MV preview to the opening (0). Changing a Subtitle effect seeks to the first displayed subtitle cue on the trimmed MV timeline. The section covers triggers, non-triggers, autoplay and mute, and how anchoring interacts with the actual-preview lifecycle.</p>
+<p><strong>TBD-MV-EFX-03</strong> now names the data the client needs: MV-timeline cues (or <code>firstSubtitleStartSec</code>) and an optional per-effect <code>titleStartSec</code>, delivered with the MV result or preview. The audit found that <code>SongResult.lyricsLrc</code> alone cannot supply this, for three reasons:<br>
+- it exists for AI songs only;<br>
+- <code>useInMv()</code> drops it at the Song → MV handoff;<br>
+- it is on the song timeline, not the trimmed MV timeline.</p>
+<p><strong>Prototype demo (same day, product owner):</strong> the Edit Title &amp; Subtitle dialog now applies the EFX-3a jump rules to its preview player. Because the mockup has no whole-MV video, it jumps within the selected scene clip; the clip carries no effect text, so only the play position moves. The two review fixtures' first cue moved from 0s to 4s so the Subtitle jump is visible.<br>
+- Code: <code>MobileScenePreview</code> takes a <code>jump</code> request (seek, then play; waits for metadata; autoplay refusal leaves it paused). <code>EditTitleSubtitleDialog</code> issues jumps per A1–A7. <code>firstSubtitleAnchorSec()</code> in <code>synchronizedMvLyrics.ts</code> returns the first real cue or null, and <code>MvEditor</code> passes it in. The Demo panel's <strong>Timed lyrics available</strong> override has no real cues, so it enables the Subtitle tab without a Subtitle jump.<br>
+- Tests: five new dialog cases (open/pick/replay, tab switches, Subtitle Off then on, Title on, no timing) plus a drag-never-jumps assertion, and a trimmed-timeline anchor case in <code>synchronizedMvLyrics.test.ts</code>. Mutation-tested both ways.<br>
+- No API, provider, schema or token changes.</p>
 <h2 id="2026-11-13-explicit-usable-subtitle-demo-state-and-compact-status-row">2026-11-13 — Explicit usable-subtitle Demo state and compact status row</h2>
 <p>Added <strong>Timed lyrics available</strong> as a presentation-only QA override; <strong>Use original data (may have no lyrics)</strong> retains real eligibility and can legitimately disable Subtitle. No synthetic timing, song edits or saved-choice changes. Normal dialogs now show <strong>Choose a title effect</strong> / <strong>Choose a subtitle effect</strong> in a compact status row (32px desktop / 48px phone), replacing the unexplained 64px spacer while retaining stable geometry. Area 02 EFX-2 and S3 v13 D-16 updated; P6-S8/S9/S10 recaptured and normal Subtitle state added at P6-S11. Validation: typecheck, lint, 219 unit tests, production build and two 390/1440 browser cases passed; browser checks cover geometry, reversible overrides and accessible actions on short viewports. Canonical Linux snapshot baselines and the full e2e suite were not run manually.</p>
 <h2 id="2026-11-13-disable-unavailable-subtitle-tabs-and-stabilize-the-effects-dialog">2026-11-13 — Disable unavailable Subtitle tabs and stabilize the effects dialog</h2>
@@ -3558,6 +3568,102 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <p><strong>Scope clarification (product owner, 2026-10-29):</strong> actual user-MV preview, its loading/timeout/Retry lifecycle and effects burned into video are <strong>production RD/engine requirements only</strong>. The mockup plays the existing MV scene video in the canvas without title/subtitle overlays, plays supplied motion samples on visible cards, and demonstrates selection/Save/Merge settings. It does not attempt engine preparation or show unavailable-engine errors, Retry or preparation locks.</p>
 <p>In the current Title or enabled Subtitle tab, every card whose image frame is at least 50% visible within the viewport and clipped scroll strip loops silently, independently of selection. Below 50%, show its static cover. Switching tabs, closing the dialog or putting the browser tab in the background stops sample playback; returning resumes eligible visible cards. Playback alone never changes selection or enables Save. Production samples use WebM; supplied prototype assets are silent animated WebP, stopped by replacing them with covers. Cards use a 16:9 image frame with the full sample visible; names appear below the image rather than over it. The horizontal strip scrolls when needed. Motion samples may use a fixed sample ratio. The mockup canvas remains the existing video player with its playback controls and no text-effect overlay; selecting a card does not render its effect onto the canvas. The actual preview uses this MV's ratio, title, author and synchronized lyrics; it is distinct from the illustrative sample. First open is muted. Opening on Title and selecting a Title effect starts at the opening; selecting Subtitle starts at the first timed lyric, playing automatically when ready. Clicking an already-selected effect replays from that tab's start using its available preview, without changing settings or regenerating an available preview.</p>
 <p>While actual preview is preparing, show loading and disable effect selection, preview-changing switches, player controls and Save. Tabs and close remain available; tab changes retain the draft and do not alter the settings being prepared. Timeout after <strong>30 seconds</strong>: mark failure, unlock and offer Retry. On failure retain selection, clearly label the failed preview and allow Save; an old preview must not masquerade as the selected effect. Ignore obsolete results; closing discards the draft, stops playback and ignores pending results. WebM failure preserves its name/cover and selectability, independently of actual-preview failures. Tabs remain accessible: Off disables the retained controls, unavailable subtitle data disables the Subtitle tab with the EFX-2 explanation, and preparation temporarily locks changing controls.</p>
+<h4 id="efx-3a-preview-anchoring-approved-2026-11-17-product-owner">EFX-3a — Preview anchoring (approved 2026-11-17, product owner)</h4>
+<p><strong>Goal.</strong> When the user changes a Title or Subtitle effect, the preview jumps to where that effect is visible, so they see the new look immediately instead of scrubbing for it. Matches current app behavior for Title; extends it to Subtitle. Expands EFX-3's one-line "starts at the opening / first timed lyric" rule. The product owner accepted all three proposed defaults on 2026-11-17: seek on tab switch (A4/A5), seek on in-dialog turn-on (A7), and no pre-roll.</p>
+<p><strong>Anchor timeline.</strong> Both anchors are seconds on the <strong>MV output timeline</strong> (0 = first frame of the MV after trim), which is the timeline of the video the dialog plays. Anchoring therefore requires the dialog player to play the whole MV, either the actual preview or the current render. It must not play a single scene clip. Never apply an anchor to a scene clip in production. <strong>Prototype demo (2026-11-17, product owner):</strong> the mockup canvas has no whole-MV video, so it applies these anchors to the selected scene clip purely to demonstrate the trigger rules; there is no effect text on that clip, so only the play position moves.</p>
+<table>
+<thead>
+<tr>
+<th>Anchor</th>
+<th>Value</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Title anchor</strong></td>
+<td><code>0</code>: Title/Author appear only in the opening (EFX-2).</td>
+<td>Fixed 0 unless the engine declares a per-effect title start (TBD-MV-EFX-03).</td>
+</tr>
+<tr>
+<td><strong>Subtitle anchor</strong></td>
+<td>Start time of the <strong>first subtitle cue displayed in this MV</strong>: the earliest cue whose display interval overlaps the trimmed range, as <code>max(0, cue.start − trim.start)</code>, skipping blank lines and section tags.</td>
+<td>The same cue timing the engine renders with, delivered with the MV/preview (TBD-MV-EFX-03). Never derived from plain lyrics, never estimated, never read from words burned into the video.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Triggers.</strong> Each trigger seeks to the anchor of the current tab, then plays.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>User action</th>
+<th>Seek to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1</td>
+<td>Dialog opens (always on Title)</td>
+<td>Title anchor</td>
+</tr>
+<tr>
+<td>A2</td>
+<td>Selects a different Title effect</td>
+<td>Title anchor</td>
+</tr>
+<tr>
+<td>A3</td>
+<td>Clicks the already-selected Title effect (replay, EFX-3)</td>
+<td>Title anchor</td>
+</tr>
+<tr>
+<td>A4</td>
+<td>Switches to the Subtitle tab</td>
+<td>Subtitle anchor, only if the Subtitle draft is On</td>
+</tr>
+<tr>
+<td>A5</td>
+<td>Switches back to the Title tab</td>
+<td>Title anchor</td>
+</tr>
+<tr>
+<td>A6</td>
+<td>Selects a different Subtitle effect, or re-clicks the selected one</td>
+<td>Subtitle anchor</td>
+</tr>
+<tr>
+<td>A7</td>
+<td>Turns Title or Subtitle on in the dialog's notice</td>
+<td>That tab's anchor</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Non-triggers.</strong> These never seek: manual play, pause, scrub or fullscreen; a mouse drag of the effect strip (a drag never selects, per YMW261103P0002); sample-card playback or scrolling; Save, Close, Escape and the backdrop; mute. After a trigger, user control is never overridden until the next trigger. If the user scrubs elsewhere, playback stays there.</p>
+<p><strong>Playback after seek.</strong><br>
+- Play automatically from the anchor. Playback continues normally and does not stop after the effect segment.<br>
+- If the browser rejects autoplay, stay paused on the anchor frame with Play available. Do not show an error.<br>
+- Keep the user's mute state. Only the first open is muted (EFX-3); a trigger never re-mutes.<br>
+- Seek exactly to the anchor, with no pre-roll.</p>
+<p><strong>With the actual-preview lifecycle (EFX-3 / AC-MV-27–28):</strong><br>
+- A trigger that starts preparation seeks when the new preview becomes <strong>ready</strong>, not before.<br>
+- It uses the anchor of the tab that is active at ready time.<br>
+- An obsolete result is ignored, and its seek with it.<br>
+- A failed preview does not seek, and the old output is not presented as the new effect.</p>
+<p><strong>Unavailable and Off.</strong><br>
+- Subtitle unavailable (no lyrics or no usable timing, EFX-2): the Subtitle tab is disabled, so no Subtitle anchor exists or is needed.<br>
+- Usable timing but the Subtitle draft is Off: switching to the tab does not seek, because there is nothing to see. Turning it on triggers A7.<br>
+- If trimming removes every cue, this MV has no usable timing and falls under the unavailable state (this is already how <code>subtitleDataState</code> behaves).</p>
+<p><strong>Data the client needs (RD / engine).</strong> Deliver this with the MV result and the actual preview, on the MV timeline:<br>
+- The subtitle cue list <code>[{ startSec, endSec?, text }]</code>, or at minimum <code>firstSubtitleStartSec</code>.<br>
+- Optionally <code>titleStartSec</code>, defaulting to 0.</p>
+<p>The existing <code>SongResult.lyricsLrc</code> is <strong>not sufficient on its own</strong>:<br>
+- It exists only for AI songs.<br>
+- It is dropped at the Song → MV handoff: <code>SongResultView.useInMv()</code> copies <code>lyrics</code> only, and <code>Song</code> has no timing field.<br>
+- Imported and uploaded songs have no timing.<br>
+- It is on the song timeline, not the trimmed MV timeline.<br>
+- The engine's rendered alignment is the oracle.</p>
+<p>The prototype's timed cues are approved review fixtures (Cinematic Night, Neon City Nights; EFX-6) plus the vendored Neon Static LRC. They are not measured alignment.</p>
 <h4 id="efx-4-save-merge-and-persistence">EFX-4 — Save, Merge and persistence</h4>
 <p>Save is available only when the draft differs from the latest confirmed settings and actual-preview preparation is not in progress. Save confirms effect choices and dialog switch changes, closes the dialog and costs nothing. Reopening restores the latest confirmed session settings. Desktop uses Save; phone uses the header checkmark. Close, Escape and backdrop discard unsaved dialog changes immediately, without confirmation, including during loading.</p>
 <p>Effects are unmerged session edits: leaving MV Edit without Merge discards them under MV-E5. Merge availability compares the current confirmed settings with the entry baseline, together with other pending edits: restoring all original settings with no other edits disables Merge again. Selecting/replaying a card alone is not a billable operation. Merge retains the existing charge, insufficient-balance and refund rules. Successful output stores effect choices, text and switches with that output version; History re-entry restores them. Failed Merge never overwrites the previous successful version's settings. Preview and Merge must use the same effect identity/version and settings; preview failure does not bypass Merge's independent validation.</p>
@@ -3583,8 +3689,8 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 </tr>
 <tr>
 <td>TBD-MV-EFX-03</td>
-<td>Synchronized-lyrics availability and timing data, including first lyric and any word-level timing required by an effect</td>
-<td>Subtitle eligibility, seeking and timed effects; no fabricated timings</td>
+<td>Synchronized-lyrics availability and timing data <strong>on the trimmed MV timeline</strong>, delivered with the MV result/actual preview (cue list or at least <code>firstSubtitleStartSec</code>; optional per-effect <code>titleStartSec</code>), plus any word-level timing required by an effect</td>
+<td>Subtitle eligibility, preview anchoring (EFX-3a) and timed effects; no fabricated timings. <code>SongResult.lyricsLrc</code> alone does not satisfy it (AI songs only, dropped at Song → MV handoff, song timeline)</td>
 </tr>
 <tr>
 <td>TBD-MV-EFX-04</td>
@@ -3594,7 +3700,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 </tbody>
 </table>
 <h4 id="efx-6-known-implementation-gaps-and-qa-status">EFX-6 — Known implementation gaps and QA status</h4>
-<p><strong>Review fixtures (product owner, 2026-10-29):</strong> History samples <strong>Cinematic Night</strong> and <strong>Neon City Nights</strong> have explicit prototype-only timed lyric cues so Subtitle choices and selected-card animations can be reviewed. These are demo cues, not measured alignment or production engine evidence. They apply only to the named sample records; imports and other records without synchronized lyrics remain disabled. The canvas still plays the existing video without newly overlaid lyrics.</p>
+<p><strong>Review fixtures (product owner, 2026-10-29):</strong> History samples <strong>Cinematic Night</strong> and <strong>Neon City Nights</strong> have explicit prototype-only timed lyric cues so Subtitle choices and selected-card animations can be reviewed. On 2026-11-17 their first cue moved from 0s to 4s (cues now 4/6/8/10s), so the EFX-3a Subtitle jump lands visibly apart from the Title jump at 0s. These are demo cues, not measured alignment or production engine evidence. They apply only to the named sample records; imports and other records without synchronized lyrics remain disabled. The canvas still plays the existing video without newly overlaid lyrics.</p>
 <p>Implementation checkpoint (2026-10-29): the prototype now uses all <strong>8/17 supplied animated WebP</strong> samples from <code>public/assets/title_mv</code>, with still covers on frames below 50% visibility or when playback is suspended and the existing scene video playing in the canvas without text overlays. It enforces 60/60, uses real timestamp availability for subtitle eligibility, and compares confirmed settings/effects against the entry baseline. Close/reopen discards the dialog draft even during its exit animation. The currently used effect is selected on open; no Use default action exists. Older prototype snapshots with null effects resolve to the prototype current-look seed. Global engine default IDs remain unconfirmed.</p>
 <p>By explicit product-owner approval, prototype-only snapshots use a separate local storage record: successful Merge commits effect asset keys, output settings and the source song (preserving synchronized-lyrics eligibility), and History re-entry restores them; failed Merge leaves the successful version intact. Existing API/schema and domain-hook interfaces are unchanged. These asset keys are <strong>not verified engine wire IDs or versions</strong>, and the mock render does not burn these effects into the returned video.</p>
 <p>Mockup scope clarified by the product owner: the mockup plays the existing scene video without text overlays, with supplied animated samples confined to visible effect cards. The artificial actual-preview preparation service, unavailable-engine message, Retry and timeout/cancellation implementation were removed. Production expectations for those behaviors remain in EFX-3 / AC-MV-26–28 for RD/engine. CSS approximations and fixed lyric substitutions remain removed; the canvas uses the existing playback controls and does not display an enlarged effect sample. Actual MV preview and effects burned into video are intentionally outside mockup acceptance.</p>
@@ -3715,6 +3821,7 @@ escape hatch is. Reviving trays means designing them, not flipping a flag.</p>
 <li><strong>AC-MV-28</strong> — Closing SHALL discard dialog changes, stop playback and ignore pending results; obsolete results SHALL not replace newer previews; sample failure SHALL preserve effect selection independently (EFX-3/4).</li>
 <li><strong>AC-MV-29</strong> — Save SHALL confirm only changed session settings without charge; preparing preview SHALL disable Save; leaving without Merge SHALL discard edits, and restoring the entry baseline with no other edits SHALL disable Merge (EFX-4).</li>
 <li><strong>AC-MV-30</strong> — Preview and Merge SHALL share effect identities/versions/settings; successful Merge SHALL restore those settings on re-edit, failed Merge SHALL preserve the previous successful settings, and absent settings SHALL use engine defaults (EFX-4/5).</li>
+<li><strong>AC-MV-31</strong> <em>(approved 2026-11-17, product owner)</em> — WHEN the Edit Title &amp; Subtitle dialog opens, OR a Title effect is selected or re-selected, THE SYSTEM SHALL seek the whole-MV preview to the Title anchor (0) and play; WHEN a Subtitle effect is selected or re-selected, it SHALL seek to the first displayed subtitle cue on the trimmed MV timeline and play. Tab switches and in-dialog turn-on SHALL seek to that tab's anchor, with no pre-roll; Subtitle Off SHALL NOT seek. Manual transport, strip drags, sample playback, Save/close and mute SHALL NOT seek. Autoplay rejection SHALL leave the player paused on the anchor frame; mute state SHALL be preserved. With actual-preview preparation, the seek SHALL happen on ready, using the tab active at that time; obsolete or failed previews SHALL NOT seek. Anchors SHALL come from engine timing for this MV and SHALL never be estimated or applied to a single scene clip (EFX-3a).</li>
 </ul>
 <h2 id="7-per-path-qa-checklist">7. Per-path QA checklist</h2>
 <ul>
@@ -8125,8 +8232,8 @@ storyboard spec 狀態、gate 結果)見 <code>docs/RD-HANDOFF-READINESS-2026-09
 </tr>
 <tr>
 <td>TBD-MV-EFX-03</td>
-<td>Engine</td>
-<td>Synchronized-lyrics availability, first lyric and effect-required timing granularity</td>
+<td>Engine / RD</td>
+<td>Synchronized-lyrics availability, effect-required timing granularity, and <strong>MV-timeline cue data (or <code>firstSubtitleStartSec</code>) plus optional per-effect <code>titleStartSec</code> delivered with the MV result/preview</strong> for preview anchoring (area 02 EFX-3a)</td>
 </tr>
 <tr>
 <td>TBD-MV-EFX-04</td>
