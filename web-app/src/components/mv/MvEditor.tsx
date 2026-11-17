@@ -1003,6 +1003,9 @@ export function MvEditor() {
         subtitleOn={settings.showSubtitle}
         subtitleState={subtitleState}
         subtitleAnchorSec={firstSubtitleAnchorSec(compose.song)}
+        titleHasText={
+          !!settings.title.text.trim() || (settings.author.on && !!settings.author.text.trim())
+        }
       />
 
       <ImageLightbox

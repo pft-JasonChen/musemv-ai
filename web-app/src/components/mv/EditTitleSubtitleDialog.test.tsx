@@ -321,4 +321,21 @@ describe("EFX-3a preview anchoring", () => {
     fireEvent.click(screen.getByRole("radio", { name: SUBTITLE_STYLES[1].label }));
     expect(jumpState()).toEqual({ at: 0, key: 0 });
   });
+  it("does not jump back to the opening while Title is Off, and jumps when it is turned on", async () => {
+    await setup({ subtitleAnchorSec: 4, titleOn: false });
+    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+    expect(jumpState()).toEqual({ at: 4, key: 1 });
+    fireEvent.click(screen.getByRole("tab", { name: "Title" }));
+    expect(jumpState()).toEqual({ at: 4, key: 1 });
+    fireEvent.click(screen.getByRole("switch", { name: "Turn title on" }));
+    expect(jumpState()).toEqual({ at: 0, key: 2 });
+  });
+  it("does not jump to the opening when it has no Title or Author text", async () => {
+    await setup({ subtitleAnchorSec: 4, titleHasText: false });
+    fireEvent.click(screen.getByRole("radio", { name: TITLE_EFFECTS[2].label }));
+    expect(jumpState().key).toBe(0);
+    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Title" }));
+    expect(jumpState()).toEqual({ at: 4, key: 1 });
+  });
 });

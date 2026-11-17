@@ -4,6 +4,10 @@
 > **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
 > get from "what changed?" to the exact file without diffing.
 
+## 2026-11-17 — EFX-3a: no Title jump when the opening shows nothing
+
+Product owner: align Title with Subtitle Off — "nothing to see, no jump". Switching to the Title tab no longer jumps to 0s when the Title draft is Off, or when the Title text is blank and Author is Off or blank; turning Title on in the dialog jumps only when the opening has text. Area 02 EFX-3a (A5, A7, Unavailable and Off) and AC-MV-31 updated. Code: `EditTitleSubtitleDialog` takes `titleHasText` (computed in `MvEditor` from saved Title/Author text and the Author switch). Tests: two new dialog cases, mutation-tested both ways. No API, provider, schema or token changes.
+
 ## 2026-11-17 — Edit MV preview anchoring for Title / Subtitle effects
 
 New area 02 **EFX-3a** and **AC-MV-31**, approved by the product owner on 2026-11-17, who also accepted all three proposed defaults: seek on tab switch, seek on in-dialog turn-on, and no pre-roll. Changing a Title effect seeks the whole-MV preview to the opening (0). Changing a Subtitle effect seeks to the first displayed subtitle cue on the trimmed MV timeline. The section covers triggers, non-triggers, autoplay and mute, and how anchoring interacts with the actual-preview lifecycle.

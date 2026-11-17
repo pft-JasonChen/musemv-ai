@@ -211,9 +211,9 @@ While actual preview is preparing, show loading and disable effect selection, pr
 | A2 | Selects a different Title effect | Title anchor |
 | A3 | Clicks the already-selected Title effect (replay, EFX-3) | Title anchor |
 | A4 | Switches to the Subtitle tab | Subtitle anchor, only if the Subtitle draft is On |
-| A5 | Switches back to the Title tab | Title anchor |
+| A5 | Switches back to the Title tab | Title anchor, only if the Title draft is On and the opening has text |
 | A6 | Selects a different Subtitle effect, or re-clicks the selected one | Subtitle anchor |
-| A7 | Turns Title or Subtitle on in the dialog's notice | That tab's anchor |
+| A7 | Turns Title or Subtitle on in the dialog's notice | That tab's anchor (Title: only if the opening has text) |
 
 **Non-triggers.** These never seek: manual play, pause, scrub or fullscreen; a mouse drag of the effect strip (a drag never selects, per YMW261103P0002); sample-card playback or scrolling; Save, Close, Escape and the backdrop; mute. After a trigger, user control is never overridden until the next trigger. If the user scrubs elsewhere, playback stays there.
 
@@ -233,6 +233,7 @@ While actual preview is preparing, show loading and disable effect selection, pr
 - Subtitle unavailable (no lyrics or no usable timing, EFX-2): the Subtitle tab is disabled, so no Subtitle anchor exists or is needed.
 - Usable timing but the Subtitle draft is Off: switching to the tab does not seek, because there is nothing to see. Turning it on triggers A7.
 - If trimming removes every cue, this MV has no usable timing and falls under the unavailable state (this is already how `subtitleDataState` behaves).
+- **Title follows the same rule (product owner, 2026-11-17):** no Title jump when there is nothing to see in the opening. That is, when the Title draft is Off, or when the Title text is blank and Author is Off or blank. Switching to the Title tab then leaves playback where it is; turning Title on in the dialog jumps to 0 when the opening has text. Title effect picks cannot happen while Off (EFX-2). Opening the dialog still starts at 0, which is where the video starts anyway.
 
 **Data the client needs (RD / engine).** Deliver this with the MV result and the actual preview, on the MV timeline:
 - The subtitle cue list `[{ startSec, endSec?, text }]`, or at minimum `firstSubtitleStartSec`.
@@ -348,7 +349,7 @@ Legend: _(visual)_ = verification blocked until the screenshot phase.
 - **AC-MV-28** — Closing SHALL discard dialog changes, stop playback and ignore pending results; obsolete results SHALL not replace newer previews; sample failure SHALL preserve effect selection independently (EFX-3/4).
 - **AC-MV-29** — Save SHALL confirm only changed session settings without charge; preparing preview SHALL disable Save; leaving without Merge SHALL discard edits, and restoring the entry baseline with no other edits SHALL disable Merge (EFX-4).
 - **AC-MV-30** — Preview and Merge SHALL share effect identities/versions/settings; successful Merge SHALL restore those settings on re-edit, failed Merge SHALL preserve the previous successful settings, and absent settings SHALL use engine defaults (EFX-4/5).
-- **AC-MV-31** _(approved 2026-11-17, product owner)_ — WHEN the Edit Title & Subtitle dialog opens, OR a Title effect is selected or re-selected, THE SYSTEM SHALL seek the whole-MV preview to the Title anchor (0) and play; WHEN a Subtitle effect is selected or re-selected, it SHALL seek to the first displayed subtitle cue on the trimmed MV timeline and play. Tab switches and in-dialog turn-on SHALL seek to that tab's anchor, with no pre-roll; Subtitle Off SHALL NOT seek. Manual transport, strip drags, sample playback, Save/close and mute SHALL NOT seek. Autoplay rejection SHALL leave the player paused on the anchor frame; mute state SHALL be preserved. With actual-preview preparation, the seek SHALL happen on ready, using the tab active at that time; obsolete or failed previews SHALL NOT seek. Anchors SHALL come from engine timing for this MV and SHALL never be estimated or applied to a single scene clip (EFX-3a).
+- **AC-MV-31** _(approved 2026-11-17, product owner)_ — WHEN the Edit Title & Subtitle dialog opens, OR a Title effect is selected or re-selected, THE SYSTEM SHALL seek the whole-MV preview to the Title anchor (0) and play; WHEN a Subtitle effect is selected or re-selected, it SHALL seek to the first displayed subtitle cue on the trimmed MV timeline and play. Tab switches and in-dialog turn-on SHALL seek to that tab's anchor, with no pre-roll; Subtitle Off SHALL NOT seek, and Title SHALL NOT seek while Off or while the opening has no Title/Author text. Manual transport, strip drags, sample playback, Save/close and mute SHALL NOT seek. Autoplay rejection SHALL leave the player paused on the anchor frame; mute state SHALL be preserved. With actual-preview preparation, the seek SHALL happen on ready, using the tab active at that time; obsolete or failed previews SHALL NOT seek. Anchors SHALL come from engine timing for this MV and SHALL never be estimated or applied to a single scene clip (EFX-3a).
 
 ## 7. Per-path QA checklist
 

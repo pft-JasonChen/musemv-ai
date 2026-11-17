@@ -60,6 +60,7 @@ export function EditTitleSubtitleDialog({
   subtitleOn,
   subtitleState = "available",
   subtitleAnchorSec = null,
+  titleHasText = true,
   videoSrc,
   poster,
 }: {
@@ -72,6 +73,8 @@ export function EditTitleSubtitleDialog({
   subtitleState?: SubtitleDataState;
   /** First subtitle cue on the MV timeline, or null without real timing (EFX-3a). */
   subtitleAnchorSec?: number | null;
+  /** Whether the opening shows any text (Title or an On Author is non-blank). */
+  titleHasText?: boolean;
   videoSrc: string;
   poster: string;
 }) {
@@ -98,6 +101,7 @@ export function EditTitleSubtitleDialog({
       subtitleOn={subtitleOn}
       subtitleState={subtitleState}
       subtitleAnchorSec={subtitleAnchorSec}
+      titleHasText={titleHasText}
       videoSrc={videoSrc}
       poster={poster}
     />,
@@ -115,6 +119,7 @@ function DialogBody({
   subtitleOn,
   subtitleState = "available",
   subtitleAnchorSec = null,
+  titleHasText = true,
   videoSrc,
   poster,
 }: {
@@ -128,6 +133,8 @@ function DialogBody({
   subtitleState?: SubtitleDataState;
   /** First subtitle cue on the MV timeline, or null without real timing (EFX-3a). */
   subtitleAnchorSec?: number | null;
+  /** Whether the opening shows any text (Title or an On Author is non-blank). */
+  titleHasText?: boolean;
   videoSrc: string;
   poster: string;
 }) {
@@ -152,7 +159,9 @@ function DialogBody({
   // these MV-timeline anchors are applied to a clip only to demonstrate the rules.
   const [jump, setJump] = useState({ at: TITLE_ANCHOR_SEC, key: 0 });
   function jumpTo(target: Tab, next: TextEffectDraft = draft) {
+    // Nothing to see, nothing to jump to: Subtitle Off, or Title Off / no opening text.
     if (target === "subtitle" && !next.subtitleOn) return;
+    if (target === "title" && (!next.titleOn || !titleHasText)) return;
     const at = target === "title" ? TITLE_ANCHOR_SEC : subtitleAnchorSec;
     if (at == null) return;
     setJump((j) => ({ at, key: j.key + 1 }));
