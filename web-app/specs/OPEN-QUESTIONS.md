@@ -24,7 +24,7 @@ Actual engine preview/output are production-only dependencies and do not block t
 | --- | --- | --- |
 | TBD-MV-EFX-01 | Engine / Design | All 8/17 production IDs, versions, defaults, compatibility and final English names; samples now supplied and local asset keys implemented |
 | TBD-MV-EFX-02 | Engine / Design | Animated WebP samples/covers delivered; remaining production timing/type/layout, both ratios and 60 UTF-16-unit Title/Author support; UI now supports 60/60; engine support remains pending |
-| TBD-MV-EFX-03 | Engine | Synchronized-lyrics availability, first lyric and effect-required timing granularity |
+| TBD-MV-EFX-03 | Engine / RD | Synchronized-lyrics availability, effect-required timing granularity, and **MV-timeline cue data (or `firstSubtitleStartSec`) plus optional per-effect `titleStartSec` delivered with the MV result/preview** for preview anchoring (area 02 EFX-3a) |
 | TBD-MV-EFX-04 | Engine / RD | Preview success/error/timeout and shared Merge identity/settings/persisted-version contract; no wire fields changed yet |
 
 

@@ -10,7 +10,9 @@ vi.mock("@/components/ui/useDialogTransition", () => ({
 }));
 vi.mock("@/lib/ssr", () => ({ PHONE_QUERY: "", useMediaQuery: () => false }));
 vi.mock("@/components/mv/MobileScenePreview", () => ({
-  MobileScenePreview: ({ src }: { src: string }) => <video src={src} data-testid="canvas-video" />,
+  MobileScenePreview: ({ src, jump }: { src: string; jump?: { at: number; key: number } }) => (
+    <video src={src} data-testid="canvas-video" data-jump-at={jump?.at} data-jump-key={jump?.key} />
+  ),
 }));
 
 const observers: {
@@ -55,6 +57,12 @@ beforeAll(() => {
   );
   Object.defineProperty(HTMLElement.prototype, "scrollBy", { configurable: true, value: vi.fn() });
 });
+
+/** The latest EFX-3a jump request handed to the preview player. */
+function jumpState() {
+  const video = screen.getByTestId("canvas-video");
+  return { at: Number(video.dataset.jumpAt), key: Number(video.dataset.jumpKey) };
+}
 
 async function setup(
   overrides: Partial<React.ComponentProps<typeof EditTitleSubtitleDialog>> = {},
@@ -150,6 +158,7 @@ describe("MV effects draft boundaries", () => {
         });
         fireEvent(card, event);
       }
+      const jumpsBeforeDrag = jumpState().key;
       pointer("pointerdown", 300);
       pointer("pointermove", 297);
       expect(strip.scrollLeft).toBe(0);
@@ -158,6 +167,7 @@ describe("MV effects draft boundaries", () => {
       pointer("pointerup", 150);
       fireEvent.click(card, { detail: 1 });
       expect(card).toHaveAttribute("aria-checked", "false");
+      expect(jumpState().key).toBe(jumpsBeforeDrag); // EFX-3a: a drag never jumps
       expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
       // Programmatic/keyboard clicks still work immediately after a drag.
       fireEvent.keyDown(screen.getAllByRole("radio")[0], { key: "ArrowRight" });
@@ -268,5 +278,47 @@ describe("MV effects draft boundaries", () => {
     rerender(<EditTitleSubtitleDialog {...props} open={false} />);
     expect(observers.every((o) => o.disconnect.mock.calls.length > 0)).toBe(true);
     expect(document.querySelector('img[src$=".webp"]')).toBeNull();
+  });
+});
+
+describe("EFX-3a preview anchoring", () => {
+  it("jumps to the opening on open, on a new Title effect and on replay", async () => {
+    await setup({ subtitleAnchorSec: 4 });
+    expect(jumpState()).toEqual({ at: 0, key: 0 });
+    fireEvent.click(screen.getByRole("radio", { name: TITLE_EFFECTS[2].label }));
+    expect(jumpState()).toEqual({ at: 0, key: 1 });
+    fireEvent.click(screen.getByRole("radio", { name: TITLE_EFFECTS[2].label }));
+    expect(jumpState()).toEqual({ at: 0, key: 2 });
+  });
+  it("jumps to the first subtitle on tab switch and Subtitle picks, and back to 0 on Title", async () => {
+    await setup({ subtitleAnchorSec: 4 });
+    fireEvent.click(screen.getByRole("tab", { name: "Title" })); // already active: no jump
+    expect(jumpState().key).toBe(0);
+    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+    expect(jumpState()).toEqual({ at: 4, key: 1 });
+    fireEvent.click(screen.getByRole("radio", { name: SUBTITLE_STYLES[5].label }));
+    expect(jumpState()).toEqual({ at: 4, key: 2 });
+    fireEvent.click(screen.getByRole("radio", { name: SUBTITLE_STYLES[5].label }));
+    expect(jumpState()).toEqual({ at: 4, key: 3 });
+    fireEvent.click(screen.getByRole("tab", { name: "Title" }));
+    expect(jumpState()).toEqual({ at: 0, key: 4 });
+  });
+  it("does not jump into Subtitle while it is Off, and jumps when it is turned on", async () => {
+    await setup({ subtitleAnchorSec: 4, subtitleOn: false });
+    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+    expect(jumpState().key).toBe(0);
+    fireEvent.click(screen.getByRole("switch", { name: "Turn subtitles on" }));
+    expect(jumpState()).toEqual({ at: 4, key: 1 });
+  });
+  it("jumps to the opening when Title is turned on in the dialog", async () => {
+    await setup({ titleOn: false });
+    fireEvent.click(screen.getByRole("switch", { name: "Turn title on" }));
+    expect(jumpState()).toEqual({ at: 0, key: 1 });
+  });
+  it("never invents a Subtitle anchor when there is no real timing", async () => {
+    await setup({ subtitleAnchorSec: null });
+    fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+    fireEvent.click(screen.getByRole("radio", { name: SUBTITLE_STYLES[1].label }));
+    expect(jumpState()).toEqual({ at: 0, key: 0 });
   });
 });

@@ -4,6 +4,20 @@
 > **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
 > get from "what changed?" to the exact file without diffing.
 
+## 2026-11-17 — Edit MV preview anchoring for Title / Subtitle effects
+
+New area 02 **EFX-3a** and **AC-MV-31**, approved by the product owner on 2026-11-17, who also accepted all three proposed defaults: seek on tab switch, seek on in-dialog turn-on, and no pre-roll. Changing a Title effect seeks the whole-MV preview to the opening (0). Changing a Subtitle effect seeks to the first displayed subtitle cue on the trimmed MV timeline. The section covers triggers, non-triggers, autoplay and mute, and how anchoring interacts with the actual-preview lifecycle.
+
+**TBD-MV-EFX-03** now names the data the client needs: MV-timeline cues (or `firstSubtitleStartSec`) and an optional per-effect `titleStartSec`, delivered with the MV result or preview. The audit found that `SongResult.lyricsLrc` alone cannot supply this, for three reasons:
+- it exists for AI songs only;
+- `useInMv()` drops it at the Song → MV handoff;
+- it is on the song timeline, not the trimmed MV timeline.
+
+**Prototype demo (same day, product owner):** the Edit Title & Subtitle dialog now applies the EFX-3a jump rules to its preview player. Because the mockup has no whole-MV video, it jumps within the selected scene clip; the clip carries no effect text, so only the play position moves. The two review fixtures' first cue moved from 0s to 4s so the Subtitle jump is visible.
+- Code: `MobileScenePreview` takes a `jump` request (seek, then play; waits for metadata; autoplay refusal leaves it paused). `EditTitleSubtitleDialog` issues jumps per A1–A7. `firstSubtitleAnchorSec()` in `synchronizedMvLyrics.ts` returns the first real cue or null, and `MvEditor` passes it in. The Demo panel's **Timed lyrics available** override has no real cues, so it enables the Subtitle tab without a Subtitle jump.
+- Tests: five new dialog cases (open/pick/replay, tab switches, Subtitle Off then on, Title on, no timing) plus a drag-never-jumps assertion, and a trimmed-timeline anchor case in `synchronizedMvLyrics.test.ts`. Mutation-tested both ways.
+- No API, provider, schema or token changes.
+
 ## 2026-11-13 — Explicit usable-subtitle Demo state and compact status row
 
 Added **Timed lyrics available** as a presentation-only QA override; **Use original data (may have no lyrics)** retains real eligibility and can legitimately disable Subtitle. No synthetic timing, song edits or saved-choice changes. Normal dialogs now show **Choose a title effect** / **Choose a subtitle effect** in a compact status row (32px desktop / 48px phone), replacing the unexplained 64px spacer while retaining stable geometry. Area 02 EFX-2 and S3 v13 D-16 updated; P6-S8/S9/S10 recaptured and normal Subtitle state added at P6-S11. Validation: typecheck, lint, 219 unit tests, production build and two 390/1440 browser cases passed; browser checks cover geometry, reversible overrides and accessible actions on short viewports. Canonical Linux snapshot baselines and the full e2e suite were not run manually.

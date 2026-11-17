@@ -41,7 +41,11 @@ import {
   MV_TITLE_MAX,
   type Scene,
 } from "@/lib/mv/types";
-import { subtitleDataState, SUBTITLE_UNAVAILABLE_MESSAGES } from "@/lib/mv/synchronizedMvLyrics";
+import {
+  firstSubtitleAnchorSec,
+  subtitleDataState,
+  SUBTITLE_UNAVAILABLE_MESSAGES,
+} from "@/lib/mv/synchronizedMvLyrics";
 import { useDemoState } from "@/components/demo/useDemo";
 import { MV_TYPES, randomCoverImage } from "@/lib/mv/mock";
 
@@ -998,6 +1002,7 @@ export function MvEditor() {
         titleOn={settings.title.on}
         subtitleOn={settings.showSubtitle}
         subtitleState={subtitleState}
+        subtitleAnchorSec={firstSubtitleAnchorSec(compose.song)}
       />
 
       <ImageLightbox

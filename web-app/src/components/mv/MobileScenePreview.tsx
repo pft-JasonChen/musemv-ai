@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { SeekBar } from "@/components/ui/SeekBar";
 import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
@@ -27,11 +27,19 @@ export function MobileScenePreview({
   src,
   poster,
   overlay,
+  jump,
 }: {
   src: string;
   poster: string;
   /** Drawn over the video itself (not the letterbox) — the Title & Subtitle popup's text. */
   overlay?: React.ReactNode;
+  /**
+   * Jump request from the Title & Subtitle popup (area 02 EFX-3a): seek to `at`
+   * seconds and play. A NEW object is a new request, so the same time can be
+   * requested twice in a row (re-clicking the picked effect replays it).
+   * Before metadata loads the request waits for `loadedmetadata`.
+   */
+  jump?: { at: number; key: number };
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,6 +48,23 @@ export function MobileScenePreview({
   const [muted, setMuted] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const pendingSeek = useRef<number | null>(null);
+
+  function seekAndPlay(v: HTMLVideoElement, at: number) {
+    const end = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : Infinity;
+    // Stay just inside a known end so the jump never lands on the loop point.
+    v.currentTime = Math.max(0, Math.min(at, end - 0.05));
+    // Autoplay can be refused; the player then rests paused on the anchor frame.
+    void v.play().catch(() => {});
+  }
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!jump || !v) return;
+    // 1 = HAVE_METADATA: seeking before it is ignored by some browsers.
+    if (v.readyState >= 1) seekAndPlay(v, jump.at);
+    else pendingSeek.current = jump.at;
+  }, [jump]);
 
   function togglePlay() {
     const v = videoRef.current;
@@ -69,7 +94,13 @@ export function MobileScenePreview({
       onPlay={() => setPlaying(true)}
       onPause={() => setPlaying(false)}
       onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-      onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+      onLoadedMetadata={(e) => {
+        setDuration(e.currentTarget.duration);
+        if (pendingSeek.current != null) {
+          seekAndPlay(e.currentTarget, pendingSeek.current);
+          pendingSeek.current = null;
+        }
+      }}
       onClick={togglePlay}
     />
   );
