@@ -306,7 +306,7 @@
         <td class="c-area">S11</td>
         <td class="c-feat"><a class="sb-link" href="storyboards/content-report/specs/spec.html" target="_blank" rel="noopener"><span class="feat-name">Content Report</span><span class="feat-open">Open spec ↗</span></a><div class="c-file">storyboards/content-report/specs/spec.html</div></td>
         <td class="c-dev">MV / Song / Share report · History / Result removal notice</td>
-        <td><span class="badge st-ok">v2 · 2026-11-11</span></td>
+        <td><span class="badge st-ok">v4 · 2026-11-18</span></td>
         <td class="c-cl"><a class="sb-link" href="storyboards/content-report/specs/spec.html#changelog" target="_blank" rel="noopener">Changelog &#8599;</a></td>
       </tr>
       <tr>
@@ -1008,6 +1008,34 @@ no mail capability at all; this is a backend contract only, and its links to <co
 <strong>spec IDs</strong> that moved, the <strong>code</strong> that implements it, and the <strong>test</strong> that holds it — so you can<br>
 get from "what changed?" to the exact file without diffing.</p>
 </blockquote>
+<h2 id="2026-11-18-content-notice-one-wording-for-every-removal-six-reason-sentences-approved">2026-11-18 — Content Notice: one wording for every removal; six reason sentences approved</h2>
+<h3 id="ymw261112p0005-rd-asked-which-of-two-strings-shows-when"><code>YMW261112P0005</code>: RD asked which of two strings shows when</h3>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No ordinary vs permanent removal. Content Notice always shows Content Removed / "This content violated our content policy." — "A reviewer removed this content after a community report." is deleted — and the explanation is always "This content contained {reason sentence}." ("This content was permanently removed because it contained …" is gone). The <code>ContentRemoval.kind</code> field and the QA panel's Removal type switch are removed</td>
+<td>area 14 §3.4 (notice copy + reason table), §3.5 QA panel, checklist, AC carried · S11 <strong>P3 step 4</strong> (v4)</td>
+<td><code>src/lib/report.ts</code>, <code>src/components/history/ContentNotice.tsx</code>, <code>src/lib/contentModeration.ts</code>, <code>src/components/demo/DemoPanel.tsx</code>, <code>src/lib/mv/mock.ts</code></td>
+<td><code>e2e/behaviour-regressions.spec.ts</code> → "YMW261112P0005"</td>
+</tr>
+<tr>
+<td>All six reason sentences approved as written (the four drafts: Sexual, Harassment, Violent, Misinformation); Copyright now spells "authorization"</td>
+<td>area 14 §3.4 table</td>
+<td><code>src/lib/report.ts</code> <code>REMOVAL_REASON_COPY</code></td>
+<td>same</td>
+</tr>
+</tbody>
+</table>
+<p>Storyboards: <strong>S11 → v4</strong> (all 16 shots recaptured; <code>12_notice_detail</code> is the behaviour change). Not updated: <code>docs/requirements/YCM-content-report-v1.2-web.docx</code> still says "Keep Content Removed and Permanently Removed variants" — area 14 now supersedes it. Contract: none (<code>ContentRemoval</code> is prototype-only, not in <code>schemas.ts</code>).</p>
+<hr>
 <h2 id="2026-11-18-home-trending-music-videos-cards-show-the-creator-not-the-duration">2026-11-18 — Home "Trending Music Videos" cards show the creator, not the duration</h2>
 <h3 id="ymw261111p0002-the-rail-still-read-popular-2-3-min"><code>YMW261111P0002</code>: the rail still read "Popular | 2-3 min"</h3>
 <table>
@@ -8065,10 +8093,46 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 <li><code>A reviewer removed this content. Tap to see the reason.</code></li>
 </ul>
 <p>被下架項目隱藏 Publish。點 notice 開啟 Content Notice；手機全頁、桌機 dialog。<br>
-<strong>沿用現有設計</strong>：保留 Content Removed / Permanently Removed、縮圖／標題／類型／發布日期／移除資訊、六分類 reason chip 與原因說明、Got It；不提供重新送審指引或資格資訊。六分類既有敘述全部沿用。<br>
-永久下架與一般下架對本版的公開／私人存取規則相同。</p>
+<strong>沿用現有設計</strong>：標題一律 <strong>Content Removed</strong>，其下一律 <strong>This content violated our content policy.</strong>；縮圖／標題／類型／發布日期／移除日期（✕ Removed {date}）、六分類 reason chip、原因說明、Got It；不提供重新送審指引或資格資訊。</p>
+<p><strong>YMW261112P0005（產品負責人 2026-11-18）：沒有「一般／永久下架」之分。</strong> 每筆下架的文案都相同，只有原因不同；刪除「A reviewer removed this content after a community report.」與「Permanently Removed」／「This content was permanently removed because it contained …」變體。原因說明一律為 <strong>This content contained {原因句}.</strong>，六個原因句（全部已核可）：</p>
+<table>
+<thead>
+<tr>
+<th>原因（chip）</th>
+<th>原因句</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sexual or Adult Content</td>
+<td>sexually explicit or adult material that is not permitted on Muse</td>
+</tr>
+<tr>
+<td>Harassment or Hate Speech</td>
+<td>harassment, hate speech, or content that targets people or groups</td>
+</tr>
+<tr>
+<td>Spam or Commercial Advertising</td>
+<td>repetitive spam, fake engagement signals, or deceptive titles and thumbnails that misrepresent the actual content</td>
+</tr>
+<tr>
+<td>Violent or Disturbing Content</td>
+<td>violent or disturbing material that is not permitted on Muse</td>
+</tr>
+<tr>
+<td>Misinformation or Misleading</td>
+<td>false or misleading information presented as fact</td>
+</tr>
+<tr>
+<td>Copyright or Unauthorized Use</td>
+<td>copyrighted music, video footage, or artwork used without authorization from the rights holder</td>
+</tr>
+</tbody>
+</table>
+<p>例：Sexual → "This content contained sexually explicit or adult material that is not permitted on Muse."<br>
+所有下架的公開／私人存取規則相同（本版不分一般／永久）。</p>
 <h3 id="35-qa">3.5 QA 模擬</h3>
-<p>僅既有 <code>?demo=1</code> 面板提供檢舉失敗、選擇作品／六原因／下架類型、Simulate reviewer removal 及 Reset report QA session。<br>
+<p>僅既有 <code>?demo=1</code> 面板提供檢舉失敗、選擇作品／六原因、Simulate reviewer removal 及 Reset report QA session。<br>
 同一作品的移除狀態即時影響列表、公開連結與私人頁；不改動固定 fixtures。一般檢舉成功不會觸發 reviewer 動作。<br>
 面板新狀態只保留於目前分頁記憶體；重新整理重設。Reset 清除本次 reviewer 模擬、失敗與檢舉次數，固定下架範例仍保留。關閉面板清除本次 reviewer 模擬與失敗，正常檢舉次數不受影響。</p>
 <h2 id="4-user-journeys">4. User journeys</h2>
@@ -8207,7 +8271,7 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 <li>[ ] RPT-P3：連點不重複提交、失敗輸入保留、不計次、關 QA 後重試成功。</li>
 <li>[ ] RPT-P4：登入自己無入口；他人／官方可檢舉；訪客按 Report 要求登入。</li>
 <li>[ ] RPT-P5：同作品跨公開列表／profile／player／share 同步；只有本人登入可私人播放；登出即阻擋。</li>
-<li>[ ] History 通知、無 Publish、一般／永久下架與六原因說明、Got It。</li>
+<li>[ ] History 通知、無 Publish、單一文案（This content violated our content policy. ＋ This content contained {原因句}.）與六原因說明、Got It。</li>
 <li>[ ] 390 / 1440 視覺檢查；其餘六階寬度與既有全站行為交給專案 gate，不宣告本次已重錄 Linux baseline。</li>
 </ul>
 <h2 id="8-open-items-for-rd">8. Open items for RD</h2>
@@ -8216,7 +8280,7 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 Prototype 不宣稱具有匿名安全、防濫用安全或真正私人授權；這些須由正式後端執行。</p>
 <h2 id="9-mockup-prototype-update-assessment">9. Mockup / prototype update assessment</h2>
 <p>已批准調整：五次上限與 amber 提示、三秒 toast、失敗重試、自有作品入口與送出防護、History notice 文案、跨頁 reviewer 狀態與公開／私人存取、QA 控制。<br>
-沿用：六原因＋Something else、disabled Submit、Done-only、手機／桌機設計、永久下架與既有原因敘述。<br>
+沿用：六原因＋Something else、disabled Submit、Done-only、手機／桌機設計與原因敘述（2026-11-18 起不分一般／永久下架，見 §3.4）。<br>
 S11 是共用功能的單一 storyboard；S4 / S8 / S9 / Result storyboard 交叉引用，避免不同流程重複定義同一檢舉規則。</p>
 </article>
 <article class="doc" id="doc-OQ" data-name="Open Questions" data-file="OPEN-QUESTIONS.md">

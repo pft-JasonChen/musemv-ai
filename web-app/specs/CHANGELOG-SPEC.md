@@ -4,6 +4,19 @@
 > **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
 > get from "what changed?" to the exact file without diffing.
 
+## 2026-11-18 — Content Notice: one wording for every removal; six reason sentences approved
+
+### `YMW261112P0005`: RD asked which of two strings shows when
+
+| What | Spec IDs | Code | Test |
+| --- | --- | --- | --- |
+| No ordinary vs permanent removal. Content Notice always shows Content Removed / "This content violated our content policy." — "A reviewer removed this content after a community report." is deleted — and the explanation is always "This content contained {reason sentence}." ("This content was permanently removed because it contained …" is gone). The `ContentRemoval.kind` field and the QA panel's Removal type switch are removed | area 14 §3.4 (notice copy + reason table), §3.5 QA panel, checklist, AC carried · S11 **P3 step 4** (v4) | `src/lib/report.ts`, `src/components/history/ContentNotice.tsx`, `src/lib/contentModeration.ts`, `src/components/demo/DemoPanel.tsx`, `src/lib/mv/mock.ts` | `e2e/behaviour-regressions.spec.ts` → "YMW261112P0005" |
+| All six reason sentences approved as written (the four drafts: Sexual, Harassment, Violent, Misinformation); Copyright now spells "authorization" | area 14 §3.4 table | `src/lib/report.ts` `REMOVAL_REASON_COPY` | same |
+
+Storyboards: **S11 → v4** (all 16 shots recaptured; `12_notice_detail` is the behaviour change). Not updated: `docs/requirements/YCM-content-report-v1.2-web.docx` still says "Keep Content Removed and Permanently Removed variants" — area 14 now supersedes it. Contract: none (`ContentRemoval` is prototype-only, not in `schemas.ts`).
+
+---
+
 ## 2026-11-18 — Home "Trending Music Videos" cards show the creator, not the duration
 
 ### `YMW261111P0002`: the rail still read "Popular | 2-3 min"

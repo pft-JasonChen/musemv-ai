@@ -81,12 +81,25 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 - `A reviewer removed this content. Tap to see the reason.`
 
 被下架項目隱藏 Publish。點 notice 開啟 Content Notice；手機全頁、桌機 dialog。
-**沿用現有設計**：保留 Content Removed / Permanently Removed、縮圖／標題／類型／發布日期／移除資訊、六分類 reason chip 與原因說明、Got It；不提供重新送審指引或資格資訊。六分類既有敘述全部沿用。
-永久下架與一般下架對本版的公開／私人存取規則相同。
+**沿用現有設計**：標題一律 **Content Removed**，其下一律 **This content violated our content policy.**；縮圖／標題／類型／發布日期／移除日期（✕ Removed {date}）、六分類 reason chip、原因說明、Got It；不提供重新送審指引或資格資訊。
+
+**YMW261112P0005（產品負責人 2026-11-18）：沒有「一般／永久下架」之分。** 每筆下架的文案都相同，只有原因不同；刪除「A reviewer removed this content after a community report.」與「Permanently Removed」／「This content was permanently removed because it contained …」變體。原因說明一律為 **This content contained {原因句}.**，六個原因句（全部已核可）：
+
+| 原因（chip） | 原因句 |
+| --- | --- |
+| Sexual or Adult Content | sexually explicit or adult material that is not permitted on Muse |
+| Harassment or Hate Speech | harassment, hate speech, or content that targets people or groups |
+| Spam or Commercial Advertising | repetitive spam, fake engagement signals, or deceptive titles and thumbnails that misrepresent the actual content |
+| Violent or Disturbing Content | violent or disturbing material that is not permitted on Muse |
+| Misinformation or Misleading | false or misleading information presented as fact |
+| Copyright or Unauthorized Use | copyrighted music, video footage, or artwork used without authorization from the rights holder |
+
+例：Sexual → "This content contained sexually explicit or adult material that is not permitted on Muse."
+所有下架的公開／私人存取規則相同（本版不分一般／永久）。
 
 ### 3.5 QA 模擬
 
-僅既有 `?demo=1` 面板提供檢舉失敗、選擇作品／六原因／下架類型、Simulate reviewer removal 及 Reset report QA session。
+僅既有 `?demo=1` 面板提供檢舉失敗、選擇作品／六原因、Simulate reviewer removal 及 Reset report QA session。
 同一作品的移除狀態即時影響列表、公開連結與私人頁；不改動固定 fixtures。一般檢舉成功不會觸發 reviewer 動作。
 面板新狀態只保留於目前分頁記憶體；重新整理重設。Reset 清除本次 reviewer 模擬、失敗與檢舉次數，固定下架範例仍保留。關閉面板清除本次 reviewer 模擬與失敗，正常檢舉次數不受影響。
 
@@ -146,7 +159,7 @@ History 列表外觀維持普通項目，沒有 badge／灰縮圖／狀態字；
 - [ ] RPT-P3：連點不重複提交、失敗輸入保留、不計次、關 QA 後重試成功。
 - [ ] RPT-P4：登入自己無入口；他人／官方可檢舉；訪客按 Report 要求登入。
 - [ ] RPT-P5：同作品跨公開列表／profile／player／share 同步；只有本人登入可私人播放；登出即阻擋。
-- [ ] History 通知、無 Publish、一般／永久下架與六原因說明、Got It。
+- [ ] History 通知、無 Publish、單一文案（This content violated our content policy. ＋ This content contained {原因句}.）與六原因說明、Got It。
 - [ ] 390 / 1440 視覺檢查；其餘六階寬度與既有全站行為交給專案 gate，不宣告本次已重錄 Linux baseline。
 
 ## 8. Open items for RD
@@ -158,5 +171,5 @@ Prototype 不宣稱具有匿名安全、防濫用安全或真正私人授權；�
 ## 9. Mockup / prototype update assessment
 
 已批准調整：五次上限與 amber 提示、三秒 toast、失敗重試、自有作品入口與送出防護、History notice 文案、跨頁 reviewer 狀態與公開／私人存取、QA 控制。
-沿用：六原因＋Something else、disabled Submit、Done-only、手機／桌機設計、永久下架與既有原因敘述。
+沿用：六原因＋Something else、disabled Submit、Done-only、手機／桌機設計與原因敘述（2026-11-18 起不分一般／永久下架，見 §3.4）。
 S11 是共用功能的單一 storyboard；S4 / S8 / S9 / Result storyboard 交叉引用，避免不同流程重複定義同一檢舉規則。

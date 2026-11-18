@@ -96,7 +96,7 @@ STORYBOARDS = [
      "/ · /explore/mvs · /explore/songs · /watch · /song/play · /creator", "7 paths / 38 shots"),
     ("S9", "share", "Share", "v2 · 2026-10-08",
      "/share · ShareDialog", "5 paths / 15 shots"),
-    ("S11", "content-report", "Content Report", "v2 · 2026-11-11",
+    ("S11", "content-report", "Content Report", "v4 · 2026-11-18",
      "MV / Song / Share report · History / Result removal notice", "6 paths / 16 shots"),
 ]
 # S10 (credit-consumption) has no spec.html — the product owner ruled it ships

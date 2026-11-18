@@ -5381,3 +5381,44 @@ test("YMW261111P0002: Home Trending Music Videos cards show the creator, not a d
   expect(texts.length).toBeGreaterThan(0);
   for (const t of texts) expect(t).not.toMatch(/\d+-\d+ min/);
 });
+
+test("YMW261112P0005: Content Notice has one wording for every removal, with the approved reason copy", async ({
+  page,
+}) => {
+  await login(page);
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/history");
+
+  const cases = [
+    {
+      title: "Love Melody",
+      detail:
+        "This content contained repetitive spam, fake engagement signals, or deceptive titles and thumbnails that misrepresent the actual content.",
+    },
+    {
+      title: "Velvet Skyline",
+      detail:
+        "This content contained copyrighted music, video footage, or artwork used without authorization from the rights holder.",
+    },
+  ];
+  for (const c of cases) {
+    const row = page.locator(".history-card").filter({ hasText: c.title }).first();
+    await expect(row).toBeVisible();
+    await row.getByRole("button", { name: "Options" }).click();
+    // One menu portal per row stays mounted (inert) — target the OPEN one.
+    await page
+      .locator(".history-card__menu--visible")
+      .getByRole("menuitem", { name: /Removed from community/ })
+      .click();
+    const notice = page.getByRole("dialog", { name: "Content Notice" });
+    await expect(notice).toBeVisible();
+    await expect(notice.getByText("This content violated our content policy.")).toBeVisible();
+    await expect(
+      notice.getByText(/A reviewer removed this content after a community report/),
+    ).toHaveCount(0);
+    await expect(notice.getByText(/permanently removed/)).toHaveCount(0);
+    await expect(notice.getByText(c.detail)).toBeVisible();
+    await notice.getByRole("button", { name: "Got It" }).click();
+    await expect(notice).toHaveCount(0);
+  }
+});

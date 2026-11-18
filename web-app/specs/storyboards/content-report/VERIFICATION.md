@@ -1,5 +1,13 @@
 # Content Report verification
 
+## v4 — 2026-11-18: one wording for every removal (YMW261112P0005)
+
+Verified against the local production build on macOS.
+
+- `capture_screenshots.mjs`: passed; all 16 screenshots recaptured. `12_notice_detail` now reads Content Removed / "This content violated our content policy." and "This content contained repetitive spam, …"; the "A reviewer removed this content after a community report." line is gone. The other shots carry no behaviour change (dates and the current chrome only).
+- `e2e/behaviour-regressions.spec.ts` "YMW261112P0005": opens both seeded removals (Love Melody / Spam, Velvet Skyline / Copyright) and asserts the single top line, no reviewer or "permanently removed" wording, and the exact reason sentence; mutation-tested (restoring "authorisation" makes it fail).
+- `npm run typecheck`, `npm run lint` (one pre-existing `dirname` warning), `npm run test:run` (225), `npm run build`: passed.
+
 ## v2 — 2026-11-11: reporting requires sign-in
 
 Verified against the local production build on macOS.

@@ -28,7 +28,6 @@ const KIND_LABEL: Record<NoticeSubject["kind"], string> = {
 
 function NoticeBody({ subject }: { subject: NoticeSubject }) {
   const { removal } = subject;
-  const permanent = removal.kind === "permanent";
   return (
     <>
       <div className="content-notice__hero">
@@ -36,14 +35,12 @@ function NoticeBody({ subject }: { subject: NoticeSubject }) {
           <DpIcon name="ic_alert" className="content-notice__icon-glyph" />
         </span>
         <div className="content-notice__message">
-          {/* One headline for both kinds (product owner, 2026-10-29); the
-              line below and the reason still say which kind it was. */}
+          {/* One headline (product owner, 2026-10-29) and one line under it:
+              there is no ordinary-vs-permanent removal (YMW261112P0005,
+              2026-11-18), so "A reviewer removed this content after a
+              community report." is gone and every removal reads the same. */}
           <p className="content-notice__headline">Content Removed</p>
-          <p className="content-notice__text">
-            {permanent
-              ? "This content violated our content policy."
-              : "A reviewer removed this content after a community report."}
-          </p>
+          <p className="content-notice__text">This content violated our content policy.</p>
         </div>
       </div>
 
@@ -58,7 +55,7 @@ function NoticeBody({ subject }: { subject: NoticeSubject }) {
           </p>
           <span className="content-notice__badge">
             <DpIcon name="ic_close" className="content-notice__badge-icon" />
-            {/* Always the removal date, permanent or not (2026-10-29). */}
+            {/* Always the removal date (2026-10-29). */}
             Removed {formatNoticeDate(removal.removedOn)}
           </span>
         </div>

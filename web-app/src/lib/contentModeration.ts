@@ -25,12 +25,7 @@ export const moderationStore = {
     snapshot = { ...snapshot, failReports };
     listeners.forEach((l) => l());
   },
-  remove(
-    kind: ReportKind,
-    id: string,
-    reason: ReportReason,
-    severity: ContentRemoval["kind"] = "removed",
-  ) {
+  remove(kind: ReportKind, id: string, reason: ReportReason) {
     if (!id) return;
     const today = new Date().toISOString().slice(0, 10);
     snapshot = {
@@ -38,7 +33,6 @@ export const moderationStore = {
       removals: {
         ...snapshot.removals,
         [contentKey(kind, id)]: {
-          kind: severity,
           reason,
           publishedOn: today,
           removedOn: today,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useModeration } from "@/components/community/useModeration";
 import { moderationStore } from "@/lib/contentModeration";
-import { REPORT_REASONS, resetReports, type ReportKind, type ContentRemoval } from "@/lib/report";
+import { REPORT_REASONS, resetReports, type ReportKind } from "@/lib/report";
 import {
   NEW_MVS,
   TRENDING_MVS,
@@ -308,7 +308,6 @@ function ReportControls() {
   const { history } = useHistory();
   const [target, setTarget] = useState("song:sp-neon-static");
   const [reason, setReason] = useState<(typeof REPORT_REASONS)[number]>(REPORT_REASONS[2]);
-  const [severity, setSeverity] = useState<ContentRemoval["kind"]>("removed");
   const options = [
     ...NEW_MVS.map((m) => ({ kind: "mv", id: m.id, title: m.title })),
     ...HERO_MVS.map((m) => ({ kind: "mv", id: m.id, title: m.title })),
@@ -369,25 +368,11 @@ function ReportControls() {
           ))}
         </select>
       </label>
-      <label className="block py-1">
-        Removal type
-        <select
-          aria-label="Removal type"
-          style={controlStyle}
-          value={severity}
-          onChange={(e) => setSeverity(e.target.value as typeof severity)}
-        >
-          <option value="removed">Removed</option>
-          <option value="permanent">Permanently removed</option>
-        </select>
-      </label>
       <button
         type="button"
         className="rounded-lg border p-1"
         style={controlStyle}
-        onClick={() =>
-          moderationStore.remove(selected.kind as ReportKind, selected.id, reason, severity)
-        }
+        onClick={() => moderationStore.remove(selected.kind as ReportKind, selected.id, reason)}
       >
         Simulate reviewer removal
       </button>

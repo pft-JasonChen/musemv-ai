@@ -400,9 +400,10 @@ export const HISTORY_SAMPLES: HistorySample[] = [
     shares: 0,
     liked: false,
   },
-  // Two takedown fixtures (2026-10-21, Figma "Menu + Removed Notice"): one of each
-  // severity, one MV and one song, so the menu notice and both notice screens can
-  // be reached without a demo switch.
+  // Two takedown fixtures (2026-10-21, Figma "Menu + Removed Notice"), one MV and
+  // one song, so the menu notice and the Content Notice can be reached without a
+  // demo switch. (They were once one of each severity; that split was removed by
+  // YMW261112P0005, 2026-11-18 — the ids keep their old names.)
   {
     id: "h-love-melody-removed",
     kind: "mv",
@@ -416,7 +417,6 @@ export const HISTORY_SAMPLES: HistorySample[] = [
     liked: false,
     published: false,
     removal: {
-      kind: "removed",
       reason: "Spam or commercial advertising",
       publishedOn: "2026-09-22",
       removedOn: "2026-10-13",
@@ -435,7 +435,6 @@ export const HISTORY_SAMPLES: HistorySample[] = [
     liked: false,
     published: false,
     removal: {
-      kind: "permanent",
       reason: "Copyright or unauthorized use",
       publishedOn: "2026-09-22",
       removedOn: "2026-10-13",

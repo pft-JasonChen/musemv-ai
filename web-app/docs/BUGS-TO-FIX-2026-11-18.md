@@ -83,7 +83,7 @@ https://eperfect.perfectcorp.com/IF3/ebug/BPM/Start/ViewPage/View?BugCode=YMW261
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261117P0004
 - Retrieved at: 2026-11-18 14:52 CST
 - Triage: **Needs PM** — two of the three differences are by design, one is an unspecified inconsistency.
-- Local status: **Blocked** — diagnosed, no change made.
+- Local status: **Not handled this round** — product owner, 2026-11-18: only YMW261111P0002 and YMW261112P0005 are changed now.
 - Decision needed: (1) Header flag: by design — History opens YOUR song on `/song/result`, and you can't report your own work (area 14: Report hidden on own content); Explore opens a community song on `/song/play`. Confirm. (2) Author line: own-song result screen has none (designer prototype has none either); Explore shows the creator. Keep, or add your name under the title? (3) Mute / Lyrics order: History = mute → lyrics, Explore = lyrics → mute. No spec; the History order came from a 2026-09-16 override that made the desktop-only volume button show on phones without reordering it. Pick one order for both (recommend Explore's lyrics → mute, a one-line move in `SongResultView`).
 - Related code/spec: `src/components/song/SongResultView.tsx` (History → own song, mute `:537-565` then lyrics `:566-575`); `src/components/song/SongDetailView.tsx` `MobileNowPlaying` (lyrics `:399-406` then mute `:415-443`); `designer-overrides.css:535-545`; specs area 03 `:237/:280` still say volume is desktop-only (stale); area 14 own-content report rule.
 
@@ -129,9 +129,9 @@ https://eperfect.perfectcorp.com/IF3/ebug/BPM/Start/ViewPage/View?BugCode=YMW261
 - Reported by KURT_WANG at 2026-11-12T16:54:52
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261112P0005
 - Retrieved at: 2026-11-18 14:52 CST
-- Triage: **Needs PM** — RD asks for a rule the specs never wrote down; the code has one.
-- Local status: **Blocked** — diagnosed, no change made.
-- Decision needed: The prototype's rule is by removal **type** (two types, chosen per removal): **Removed** → top line "A reviewer removed this content after a community report." + "This content contained {reason}."; **Permanent** → "This content violated our content policy." + "This content was permanently removed because it contained {reason}." Confirm that rule, and say what decides the type in production (does the reviewer pick Removed vs Permanently removed in the console?). Also: 4 of the 6 reason phrases (Sexual, Harassment, Violent, Misinformation) are still marked TBC drafts — approve them or give final copy. Spec drift to fix with your answer: area 14 / storyboard / Word v1.2 still say "Content Removed and Permanently Removed variants", but since 2026-10-29 the headline is always "Content Removed" with a dated "✕ Removed {date}" badge. The visual items in the report (close button style, Got It colour, centred reason, ✕ before the date, date colours) are RD's build not matching the prototype — the prototype is the reference, no change needed there.
+- Triage: **Decided 2026-11-18** (product owner): there is no ordinary-vs-permanent removal rule. Delete "A reviewer removed this content after a community report."; one wording for every removal (top line "This content violated our content policy.", explanation "This content contained {reason}."); the four draft reason sentences approved as written; Copyright → "authorization"; spec drops the Content Removed / Permanently Removed variants.
+- Local status: **Committed** (not pushed) — awaiting the product owner's local test.
+- Decision needed: Answered — see Triage.
 - Related code/spec: `src/components/history/ContentNotice.tsx` (`NoticeBody` `:29-77`); `src/lib/report.ts` (`ContentRemoval.kind`, `REMOVAL_REASON_COPY` `:73-100`, `removalDetail` `:102-107`); seeds `src/lib/mv/mock.ts:406-443`; spec `specs/areas/14-content-report.md` §3.4, AC-RPT-11; storyboard content-report step 12.
 
 ### Report
@@ -180,9 +180,9 @@ Could you please help clarify the conditions for displaying each of the two stri
 ### Resolution and verification
 
 - Root cause: Strings and their conditions live only in code; the spec says "keep existing variants".
-- Resolution: —
-- Verified: —
-- Not verified: —
+- Resolution: `ContentRemoval.kind` removed (`src/lib/report.ts`), `removalDetail` is single-form, TBC markers dropped, "authorization"; `ContentNotice.tsx` top line fixed to "This content violated our content policy."; `contentModeration.remove` lost its severity arg; QA panel Removal type switch removed (`DemoPanel.tsx`); seed comments updated (`mock.ts`, ids kept). Spec area 14 §3.4 (copy + six-sentence table), QA panel line, checklist; storyboard S11 → v4 (all shots recaptured, VERIFICATION.md v4); `CHANGELOG-SPEC.md`. Not changed: History menu's own line "A reviewer removed this content. Tap to see the reason." (menu notice, not the dialog); Word v1.2 docx still mentions the two variants. RD's visual mismatches in the report (close button, Got It colour, centred reason, ✕ before the date) are their build vs the prototype — no prototype change.
+- Verified: typecheck / lint (1 pre-existing warning) / test:run (225/225) / build exit 0. New e2e "YMW261112P0005" passes on both seeded removals; mutation-tested ("authorisation" → fails). S11 capture script passed against the production build; recaptured `12_notice_detail` shows the new copy.
+- Not verified: Production (not pushed). Visual gate not evaluated.
 
 ### Reply comment (paste into eBug)
 
@@ -200,7 +200,7 @@ Could you please help clarify the conditions for displaying each of the two stri
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261112P0007
 - Retrieved at: 2026-11-18 14:52 CST
 - Triage: **Needs PM (confirm by-design)** — prototype and spec both say a removed item can't be published again (area 14 AC-RPT-10: removed items hide Publish; no resubmission). RD/BE propose NAB.
-- Local status: **Blocked** — diagnosed, no change made.
+- Local status: **Not handled this round** — product owner, 2026-11-18: only YMW261111P0002 and YMW261112P0005 are changed now.
 - Decision needed: Confirm NAB. Related gap: Edit MV is still offered on a removed MV, and Merge re-renders the SAME creation, so the removal stays — editing can never lead to publishing. Keep Edit MV available (private edits are fine), or hide it on removed MVs? Either way I'd add one spec line: "removal stays with the creation through Edit / Merge".
 - Related code/spec: `src/components/history/HistoryView.tsx:1010` (Publish hidden when removed), Edit MV condition near `:956`; `src/lib/contentModeration.ts:55-64` (removal keyed by creation id); `MvFlowProvider.tsx:236-253` + `HistoryProvider.tsx:30-34` (Merge replaces the same row). Spec area 14 `:83`, AC-RPT-10/11, Word v1.2 §6.
 
@@ -252,7 +252,7 @@ The current behavior is consistent with both the mockup and the spec received by
 - Form: https://eperfect.perfectcorp.com/IF3/ebug/BPM/FormView/YMW261112P0006
 - Retrieved at: 2026-11-18 14:52 CST
 - Triage: **Needs PM (confirm by-design)** — first logged in `docs/BUGS-TO-FIX-2026-11-13.md` (no ruling then). The web app treats "Something else" as a report input, not a removal category: Word spec v1.2 §6 says "The category chip corresponds to one of the six built-in reasons. Something else is a reporting input, not an additional removal category." So a reviewer approving a "Something else" report picks one of the six policy categories — the console's list matches the spec.
-- Local status: **Blocked** — diagnosed, no change made.
+- Local status: **Not handled this round** — product owner, 2026-11-18: only YMW261111P0002 and YMW261112P0005 are changed now.
 - Decision needed: Confirm NAB (optionally I copy the v1.2 §6 sentence into area 14 so it's in the area spec too).
 - Related code/spec: `src/lib/report.ts:4-20` (`REPORT_REASONS` six + separate `REPORT_OTHER`); `ContentRemoval.reason` limited to the six; `ReportDialog.tsx:228/250`; spec area 14 `:36`, `:84`, TBD-RPT-07 (reason-ID mapping owned by RD); console UI out of scope (`:14`).
 
