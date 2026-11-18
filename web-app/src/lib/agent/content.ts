@@ -12,20 +12,57 @@
 export const media = (file: string) => `/assets/agent/${file}`;
 
 /** The three runnable demos (handoff §0): F7 sub-skill, F8 Creator, F9 Marketer. */
-export type AgentFlowId = "ugc" | "pet" | "bag";
+/** Plus Dance Video (product owner, 2026-11-18), launched from its composer recipe. */
+export type AgentFlowId = "ugc" | "pet" | "bag" | "dance";
 
 /* ── Launcher ─────────────────────────────────────────────────────────────── */
 
-/** Input-card pills (handoff §1.1). Only UGC Review does anything — the other
- *  six are on screen as the planned catalogue and are deliberately inert. */
-export const SHORTS_SKILLS = [
-  "UGC Review",
-  "UGC Tutorial",
-  "Product Showcase Ad",
-  "Product Demo & Solution",
-  "Cinematic Brand Ad",
-  "Unboxing & First-Use",
-  "Person Action Remix",
+/** Input-card skills (handoff §1.1; names from the product owner, 2026-11-18,
+ *  when "UGC Review" became "UGC Talking Review"), in three groups
+ *  (Figma 6096:93403, 2026-11-18): the row shows the group pills, and opening
+ *  one shows only its skills until it is closed. Only UGC Talking Review does
+ *  anything — the other eight are on screen as the planned catalogue and are
+ *  deliberately inert. */
+/*  Labels are "type + format" so each says what you get (product owner,
+ *  2026-11-18; were "Creative" / "UGC"). `hint` is the prompt's placeholder
+ *  while that group is open — it says what the group is for, at the moment of
+ *  choosing. */
+export const SHORTS_SKILL_GROUPS = [
+  {
+    id: "creative",
+    label: "Creative Clips",
+    hint: "Turn your photo into a dance, sport or action scene…",
+    skills: ["Sport Video", "Dance Video", "Action Video"],
+  },
+  {
+    id: "ugc",
+    label: "UGC Reviews",
+    hint: "Have a real person review, demo or unbox your product…",
+    skills: ["UGC Talking Review", "UGC Demo Video", "Unboxing Video"],
+  },
+  {
+    id: "ads",
+    label: "Product Ads",
+    hint: "Describe the polished ad you want for your product…",
+    skills: ["Cinematic Brand Ad", "Product Demo & Solution Ad", "Product Showcase Ad"],
+  },
+] as const;
+
+export type ShortsSkillGroupId = (typeof SHORTS_SKILL_GROUPS)[number]["id"];
+
+/** Dance Video's recipe (YCA mockup, product owner 2026-11-18): "Create a
+ *  stunning cinematic dance video featuring all the people from + Character
+ *  performing Dance Style." The styles its Dance Style chip offers.
+ *  PLACEHOLDER list — swap for the real catalogue when it exists. */
+export const DANCE_STYLES = [
+  "K-pop",
+  "Hip-hop",
+  "Ballet",
+  "Breakdance",
+  "Jazz",
+  "Latin",
+  "Contemporary",
+  "Shuffle",
 ] as const;
 
 export const SHORTS_PLACEHOLDER = "Describe the video you want to make";
@@ -165,7 +202,11 @@ const rail = (title: string, slugs: string[]): TemplateSection => ({
   cards: x2(slugs).map((s, i) => card(s, i === 0)),
 });
 
-export const TEMPLATE_TABS: { id: "creator" | "marketer"; label: string; rows: TemplateSection[] }[] = [
+export const TEMPLATE_TABS: {
+  id: "creator" | "marketer";
+  label: string;
+  rows: TemplateSection[];
+}[] = [
   {
     id: "creator",
     label: "Creator",
@@ -181,8 +222,18 @@ export const TEMPLATE_TABS: { id: "creator" | "marketer"; label: string; rows: T
     rows: [
       rail("Luxury Ads", ["product-detail-demo", "luxe-product-reveal", "product-demo-jewelry"]),
       rail("Feature Demo", ["close-up-demo", "product-demo-car", "product-feature-demo"]),
-      rail("User Testimonial", ["ugc-hand-gesture", "home-shopping-demo", "skin-renewal-effect", "product-demo-watch"]),
-      rail("KOL Seller", ["beauty-brian", "beauty-natalie", "electronics-steven", "fashion-trevor"]),
+      rail("User Testimonial", [
+        "ugc-hand-gesture",
+        "home-shopping-demo",
+        "skin-renewal-effect",
+        "product-demo-watch",
+      ]),
+      rail("KOL Seller", [
+        "beauty-brian",
+        "beauty-natalie",
+        "electronics-steven",
+        "fashion-trevor",
+      ]),
       rail("Campaign", ["commercial-display", "nature-bloom", "woodland-swing"]),
       rail("Sale Event", ["themed-sale-display", "themed-sale-unbox", "themed-sale-hightech"]),
       rail("Fashion Host", ["fashion-erica", "fashion-kian", "fashion-ava", "fashion-lara"]),
@@ -229,9 +280,27 @@ export const CATEGORY_DESC: Record<string, string> = {
 /** PLACEHOLDER history of AI Shorts runs — two finished demo runs. The /shorts
  *  "Recent" row and History's All / AI Shorts tabs both list them, and both
  *  reopen the run's Agent conversation (`/agent?flow=`). */
-export const RECENT_SHORTS: { id: string; title: string; when: string; poster: string; flow: AgentFlowId }[] = [
-  { id: "r-pet", title: "Pet Diary · First snow", when: "Yesterday", poster: media("Creator_petdiary.jpg"), flow: "pet" },
-  { id: "r-bag", title: "Handbag Showcase · Luxury ad", when: "Oct 27", poster: media("product-detail-demo.jpg"), flow: "bag" },
+export const RECENT_SHORTS: {
+  id: string;
+  title: string;
+  when: string;
+  poster: string;
+  flow: AgentFlowId;
+}[] = [
+  {
+    id: "r-pet",
+    title: "Pet Diary · First snow",
+    when: "Yesterday",
+    poster: media("Creator_petdiary.jpg"),
+    flow: "pet",
+  },
+  {
+    id: "r-bag",
+    title: "Handbag Showcase · Luxury ad",
+    when: "Oct 27",
+    poster: media("product-detail-demo.jpg"),
+    flow: "bag",
+  },
 ];
 
 /* ── Agent chat copy (handoff §3–§5) ──────────────────────────────────────── */
@@ -243,7 +312,11 @@ export const ASK_NAME =
   "What is the name of this product? The product name helps me write a better script.";
 export const BAG_NAME = "Fawn Calf-Hair Top Handle Bag";
 
-export const KEEP_EXPLORING = ["Change approach", "Make a 30s version", "Try another model"] as const;
+export const KEEP_EXPLORING = [
+  "Change approach",
+  "Make a 30s version",
+  "Try another model",
+] as const;
 
 export const NEXT_REPLY: Record<(typeof KEEP_EXPLORING)[number], string> = {
   "Change approach":

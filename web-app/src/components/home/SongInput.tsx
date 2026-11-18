@@ -215,7 +215,7 @@ export function SongInput({
 
       <SongStyleSheet
         open={styleOpen}
-        value={{ genre: s.genre, mood: s.mood, vocal: s.vocal }}
+        value={{ genre: s.genre, mood: s.mood, vocal: s.vocal, title: s.title }}
         instrumental={s.instrumental}
         onApply={(st) => {
           patch(st);

@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -9,6 +9,7 @@ import { localePath } from "@/lib/i18n/config";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { GuideHint } from "@/components/agent/GuideHint";
+import { DanceStyleSheet } from "@/components/agent/DanceStyleSheet";
 import { LinkSheet } from "@/components/agent/LinkSheet";
 import { PhotoPicker } from "@/components/agent/PhotoPicker";
 import { useEdgeFade } from "@/components/agent/useEdgeFade";
@@ -18,7 +19,8 @@ import {
   IMG,
   PICK_CELL,
   SHORTS_PLACEHOLDER,
-  SHORTS_SKILLS,
+  SHORTS_SKILL_GROUPS,
+  type ShortsSkillGroupId,
 } from "@/lib/agent/content";
 import { SHORTS_IDEA_PROMPTS } from "@/lib/agent/shortsIdeas";
 import { TOP_PICKS_SONGS } from "@/lib/mv/community";
@@ -28,7 +30,7 @@ import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { HeroBannerSectionV3, type HeroCard } from "./HeroBannerSectionV3";
 import { HERO_ITEMS } from "./heroItems";
-import { RecipeEditor } from "./RecipeEditor";
+import { DanceRecipeEditor, RecipeEditor } from "./RecipeEditor";
 import { MvInput, type MvPick } from "./MvInput";
 import { SongInput } from "./SongInput";
 import { ShortsTemplates } from "./ShortsTemplates";
@@ -52,11 +54,12 @@ import {
  *   2026-10-30): Custom / Simple, Instrumental, Song Style, Idea, Enhance, and
  *   a Create that starts the real generation. Its "Use" sets the Song Style
  *   picks and the starter in `songCompose` rather than this file's own state.
- * · Video Shorts is the YCA launcher (handoff §1): the 7 skill pills sit under
- *   the input, and `UGC Review` turns the input into its recipe — Model /
+ * · Video Shorts is the YCA launcher (handoff §1): skill pills sit under the
+ *   input in three groups — Creative, UGC, Product Ads (2026-11-18) — and
+ *   `UGC Talking Review` (in UGC) turns the input into its recipe — Model /
  *   Product slots plus "Create a UGC before-and-after video for … featuring …".
  *   Send lights up as soon as the recipe is on, whatever is still missing; the
- *   Agent asks for it in chat. The other six pills are deliberately inert.
+ *   Agent asks for it in chat. The other eight skills are deliberately inert.
  *   The recipe is one editable prompt with the chips inline, pollo.ai-style
  *   (2026-10-28): see `RecipeEditor`.
  * · `+` opens the same photo picker as the slots: in the recipe it fills the
@@ -145,11 +148,19 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
     getSongPlayingServer,
   );
   const [text, setText] = useState<Record<Mode, string>>({ mv: "", song: "", shorts: "" });
-  const [recipe, setRecipe] = useState(false);
+  /** The skill recipe loaded into the prompt: UGC Talking Review's or, since
+   *  2026-11-18, Dance Video's (YCA mockup). */
+  const [recipe, setRecipe] = useState<"ugc" | "dance" | null>(null);
+  /** Dance Video's two chips: the character photo and the dance style. */
+  const [character, setCharacter] = useState(false);
+  const [danceStyle, setDanceStyle] = useState<string | null>(null);
+  const [styleOpen, setStyleOpen] = useState(false);
+  /** The skill group opened under the card; null shows the three group pills. */
+  const [skillGroup, setSkillGroup] = useState<ShortsSkillGroupId | null>(null);
   const [product, setProduct] = useState<Product>(null);
   const [model, setModel] = useState(false);
   const [attached, setAttached] = useState<Record<Mode, number>>({ mv: 0, song: 0, shorts: 0 });
-  const [picker, setPicker] = useState<"model" | "product" | "attach" | null>(null);
+  const [picker, setPicker] = useState<"model" | "product" | "character" | "attach" | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   /** Music Video / Song: the inspiration card whose style was loaded into the prompt. */
   const [styles, setStyles] = useState<Record<InspoMode, Inspiration | null>>({
@@ -205,22 +216,98 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
       el.setSelectionRange(el.value.length, el.value.length);
     });
   };
-  const inRecipe = mode === "shorts" && recipe;
+  const inRecipe = mode === "shorts" && recipe !== null;
   const go = (path: string) => requireLogin(() => router.push(localePath(locale, path)));
 
-  const toggleUgc = () => {
-    setRecipe((on) => !on);
+  // A skill pill turns its recipe on, or off if it is already on; switching
+  // to the other recipe starts it fresh.
+  const toggleRecipe = (kind: "ugc" | "dance") => {
+    setRecipe((on) => (on === kind ? null : kind));
     setProduct(null);
     setModel(false);
+    setCharacter(false);
+    setDanceStyle(null);
   };
 
-  // AI Shorts sends a UGC Review recipe, or — since 2026-10-30 — a free
-  // prompt, which opens the Agent on it (`fromPrompt` in flows.ts).
-  const canSend = mode === "shorts" ? recipe || text.shorts.trim() !== "" : true;
+  // Skill row motion (product owner, 2026-11-18). Opening or closing a group
+  // measures every pill first; once React has re-rendered the row, pills that
+  // stayed slide over from where they were (FLIP) and new ones fade in from
+  // the left one after another. Leaving pills go at once — the arrivals carry
+  // the change. Reduced motion: no animation.
+  const skillRects = useRef<Map<string, DOMRect> | null>(null);
+  const toggleSkillGroup = (id: ShortsSkillGroupId) => {
+    const row = skillsRef.current;
+    if (row) {
+      skillRects.current = new Map(
+        Array.from(row.querySelectorAll<HTMLElement>("[data-skill]"), (el) => [
+          el.dataset.skill!,
+          el.getBoundingClientRect(),
+        ]),
+      );
+    }
+    setSkillGroup((open) => (open === id ? null : id));
+  };
+
+  useLayoutEffect(() => {
+    const row = skillsRef.current;
+    const before = skillRects.current;
+    skillRects.current = null;
+    if (!row || !before) return;
+    // Every change starts the row at its left edge (an open group overflows
+    // on phones), and the scroll event makes the edge fade re-measure: the
+    // hook only listens for scrolls and resizes, and new content is neither.
+    row.scrollLeft = 0;
+    row.dispatchEvent(new Event("scroll"));
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let arrival = 0;
+    for (const el of row.querySelectorAll<HTMLElement>("[data-skill]")) {
+      const was = before.get(el.dataset.skill!);
+      if (was) {
+        const dx = was.left - el.getBoundingClientRect().left;
+        if (Math.abs(dx) > 0.5) {
+          el.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], {
+            duration: 280,
+            easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          });
+        }
+      } else {
+        el.animate(
+          [
+            { opacity: 0, transform: "translateX(-8px)" },
+            { opacity: 1, transform: "none" },
+          ],
+          { duration: 220, delay: 60 + arrival++ * 40, easing: "ease-out", fill: "backwards" },
+        );
+      }
+    }
+  }, [skillGroup, skillsRef]);
+
+  /** A pill clicked while partly under the row's faded edge (`.edge-fade`,
+   *  56px) scrolls fully into view; at the row's ends `scrollBy` clamps. */
+  const revealSkill = (el: HTMLElement) => {
+    const row = skillsRef.current;
+    if (!row) return;
+    const pill = el.getBoundingClientRect();
+    const box = row.getBoundingClientRect();
+    const left = pill.left - (box.left + 56);
+    const right = pill.right - (box.right - 56);
+    if (left < 0) row.scrollBy({ left, behavior: "smooth" });
+    else if (right > 0) row.scrollBy({ left: right, behavior: "smooth" });
+  };
+
+  // AI Shorts sends a UGC Talking Review recipe, or — since 2026-10-30 — a free
+  // prompt, which opens the Agent on it (`fromPrompt` in flows.ts). Dance
+  // Video's recipe opens its own script (`dance`, 2026-11-18) with what its
+  // chips hold: whether a character photo was picked, and the style.
+  const canSend = mode === "shorts" ? recipe !== null || text.shorts.trim() !== "" : true;
   const send = () => {
     if (!canSend) return;
     if (mode !== "shorts") return go(current.href!);
-    if (recipe) return go(`/agent?flow=ugc&product=${product ? product.type : "none"}`);
+    if (recipe === "ugc") return go(`/agent?flow=ugc&product=${product ? product.type : "none"}`);
+    if (recipe === "dance") {
+      const style = danceStyle ? `&style=${encodeURIComponent(danceStyle)}` : "";
+      return go(`/agent?flow=dance&character=${character ? 1 : 0}${style}`);
+    }
     requireLogin(() => {
       try {
         sessionStorage.setItem(AGENT_PROMPT_KEY, text.shorts.trim());
@@ -232,11 +319,32 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
   };
 
   const openAdd = () =>
-    setPicker(!inRecipe ? "attach" : !model ? "model" : !product ? "product" : "model");
+    setPicker(
+      !inRecipe
+        ? "attach"
+        : recipe === "dance"
+          ? "character"
+          : !model
+            ? "model"
+            : !product
+              ? "product"
+              : "model",
+    );
 
-  // Guide (handoff §3.1, round 0): UGC Review → Product URL → send. The
-  // model is left empty on purpose — the Agent asks for it.
-  const hint = mode !== "shorts" ? null : !recipe ? "pill" : !product ? "url" : "send";
+  // Guide (handoff §3.1, round 0): UGC Talking Review → Product URL → send. The
+  // model is left empty on purpose — the Agent asks for it. Step 1 ("pill")
+  // also leads to Creative → Dance Video (2026-11-18); its recipe has no
+  // later steps.
+  const hint =
+    mode !== "shorts"
+      ? null
+      : recipe === null
+        ? "pill"
+        : recipe === "ugc"
+          ? !product
+            ? "url"
+            : "send"
+          : null;
 
   // The templates are a SIBLING of the composer, not inside it: the composer
   // keeps its 920px column while the rails run the full width of Home's other
@@ -255,11 +363,35 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
         ) : (
           <h1 className="tool-selector-v3__heading agent-composer__heading">
             {/* Phones get the shorter line, which fits on one line at 320px
-                (product owner, 2026-10-30); CSS shows one or the other. */}
-            <span className="agent-composer__heading-full">
-              What would you like to create today?
+                (product owner, 2026-10-30); CSS shows one or the other.
+                Since 2026-11-18 the heading loops between the question and
+                its answer — what you can make here — with a fade-up
+                (`.agent-composer__line`, CSS only). Both lines share one grid
+                cell, so the heading keeps the taller one's height and the
+                swap never moves the page. The answer is aria-hidden: the
+                h1's accessible name stays the question. */}
+            <span className="agent-composer__lines">
+              <span className="agent-composer__line agent-composer__line--ask">
+                <span className="agent-composer__heading-full">
+                  What would you like to create today?
+                </span>
+                <span className="agent-composer__heading-short">What will you create today?</span>
+              </span>
+              <span
+                className="agent-composer__line agent-composer__line--answer"
+                aria-hidden="true"
+              >
+                {/* Broken after the comma, so "Music Videos" stays together. */}
+                <span className="agent-composer__heading-full">
+                  Create AI Shorts,
+                  <br />
+                  Music Videos and Songs
+                </span>
+                <span className="agent-composer__heading-short">
+                  Shorts, Music Videos &amp; Songs
+                </span>
+              </span>
             </span>
-            <span className="agent-composer__heading-short">What will you create today?</span>
           </h1>
         )}
 
@@ -307,7 +439,32 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
             />
           ) : (
             <>
-              {inRecipe ? (
+              {inRecipe && recipe === "dance" ? (
+                // Dance Video (YCA mockup, 2026-11-18): a character photo
+                // slot once picked, then the sentence with its two chips.
+                <div className="agent-recipe">
+                  {character && (
+                    <div className="agent-recipe__slots">
+                      <PhotoSlot
+                        label="Character"
+                        src={IMG.picked}
+                        showLabel
+                        onPick={() => setPicker("character")}
+                        onClear={() => setCharacter(false)}
+                      />
+                    </div>
+                  )}
+                  <DanceRecipeEditor
+                    character={character}
+                    style={danceStyle}
+                    onChip={(t) => (t === "style" ? setStyleOpen(true) : setPicker("character"))}
+                    onRemoved={(slot) =>
+                      slot === "style" ? setDanceStyle(null) : setCharacter(false)
+                    }
+                    onEnter={send}
+                  />
+                </div>
+              ) : inRecipe ? (
                 <div className="agent-recipe">
                   {/* A slot appears only once it holds a photo (2026-10-28): empty
                   placeholders duplicated the inline "+ Model Image" / "+ Product
@@ -366,8 +523,13 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
                   <textarea
                     ref={inputRef}
                     key={mode}
-                    className="agent-composer__input"
-                    placeholder={current.placeholder}
+                    className="agent-composer__input agent-composer__input--shorts"
+                    // An open skill group says what it is for here
+                    // (2026-11-18); the field's accessible name stays put.
+                    placeholder={
+                      SHORTS_SKILL_GROUPS.find((g) => g.id === skillGroup)?.hint ??
+                      current.placeholder
+                    }
                     aria-label={current.placeholder}
                     value={text[mode]}
                     onChange={(e) => setText({ ...text, [mode]: e.target.value })}
@@ -432,21 +594,60 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
             className="agent-composer__skills edge-fade"
             aria-label="AI Shorts skills"
           >
-            {SHORTS_SKILLS.map((name) => {
-              const live = name === "UGC Review";
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  className={`agent-composer__skill${live && recipe ? " agent-composer__skill--on" : ""}`}
-                  aria-pressed={live ? recipe : undefined}
-                  onClick={live ? toggleUgc : undefined}
-                >
-                  {name}
-                  {live && <GuideHint show={hint === "pill"} />}
-                </button>
-              );
-            })}
+            {/* Three group pills (Figma 6096:93403, 2026-11-18). Opening one
+                hides the other two and lists its skills after it; the open
+                pill wears the MV gradient as a border and an ✕, and a second
+                click closes it. Same button either way, so focus stays put. */}
+            {SHORTS_SKILL_GROUPS.map((g) =>
+              skillGroup && skillGroup !== g.id ? null : (
+                <Fragment key={g.id}>
+                  <button
+                    type="button"
+                    data-skill={`group:${g.id}`}
+                    className={`agent-composer__skill${skillGroup === g.id ? " agent-composer__skill--open" : ""}`}
+                    aria-expanded={skillGroup === g.id}
+                    onClick={() => toggleSkillGroup(g.id)}
+                  >
+                    {g.label}
+                    {skillGroup === g.id && (
+                      <DpIcon name="ic_close" className="agent-composer__skill-close" />
+                    )}
+                    {/* Guide step 1: dots lead to the two groups with a working
+                        skill (UGC; Creative, product owner 2026-11-18), then
+                        into them. */}
+                    {(g.id === "ugc" || g.id === "creative") && !skillGroup && (
+                      <GuideHint show={hint === "pill"} />
+                    )}
+                  </button>
+                  {skillGroup === g.id &&
+                    g.skills.map((name) => {
+                      // The two skills with a recipe; the rest are inert.
+                      const kind =
+                        name === "UGC Talking Review"
+                          ? "ugc"
+                          : name === "Dance Video"
+                            ? "dance"
+                            : null;
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          data-skill={`skill:${name}`}
+                          className={`agent-composer__skill${kind && recipe === kind ? " agent-composer__skill--on" : ""}`}
+                          aria-pressed={kind ? recipe === kind : undefined}
+                          onClick={(e) => {
+                            revealSkill(e.currentTarget);
+                            if (kind) toggleRecipe(kind);
+                          }}
+                        >
+                          {name}
+                          {kind && <GuideHint show={hint === "pill"} />}
+                        </button>
+                      );
+                    })}
+                </Fragment>
+              ),
+            )}
           </div>
         )}
 
@@ -455,6 +656,7 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
           hintCell={picker === "product" ? PICK_CELL.ugcProduct : PICK_CELL.model}
           onPick={() => {
             if (picker === "model") setModel(true);
+            else if (picker === "character") setCharacter(true);
             else if (picker === "product") setProduct({ type: "photo" });
             else setAttached({ ...attached, [mode]: attached[mode] + 1 });
             setPicker(null);
@@ -470,6 +672,15 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
             setLinkOpen(false);
           }}
           onClose={() => setLinkOpen(false)}
+        />
+        <DanceStyleSheet
+          open={styleOpen}
+          value={danceStyle}
+          onPick={(s) => {
+            setDanceStyle(s);
+            setStyleOpen(false);
+          }}
+          onClose={() => setStyleOpen(false)}
         />
       </section>
       {!solo && mode !== "shorts" && (

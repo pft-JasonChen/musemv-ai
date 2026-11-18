@@ -4181,8 +4181,15 @@ test("video-agent-home: the Song tab — Song Style sheet, Idea → Enhance, Cre
   await sheet.getByRole("button", { name: "Jazz", exact: true }).click();
   await sheet.getByRole("button", { name: "Calm", exact: true }).click();
   await sheet.getByRole("button", { name: "Male", exact: true }).click();
+  // SONG TITLE (Optional), as on /song/create (2026-11-18): part of the
+  // draft, so ✓ keeps it and the sheet re-opens on it.
+  await sheet.getByRole("textbox", { name: "Song title" }).fill("Midnight Drive");
+  await expect(sheet.getByText("14/120")).toBeVisible();
   await sheet.getByRole("button", { name: "Apply" }).click();
   await expect(page.locator(".agent-song__style-label")).toHaveText("Jazz / Calm / Male");
+  await card.getByRole("button", { name: "Jazz / Calm / Male" }).click();
+  await expect(sheet.getByRole("textbox", { name: "Song title" })).toHaveValue("Midnight Drive");
+  await sheet.getByRole("button", { name: "Close" }).click();
 
   await expect(card.getByRole("button", { name: "Enhance" })).toHaveCount(0);
   await card.getByRole("button", { name: "Idea" }).click();
@@ -4199,11 +4206,11 @@ test("video-agent-home: the Song tab — Song Style sheet, Idea → Enhance, Cre
   await expect(page).toHaveURL(/\/song\/creating/);
 });
 
-test("video-agent-home: the AI Shorts tab — Idea writes a prompt, Enhance rewrites it, both step aside for UGC Review", async ({
+test("video-agent-home: the AI Shorts tab — Idea writes a prompt, Enhance rewrites it, both step aside for UGC Talking Review", async ({
   page,
 }) => {
   // Product owner, 2026-10-30 (Figma 5559:194908): `+` and Idea on the left,
-  // Enhance (once there is text) beside Create. The UGC Review recipe is a
+  // Enhance (once there is text) beside Create. The UGC Talking Review recipe is a
   // fixed sentence with chip gaps, so neither applies to it.
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/?nohint");
@@ -4217,7 +4224,22 @@ test("video-agent-home: the AI Shorts tab — Idea writes a prompt, Enhance rewr
   await card.getByRole("button", { name: "Enhance" }).click();
   await expect(prompt).not.toHaveValue(idea);
 
-  await page.getByRole("button", { name: "UGC Review" }).click();
+  // The skills sit in three groups (Figma 6096:93403, 2026-11-18): only the
+  // group pills show until one is opened, which hides the other two and lists
+  // its skills; a second click closes it.
+  const skills = page.getByLabel("AI Shorts skills");
+  await expect(skills.getByRole("button")).toHaveText(["Creative Clips", "UGC Reviews", "Product Ads"]);
+  await skills.getByRole("button", { name: "Creative Clips" }).click();
+  await expect(skills.getByRole("button")).toHaveText(["Creative Clips", "Sport Video", "Dance Video", "Action Video"]);
+  // The open group says what it is for in the prompt (2026-11-18).
+  await expect(prompt).toHaveAttribute("placeholder", /dance, sport or action scene/);
+  await skills.getByRole("button", { name: "Creative Clips" }).click();
+  await expect(skills.getByRole("button")).toHaveText(["Creative Clips", "UGC Reviews", "Product Ads"]);
+  await skills.getByRole("button", { name: "UGC Reviews" }).click();
+  await expect(skills.getByRole("button", { name: "UGC Reviews" })).toHaveAttribute("aria-expanded", "true");
+  await expect(skills.getByRole("button", { name: "Product Ads" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "UGC Talking Review" }).click();
   await expect(card.getByRole("button", { name: "Add photo" })).toBeVisible();
   await expect(card.getByRole("button", { name: "Idea" })).toHaveCount(0);
   await expect(card.getByRole("button", { name: "Enhance" })).toHaveCount(0);
@@ -4251,7 +4273,8 @@ test("landing page: the composer's Create requires login", async ({ page }) => {
 
     await page.goto("/");
     await page.getByRole("tab", { name: "AI Shorts" }).click();
-    await page.getByRole("button", { name: "UGC Review" }).click();
+    await page.getByRole("button", { name: "UGC Reviews" }).click();
+    await page.getByRole("button", { name: "UGC Talking Review" }).click();
     await page.locator(".agent-composer").getByRole("button", { name: "Create", exact: true }).click();
     await expect(page.getByRole("dialog", { name: /sign in/i })).toBeVisible();
     await expect(page).not.toHaveURL(/\/agent/);
@@ -5591,7 +5614,73 @@ test("2026-10-22: songLangUnsupported shows the language error, and it stays whi
   await page.evaluate(() => localStorage.removeItem("muse_demo"));
 });
 
-test("video-agent-home: UGC Review → Product URL → Create opens the Agent on its first question", async ({
+test("video-agent-home: Dance Video loads its recipe — a Character photo and a Dance Style", async ({ page }) => {
+  // Product owner, 2026-11-18 (YCA mockup): Dance Video turns the prompt into
+  // "Create a stunning cinematic dance video featuring all the people from
+  // + Character performing Dance Style." — each chip opens its picker and is
+  // replaced by what was picked; a second click on the pill turns it off.
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  const skills = page.getByLabel("AI Shorts skills");
+  await skills.getByRole("button", { name: "Creative Clips" }).click();
+  await skills.getByRole("button", { name: "Dance Video" }).click();
+  await expect(skills.getByRole("button", { name: "Dance Video" })).toHaveAttribute("aria-pressed", "true");
+  const prompt = page.locator(".agent-recipe__text");
+  await expect(prompt).toContainText("Create a stunning cinematic dance video featuring all the people from");
+
+  await prompt.getByRole("button", { name: "Dance Style" }).click();
+  const sheet = page.getByRole("dialog", { name: "Dance Style" });
+  await sheet.getByRole("button", { name: "Hip-hop" }).click();
+  await expect(sheet).toHaveCount(0);
+  await expect(prompt).toContainText("performing Hip-hop");
+
+  // A style of the user's own: typed under the pills, and back in the field
+  // when the sheet re-opens on it.
+  await prompt.getByRole("button", { name: "Hip-hop" }).click();
+  await sheet.getByRole("textbox", { name: "Your own dance style" }).fill("Tutting");
+  await sheet.getByRole("textbox", { name: "Your own dance style" }).press("Enter");
+  await expect(sheet).toHaveCount(0);
+  await expect(prompt).toContainText("performing Tutting");
+  await prompt.getByRole("button", { name: "Tutting" }).click();
+  await expect(sheet.getByRole("textbox", { name: "Your own dance style" })).toHaveValue("Tutting");
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+
+  await prompt.getByRole("button", { name: "Character" }).click();
+  await page.locator(".agent-picker").getByRole("button", { name: "Photo 1", exact: true }).click();
+  await expect(prompt).toContainText("@Character 1");
+  await expect(page.getByRole("button", { name: "Remove Character" })).toBeVisible();
+
+  await skills.getByRole("button", { name: "Dance Video" }).click();
+  await expect(prompt).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Describe the video you want to make" })).toBeVisible();
+});
+
+test("video-agent-home: Dance Video's Create opens the Agent's dance script — dancers and style, never a product", async ({
+  page,
+}) => {
+  // Product owner, 2026-11-18: the Dance recipe used to fall into the free-
+  // prompt chat, which asks about product videos. It has its own script now,
+  // carrying the recipe's character photo and dance style.
+  await page.addInitScript(() => localStorage.setItem("muse_auth", "1"));
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  const skills = page.getByLabel("AI Shorts skills");
+  await skills.getByRole("button", { name: "Creative Clips" }).click();
+  await skills.getByRole("button", { name: "Dance Video" }).click();
+  const prompt = page.locator(".agent-recipe__text");
+  await prompt.getByRole("button", { name: "Dance Style" }).click();
+  await page.getByRole("dialog", { name: "Dance Style" }).getByRole("button", { name: "Hip-hop" }).click();
+  await page.locator(".agent-composer").getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page).toHaveURL(/\/agent\?flow=dance&character=0&style=Hip-hop$/);
+
+  // No character yet: the Agent asks for the dancers, then the settings.
+  await expect(page.getByText("send me a photo of", { exact: false })).toBeVisible();
+  await expect(page.getByText("the people who'll dance")).toBeVisible();
+  await expect(page.getByText(/product/i)).toHaveCount(0);
+});
+
+test("video-agent-home: UGC Talking Review → Product URL → Create opens the Agent on its first question", async ({
   page,
 }) => {
   // The launcher half of handoff §1.2 / §5.0 end to end: the recipe takes the
@@ -5602,7 +5691,8 @@ test("video-agent-home: UGC Review → Product URL → Create opens the Agent on
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/");
   await page.getByRole("tab", { name: "AI Shorts" }).click();
-  await page.getByRole("button", { name: "UGC Review" }).click();
+  await page.getByRole("button", { name: "UGC Reviews" }).click();
+  await page.getByRole("button", { name: "UGC Talking Review" }).click();
   await page.getByRole("button", { name: "Product URL", exact: true }).click();
   await page.getByRole("dialog", { name: "Product URL" }).getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("button", { name: "www.anthropologie.com" })).toBeVisible();
@@ -5695,7 +5785,7 @@ test("video-agent-home: a typed AI Shorts prompt sends — the arrow opens the A
 }) => {
   // Product owner, 2026-10-30 (Figma 5594:201121): the AI Shorts send is the
   // arrow alone ("Create" stays its name) and a free prompt can be sent, not
-  // only the UGC Review recipe.
+  // only the UGC Talking Review recipe.
   await login(page);
   await page.setViewportSize({ width: 1440, height: 950 });
   await page.goto("/?nohint");

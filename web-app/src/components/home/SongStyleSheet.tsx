@@ -5,11 +5,14 @@ import { createPortal } from "react-dom";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { useEscapeToClose } from "@/components/ui/useDialogTransition";
 import { GENRES, MOODS, VOCALS } from "@/lib/mv/mock";
+import { SONG_TITLE_MAX } from "@/lib/mv/types";
 
 export interface SongStyle {
   genre: string;
   mood: string;
   vocal: string | null;
+  /** SONG TITLE (Optional), as on `/song/create` (product owner, 2026-11-18). */
+  title: string;
 }
 
 /**
@@ -23,6 +26,13 @@ export interface SongStyle {
  *
  * The shell is the Agent's `.agent-sheet` (a centred dialog on desktop, a
  * bottom sheet on phones); chips are DP's `.chip`.
+ *
+ * Last comes SONG TITLE (Optional) (product owner, 2026-11-18): `/song/create`'s
+ * field — its SongCreatePage.css box and input, placeholder and 120-character
+ * cap — writing the same `songCompose.title`, so a title set here is there on
+ * the create screen. Leaner than the create screen's: the count sits inside
+ * the box and there is no hint line below. Part of the draft: ✓ keeps it,
+ * ✕ drops it.
  */
 export function SongStyleSheet({
   open,
@@ -57,7 +67,7 @@ function SheetBody({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState(value);
-  const groups: { key: keyof SongStyle; label: string; optional?: boolean; options: string[] }[] = [
+  const groups: { key: "genre" | "mood" | "vocal"; label: string; optional?: boolean; options: string[] }[] = [
     { key: "genre", label: "GENRE", options: GENRES },
     { key: "mood", label: "MOOD", options: MOODS },
     ...(instrumental ? [] : [{ key: "vocal" as const, label: "VOCAL", optional: true, options: VOCALS }]),
@@ -109,6 +119,26 @@ function SheetBody({
               </div>
             </div>
           ))}
+
+          <div className="song-style__group">
+            <p className="song-style__label">
+              SONG TITLE<span className="song-style__optional"> (Optional)</span>
+            </p>
+            <div className="song-create__title-input-box">
+              <input
+                type="text"
+                className="song-create__title-input"
+                placeholder="e.g. Midnight Drive, Golden Hour..."
+                value={draft.title}
+                maxLength={SONG_TITLE_MAX}
+                onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+                aria-label="Song title"
+              />
+              <span className="song-create__char-count">
+                {draft.title.length}/{SONG_TITLE_MAX}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

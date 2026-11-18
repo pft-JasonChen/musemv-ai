@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useCredits } from "@/components/providers/CreditsProvider";
 import { useSubscribe } from "@/components/providers/SubscribeProvider";
 import { useBackNavigation } from "@/components/shell/DetailNavbar";
@@ -43,7 +50,8 @@ const GLIDE_MS = 500;
  *  solve the curve's x for time `k` (Newton, bisection as a fallback), return
  *  its y. So the scroll eases on the very curve the CSS fade does. */
 function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
-  const at = (a: number, b: number, s: number) => 3 * a * s * (1 - s) ** 2 + 3 * b * s * s * (1 - s) + s ** 3;
+  const at = (a: number, b: number, s: number) =>
+    3 * a * s * (1 - s) ** 2 + 3 * b * s * s * (1 - s) + s ** 3;
   const slope = (a: number, b: number, s: number) =>
     3 * a * (1 - s) ** 2 + 6 * (b - a) * s * (1 - s) + 3 * (1 - b) * s * s;
   return (k: number) => {
@@ -92,15 +100,20 @@ export function AgentView() {
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
     const raw = q.get("flow");
-    const flow: AgentFlowId = raw === "pet" || raw === "bag" ? raw : "ugc";
+    const flow: AgentFlowId = raw === "pet" || raw === "bag" || raw === "dance" ? raw : "ugc";
     const p = q.get("product");
     const launch: UgcLaunch = { product: p === "url" || p === "photo" ? p : null };
+    // `?flow=dance`: Dance Video's recipe — its character photo and style.
+    if (raw === "dance") {
+      launch.character = q.get("character") === "1";
+      launch.style = q.get("style") ?? undefined;
+    }
     // `?flow=prompt`: the composer's typed prompt opens the chat (2026-10-30).
     if (raw === "prompt") {
       try {
         launch.prompt = sessionStorage.getItem(AGENT_PROMPT_KEY)?.trim() || undefined;
       } catch {
-        // Storage blocked: fall through to UGC Review, the default flow.
+        // Storage blocked: fall through to UGC Talking Review, the default flow.
       }
     }
     void engine.start(flowScript(flow, launch));
@@ -165,7 +178,8 @@ export function AgentView() {
     const cap = toEnd.current ? null : engine.getSnapshot().capId;
     const el = cap === null ? null : sc.querySelector<HTMLElement>(`[data-msg="${cap}"]`);
     if (el) {
-      const top = sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - 12;
+      const top =
+        sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - 12;
       // Already past the reply's first line (a survey took the view to the
       // end): stay put. Pulling back up to it read as a jump after submitting.
       if (top < at - 1) return;
@@ -297,7 +311,9 @@ export function AgentView() {
       </div>
 
       <div className="agent-page__dock" ref={dockRef}>
-        {s.survey && <AgentSurvey key={s.survey.key} qs={s.survey.qs} onSubmit={engine.submitSurvey} />}
+        {s.survey && (
+          <AgentSurvey key={s.survey.key} qs={s.survey.qs} onSubmit={engine.submitSurvey} />
+        )}
         {/* Two rows, like Home's composer card (2026-10-30): the field on top,
             `+` and Send under it. */}
         <div className="agent-input">
@@ -345,7 +361,6 @@ export function AgentView() {
           )}
         </div>
       </div>
-
 
       <PhotoPicker
         sheet={s.picker}
