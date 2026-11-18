@@ -5367,3 +5367,17 @@ test("2026-10-22: songLangUnsupported shows the language error, and it stays whi
   await expect(error).toHaveCount(0, { timeout: 6000 });
   await page.evaluate(() => localStorage.removeItem("muse_demo"));
 });
+
+test("YMW261111P0002: Home Trending Music Videos cards show the creator, not a duration", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.goto("/");
+  const subtitles = page.locator(".new-mvs__item .card__subtitle");
+  await expect(subtitles.first()).toBeVisible();
+  // NEW_MVS[0] is "Cinematic Dark" by EchoingDreams (src/lib/mv/community.ts).
+  await expect(subtitles.first()).toHaveText("EchoingDreams");
+  const texts = await subtitles.allTextContents();
+  expect(texts.length).toBeGreaterThan(0);
+  for (const t of texts) expect(t).not.toMatch(/\d+-\d+ min/);
+});

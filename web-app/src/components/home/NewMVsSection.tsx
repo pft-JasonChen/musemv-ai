@@ -27,10 +27,10 @@ import { IconButton } from "@/components/ui/IconButton";
  * screen it belonged to.
  *
  * DP's decorative `SUBTITLES` array (six rotating "Cinematic | 2-3 min" strings
- * it uses because it has no per-video metadata) is NOT ported: WA's
- * `CommunityMv` carries a real `meta` field of exactly that shape, and the
- * pre-migration home already showed it. Using invented strings in preference to
- * real data would be a regression dressed as fidelity.
+ * it uses because it has no per-video metadata) is NOT ported. The card's
+ * second line is the MV's real creator (`CommunityMv.creator`): the product
+ * owner replaced every Home MV duration line with the creator's name
+ * (YMW261021P0001 → YMW261111P0002, 2026-11-18).
  *
  * ── THE ARROWS ARE STATE, NOT DECORATION ───────────────────────────────────
  *
@@ -105,7 +105,10 @@ export function NewMVsSection() {
                   type="Video"
                   ratio={mvCoverRatio(mv.id)}
                   title={mv.title}
-                  subtitle={mv.meta}
+                  // YMW261111P0002 (product owner, via YMW261021P0001): Home MV
+                  // cards show the creator, not "Popular | 2-3 min". The hero
+                  // carousels switched on 2026-10-29; this rail was missed.
+                  subtitle={mv.creator}
                   badge={mv.badge ?? undefined}
                   coverImage={mv.thumb}
                 />

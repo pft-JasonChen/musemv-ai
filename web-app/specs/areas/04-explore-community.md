@@ -93,6 +93,10 @@ The rails:
 
 - **Trending Music Videos** — horizontal scroll of the whole of `NEW_MVS`, prev/next arrows that
   appear only when the row can scroll that way; card → `/watch?id`; "See all" → `/explore/mvs`.
+  Each card shows the title and, under it, the **creator's name** — not a tag + duration
+  ("Popular | 2-3 min"). _(YMW261111P0002, product owner 2026-11-18, applying YMW261021P0001's
+  rule that every Home MV card shows the creator instead of the duration; the hero carousels
+  changed on 2026-10-29 and this rail had been missed.)_
 - **Top Picks Songs** — horizontal scroll, `TOP_PICKS_SONGS`, square cards; the card navigates to
   `/song/play?id`, the cover's play button previews the real audio in place; "See all" →
   `/explore/songs`.

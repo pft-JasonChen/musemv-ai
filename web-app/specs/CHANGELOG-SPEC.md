@@ -4,6 +4,18 @@
 > **spec IDs** that moved, the **code** that implements it, and the **test** that holds it — so you can
 > get from "what changed?" to the exact file without diffing.
 
+## 2026-11-18 — Home "Trending Music Videos" cards show the creator, not the duration
+
+### `YMW261111P0002`: the rail still read "Popular | 2-3 min"
+
+| What | Spec IDs | Code | Test |
+| --- | --- | --- | --- |
+| The Trending Music Videos rail's card line under the title is the MV's creator name (`CommunityMv.creator`), replacing "tag \| duration". Completes YMW261021P0001's rule (all Home MV cards show the creator); the hero carousels already did since 2026-10-29 | area 04 Home rails — Trending Music Videos | `src/components/home/NewMVsSection.tsx` | `e2e/behaviour-regressions.spec.ts` → "YMW261111P0002" |
+
+Storyboards: not recaptured (no storyboard step states this line). Contract: none.
+
+---
+
 ## 2026-11-17 — Edit MV preview anchoring for Title / Subtitle effects
 
 New area 02 **EFX-3a** and **AC-MV-31**, approved by the product owner on 2026-11-17, who also accepted all three proposed defaults: seek on tab switch, seek on in-dialog turn-on, and no pre-roll. Changing a Title effect seeks the whole-MV preview to the opening (0). Changing a Subtitle effect seeks to the first displayed subtitle cue on the trimmed MV timeline. The section covers triggers, non-triggers, autoplay and mute, and how anchoring interacts with the actual-preview lifecycle.

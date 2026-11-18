@@ -1008,6 +1008,28 @@ no mail capability at all; this is a backend contract only, and its links to <co
 <strong>spec IDs</strong> that moved, the <strong>code</strong> that implements it, and the <strong>test</strong> that holds it — so you can<br>
 get from "what changed?" to the exact file without diffing.</p>
 </blockquote>
+<h2 id="2026-11-18-home-trending-music-videos-cards-show-the-creator-not-the-duration">2026-11-18 — Home "Trending Music Videos" cards show the creator, not the duration</h2>
+<h3 id="ymw261111p0002-the-rail-still-read-popular-2-3-min"><code>YMW261111P0002</code>: the rail still read "Popular | 2-3 min"</h3>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Spec IDs</th>
+<th>Code</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The Trending Music Videos rail's card line under the title is the MV's creator name (<code>CommunityMv.creator</code>), replacing "tag | duration". Completes YMW261021P0001's rule (all Home MV cards show the creator); the hero carousels already did since 2026-10-29</td>
+<td>area 04 Home rails — Trending Music Videos</td>
+<td><code>src/components/home/NewMVsSection.tsx</code></td>
+<td><code>e2e/behaviour-regressions.spec.ts</code> → "YMW261111P0002"</td>
+</tr>
+</tbody>
+</table>
+<p>Storyboards: not recaptured (no storyboard step states this line). Contract: none.</p>
+<hr>
 <h2 id="2026-11-17-edit-mv-preview-anchoring-for-title-subtitle-effects">2026-11-17 — Edit MV preview anchoring for Title / Subtitle effects</h2>
 <p>New area 02 <strong>EFX-3a</strong> and <strong>AC-MV-31</strong>, approved by the product owner on 2026-11-17, who also accepted all three proposed defaults: seek on tab switch, seek on in-dialog turn-on, and no pre-roll. Changing a Title effect seeks the whole-MV preview to the opening (0). Changing a Subtitle effect seeks to the first displayed subtitle cue on the trimmed MV timeline. The section covers triggers, non-triggers, autoplay and mute, and how anchoring interacts with the actual-preview lifecycle.</p>
 <p><strong>TBD-MV-EFX-03</strong> now names the data the client needs: MV-timeline cues (or <code>firstSubtitleStartSec</code>) and an optional per-effect <code>titleStartSec</code>, delivered with the MV result or preview. The audit found that <code>SongResult.lyricsLrc</code> alone cannot supply this, for three reasons:<br>
@@ -4512,7 +4534,11 @@ is DP's own arrangement:</p>
 <p>The rails:</p>
 <ul>
 <li><strong>Trending Music Videos</strong> — horizontal scroll of the whole of <code>NEW_MVS</code>, prev/next arrows that<br>
-  appear only when the row can scroll that way; card → <code>/watch?id</code>; "See all" → <code>/explore/mvs</code>.</li>
+  appear only when the row can scroll that way; card → <code>/watch?id</code>; "See all" → <code>/explore/mvs</code>.<br>
+  Each card shows the title and, under it, the <strong>creator's name</strong> — not a tag + duration<br>
+  ("Popular | 2-3 min"). <em>(YMW261111P0002, product owner 2026-11-18, applying YMW261021P0001's<br>
+  rule that every Home MV card shows the creator instead of the duration; the hero carousels<br>
+  changed on 2026-10-29 and this rail had been missed.)</em></li>
 <li><strong>Top Picks Songs</strong> — horizontal scroll, <code>TOP_PICKS_SONGS</code>, square cards; the card navigates to<br>
 <code>/song/play?id</code>, the cover's play button previews the real audio in place; "See all" →<br>
 <code>/explore/songs</code>.</li>
