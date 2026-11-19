@@ -90,11 +90,22 @@ for (const width of [1440, 390]) {
     await expect(subtitleSwitch).toHaveCount(0);
     await expect(page.locator(".mv-edit__toggle-row--subtitle")).toContainText(noLyrics);
     await expect(dialog.getByRole("switch")).toHaveCount(0);
-    await expect(dialog.getByRole("tab", { name: "Subtitle", exact: true })).toBeDisabled();
-    await expect(dialog.getByRole("tab", { name: "Title", exact: true })).toHaveAttribute(
+    // Product owner, 2026-11-19: the Subtitle tab stays openable and shows the
+    // reason ALONE (no switch, inert looks); the Title tab never mentions it.
+    await expect(dialog.getByRole("tab", { name: "Subtitle", exact: true })).toBeEnabled();
+    await expect(dialog.getByRole("tab", { name: "Subtitle", exact: true })).toHaveAttribute(
       "aria-selected",
       "true",
     );
+    await expect(dialog.getByRole("radiogroup")).toHaveAttribute("aria-disabled", "true");
+    await expect(dialog.locator('[aria-checked="true"]')).toHaveAttribute(
+      "aria-label",
+      savedChoice!,
+    );
+    await expectStable();
+    await dialog.getByRole("tab", { name: "Title", exact: true }).click();
+    await expect(dialog.getByText(noLyrics, { exact: true })).toBeHidden();
+    await expect(dialog.getByText("Choose a title effect", { exact: true })).toBeVisible();
     await expect(dialog.getByRole("radio").nth(1)).toHaveAttribute("aria-checked", "true");
     await expectStable();
     await expect(dialog.locator("video")).toBeVisible();
@@ -103,8 +114,11 @@ for (const width of [1440, 390]) {
     await dialog.getByRole("button", { name: "Save", exact: true }).click();
     dialog = await effects(page);
     await expect(dialog.getByRole("radio").nth(1)).toHaveAttribute("aria-checked", "true");
-    await expect(dialog.getByRole("tab", { name: "Subtitle", exact: true })).toBeDisabled();
+    await expect(dialog.getByRole("tab", { name: "Subtitle", exact: true })).toBeEnabled();
     await expect(dialog.getByRole("button", { name: "Save", exact: true })).toBeDisabled();
+    await dialog.getByRole("tab", { name: "Subtitle", exact: true }).click();
+    await expect(dialog.getByText(noLyrics, { exact: true })).toBeVisible();
+    await expect(dialog.getByRole("switch")).toHaveCount(0);
     await captureSubtitle(page, `/tmp/mv-subtitle-no-lyrics-${width}.png`);
 
     await dataMode(page, "untimed");
@@ -112,7 +126,11 @@ for (const width of [1440, 390]) {
     await expect(dialog.getByText(untimed, { exact: true })).toBeVisible();
     await expect(page.locator(".mv-edit__toggle-row--subtitle")).toContainText(untimed);
     await expect(dialog.getByRole("switch")).toHaveCount(0);
-    await expect(dialog.getByRole("tab", { name: "Subtitle", exact: true })).toBeDisabled();
+    await expect(dialog.getByRole("tab", { name: "Subtitle", exact: true })).toBeEnabled();
+    await expect(dialog.getByRole("tab", { name: "Subtitle", exact: true })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     await expect(dialog.getByRole("radiogroup")).toBeVisible();
     await expectStable();
     await expect(dialog.getByRole("button", { name: "Save", exact: true })).toBeDisabled();

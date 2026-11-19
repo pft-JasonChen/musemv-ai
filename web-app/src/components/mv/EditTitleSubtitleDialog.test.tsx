@@ -95,9 +95,17 @@ describe("MV effects draft boundaries", () => {
     );
     for (const subtitleState of ["no-lyrics", "untimed"] as const) {
       rerender(<EditTitleSubtitleDialog {...props} subtitleState={subtitleState} />);
-      expect(screen.getByRole("tab", { name: "Subtitle" })).toBeDisabled();
-      expect(screen.getByRole("tab", { name: "Title" })).toHaveAttribute("aria-selected", "true");
-      expect(screen.getAllByRole("radio")).toHaveLength(TITLE_EFFECTS.length);
+      // The tab stays where the user was (it is no longer snapped back to Title,
+      // 2026-11-19) and says why subtitles cannot be edited: the reason alone,
+      // no switch, the looks inert.
+      expect(screen.getByRole("tab", { name: "Subtitle" })).toBeEnabled();
+      expect(screen.getByRole("tab", { name: "Subtitle" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+      expect(screen.getByText(SUBTITLE_UNAVAILABLE_MESSAGES[subtitleState])).toBeVisible();
+      expect(screen.getByRole("radiogroup")).toHaveAttribute("aria-disabled", "true");
+      expect(screen.getAllByRole("radio")).toHaveLength(SUBTITLE_STYLES.length);
       expect(screen.queryByRole("switch")).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     }
@@ -203,19 +211,40 @@ describe("MV effects draft boundaries", () => {
   });
 
   it.each(["no-lyrics", "untimed"] as const)(
-    "disables Subtitle with the %s explanation and keeps Title usable",
+    "%s: the reason shows only on the Subtitle tab, with no switch, and Title stays usable",
     async (subtitleState) => {
       await setup({ subtitleState });
-      fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
-      expect(screen.getByText(SUBTITLE_UNAVAILABLE_MESSAGES[subtitleState])).toBeVisible();
-      expect(screen.queryByRole("switch")).not.toBeInTheDocument();
-      expect(screen.getByRole("radio", { name: TITLE_EFFECTS[0].label })).toBeEnabled();
-      expect(screen.getByRole("tab", { name: "Subtitle" })).toBeDisabled();
+      const message = SUBTITLE_UNAVAILABLE_MESSAGES[subtitleState];
+      // Title tab: usable, and silent about subtitles.
       expect(screen.getByRole("tab", { name: "Title" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByText("Choose a title effect")).toBeVisible();
+      expect(screen.getByText(message)).not.toBeVisible();
       expect(screen.getAllByRole("radio")).toHaveLength(TITLE_EFFECTS.length);
+      expect(screen.getByRole("radio", { name: TITLE_EFFECTS[0].label })).toBeEnabled();
+
+      // Subtitle tab: openable, the reason alone — no switch, no "Choose…" line, inert looks.
+      expect(screen.getByRole("tab", { name: "Subtitle" })).toBeEnabled();
+      expect(screen.getByRole("tab", { name: "Subtitle" })).toHaveAccessibleDescription(message);
+      fireEvent.click(screen.getByRole("tab", { name: "Subtitle" }));
+      expect(screen.getByRole("tab", { name: "Subtitle" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+      expect(screen.getByText(message)).toBeVisible();
+      expect(screen.queryByText("Choose a subtitle effect")).not.toBeInTheDocument();
+      expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+      expect(screen.getByRole("radiogroup")).toHaveAttribute("aria-disabled", "true");
+      expect(
+        screen.getAllByRole("radio").every((radio) => (radio as HTMLButtonElement).disabled),
+      ).toBe(true);
       expect(document.querySelector(".fx-sub")).toBeNull();
       // Eligibility does not silently change the saved switch or create a dirty draft.
       expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+
+      // Back on Title the reason is gone again.
+      fireEvent.click(screen.getByRole("tab", { name: "Title" }));
+      expect(screen.getByText(message)).not.toBeVisible();
+      expect(screen.getByRole("radio", { name: TITLE_EFFECTS[0].label })).toBeEnabled();
     },
   );
 

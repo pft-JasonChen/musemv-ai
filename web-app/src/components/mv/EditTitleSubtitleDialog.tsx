@@ -45,8 +45,10 @@ export interface TextEffectDraft extends TextEffectSelection {
  * outside, the popup says so under the Title / Subtitle switch with a toggle to turn
  * them back on; until that is switched on the looks below are disabled, and once it
  * is, the notice goes away.
- * Missing lyrics/timing disables the Subtitle tab with a persistent reason
- * while Title controls remain visible. Saved choices stay intact and Title drafts remain saveable.
+ * Missing lyrics/timing (product owner, 2026-11-19): the Subtitle tab stays openable and
+ * says WHY there — the reason alone in the status line, no switch, the looks dimmed — while
+ * the Title tab is untouched and does not mention subtitles. Saved choices stay intact and
+ * Title drafts remain saveable.
  *
  * The draft lives in the body, which unmounts on close, so ✕ (or Escape, or the
  * backdrop) discards it and the next open starts from the saved choice.
@@ -132,11 +134,8 @@ function DialogBody({
   poster: string;
 }) {
   const isPhone = useMediaQuery(PHONE_QUERY);
-  const [selectedTab, setTab] = useState<Tab>("title");
+  const [tab, setTab] = useState<Tab>("title");
   const subtitleUnavailable = subtitleState !== "available";
-  const tab = subtitleUnavailable ? "title" : selectedTab;
-  // Reset the tab, not the draft, when a live Demo/data change removes eligibility.
-  if (subtitleUnavailable && selectedTab !== "title") setTab("title");
   const subtitleReasonId = useId();
   const [draft, setDraft] = useState<TextEffectDraft>({ ...selection, titleOn, subtitleOn });
 
@@ -161,6 +160,10 @@ function DialogBody({
   const options = tab === "title" ? TITLE_EFFECTS : SUBTITLE_STYLES;
   const current = tab === "title" ? draft.titleEffect : draft.subtitleStyle;
   const tabOn = tab === "title" ? draft.titleOn : draft.subtitleOn;
+  /** The Subtitle tab with no usable lyrics: it shows the reason only, and its looks are inert. */
+  const subtitleBlocked = tab === "subtitle" && subtitleUnavailable;
+  /** Whether the looks below can be picked: the tab's switch is on and its data exists. */
+  const stripOn = tabOn && !subtitleBlocked;
 
   const dirty =
     draft.titleEffect !== selection.titleEffect ||
@@ -181,7 +184,7 @@ function DialogBody({
   useEffect(() => {
     const strip = stripRef.current;
     const picked = strip?.querySelector<HTMLElement>('[aria-checked="true"]');
-    if (!strip || !picked || !tabOn) return;
+    if (!strip || !picked || !stripOn) return;
     // Leave the same gap the row keeps at its ends (the dialog's side padding: 32px
     // on desktop, 20px on the phone sheet), so a look picked at either edge sits
     // where it would at rest instead of against the dialog's border.
@@ -194,7 +197,7 @@ function DialogBody({
     } else if (rect.right + margin > box.right) {
       strip.scrollBy({ left: rect.right + margin - box.right, behavior: "smooth" });
     }
-  }, [tab, current, tabOn]);
+  }, [tab, current, stripOn]);
 
   const closeButton = (
     <button
@@ -247,7 +250,6 @@ function DialogBody({
                 type="button"
                 role="tab"
                 aria-selected={tab === t}
-                disabled={t === "subtitle" && subtitleUnavailable}
                 aria-describedby={
                   t === "subtitle" && subtitleUnavailable ? subtitleReasonId : undefined
                 }
@@ -264,17 +266,23 @@ function DialogBody({
           </div>
 
           <div className="effects-dialog__status">
+            {/* The reason is in the DOM whenever subtitles are unavailable, so the Subtitle
+                tab can always point at it (`aria-describedby`), but only SHOWN on that tab. */}
             {subtitleUnavailable && (
-              <p id={subtitleReasonId} className="effects-dialog__reason">
+              <p
+                id={subtitleReasonId}
+                className="effects-dialog__reason"
+                hidden={tab !== "subtitle"}
+              >
                 {SUBTITLE_UNAVAILABLE_MESSAGES[subtitleState]}
               </p>
             )}
-            {!subtitleUnavailable && tabOn && (
+            {!subtitleBlocked && tabOn && (
               <p className="effects-dialog__reason">
                 {tab === "title" ? "Choose a title effect" : "Choose a subtitle effect"}
               </p>
             )}
-            {!tabOn && (
+            {!subtitleBlocked && !tabOn && (
               <div className="effects-dialog__notice">
                 <span>{tab === "title" ? "Title is off" : "Subtitles are off"}</span>
                 <ToggleSwitch
@@ -295,15 +303,15 @@ function DialogBody({
 
           <div
             ref={stripRef}
-            className={`effects-dialog__strip${tabOn ? "" : " effects-dialog__strip--off"}`}
+            className={`effects-dialog__strip${stripOn ? "" : " effects-dialog__strip--off"}`}
             role="radiogroup"
-            aria-disabled={!tabOn}
+            aria-disabled={!stripOn}
             onDragStart={(event) => event.preventDefault()}
             onPointerDown={(event) => {
               suppressDragClick.current = false;
               const strip = event.currentTarget;
               if (
-                !tabOn ||
+                !stripOn ||
                 event.pointerType !== "mouse" ||
                 event.button !== 0 ||
                 strip.scrollWidth <= strip.clientWidth
@@ -318,7 +326,7 @@ function DialogBody({
             }}
             onPointerMove={(event) => {
               const gesture = drag.current;
-              if (!tabOn || !gesture || gesture.pointerId !== event.pointerId) return;
+              if (!stripOn || !gesture || gesture.pointerId !== event.pointerId) return;
               const distance = event.clientX - gesture.x;
               if (!gesture.moved && Math.abs(distance) < 6) return;
               const strip = event.currentTarget;
@@ -352,7 +360,8 @@ function DialogBody({
               }
             }}
             onKeyDown={(event) => {
-              if (!tabOn || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+              if (!stripOn || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
+                return;
               const buttons = Array.from(
                 event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"),
               );
@@ -382,7 +391,7 @@ function DialogBody({
                     tabIndex={selected ? 0 : -1}
                     aria-checked={selected}
                     aria-label={o.label}
-                    disabled={!tabOn}
+                    disabled={!stripOn}
                     className={`effects-dialog__thumb${selected ? " effects-dialog__thumb--selected" : ""}`}
                     onClick={() => {
                       jumpTo(tab);
@@ -401,7 +410,7 @@ function DialogBody({
                       sample={o.sample}
                       cover={o.thumb}
                       selected={selected}
-                      enabled={open && pageVisible && (tab === "title" || tabOn)}
+                      enabled={open && pageVisible && (tab === "title" || stripOn)}
                       replayKey={selected ? replayKey : 0}
                       failed={failedSamples.has(o.sample)}
                       onError={() =>

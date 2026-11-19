@@ -6311,7 +6311,10 @@ button:disabled {
   width: 288px;
   max-width: 100%;
   box-sizing: border-box;
-  margin-bottom: 12px;
+  /* Centred (product owner, 2026-11-19). `align-self` only does it inside a flex
+     column; the auto side margins do it in any container, so the bar cannot fall
+     back to the left if `.effects-dialog__content` is not (yet) a flex column. */
+  margin: 0 auto 12px;
   padding: 4px;
   border-radius: 55px;
   background: var(--neutral-dark-14);
