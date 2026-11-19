@@ -138,7 +138,7 @@ export function Sidebar() {
       <div className="sidebar__top">
         <div className="sidebar__logo-row">
           {!collapsed && (
-            <Link href={homePath} className="sidebar__logo">
+            <Link href={homePath} className="sidebar__logo" data-gtm="sidemenu-logo">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/assets/brand/ycm_logo_word_ver.svg" alt="MUSE" />
             </Link>
@@ -146,6 +146,8 @@ export function Sidebar() {
           <button
             type="button"
             className="icon-button icon-button--small icon-button--ghost"
+            data-gtm="sidemenu-collapse"
+            data-gtm-variant={collapsed ? "expand" : "collapse"}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-expanded={!collapsed}
             onClick={toggleCollapsed}
@@ -161,6 +163,8 @@ export function Sidebar() {
               href={localePath(locale, item.href)}
               className={`sidebar__nav-item${isActive(item.href) ? " sidebar__nav-item--active" : ""}`}
               aria-current={isActive(item.href) ? "page" : undefined}
+              data-gtm="sidemenu-nav"
+              data-gtm-item={item.key}
               onClick={(e) => onNavClick(e, item.href)}
             >
               <span className="sidebar__nav-icon" style={mask(item.icon)} aria-hidden="true" />
@@ -187,7 +191,11 @@ export function Sidebar() {
 
       {loggedIn && (
         <div className="sidebar__bottom">
-          <Link href={localePath(locale, "/profile")} className="sidebar__profile">
+          <Link
+            href={localePath(locale, "/profile")}
+            className="sidebar__profile"
+            data-gtm="sidemenu-profile"
+          >
             <span className="sidebar__profile-avatar">
               <span
                 className="sidebar__profile-avatar-icon"
@@ -215,6 +223,7 @@ export function Sidebar() {
             <button
               type="button"
               className="button button--medium button--tertiary sidebar__upgrade-button"
+              data-gtm="sidemenu-upgrade"
               onClick={() => openSubscribe()}
             >
               {/* Designer fix, 2026-08-07: missing the `button__label` wrap —

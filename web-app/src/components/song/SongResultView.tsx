@@ -691,6 +691,7 @@ function SongResultViewBody() {
                       <button
                         type="button"
                         className="song-result__cta-secondary"
+                        data-gtm="tool-song-recreate"
                         onClick={recreate}
                       >
                         <DpIcon name="ic_song_ai" className="song-result__cta-secondary-icon" />
