@@ -104,8 +104,14 @@ export function ShortsView() {
         <button type="button" className="shorts-dock__bar" onClick={backToComposer}>
           <DpIcon name="ic_video_shorts" className="shorts-dock__icon" />
           <span className="shorts-dock__text">{SHORTS_PLACEHOLDER}</span>
-          <span className="shorts-dock__go" aria-hidden="true">
-            <DpIcon name="ic_arrow_right" className="shorts-dock__go-icon" />
+          {/* The composer's own send pill (gradient, 54×30 / 48×24 on phones),
+              not a round look-alike — product owner, 2026-11-24. Decorative:
+              the whole bar is the button. */}
+          <span
+            className="agent-composer__create agent-composer__create--icon agent-composer__create--on"
+            aria-hidden="true"
+          >
+            <DpIcon name="ic_arrow_right" className="agent-composer__create-icon" />
           </span>
         </button>
       </div>

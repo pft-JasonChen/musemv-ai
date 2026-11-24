@@ -3421,7 +3421,9 @@
   gap: 10px;
   width: min(720px, 100%);
   height: 52px;
-  padding: 0 7px 0 18px;
+  /* 11px right: centres the 30px send pill in the 52px bar (was 7 for a 38px
+     circle). */
+  padding: 0 11px 0 18px;
   /* The composer card's stroke and glow (`.agent-composer__card`), so the
      docked bar reads as the same input (product owner, 2026-10-30). */
   border: 1px solid var(--color-accent-purple);
@@ -3453,27 +3455,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.shorts-dock__go {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--gradient-mv);
-  color: #fff;
-}
-
-.shorts-dock__go-icon {
-  width: 18px;
-  height: 18px;
-  background-color: currentColor;
-  mask-size: contain;
-  mask-repeat: no-repeat;
-  mask-position: center;
 }
 
 /* ── Mobile create sheet: the AI Shorts option (2026-10-30) ───────────────
