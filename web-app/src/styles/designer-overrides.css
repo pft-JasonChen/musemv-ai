@@ -1378,6 +1378,23 @@
   visibility: hidden;
 }
 
+/* Product owner request, 2026-11-19 — with no secondary line under the title
+   (the genre · mood hint above is hidden), the title is vertically centred on
+   the action buttons instead of sitting at the top of a box sized for two
+   lines. The hidden hint leaves the layout (`display: none`, still out of the
+   accessibility tree), and `.song-result__meta` keeps the height it had with
+   it — the 26px title + 2px gap + the hint's 21px line (14px × the inherited
+   1.5) — so the panel still does not change height between playlist entries,
+   which is what the `visibility` fix above is for. */
+.song-result__meta {
+  justify-content: center;
+  min-height: calc(26px + 2px + 21px);
+}
+
+.song-result__meta > .song-create__title-hint--hidden {
+  display: none;
+}
+
 /* Product owner request, 2026-08-13 — the gap between a field's own label
    row and its input box drops from 24px to 8px on AI Song: Simple's
    "DESCRIBE YOUR SONG" and Custom's "LYRICS / IDEA" (both rely on
@@ -6260,7 +6277,10 @@ button:disabled {
   width: 288px;
   max-width: 100%;
   box-sizing: border-box;
-  margin-bottom: 12px;
+  /* Centred (product owner, 2026-11-19). `align-self` only does it inside a flex
+     column; the auto side margins do it in any container, so the bar cannot fall
+     back to the left if its container is not a flex column. */
+  margin: 0 auto 12px;
   padding: 4px;
   border-radius: 55px;
   background: var(--neutral-dark-14);

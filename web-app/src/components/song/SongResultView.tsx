@@ -508,6 +508,22 @@ export function SongResultView() {
                             <DpIcon name="ic_download" className="song-result__icon" />
                           </button>
                         )}
+                        {/* Order on phones and tablets: Like, Share, Lyrics, Volume —
+                            as the community song page's player (SongDetailView) and
+                            History's rows have it (product owner, 2026-11-19).
+                            Desktop hides this Lyrics button (the lyrics show inline),
+                            so its order there is unchanged: Like, Share, Download,
+                            Volume. */}
+                        {hasLyrics && (
+                          <button
+                            type="button"
+                            className="song-result__icon-btn song-result__icon-btn--lyrics"
+                            onClick={() => setLyricsOpen(true)}
+                            aria-label="Lyrics"
+                          >
+                            <DpIcon name="ic_singing_mic" className="song-result__icon" />
+                          </button>
+                        )}
                         <div
                           className={`song-result__volume${
                             volumePopup.open ? " song-result__volume--open" : ""
@@ -537,16 +553,6 @@ export function SongResultView() {
                             />
                           </button>
                         </div>
-                        {hasLyrics && (
-                          <button
-                            type="button"
-                            className="song-result__icon-btn song-result__icon-btn--lyrics"
-                            onClick={() => setLyricsOpen(true)}
-                            aria-label="Lyrics"
-                          >
-                            <DpIcon name="ic_singing_mic" className="song-result__icon" />
-                          </button>
-                        )}
                       </div>
                     </div>
 
