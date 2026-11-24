@@ -548,6 +548,30 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
                   >
                     <DpIcon name="ic_add" className="agent-composer__add-icon" />
                   </button>
+                  {inRecipe && recipe && (
+                    // The loaded skill's name with an ✕ that unselects it
+                    // (Figma 6096:92356, product owner 2026-11-24): the skill
+                    // pill below shows it is on, this says so up here and is
+                    // the way to take it back out.
+                    <div className="agent-song__style-group">
+                      <span className="agent-composer__skill-name">
+                        {recipe === "dance" ? "Dance Video" : "UGC Talking Review"}
+                      </span>
+                      <button
+                        type="button"
+                        className="agent-song__style-x"
+                        aria-label={`Remove ${recipe === "dance" ? "Dance Video" : "UGC Talking Review"}`}
+                        onClick={() => {
+                          toggleRecipe(recipe);
+                          requestAnimationFrame(() =>
+                            inputRef.current?.focus({ preventScroll: true }),
+                          );
+                        }}
+                      >
+                        <DpIcon name="ic_close" className="agent-song__style-x-icon" />
+                      </button>
+                    </div>
+                  )}
                   {!inRecipe && (
                     <button
                       type="button"

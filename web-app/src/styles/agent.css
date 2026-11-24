@@ -13,20 +13,36 @@
 
 /* ── Guide hint (handoff §3.1) ─────────────────────────────────────────── */
 
-.agent-hint {
+/* Tap hint (handoff §3.1). Product owner, 2026-11-24: the dot is WHITE and a
+   touch smaller than the original purple one, but keeps the original
+   breathing — it swells and shrinks, 1.4s a cycle, 600ms after the target
+   becomes the next step. (A ripple ring was tried and rejected.) The restart-
+   on-pointer-down remount (GuideHint) replays the delay whenever the user acts.
+   One rule feeds both the React dot and the recipe chip's ::after so they
+   cannot drift apart. The soft dark shadow keeps the white dot visible on light
+   surfaces too. */
+.agent-hint,
+.agent-recipe__chip[data-hint]::after {
+  --hint-size: 16px;
   position: absolute;
   left: 50%;
   top: 50%;
   z-index: 5;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
+  width: var(--hint-size);
+  height: var(--hint-size);
+  margin: calc(var(--hint-size) / -2) 0 0 calc(var(--hint-size) / -2);
   border-radius: 50%;
-  background: rgba(168, 85, 247, 0.55);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
   pointer-events: none;
   opacity: 0;
-  animation: agent-hint-in 200ms ease-out 600ms forwards, agent-hint-pulse 1.4s ease-in-out 800ms infinite;
+  animation:
+    agent-hint-in 200ms ease-out 600ms forwards,
+    agent-hint-pulse 1.4s ease-in-out 800ms infinite;
+}
+
+.agent-recipe__chip[data-hint]::after {
+  content: "";
 }
 
 @keyframes agent-hint-in {
@@ -46,19 +62,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .agent-hint {
+  .agent-hint,
+  .agent-recipe__chip[data-hint]::after {
     animation: agent-hint-in 200ms ease-out 600ms forwards;
   }
 }
 
-/* Smaller on phones (product owner, 2026-11-02); the recipe chip's hint
-   matches it below, after its own rule. */
+/* Smaller on phones (product owner, 2026-11-02). */
 @media (max-width: 767px) {
-  .agent-hint {
-    width: 16px;
-    height: 16px;
-    margin: -8px 0 0 -8px;
-    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+  .agent-hint,
+  .agent-recipe__chip[data-hint]::after {
+    --hint-size: 12px;
   }
 }
 
@@ -363,6 +377,40 @@
   min-width: 0;
 }
 
+/* A loaded skill's name and its ✕ after `+` (Figma Agent Input/Style Picker,
+   6259:66532): plain 14px text, no pill, 4px from a 24px remove button that
+   reuses the Song/MV style ✕. It is a label, not a button — the ✕ unselects. */
+.agent-composer__tools .agent-song__style-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.agent-composer__skill-name {
+  min-width: 0;
+  padding: 4px 0;
+  overflow: hidden;
+  color: var(--neutral-dark-100);
+  font-size: var(--font-body-m);
+  font-weight: var(--font-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .agent-composer__tools .agent-song__style-group {
+    animation: agent-skill-name-in 200ms ease-out both;
+  }
+}
+
+@keyframes agent-skill-name-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+}
+
 /* 4px on phones (Figma 5582:199168). */
 @media (max-width: 767px) {
   .agent-composer__tools {
@@ -480,32 +528,14 @@
   margin-right: auto;
 }
 
-/* The open group's pill (Figma Skill Pill, State=Active): the glass pill with
-   the MV gradient as a 1px border, its label and an ✕ 8px apart. The border
-   is a masked layer, not `border-image` (which drops the radius) and not a
-   gradient under a translucent fill (which would show through it). */
+/* The open group's pill (Figma Skill Pill, State=Active; 6096:92356): the
+   glass pill with a solid purple 1px stroke (product owner, 2026-11-24 — was
+   the MV gradient as a masked border layer), its label and an ✕ 8px apart. */
 .agent-composer__skill--open {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border-color: transparent;
-}
-
-.agent-composer__skill--open::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  padding: 1px;
-  border-radius: inherit;
-  background: var(--gradient-mv);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-  pointer-events: none;
+  border-color: var(--color-accent-purple, #a855f7);
 }
 
 .agent-composer__skill-close {
@@ -517,21 +547,11 @@
   mask-position: center;
 }
 
-/* Opening a group: its gradient border and ✕ fade in while the pill slides
-   (the slide itself is AgentComposer's FLIP). */
+/* Opening a group: its ✕ fades in while the pill slides (the slide itself is
+   AgentComposer's FLIP). */
 @media (prefers-reduced-motion: no-preference) {
-  .agent-composer__skill--open::before {
-    animation: agent-skill-open 220ms ease-out both;
-  }
-
   .agent-composer__skill-close {
     animation: agent-skill-close-in 220ms ease-out 60ms both;
-  }
-}
-
-@keyframes agent-skill-open {
-  from {
-    opacity: 0;
   }
 }
 
@@ -1100,32 +1120,6 @@
 .agent-recipe__text .agent-recipe__tok {
   margin: 0 2px;
   user-select: none;
-}
-
-/* Guide dot on a chip the editor owns (not a React node, so no <GuideHint>). */
-.agent-recipe__chip[data-hint]::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
-  border-radius: 50%;
-  background: rgba(168, 85, 247, 0.55);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
-  pointer-events: none;
-  opacity: 0;
-  animation: agent-hint-in 200ms ease-out 600ms forwards, agent-hint-pulse 1.4s ease-in-out 800ms infinite;
-}
-
-@media (max-width: 767px) {
-  .agent-recipe__chip[data-hint]::after {
-    width: 16px;
-    height: 16px;
-    margin: -8px 0 0 -8px;
-    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
-  }
 }
 
 .agent-recipe__chip-icon {
