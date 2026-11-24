@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MvSheet } from "./MvSheet";
 import { DpIcon } from "@/components/ui/DpIcon";
@@ -8,6 +9,9 @@ import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import { MY_SONGS, SAMPLE_SONGS, formatDuration } from "@/lib/mv/mock";
 import type { Song } from "@/lib/mv/types";
 import { useDemoFlag } from "@/components/demo/useDemo";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { localePath } from "@/lib/i18n/config";
+import { creationHref, useOpenCreation } from "@/components/history/useOpenCreation";
 
 interface Props {
   open: boolean;
@@ -45,9 +49,17 @@ interface Props {
  * -subtitle` classes verbatim (identical type spec) rather than duplicating
  * them under a new name.
  *
+ * ── WHO PLAYS, WHO NAVIGATES (product owner, 2026-11-24) ────────────────────
+ *
+ * On MY SONGS only the ALBUM ART plays or pauses the preview (a real button,
+ * "Play <title>") and the song's name + duration are one link to the Now
+ * song's own result page — the one with its lyrics (`/song/result?id=`): art plays, text opens the song, "Use" picks
+ * it. SAMPLE SONGS have no such page, so they are unchanged — the whole
+ * row plays and nothing links.
+ *
  * ── WHAT DP HAS THAT WA DID NOT ─────────────────────────────────────────────
  *
- * Row-click audio preview, with the art swapping to a pause icon. Ported
+ * Audio preview, with the art swapping to a pause icon. Ported
  * through `useAudioPlayer`, NOT DP's raw `audio.play()`: an un-gestured play()
  * rejects with `NotAllowedError`, and an uncaught rejection prints to the
  * console, which the R-2 specs assert is empty. Durations come from WA's own
@@ -55,6 +67,8 @@ interface Props {
  * probes — the data already has them, so the probes buy nothing.
  */
 export function ChooseSongModal({ open, onClose, onPick }: Props) {
+  const { locale } = useLocale();
+  const openCreation = useOpenCreation();
   const [tab, setTab] = useState<"my" | "sample">("my");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
@@ -85,7 +99,7 @@ export function ChooseSongModal({ open, onClose, onPick }: Props) {
     setTab(next);
   }
 
-  function handleRowClick(song: Song) {
+  function togglePreview(song: Song) {
     if (activeId === song.id) preview.toggle();
     else setActiveId(song.id);
   }
@@ -135,37 +149,81 @@ export function ChooseSongModal({ open, onClose, onPick }: Props) {
           {songs.map((song) => {
             const active = activeId === song.id || focusedId === song.id;
             const playing = activeId === song.id && preview.playing;
+            // Only a library song has a result page to open (product
+            // owner, 2026-11-24): its art plays, its text links. A sample song
+            // keeps the original row — the whole row plays, nothing links.
+            const linked = song.source === "library";
+            const artInner = (
+              <>
+                <img src={song.art} alt="" />
+                <span className="mv-song-picker__art-scrim" aria-hidden="true" />
+                <DpIcon
+                  name={playing ? "ic_pause" : "ic_play"}
+                  className="mv-song-picker__art-icon"
+                />
+              </>
+            );
+            const infoInner = (
+              <>
+                <span className="mv-song-picker__title">{song.title}</span>
+                <span className="mv-song-picker__duration">
+                  {playing ? (
+                    <>
+                      <span className="mv-song-picker__duration-current">
+                        {formatDuration(Math.floor(preview.currentTime))}
+                      </span>
+                      <span> / {formatDuration(song.durationSec)}</span>
+                    </>
+                  ) : (
+                    formatDuration(song.durationSec)
+                  )}
+                </span>
+              </>
+            );
             return (
               <div
                 key={song.id}
                 className={`mv-song-picker__row${active ? " mv-song-picker__row--active" : ""}`}
-                onClick={() => handleRowClick(song)}
+                onClick={linked ? undefined : () => togglePreview(song)}
                 onFocus={() => setFocusedId(song.id)}
                 onBlur={() => setFocusedId((id) => (id === song.id ? null : id))}
               >
-                <span className="mv-song-picker__art">
-                  <img src={song.art} alt="" />
-                  <span className="mv-song-picker__art-scrim" aria-hidden="true" />
-                  <DpIcon
-                    name={playing ? "ic_pause" : "ic_play"}
-                    className="mv-song-picker__art-icon"
-                  />
-                </span>
-                <span className="mv-song-picker__info">
-                  <span className="mv-song-picker__title">{song.title}</span>
-                  <span className="mv-song-picker__duration">
-                    {playing ? (
-                      <>
-                        <span className="mv-song-picker__duration-current">
-                          {formatDuration(Math.floor(preview.currentTime))}
-                        </span>
-                        <span> / {formatDuration(song.durationSec)}</span>
-                      </>
-                    ) : (
-                      formatDuration(song.durationSec)
-                    )}
-                  </span>
-                </span>
+                {linked ? (
+                  <button
+                    type="button"
+                    className="mv-song-picker__art"
+                    aria-label={`${playing ? "Pause" : "Play"} ${song.title}`}
+                    onClick={() => togglePreview(song)}
+                  >
+                    {artInner}
+                  </button>
+                ) : (
+                  <span className="mv-song-picker__art">{artInner}</span>
+                )}
+                {linked ? (
+                  <Link
+                    href={localePath(locale, creationHref({ id: song.id, kind: "song" }))}
+                    className="mv-song-picker__info"
+                    onClick={(e) => {
+                      // Seed-then-navigate, as every other creation link does
+                      // (`useOpenCreation`): the result page guards on song
+                      // flow state, and that is also what fills its lyrics.
+                      e.preventDefault();
+                      preview.pause();
+                      openCreation({
+                        id: song.id,
+                        kind: "song",
+                        title: song.title,
+                        thumb: song.art,
+                        resultUrl: song.url,
+                      });
+                    }}
+                  >
+                    {infoInner}
+                  </Link>
+                ) : (
+                  <span className="mv-song-picker__info">{infoInner}</span>
+                )}
                 <button
                   type="button"
                   className="mv-song-picker__use"
