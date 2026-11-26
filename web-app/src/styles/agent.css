@@ -828,9 +828,9 @@
 }
 
 /* Title → row follows Home's rails at every width (product owner,
-   2026-11-26): 24px desktop (above), 16px tablet (the shared tablet rule
-   further down lists `.agent-inspo`), 12px phone (here, as `.new-mvs`,
-   `.top-picks` and `.new-songs` get it in designer-overrides.css). */
+   2026-11-26): 16px desktop and tablet (the shared rules further down
+   list `.agent-inspo`), 12px phone (here, as `.new-mvs`, `.top-picks` and
+   `.new-songs` get it in designer-overrides.css). */
 @media (max-width: 767px) {
   .agent-inspo {
     gap: 12px;
@@ -1303,6 +1303,18 @@
    owner, 2026-10-30) — between the phone's 12 and the desktop's 24. The
    DP sections' 24px is gated verbatim, hence here. */
 @media (min-width: 768px) and (max-width: 1023px) {
+  .shorts-tpl,
+  .home-page > .agent-inspo,
+  .home-page > .new-mvs,
+  .home-page > .top-picks,
+  .home-page > .new-songs {
+    gap: 16px;
+  }
+}
+
+/* Desktop: 16px (product owner, 2026-11-26; was DP's 24px). Same list as the
+   tablet rule above, so every Home section keeps one rhythm per breakpoint. */
+@media (min-width: 1024px) {
   .shorts-tpl,
   .home-page > .agent-inspo,
   .home-page > .new-mvs,
