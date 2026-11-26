@@ -29,6 +29,7 @@ import { pickIdea } from "@/lib/mv/songIdeas";
 import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { HeroBannerSectionV3, type HeroCard } from "./HeroBannerSectionV3";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { HERO_ITEMS } from "./heroItems";
 import { DanceRecipeEditor, RecipeEditor } from "./RecipeEditor";
 import { MvInput, type MvPick } from "./MvInput";
@@ -121,7 +122,16 @@ const MODES: { id: Mode; label: string; icon: string; placeholder: string; href?
   },
 ];
 
-export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts" } = {}) {
+export function AgentComposer({
+  variant = "home",
+  onModeChange,
+}: {
+  variant?: "home" | "shorts";
+  /** Called when the user switches to a DIFFERENT tab (never on mount, never
+   *  on a click on the tab already open) — Home uses it to replay the
+   *  fade-up on every section below the tab bar. */
+  onModeChange?: () => void;
+} = {}) {
   const solo = variant === "shorts";
   const router = useRouter();
   const { locale } = useLocale();
@@ -132,8 +142,10 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
     solo ? "shorts" : (rememberedMode ?? "shorts"),
   );
   const setMode = (m: Mode) => {
+    if (m === mode) return;
     if (!solo) rememberMode(m);
     setModeState(m);
+    onModeChange?.();
   };
   const { songCompose, patchSongCompose } = useSongFlow();
   const { compose, patchCompose } = useMvFlow();
@@ -708,24 +720,31 @@ export function AgentComposer({ variant = "home" }: { variant?: "home" | "shorts
         />
       </section>
       {!solo && mode !== "shorts" && (
-        // Keyed by tab: the strip reads its catalog once at mount (loop maths).
-        <HeroBannerSectionV3
-          key={mode}
-          items={INSPIRATION[mode]}
-          hrefFor={mode === "song" ? (i) => `/song/play?id=${i.id}` : undefined}
-          compact
-          square={mode === "song"}
-          // "Use Style", not "Create": the composer's own Create is the button that
-          // actually starts a job; this one only loads the style into the prompt.
-          ctaLabel="Use Style"
-          onCta={applyStyle}
-          // Watch / hear before choosing (product owner, 2026-11-02): an MV
-          // card opens a preview with sound, a Song cover's ▶ plays the song
-          // in Home's preview bar (Top Picks owns it, `songPreviewBus`).
-          onPreview={mode === "mv" ? setPreview : undefined}
-          onPlay={mode === "song" ? (c) => requestSongPreview(c.id) : undefined}
-          playingId={songPlaying}
-        />
+        // A titled section like the rails below it (product owner, 2026-11-26):
+        // the same `SectionHeader`, the row starting at the content's left
+        // edge. Keyed by tab: the strip reads its catalog once at mount (loop
+        // maths).
+        <section key={mode} className="agent-inspo">
+          <SectionHeader
+            title={mode === "song" ? "Explore Song Styles" : "Explore Music Video Styles"}
+          />
+          <HeroBannerSectionV3
+            items={INSPIRATION[mode]}
+            hrefFor={mode === "song" ? (i) => `/song/play?id=${i.id}` : undefined}
+            compact
+            square={mode === "song"}
+            // "Use Style", not "Create": the composer's own Create is the button that
+            // actually starts a job; this one only loads the style into the prompt.
+            ctaLabel="Use Style"
+            onCta={applyStyle}
+            // Watch / hear before choosing (product owner, 2026-11-02): an MV
+            // card opens a preview with sound, a Song cover's ▶ plays the song
+            // in Home's preview bar (Top Picks owns it, `songPreviewBus`).
+            onPreview={mode === "mv" ? setPreview : undefined}
+            onPlay={mode === "song" ? (c) => requestSongPreview(c.id) : undefined}
+            playingId={songPlaying}
+          />
+        </section>
       )}
       {!solo && (
         <StylePreviewDialog

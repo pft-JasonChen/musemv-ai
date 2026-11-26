@@ -10,6 +10,7 @@ import { localePath } from "@/lib/i18n/config";
 import { IconButton } from "@/components/ui/IconButton";
 import { HoverCta } from "@/components/ui/HoverCta";
 import { DpIcon } from "@/components/ui/DpIcon";
+import { useEdgeFade } from "@/components/agent/useEdgeFade";
 import { HERO_ITEMS, type HeroItem } from "./heroItems";
 
 /**
@@ -127,18 +128,24 @@ export function HeroBannerSectionV3({
 } = {}) {
   const REAL = items.length;
   // K clones on each side: domIndex 0..K-1 = clones of the last K real cards,
-  // K..K+REAL-1 = real cards, then clones of the first K. DP uses K = 1; the
-  // square Song strip shows ~6 narrow cards, so the centred card needs more
-  // neighbours on its left than one clone, or the strip starts half empty.
-  // The compact Music Video strip too, since its cards went to a fixed 320px
-  // (2026-11-02): on a wide screen one clone left the strip's left end empty.
-  const K = square || compact ? 4 : 1;
-  const PADDED_ITEMS = [...items.slice(-K), ...items, ...items.slice(0, K)];
+  // K..K+REAL-1 = real cards, then clones of the first K. DP uses K = 1 for the
+  // Home hero, which loops. The compact inspiration strips do NOT loop any
+  // more (product owner, 2026-11-26): they are a plain left-aligned row like
+  // Home's other rails — it starts at the first card, has no clones, and its
+  // Previous / Next arrows appear only while there is something to scroll to
+  // (a looping row always had both, so a left arrow showed at the very start).
+  const K = compact ? 0 : 1;
+  const PADDED_ITEMS = [...(K ? items.slice(-K) : []), ...items, ...items.slice(0, K)];
   const router = useRouter();
   const { locale } = useLocale();
   const { requireLogin } = useAuth();
 
   const trackRef = useRef<HTMLDivElement>(null);
+  // The compact row fades its edges only where more cards continue (the same
+  // hook as every other rail); it is attached to the same element as `trackRef`.
+  const fadeRef = useEdgeFade<HTMLDivElement>();
+  // Compact only: whether there is anything to scroll to either way.
+  const [edges, setEdges] = useState({ back: false, forward: true });
   const domIndexRef = useRef(K);
   const stepRef = useRef(0);
   const timerRef = useRef<number | undefined>(undefined);
@@ -163,6 +170,14 @@ export function HeroBannerSectionV3({
   // owner, 2026-11-02): an MV is heard in its preview dialog. Only the home
   // hero's centred card can be unmuted.
   const isMuted = (isActive: boolean) => (compact || !isActive ? true : muted);
+
+  function measureEdges() {
+    const track = trackRef.current;
+    if (!compact || !track) return;
+    const back = track.scrollLeft > 2;
+    const forward = track.scrollWidth - track.clientWidth - track.scrollLeft > 2;
+    setEdges((prev) => (prev.back === back && prev.forward === forward ? prev : { back, forward }));
+  }
 
   function measureVisible() {
     const track = trackRef.current;
@@ -220,12 +235,24 @@ export function HeroBannerSectionV3({
       : 0;
   }
 
-  function scrollToIndex(domIndex: number, animated: boolean) {
+  function scrollToIndex(index: number, animated: boolean) {
     const track = trackRef.current;
     if (!track) return;
+    // A finite row has no card before the first or after the last.
+    const domIndex = compact ? Math.max(0, Math.min(index, PADDED_ITEMS.length - 1)) : index;
     domIndexRef.current = domIndex;
     setActiveDomIndex(domIndex);
     track.scrollTo({ left: domIndex * stepRef.current, behavior: animated ? "smooth" : "instant" });
+  }
+
+  // One card per click. The looping hero steps from its tracked index; a finite
+  // row steps from where it really is, so a click that is clamped at an end
+  // cannot leave the tracked index ahead of the scroll position.
+  function stepBy(direction: -1 | 1) {
+    const from = compact
+      ? Math.round((trackRef.current?.scrollLeft ?? 0) / (stepRef.current || 1))
+      : domIndexRef.current;
+    scrollToIndex(from + direction, true);
   }
 
   function startAuto() {
@@ -240,6 +267,7 @@ export function HeroBannerSectionV3({
   // Fires for the auto-advance's own smooth scroll AND for any real user
   // wheel/trackpad/drag — debounced so it only runs once scrolling has stopped.
   function handleScroll() {
+    measureEdges();
     window.clearTimeout(settleTimeoutRef.current);
     settleTimeoutRef.current = window.setTimeout(handleSettle, SETTLE_MS);
   }
@@ -255,8 +283,10 @@ export function HeroBannerSectionV3({
     measureVisible();
     // Landed on a clone — pixel-identical to its real equivalent, so jumping
     // to it with no transition is invisible.
-    if (nearest >= REAL + K) scrollToIndex(nearest - REAL, false);
-    else if (nearest < K) scrollToIndex(nearest + REAL, false);
+    if (!compact) {
+      if (nearest >= REAL + K) scrollToIndex(nearest - REAL, false);
+      else if (nearest < K) scrollToIndex(nearest + REAL, false);
+    }
     // Re-arm fresh after ANY settle, so a manual scroll is not immediately
     // overridden by an auto-advance that was already mid-countdown.
     startAuto();
@@ -266,11 +296,13 @@ export function HeroBannerSectionV3({
     stepRef.current = measureStep();
     scrollToIndex(K, false);
     measureVisible();
+    measureEdges();
     startAuto();
     function handleResize() {
       stepRef.current = measureStep();
       scrollToIndex(domIndexRef.current, false);
       measureVisible();
+      measureEdges();
     }
     function handleVisibility() {
       if (document.hidden) window.clearInterval(timerRef.current);
@@ -296,17 +328,26 @@ export function HeroBannerSectionV3({
     <section
       className={`hero-banner-v3${compact ? " hero-banner-v3--compact" : ""}${square ? " hero-banner-v3--square" : ""}`}
     >
-      <div className="hero-banner-v3__previous">
-        <IconButton
-          size="large"
-          variant="ghost"
-          icon="ic_arrow_left"
-          label="Previous"
-          onClick={() => scrollToIndex(domIndexRef.current - 1, true)}
-        />
-      </div>
+      {(!compact || edges.back) && (
+        <div className="hero-banner-v3__previous">
+          <IconButton
+            size="large"
+            variant="ghost"
+            icon="ic_arrow_left"
+            label="Previous"
+            onClick={() => stepBy(-1)}
+          />
+        </div>
+      )}
 
-      <div className="hero-banner-v3__track" ref={trackRef} onScroll={handleScroll}>
+      <div
+        className={`hero-banner-v3__track${compact ? " edge-fade" : ""}`}
+        ref={(el) => {
+          trackRef.current = el;
+          fadeRef.current = el;
+        }}
+        onScroll={handleScroll}
+      >
         {PADDED_ITEMS.map((item, domIndex) => {
           const isActive = domIndex === activeDomIndex;
           const plays = isActive || (playVisible && visible.has(domIndex));
@@ -425,15 +466,17 @@ export function HeroBannerSectionV3({
         })}
       </div>
 
-      <div className="hero-banner-v3__next">
-        <IconButton
-          size="large"
-          variant="ghost"
-          icon="ic_arrow_right"
-          label="Next"
-          onClick={() => scrollToIndex(domIndexRef.current + 1, true)}
-        />
-      </div>
+      {(!compact || edges.forward) && (
+        <div className="hero-banner-v3__next">
+          <IconButton
+            size="large"
+            variant="ghost"
+            icon="ic_arrow_right"
+            label="Next"
+            onClick={() => stepBy(1)}
+          />
+        </div>
+      )}
     </section>
   );
 }

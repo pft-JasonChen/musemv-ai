@@ -90,9 +90,18 @@ export function HomeView() {
   const [activeSongSection, setActiveSongSection] = useState<"top-picks" | "new-songs" | null>(
     null,
   );
+  // Tab-switch fade-up (product owner, 2026-11-26): every switch bumps this and
+  // the page flips between two identical keyframes ("a" / "b", agent.css) so the
+  // animation restarts WITHOUT remounting a section — a remount would reload the
+  // rails' media and reset their scroll. Absent until the first switch, so the
+  // page load itself does not animate.
+  const [tabSwitches, setTabSwitches] = useState(0);
 
   return (
-    <div className="home-page">
+    <div
+      className="home-page"
+      data-tab-switch={tabSwitches === 0 ? undefined : tabSwitches % 2 === 1 ? "a" : "b"}
+    >
       {/* feature/video-agent-home: the Agent composer replaces both tool
           selectors, and the hero filmstrip now lives INSIDE it as the Music
           Video tab's inspiration row (compact, "Use this style" fills the
@@ -101,7 +110,7 @@ export function HomeView() {
           composer. `ToolSelectorSection(V3)` and the phone
           `HeroBannerSection` stay in the tree until the design is signed off,
           so reverting is a small change. */}
-      <AgentComposer />
+      <AgentComposer onModeChange={() => setTabSwitches((n) => n + 1)} />
       <NewMVsSection />
       <TopPicksSection
         suspend={activeSongSection === "new-songs"}

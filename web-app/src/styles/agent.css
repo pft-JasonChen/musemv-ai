@@ -165,6 +165,58 @@
   }
 }
 
+/* ── Tab-switch fade-up (product owner, 2026-11-26) ───────────────────────────
+   Switching AI Shorts / Music Video / Song fades the sections BELOW the Agent
+   input up into place: the style strip (Music Video / Song), the skills
+   catalogue (AI Shorts), and Home's three rails. The heading, the tab bar, the
+   Agent input and its skill pills stay still (product owner, same day — they
+   are the controls the user is working in). The three numbers to tune are the
+   custom properties just below — change them here and nothing else.
+
+     --tab-fade-duration   how long each section takes to arrive
+     --tab-fade-distance   how far up it travels (it starts this far BELOW)
+     --tab-fade-easing     the curve, as cubic-bezier(x1, y1, x2, y2)
+
+   Current: 400ms, 32px, cubic-bezier(0.22, 1, 0.36, 1) — an ease-out that
+   covers most of the distance early and settles softly.
+
+   HomeView sets `data-tab-switch="a"` / `"b"` on `.home-page`, alternating on
+   each switch: two identically-shaped keyframes under different names are what
+   restart a CSS animation on an element that never unmounts. No attribute
+   means no animation, so a page load does not play it. No fill mode: when it
+   ends the section returns to its normal, transform-free style. */
+.home-page {
+  --tab-fade-duration: 400ms;
+  --tab-fade-distance: 32px;
+  --tab-fade-easing: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-page[data-tab-switch="a"]
+    :is(.agent-inspo, .shorts-tpl, .new-mvs, .top-picks, .new-songs) {
+    animation: tab-fade-up-a var(--tab-fade-duration) var(--tab-fade-easing);
+  }
+
+  .home-page[data-tab-switch="b"]
+    :is(.agent-inspo, .shorts-tpl, .new-mvs, .top-picks, .new-songs) {
+    animation: tab-fade-up-b var(--tab-fade-duration) var(--tab-fade-easing);
+  }
+}
+
+@keyframes tab-fade-up-a {
+  from {
+    opacity: 0;
+    transform: translateY(var(--tab-fade-distance));
+  }
+}
+
+@keyframes tab-fade-up-b {
+  from {
+    opacity: 0;
+    transform: translateY(var(--tab-fade-distance));
+  }
+}
+
 /* ── Phone Home: the colourflow video and the header over it ───────────────
    Figma 5582:199130 (product owner, 2026-10-30): Home plays the same looping
    background on phones as on desktop, behind the header and the composer,
@@ -756,6 +808,56 @@
   }
 }
 
+/* The Music Video / Song inspiration section (product owner, 2026-11-26): a
+   `SectionHeader` over the strip, 24px apart like the other Home rails
+   (`.new-mvs`), and the strip LEFT-aligned — its first card starts where the
+   title and the rails below start — instead of the Home hero's centred
+   filmstrip. Three things change on the compact strips only, all at (0,3,0) so
+   they beat the Song strip's own per-breakpoint centring padding without
+   caring about source order:
+   · no centring padding, so the first card sits at the left edge;
+   · cards snap to `start` rather than `center`;
+   · the row is finite (no loop clones — HeroBannerSectionV3), so it fades and
+     shows its Previous / Next arrows only where there is more to scroll to. */
+.agent-inspo {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Title → row follows Home's rails at every width (product owner,
+   2026-11-26): 24px desktop (above), 16px tablet (the shared tablet rule
+   further down lists `.agent-inspo`), 12px phone (here, as `.new-mvs`,
+   `.top-picks` and `.new-songs` get it in designer-overrides.css). */
+@media (max-width: 767px) {
+  .agent-inspo {
+    gap: 12px;
+  }
+}
+
+.hero-banner-v3.hero-banner-v3--compact .hero-banner-v3__track {
+  padding-inline: 0;
+}
+
+/* DP's own both-ends fade is the track's base mask. The compact row is a plain
+   finite rail now, so it fades like every other one (`.edge-fade[data-fade]`,
+   set by `useEdgeFade`): only the end that has more cards, none at all when
+   everything fits — which is what this switches DP's default off for. */
+.hero-banner-v3--compact .hero-banner-v3__track:not(
+    [data-fade="l"],
+    [data-fade="r"],
+    [data-fade="lr"]
+  ) {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.hero-banner-v3.hero-banner-v3--compact .hero-banner-v3__card {
+  scroll-snap-align: start;
+}
+
 /* Song inspiration: square album covers. Narrower cards, so
    the track's centring padding is recomputed from the same width. */
 /* A fixed square, shorter than the Music Video strip's 16:9 cards (product
@@ -1202,6 +1304,7 @@
    DP sections' 24px is gated verbatim, hence here. */
 @media (min-width: 768px) and (max-width: 1023px) {
   .shorts-tpl,
+  .home-page > .agent-inspo,
   .home-page > .new-mvs,
   .home-page > .top-picks,
   .home-page > .new-songs {
