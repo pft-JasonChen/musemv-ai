@@ -787,7 +787,11 @@ export function MvRoom() {
                       variant="community"
                       title={mv.title}
                       coverImage={mv.thumb}
-                      username={mv.username}
+                      // My own creations: no username (it is always me) and
+                      // the date it was made instead (Figma 1367:34073, product
+                      // owner 2026-11-26). A just-made one has no stored date —
+                      // `/mv/result` calls it "just now" and so does this.
+                      date={mv.date ?? "Just now"}
                       plays={mv.plays}
                       likes={mv.likes}
                       shares={mv.shares}

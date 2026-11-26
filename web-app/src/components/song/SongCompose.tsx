@@ -620,7 +620,10 @@ export function SongCompose() {
                       variant="community"
                       title={song.title}
                       coverImage={song.thumb}
-                      username={song.username}
+                      // My own creations: no username (it is always me) and
+                      // the date it was made instead (Figma 1367:34073, product
+                      // owner 2026-11-26). A just-made one has no stored date.
+                      date={song.date ?? "Just now"}
                       plays={song.plays}
                       likes={song.likes}
                       shares={song.shares}
