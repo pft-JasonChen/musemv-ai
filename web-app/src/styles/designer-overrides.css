@@ -6894,3 +6894,22 @@ button:disabled {
 .card__cover-video--live {
   opacity: 1;
 }
+
+/* Product owner, 2026-11-26 — a community row's optional third line: when the
+   creation was made (`ListItem`'s `date`, used by the "My Creations" rails on
+   /mv/room and /song/create in place of the username). Figma 1367:34073:
+   Caption/M — 11px / 16px Medium, -0.11px, Neutral/Dark/54, one line that
+   ellipsizes. DP's body gap is 3px; Figma puts 4px between the stats and the
+   date, hence the 1px. DP's list-item CSS has no such element at all. */
+.list-item__date {
+  overflow: hidden;
+  margin: 1px 0 0;
+  color: var(--neutral-dark-54);
+  font-family: var(--font-family-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  line-height: 16px;
+  letter-spacing: -0.11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

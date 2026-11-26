@@ -58,6 +58,7 @@ export function ListItem({
   cta = false,
   username,
   avatarUrl,
+  date,
   plays = 0,
   likes = 0,
   shares = 0,
@@ -81,6 +82,11 @@ export function ListItem({
   username?: string;
   /** Falls back to a placeholder icon — most users will not have uploaded one. */
   avatarUrl?: string;
+  /** community only. A third line under the stats — when a creation was made
+   *  (Figma "My Creations" rows, 1367:34073: `2026-06-05`, Caption/M). The
+   *  rails that list the user's OWN creations pass this and omit `username`;
+   *  everything else leaves it out and the row is unchanged. */
+  date?: string;
   plays?: number;
   likes?: number;
   shares?: number;
@@ -211,6 +217,7 @@ export function ListItem({
                 {formatCount(shares)}
               </span>
             </div>
+            {date && <p className="list-item__date">{date}</p>}
           </div>
         )}
       </div>
