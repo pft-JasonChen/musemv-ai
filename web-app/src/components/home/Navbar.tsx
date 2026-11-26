@@ -56,6 +56,7 @@ function LanguagePicker() {
       <button
         type="button"
         className="button button--medium button--tertiary"
+        data-gtm="header-language"
         onClick={() => setIsOpen((open) => !open)}
       >
         <span className="button__label">{LOCALE_NAMES[locale].native}</span>
@@ -69,6 +70,8 @@ function LanguagePicker() {
               <button
                 type="button"
                 className={`navbar__lang-option${loc === locale ? " navbar__lang-option--active" : ""}`}
+                data-gtm="header-language-option"
+                data-gtm-item={loc}
                 onClick={() => {
                   setLocale(loc);
                   setIsOpen(false);
@@ -109,6 +112,7 @@ export function Navbar() {
             <button
               type="button"
               className="credit-balance"
+              data-gtm="header-credits"
               aria-label={t("profile.credits")}
               onClick={() => openBuyCredits()}
             >
@@ -119,7 +123,12 @@ export function Navbar() {
               <DpIcon name="ic_add" className="credit-balance__add" />
             </button>
             {!subscribed && (
-              <button type="button" className="upgrade-button" onClick={() => openSubscribe()}>
+              <button
+                type="button"
+                className="upgrade-button"
+                data-gtm="header-upgrade"
+                onClick={() => openSubscribe()}
+              >
                 <DpIcon name="ic_crown" className="upgrade-button__icon" />
                 {t("nav.upgrade")}
               </button>
@@ -128,10 +137,20 @@ export function Navbar() {
         ) : (
           <>
             <LanguagePicker />
-            <button type="button" className="button button--medium button--tertiary" onClick={() => openSignIn()}>
+            <button
+              type="button"
+              className="button button--medium button--tertiary"
+              data-gtm="header-login"
+              onClick={() => openSignIn()}
+            >
               <span className="button__label">Login</span>
             </button>
-            <button type="button" className="button button--medium button--primary" onClick={startForFree}>
+            <button
+              type="button"
+              className="button button--medium button--primary"
+              data-gtm="header-start-free"
+              onClick={startForFree}
+            >
               <DpIcon name="ic_arrow_right" className="button__icon button__icon--mask" />
               <span className="button__label">Start for Free</span>
             </button>

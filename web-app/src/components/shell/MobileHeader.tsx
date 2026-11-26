@@ -70,6 +70,7 @@ export function MobileHeader() {
         <button
           type="button"
           className="mobile-header__subscribe"
+          data-gtm="mobile-menu-upgrade"
           onClick={() => openSubscribe()}
           aria-label={t("profile.upgrade")}
         >
@@ -80,7 +81,12 @@ export function MobileHeader() {
           />
         </button>
       )}
-      <Link href={profilePath} className="mobile-header__account" aria-label={t("nav.account")}>
+      <Link
+        href={profilePath}
+        className="mobile-header__account"
+        data-gtm="mobile-menu-account"
+        aria-label={t("nav.account")}
+      >
         <span
           className="mobile-header__account-icon"
           style={mask("ic_account")}

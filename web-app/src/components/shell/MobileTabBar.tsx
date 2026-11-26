@@ -72,6 +72,8 @@ export function MobileTabBar() {
           href={homePath}
           className={`mobile-tabbar__item${onHome ? " mobile-tabbar__item--active" : ""}`}
           aria-current={onHome ? "page" : undefined}
+          data-gtm="mobile-menu-nav"
+          data-gtm-item="home"
         >
           <span className="mobile-tabbar__icon" style={mask("ic_compass_OL")} aria-hidden="true" />
           <span className="mobile-tabbar__label">{t("nav.explore")}</span>
@@ -80,6 +82,7 @@ export function MobileTabBar() {
         <button
           type="button"
           className="mobile-tabbar__create"
+          data-gtm="mobile-menu-create"
           onClick={() => setCreateOpen(true)}
           aria-label={t("nav.create")}
           aria-expanded={createOpen}
@@ -92,6 +95,8 @@ export function MobileTabBar() {
           onClick={guardHistory}
           className={`mobile-tabbar__item${onHistory ? " mobile-tabbar__item--active" : ""}`}
           aria-current={onHistory ? "page" : undefined}
+          data-gtm="mobile-menu-nav"
+          data-gtm-item="history"
         >
           <span className="mobile-tabbar__icon" style={mask("ic_history_OL")} aria-hidden="true" />
           <span className="mobile-tabbar__label">{t("nav.history")}</span>
@@ -132,6 +137,8 @@ export function MobileTabBar() {
             href={localePath(locale, "/mv/room")}
             onClick={(e) => go(e, "/mv/room")}
             className="mobile-tabbar-sheet__option"
+            data-gtm="mobile-menu-create-option"
+            data-gtm-item="mv"
           >
             <span className="mobile-tabbar-sheet__badge mobile-tabbar-sheet__badge--mv">
               <span
@@ -157,6 +164,8 @@ export function MobileTabBar() {
             href={localePath(locale, "/song/create")}
             onClick={(e) => go(e, "/song/create")}
             className="mobile-tabbar-sheet__option"
+            data-gtm="mobile-menu-create-option"
+            data-gtm-item="song"
           >
             <span className="mobile-tabbar-sheet__badge mobile-tabbar-sheet__badge--song">
               <span
