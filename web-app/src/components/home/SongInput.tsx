@@ -47,6 +47,7 @@ export function SongInput({
   onStyleClear,
 }: {
   inputRef: RefObject<HTMLTextAreaElement | null>;
+  /** With it, the bar opens with a "Song ✕" chip (pill mode). */
   /** The prompt a Song inspiration card wrote, if any — cleared with the style. */
   starter?: string | null;
   onStyleClear?: () => void;

@@ -4230,7 +4230,7 @@ test("video-agent-home: the AI Shorts tab — Idea writes a prompt, Enhance rewr
   const skills = page.getByLabel("AI Shorts skills");
   await expect(skills.getByRole("button")).toHaveText(["Creative Clips", "UGC Reviews", "Product Ads"]);
   await skills.getByRole("button", { name: "Creative Clips" }).click();
-  await expect(skills.getByRole("button")).toHaveText(["Creative Clips", "Sport Video", "Dance Video", "Action Video"]);
+  await expect(skills.getByRole("button")).toHaveText(["Creative Clips", "Dance Video", "Sport Video", "Action Video"]);
   // The open group says what it is for in the prompt (2026-11-18).
   await expect(prompt).toHaveAttribute("placeholder", /dance, sport or action scene/);
   await skills.getByRole("button", { name: "Creative Clips" }).click();

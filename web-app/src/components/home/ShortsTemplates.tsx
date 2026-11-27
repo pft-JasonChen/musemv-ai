@@ -73,6 +73,18 @@ export function ShortsTemplates({ onStart }: { onStart: (flow: AgentFlowId) => v
  *  and Top Picks rails (`NewMVsSection`): each appears only while there is
  *  something to scroll to that way, and a click pages one rail-width. */
 function Rail({ row, onStart }: { row: TemplateSection; onStart: (flow: AgentFlowId) => void }) {
+  return (
+    <RailFrame label={row.title}>
+      {row.cards.map((c, k) => (
+        <SkillTile key={k} card={c} onStart={onStart} />
+      ))}
+    </RailFrame>
+  );
+}
+
+/** The scroll frame itself — edge fades and the hover arrows. Shared with
+ *  Home's mixed Explore row (`ExploreRow`), which fills it with its own tiles. */
+export function RailFrame({ label, children }: { label: string; children: React.ReactNode }) {
   const ref = useEdgeFade<HTMLDivElement>();
   const [canBack, setCanBack] = useState(false);
   const [canForward, setCanForward] = useState(false);
@@ -100,12 +112,10 @@ function Rail({ row, onStart }: { row: TemplateSection; onStart: (flow: AgentFlo
   };
 
   return (
-    <section className="shorts-tpl__sec" role="tabpanel" aria-label={row.title}>
+    <section className="shorts-tpl__sec" role="tabpanel" aria-label={label}>
       <div className="shorts-tpl__row">
         <div ref={ref} className="shorts-tpl__rail edge-fade">
-          {row.cards.map((c, k) => (
-            <SkillTile key={k} card={c} onStart={onStart} />
-          ))}
+          {children}
         </div>
         {canBack && (
           <div className="shorts-tpl__previous">

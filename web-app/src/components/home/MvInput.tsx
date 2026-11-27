@@ -58,6 +58,7 @@ export function MvInput({
   inputRef: RefObject<HTMLTextAreaElement | null>;
   pick: MvPick | null;
   onPick: (pick: MvPick | null) => void;
+  /** With it, the bar opens with a "Music Video ✕" chip (pill mode). */
 }) {
   const router = useRouter();
   const { locale } = useLocale();
@@ -191,7 +192,9 @@ export function MvInput({
 
       {/* Same grid as the Song tab (`.agent-song__bar`): Templates beside Idea
           on desktop / tablet, on its own row above on phones (Figma). */}
-      <div className="agent-composer__bar agent-song__bar agent-song__bar--style">
+      <div
+        className={`agent-composer__bar agent-song__bar agent-song__bar--style`}
+      >
         <button
           type="button"
           className="agent-song__idea"

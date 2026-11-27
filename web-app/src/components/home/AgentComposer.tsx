@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { Fragment, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useLocale } from "@/components/providers/LocaleProvider";
@@ -9,6 +9,7 @@ import { localePath } from "@/lib/i18n/config";
 import { DpIcon } from "@/components/ui/DpIcon";
 import { EnhanceButton } from "@/components/ui/EnhanceButton";
 import { GuideHint } from "@/components/agent/GuideHint";
+import { useHomeLayout } from "@/lib/homeLayout";
 import { DanceStyleSheet } from "@/components/agent/DanceStyleSheet";
 import { LinkSheet } from "@/components/agent/LinkSheet";
 import { PhotoPicker } from "@/components/agent/PhotoPicker";
@@ -23,25 +24,15 @@ import {
   type ShortsSkillGroupId,
 } from "@/lib/agent/content";
 import { SHORTS_IDEA_PROMPTS } from "@/lib/agent/shortsIdeas";
-import { TOP_PICKS_SONGS } from "@/lib/mv/community";
-import { GENRES, MOODS } from "@/lib/mv/mock";
 import { pickIdea } from "@/lib/mv/songIdeas";
-import { useSongFlow } from "@/components/providers/SongFlowProvider";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
-import { HeroBannerSectionV3, type HeroCard } from "./HeroBannerSectionV3";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { type HeroCard } from "./HeroBannerSectionV3";
 import { HERO_ITEMS } from "./heroItems";
 import { DanceRecipeEditor, RecipeEditor } from "./RecipeEditor";
 import { MvInput, type MvPick } from "./MvInput";
 import { SongInput } from "./SongInput";
-import { ShortsTemplates } from "./ShortsTemplates";
-import { StylePreviewDialog } from "./StylePreviewDialog";
-import {
-  getSongPlaying,
-  getSongPlayingServer,
-  requestSongPreview,
-  subscribeSongPlaying,
-} from "@/lib/songPreviewBus";
+import { ExploreRow } from "./ExploreRow";
+import { ContinueRow } from "./ContinueRow";
 
 /**
  * Home's Agent composer (feature/video-agent-home) — replaces the two tool
@@ -88,14 +79,23 @@ import {
  */
 
 type Mode = "mv" | "song" | "shorts";
+export type HomeMode = Mode;
+
+/** What Home opens on before the user has picked anything, per layout (see
+ *  `lib/homeLayout`). B, the tab bar: Music Video, not the first tab (home
+ *  redesign, 2026-11-26) — CEO feedback was that Home leaned on AI Shorts and
+ *  the MV is the flagship; the tab ORDER is unchanged. A, Music Video and Song
+ *  as pills: nothing selected (product owner, 2026-11-27) — AI Shorts' own
+ *  prompt, with no pill filled. */
+const FIRST_VISIT_MODE: Record<"A" | "B", Mode> = { A: "shorts", B: "mv" };
 
 /**
  * The Home composer tab last picked, for the lifetime of the document
  * (product owner, 2026-11-02): open a card, "See all" or a create screen and
- * come back, and Home is on the tab you left — not reset to AI Shorts.
+ * come back, and Home is on the tab you left — not reset to the first tab.
  * Module scope, like History's `rememberedFilter`: it survives client-side
  * navigation and resets on a real page load, which also keeps the first
- * render identical to the server's ("shorts").
+ * render identical to the server's (`FIRST_VISIT_MODE`).
  */
 let rememberedMode: Mode | null = null;
 const rememberMode = (m: Mode) => {
@@ -138,27 +138,26 @@ export function AgentComposer({
   const { requireLogin } = useAuth();
   // Home resumes the tab the user left it on (see `rememberedMode`); /shorts
   // only ever does AI Shorts.
-  const [mode, setModeState] = useState<Mode>(() =>
-    solo ? "shorts" : (rememberedMode ?? "shorts"),
-  );
+  // Layout A (pills) or B (tab bar) — see `lib/homeLayout`.
+  const layout = useHomeLayout();
+  const PILL_MODES = layout === "A";
+  // The mode the user picked; null until they do. Until then Home follows the
+  // layout's own default (A: nothing selected; B: Music Video), including when
+  // the layout is switched — derived, not copied into state, so a stored B is
+  // picked up after hydration without a mismatch. The server and the first
+  // client render are layout A.
+  const [picked, setPicked] = useState<Mode | null>(() => (solo ? "shorts" : rememberedMode));
+  const mode: Mode = picked ?? FIRST_VISIT_MODE[layout];
   const setMode = (m: Mode) => {
     if (m === mode) return;
     if (!solo) rememberMode(m);
-    setModeState(m);
+    setPicked(m);
     onModeChange?.();
   };
-  const { songCompose, patchSongCompose } = useSongFlow();
   const { compose, patchCompose } = useMvFlow();
   /** What the MV tab's Templates button shows: a template or a hero style. */
   const [mvPick, setMvPick] = useState<MvPick | null>(null);
-  /** The Music Video inspiration card being previewed (`StylePreviewDialog`). */
-  const [preview, setPreview] = useState<HeroCard | null>(null);
-  // The song Home's preview bar is playing, so its cover shows ⏸.
-  const songPlaying = useSyncExternalStore(
-    subscribeSongPlaying,
-    getSongPlaying,
-    getSongPlayingServer,
-  );
+
   const [text, setText] = useState<Record<Mode, string>>({ mv: "", song: "", shorts: "" });
   /** The skill recipe loaded into the prompt: UGC Talking Review's or, since
    *  2026-11-18, Dance Video's (YCA mockup). */
@@ -184,42 +183,87 @@ export function AgentComposer({
   const modesRef = useEdgeFade<HTMLDivElement>();
   const skillsRef = useEdgeFade<HTMLDivElement>();
 
-  const current = MODES.find((m) => m.id === mode)!;
+  // The card's height follows its content — a tab with a song slot, a photo
+  // attached, Custom ↔ Simple — and everything below it moves with it. Rather
+  // than jump, run the change as an animation from the old height to the new
+  // one (product owner, 2026-11-27) — the box's border and the bar along its
+  // bottom edge on one clock. The layout is already at the new height
+  // when the observer fires; the animation only overrides what is painted, so
+  // it can be cancelled or skipped at no cost. `overflow: hidden` for its 300ms
+  // keeps the NEW content inside the growing box, then goes (popovers need it).
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let last = el.getBoundingClientRect().height;
+    let running: Animation | null = null;
+    const ro = new ResizeObserver(() => {
+      if (running) return; // the animation itself resizes the box
+      const h = el.getBoundingClientRect().height;
+      const from = last;
+      last = h;
+      if (Math.abs(h - from) < 2) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      el.style.overflow = "hidden";
+      const timing = { duration: 300, easing: "cubic-bezier(0.22, 1, 0.36, 1)" };
+      // The controls row sits at the card's bottom edge. Left alone it would
+      // jump while the border glides — or not, if the tab's layout already pins
+      // it to the bottom. So measure instead of assuming: how far the bar is
+      // from the bottom edge at its final height, and how far once the box is
+      // back at its old height. Offset the bar by the difference and let it
+      // settle on the same clock as the box.
+      const bar = el.querySelector<HTMLElement>(".agent-composer__bar");
+      const gap = () =>
+        el.getBoundingClientRect().bottom - (bar?.getBoundingClientRect().bottom ?? 0);
+      const finalGap = bar ? gap() : 0;
+      const a = el.animate([{ height: `${from}px` }, { height: `${h}px` }], timing);
+      if (bar) {
+        const offset = gap() - finalGap;
+        if (Math.abs(offset) >= 1) {
+          bar.animate([{ transform: `translateY(${offset}px)` }, { transform: "none" }], timing);
+        }
+      }
+      running = a;
+      const done = () => {
+        running = null;
+        el.style.overflow = "";
+        last = el.getBoundingClientRect().height;
+      };
+      a.onfinish = done;
+      a.oncancel = done;
+    });
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      running?.cancel();
+    };
+  }, []);
 
-  // Music Video / Song inspiration (2026-10-28): a card's "Use Style"
-  // loads that style into the prompt and brings the composer back into view,
-  // instead of leaving Home. Text the user already typed is kept; an empty
-  // prompt (or one we filled from an earlier card) gets a starter sentence.
+  const current = MODES.find((m) => m.id === mode)!;
+  // The skills row is open on the AI Shorts tab — and on every tab when Music
+  // Video and Song are pills in it.
+  const skillsOpen = solo || PILL_MODES || mode === "shorts";
+
+  // Music Video inspiration (2026-10-28): a style's "Use Style" loads it into
+  // the prompt and brings the composer back into view, instead of leaving Home.
+  // Text the user already typed is kept; an empty prompt (or one we filled from
+  // an earlier card) gets a starter sentence. The Explore row serves every tab
+  // (2026-11-26), so this also switches the composer to Music Video.
   const applyStyle = (card: HeroCard) => {
-    if (mode === "shorts") return;
-    const m = mode;
-    const item = INSPIRATION[m].find((i) => i.id === card.id);
+    const item = INSPIRATION.mv.find((i) => i.id === card.id);
     if (!item) return;
-    const prev = styles[m];
+    const prev = styles.mv;
     const keep = (t: string) => t.trim() !== "" && !(prev && t === prev.starter);
-    if (m === "song") {
-      // The Song tab's text and style live in `songCompose` (SongInput,
-      // 2026-10-30): the card sets the Song Style picks it maps to — only
-      // values the Song Style sheet offers — plus the starter, in whichever
-      // box the current tab shows.
-      const field = songCompose.mode === "custom" ? "lyrics" : "describe";
-      patchSongCompose({
-        genre: item.genre && GENRES.includes(item.genre) ? item.genre : songCompose.genre,
-        mood: item.mood && MOODS.includes(item.mood) ? item.mood : songCompose.mood,
-        ...(keep(songCompose[field]) ? {} : { [field]: item.starter }),
-      });
-    } else {
-      // The MV tab's prompt is `compose.description` (MvInput, 2026-10-30) —
-      // the one `/mv/room` reads; the card shows on its Templates button.
-      const kept = keep(compose.description);
-      if (!kept) patchCompose({ description: item.starter });
-      setMvPick({
-        cover: item.thumbnail,
-        name: item.title,
-        prompt: kept ? undefined : item.starter,
-      });
-    }
-    setStyles((st) => ({ ...st, [m]: item }));
+    // The MV tab's prompt is `compose.description` (MvInput, 2026-10-30) —
+    // the one `/mv/room` reads; the card shows on its Templates button.
+    const kept = keep(compose.description);
+    if (!kept) patchCompose({ description: item.starter });
+    setMvPick({
+      cover: item.thumbnail,
+      name: item.title,
+      prompt: kept ? undefined : item.starter,
+    });
+    setStyles((st) => ({ ...st, mv: item }));
+    setMode("mv");
     cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     requestAnimationFrame(() => {
       const el = inputRef.current;
@@ -257,6 +301,9 @@ export function AgentComposer({
         ]),
       );
     }
+    // A group is an AI Shorts skill: opening one from the Music Video or Song
+    // composer switches the composer to AI Shorts first.
+    if (mode !== "shorts") setMode("shorts");
     setSkillGroup((open) => (open === id ? null : id));
   };
 
@@ -407,7 +454,7 @@ export function AgentComposer({
           </h1>
         )}
 
-        {!solo && (
+        {!solo && !PILL_MODES && (
           <div
             ref={modesRef}
             className="agent-composer__modes edge-fade"
@@ -624,68 +671,90 @@ export function AgentComposer({
           )}
         </div>
 
-        {mode === "shorts" && (
-          <div
-            ref={skillsRef}
-            className="agent-composer__skills edge-fade"
-            aria-label="AI Shorts skills"
-          >
-            {/* Three group pills (Figma 6096:93403, 2026-11-18). Opening one
+        {/* Collapses, not unmounts, off the AI Shorts tab so the composer's height
+            animates (see the card animation above). `inert` keeps the hidden
+            pills out of the tab order and the accessibility tree. */}
+        <div className="agent-composer__skills-collapse" data-open={skillsOpen} inert={!skillsOpen}>
+          <div className="agent-composer__skills-clip">
+            <div
+              ref={skillsRef}
+              className="agent-composer__skills edge-fade"
+              aria-label={solo ? "AI Shorts skills" : "Create"}
+            >
+              {/* Music Video, then Song, before the AI Shorts groups — the same row
+                  (product owner, 2026-11-27). A selected one is filled like a
+                  selected sub-skill; a second click, or the chip's ✕ in the input
+                  bar, puts the composer back on AI Shorts. Like the groups, they
+                  step aside while a group is open. */}
+              {!solo &&
+                PILL_MODES &&
+                !skillGroup &&
+                MODES.filter((m) => m.id !== "shorts").map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    data-skill={`mode:${m.id}`}
+                    className={`agent-composer__skill${mode === m.id ? " agent-composer__skill--on" : ""}`}
+                    aria-pressed={mode === m.id}
+                    onClick={() => setMode(mode === m.id ? "shorts" : m.id)}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              {/* Three group pills (Figma 6096:93403, 2026-11-18). Opening one
                 hides the other two and lists its skills after it; the open
                 pill wears the MV gradient as a border and an ✕, and a second
                 click closes it. Same button either way, so focus stays put. */}
-            {SHORTS_SKILL_GROUPS.map((g) =>
-              skillGroup && skillGroup !== g.id ? null : (
-                <Fragment key={g.id}>
-                  <button
-                    type="button"
-                    data-skill={`group:${g.id}`}
-                    className={`agent-composer__skill${skillGroup === g.id ? " agent-composer__skill--open" : ""}`}
-                    aria-expanded={skillGroup === g.id}
-                    onClick={() => toggleSkillGroup(g.id)}
-                  >
-                    {g.label}
-                    {skillGroup === g.id && (
-                      <DpIcon name="ic_close" className="agent-composer__skill-close" />
-                    )}
-                    {/* Guide step 1: dots lead to the two groups with a working
-                        skill (UGC; Creative, product owner 2026-11-18), then
-                        into them. */}
-                    {(g.id === "ugc" || g.id === "creative") && !skillGroup && (
-                      <GuideHint show={hint === "pill"} />
-                    )}
-                  </button>
-                  {skillGroup === g.id &&
-                    g.skills.map((name) => {
-                      // The two skills with a recipe; the rest are inert.
-                      const kind =
-                        name === "UGC Talking Review"
-                          ? "ugc"
-                          : name === "Dance Video"
-                            ? "dance"
-                            : null;
-                      return (
-                        <button
-                          key={name}
-                          type="button"
-                          data-skill={`skill:${name}`}
-                          className={`agent-composer__skill${kind && recipe === kind ? " agent-composer__skill--on" : ""}`}
-                          aria-pressed={kind ? recipe === kind : undefined}
-                          onClick={(e) => {
-                            revealSkill(e.currentTarget);
-                            if (kind) toggleRecipe(kind);
-                          }}
-                        >
-                          {name}
-                          {kind && <GuideHint show={hint === "pill"} />}
-                        </button>
-                      );
-                    })}
-                </Fragment>
-              ),
-            )}
+              {SHORTS_SKILL_GROUPS.map((g) =>
+                skillGroup && skillGroup !== g.id ? null : (
+                  <Fragment key={g.id}>
+                    <button
+                      type="button"
+                      data-skill={`group:${g.id}`}
+                      className={`agent-composer__skill${skillGroup === g.id ? " agent-composer__skill--open" : ""}`}
+                      aria-expanded={skillGroup === g.id}
+                      onClick={() => toggleSkillGroup(g.id)}
+                    >
+                      {g.label}
+                      {skillGroup === g.id && (
+                        <DpIcon name="ic_close" className="agent-composer__skill-close" />
+                      )}
+                      {/* No guide dot on the group pills (product owner, 2026-11-27):
+                        the hint appears only on the working skills once a group
+                        is open, below. */}
+                    </button>
+                    {skillGroup === g.id &&
+                      g.skills.map((name) => {
+                        // The two skills with a recipe; the rest are inert.
+                        const kind =
+                          name === "UGC Talking Review"
+                            ? "ugc"
+                            : name === "Dance Video"
+                              ? "dance"
+                              : null;
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            data-skill={`skill:${name}`}
+                            className={`agent-composer__skill${kind && recipe === kind ? " agent-composer__skill--on" : ""}`}
+                            aria-pressed={kind ? recipe === kind : undefined}
+                            onClick={(e) => {
+                              revealSkill(e.currentTarget);
+                              if (kind) toggleRecipe(kind);
+                            }}
+                          >
+                            {name}
+                            {kind && <GuideHint show={hint === "pill"} />}
+                          </button>
+                        );
+                      })}
+                  </Fragment>
+                ),
+              )}
+            </div>
           </div>
-        )}
+        </div>
 
         <PhotoPicker
           sheet={picker === "product" ? "product" : picker ? "recents" : null}
@@ -719,46 +788,10 @@ export function AgentComposer({
           onClose={() => setStyleOpen(false)}
         />
       </section>
-      {!solo && mode !== "shorts" && (
-        // A titled section like the rails below it (product owner, 2026-11-26):
-        // the same `SectionHeader`, the row starting at the content's left
-        // edge. Keyed by tab: the strip reads its catalog once at mount (loop
-        // maths).
-        <section key={mode} className="agent-inspo">
-          <SectionHeader
-            title={mode === "song" ? "Explore Song Styles" : "Explore Music Video Styles"}
-          />
-          <HeroBannerSectionV3
-            items={INSPIRATION[mode]}
-            hrefFor={mode === "song" ? (i) => `/song/play?id=${i.id}` : undefined}
-            compact
-            square={mode === "song"}
-            // "Use Style", not "Create": the composer's own Create is the button that
-            // actually starts a job; this one only loads the style into the prompt.
-            ctaLabel="Use Style"
-            onCta={applyStyle}
-            // Watch / hear before choosing (product owner, 2026-11-02): an MV
-            // card opens a preview with sound, a Song cover's ▶ plays the song
-            // in Home's preview bar (Top Picks owns it, `songPreviewBus`).
-            onPreview={mode === "mv" ? setPreview : undefined}
-            onPlay={mode === "song" ? (c) => requestSongPreview(c.id) : undefined}
-            playingId={songPlaying}
-          />
-        </section>
-      )}
-      {!solo && (
-        <StylePreviewDialog
-          card={preview}
-          onClose={() => setPreview(null)}
-          onUse={(c) => {
-            setPreview(null);
-            applyStyle(c);
-          }}
-        />
-      )}
-      {!solo && mode === "shorts" && (
-        <ShortsTemplates onStart={(flow) => go(`/agent?flow=${flow}`)} />
-      )}
+      {/* Music Video styles and AI Shorts skills in one row, whichever tab is
+          open; Recent comes after it (product owner, 2026-11-26). */}
+      {!solo && <ExploreRow onStyle={applyStyle} onSkill={(flow) => go(`/agent?flow=${flow}`)} />}
+      {!solo && <ContinueRow />}
     </>
   );
 }
@@ -774,46 +807,10 @@ const soften = (words: string) =>
     .map((w) => (/[a-z]/.test(w) ? w.toLowerCase() : w))
     .join(" ");
 
-/** The Song strip is titled by GENRE so each card reads as a style at a
- *  glance (product owner, 2026-10-28). The catalog's own `genre` is too coarse
- *  for that — two songs are "Electronic · Energetic", two "Hip-Hop · Calm" —
- *  so each Top Pick gets a specific genre name here; the song becomes the
- *  subtitle. Keyed by title; an unlisted song falls back to mood + genre. */
-const SONG_GENRE: Record<string, string> = {
-  "Neon Static": "Dark Electronic",
-  "Pop Anthem": "Upbeat Pop",
-  "Chill R&B": "Chill R&B",
-  Electronic: "EDM",
-  "Acoustic Folk": "Acoustic Folk",
-  "Synth Wave": "Synthwave",
-  "Indie Vibes": "Indie Rock",
-  "Jazz Nights": "Smooth Jazz",
-  "Chill Beats": "Chill Hip-Hop",
-  "Retro Funk": "Retro Funk",
-  "Dream Pop": "Dream Pop",
-  "Lo-Fi Study": "Lo-Fi",
-  "Summer Breeze": "Country Pop",
-};
-
-/** What each tab's inspiration strip shows, plus the starter sentence its
- *  "Use" writes — e.g. "An energetic music video inspired by
- *  “Splash Zone”." / "A dark electronic song inspired by “Neon Static”." */
-const INSPIRATION: Record<InspoMode, Inspiration[]> = {
+const INSPIRATION: Record<"mv", Inspiration[]> = {
   mv: HERO_ITEMS.map((h) => {
     const mood = soften(h.subtitle.split("|")[0].trim());
     return { ...h, starter: `${article(mood)} ${mood} music video inspired by “${h.title}”.` };
-  }),
-  song: TOP_PICKS_SONGS.map((s) => {
-    const genre = SONG_GENRE[s.title] ?? `${s.mood} ${s.genre}`;
-    return {
-      id: s.id,
-      title: genre,
-      subtitle: `${s.mood} | “${s.title}”`,
-      thumbnail: s.cover,
-      genre: s.genre,
-      mood: s.mood,
-      starter: `${article(genre)} ${soften(genre)} song inspired by “${s.title}”.`,
-    };
   }),
 };
 

@@ -21,10 +21,13 @@ export function StylePreviewDialog({
   card,
   onClose,
   onUse,
+  useLabel = "Use this Style",
 }: {
   card: HeroCard | null;
   onClose: () => void;
   onUse: (card: HeroCard) => void;
+  /** The primary button's text: "Use this Skill" when it previews an AI Shorts skill. */
+  useLabel?: string;
 }) {
   const [shown, setShown] = useState<HeroCard | null>(card);
   if (card && card !== shown) setShown(card);
@@ -67,7 +70,7 @@ export function StylePreviewDialog({
               className="button button--large button--primary style-preview__use"
               onClick={() => onUse(shown)}
             >
-              <span className="button__label">Use this Style</span>
+              <span className="button__label">{useLabel}</span>
             </button>
           </div>
         </>

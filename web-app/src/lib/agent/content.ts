@@ -32,7 +32,7 @@ export const SHORTS_SKILL_GROUPS = [
     id: "creative",
     label: "Creative Clips",
     hint: "Turn your photo into a dance, sport or action scene…",
-    skills: ["Sport Video", "Dance Video", "Action Video"],
+    skills: ["Dance Video", "Sport Video", "Action Video"],
   },
   {
     id: "ugc",

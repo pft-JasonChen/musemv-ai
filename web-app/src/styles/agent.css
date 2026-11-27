@@ -191,17 +191,16 @@
   --tab-fade-easing: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .home-page[data-tab-switch="a"]
-    :is(.agent-inspo, .shorts-tpl, .new-mvs, .top-picks, .new-songs) {
-    animation: tab-fade-up-a var(--tab-fade-duration) var(--tab-fade-easing);
-  }
+/* OFF for now (product owner, 2026-11-27): every row below the composer is the
+   same on all three tabs, so there is nothing for a switch to fade in. The
+   variables, the keyframes and HomeView's `data-tab-switch` stay; to turn it back
+   on, restore this rule (the sections it covered were `.home-recent`,
+   `.shorts-tpl`, `.new-mvs`, `.top-picks`):
 
-  .home-page[data-tab-switch="b"]
-    :is(.agent-inspo, .shorts-tpl, .new-mvs, .top-picks, .new-songs) {
-    animation: tab-fade-up-b var(--tab-fade-duration) var(--tab-fade-easing);
-  }
-}
+   @media (prefers-reduced-motion: no-preference) {
+     .home-page[data-tab-switch="a"] :is(…) { animation: tab-fade-up-a … }
+     .home-page[data-tab-switch="b"] :is(…) { animation: tab-fade-up-b … }
+   } */
 
 @keyframes tab-fade-up-a {
   from {
@@ -4350,5 +4349,342 @@
 
   .agent-song__bar .agent-composer__create {
     height: 24px;
+  }
+}
+
+/* ── Home redesign, 2026-11-26 ───────────────────────────────────────────────
+   CEO feedback: Home leaned on AI Shorts. Changes live here (the component
+   side is ExploreRow / ContinueRow / HomeView): a mixed Explore row, a
+   personal Recent row, and the shelves at one card height. (Create tiles were tried
+   and removed: they duplicated the composer's tab bar.) Roll back: git tag `home-v1-ai-shorts-first`. */
+
+/* Home's Recent row reuses `/shorts`' `.shorts-recent*` list items. Home mixes
+   three products, so it is capped by width instead of wrapping: four across
+   on desktop, two on tablet and phone (items past the cap are hidden). */
+.home-recent {
+  min-width: 0;
+}
+
+.home-recent .shorts-recent__list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-recent .shorts-recent__item:nth-child(n + 3) {
+  display: none;
+}
+
+a.shorts-recent__item {
+  text-decoration: none;
+}
+
+.shorts-recent__item--static {
+  cursor: default;
+}
+
+.shorts-recent__item--static:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.shorts-recent__thumb--empty {
+  background: var(--white-15);
+}
+
+@media (max-width: 767px) {
+  .home-recent .shorts-recent__list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-recent .shorts-recent__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .home-recent .shorts-recent__item:nth-child(n + 3) {
+    display: flex;
+  }
+
+  /* One card height across the three product shelves (desktop). Each rail's own
+     width formula is DP's (gated verbatim), so the height is set by picking
+     the width that gives it: 4:3 for Shorts, 3:4 for Music Video, 1:1 for Song
+     covers. Tablet and phone keep their own sizing. */
+  .home-page {
+    --home-rail-h: 232px;
+  }
+
+  .home-page .shorts-card {
+    width: calc(var(--home-rail-h) * 4 / 3);
+    min-width: 0;
+  }
+
+  .home-page .new-mvs__row-wrapper {
+    --new-mvs-card-width: calc(var(--home-rail-h) * 3 / 4);
+  }
+
+  .home-page .top-picks__row-wrapper {
+    --top-picks-card-width: var(--home-rail-h);
+  }
+}
+
+/* Explore row (mixed Music Video styles + AI Shorts skills): its chips are the
+   category chips' look, and unlike the Shorts categories they stay on phones —
+   three short labels fit. */
+@media (max-width: 767px) {
+  .home-explore .shorts-tpl__cats {
+    display: flex;
+  }
+}
+
+/* Explore row, level 2: AI Shorts' categories, quieter than the product chips
+   above (outlined, smaller, no fill) so the two rows read as parent and child. */
+.home-explore__sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.home-explore__sub::-webkit-scrollbar {
+  display: none;
+}
+
+.home-explore__sub-tab {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--white-15);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--white-60);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-label-m);
+  font-weight: var(--font-weight-medium);
+  line-height: 26px;
+  letter-spacing: -0.13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.home-explore__sub-tab:hover {
+  color: var(--neutral-dark-100);
+}
+
+.home-explore__sub-tab--on {
+  border-color: var(--color-accent-purple);
+  color: var(--neutral-dark-100);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-explore__sub {
+    animation: agent-skill-name-in 200ms ease-out both;
+  }
+}
+
+/* Phones: the sub-chips are the product chips' size (Tabs.css' app-mobile
+   variant: 26px tall, Caption/M 11px Medium, 10px side padding, 6px gap), so
+   the two rows read as one family — they stay outlined and unfilled. The 1px
+   border is inside the 26px (border-box), hence the 24px line-height. */
+@media (max-width: 767px) {
+  .home-explore__sub {
+    gap: 6px;
+  }
+
+  .home-explore__sub-tab {
+    height: 26px;
+    padding: 0 10px;
+    font-size: var(--font-caption-m);
+    font-weight: var(--font-weight-medium);
+    line-height: 24px;
+    letter-spacing: -0.11px;
+  }
+}
+
+/* Product badge on an Explore card: a small glass disc, top-left. */
+.home-explore__badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  pointer-events: none;
+}
+
+.home-explore__badge-icon {
+  width: 14px;
+  height: 14px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+@media (max-width: 767px) {
+  .home-explore__badge {
+    top: 8px;
+    left: 8px;
+    width: 22px;
+    height: 22px;
+  }
+
+  .home-explore__badge-icon {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Explore tiles: the pill CTA and its ▶ (`.hover-cta-group`, the Music Video
+   strip's pairing) on a `.shorts-card`. The strip's rules reveal the group on
+   `.hero-banner-v3__card`; these repeat them for the skill card. */
+.home-explore__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .shorts-card:hover .hover-cta-group,
+  .shorts-card:has(:focus-visible) .hover-cta-group {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+
+  .shorts-card .hover-cta-group .hover-cta,
+  .shorts-card .hover-cta-group button.hover-cta:not(:disabled):active {
+    position: static;
+    opacity: 1;
+    transform: none;
+  }
+
+  .shorts-card .hover-cta-group button.hover-cta-play:active {
+    transform: none;
+  }
+
+  /* The demo's pulse hint sits on the same centre point — it steps aside. */
+  .shorts-card:has(:focus-visible) .agent-hint {
+    visibility: hidden;
+  }
+}
+
+/* Composer height changes (a tab switch, a photo, Custom ↔ Simple) animate
+   instead of jumping (AgentComposer measures the card and runs the animation).
+   The AI Shorts skills row is part of that height: it collapses, rather than
+   unmounting, when another tab is open. `overflow-y: clip` keeps the row's
+   phone bleed to the screen edges, which `hidden` would cut off. */
+.agent-composer__skills-collapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  width: 100%;
+  margin-top: -8px;
+  transition:
+    grid-template-rows 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    margin-top 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+}
+
+.agent-composer__skills-collapse[data-open="false"] {
+  grid-template-rows: 0fr;
+  margin-top: -16px;
+  opacity: 0;
+}
+
+.agent-composer__skills-clip {
+  min-height: 0;
+  overflow-x: visible;
+  overflow-y: clip;
+}
+
+.agent-composer__skills-collapse .agent-composer__skills {
+  margin-top: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-composer__skills-collapse {
+    transition: none;
+  }
+}
+
+/* Phones: the section's gap is 10px and the row has no negative top margin. */
+@media (max-width: 767px) {
+  .agent-composer__skills-collapse {
+    margin-top: 0;
+  }
+
+  .agent-composer__skills-collapse[data-open="false"] {
+    margin-top: -10px;
+  }
+}
+
+/* ── Home layout A/B switch (`HomeLayoutToggle`), 2026-11-27 ─────────────────
+   Temporary, for UX testing: a small segmented control fixed top-left, on the navbar row.
+   Below the dialogs (z-index) and clear of the phone tab bar. */
+.home-layout-toggle {
+  position: fixed;
+  /* Top-left of the page, on the navbar's row, just past the sidebar (240px, or
+     76px collapsed) — the credit / Upgrade buttons are at the other end. */
+  left: 256px;
+  top: 22px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(24, 24, 27, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.home-layout-toggle__label {
+  padding: 0 8px 0 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.home-layout-toggle__opt {
+  min-width: 32px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: transparent;
+}
+
+.home-layout-toggle__opt--on {
+  background: #fff;
+  color: #09090b;
+}
+
+body:has(.sidebar--collapsed) .home-layout-toggle {
+  left: 92px;
+}
+
+/* Phones have no sidebar and the top row is the app header: sit above the tab bar. */
+@media (max-width: 767px) {
+  .home-layout-toggle,
+  body:has(.sidebar--collapsed) .home-layout-toggle {
+    left: 16px;
+    top: auto;
+    bottom: 84px;
   }
 }

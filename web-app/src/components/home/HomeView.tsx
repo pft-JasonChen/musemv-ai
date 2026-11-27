@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { AgentComposer } from "./AgentComposer";
+import { HomeLayoutToggle } from "./HomeLayoutToggle";
 import { NewMVsSection } from "./NewMVsSection";
 import { TopPicksSection } from "./TopPicksSection";
-import { NewSongsSection } from "./NewSongsSection";
 
 /**
  * ── MIGRATED TO THE DESIGNER UI — the landing page, and the 17th route ──────
@@ -70,33 +70,22 @@ import { NewSongsSection } from "./NewSongsSection";
  * `AppShell` has never rendered `.app-layout__background` on any route. Neither
  * is a loss introduced here, and neither is this slice's to add.
  *
- * ── ARBITRATING TWO `SongPlayBar` OWNERS, ADDED 2026-08-18 ─────────────────
+ * ── ONE SONG-PREVIEW OWNER, SINCE 2026-11-26 ───────────────────────────────
  *
- * `TopPicksSection` and `NewSongsSection` each own an independent desktop
- * song preview (state, `<audio>`, `SongPlayBar` — see either file's header
- * for why the state isn't shared). Rendered on the same page, that would let
- * both open at once: two `position: fixed` bars stacked on each other and two
- * `<audio>` elements playing simultaneously. `activeSongSection` is the one
- * bit of arbitration that prevents it — whichever section's Play button was
- * pressed most recently tells this component via `onPreviewOpen`, and that
- * section's sibling is told via `suspend` to close whatever it had open.
- *
- * The same state also answers "is any bar open at all"
- * (`activeSongSection !== null`), passed to `NewSongsSection` as
- * `barVisible` — see its own header comment for why it, not `TopPicksSection`,
- * needs to know that regardless of which section's bar is actually showing.
+ * Home used to render `TopPicksSection` AND `NewSongsSection`, each with its
+ * own `<audio>` and `SongPlayBar`, and this component arbitrated between them
+ * (`suspend` / `onPreviewOpen` / `onPreviewClose` / `barVisible`, 2026-08-18).
+ * The home redesign shows ONE Songs shelf, so there is nothing to arbitrate and
+ * that state is gone; the props stay on both sections for any screen that
+ * renders the pair again (restore `NewSongsSection` here and re-add them).
  */
 export function HomeView() {
-  const [activeSongSection, setActiveSongSection] = useState<"top-picks" | "new-songs" | null>(
-    null,
-  );
   // Tab-switch fade-up (product owner, 2026-11-26): every switch bumps this and
   // the page flips between two identical keyframes ("a" / "b", agent.css) so the
   // animation restarts WITHOUT remounting a section — a remount would reload the
   // rails' media and reset their scroll. Absent until the first switch, so the
   // page load itself does not animate.
   const [tabSwitches, setTabSwitches] = useState(0);
-
   return (
     <div
       className="home-page"
@@ -111,22 +100,14 @@ export function HomeView() {
           `HeroBannerSection` stay in the tree until the design is signed off,
           so reverting is a small change. */}
       <AgentComposer onModeChange={() => setTabSwitches((n) => n + 1)} />
+      <HomeLayoutToggle />
+      {/* One shelf per product, and never two of the same product back to back
+          (home redesign, 2026-11-26). The composer's Explore row mixes Music
+          Video styles and AI Shorts skills, so the shelves are the MV and Songs
+          catalogues. `NewSongsSection` is not rendered: it was a second Songs
+          shelf. Its file stays; /explore/songs has the catalogue. */}
       <NewMVsSection />
-      <TopPicksSection
-        suspend={activeSongSection === "new-songs"}
-        onPreviewOpen={() => setActiveSongSection("top-picks")}
-        onPreviewClose={() =>
-          setActiveSongSection((current) => (current === "top-picks" ? null : current))
-        }
-      />
-      <NewSongsSection
-        suspend={activeSongSection === "top-picks"}
-        onPreviewOpen={() => setActiveSongSection("new-songs")}
-        onPreviewClose={() =>
-          setActiveSongSection((current) => (current === "new-songs" ? null : current))
-        }
-        barVisible={activeSongSection !== null}
-      />
+      <TopPicksSection />
     </div>
   );
 }

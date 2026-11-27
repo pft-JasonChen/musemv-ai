@@ -8,8 +8,13 @@ import { useEffect, useRef } from "react";
  * element — a data attribute, not a class, because React owns `className` and
  * would wipe a toggled class on its next render. `agent.css` turns the
  * attribute into a mask.
+ *
+ * `watch` re-attaches the listener when it changes — for a scroller that is
+ * mounted conditionally, or whose children are swapped, after this hook first
+ * ran (an effect with no deps runs once, finds `ref.current` null, and the
+ * row never fades). Pass whatever decides that, e.g. the shown group.
  */
-export function useEdgeFade<T extends HTMLElement>() {
+export function useEdgeFade<T extends HTMLElement>(watch?: unknown) {
   const ref = useRef<T>(null);
   useEffect(() => {
     const el = ref.current;
@@ -29,6 +34,6 @@ export function useEdgeFade<T extends HTMLElement>() {
       el.removeEventListener("scroll", update);
       ro.disconnect();
     };
-  }, []);
+  }, [watch]);
   return ref;
 }
