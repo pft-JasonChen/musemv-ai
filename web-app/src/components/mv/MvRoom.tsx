@@ -16,8 +16,11 @@ import { importAudioFile } from "./importAudio";
 import { FacePickerModal } from "./FacePickerModal";
 import { FaceConsentDialog } from "./FaceConsentDialog";
 import { SettingsModal } from "./SettingsModal";
+import { useEdgeFade } from "@/components/agent/useEdgeFade";
+import { revealInRow } from "@/lib/revealInRow";
 import { ModeModal } from "./ModeModal";
-import { TemplateSheet } from "./TemplateSheet";
+import { TemplateListSheet } from "./TemplateListSheet";
+import { CharacterListSheet } from "./CharacterListSheet";
 import { BuyCreditsModal } from "@/components/credits/BuyCreditsModal";
 import { useMvFlow } from "@/components/providers/MvFlowProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -29,7 +32,7 @@ import { localePath } from "@/lib/i18n/config";
 import { useAudioPlayer } from "@/components/audio/useAudioPlayer";
 import {
   MV_TYPES,
-  SAMPLE_FACES,
+  SAMPLE_CHARACTERS,
   TEMPLATES,
   formatDuration,
   type TemplateOption,
@@ -125,18 +128,39 @@ export function MvRoom() {
   const showMine = myMvs.length > 0;
   const [songOpen, setSongOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // The applied template is DERIVED from the description: a template is "on"
+  // exactly while the box still holds its prompt. That is the rule Home's MV
+  // input already uses to carry a template into this room, and it means picking,
+  // un-picking and hand-editing all stay consistent without a second state.
+  const selectedTemplate = TEMPLATES.find((t) => t.prompt === compose.description) ?? null;
+  // Both thumbnail rows fade at whichever edge has more to scroll to (product owner,
+  // 2026-11-27) — the same `.edge-fade` mask the Home Explore row uses.
+  const tplFadeRef = useEdgeFade<HTMLDivElement>();
+  const sampleFadeRef = useEdgeFade<HTMLDivElement>();
   const [templatesOpen, setTemplatesOpen] = useState(false);
-  // Product owner request, 2026-08-13 (Figma node 1344:25723) — the
-  // Templates button shows the applied template's own cover + name once
-  // one's been picked, instead of always reading "Templates". Local to
-  // this component: `TemplateSheet` only ever hands back the FULL template
-  // (see its own onApply type), never persists a choice itself.
-  // feature/video-agent-home (2026-10-30): Home's MV input applies a template
-  // into the shared `compose` before sending the user here; recognise it by
-  // the prompt it wrote, so the button carries it over without a new field.
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateOption | null>(
-    () => TEMPLATES.find((t) => t.prompt === compose.description) ?? null,
-  );
+  const [charsOpen, setCharsOpen] = useState(false);
+  /** Apply a template, or unselect it when it is the one already applied. */
+  function pickTemplate(t: TemplateOption) {
+    const unselecting = selectedTemplate?.id === t.id;
+    patchCompose({ description: unselecting ? "" : t.prompt });
+    if (!unselecting) showTemplateArea();
+  }
+  // Applying a template scrolls the page so the template row, the Characters section
+  // and the prompt box it just filled are all in view (product owner, 2026-11-27) —
+  // only on a pick the user makes, never on mount (a template carried in from Home).
+  const tplSectionRef = useRef<HTMLDivElement>(null);
+  function showTemplateArea() {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    tplSectionRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
+  // However a template gets picked (the row, or the See all sheet), the row scrolls
+  // so its tile is fully in view, clear of the faded edge (product owner, 2026-11-27).
+  const selectedTemplateId = selectedTemplate?.id ?? null;
+  useEffect(() => {
+    if (!selectedTemplateId) return;
+    const tile = tplFadeRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (tile) revealInRow(tile);
+  }, [selectedTemplateId, tplFadeRef]);
   const [modeOpen, setModeOpen] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
   const { toast, show: showToast, hold: toastHold } = useToastTimer(2600);
@@ -229,9 +253,19 @@ export function MvRoom() {
     const photo: CharacterPhoto = { id: crypto.randomUUID(), url };
     setCompose((c) => ({ ...c, photos: [...c.photos, photo].slice(0, 2) }));
   }
-  function addSampleFace(url: string) {
-    const photo: CharacterPhoto = { id: crypto.randomUUID(), url, fromSample: true };
-    setCompose((c) => ({ ...c, photos: [...c.photos, photo].slice(0, 2) }));
+  /** Sample Characters fill the next free slots, in order, AND carry their names into
+   *  those slots' Name labels (product owner, 2026-11-27); the user can still edit them. */
+  function addSampleFaces(picks: { url: string; name: string }[]) {
+    const start = compose.photos.length;
+    const room = picks.slice(0, Math.max(0, 2 - start));
+    if (room.length === 0) return;
+    const photos: CharacterPhoto[] = room.map((p) => ({
+      id: crypto.randomUUID(),
+      url: p.url,
+      fromSample: true,
+    }));
+    setCompose((c) => ({ ...c, photos: [...c.photos, ...photos].slice(0, 2) }));
+    setCharacterNames((names) => names.map((n, i) => (room[i - start] ? room[i - start].name : n)));
   }
   function setPhotoName(index: number, name: string) {
     setCharacterNames((names) => names.map((n, i) => (i === index ? name : n)));
@@ -440,90 +474,46 @@ export function MvRoom() {
             />
           </div>
 
-          <div className="mv-create__section">
-            <p className="mv-create__label">
-              DESCRIBE YOUR VIDEO IDEA <span className="mv-create__label-optional">(Required)</span>
-            </p>
-            <div className="mv-create__input-box">
-              <textarea
-                className="mv-create__textarea"
-                placeholder="Describe your video to help AI create a more compelling story."
-                maxLength={DESCRIPTION_MAX}
-                value={compose.description}
-                onChange={(e) => patchCompose({ description: e.target.value })}
-              />
-              <div className="mv-create__input-footer">
-                <div className="mv-create__input-actions">
-                  {/* Product owner request, 2026-08-13 (Figma node 1762:38446
-                      unselected / 1344:25723 selected) — circular thumbnail(s)
-                      replace the old `ic_video` icon. Unselected: a stack of
-                      3 (the first 3 catalog entries, standing in for "these
-                      are templates" the same way Figma's own mockup uses 3
-                      generic covers — not a specific selection). Selected:
-                      just the applied template's own cover + its name. */}
+          <div ref={tplSectionRef} className="mv-create__section mv-create__section--template">
+            <div className="mv-create__label-row">
+              <p className="mv-create__label">
+                START FROM A TEMPLATE <span className="mv-create__label-optional">(Optional)</span>
+              </p>
+              <button
+                type="button"
+                className="section-header__see-all mv-create__see-all"
+                onClick={() => setTemplatesOpen(true)}
+              >
+                See all
+                <DpIcon name="ic_chevron-right" className="section-header__see-all-icon" />
+              </button>
+            </div>
+            {/* Tap to apply, tap again to unselect (product owner, 2026-11-27: no
+                preview popup). Nothing is preselected. "Applied" is derived from
+                the description itself — the rule Home's MV input uses — so editing
+                the text by hand also deselects, with no second state to drift. */}
+            <div ref={tplFadeRef} className="mv-create__tpl-row edge-fade">
+              {TEMPLATES.map((t) => {
+                const on = selectedTemplate?.id === t.id;
+                return (
                   <button
+                    key={t.id}
                     type="button"
-                    className="mv-create__idea-btn"
-                    onClick={() => setTemplatesOpen(true)}
+                    className={`mv-create__tpl${on ? " mv-create__tpl--active mv-create__tpl--checked" : ""}`}
+                    aria-pressed={on}
+                    onClick={() => pickTemplate(t)}
                   >
-                    <span className="mv-create__idea-thumbs">
-                      {selectedTemplate ? (
-                        <img
-                          src={selectedTemplate.cover}
-                          alt=""
-                          className="mv-create__idea-thumb"
-                        />
-                      ) : (
-                        TEMPLATES.slice(0, 3).map((t) => (
-                          <img key={t.id} src={t.cover} alt="" className="mv-create__idea-thumb" />
-                        ))
-                      )}
-                    </span>
-                    {selectedTemplate ? selectedTemplate.name : "Templates"}
+                    <img src={t.cover} alt="" className="mv-create__tpl-thumb" />
+                    <span className="mv-create__tpl-check" aria-hidden="true" />
+                    <span className="mv-create__tpl-name">{t.name}</span>
                   </button>
-                  {/* The "Ideas" button was REMOVED 2026-08-06 — V1 ships no
-                      canned-sample fillers (product owner). Note this is a
-                      deliberate deviation FROM DP, not a fidelity fix: DP has
-                      `.mv-create__idea-btn` on this box too
-                      (`MVCreatePage.tsx:1182`), so the next drop will bring it
-                      back and the removal has to be re-applied. Templates
-                      stays — it opens `TemplateSheet`, a real feature, not a
-                      mock-data filler. */}
-                </div>
-                <div className="mv-create__footer-right">
-                  {/* RESTORED 2026-08-27 (product owner) — RD confirmed the
-                      backend now supports this call. Was HIDDEN 2026-08-25
-                      to 2026-08-27 (`3bdff87`) for having no supported API;
-                      that blocker is gone, so the removal is not re-applied
-                      here on the next drop. G5-d #10: this goes through
-                      `api.enhancePrompt`. DP's equivalent picks a random
-                      local string. */}
-                  <EnhanceButton
-                    value={compose.description}
-                    kind="mv"
-                    onEnhanced={(t) => patchCompose({ description: t })}
-                    bem="mv-create"
-                  />
-                  <span className="mv-create__char-count">
-                    {compose.description.length}/{DESCRIPTION_MAX}
-                  </span>
-                  {compose.description.length > 0 && (
-                    <button
-                      type="button"
-                      className="mv-create__clear-btn"
-                      onClick={() => patchCompose({ description: "" })}
-                      aria-label="Clear"
-                    >
-                      <DpIcon name="ic_close" className="mv-create__clear-icon" />
-                    </button>
-                  )}
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
 
           <div className="mv-create__section">
-            <p className="mv-create__label">UPLOAD CHARACTER PHOTO</p>
+            <p className="mv-create__label">CHARACTERS</p>
             <div className="mv-create__photos">
               {[0, 1].map((slot) => {
                 const photo = compose.photos[slot];
@@ -536,12 +526,19 @@ export function MvRoom() {
                           <button
                             type="button"
                             className="mv-create__photo-circle-btn"
-                            onClick={() =>
+                            onClick={() => {
                               setCompose((c) => ({
                                 ...c,
                                 photos: c.photos.filter((p) => p.id !== photo.id),
-                              }))
-                            }
+                              }));
+                              // Names are held by slot index, so they shift up with the
+                              // photos; otherwise a removed sample's name would stay and
+                              // land on the next photo added to that slot.
+                              setCharacterNames((names) => [
+                                ...names.filter((_, i) => i !== slot),
+                                "",
+                              ]);
+                            }}
                             aria-label="Remove photo"
                           >
                             <DpIcon name="ic_close" className="mv-create__photo-circle-icon" />
@@ -586,7 +583,7 @@ export function MvRoom() {
                           <DpIcon name="ic_add" className="mv-create__photo-add-icon" />
                         </span>
                         <span className="mv-create__photo-add-text">
-                          {slot === 0 ? "1st face photo" : "2nd face photo"}
+                          Character {slot + 1}
                           <br />
                           <span className="mv-create__photo-add-optional">(Optional)</span>
                         </span>
@@ -607,19 +604,105 @@ export function MvRoom() {
                 e.target.value = "";
               }}
             />
-            <p className="mv-create__sample-label">Sample Photos</p>
-            <div className="mv-create__samples">
-              {SAMPLE_FACES.map((src) => (
+            <div className="mv-create__label-row">
+              <p className="mv-create__sample-label">Sample Characters</p>
+              <button
+                type="button"
+                className="section-header__see-all mv-create__see-all"
+                disabled={compose.photos.length >= 2}
+                onClick={() => setCharsOpen(true)}
+              >
+                See all
+                <DpIcon name="ic_chevron-right" className="section-header__see-all-icon" />
+              </button>
+            </div>
+            <div ref={sampleFadeRef} className="mv-create__face-row edge-fade">
+              {SAMPLE_CHARACTERS.map((c) => (
                 <button
-                  key={src}
+                  key={c.url}
                   type="button"
-                  className="mv-create__sample"
-                  onClick={() => addSampleFace(src)}
-                  aria-label="Use sample photo"
+                  className="mv-create__face"
+                  onClick={(e) => {
+                    revealInRow(e.currentTarget);
+                    addSampleFaces([c]);
+                  }}
+                  aria-label={`Use ${c.name}`}
                 >
-                  <img src={src} alt="" />
+                  <img src={c.url} alt="" className="mv-create__face-thumb" />
+                  <span className="mv-create__face-name">{c.name}</span>
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="mv-create__section">
+            <p className="mv-create__label">
+              DESCRIBE YOUR VIDEO IDEA <span className="mv-create__label-optional">(Required)</span>
+            </p>
+            <div className="mv-create__input-box">
+              <textarea
+                className="mv-create__textarea"
+                placeholder="Describe your video to help AI create a more compelling story."
+                maxLength={DESCRIPTION_MAX}
+                value={compose.description}
+                onChange={(e) => patchCompose({ description: e.target.value })}
+              />
+              <div className="mv-create__input-footer">
+                <div className="mv-create__input-actions">
+                  {/* The applied template, as the Templates button DP's box carries
+                      (product owner, 2026-11-27): its cover and name, and a ✕ — one
+                      tap removes it and empties the prompt it filled. Shown only while
+                      a template is applied, and the group stays when it is not: the
+                      footer is `justify-content: space-between`, so without a left
+                      child the Enhance / count group slides to the left. */}
+                  {selectedTemplate && (
+                    <button
+                      type="button"
+                      className="mv-create__idea-btn"
+                      aria-label={`Remove template ${selectedTemplate.name}`}
+                      onClick={() => patchCompose({ description: "" })}
+                    >
+                      <span className="mv-create__idea-thumbs">
+                        <img
+                          src={selectedTemplate.cover}
+                          alt=""
+                          className="mv-create__idea-thumb"
+                        />
+                      </span>
+                      {selectedTemplate.name}
+                      <DpIcon name="ic_close" className="mv-create__idea-remove" />
+                    </button>
+                  )}
+                </div>
+                <div className="mv-create__footer-right">
+                  {/* RESTORED 2026-08-27 (product owner) — RD confirmed the
+                      backend now supports this call. Was HIDDEN 2026-08-25
+                      to 2026-08-27 (`3bdff87`) for having no supported API;
+                      that blocker is gone, so the removal is not re-applied
+                      here on the next drop. G5-d #10: this goes through
+                      `api.enhancePrompt`. DP's equivalent picks a random
+                      local string. */}
+                  <EnhanceButton
+                    value={compose.description}
+                    kind="mv"
+                    onEnhanced={(t) => patchCompose({ description: t })}
+                    bem="mv-create"
+                  />
+                  <span className="mv-create__char-count">
+                    {compose.description.length}/{DESCRIPTION_MAX}
+                  </span>
+                  {compose.description.length > 0 && (
+                    <button
+                      type="button"
+                      className="mv-create__clear-btn"
+                      onClick={() => patchCompose({ description: "" })}
+                      aria-label="Clear"
+                    >
+                      <DpIcon name="ic_close" className="mv-create__clear-icon" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -820,13 +903,24 @@ export function MvRoom() {
           {toast}
         </div>
       )}
-      <TemplateSheet
+      <TemplateListSheet
         open={templatesOpen}
         onClose={() => setTemplatesOpen(false)}
-        onApply={(template) => {
-          patchCompose({ description: template.prompt });
-          setSelectedTemplate(template);
+        selectedId={selectedTemplateId}
+        onApply={(t) => {
+          patchCompose({ description: t.prompt });
           setTemplatesOpen(false);
+          showTemplateArea();
+        }}
+      />
+      <CharacterListSheet
+        open={charsOpen}
+        onClose={() => setCharsOpen(false)}
+        usedUrls={compose.photos.filter((p) => p.fromSample).map((p) => p.url)}
+        maxPick={Math.max(0, 2 - compose.photos.length)}
+        onApply={(picks) => {
+          addSampleFaces(picks);
+          setCharsOpen(false);
         }}
       />
       {preparing && (

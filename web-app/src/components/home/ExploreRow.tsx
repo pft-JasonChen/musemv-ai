@@ -9,6 +9,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useToast } from "@/components/ui/Toast";
 import { GuideHint } from "@/components/agent/GuideHint";
 import { useEdgeFade } from "@/components/agent/useEdgeFade";
+import { revealInRow } from "@/lib/revealInRow";
 import {
   HOT_SKILLS,
   TEMPLATE_TABS,
@@ -81,23 +82,6 @@ const NOT_IN_DEMO = `This skill is not part of the demo. Try ${LIVE_SKILLS.join(
 type Tile =
   | { kind: "mv"; key: string; card: HeroCard; mood: string }
   | { kind: "shorts"; key: string; card: TemplateCard };
-
-/** A chip picked while partly under its row's faded edge (`.edge-fade`, 56px)
- *  scrolls fully into view (product owner, 2026-11-27 — phones and tablets,
- *  where the chip rows overflow); in a row that fits, or at its ends,
- *  `scrollBy` has nothing to do. The same rule as `revealSkill` in
- *  AgentComposer. */
-const FADE = 56;
-function revealChip(el: HTMLElement) {
-  const row = el.parentElement;
-  if (!row) return;
-  const chip = el.getBoundingClientRect();
-  const box = row.getBoundingClientRect();
-  const left = chip.left - (box.left + FADE);
-  const right = chip.right - (box.right - FADE);
-  if (left < 0) row.scrollBy({ left, behavior: "smooth" });
-  else if (right > 0) row.scrollBy({ left: right, behavior: "smooth" });
-}
 
 export function ExploreRow({
   onStyle,
@@ -190,7 +174,7 @@ export function ExploreRow({
             aria-selected={product === c.id}
             className={`tabs__tab${product === c.id ? " tabs__tab--active" : ""}`}
             onClick={(e) => {
-              revealChip(e.currentTarget);
+              revealInRow(e.currentTarget);
               setProduct(c.id);
               setCategory(ALL);
               // "All" is first in the sub row; a new group starts at its start.
@@ -220,7 +204,7 @@ export function ExploreRow({
               aria-selected={category === c.id}
               className={`home-explore__sub-tab${category === c.id ? " home-explore__sub-tab--on" : ""}`}
               onClick={(e) => {
-                revealChip(e.currentTarget);
+                revealInRow(e.currentTarget);
                 setCategory(c.id);
               }}
             >

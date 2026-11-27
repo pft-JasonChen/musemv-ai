@@ -33,6 +33,7 @@ import { MvInput, type MvPick } from "./MvInput";
 import { SongInput } from "./SongInput";
 import { ExploreRow } from "./ExploreRow";
 import { ContinueRow } from "./ContinueRow";
+import { revealInRow } from "@/lib/revealInRow";
 
 /**
  * Home's Agent composer (feature/video-agent-home) — replaces the two tool
@@ -341,18 +342,8 @@ export function AgentComposer({
     }
   }, [skillGroup, skillsRef]);
 
-  /** A pill clicked while partly under the row's faded edge (`.edge-fade`,
-   *  56px) scrolls fully into view; at the row's ends `scrollBy` clamps. */
-  const revealSkill = (el: HTMLElement) => {
-    const row = skillsRef.current;
-    if (!row) return;
-    const pill = el.getBoundingClientRect();
-    const box = row.getBoundingClientRect();
-    const left = pill.left - (box.left + 56);
-    const right = pill.right - (box.right - 56);
-    if (left < 0) row.scrollBy({ left, behavior: "smooth" });
-    else if (right > 0) row.scrollBy({ left: right, behavior: "smooth" });
-  };
+  /** A pill clicked while partly under the row's faded edge scrolls fully into view. */
+  const revealSkill = (el: HTMLElement) => revealInRow(el, skillsRef.current);
 
   // AI Shorts sends a UGC Talking Review recipe, or — since 2026-10-30 — a free
   // prompt, which opens the Agent on it (`fromPrompt` in flows.ts). Dance

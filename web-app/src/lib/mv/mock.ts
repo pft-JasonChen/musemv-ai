@@ -120,10 +120,24 @@ export const MY_SONGS: Song[] = [
   },
 ];
 
-export const SAMPLE_FACES: string[] = Array.from(
-  { length: 8 },
-  (_, i) => `/assets/images/character-photos/samples/Sample_P${i + 1}.jpg`,
-);
+/**
+ * `/mv/room`'s "Sample Characters" row: a face to drop into a character slot, with
+ * a name under it. The names are placeholders (the photos came without any) —
+ * rename freely. To add one, drop `Sample_P<n>.jpg` next to the others and append here.
+ */
+export const SAMPLE_CHARACTERS: { name: string; url: string }[] = [
+  "Emma",
+  "Liam",
+  "Zara",
+  "Noah",
+  "Yuki",
+  "Kenji",
+  "Marco",
+  "Sofia",
+].map((name, i) => ({
+  name,
+  url: `/assets/images/character-photos/samples/Sample_P${i + 1}.jpg`,
+}));
 
 export interface TemplateOption {
   id: string;
@@ -132,44 +146,366 @@ export interface TemplateOption {
   prompt: string;
 }
 
+/**
+ * A template's prompt is written in the same seven sections every time (product
+ * owner, 2026-11-27): Theme, Character Setting, Costume Design, Style, Scene and
+ * Background, Camera Shot, Ending. Each template supplies the creative parts; the
+ * face-identity rules and the base camera instruction are shared so they stay
+ * consistent. Every prompt must fit the description box (`DESCRIPTION_MAX`) —
+ * `templates.test.ts` holds that.
+ */
+const CHARACTER_CORE =
+  "Keep the figure moving gracefully to the melody and never stop. Strictly keep the input character's face ID, face shape, skin color and overall look in every scene; the character stays the same, realistic and recognizable. Smooth, young, flawless skin with natural foundation, no moles, no spots, no wrinkles. Small face, tall model, half body view, elegant presence.";
+
+interface PromptSpec {
+  /** Setting → Inciting Incident & Motive → Development & Climax → Resolution & Meaning. */
+  theme: string;
+  /** Added after the shared character rules (performance, or the art style the face is drawn in). */
+  character: string;
+  costume: string;
+  style: string;
+  scene: string;
+  /** Added after the shared "smooth and natural" camera instruction. */
+  camera: string;
+  /** The closing image; every ending is a zoom out. */
+  ending: string;
+}
+
+function buildPrompt(p: PromptSpec): string {
+  return [
+    `Theme:\n${p.theme}`,
+    `Character Setting:\n${CHARACTER_CORE} ${p.character}`,
+    `Costume Design:\n${p.costume}`,
+    `Style:\n${p.style}`,
+    `Scene and Background (no logo, no brand):\n${p.scene}`,
+    `Camera Shot: Ensure smooth and natural background camera movement. ${p.camera}`,
+    `Ending:\n${p.ending}`,
+  ].join("\n\n");
+}
+
+/** The first six covers are the MV samples; the rest are the visual-style covers
+ *  (`public/assets/images/visaul-style/`, sic). */
+const STYLE_COVER = (name: string) => encodeURI(`/assets/images/visaul-style/vs_${name}.jpg`);
+
 export const TEMPLATES: TemplateOption[] = [
   {
     id: "t1",
     name: "Neon City",
     cover: "/assets/videos/sample-mvs/mv_03_neon_city.jpg",
-    prompt:
-      "A glamorous night drive through a neon-lit city, reflections shimmering on wet streets.",
+    prompt: buildPrompt({
+      theme:
+        "A glamorous midnight drive through a neon-soaked city. Setting: wet downtown streets after rain, signs reflecting in every puddle. Inciting Incident & Motive: the character leaves a rooftop party alone, drawn toward the brightest part of the skyline. Development & Climax: a convertible glides through intersections of pink and cyan light as the chorus hits and the city pulses with the beat. Resolution & Meaning: parked above the harbor, the character watches the lights settle, calm and free.",
+      character: "Cool, confident and magnetic, with smooth, rhythmic movement.",
+      costume:
+        "Glossy black leather jacket over a metallic silk top, neon-framed reflective sunglasses, sleek tailored trousers, silver rings and chain earrings, polished boots, hair swept back with a wet-look finish.",
+      style:
+        "Cyberpunk-tinged cinematic night photography. Saturated magenta, electric blue and cyan color grading, high-contrast low-key lighting, glossy reflections, shallow depth of field with soft bokeh, subtle lens flare.",
+      scene:
+        "Rain-slicked avenues, towering glass skyscrapers, glowing signage in abstract unreadable lettering, a vintage convertible, crosswalks, steam rising from street vents, a rooftop overlooking the harbor.",
+      camera: "Low tracking shots beside the car and slow orbiting moves around the character.",
+      ending:
+        "The final frame holds on the character against a sea of neon bokeh. Ending is zoom out over the glittering skyline.",
+    }),
   },
   {
     id: "t2",
     name: "Cinematic Dark",
     cover: "/assets/videos/sample-mvs/mv_01_cinematic_dark.jpg",
-    prompt:
-      "Moody cinematic close-ups under dramatic low-key lighting, deep shadows and rim light.",
+    prompt: buildPrompt({
+      theme:
+        "A brooding noir-tinted drama told in close-ups. Setting: a dim apartment and an empty late-night street. Inciting Incident & Motive: the character wakes from a restless sleep haunted by a memory they cannot place. Development & Climax: they wander through shadow and rim light, emotions rising with the music until a single beam of red light breaks across their face. Resolution & Meaning: stillness returns; the character accepts the memory and steps into the dark with quiet resolve.",
+      character: "Intense, introspective expression with minimal, controlled movement.",
+      costume:
+        "A worn black leather jacket over a dark collared shirt, a subtle silver earring, tousled hair; muted dark layers with no bright accents.",
+      style:
+        "Moody cinematic close-ups with dramatic low-key lighting, deep shadows and crimson-and-teal rim light, desaturated blacks, fine film grain, shallow depth of field, anamorphic feel.",
+      scene:
+        "A dim apartment with blinds casting bars of light, a rainy window, an empty night street under a single streetlamp, a narrow corridor with flickering fluorescent light.",
+      camera: "Slow push-ins and stable close-ups with occasional rack focus.",
+      ending:
+        "The frame darkens until only the character's eyes catch the red light. Ending is zoom out into shadow.",
+    }),
   },
   {
     id: "t3",
     name: "Late Night Stage",
     cover: "/assets/videos/sample-mvs/mv_02_late_night_stage.jpg",
-    prompt: "A spotlit performance on a smoky late-night stage, intimate and emotional.",
+    prompt: buildPrompt({
+      theme:
+        "An intimate late-night performance on a smoky stage. Setting: a small club after midnight, a lone spotlight and a worn guitar. Inciting Incident & Motive: the character steps up to play one last song for a handful of listeners. Development & Climax: the performance grows from a whisper to a full-voiced release as the lights rise and the room joins in. Resolution & Meaning: the final note fades into applause, leaving a quiet, emotional connection.",
+      character:
+        "Performing live with genuine emotion, eyes often closed, fully absorbed in the song.",
+      costume:
+        "A loose white graphic tee under an open denim jacket, a leather guitar strap, a wristband and a simple pendant, hair slightly tousled from the stage heat.",
+      style:
+        "Warm live-concert cinematography: amber stage lights, haze and floating dust, soft rim light, subtle film grain, rich shadows, an intimate and emotional mood.",
+      scene:
+        "A small club stage with a vintage amplifier, a microphone stand, acoustic and electric guitars, red velvet curtains, hazy spotlights and a silhouetted audience.",
+      camera: "Close, stable shots on hands and face, then wider shots from the audience.",
+      ending:
+        "The spotlight narrows to the character's silhouette. Ending is zoom out across the empty room.",
+    }),
   },
   {
     id: "t4",
     name: "Anime Style",
     cover: "/assets/videos/sample-mvs/mv_05_anime_style.jpg",
-    prompt: "Stylized anime visuals with vibrant colors and expressive motion.",
+    prompt: buildPrompt({
+      theme:
+        "A vibrant anime coming-of-age adventure. Setting: a sunlit city of rooftops and cherry-blossom streets. Inciting Incident & Motive: the character hears a melody on the wind and runs to follow it. Development & Climax: across rooftops and train platforms, colors burst and the world swirls with energy as the chorus peaks. Resolution & Meaning: at the hilltop, the character finds the source of the song and smiles with new courage.",
+      character:
+        "Rendered as a stylized anime character with expressive eyes and flowing hair, while keeping the face ID recognizable.",
+      costume:
+        "A colorful layered streetwear jacket with bold patterns, a scarf fluttering in the wind, sneakers, a headset and playful accessories such as star pins.",
+      style:
+        "High-energy anime film aesthetic: bold ink outlines, vibrant saturated colors, cel shading, painterly skies with dramatic clouds, speed lines, sparkles and expressive motion.",
+      scene:
+        "Rooftops with laundry lines, a train crossing at sunset, narrow streets with blooming trees, a school-yard stairway and a hilltop overlooking the city.",
+      camera: "Dynamic sweeping moves with dramatic anime-style angles and quick whip pans.",
+      ending: "Petals drift across a glowing sunset sky. Ending is zoom out over the city.",
+    }),
   },
   {
     id: "t5",
     name: "Nature Earth",
     cover: "/assets/videos/sample-mvs/mv_07_nature_earth.jpg",
-    prompt: "Sweeping natural landscapes at golden hour, organic and serene.",
+    prompt: buildPrompt({
+      theme:
+        "A serene journey through untouched wilderness. Setting: alpine peaks, forests and a mirror-still lake at golden hour. Inciting Incident & Motive: the character leaves the city behind, seeking quiet and clarity. Development & Climax: they trek past waterfalls and ridgelines as the music swells with the rising sun. Resolution & Meaning: at the lakeshore, the character breathes in the stillness and feels at one with the earth.",
+      character: "Calm, grounded movement with a peaceful, open expression.",
+      costume:
+        "Earth-toned outdoor layers: a soft wool sweater, a light windbreaker, durable trousers, hiking boots, a woven scarf and a small canvas backpack.",
+      style:
+        "Epic nature cinematography: warm golden-hour light, rich greens and glacier blues, atmospheric mist, natural film color, ultra-sharp landscapes with gentle depth, serene and awe-inspiring.",
+      scene:
+        "Snow-capped mountains, a pine forest, a glassy alpine lake reflecting the sky, a winding river, wildflower meadows and drifting morning fog.",
+      camera:
+        "Slow aerial glides and wide drone-style reveals, with gentle tracking beside the character.",
+      ending: "Sunlight spills across the lake. Ending is zoom out to reveal the whole valley.",
+    }),
   },
   {
     id: "t6",
     name: "Urban Performer",
     cover: "/assets/videos/sample-mvs/mv_09_urban_performer.jpg",
-    prompt: "Raw urban rooftop performance, city skyline behind, energetic handheld camera.",
+    prompt: buildPrompt({
+      theme:
+        "A raw rooftop performance above the city. Setting: a concrete rooftop at golden hour with the skyline behind. Inciting Incident & Motive: the character climbs up with a mic and a battered speaker to be heard. Development & Climax: the verse builds into an energetic chorus as the sun drops and the skyline ignites. Resolution & Meaning: the last line lands with confidence, claiming the city as their stage.",
+      character: "Confident, rhythmic movement with strong stage presence.",
+      costume:
+        "Oversized streetwear: a graphic hoodie or camouflage jacket, layered gold chains, baggy cargo pants, chunky sneakers, a cap and rings.",
+      style:
+        "Gritty urban cinematography: warm golden-hour backlight, high-contrast color grading, energetic framing, lens flare, film grain and punchy contrast.",
+      scene:
+        "A weathered rooftop with graffiti walls, water tanks, a skyline of towers, a speaker stack and string lights, with city traffic glowing below.",
+      camera: "Energetic movement with quick push-ins that stay smooth and stable.",
+      ending:
+        "The skyline glows behind the character's silhouette. Ending is zoom out over the rooftops.",
+    }),
+  },
+  // Product owner, 2026-11-27: more visual-style covers, dropped into
+  // `public/assets/images/visaul-style/`.
+  {
+    id: "t7",
+    name: "Arena Lights",
+    cover: STYLE_COVER("Arena Lights"),
+    prompt: buildPrompt({
+      theme:
+        "A stadium-sized anthem performed under blinding lights. Setting: a packed arena at night with pyrotechnics waiting in the dark. Inciting Incident & Motive: the character walks out alone to a roaring crowd. Development & Climax: as the chorus drops, fire jets, lasers and confetti explode while thousands sing along. Resolution & Meaning: with arms raised, the character shares the moment with the crowd in pure triumph.",
+      character:
+        "Commanding stage presence with wide, expressive gestures, performing to the crowd.",
+      costume:
+        "A sparkling sequined stage jacket or embroidered tailored coat, fitted trousers, statement boots, bold jewelry and a wireless headset microphone.",
+      style:
+        "Epic live-concert cinematography: saturated beams of light, volumetric haze, sparks and confetti, powerful backlight, high dynamic range and an electrifying mood.",
+      scene:
+        "A giant arena stage with a runway, LED walls showing abstract visuals, towering truss lights, pyrotechnic flames and a sea of raised hands.",
+      camera: "Sweeping crane moves over the crowd and sudden close-ups on the performer.",
+      ending:
+        "Confetti rains down through the beams of light. Ending is zoom out over the entire arena.",
+    }),
+  },
+  {
+    id: "t8",
+    name: "Celestial Bloom",
+    cover: STYLE_COVER("Celestial Bloom"),
+    prompt: buildPrompt({
+      theme:
+        "A dreamlike fantasy where flowers and stars bloom together. Setting: a floating garden in a starlit sky. Inciting Incident & Motive: the character awakens among glowing seeds and follows them upward. Development & Climax: with each step, petals unfurl into constellations until the whole sky blooms in light. Resolution & Meaning: the character dissolves into drifting stardust, at peace with the universe.",
+      character: "Weightless, flowing movement, as if floating.",
+      costume:
+        "A flowing translucent gown or robe in pearl and lavender silk with star-shaped embroidery, a crown of glowing blossoms, long trailing sleeves and shimmering jewelry.",
+      style:
+        "Ethereal fantasy art: iridescent pastel colors, soft glow, sparkling bokeh, luminous mist, painterly cosmic depth, dreamy and graceful.",
+      scene:
+        "A floating garden of giant glowing flowers, drifting petals, a night sky full of stars and nebulae, crystal pathways and soft clouds below.",
+      camera: "Slow, floating moves that drift with the petals.",
+      ending: "Stardust and petals swirl into the sky. Ending is zoom out to a bloom of stars.",
+    }),
+  },
+  {
+    id: "t9",
+    name: "Concrete Pulse",
+    cover: STYLE_COVER("Concrete Pulse"),
+    prompt: buildPrompt({
+      theme:
+        "Street energy synchronized to the beat. Setting: graffiti-covered back alleys and an underpass at dusk. Inciting Incident & Motive: the character steps into the alley as the bass drops, ready to move. Development & Climax: sharp, rhythmic movement cuts across walls and stairs as the beat grows louder. Resolution & Meaning: the character stands in the center of the alley, owning the street.",
+      character: "Sharp, rhythmic street-dance movement, perfectly on the beat.",
+      costume:
+        "Streetwear: a bomber jacket or windbreaker, a graphic tee, cargo pants, chunky sneakers, a beanie, a chain and fingerless gloves.",
+      style:
+        "Gritty urban cinematography: desaturated concrete tones with punchy color accents, hard directional light, sharp contrast, film grain and a raw documentary feel.",
+      scene:
+        "A graffiti-covered alley, concrete stairs, an underpass with hanging lamps, chain-link fences, posters and puddles reflecting colorful lights.",
+      camera: "Rhythmic cuts on the beat with smooth tracking along walls and stairs.",
+      ending: "A final pose in the center of the alley. Ending is zoom out.",
+    }),
+  },
+  {
+    id: "t10",
+    name: "Dust & Chrome",
+    cover: STYLE_COVER("Dust & Chrome"),
+    prompt: buildPrompt({
+      theme:
+        "A sun-baked road movie on an endless desert highway. Setting: cracked asphalt under a blazing sky. Inciting Incident & Motive: the character leaves town in a vintage muscle car with nothing but a guitar. Development & Climax: dust storms and mirages chase the car as the engine and the chorus roar together. Resolution & Meaning: at sunset, the character stops, turns off the engine and listens to the silence.",
+      character: "Rugged, cool and self-assured, with relaxed movement.",
+      costume:
+        "A worn leather jacket, a vintage band-style tee, faded denim, leather boots, aviator sunglasses and a silver belt buckle.",
+      style:
+        "Retro road-movie photography: sun-bleached warm tones, heat haze, rich chrome reflections, gritty film grain, wide-angle composition and a nostalgic Americana mood.",
+      scene:
+        "An empty desert highway, a vintage muscle car with polished chrome, red rock formations, a roadside gas pump, drifting dust and a blazing sunset.",
+      camera: "Low-angle tracking shots beside the car and wide landscape shots.",
+      ending: "The car glows in the sunset dust. Ending is zoom out over the endless road.",
+    }),
+  },
+  {
+    id: "t11",
+    name: "Gilded Baroque",
+    cover: STYLE_COVER("Gilded Baroque"),
+    prompt: buildPrompt({
+      theme:
+        "An opulent baroque court drama by candlelight. Setting: a gilded palace hall with towering columns. Inciting Incident & Motive: the character enters a grand ball carrying a secret melody. Development & Climax: amid swirling dancers and candle flames, the music builds to a passionate crescendo. Resolution & Meaning: in the quiet gallery, the character reveals the song and the hall falls silent in awe.",
+      character: "Regal, poised movement with theatrical elegance.",
+      costume:
+        "A richly embroidered velvet gown or brocade coat in deep burgundy and gold, a lace collar, jeweled brooches, pearl necklaces, an ornate headpiece and long gloves.",
+      style:
+        "Baroque oil-painting cinematography: warm candlelit chiaroscuro, deep reds and gold, luxurious textures, soft glow, rich shadows and theatrical grandeur.",
+      scene:
+        "A gilded hall with marble columns, crystal chandeliers, candelabras, heavy velvet drapes, ornate mirrors, a grand staircase and a lute resting on a gold chair.",
+      camera: "Slow, elegant dolly moves and gentle orbits around the character.",
+      ending:
+        "Candlelight flickers across the gold walls. Ending is zoom out through the grand hall.",
+    }),
+  },
+  {
+    id: "t12",
+    name: "Golden Hour Anthem",
+    cover: STYLE_COVER("Golden Hour Anthem"),
+    prompt: buildPrompt({
+      theme:
+        "An uplifting rooftop anthem at sunset. Setting: a city rooftop terrace bathed in golden light. Inciting Incident & Motive: the character picks up a guitar to sing about a new beginning. Development & Climax: the sun sinks, the skyline glows and the chorus lifts as warm light wraps the scene. Resolution & Meaning: the final chorus carries hope as the last light fades.",
+      character: "Joyful and heartfelt, singing with an open smile.",
+      costume:
+        "A flowing terracotta or rust-colored dress or linen shirt, a light denim jacket, delicate gold jewelry and loose, sun-kissed hair.",
+      style:
+        "Warm golden-hour cinematography: glowing backlight, soft lens flare, honey-toned color grading, shallow depth of field and an optimistic, nostalgic mood.",
+      scene:
+        "A rooftop terrace with string lights, potted plants, a low wall overlooking a glowing skyline, a wooden stool and an acoustic guitar.",
+      camera: "Gentle circular moves and wide, uplifting reveals of the skyline.",
+      ending: "Golden light fills the frame. Ending is zoom out over the skyline.",
+    }),
+  },
+  {
+    id: "t13",
+    name: "Monochrome Noir",
+    cover: STYLE_COVER("Monochrome Noir"),
+    prompt: buildPrompt({
+      theme:
+        "A smoky black-and-white noir ballad. Setting: a dim jazz club in the 1940s. Inciting Incident & Motive: a singer steps into a single spotlight, haunted by a lost love. Development & Climax: the song builds as smoke swirls and shadows deepen around the stage. Resolution & Meaning: the last note fades into silence and the spotlight goes out.",
+      character: "Slow, smoldering movement with a dramatic, wistful expression.",
+      costume:
+        "A satin evening gown with sequin details or a double-breasted suit, long gloves, a pearl necklace, finger-wave hair and bold lipstick, all shown in monochrome.",
+      style:
+        "Classic black-and-white film noir: high-contrast monochrome, hard spotlight, deep shadows, drifting smoke, fine film grain and a timeless, melancholy mood.",
+      scene:
+        "A smoky jazz club stage with a vintage microphone, a piano, a velvet curtain, small round tables and a single hanging spotlight.",
+      camera: "Slow dolly moves and close-ups through the smoke.",
+      ending: "The spotlight closes on the singer. Ending is zoom out into darkness.",
+    }),
+  },
+  {
+    id: "t14",
+    name: "Neon Mirage",
+    cover: STYLE_COVER("Neon Mirage"),
+    prompt: buildPrompt({
+      theme:
+        "A surreal neon dream in a futuristic city. Setting: a rain-washed cyber district at night. Inciting Incident & Motive: the character follows a glowing sign that appears and disappears. Development & Climax: reality bends as signs, reflections and rain merge into a shimmering mirage. Resolution & Meaning: at the heart of the maze, the character realizes the city is a dream and steps through.",
+      character: "Cool, mysterious presence with slow, dreamy movement.",
+      costume:
+        "A holographic trench coat or glossy techwear jacket, neon-trimmed accessories, a transparent visor, dark fitted layers and metallic boots.",
+      style:
+        "Cyberpunk neon cinematography: vivid pink, purple and cyan lights, heavy reflections, volumetric rain, anamorphic flares and a surreal, dreamlike atmosphere.",
+      scene:
+        "A dense futuristic alley with towering holographic signs in abstract lettering, wet streets, steam, a lone noodle stall, flying vehicles and reflective glass.",
+      camera: "Floating, gliding moves through reflections and rain.",
+      ending: "The neon haze dissolves into light. Ending is zoom out over the dreamlike city.",
+    }),
+  },
+  {
+    id: "t15",
+    name: "Sakura Anime Dream",
+    cover: STYLE_COVER("Sakura Anime Dream"),
+    prompt: buildPrompt({
+      theme:
+        "A tender anime spring story under cherry blossoms. Setting: a school rooftop in full bloom. Inciting Incident & Motive: the character finds an old music sheet drifting among petals. Development & Climax: as the song plays, memories bloom in pastel flashes and petals swirl around them. Resolution & Meaning: the character smiles through the petals, ready for the next chapter.",
+      character:
+        "Rendered as a gentle anime character with soft expressions, while keeping the face ID recognizable.",
+      costume:
+        "A pastel school-style uniform with a ribbon or tie, a light cardigan, a small crossbody bag, hair clips and sneakers.",
+      style:
+        "Soft anime film aesthetic: pastel pink and sky-blue palette, delicate line art, glowing backlight, falling petals, painterly clouds and a nostalgic, tender mood.",
+      scene:
+        "A school rooftop with a chain-link fence, cherry trees in full bloom, a distant city skyline, a music stand with sheet music and a sky full of drifting petals.",
+      camera: "Gentle drifting moves with soft focus pulls through the petals.",
+      ending: "Petals fill the frame. Ending is zoom out over the pink skyline.",
+    }),
+  },
+  {
+    id: "t16",
+    name: "Super 8 Nostalgia",
+    cover: STYLE_COVER("Super 8 Nostalgia"),
+    prompt: buildPrompt({
+      theme:
+        "A warm home-movie memory of a summer long ago. Setting: a sunny suburban backyard and a garage band. Inciting Incident & Motive: friends gather to play a song for the first time. Development & Climax: laughter, dancing and sparklers fill the evening as the music grows. Resolution & Meaning: the film runs out, leaving a bittersweet, cherished memory.",
+      character: "Natural, candid and joyful, as if caught on home film.",
+      costume:
+        "Retro 1970s outfits: a patterned knit sweater, flared jeans, a denim vest, a headband, round sunglasses and a leather bracelet.",
+      style:
+        "Authentic Super 8 film look: warm faded colors, heavy film grain, light leaks, gate flicker, soft focus edges and a nostalgic home-movie mood.",
+      scene:
+        "A sunlit backyard with a picnic table, a garage with amps and a drum kit, hanging laundry, a vintage station wagon, string lights and sparklers.",
+      camera: "Natural, slightly loose framing that stays smooth, with soft pans and zooms.",
+      ending: "The film burns out in a warm light leak. Ending is zoom out.",
+    }),
+  },
+  {
+    id: "t17",
+    name: "Vaporwave Static",
+    cover: STYLE_COVER("Vaporwave Static"),
+    prompt: buildPrompt({
+      theme:
+        "A retro-futuristic vaporwave daydream. Setting: an endless pastel grid horizon at sunset. Inciting Incident & Motive: the character wakes in front of an old CRT screen playing static. Development & Climax: statues, palm trees and glitching shapes rise as the synth line loops. Resolution & Meaning: the character fades into the static, becoming part of the loop.",
+      character: "Cool, detached and dreamy, with slow, stylized movement.",
+      costume:
+        "A pastel windbreaker or oversized shirt, retro sunglasses, holographic accessories, high-waisted trousers and chunky 90s sneakers.",
+      style:
+        "Vaporwave aesthetic: pink, purple and teal gradients, VHS static and scanlines, chromatic aberration, glitch effects, a retro 80s and 90s digital look.",
+      scene:
+        "A glowing grid horizon with a huge pastel sun, palm trees, floating marble busts, old CRT monitors, checkerboard floors and drifting pixel clouds.",
+      camera: "Slow floating moves with occasional glitchy cuts that stay smooth.",
+      ending: "The picture dissolves into VHS static. Ending is zoom out from the horizon.",
+    }),
   },
 ];
 
