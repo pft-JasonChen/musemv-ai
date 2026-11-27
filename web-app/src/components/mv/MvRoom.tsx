@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToastTimer } from "@/components/ui/useToastTimer";
@@ -39,8 +39,10 @@ import {
 } from "@/lib/mv/mock";
 import { NEW_MVS } from "@/lib/mv/community";
 import { grantFaceConsent, hasFaceConsent } from "@/lib/mv/faceConsent";
+import { consumeSpentCompose } from "@/lib/mv/composeSpent";
 import {
   createMvCost,
+  DEFAULT_COMPOSE,
   resolutionOf,
   scriptCost,
   DESCRIPTION_MAX,
@@ -108,6 +110,16 @@ export function MvRoom() {
   const router = useRouter();
   const { compose, setCompose, patchCompose, resetForNewMv, characterNames, setCharacterNames } =
     useMvFlow();
+  // After an MV has been made, coming back here starts from an empty form (product
+  // owner, 2026-11-27). A layout effect, so the old inputs never paint. Only an
+  // untouched, spent form is cleared — see `composeSpent.ts`.
+  useLayoutEffect(() => {
+    if (!consumeSpentCompose(compose)) return;
+    setCompose(DEFAULT_COMPOSE);
+    setCharacterNames(["", ""]);
+    // Arrival only: `compose` is read once, here, on purpose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const { loggedIn, profile, requireLogin } = useAuth();
   const openCreation = useOpenCreation();
   const { credits } = useCredits();

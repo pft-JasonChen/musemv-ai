@@ -20,6 +20,7 @@ import { buildShareUrl } from "@/lib/share";
 import { downloadFile } from "@/lib/download";
 import { toggleMvFullscreen, useIsFullscreen } from "@/lib/fullscreen";
 import { MV_TYPES, mockStoryboard, removalForId } from "@/lib/mv/mock";
+import { markComposeSpent } from "@/lib/mv/composeSpent";
 import { MOCK_USER } from "@/lib/user";
 import { useDemoState } from "@/components/demo/useDemo";
 import {
@@ -174,6 +175,12 @@ export function MvResult() {
   useEffect(() => {
     if (!resultUrl) router.replace(localePath(locale, "/mv/room"));
   }, [resultUrl, router, locale]);
+
+  // The MV is made, so this compose form is spent: /mv/room opens empty next time
+  // (see `composeSpent.ts`). Re-marked if the form changes while this page is up.
+  useEffect(() => {
+    markComposeSpent(compose);
+  }, [compose]);
 
   if (!resultUrl) return null;
 
@@ -430,7 +437,11 @@ export function MvResult() {
                 <button
                   type="button"
                   className="mv-result__action"
-                  onClick={() => router.push(localePath(locale, "/mv/room"))}
+                  onClick={() => {
+                    // Recreate starts from THIS MV's inputs, so the form is kept.
+                    markComposeSpent(null);
+                    router.push(localePath(locale, "/mv/room"));
+                  }}
                 >
                   <img src="/assets/icons/ui/ic_video_ai.svg" alt="" />
                   Recreate
